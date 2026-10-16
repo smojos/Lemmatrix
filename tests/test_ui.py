@@ -406,7 +406,7 @@ def test_settings_tabs_theme_and_pitch(win):
     finally:
         win.prefs.theme, win.prefs.accent = "light", theme.DEFAULT_ACCENT
         theme.from_prefs(win.prefs)
-    assert theme.colour("pitch").name() == "#385867"
+    assert theme.colour("pitch").name() == theme.DEFAULT_ACCENT
     menus = [a.text() for a in win.menuBar().actions()]
     assert "&Settings" not in menus
     edit = next(a.menu() for a in win.menuBar().actions() if a.text() == "&Edit")
