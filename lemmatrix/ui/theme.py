@@ -11,7 +11,7 @@ from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QApplication
 
 LIGHT, DARK = "light", "dark"
-DEFAULT_ACCENT = "#3a78d4"
+DEFAULT_ACCENT = "#385867"          # slate blue-green
 
 _state = {"mode": LIGHT, "accent": QColor(DEFAULT_ACCENT)}
 
@@ -87,8 +87,11 @@ def text_on(c: QColor) -> QColor:
 
 
 def wash(t: float) -> QColor:
-    """The accent faded toward the background (white, or dark grey in the dark theme)."""
-    return mix(accent(), QColor(_FIXED[mode()]["base"]), t)
+    """The accent faded toward the background (white, or dark grey in the dark theme).
+
+    On the dark theme the lightened accent is used, so even a dark accent shows.
+    """
+    return mix(_bright_accent(), QColor(_FIXED[mode()]["base"]), t)
 
 
 def ink(t: float) -> QColor:
