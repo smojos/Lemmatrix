@@ -61,7 +61,13 @@ class Document(QObject):
         self.db = db
         self.undo = QUndoStack(self)
         self._settings_dirty = False
-        self.undo.cleanChanged.connect(lambda clean: self.dirtyChanged.emit(self.dirty))
+        self.undo.cleanChanged.connect(self._clean_changed)
+
+    def _clean_changed(self, clean: bool):
+        try:
+            self.dirtyChanged.emit(self.dirty)
+        except RuntimeError:          # the window is closing and Qt has already deleted us
+            pass
 
     @property
     def dirty(self) -> bool:

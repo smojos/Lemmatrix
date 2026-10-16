@@ -256,3 +256,24 @@ def test_lemma_fields_edit_in_place(win):
     assert "H/H" in win.doc.db.settings.entry_field("ToneClass").all_values()
     win._lemma_edited(goat, "Gloss:en", "he/she")              # refused: / isn't allowed
     assert win.doc.db.gloss(goat) == "goat"
+
+
+def test_closing_with_unsaved_changes_and_discarding(app, tmp_path, monkeypatch):
+    import sys
+    from PySide6.QtWidgets import QMessageBox
+    from lemmatrix.ui import main_window
+    shutil.copy2(SAMPLES / "Sample.xml", tmp_path / "Sample.xml")
+    w = main_window.MainWindow()
+    w.load_database(storage.load(tmp_path / "Sample.xml"))
+    goat = w.doc.db.entry_by_ref("D001")
+    w.doc.edit_entry(goat, lambda e: e.set("Comment", "changed"), "Edit")
+    assert w.doc.dirty
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Discard)
+    errors = []
+    monkeypatch.setattr(sys, "excepthook", lambda *a: errors.append(a))
+    assert w.close()
+    w.deleteLater()
+    app.processEvents()
+    from PySide6.QtCore import QCoreApplication, QEvent
+    QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
+    assert errors == []

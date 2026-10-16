@@ -79,7 +79,7 @@ class MainWindow(QMainWindow):
         self._build()
         self._build_menus()
         self.doc.changed.connect(self._doc_changed)
-        self.doc.dirtyChanged.connect(lambda d: self._update_title())
+        self.doc.dirtyChanged.connect(self._dirty_changed)
         self.autosave = QTimer(self)
         self.autosave.timeout.connect(self._autosave)
         self._apply_autosave()
@@ -532,6 +532,9 @@ class MainWindow(QMainWindow):
 
     def session_date(self) -> str:
         return "" if self.sess_nodate.isChecked() else self.sess_date.date().toString("yyyy-MM-dd")
+
+    def _dirty_changed(self, dirty: bool):
+        self._update_title()
 
     def _update_title(self):
         db = self.doc.db
@@ -1211,6 +1214,9 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         if self._confirm_discard():
             self.player.stop()
+            # Nothing should react to the undo history being thrown away as the window closes.
+            self.doc.undo.blockSignals(True)
+            self.doc.blockSignals(True)
             event.accept()
         else:
             event.ignore()
