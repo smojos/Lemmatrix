@@ -228,12 +228,24 @@ class TagStructure:
 # --------------------------------------------------------------------------
 
 @dataclass
+class ListItem:
+    """One value in a closed field's list; lists can be hierarchical."""
+    name: str
+    children: list["ListItem"] = field(default_factory=list)
+
+    def walk(self):
+        yield self
+        for c in self.children:
+            yield from c.walk()
+
+
+@dataclass
 class FieldDef:
     name: str                    # XML element name, no spaces
     label: str = ""
     role: str = ""               # lemma, gloss, word-class, phonetic, phonemic, pitch, translation
-    is_list: bool = False        # values picked from a growing list
-    values: list[str] = field(default_factory=list)
+    closed: bool = False         # values come from a list kept in settings
+    items: list[ListItem] = field(default_factory=list)
 
     @property
     def title(self) -> str:
@@ -242,6 +254,19 @@ class FieldDef:
     @property
     def multilingual(self) -> bool:
         return self.role in ("gloss", "translation")
+
+    @property
+    def builtin(self) -> bool:
+        """Built-in fields can be relabelled and moved but not deleted."""
+        return self.role in ("lemma", "gloss", "word-class", "phonetic", "phonemic", "pitch",
+                             "translation")
+
+    def all_values(self) -> list[str]:
+        return [i.name for top in self.items for i in top.walk()]
+
+    def add_value(self, value: str):
+        if value and value not in self.all_values():
+            self.items.append(ListItem(value))
 
 
 @dataclass
@@ -262,14 +287,14 @@ class Settings:
     ref_digits: int = 3
     ref_categories: list[RefCategory] = field(default_factory=list)
     sound_folder: str = "Soundfiles"
-    filename_pattern: str = "{language}-{variety}-{speaker}_{reference}_{gloss}_{tags}"
+    filename_pattern: str = "{language}-{variety}_{reference}_{gloss}_{tags}"
     tag_separator: str = "-"
     auto_update_names: bool = True
     pitch_low: int = 1
     pitch_high: int = 5
     pitch_style: str = "contours"
     play_cell_on_click: bool = False
-    views: list[dict] = field(default_factory=list)   # saved matrix layouts
+    matrices: list = field(default_factory=list)      # saved MatrixConfig objects
     extra: list = field(default_factory=list)   # unknown settings elements, kept as-is
 
     def entry_field(self, role_or_name: str) -> FieldDef | None:
@@ -283,6 +308,12 @@ class Settings:
             if f.role == role_or_name or f.name == role_or_name:
                 return f
         return None
+
+    def list_items(self, f: FieldDef) -> list[ListItem]:
+        """The list behind a closed field (the word classes for Word Class)."""
+        if f.role == "word-class":
+            return [ListItem(n) for n in self.tags.word_class_names()]
+        return f.items
 
 
 # --------------------------------------------------------------------------

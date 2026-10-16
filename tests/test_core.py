@@ -34,14 +34,19 @@ def db():
 
 def test_filenames_drop_empty_separators(db):
     e = db.entries[0]
-    assert db.expected_filename(e, e.tokens[0]) == "LXX-VXX-SP1_D009_goat.wav"
-    assert db.expected_filename(e, e.tokens[1]) == "LXX-VXX-SP1_D009_goat_PL.wav"
-    assert db.expected_filename(e, e.tokens[2]) == "LXX-VXX-SP1_D009_goat_PL-GEN-xH.wav"
+    assert db.expected_filename(e, e.tokens[0]) == "LXX-VXX_D009_goat.wav"
+    assert db.expected_filename(e, e.tokens[1]) == "LXX-VXX_D009_goat_PL.wav"
+    assert db.expected_filename(e, e.tokens[2]) == "LXX-VXX_D009_goat_PL-GEN-xH.wav"
     db.metadata.variety_code = ""
-    e.tokens[0].speaker = ""
     assert db.expected_filename(e, e.tokens[0]) == "LXX_D009_goat.wav"
-    e.tokens[0].speaker = "SP1"
-    assert db.expected_filename(e, e.tokens[0]) == "LXX-SP1_D009_goat.wav"
+
+
+def test_speaker_is_optional_in_the_pattern(db):
+    e = db.entries[0]
+    db.settings.filename_pattern = "{language}-{variety}-{speaker}_{reference}_{gloss}_{tags}"
+    assert db.expected_filename(e, e.tokens[0]) == "LXX-VXX-SP1_D009_goat.wav"
+    e.tokens[0].speaker = ""
+    assert db.expected_filename(e, e.tokens[0]) == "LXX-VXX_D009_goat.wav"
 
 
 def test_tag_order_is_independent_of_input_order(db):
@@ -153,11 +158,53 @@ def test_unknown_settings_survive(tmp_path, db):
 
 # ---- pitch ----------------------------------------------------------------
 
-def test_pitch_parsing():
-    assert pitch.parse("13 3 31, 5") == [[1, 3], [3], [3, 1], pitch.PAUSE, [5]]
+def test_pitch_notation():
+    syl = pitch.parse("4:42 42:1, 14")
+    assert [x.points for x in syl if x != pitch.PAUSE] == [[4, 4, 2], [4, 2, 1], [1, 4]]
+    assert [x.steps for x in syl if x != pitch.PAUSE] == [[2, 1], [1, 2], [1]]
+    assert syl[2] == pitch.PAUSE
+    assert pitch.parse("1::1")[0].steps == [3]
+    assert pitch.parse("5")[0].points == [5, 5]                # a lone digit is a short level
+    assert pitch.normalise("5 2, 13 1:1") == "55 22, 13 1:1"
     assert pitch.syllable_count("5 2, 2 3") == 4
-    assert pitch.out_of_range("1 6 0", 1, 5) == [0, 6]
-    assert pitch.from_dekereke("Aa5") == "12 21 5"
+    assert pitch.out_of_range("11 66 00", 1, 5) == [0, 6]
+    assert pitch.problems(":13", 1, 5)                          # stray colon is flagged
+    assert not pitch.problems("1:4", 1, 5)
+
+
+def test_old_pitch_is_doubled_on_load(tmp_path, db):
+    path = tmp_path / "p.xml"
+    storage.save(db, path)
+    text = path.read_text(encoding="utf-8").replace("<Pitch>21</Pitch>", "<Pitch>2 1</Pitch>")
+    path.write_text(text, encoding="utf-8")
+    assert storage.load(path).entries[0].tokens[0].get("Pitch") == "22 11"
+
+
+# ---- filters --------------------------------------------------------------
+
+def test_text_filters():
+    from lemmatrix.filters import TextFilter, ANYWHERE, WHOLE, START, END, REGEX
+    assert TextFilter("deet").matches("dɪɪʈʰ") is False         # ʈ is a different letter
+    assert TextFilter("deet").matches("dɪɪtʰ")                  # ʰ ignored
+    assert TextFilter("deet", WHOLE).matches("dɪɪtʰ")
+    assert not TextFilter("deet", WHOLE, match_diacritics=True).matches("dɪɪtʰ")
+    assert TextFilter("a").matches("á")
+    assert TextFilter("Goat", WHOLE).matches("goat")
+    assert not TextFilter("Goat", WHOLE, match_case=True).matches("goat")
+    assert TextFilter("go", START).matches("goat") and TextFilter("at", END).matches("goat")
+    assert TextFilter(r"^d.*l$", REGEX).matches("dɪɪr")
+    assert not TextFilter("[", REGEX).matches("x")              # bad pattern matches nothing
+
+
+def test_choice_filters():
+    from lemmatrix.filters import ChoiceFilter, Blanks, NonBlanks, matches, ANY, NONE, EXACTLY
+    assert matches(ChoiceFilter({"NOUN"}), "NOUN") and not matches(ChoiceFilter({"NOUN"}), "VERB")
+    assert matches(ChoiceFilter({"NOUN"}, NONE), "VERB")
+    tags = ["Plural", "Genitive", "in isolation"]
+    assert matches(ChoiceFilter({"Plural"}), tags)
+    assert not matches(ChoiceFilter({"Plural"}, EXACTLY), tags, {"in isolation"})
+    assert matches(ChoiceFilter({"Plural", "Genitive"}, EXACTLY), tags, {"in isolation"})
+    assert matches(Blanks(), "") and matches(NonBlanks(), "x") and matches(Blanks(), [])
 
 
 # ---- matrix ---------------------------------------------------------------
@@ -173,50 +220,71 @@ def _noun_db():
     return d
 
 
-def test_entry_tag_exactly():
+def S(*tags, match=matrix.EXACT):
+    return matrix.Spec(frozenset(tags), match)
+
+
+def test_exact_ignores_defaults_loose_takes_extras():
     d = _noun_db()
-    sg_gen = frozenset({"Singular", "Genitive"})
-    lay = matrix.entry_tag_layout(d, d.entries, [sg_gen])
-    assert [r.label for r in lay.rows] == ["SG + GEN"]
-    assert len(lay.tokens(0, 0)) == 1                     # not the + xH one
+    cfg = matrix.MatrixConfig(x=[matrix.Spec.citation(), S("Singular", match=matrix.LOOSE),
+                                 S("Plural")])
+    lay = matrix.lemma_tag_layout(d, d.entries, cfg)
+    assert [c.label for c in lay.cols] == ["Citation", "SG …", "PL"]
+    assert len(lay.tokens(0, 0)) == 1                       # citation
+    assert len(lay.tokens(0, 1)) == 3                       # SG, SG+GEN, SG+GEN+xH side by side
+    assert [t.tags[:2] for _, t in lay.tokens(0, 1)][0] == ["Singular", "in isolation"]
+    assert len(lay.tokens(0, 2)) == 1                       # exact PL (has in isolation too)
 
 
-def test_entry_tag_includes_adds_sub_rows():
+def test_extra_chips_for_side_by_side_tokens():
     d = _noun_db()
-    sg_gen = frozenset({"Singular", "Genitive"})
-    lay = matrix.entry_tag_layout(d, d.entries, [sg_gen], mode=matrix.INCLUDES)
-    assert [r.label for r in lay.rows] == ["SG + GEN", "+ xH"]
-    assert len(lay.tokens(1, 1)) == 1
+    spec = S("Singular", match=matrix.LOOSE)
+    lay = matrix.lemma_tag_layout(d, d.entries, matrix.MatrixConfig(x=[spec]))
+    defaults = matrix.default_names(d)
+    labels = [matrix.extra_chips(d, t, spec, "NOUN", defaults) for _, t in lay.tokens(0, 0)]
+    assert labels == [[], ["+GEN"], ["+GEN", "+xH"]]
 
 
-def test_auto_headers_ignore_defaults():
+def test_automatic_columns():
     d = _noun_db()
-    lay = matrix.entry_tag_layout(d, d.entries, None)
-    # As in the mockup: SG, SG + GEN, PL, PL + GEN.
-    assert [r.label for r in lay.rows] == ["Citation", "SG", "SG + GEN", "SG + GEN + xH",
+    lay = matrix.lemma_tag_layout(d, d.entries, None)
+    assert [c.label for c in lay.cols] == ["Citation", "SG", "SG + GEN", "SG + GEN + xH",
                                            "PL", "PL + GEN"]
 
 
-def test_includes_with_automatic_headers():
-    d = _noun_db()
-    lay = matrix.entry_tag_layout(d, d.entries, None, mode=matrix.INCLUDES)
-    assert [r.label for r in lay.rows] == ["Citation", "SG", "+ GEN", "+ GEN + xH", "PL", "+ GEN"]
-
-
-def test_tag_tag_paradigm():
+def test_tag_tag_paradigm_and_contradictions():
     d = new_database()
     v = d.new_entry("V001", "cəm", "eat", "VERB")
-    for s in ("1SG.A", "3SG.A"):
+    for s_ in ("1SG.A", "3SG.A"):
         for o in ("1SG.O", "3SG.O"):
-            v.tokens.append(d.new_token(v, [s, o]))
-    subj = next(g for p, g in d.settings.tags.leaf_groups_for("VERB") if g.name == "Subject")
-    obj = next(g for p, g in d.settings.tags.leaf_groups_for("VERB") if g.name == "Object")
-    lay = matrix.tag_tag_layout(d, v, subj, obj)
-    r = [x.label for x in lay.rows].index("3SG.A")
-    c = [x.label for x in lay.cols].index("1SG.O")
-    (entry, tok), = lay.tokens(r, c)
-    assert set(tok.tags) >= {"3SG.A", "1SG.O"}
-    assert "—" in [x.label for x in lay.cols]            # the citation token has no object
+            v.tokens.append(d.new_token(v, [s_, o]))
+    cfg = matrix.MatrixConfig(kind=matrix.TAG_TAG, word_class="VERB",
+                              y=[S("1SG.A"), S("3SG.A")], x=[S("1SG.O"), S("3SG.O"), S("1SG.A")])
+    lay = matrix.tag_tag_layout(d, v, cfg)
+    (entry, tok), = lay.tokens(1, 0)
+    assert {"3SG.A", "1SG.O"} <= set(tok.tags)
+    assert (1, 2) in lay.greyed and (0, 2) not in lay.greyed  # 3SG.A + 1SG.A contradict
+    other = matrix.MatrixConfig(kind=matrix.TAG_TAG, word_class="NOUN", y=[S("Plural")], x=[S("Genitive")])
+    assert "for NOUN" in matrix.tag_tag_layout(d, v, other).message
+    assert matrix.tag_tag_layout(d, v, None).message == "Please configure a matrix."
+
+
+def test_matrix_class():
+    d = _noun_db()
+    d.entries.append(d.new_entry("X001", "zz", "thing", ""))
+    assert len(matrix.in_class(d, d.entries, "NOUN")) == 2
+    assert len(matrix.in_class(d, d.entries, matrix.NO_CLASS)) == 1
+
+
+def test_saved_matrices_round_trip(tmp_path, db):
+    cfg = matrix.MatrixConfig(name="Noun cases", kind=matrix.LEMMA_TAG, word_class="NOUN",
+                              x=[matrix.Spec.citation(), S("Singular", match=matrix.LOOSE)],
+                              cell=["Phonetic"])
+    db.settings.matrices.append(cfg)
+    path = tmp_path / "m.xml"
+    storage.save(db, path)
+    back = storage.load(path).settings.matrices
+    assert back == [cfg]
 
 
 def test_reading_order_is_column_by_column():
@@ -225,11 +293,14 @@ def test_reading_order_is_column_by_column():
     assert lay.reading_order() == [(0, 0), (1, 0), (0, 1), (1, 1)]
 
 
-def test_token_filter():
-    f = matrix.TokenFilter(tags={"Number": {"Plural"}})
-    assert f.accepts(Token(tags=["Plural", "Genitive"]))
-    assert not f.accepts(Token(tags=["Singular"]))
-    assert matrix.TokenFilter(citation_only=True).accepts(Token())
+def test_closed_lists_round_trip(tmp_path, db):
+    from lemmatrix.model import ListItem
+    f = db.settings.entry_field("ToneClass")
+    f.items = [ListItem("Low", [ListItem("L/L"), ListItem("L/H")]), ListItem("H/L")]
+    path = tmp_path / "c.xml"
+    storage.save(db, path)
+    g = storage.load(path).settings.entry_field("ToneClass")
+    assert g.closed and g.all_values() == ["Low", "L/L", "L/H", "H/L"]
 
 
 # ---- audio ----------------------------------------------------------------

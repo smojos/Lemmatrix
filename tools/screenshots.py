@@ -1,10 +1,11 @@
-"""Render the main windows offscreen to PNG files (for checking the layout).
+"""Render the main windows and dialogues offscreen to PNG files (for checking layouts).
 
     QT_QPA_PLATFORM=offscreen python tools/screenshots.py OUTPUT_FOLDER
 """
 
 from __future__ import annotations
 
+import os
 import shutil
 import sys
 import tempfile
@@ -12,17 +13,20 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(HERE))
+os.environ.setdefault("LEMMATRIX_SETTINGS", "Lemmatrix-screenshots")
 
 
 def main(out: Path):
-    from PySide6.QtCore import QTimer
     from PySide6.QtWidgets import QApplication
 
+    from lemmatrix import filters as fl
+    from lemmatrix import matrix as mx
     from lemmatrix import storage
-    from lemmatrix.ui.main_window import MainWindow
-    from lemmatrix.ui.matrix_view import ALL_DATA, ENTRY_TAG, TAG_TAG
+    from lemmatrix.ui.fields_dialog import FieldsDialog
+    from lemmatrix.ui.filter_dialogs import ChooseDialog, ConfigureColumnsDialog, FilterForDialog
+    from lemmatrix.ui.main_window import ALL_DATA, LEMMA_TAG, TAG_TAG, MainWindow
+    from lemmatrix.ui.matrix_dialogs import ConfigureMatrixDialog, SpecDialog
     from lemmatrix.ui.token_dialog import Slot, TokenDialog
-    from lemmatrix.ui.dialogs import TagStructureDialog, EntryDialog, DisplaySetupDialog
 
     out.mkdir(parents=True, exist_ok=True)
     work = Path(tempfile.mkdtemp())
@@ -32,55 +36,82 @@ def main(out: Path):
     app = QApplication([])
     app.setStyle("Fusion")
     win = MainWindow()
-    win.load_database(storage.load(work / "Sample.xml"))
-    win.resize(1500, 880)
+    win.resize(1500, 900)
     win.show()
-    app.processEvents()
 
     def shot(widget, name):
         app.processEvents()
         widget.grab().save(str(out / name))
         print("saved", name)
 
-    win.tabs.setCurrentIndex(ENTRY_TAG)
-    shot(win, "1-entry-tag.png")
-    win.matching.setCurrentIndex(1)
-    shot(win, "2-entry-tag-includes.png")
-    win.matching.setCurrentIndex(0)
-    win.switch_axes()
-    shot(win, "3-entry-tag-switched.png")
-    win.switch_axes()
-    verb = win.doc.db.entry_by_ref("V001")
-    win.lemmas.select_entry(verb)
+    win.load_database(storage.load(work / "Sample.xml"))
+    shot(win, "01-all-data.png")
+    win.lemmas.select_row(win.doc.db.entry_by_ref("D001"))
+    win.tabs.setCurrentIndex(LEMMA_TAG)
+    shot(win, "02-lemma-tag-automatic.png")
+    cfg = win.config_for(LEMMA_TAG)
+    cfg.x = [mx.Spec.citation(), mx.Spec(frozenset({"Singular"}), mx.LOOSE),
+             mx.Spec(frozenset({"Plural"}), mx.EXACT)]
+    win.refresh()
+    shot(win, "03-lemma-tag-loose.png")
+    win.switch_axes(LEMMA_TAG)
+    shot(win, "04-lemma-tag-switched.png")
+    win.switch_axes(LEMMA_TAG)
+    win.lemmas.select_row(win.doc.db.entry_by_ref("V001"))
     win.tabs.setCurrentIndex(TAG_TAG)
-    shot(win, "4-tag-tag.png")
-    win.tabs.setCurrentIndex(ALL_DATA)
-    shot(win, "5-all-data.png")
+    shot(win, "05-tag-tag-unconfigured.png")
+    tcfg = win.config_for(TAG_TAG)
+    tcfg.y = [mx.Spec(frozenset({"1SG.A"})), mx.Spec(frozenset({"3SG.A"}), mx.LOOSE)]
+    tcfg.x = [mx.Spec(frozenset({"1SG.O"})), mx.Spec(frozenset({"3SG.O"})), mx.Spec(frozenset({"3SG.A"}))]
+    win.refresh()
+    shot(win, "06-tag-tag.png")
+
+    dlg = ConfigureMatrixDialog(win, win.doc.db, tcfg)
+    dlg.show()
+    shot(dlg, "07-configure-matrix.png")
+    dlg.close()
+    dlg = SpecDialog(win, win.doc.db, "NOUN", mx.Spec(frozenset({"Singular"}), mx.LOOSE))
+    dlg.show()
+    shot(dlg, "08-matrix-column.png")
+    dlg.close()
 
     goat = win.doc.db.entry_by_ref("D001")
     idx = next(i for i, t in enumerate(goat.tokens) if "f2" in t.tags)
-    dlg = TokenDialog(win, [Slot(goat, idx)], 0)
-    dlg.show()
-    shot(dlg, "6-token-dialog.png")
-    dlg.close()
-
-    v = win.doc.db.entry_by_ref("V001")
-    dlg = TokenDialog(win, [Slot(v, None, ("3SG.A", "1SG.O", "Past"), explicit=True, defaults=True)], 0)
-    dlg.show()
-    shot(dlg, "7-token-dialog-new-verb.png")
-    dlg.close()
-
-    d = TagStructureDialog(win, win.doc.db)
+    d = TokenDialog(win, [Slot(goat, idx)], 0)
     d.show()
-    shot(d, "8-tag-structure.png")
+    shot(d, "09-token-dialog.png")
     d.close()
-    d = EntryDialog(win, win.doc.db)
+
+    d = FieldsDialog(win, win.doc.db)
     d.show()
-    d.category.setCurrentIndex(d.category.findData("D"))
-    shot(d, "9-add-entry.png")
+    d.widgets["lemma"].setCurrentRow(3)
+    shot(d, "10-fields.png")
     d.close()
-    win.doc._settings_dirty = False
+
+    d = FilterForDialog(win, "Phonetic", fl.TextFilter("deet"))
+    d.show()
+    shot(d, "11-filter-for.png")
+    d.close()
+    tags_col = next(c for c in win.all_table.model_.all_columns if c.key == "tags")
+    d = ChooseDialog(win, "Tags", tags_col.tree(), {"Plural": 9, "Singular": 7},
+                     fl.ChoiceFilter({"Plural"}), allow_exactly=True)
+    d.show()
+    shot(d, "12-choose.png")
+    d.close()
+    cols = win._lemma_columns()
+    d = ConfigureColumnsDialog(win, [(c.key, c.title) for c in cols], win.lemmas.visible_keys())
+    d.show()
+    shot(d, "13-configure-columns.png")
+    d.close()
+
+    big = HERE / "samples" / "Test-300.xml"
+    if big.exists():
+        win.load_database(storage.load(big))
+        win.lemmas.select_row(win.doc.db.entries[0])
+        win.tabs.setCurrentIndex(LEMMA_TAG)
+        shot(win, "14-test-300-lemma-tag.png")
     win.doc.undo.setClean()
+    win.doc._settings_dirty = False
     win.close()
 
 

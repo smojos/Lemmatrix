@@ -1,49 +1,97 @@
-"""Pitch notation: digits 0-9, spaces between syllables, commas for pauses.
+"""Pitch notation.
 
-    "13 3 31, 5"  ->  rise, level, fall, pause, level
-    "22"          ->  one long level syllable
+    Digits are pitch points; spaces separate syllables; a comma is a pause.
+    Between two adjacent points is one short step, and each colon between
+    them adds a step:
 
-Stored as typed; drawing happens in the UI.
+        11     short level          1:1    long level        1::1   extra long
+        14     quick rise           1:4    long steady rise
+        4:42   long high level, then a quick fall
+        42:1   quick fall, then a long fall
+
+    A syllable needs two points; a lone digit is doubled (5 -> 55).
+    Stored as typed (after that doubling); drawing happens in the UI.
 """
 
 from __future__ import annotations
 
+import re
+from dataclasses import dataclass
+
 PAUSE = ","
 
-# Dekereke's one-character-per-syllable contour letters (used when converting).
-DEKEREKE_LETTERS = dict(item.split("=")[::-1] for item in (
-    "12=A 13=I 14=P 21=a 23=B 24=J 25=Q 31=i 32=b 34=C 35=K 36=R 41=p 42=j "
-    "43=c 45=D 46=L 52=q 53=k 54=d 56=E 63=r 64=l 65=e").split())
+
+@dataclass
+class Syllable:
+    points: list[int]          # pitch levels
+    steps: list[int]           # length of each step between points: 1 short, 2 long, ...
+    bad_colons: bool = False   # colons at the start or end, which mean nothing
+
+    @property
+    def length(self) -> int:
+        return sum(self.steps)
+
+
+_TOKEN = re.compile(r",|[^\s,]+")
+
+
+def _syllable(text: str) -> Syllable | None:
+    points, steps = [], []
+    colons = 0
+    bad = False
+    for ch in text:
+        if ch.isdigit():
+            if points:
+                steps.append(1 + colons)
+            elif colons:
+                bad = True
+            points.append(int(ch))
+            colons = 0
+        elif ch == ":":
+            colons += 1
+    if colons:
+        bad = True
+    if not points:
+        return None
+    if len(points) == 1:                 # a lone digit counts as a short level
+        points = points * 2
+        steps = [1]
+    return Syllable(points, steps, bad)
 
 
 def parse(text: str) -> list:
-    """Return a list of syllables (lists of ints) and PAUSE markers.
-
-    Characters other than digits, spaces and commas are ignored.
-    """
+    """A list of Syllable objects and PAUSE markers. Other characters are ignored."""
     items: list = []
-    current: list[int] = []
-
-    def flush():
-        nonlocal current
-        if current:
-            items.append(current)
-            current = []
-
-    for ch in text or "":
-        if ch.isdigit():
-            current.append(int(ch))
-        elif ch == ",":
-            flush()
+    for tok in _TOKEN.findall(text or ""):
+        if tok == ",":
             items.append(PAUSE)
-        elif ch.isspace():
-            flush()
-    flush()
+            continue
+        syl = _syllable(tok)
+        if syl:
+            items.append(syl)
     return items
 
 
+def normalise(text: str) -> str:
+    """Double lone digits (5 -> 55) and tidy spacing; everything else as typed."""
+    if not text:
+        return ""
+    out = []
+    for tok in _TOKEN.findall(text):
+        if tok == ",":
+            if out:
+                out[-1] += ","
+            continue
+        digits = [c for c in tok if c.isdigit()]
+        if len(digits) == 1 and ":" not in tok:
+            tok = digits[0] * 2
+        out.append(tok)
+    return " ".join(out)
+
+
 def invalid_chars(text: str) -> str:
-    return "".join(sorted({c for c in text or "" if not (c.isdigit() or c.isspace() or c == ",")}))
+    return "".join(sorted({c for c in text or ""
+                           if not (c.isdigit() or c.isspace() or c in ",:")}))
 
 
 def syllable_count(text: str) -> int:
@@ -51,17 +99,18 @@ def syllable_count(text: str) -> int:
 
 
 def out_of_range(text: str, low: int, high: int) -> list[int]:
-    return sorted({d for s in parse(text) if s != PAUSE for d in s if d < low or d > high})
+    return sorted({d for s in parse(text) if s != PAUSE for d in s.points if d < low or d > high})
 
 
-def from_dekereke(text: str) -> str:
-    """Convert Dekereke's pitch letters (one character per syllable) to digits."""
-    out = []
-    for ch in text or "":
-        if ch in DEKEREKE_LETTERS:
-            out.append(DEKEREKE_LETTERS[ch])
-        elif ch.isdigit():
-            out.append(ch)
-        elif ch == ",":
-            out.append(",")
-    return " ".join(out).replace(" ,", ",")
+def problems(text: str, low: int, high: int) -> list[str]:
+    notes = []
+    bad = out_of_range(text, low, high)
+    if bad:
+        notes.append(f"Outside the display range {low}-{high}: {' '.join(map(str, bad))}.")
+    if any(s != PAUSE and s.bad_colons for s in parse(text)):
+        notes.append("A colon at the start or end of a syllable means nothing; "
+                     "colons go between two digits (e.g. 4:42).")
+    junk = invalid_chars(text)
+    if junk:
+        notes.append(f"Ignored: {junk}")
+    return notes

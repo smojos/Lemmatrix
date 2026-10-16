@@ -14,7 +14,11 @@ from PySide6.QtCore import QFile
 
 from .. import audio, pitch as pitchmod, storage
 from ..model import Entry, Token
-from .widgets import FlowLayout, PitchCanvas, ipa_font
+from PySide6.QtCore import QSize
+
+from .icons import icon
+from .tagpanel import TagPanel
+from .widgets import PitchCanvas, ipa_font
 
 
 @dataclass
@@ -25,84 +29,6 @@ class Slot:
     tags: tuple = ()               # tags for a new token
     explicit: bool = False         # created on purpose (double-click), so OK keeps it even if empty
     defaults: bool | None = None   # pre-select group defaults (None: only if tags were given)
-
-
-class TagPanel(QWidget):
-    """Tag toggle buttons grouped by group; one tag per group."""
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.buttons: dict[str, QPushButton] = {}
-        self.groups: list[set[str]] = []
-        self.on_change = None
-        self.box = QVBoxLayout(self)
-        self.box.setContentsMargins(6, 6, 6, 6)
-        self.box.setSpacing(4)
-
-    def build(self, db, word_class, selected):
-        while self.box.count():
-            item = self.box.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        self.buttons.clear()
-        self.groups.clear()
-        last_parent = None
-        for path, g in db.settings.tags.leaf_groups_for(word_class):
-            parents = path[1:-1]
-            if parents and parents != last_parent:
-                head = QLabel(" → ".join(parents))
-                head.setStyleSheet("font-weight: 600; color: #333; margin-top: 4px;")
-                self.box.addWidget(head)
-            last_parent = parents
-            title = QLabel(g.name.lower() if not parents else "   " + g.name.lower())
-            title.setStyleSheet("font-style: italic; color: #444;")
-            title.setAlignment(Qt.AlignRight)
-            line = QFrame()
-            line.setFrameShape(QFrame.HLine)
-            line.setStyleSheet("color: #888;")
-            self.box.addWidget(line)
-            self.box.addWidget(title)
-            holder = QWidget()
-            flow = FlowLayout(holder, spacing=6)
-            names = set()
-            for t in g.tags:
-                b = QPushButton(t.display())
-                b.setCheckable(True)
-                b.setChecked(t.name in selected)
-                tip = t.name + (" (default, not in file names)" if t.default else f"  [{t.code}]")
-                if t.description:
-                    tip += "\n" + t.description
-                b.setToolTip(tip)
-                b.setMinimumHeight(30)
-                f = b.font()
-                f.setPointSize(f.pointSize() + 2)
-                f.setBold(True)
-                b.setFont(f)
-                b.setStyleSheet("QPushButton { background: #d6d6d6; border: none; padding: 3px 10px; }"
-                                "QPushButton:checked { background: #5b8fd6; color: white; }")
-                b.toggled.connect(lambda on, name=t.name: self._toggled(name, on))
-                flow.addWidget(b)
-                self.buttons[t.name] = b
-                names.add(t.name)
-            self.groups.append(names)
-            self.box.addWidget(holder)
-        self.box.addStretch(1)
-
-    def _toggled(self, name, on):
-        if on:
-            for names in self.groups:
-                if name in names:
-                    for other in names - {name}:
-                        b = self.buttons[other]
-                        if b.isChecked():
-                            b.blockSignals(True)
-                            b.setChecked(False)
-                            b.blockSignals(False)
-        if self.on_change:
-            self.on_change()
-
-    def selected(self) -> list[str]:
-        return [n for n, b in self.buttons.items() if b.isChecked()]
 
 
 class TokenDialog(QDialog):
@@ -142,7 +68,7 @@ class TokenDialog(QDialog):
         tf.setBold(True)
         title.setFont(tf)
         left.addWidget(title, 0, 1)
-        self.canvas = PitchCanvas(low=s.pitch_low, high=s.pitch_high)
+        self.canvas = PitchCanvas(low=s.pitch_low, high=s.pitch_high, font=ipa_font(self.main.prefs.ipa_size + 3))
         self.canvas.setMinimumHeight(70)
         left.addWidget(QLabel("Pitch\nRendering"), 1, 0)
         left.addWidget(self.canvas, 1, 1)
@@ -215,23 +141,21 @@ class TokenDialog(QDialog):
         rl.addWidget(self.date, 3, 1)
 
         buttons = QHBoxLayout()
-        self.record_btn = QPushButton("● Record")
-        self.record_btn.setToolTip("Record (Ctrl+R); press again to stop")
-        self.record_btn.setStyleSheet("QPushButton { background: #e53935; color: white; font-weight: bold;"
-                                      " padding: 8px 14px; border-radius: 4px; }")
-        self.play_btn = QPushButton("▶ Play")
-        self.play_btn.setToolTip("Play (Ctrl+Space)")
-        self.play_btn.setStyleSheet("QPushButton { background: #111; color: white; font-weight: bold;"
-                                    " padding: 8px 14px; border-radius: 4px; }"
-                                    " QPushButton:disabled { background: #999; }")
-        self.delete_btn = QPushButton("✕ Delete recording")
-        self.delete_btn.setStyleSheet("QPushButton { background: #c62828; color: white; padding: 8px 10px;"
-                                      " border-radius: 4px; } QPushButton:disabled { background: #e8a5a5; }")
-        self.update_btn = QPushButton("⟳ Update file name")
-        self.update_btn.setStyleSheet("QPushButton { background: #4a7fd0; color: white; padding: 8px 10px;"
-                                      " border-radius: 4px; } QPushButton:disabled { background: #a9c1e8; }")
-        for b in (self.record_btn, self.play_btn, self.delete_btn, self.update_btn):
+        def icon_button(name, tip):
+            b = QPushButton()
+            b.setIcon(icon(name, 40))
+            b.setIconSize(QSize(40, 40))
+            b.setFixedSize(48, 48)
+            b.setFlat(True)
+            b.setToolTip(tip)
+            b.setStyleSheet("QPushButton { border: none; }")
             buttons.addWidget(b)
+            return b
+        self.record_btn = icon_button("record", "Record (Ctrl+R)")
+        self.play_btn = icon_button("play", "Play (Ctrl+Space)")
+        self.delete_btn = icon_button("delete-recording", "Delete recording")
+        self.update_btn = icon_button("update", "Update file name")
+        buttons.addStretch(1)
         self.record_btn.clicked.connect(self._record)
         self.play_btn.clicked.connect(self._play)
         self.delete_btn.clicked.connect(self._delete_recording)
@@ -319,7 +243,7 @@ class TokenDialog(QDialog):
         self.back_btn.setEnabled(self.pos > 0)
         self.next_btn.setEnabled(self.pos < len(self.slots) - 1)
         self._refresh_name()
-        if self.main.prefs.auto_play and t.file:
+        if getattr(self.main, "dialog_autoplay", False) and t.file:
             QTimer.singleShot(150, self._play)
 
     def _collect(self):
@@ -328,10 +252,13 @@ class TokenDialog(QDialog):
         t = self.token
         for name, ed in self.edits.items():
             f = s.token_field(name)
+            text = ed.text().strip()
+            if f.role == "pitch":
+                text = pitchmod.normalise(text)       # a lone digit becomes 55
             if f.multilingual:
-                t.set(name, ed.text().strip(), s.primary_gloss)
+                t.set(name, text, s.primary_gloss)
             else:
-                t.set(name, ed.text().strip())
+                t.set(name, text)
         wc = self.db.word_class(self.slot.entry)
         t.tags = s.tags.sort(wc, self.tags.selected() + self.unknown_tags)
         t.speaker = self.speaker.currentText()
@@ -346,12 +273,8 @@ class TokenDialog(QDialog):
 
     def _pitch_changed(self, text):
         self.canvas.set_pitch(text)
-        notes = []
-        bad = pitchmod.out_of_range(text, self.db.settings.pitch_low, self.db.settings.pitch_high)
-        if bad:
-            notes.append(f"Pitch outside the display range "
-                         f"{self.db.settings.pitch_low}-{self.db.settings.pitch_high}.")
-        self.pitch_note.setText(" ".join(notes))
+        s = self.db.settings
+        self.pitch_note.setText(" ".join(pitchmod.problems(text, s.pitch_low, s.pitch_high)))
 
     def _expected(self) -> str:
         return self.db.expected_filename(self.slot.entry, self.token)
@@ -474,20 +397,36 @@ class TokenDialog(QDialog):
             QMessageBox.warning(self, "Record", str(exc))
             return
         self.main.player.stop()
-        self.record_btn.setText("■ Stop")
+        self.record_btn.setIcon(icon("stop", 40))
+        self.record_btn.setToolTip("Stop recording (Ctrl+R)")
         self.timer.start()
 
     def _stop_recording(self):
         rec, self.recorder = self.recorder, None
         self.timer.stop()
         self.meter.setValue(0)
-        self.record_btn.setText("● Record")
+        self.record_btn.setIcon(icon("record", 40))
+        self.record_btn.setToolTip("Record (Ctrl+R)")
         samples = rec.stop()
         if len(samples) == 0:
             QMessageBox.warning(self, "Record", "Nothing was recorded. Check the microphone.")
             return
         self._collect()
         t = self.token
+        # Whoever records now is the token's speaker; the date is the session's.
+        speaker, date = self.main.session_speaker(), self.main.session_date()
+        if speaker:
+            t.speaker = speaker
+        if date:
+            t.collected = date
+        self.speaker.blockSignals(True)
+        if t.speaker and self.speaker.findText(t.speaker) < 0:
+            self.speaker.addItem(t.speaker)
+        self.speaker.setCurrentText(t.speaker)
+        self.speaker.blockSignals(False)
+        self.date.blockSignals(True)
+        self.date.setText(t.collected)
+        self.date.blockSignals(False)
         exp = self._expected()
         old = t.file
         try:

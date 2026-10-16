@@ -11,9 +11,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog,
                                QTableWidget, QTableWidgetItem, QTabWidget, QTreeWidget,
                                QTreeWidgetItem, QVBoxLayout, QWidget, QInputDialog)
 
-from .. import matrix as mx
 from ..model import (Database, Entry, Group, Participant, Tag, WordClass, forbidden_in, nfc)
-from .matrix_view import ENTRY_TAG, TAG_TAG, ViewState, group_path
 from .widgets import ipa_font
 
 
@@ -91,12 +89,15 @@ class EntryDialog(QDialog):
                 cb.setCurrentText(entry.get(f.name) if entry else "")
                 form.addRow(f.title, cb)
                 self.fields[(f.name, "")] = cb
-            elif f.is_list:
+            elif f.closed:
                 cb = QComboBox()
                 cb.setEditable(True)
+                cb.setToolTip("Pick from the list, or type a new value to add it to the list")
                 cb.addItem("")
-                values = set(f.values) | {e.get(f.name) for e in db.entries if e.get(f.name)}
-                cb.addItems(sorted(values))
+                listed = f.all_values()
+                cb.addItems(listed)
+                extra = sorted({e.get(f.name) for e in db.entries if e.get(f.name)} - set(listed))
+                cb.addItems(extra)
                 cb.setCurrentText(entry.get(f.name) if entry else "")
                 form.addRow(f.title, cb)
                 self.fields[(f.name, "")] = cb
@@ -143,8 +144,8 @@ class EntryDialog(QDialog):
             text = w.currentText() if isinstance(w, QComboBox) else w.text()
             f = s.entry_field(name)
             e.set(name, text.strip(), lang if f.multilingual else None, f.multilingual)
-            if f.is_list and text.strip() and text.strip() not in f.values:
-                f.values.append(text.strip())
+            if f.closed and f.role != "word-class" and text.strip():
+                f.add_value(text.strip())
         if self.entry is not None:
             e.file_gloss = nfc(self.file_gloss.text().strip())
 
@@ -292,9 +293,6 @@ class PreferencesDialog(QDialog):
         self.high.setValue(s.pitch_high)
         f.addRow("Lowest pitch digit", self.low)
         f.addRow("Highest pitch digit", self.high)
-        self.play_click = QCheckBox("Play cell when clicked")
-        self.play_click.setChecked(s.play_cell_on_click)
-        f.addRow(self.play_click)
         tabs.addTab(w, "Display (database)")
 
         w = QWidget()
@@ -311,8 +309,8 @@ class PreferencesDialog(QDialog):
         for r in (22050, 44100, 48000, 96000):
             self.rate.addItem(f"{r:,} Hz", r)
         self.rate.setCurrentIndex(max(0, self.rate.findData(prefs.sample_rate)))
-        self.autoplay = QCheckBox("Auto-play: play a token's recording when moving to it")
-        self.autoplay.setChecked(prefs.auto_play)
+        self.with_tokens = QCheckBox("Delete recordings with their tokens (to the Recycle Bin)")
+        self.with_tokens.setChecked(prefs.delete_recordings_with_tokens)
         self.confirm = QCheckBox("Confirm before deleting recordings")
         self.confirm.setChecked(prefs.confirm_delete)
         self.autosave = QSpinBox()
@@ -326,7 +324,7 @@ class PreferencesDialog(QDialog):
         f.addRow("Recording source", self.source)
         f.addRow("Bit depth", self.bits)
         f.addRow("Sample rate", self.rate)
-        f.addRow(self.autoplay)
+        f.addRow(self.with_tokens)
         f.addRow(self.confirm)
         f.addRow("Autosave every", self.autosave)
         f.addRow("IPA font size", self.ipa)
@@ -355,211 +353,15 @@ class PreferencesDialog(QDialog):
         s.sound_folder = self.folder.text().strip() or "Soundfiles"
         s.auto_update_names = self.auto_names.isChecked()
         s.pitch_low, s.pitch_high = self.low.value(), self.high.value()
-        s.play_cell_on_click = self.play_click.isChecked()
         p = self.prefs
         p.record_source = self.source.currentData()
         p.bit_depth = self.bits.currentData()
         p.sample_rate = self.rate.currentData()
-        p.auto_play = self.autoplay.isChecked()
+        p.delete_recordings_with_tokens = self.with_tokens.isChecked()
         p.confirm_delete = self.confirm.isChecked()
         p.autosave_minutes = self.autosave.value()
         p.ipa_size = self.ipa.value()
         return old != (s.filename_pattern, s.tag_separator)
-
-
-# ==========================================================================
-# Set up token display
-# ==========================================================================
-
-class DisplaySetupDialog(QDialog):
-    def __init__(self, parent, db: Database, state: ViewState, entries: list[Entry],
-                 current: Entry | None):
-        super().__init__(parent)
-        self.db, self.state = db, state
-        self.setWindowTitle("Set up token display")
-        self.resize(520, 560)
-        lay = QVBoxLayout(self)
-        form = QFormLayout()
-        self.matching = QComboBox()
-        self.matching.addItem("Exactly: only tokens with exactly these tags", mx.EXACTLY)
-        self.matching.addItem("Includes: also tokens with extra tags, as sub-rows", mx.INCLUDES)
-        self.matching.setCurrentIndex(0 if state.matching == mx.EXACTLY else 1)
-        form.addRow("Matching", self.matching)
-        self.fields = QListWidget()
-        names = [f.name for f in db.settings.token_fields]
-        for n in state.cell_fields + [n for n in names if n not in state.cell_fields]:
-            it = QListWidgetItem(n)
-            it.setFlags(it.flags() | Qt.ItemIsUserCheckable)
-            it.setCheckState(Qt.Checked if n in state.cell_fields else Qt.Unchecked)
-            self.fields.addItem(it)
-        self.fields.setDragDropMode(QAbstractItemView.InternalMove)
-        self.fields.setMaximumHeight(130)
-        form.addRow("Shown in cells\n(drag to reorder)", self.fields)
-        lay.addLayout(form)
-
-        self.mode = state.mode
-        if state.mode == ENTRY_TAG:
-            box = QGroupBox("Rows (tag combinations)")
-            bl = QVBoxLayout(box)
-            self.auto = QCheckBox("Automatic: every combination in the shown tokens")
-            self.auto.setChecked(state.headers is None)
-            bl.addWidget(self.auto)
-            self.headers = QListWidget()
-            self.headers.setDragDropMode(QAbstractItemView.InternalMove)
-            found = mx.auto_headers(db, entries)
-            chosen = state.headers or []
-            for h in chosen + [h for h in found if h not in chosen]:
-                it = QListWidgetItem(db.settings.tags.display(None, list(h)))
-                it.setData(Qt.UserRole, sorted(h))
-                it.setFlags(it.flags() | Qt.ItemIsUserCheckable)
-                it.setCheckState(Qt.Checked if (state.headers is None or h in chosen) else Qt.Unchecked)
-                self.headers.addItem(it)
-            bl.addWidget(self.headers)
-            self.auto.toggled.connect(lambda on: self.headers.setEnabled(not on))
-            self.headers.setEnabled(state.headers is None and False or state.headers is not None)
-            self.entry_label = QComboBox()
-            for k, v in (("lemma", "Lemma"), ("reference", "Reference"), ("gloss", "Gloss")):
-                self.entry_label.addItem(v, k)
-            self.entry_label.setCurrentIndex(max(0, self.entry_label.findData(state.entry_label)))
-            row = QHBoxLayout()
-            row.addWidget(QLabel("Entry headers show the"))
-            row.addWidget(self.entry_label)
-            row.addStretch(1)
-            bl.addLayout(row)
-            lay.addWidget(box)
-        elif state.mode == TAG_TAG:
-            box = QGroupBox("Paradigm")
-            bl = QFormLayout(box)
-            wc = db.word_class(current) if current else None
-            self.rows = QComboBox()
-            self.cols = QComboBox()
-            for path, g in db.settings.tags.leaf_groups_for(wc):
-                p = group_path(path)
-                self.rows.addItem(p)
-                self.cols.addItem(p)
-            self.rows.setCurrentText(state.row_group)
-            self.cols.setCurrentText(state.col_group)
-            if not state.col_group and self.cols.count() > 1:
-                self.cols.setCurrentIndex(1)
-            bl.addRow("Down the side", self.rows)
-            bl.addRow("Across the top", self.cols)
-            if current is None:
-                bl.addRow(QLabel("Select an entry in the lemma list to choose its groups."))
-            lay.addWidget(box)
-        lay.addStretch(1)
-        lay.addWidget(_buttons(self))
-
-    def accept(self):
-        if self.mode == TAG_TAG and self.rows.currentText() == self.cols.currentText() and self.rows.count():
-            QMessageBox.warning(self, "Set up token display",
-                                "The same group can't be on both axes. Pick two different groups.")
-            return
-        super().accept()
-
-    def apply(self):
-        st = self.state
-        st.matching = self.matching.currentData()
-        st.cell_fields = [self.fields.item(i).text() for i in range(self.fields.count())
-                          if self.fields.item(i).checkState() == Qt.Checked]
-        if self.mode == ENTRY_TAG:
-            st.entry_label = self.entry_label.currentData()
-            if self.auto.isChecked():
-                st.headers = None
-            else:
-                st.headers = [frozenset(self.headers.item(i).data(Qt.UserRole))
-                              for i in range(self.headers.count())
-                              if self.headers.item(i).checkState() == Qt.Checked]
-        elif self.mode == TAG_TAG:
-            st.row_group = self.rows.currentText()
-            st.col_group = self.cols.currentText()
-
-
-# ==========================================================================
-# Token filter
-# ==========================================================================
-
-class TokenFilterDialog(QDialog):
-    """Pick tags (any within a group, all across groups), speakers and dates."""
-
-    def __init__(self, parent, db: Database, tf: mx.TokenFilter):
-        super().__init__(parent)
-        self.db, self.tf = db, tf
-        self.setWindowTitle("Filter tokens")
-        self.resize(520, 600)
-        lay = QVBoxLayout(self)
-        lay.addWidget(QLabel("Tick tags to show only tokens that have them. Within a group, any "
-                             "ticked tag matches; across groups, all must match."))
-        self.tree = QTreeWidget()
-        self.tree.setHeaderHidden(True)
-        seen = set()
-        for path, g in db.settings.tags.all_leaf_groups():
-            key = group_path(path)
-            if key in seen:
-                continue
-            seen.add(key)
-            gi = QTreeWidgetItem([key])
-            gi.setData(0, Qt.UserRole, key)
-            for t in g.tags:
-                ti = QTreeWidgetItem([f"{t.display()}   {t.name if t.display() != t.name else ''}"])
-                ti.setData(0, Qt.UserRole, t.name)
-                ti.setFlags(ti.flags() | Qt.ItemIsUserCheckable)
-                ti.setCheckState(0, Qt.Checked if t.name in tf.tags.get(key, set()) else Qt.Unchecked)
-                gi.addChild(ti)
-            self.tree.addTopLevelItem(gi)
-            gi.setExpanded(bool(tf.tags.get(key)))
-        lay.addWidget(self.tree, 1)
-        self.citation = QCheckBox("Citation tokens only")
-        self.citation.setChecked(tf.citation_only)
-        lay.addWidget(self.citation)
-        row = QHBoxLayout()
-        self.speakers = QListWidget()
-        for code in sorted({t.speaker for e in db.entries for t in e.tokens if t.speaker}
-                           | set(db.participant_codes())):
-            it = QListWidgetItem(code)
-            it.setFlags(it.flags() | Qt.ItemIsUserCheckable)
-            it.setCheckState(Qt.Checked if code in tf.speakers else Qt.Unchecked)
-            self.speakers.addItem(it)
-        self.dates = QListWidget()
-        for d in sorted({t.collected for e in db.entries for t in e.tokens if t.collected}, reverse=True):
-            it = QListWidgetItem(d)
-            it.setFlags(it.flags() | Qt.ItemIsUserCheckable)
-            it.setCheckState(Qt.Checked if d in tf.dates else Qt.Unchecked)
-            self.dates.addItem(it)
-        for title, w in (("Speakers", self.speakers), ("Collection dates", self.dates)):
-            col = QVBoxLayout()
-            col.addWidget(QLabel(title))
-            col.addWidget(w)
-            row.addLayout(col)
-        lay.addLayout(row)
-        b = _buttons(self)
-        clear = b.addButton("Clear all", QDialogButtonBox.ResetRole)
-        clear.clicked.connect(self._clear)
-        lay.addWidget(b)
-
-    def _clear(self):
-        for i in range(self.tree.topLevelItemCount()):
-            g = self.tree.topLevelItem(i)
-            for j in range(g.childCount()):
-                g.child(j).setCheckState(0, Qt.Unchecked)
-        for lw in (self.speakers, self.dates):
-            for i in range(lw.count()):
-                lw.item(i).setCheckState(Qt.Unchecked)
-        self.citation.setChecked(False)
-
-    def apply(self):
-        tf = self.tf
-        tf.tags = {}
-        for i in range(self.tree.topLevelItemCount()):
-            g = self.tree.topLevelItem(i)
-            picked = {g.child(j).data(0, Qt.UserRole) for j in range(g.childCount())
-                      if g.child(j).checkState(0) == Qt.Checked}
-            if picked:
-                tf.tags[g.data(0, Qt.UserRole)] = picked
-        tf.citation_only = self.citation.isChecked()
-        tf.speakers = {self.speakers.item(i).text() for i in range(self.speakers.count())
-                       if self.speakers.item(i).checkState() == Qt.Checked}
-        tf.dates = {self.dates.item(i).text() for i in range(self.dates.count())
-                    if self.dates.item(i).checkState() == Qt.Checked}
 
 
 # ==========================================================================

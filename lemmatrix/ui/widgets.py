@@ -35,64 +35,71 @@ def ipa_font(size: int = 13) -> QFont:
 # Pitch drawing
 # --------------------------------------------------------------------------
 
-def draw_pitch(p: QPainter, rect: QRectF, text: str, low: int = 1, high: int = 5,
-               color: QColor = PITCH_BLUE, width: float = 2.0, max_slot: float = 34.0) -> None:
-    """Draw pitch digits as contours inside rect.
+def underscore_unit(font: QFont) -> float:
+    """The width of "_" in a font: one short pitch step is drawn this long."""
+    from PySide6.QtGui import QFontMetricsF
+    return max(4.0, QFontMetricsF(font).horizontalAdvance("_"))
 
-    Each syllable gets its own slot (wider for long or contour syllables); a
-    comma leaves a gap. Digits outside the display range are drawn past the
-    edge in red, so the scale stays the same for every token.
+
+def pitch_width(text: str, unit: float = 8.0) -> float:
+    """How wide a pitch drawing is: steps x unit, plus small gaps between syllables."""
+    items = pitchmod.parse(text)
+    w = 0.0
+    for n, item in enumerate(items):
+        if item == pitchmod.PAUSE:
+            w += unit * 1.2
+        else:
+            w += unit * item.length + (unit * 0.5 if n else 0)
+    return w
+
+
+def draw_pitch(p: QPainter, rect: QRectF, text: str, low: int = 1, high: int = 5,
+               color: QColor = PITCH_BLUE, width: float = 2.0, unit: float = 8.0) -> None:
+    """Draw pitch notation as contours inside rect, from the left edge.
+
+    One short step is `unit` wide (about an underscore), a long step twice
+    that. A comma leaves a gap; points outside the display range are drawn
+    past the edge in red so the scale stays the same for every token.
     """
     items = pitchmod.parse(text)
     if not items:
         return
     span = max(high - low, 1)
-    pad = 3.0
-    top, bottom = rect.top() + pad, rect.bottom() - pad
-    units = sum(max(1, len(i)) if i != pitchmod.PAUSE else 0.6 for i in items)
-    slot = min(max_slot, (rect.width() - 2 * pad) / max(units, 1))
-    x = rect.left() + pad
+    top, bottom = rect.top() + 2, rect.bottom() - 2
 
     def y_of(d: int) -> float:
-        frac = (d - low) / span
-        return bottom - frac * (bottom - top)
+        return bottom - (d - low) / span * (bottom - top)
 
     p.save()
     p.setRenderHint(QPainter.Antialiasing)
-    for item in items:
+    x = rect.left()
+    for n, item in enumerate(items):
         if item == pitchmod.PAUSE:
-            x += slot * 0.6
+            x += unit * 1.2
             continue
-        w = slot * max(1, len(item))
-        inner_l, inner_r = x + slot * 0.15, x + w - slot * 0.15
-        bad = any(d < low or d > high for d in item)
+        if n:
+            x += unit * 0.5
+        bad = any(d < low or d > high for d in item.points)
         pen = QPen(OUT_OF_RANGE if bad else color, width)
         pen.setCapStyle(Qt.RoundCap)
+        pen.setJoinStyle(Qt.RoundJoin)
         p.setPen(pen)
-        if len(set(item)) == 1:                     # level (short or long)
-            y = y_of(item[0])
-            p.drawLine(QPointF(inner_l, y), QPointF(inner_r, y))
-        else:                                       # contour through each point
-            n = len(item)
-            pts = [QPointF(inner_l + (inner_r - inner_l) * i / (n - 1), y_of(d))
-                   for i, d in enumerate(item)]
-            p.drawPolyline(QPolygonF(pts))
-        x += w
+        pts = [QPointF(x, y_of(item.points[0]))]
+        for d, step in zip(item.points[1:], item.steps):
+            x += unit * step
+            pts.append(QPointF(x, y_of(d)))
+        p.drawPolyline(QPolygonF(pts))
     p.restore()
-
-
-def pitch_width(text: str, slot: float = 34.0) -> float:
-    items = pitchmod.parse(text)
-    return 6 + slot * sum(max(1, len(i)) if i != pitchmod.PAUSE else 0.6 for i in items)
 
 
 class PitchCanvas(QWidget):
     """Shows a pitch string drawn as contours, e.g. in the token dialogue."""
 
-    def __init__(self, parent=None, low: int = 1, high: int = 5):
+    def __init__(self, parent=None, low: int = 1, high: int = 5, font: QFont | None = None):
         super().__init__(parent)
         self.text = ""
         self.low, self.high = low, high
+        self.unit = underscore_unit(font or ipa_font(16))
         self.setMinimumHeight(56)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
@@ -103,13 +110,92 @@ class PitchCanvas(QWidget):
     def paintEvent(self, event):
         p = QPainter(self)
         p.fillRect(self.rect(), self.palette().base())
-        r = QRectF(self.rect()).adjusted(6, 4, -6, -4)
-        draw_pitch(p, r, self.text, self.low, self.high, width=2.6, max_slot=48)
-        bad = pitchmod.out_of_range(self.text, self.low, self.high)
-        if bad:
-            p.setPen(OUT_OF_RANGE)
-            p.drawText(self.rect().adjusted(0, 0, -6, -2), Qt.AlignRight | Qt.AlignBottom,
-                       f"outside {self.low}-{self.high}: {' '.join(map(str, bad))}")
+        r = QRectF(self.rect()).adjusted(10, 6, -10, -6)
+        draw_pitch(p, r, self.text, self.low, self.high, width=2.6, unit=self.unit)
+
+
+# --------------------------------------------------------------------------
+# Tag chips
+# --------------------------------------------------------------------------
+
+CHIP_FILL = QColor("#d3e5fb")
+CHIP_BORDER = QColor("#8db4ea")
+CHIP_TEXT = QColor("#0f2f5c")
+
+
+def chip_metrics(font: QFont):
+    from PySide6.QtGui import QFontMetrics
+    fm = QFontMetrics(font)
+    return fm, fm.height() + 4
+
+
+def chips_width(labels, font: QFont, gap: int = 4) -> int:
+    fm, _ = chip_metrics(font)
+    return sum(fm.horizontalAdvance(t) + 12 for t in labels) + gap * max(0, len(labels) - 1)
+
+
+def paint_chips(p: QPainter, x: float, y: float, labels, font: QFont, gap: int = 4,
+                filled: bool = True, max_right: float | None = None) -> float:
+    """Draw tags as light-blue rounded chips from (x, y); returns the x after the last one."""
+    fm, h = chip_metrics(font)
+    p.save()
+    p.setRenderHint(QPainter.Antialiasing)
+    p.setFont(font)
+    for t in labels:
+        w = fm.horizontalAdvance(t) + 12
+        if max_right is not None and x + w > max_right:
+            break
+        r = QRectF(x, y, w, h)
+        p.setPen(QPen(CHIP_BORDER, 1))
+        p.setBrush(CHIP_FILL if filled else QColor("white"))
+        p.drawRoundedRect(r.adjusted(0.5, 0.5, -0.5, -0.5), h / 2.6, h / 2.6)
+        p.setPen(CHIP_TEXT)
+        p.drawText(r, Qt.AlignCenter, t)
+        x += w + gap
+    p.restore()
+    return x
+
+
+from PySide6.QtWidgets import QAbstractButton  # noqa: E402
+
+
+class ChipButton(QAbstractButton):
+    """A checkable tag chip: white with a light-blue outline, filled light blue when picked."""
+
+    def __init__(self, text: str, parent=None):
+        super().__init__(parent)
+        self.setText(text)
+        self.setCheckable(True)
+        self.setCursor(Qt.PointingHandCursor)
+        f = self.font()
+        f.setPointSize(f.pointSize() + 2)
+        f.setBold(True)
+        self.setFont(f)
+
+    def sizeHint(self):
+        from PySide6.QtGui import QFontMetrics
+        fm = QFontMetrics(self.font())
+        return QSize(fm.horizontalAdvance(self.text()) + 22, fm.height() + 10)
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        r = QRectF(self.rect()).adjusted(1, 1, -1, -1)
+        on = self.isChecked()
+        p.setPen(QPen(CHIP_BORDER.darker(125) if (self.underMouse() or on) else CHIP_BORDER, 1.5))
+        p.setBrush(QColor("#b9d5f8") if on else QColor("white"))
+        p.drawRoundedRect(r, r.height() / 2.4, r.height() / 2.4)
+        p.setPen(CHIP_TEXT if on else QColor("#3c5d8a"))
+        p.setFont(self.font())
+        p.drawText(r, Qt.AlignCenter, self.text())
+
+    def enterEvent(self, e):
+        self.update()
+        super().enterEvent(e)
+
+    def leaveEvent(self, e):
+        self.update()
+        super().leaveEvent(e)
 
 
 # --------------------------------------------------------------------------

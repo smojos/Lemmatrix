@@ -1,72 +1,109 @@
-"""Laying out tokens for the matrix view (no Qt here, so it can be tested).
+"""Matrix configurations and layouts (no Qt here, so it can be tested).
 
-Matching rule used everywhere: a token fits a cell when it has all of the
-cell's tags and no other *marked* tags. Group defaults (Simple, Indicative,
-Affirmative, in isolation, ...) are unmarked, so they never stop a token
-fitting a cell, but a header can still ask for one explicitly.
+A matrix configuration is a list of *specs* per axis. Each spec is a set of
+tags plus a match type:
 
-"Exactly" shows only those exact fits. "Includes" also adds a labelled
-sub-row (e.g. "+ xH") under a header for each extra combination found, so
-tokens with the same tags line up across entries.
+    Citation   the token with no tags at all
+    Exact      exactly these tags; group defaults (Simple, in isolation, …)
+               are unmarked and don't count, so Exact PL still shows
+               PL + in isolation
+    Loose      at least these tags (Loose SG shows SG, SG + GEN, …)
+
+Lemma/Tag: lemmas down the side (Y), specs across the top (X).
+Tag/Tag:   one lemma; specs on both axes. A cell asks for the row's and
+           column's tags together; it is Loose if either side is Loose.
+           Cells whose tags contradict (two tags of one group) are greyed.
+
+Switching axes on screen is only a display trick: configurations always
+keep Y first and X second.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .model import Database, Entry, Group, Token
+from .model import Database, Entry, Token
 
-EXACTLY = "exactly"
-INCLUDES = "includes"
+CITATION, EXACT, LOOSE = "citation", "exact", "loose"
+LEMMA_TAG, TAG_TAG = "lemma-tag", "tag-tag"
+NO_CLASS = ""                     # the "(none)" matrix class
+
+DEFAULT_CELL = ["drawing", "Phonetic", "Phonemic", "Translation"]
+
+
+@dataclass(frozen=True)
+class Spec:
+    tags: frozenset = frozenset()
+    match: str = EXACT
+
+    @classmethod
+    def citation(cls) -> "Spec":
+        return cls(frozenset(), CITATION)
+
+
+@dataclass
+class MatrixConfig:
+    name: str = ""
+    kind: str = LEMMA_TAG
+    word_class: str = NO_CLASS
+    y: list = field(default_factory=list)      # Tag/Tag rows
+    x: list = field(default_factory=list)      # columns
+    cell: list = field(default_factory=lambda: list(DEFAULT_CELL))
+
+    def copy(self) -> "MatrixConfig":
+        return MatrixConfig(self.name, self.kind, self.word_class, list(self.y), list(self.x),
+                            list(self.cell))
 
 
 @dataclass
 class AxisItem:
     label: str
-    tags: frozenset = frozenset()      # tags this row/column contributes
-    entry: Entry | None = None         # set on entry axes
-    sub: bool = False                  # an Includes sub-row ("+ xH")
-    group_none: bool = False           # Tag/Tag "(none)" item
+    chips: list = field(default_factory=list)  # tag labels shown as chips
+    spec: Spec | None = None
+    entry: Entry | None = None
 
 
 @dataclass
 class Layout:
-    rows: list[AxisItem] = field(default_factory=list)
-    cols: list[AxisItem] = field(default_factory=list)
-    cells: dict = field(default_factory=dict)          # (r, c) -> [(entry, token)]
-    entry: Entry | None = None                         # Tag/Tag: the entry shown
-    message: str = ""                                  # shown when there's nothing to lay out
+    rows: list = field(default_factory=list)
+    cols: list = field(default_factory=list)
+    cells: dict = field(default_factory=dict)      # (r, c) -> [(entry, token)]
+    greyed: set = field(default_factory=set)       # (r, c) that can never hold a token
+    entry: Entry | None = None
+    message: str = ""
+
+    def spec_at(self, r: int, c: int) -> Spec | None:
+        a, b = self.rows[r].spec, self.cols[c].spec
+        if a is None:
+            return b
+        if b is None:
+            return a
+        return combine(a, b)
 
     def target(self, r: int, c: int) -> tuple[Entry | None, frozenset]:
-        """The entry and tags a new token in this cell would get."""
+        """The entry and tags a new token created in this cell would get."""
         a, b = self.rows[r], self.cols[c]
         entry = a.entry or b.entry or self.entry
-        return entry, a.tags | b.tags
+        spec = self.spec_at(r, c)
+        return entry, (spec.tags if spec else frozenset())
 
-    def tokens(self, r: int, c: int) -> list[tuple[Entry, Token]]:
+    def tokens(self, r: int, c: int) -> list:
         return self.cells.get((r, c), [])
 
     def transposed(self) -> "Layout":
         return Layout(rows=self.cols, cols=self.rows,
                       cells={(c, r): v for (r, c), v in self.cells.items()},
+                      greyed={(c, r) for (r, c) in self.greyed},
                       entry=self.entry, message=self.message)
 
-    def reading_order(self) -> list[tuple[int, int]]:
+    def reading_order(self) -> list:
         """Cells column by column: down each column, then on to the next."""
         return [(r, c) for c in range(len(self.cols)) for r in range(len(self.rows))]
 
 
 # --------------------------------------------------------------------------
-# Tags helpers
+# Matching
 # --------------------------------------------------------------------------
-
-def global_order(db: Database) -> dict[str, int]:
-    order: dict[str, int] = {}
-    for _, g in db.settings.tags.all_leaf_groups():
-        for t in g.tags:
-            order.setdefault(t.name, len(order))
-    return order
-
 
 def default_names(db: Database) -> set[str]:
     return {t.name for _, g in db.settings.tags.all_leaf_groups() for t in g.tags if t.default}
@@ -76,214 +113,167 @@ def marked(tags, defaults: set[str]) -> frozenset:
     return frozenset(t for t in tags if t not in defaults)
 
 
-def fits(token_tags, cell_tags, defaults: set[str]) -> bool:
+def fits(token_tags, spec: Spec, defaults: set[str]) -> bool:
     tt = set(token_tags)
-    return set(cell_tags) <= tt and marked(tt, defaults) == marked(cell_tags, defaults)
+    if spec.match == CITATION:
+        return not tt
+    if not spec.tags <= tt:
+        return False
+    if spec.match == LOOSE:
+        return True
+    return marked(tt, defaults) == marked(spec.tags, defaults)
+
+
+def combine(a: Spec, b: Spec) -> Spec:
+    """The spec for a Tag/Tag cell from its row and column specs."""
+    if a.match == CITATION and b.match == CITATION:
+        return Spec.citation()
+    if a.match == CITATION:
+        return b
+    if b.match == CITATION:
+        return a
+    match = LOOSE if LOOSE in (a.match, b.match) else EXACT
+    return Spec(a.tags | b.tags, match)
+
+
+def global_order(db: Database) -> dict[str, int]:
+    order: dict[str, int] = {}
+    for _, g in db.settings.tags.all_leaf_groups():
+        for t in g.tags:
+            order.setdefault(t.name, len(order))
+    return order
 
 
 def sort_key(tags, order: dict[str, int]):
     return (len(tags) > 0, sorted(order.get(t, 10_000) for t in tags), sorted(tags))
 
 
-def label(db: Database, tags, word_class: str | None = None) -> str:
-    return db.settings.tags.display(word_class, list(tags))
+def chips(db: Database, tags, word_class: str | None = None) -> list[str]:
+    """Short labels (codes, or names for defaults) for a set of tags, in tag order."""
+    ts = db.settings.tags
+    out = []
+    for n in ts.sort(word_class, list(tags)):
+        hit = ts.find(word_class, n)
+        t = hit[0] if hit else ts.find_anywhere(n)
+        out.append(t.display() if t else n)
+    return out
+
+
+def spec_label(db: Database, spec: Spec, word_class: str | None = None) -> str:
+    if spec.match == CITATION:
+        return "Citation"
+    text = " + ".join(chips(db, spec.tags, word_class)) or "(no tags)"
+    return text + (" …" if spec.match == LOOSE else "")
+
+
+def extra_chips(db: Database, token: Token, spec: Spec | None, word_class: str | None,
+                defaults: set[str]) -> list[str]:
+    """What a token adds to its cell's tags (shown on side-by-side tokens)."""
+    base = spec.tags if spec else frozenset()
+    extra = marked(set(token.tags) - set(base), defaults)
+    return ["+" + c for c in chips(db, extra, word_class)]
 
 
 # --------------------------------------------------------------------------
-# Filters
+# Word classes
 # --------------------------------------------------------------------------
 
-@dataclass
-class TokenFilter:
-    """Which tokens the matrix shows. Empty parts don't restrict anything.
+def class_of(db: Database, e: Entry) -> str:
+    wc = db.word_class(e)
+    return wc if wc in db.settings.tags.word_class_names() else NO_CLASS
 
-    tags: group name path -> set of tag names (any of them; groups combine with AND)
-    """
-    tags: dict = field(default_factory=dict)
-    citation_only: bool = False
-    speakers: set = field(default_factory=set)
-    dates: set = field(default_factory=set)
-    text: str = ""
 
-    def active(self) -> bool:
-        return bool(any(self.tags.values()) or self.citation_only or self.speakers
-                    or self.dates or self.text)
+def in_class(db: Database, entries, word_class: str) -> list[Entry]:
+    return [e for e in entries if class_of(db, e) == word_class]
 
-    def accepts(self, t: Token) -> bool:
-        if self.citation_only and t.tags:
-            return False
-        tt = set(t.tags)
-        for wanted in self.tags.values():
-            if wanted and not (tt & set(wanted)):
-                return False
-        if self.speakers and t.speaker not in self.speakers:
-            return False
-        if self.dates and t.collected not in self.dates:
-            return False
-        if self.text:
-            needle = self.text.casefold()
-            hay = [*t.values.values(), *(v for d in t.multi.values() for v in d.values()),
-                   *t.tags, t.speaker, t.file]
-            if not any(needle in h.casefold() for h in hay):
-                return False
-        return True
+
+def class_label(word_class: str) -> str:
+    return word_class or "(none)"
 
 
 # --------------------------------------------------------------------------
 # Layouts
 # --------------------------------------------------------------------------
 
-def auto_headers(db: Database, entries, tfilter: TokenFilter | None = None) -> list[frozenset]:
-    """Every marked tag combination present among the shown tokens, citation first."""
+def auto_specs(db: Database, entries) -> list[Spec]:
+    """Citation, then an Exact column for every marked combination present."""
     defaults = default_names(db)
     order = global_order(db)
     found = set()
+    has_citation = False
     for e in entries:
         for t in e.tokens:
-            if tfilter is None or tfilter.accepts(t):
+            if not t.tags:
+                has_citation = True
+            else:
                 found.add(marked(t.tags, defaults))
-    return sorted(found, key=lambda s: sort_key(s, order))
+    specs = [Spec.citation()] if has_citation else []
+    specs += [Spec(k, EXACT) for k in sorted(found, key=lambda s: sort_key(s, order)) if k]
+    # A token carrying only defaults (e.g. just "in isolation") still needs a column.
+    if frozenset() in found:
+        specs.append(Spec(frozenset(), EXACT))
+    return specs
 
 
-def _expand(db, headers: list[frozenset], tokens_for_header, mode, word_class=None):
-    """Turn headers into axis items, adding Includes sub-rows."""
-    defaults = default_names(db)
-    order = global_order(db)
-    items = []
-    for h in headers:
-        items.append(AxisItem(label(db, h, word_class), frozenset(h)))
-        if mode != INCLUDES or not h:        # the citation row never expands
-            continue
-        extras = set()
-        for tags in tokens_for_header(h):
-            extra = marked(set(tags) - set(h), defaults)
-            if extra:
-                extras.add(frozenset(extra))
-        for ex in sorted(extras, key=lambda s: sort_key(s, order)):
-            items.append(AxisItem("+ " + label(db, ex, word_class), frozenset(h) | ex, sub=True))
-    return items
+def _sorted_hits(hits, order, defaults=frozenset()):
+    """Side-by-side tokens in tag order (group defaults ignored)."""
+    return sorted(hits, key=lambda et: sort_key(marked(et[1].tags, defaults), order))
 
 
-def entry_tag_layout(db: Database, entries: list[Entry], headers: list[frozenset] | None,
-                     mode: str = EXACTLY, tfilter: TokenFilter | None = None,
+def lemma_tag_layout(db: Database, entries: list[Entry], config: MatrixConfig | None,
                      entry_label: str = "lemma") -> Layout:
-    """Tag combinations down the side, entries across the top."""
-    tfilter = tfilter or TokenFilter()
+    """Lemmas (already limited to one class) down the side, specs across the top."""
     if not entries:
-        return Layout(message="No entries to show. Check the lemma list's search and filters.")
+        return Layout(message="No lemmas of this class pass the lemma list's search and filters.")
     defaults = default_names(db)
     order = global_order(db)
-    # Filter each entry's tokens once and index them by their marked tags,
-    # so each cell is a dictionary lookup rather than a scan.
-    shown: list[list[Token]] = []
-    index: list[dict] = []
-    found = set()
+    specs = list(config.x) if (config and config.x) else auto_specs(db, entries)
+    wc = class_of(db, entries[0])
+    cols = [AxisItem(spec_label(db, s, wc), [] if s.match == CITATION else chips(db, s.tags, wc), s)
+            for s in specs]
+    rows = []
     for e in entries:
-        toks = [t for t in e.tokens if tfilter.accepts(t)]
-        shown.append(toks)
-        idx: dict = {}
-        for t in toks:
-            key = marked(t.tags, defaults)
-            idx.setdefault(key, []).append(t)
-            found.add(key)
-        index.append(idx)
-    if headers is None:
-        headers = sorted(found, key=lambda s: sort_key(s, order))
-        if mode == INCLUDES:
-            # Keep only the smallest combinations; the larger ones become their sub-rows.
-            headers = [h for h in headers
-                       if not h or not any(o and o < h for o in headers)]
-
-    def tokens_for_header(h):
-        hs = set(h)
-        for toks in shown:
-            for t in toks:
-                if hs <= set(t.tags):
-                    yield t.tags
-
-    rows = _expand(db, headers, tokens_for_header, mode)
-    cols = []
-    for e in entries:
-        if entry_label == "reference":
-            text = e.ref
-        elif entry_label == "gloss":
-            text = db.gloss(e)
-        else:
-            text = db.lemma(e) or e.ref
-        cols.append(AxisItem(text, entry=e))
+        text = {"reference": e.ref, "gloss": db.gloss(e)}.get(entry_label) or db.lemma(e) or e.ref
+        rows.append(AxisItem(text, entry=e))
     lay = Layout(rows=rows, cols=cols)
-    row_keys = [(marked(row.tags, defaults), set(row.tags)) for row in rows]
-    for c, col in enumerate(cols):
-        idx = index[c]
-        for r, (key, need) in enumerate(row_keys):
-            cand = idx.get(key)
-            if not cand:
-                continue
-            hits = [(col.entry, t) for t in cand if need <= set(t.tags)]
+    for r, row in enumerate(rows):
+        toks = row.entry.tokens
+        for c, col in enumerate(cols):
+            hits = [(row.entry, t) for t in toks if fits(t.tags, col.spec, defaults)]
             if hits:
-                lay.cells[(r, c)] = hits
-    if not rows:
-        lay.message = "No tokens match the current filters."
+                lay.cells[(r, c)] = _sorted_hits(hits, order, defaults)
+    if not cols:
+        lay.message = "These lemmas have no tokens yet."
     return lay
 
 
-def tag_tag_layout(db: Database, entry: Entry | None, row_group: Group | None,
-                   col_group: Group | None, mode: str = EXACTLY,
-                   tfilter: TokenFilter | None = None) -> Layout:
-    """One entry's paradigm: one group's tags down the side, another's across."""
-    tfilter = tfilter or TokenFilter()
+def tag_tag_layout(db: Database, entry: Entry | None, config: MatrixConfig | None) -> Layout:
+    """One lemma's paradigm: row specs down the side, column specs across the top."""
     if entry is None:
-        return Layout(message="Select an entry in the lemma list to show its paradigm.")
-    if row_group is None or col_group is None:
-        return Layout(entry=entry, message="Choose a group for the rows and one for the columns "
-                                           "(Set up token display).")
-    wc = db.word_class(entry)
+        return Layout(message="Select a lemma in the lemma list to show its paradigm.")
+    if config is None or not config.x or not config.y:
+        return Layout(entry=entry, message="Please configure a matrix.")
+    wc = class_of(db, entry)
+    if config.word_class != wc:
+        return Layout(entry=entry, message=f"This matrix is for {class_label(config.word_class)} "
+                                           f"lemmas; {entry.ref} is {class_label(wc)}.")
     defaults = default_names(db)
-    tokens = [t for t in entry.tokens if tfilter.accepts(t)]
-    rgroup_tags = {t.name for t in row_group.tags}
-    cgroup_tags = {t.name for t in col_group.tags}
+    order = global_order(db)
+    ts = db.settings.tags
 
-    def axis(group, group_tags):
-        items = [AxisItem(t.display(), frozenset([t.name])) for t in group.tags]
-        if any(not (set(t.tags) & group_tags) for t in tokens):
-            items.append(AxisItem("—", frozenset(), group_none=True))
-        return items
+    def item(s):
+        return AxisItem(spec_label(db, s, wc), [] if s.match == CITATION else chips(db, s.tags, wc), s)
 
-    base_rows = axis(row_group, rgroup_tags)
-    cols = axis(col_group, cgroup_tags)
-    rows = []
-    for br in base_rows:
-        rows.append(br)
-        if mode != INCLUDES:
-            continue
-        extras = set()
-        for t in tokens:
-            tt = set(t.tags)
-            if not br.tags <= tt or (br.group_none and tt & rgroup_tags):
-                continue
-            for col in cols:
-                if not col.tags <= tt or (col.group_none and tt & cgroup_tags):
-                    continue
-                extra = marked(tt - br.tags - col.tags - rgroup_tags - cgroup_tags, defaults)
-                if extra:
-                    extras.add(frozenset(extra))
-        order = global_order(db)
-        for ex in sorted(extras, key=lambda s: sort_key(s, order)):
-            rows.append(AxisItem("+ " + label(db, ex, wc), br.tags | ex, sub=True,
-                                 group_none=br.group_none))
+    rows = [item(s) for s in config.y]
+    cols = [item(s) for s in config.x]
     lay = Layout(rows=rows, cols=cols, entry=entry)
     for r, row in enumerate(rows):
         for c, col in enumerate(cols):
-            cell = row.tags | col.tags
-            hits = []
-            for t in tokens:
-                tt = set(t.tags)
-                if row.group_none and tt & rgroup_tags:
-                    continue
-                if col.group_none and tt & cgroup_tags:
-                    continue
-                if fits(tt, cell, defaults):
-                    hits.append((entry, t))
+            spec = combine(row.spec, col.spec)
+            if ts.conflicts(wc or None, list(spec.tags)):
+                lay.greyed.add((r, c))
+                continue
+            hits = [(entry, t) for t in entry.tokens if fits(t.tags, spec, defaults)]
             if hits:
-                lay.cells[(r, c)] = hits
+                lay.cells[(r, c)] = _sorted_hits(hits, order, defaults)
     return lay

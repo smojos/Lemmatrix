@@ -19,7 +19,7 @@ behaves; no Dekereke code is used. The full working spec is in [DESIGN.md](DESIG
 On Mac or Linux, run `./run_lemmatrix.sh` instead.
 
 For heavier testing there's also **`samples/Test-300.xml`**: 300 invented lemmas with about
-7,500 tagged forms and no recordings (File → Open). It's rebuilt by
+7,450 tagged forms and no recordings (File → Open). It's rebuilt by
 `samples/make_test_database.py`. If you save changes to it, GitHub Desktop will list the file
 as changed; discard that change to get the original back.
 
@@ -32,29 +32,28 @@ If something goes wrong, a message box shows the details, and they're also writt
 
 - **Database files:** open, save, save as, new database; backups of the previous version
   in a `Backups` folder beside the database (10 kept); optional autosave.
-- **Lemma list:** filter button on every column, search, column choice (View menu),
-  add / edit / delete entries, references suggested from the category (next free number,
-  gaps never reused).
-- **Matrix view**, three tabs:
-  - *All data:* one row per token; Phonetic, Phonemic, Pitch, Translation and Comment can be
-    edited in place (double-click or F2).
-  - *Tag/Tag Paradigm:* the selected entry's paradigm, one tag group down the side and
-    another across the top (Set up token display).
-  - *Entry/Tag Paradigm:* tag combinations down the side, entries across the top.
-  - The ⇄ button swaps rows and columns; Exactly/Includes matching; token filters, search,
-    Play cell, saved views.
-  - Double-click a token to edit it; double-click an empty cell to add one there.
-- **Token dialogue:** live pitch drawing, tag buttons (one per group, defaults
-  pre-selected), live file name, record / stop with a level meter, play, delete recording
-  (to the Recycle Bin), update file name, Back / Next column by column, keyboard shortcuts
-  (Ctrl+R, Ctrl+Space, Alt+← / Alt+→).
-- **Sound file names** from the customisable pattern, renamed automatically when tags or
-  speaker change (or by button when that setting is off); Tools → Update all sound file
-  names and Check for duplicate file names. The speaker and date are written into each WAV
-  file's own metadata.
-- **Settings:** metadata (language, variety, participants, gloss languages), tag structure
-  editor, file-name pattern, pitch display range, recording source / bit depth / sample
-  rate, auto-play, confirm-before-delete, IPA font size.
+- **Lemma list:** a filter menu on every column (Show all, Blanks, Non-blanks, Filter for… on
+  open fields, Choose… on closed fields), Configure columns, quick search, add / edit /
+  delete lemmas, references suggested from the category.
+- **The Matrix**, three tabs, each with its own options bar (the bar's height can be dragged):
+  - *All data* (the default): one row per token, the same column filters (Tags is a closed
+    list with Any / Exactly / No selected), Configure columns, in-place editing, right-click menu.
+  - *Lemma/Tag:* lemmas of one Matrix class down the side, tag columns (Citation / Exact /
+    Loose) across the top; Configure cell, Configure matrix, Save matrix, auto-play.
+  - *Tag/Tag:* the selected lemma's paradigm from a configured matrix; contradictory cells
+    are greyed out.
+  - Tokens matching one cell sit side by side with chips for what they add (e.g. +GEN).
+  - Double-click a token to edit it; double-click an empty cell to add one there;
+    Delete and Enter work on the selected token; the ⇄ button swaps rows and columns.
+- **Token dialogue:** live pitch drawing, tag chips (one per group, defaults pre-selected),
+  live file name, record / stop with a level meter, play, delete recording, update file name,
+  Back / Next column by column, Ctrl+R, Ctrl+Space, Alt+← / Alt+→. Recording sets the token's
+  speaker and date to the current session's.
+- **Pitch notation:** digits are points; each colon lengthens the step between two points
+  (`4:42` long high level then a quick fall). A lone digit becomes a short level (`5` → `55`).
+- **Settings:** metadata, Fields (lemma and token fields, open or closed, with an XML preview),
+  tag structure, file-name pattern, pitch display range, recording, deleting recordings with
+  their tokens, confirm before deleting, IPA font size.
 - **Undo and redo** for all changes to entries and tokens.
 
 ## Not in this version yet

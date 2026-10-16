@@ -1,42 +1,66 @@
-"""The main window: lemma list on the left, matrix view on the right."""
+"""The main window: lemma list on the left, the Matrix on the right."""
 
 from __future__ import annotations
 
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import QDate, QFile, Qt, QTimer, QUrl
-from PySide6.QtGui import QAction, QDesktopServices, QKeySequence
-from PySide6.QtWidgets import (QApplication, QComboBox, QDateEdit, QFileDialog, QFrame,
-                               QGridLayout, QHBoxLayout, QInputDialog, QLabel, QLineEdit,
-                               QMainWindow, QMessageBox, QPushButton, QSplitter, QStyle, QTabBar,
-                               QToolButton, QVBoxLayout, QWidget)
+from PySide6.QtCore import QDate, QFile, QSize, Qt, QTimer, QUrl
+from PySide6.QtGui import QAction, QColor, QDesktopServices, QKeySequence
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QDateEdit, QFileDialog, QFrame, QGroupBox,
+                               QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMenu, QMessageBox,
+                               QPushButton, QSplitter, QStackedWidget, QTabBar, QToolButton,
+                               QVBoxLayout, QWidget)
 
 from .. import __version__, audio, matrix as mx, storage
 from ..defaults import new_database
-from ..model import Database
-from .dialogs import (DisplaySetupDialog, EntryDialog, MetadataDialog, PreferencesDialog,
-                      TagStructureDialog, TokenFilterDialog)
+from ..model import Database, Entry
+from .dialogs import EntryDialog, MetadataDialog, PreferencesDialog, TagStructureDialog
 from .document import Document
-from .lemma_list import LemmaList
-from .matrix_view import (ALL_DATA, ENTRY_TAG, MODE_NAMES, TAG_TAG, MatrixStack, ViewState,
-                          find_group, group_path)
+from .fields_dialog import FieldsDialog
+from .filter_dialogs import ConfigureColumnsDialog
+from .icons import icon
+from .matrix_dialogs import ConfigureCellDialog, ConfigureMatrixDialog, ask_matrix_name
+from .matrix_view import MatrixView
 from .prefs import Prefs
+from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable
 from .token_dialog import Slot, TokenDialog
+from .widgets import ipa_font
 
 SAMPLE = Path(__file__).resolve().parent.parent.parent / "samples" / "Sample.xml"
+ALL_DATA, LEMMA_TAG, TAG_TAG = 0, 1, 2
+KINDS = {LEMMA_TAG: mx.LEMMA_TAG, TAG_TAG: mx.TAG_TAG}
 
 
-def _panel(title: str | None = None) -> tuple[QFrame, QVBoxLayout]:
-    f = QFrame()
-    f.setFrameShape(QFrame.StyledPanel)
-    lay = QVBoxLayout(f)
-    lay.setContentsMargins(8, 6, 8, 6)
-    if title:
-        t = QLabel(title)
-        t.setStyleSheet("font-weight: 700; font-size: 15px;")
-        lay.addWidget(t)
-    return f, lay
+class TokenRow:
+    """A row of All data: one token of one entry (compared by identity, not content)."""
+    __slots__ = ("entry", "index")
+
+    def __init__(self, entry: Entry, index: int):
+        self.entry, self.index = entry, index
+
+    @property
+    def token(self):
+        return self.entry.tokens[self.index]
+
+    def __eq__(self, other):
+        return isinstance(other, TokenRow) and other.entry is self.entry and other.index == self.index
+
+    def __hash__(self):
+        return hash((id(self.entry), self.index))
+
+
+def tool(text: str, icon_name: str | None, fn, tip: str = "") -> QToolButton:
+    b = QToolButton()
+    b.setText(text)
+    if icon_name:
+        b.setIcon(icon(icon_name, 20))
+        b.setIconSize(QSize(20, 20))
+        b.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+    b.setToolTip(tip or text)
+    b.setAutoRaise(True)
+    b.clicked.connect(fn)
+    return b
 
 
 class MainWindow(QMainWindow):
@@ -46,147 +70,204 @@ class MainWindow(QMainWindow):
         self.player = audio.Player()
         self.doc = Document(db or new_database())
         self.doc.setParent(self)
-        self.state = ViewState()
-        self.tfilter = mx.TokenFilter()
-        self.layout_: mx.Layout | None = None
-        self.resize(1500, 900)
+        self.configs: dict = {}               # (kind, word class) -> current MatrixConfig
+        self.switched = {LEMMA_TAG: False, TAG_TAG: False}
+        self.layouts: dict = {}
+        self.dialog_autoplay = False
+        self.resize(1500, 920)
         self._build()
         self._build_menus()
-        self._connect_doc()
+        self.doc.changed.connect(self._doc_changed)
+        self.doc.dirtyChanged.connect(lambda d: self._update_title())
         self.autosave = QTimer(self)
         self.autosave.timeout.connect(self._autosave)
         self._apply_autosave()
         self.load_database(self.doc.db)
 
     # ================================================================ layout
-    def _build(self):
-        split = QSplitter(Qt.Horizontal)
-        self.setCentralWidget(split)
+    def _bar(self) -> tuple[QFrame, QVBoxLayout]:
+        f = QFrame()
+        f.setFrameShape(QFrame.StyledPanel)
+        lay = QVBoxLayout(f)
+        lay.setContentsMargins(6, 4, 6, 4)
+        lay.setSpacing(4)
+        return f, lay
 
-        # ---- left: lemma list ------------------------------------------
-        left = QWidget()
-        ll = QVBoxLayout(left)
-        ll.setContentsMargins(4, 4, 4, 4)
-        self.lemmas = LemmaList(self.doc.db)
-        ll.addWidget(self.lemmas, 1)
-        box, bl = _panel()
+    def _row(self, lay, *widgets, stretch=True) -> QHBoxLayout:
         row = QHBoxLayout()
-        st = self.style()
-        for icon, tip, fn in ((QStyle.SP_FileDialogNewFolder, "Add entry", self.add_entry),
-                              (QStyle.SP_TrashIcon, "Delete entry", self.delete_entry),
-                              (QStyle.SP_FileDialogDetailedView, "Edit entry", self.edit_entry)):
-            b = QToolButton()
-            b.setIcon(st.standardIcon(icon))
-            b.setText(tip.split()[0])
-            b.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-            b.setToolTip(tip)
-            b.clicked.connect(fn)
-            row.addWidget(b)
-        row.addStretch(1)
+        row.setSpacing(4)
+        for w in widgets:
+            row.addWidget(w)
+        if stretch:
+            row.addStretch(1)
+        lay.addLayout(row)
+        return row
+
+    def _build(self):
+        main = QSplitter(Qt.Horizontal)
+        self.setCentralWidget(main)
+
+        # ---- left: lemma list + its options -------------------------------
+        left = QSplitter(Qt.Vertical)
+        self.lemmas = FilterTable()
+        left.addWidget(self.lemmas)
+        bar, bl = self._bar()
         self.lemma_count = QLabel()
-        self.lemma_count.setStyleSheet("color: #666;")
-        row.addWidget(self.lemma_count)
-        bl.addLayout(row)
+        self.lemma_count.setStyleSheet("color: #555;")
+        self._row(bl, tool("Add", "add", self.add_entry, "Add a lemma"),
+                  tool("Delete", "delete", self.delete_entry, "Delete the selected lemma (Delete)"),
+                  tool("Edit", "edit", self.edit_entry, "Edit the selected lemma (Enter)"),
+                  tool("Configure columns", "gear", self.configure_lemma_columns),
+                  tool("Clear all filters", None, self._clear_lemma_filters))
         self.lemma_search = QLineEdit()
-        self.lemma_search.setPlaceholderText("search lemmas")
+        self.lemma_search.setPlaceholderText("quick search of the visible columns")
         self.lemma_search.setClearButtonEnabled(True)
         bl.addWidget(self.lemma_search)
-        cv = QHBoxLayout()
-        cvl = QLabel("Filter CV shape")
-        cvl.setStyleSheet("background: #bbb; padding: 3px 6px; font-weight: 600;")
-        cv.addWidget(cvl)
-        self.lemma_cv = QLineEdit()
-        self.lemma_cv.setPlaceholderText("(C)V(V)C(.CVC)")
-        self.lemma_cv.setEnabled(False)
-        self.lemma_cv.setToolTip("Matches the Lemma field. Needs the analysis engine (Stage 2).")
-        cv.addWidget(self.lemma_cv)
-        bl.addLayout(cv)
-        clear = QPushButton("Clear lemma filters")
-        clear.clicked.connect(self._clear_lemma_filters)
-        bl.addWidget(clear)
-        ll.addWidget(box)
-        split.addWidget(left)
+        cv = QLineEdit()
+        cv.setPlaceholderText("CV shape filter, e.g. (C)V(V)C(.CVC) — Stage 2")
+        cv.setEnabled(False)
+        cv.setToolTip("Matches the Lemma field. Needs the analysis engine (Stage 2).")
+        bl.addWidget(cv)
+        bl.addWidget(self.lemma_count)
+        bl.addStretch(1)
+        left.addWidget(bar)
+        left.setSizes([700, 170])
+        main.addWidget(left)
 
-        # ---- right: matrix view ----------------------------------------
-        right = QWidget()
-        rl = QVBoxLayout(right)
-        rl.setContentsMargins(4, 4, 4, 4)
+        # ---- right: Matrix + options + session ----------------------------
+        right = QSplitter(Qt.Vertical)
+        box = QGroupBox("Matrix")
+        box.setStyleSheet("QGroupBox { font-weight: 700; }")
+        bxl = QVBoxLayout(box)
         top = QHBoxLayout()
-        self.matrix_title = QLabel()
-        self.matrix_title.setStyleSheet("color: #444;")
-        top.addWidget(self.matrix_title)
+        self.count_line = QLabel()
+        self.count_line.setStyleSheet("color: #444; font-weight: normal;")
+        top.addWidget(self.count_line)
         top.addStretch(1)
         self.tabs = QTabBar()
-        for m in (ALL_DATA, TAG_TAG, ENTRY_TAG):
-            self.tabs.addTab(MODE_NAMES[m])
+        for name in ("All data", "Lemma/Tag", "Tag/Tag"):
+            self.tabs.addTab(name)
         self.tabs.setExpanding(False)
-        self.tabs.setStyleSheet("QTabBar::tab { padding: 6px 14px; } "
+        self.tabs.setStyleSheet("QTabBar::tab { padding: 6px 14px; font-weight: normal; } "
                                 "QTabBar::tab:selected { background: #5b8fd6; color: white; }")
         top.addWidget(self.tabs)
-        rl.addLayout(top)
-        self.matrix = MatrixStack(self.doc.db, self.state)
-        rl.addWidget(self.matrix, 1)
+        bxl.addLayout(top)
+        self.views = QStackedWidget()
+        self.all_table = FilterTable()
+        self.lt_view = MatrixView(self.doc.db)
+        self.tt_view = MatrixView(self.doc.db)
+        for w in (self.all_table, self.lt_view, self.tt_view):
+            self.views.addWidget(w)
+        bxl.addWidget(self.views, 1)
+        right.addWidget(box)
 
-        bottom = QHBoxLayout()
-        tools, tl = _panel()
-        g = QGridLayout()
-        tl.addLayout(g)
-        self.add_token_btn = QPushButton("Add new token")
-        self.setup_btn = QPushButton("Set up token display")
-        self.filter_btn = QPushButton("Filter tokens…")
-        self.play_cell_btn = QPushButton("▶ Play cell")
-        self.matching = QComboBox()
-        self.matching.addItem("Exactly", mx.EXACTLY)
-        self.matching.addItem("Includes", mx.INCLUDES)
-        self.matching.setToolTip("Exactly: only tokens with exactly the cell's tags.\n"
-                                 "Includes: also tokens with extra tags, as labelled sub-rows.")
-        self.token_search = QLineEdit()
-        self.token_search.setPlaceholderText("search tokens")
-        self.token_search.setClearButtonEnabled(True)
-        self.token_cv = QLineEdit()
-        self.token_cv.setPlaceholderText("CV shape (Phonetic) — Stage 2")
-        self.token_cv.setEnabled(False)
-        self.undo_action = self.doc.undo.createUndoAction(self, "Undo")
-        self.undo_action.setShortcut(QKeySequence.Undo)
-        self.redo_action = self.doc.undo.createRedoAction(self, "Redo")
-        self.redo_action.setShortcut(QKeySequence.Redo)
-        self.addAction(self.undo_action)
-        self.addAction(self.redo_action)
-        self.undo_btn = QToolButton()
-        self.undo_btn.setText("↶ Undo")
-        self.undo_btn.clicked.connect(self.doc.undo.undo)
-        self.doc.undo.canUndoChanged.connect(self.undo_btn.setEnabled)
-        self.doc.undo.undoTextChanged.connect(self.undo_btn.setToolTip)
-        self.undo_btn.setEnabled(False)
-        self.redo_btn = QToolButton()
-        self.redo_btn.setText("↷ Redo")
-        self.redo_btn.clicked.connect(self.doc.undo.redo)
-        self.doc.undo.canRedoChanged.connect(self.redo_btn.setEnabled)
-        self.doc.undo.redoTextChanged.connect(self.redo_btn.setToolTip)
-        self.redo_btn.setEnabled(False)
-        self.views = QComboBox()
-        self.views.setMinimumWidth(150)
-        self.views.setToolTip("Saved views")
-        self.save_view_btn = QPushButton("Save view…")
-        g.addWidget(self.add_token_btn, 0, 0)
-        g.addWidget(self.setup_btn, 0, 1)
-        g.addWidget(self.filter_btn, 0, 2)
-        g.addWidget(self.play_cell_btn, 0, 3)
-        g.addWidget(self.undo_btn, 0, 4)
-        g.addWidget(self.redo_btn, 0, 5)
-        g.addWidget(QLabel("Matching"), 1, 0)
-        g.addWidget(self.matching, 1, 1)
-        g.addWidget(self.token_search, 1, 2)
-        g.addWidget(self.token_cv, 1, 3, 1, 3)
-        g.addWidget(QLabel("View"), 2, 0)
-        g.addWidget(self.views, 2, 1)
-        g.addWidget(self.save_view_btn, 2, 2)
-        self.filter_note = QLabel()
-        self.filter_note.setStyleSheet("color: #1f4fd1;")
-        g.addWidget(self.filter_note, 2, 3, 1, 3)
-        bottom.addWidget(tools, 1)
+        bottom = QWidget()
+        bot = QHBoxLayout(bottom)
+        bot.setContentsMargins(0, 0, 0, 0)
+        self.options = QStackedWidget()
+        self.options.addWidget(self._all_data_bar())
+        self.lt_bar = self._matrix_bar(LEMMA_TAG)
+        self.tt_bar = self._matrix_bar(TAG_TAG)
+        self.options.addWidget(self.lt_bar["widget"])
+        self.options.addWidget(self.tt_bar["widget"])
+        bot.addWidget(self.options, 1)
+        bot.addWidget(self._session_panel())
+        right.addWidget(bottom)
+        right.setSizes([720, 150])
+        main.addWidget(right)
+        main.setSizes([470, 1030])
 
-        sess, sl = _panel("Current Session")
+        # ---- signals -----------------------------------------------------
+        self._refresh_timer = QTimer(self)
+        self._refresh_timer.setSingleShot(True)
+        self._refresh_timer.timeout.connect(self.refresh)
+        self._search_timers = {}
+        for name, edit, fn in (("lemma", self.lemma_search, self.lemmas.proxy.set_search),
+                               ("all", self.all_search, self.all_table.proxy.set_search)):
+            t = QTimer(self)
+            t.setSingleShot(True)
+            t.setInterval(250)
+            t.timeout.connect(lambda e=edit, f=fn: f(e.text()))
+            edit.textChanged.connect(lambda _, t=t: t.start())
+            self._search_timers[name] = t
+        self.lemmas.filtersChanged.connect(lambda: self.schedule_refresh())
+        self.lemmas.rowActivated.connect(lambda e: self.edit_entry())
+        self.lemmas.deleteRequested.connect(self.delete_entry)
+        self.lemmas.contextRequested.connect(self._lemma_menu)
+        self.lemmas.selectionModel().currentRowChanged.connect(lambda *a: self._lemma_selected())
+        self.all_table.filtersChanged.connect(self._update_counts)
+        self.all_table.rowActivated.connect(lambda r: self.edit_token())
+        self.all_table.deleteRequested.connect(self.delete_token)
+        self.all_table.contextRequested.connect(self._all_menu)
+        self.all_table.model_.edited.connect(self._cell_edited)
+        self.tabs.currentChanged.connect(self._tab_changed)
+        for view, tab in ((self.lt_view, LEMMA_TAG), (self.tt_view, TAG_TAG)):
+            view.tokenClicked.connect(lambda r, c, n, tab=tab: self._token_clicked(tab, r, c, n))
+            view.cellActivated.connect(lambda r, c, n, tab=tab: self._cell_activated(tab, r, c, n))
+            view.contextRequested.connect(lambda r, c, n, pos, tab=tab: self._matrix_menu(tab, pos))
+            view.deleteRequested.connect(self.delete_token)
+            view.switchRequested.connect(lambda tab=tab: self.switch_axes(tab))
+
+    def _all_data_bar(self) -> QWidget:
+        bar, bl = self._bar()
+        self.all_count = QLabel()
+        self.all_count.setStyleSheet("color: #555;")
+        self._row(bl, tool("Add", "add", self.add_token, "Add a token"),
+                  tool("Delete", "delete", self.delete_token, "Delete the selected token (Delete)"),
+                  tool("Edit", "edit", self.edit_token, "Edit the selected token (Enter)"),
+                  tool("Configure columns", "gear", self.configure_all_columns),
+                  tool("Clear all filters", None, self._clear_all_filters))
+        self.all_search = QLineEdit()
+        self.all_search.setPlaceholderText("quick search of the visible columns")
+        self.all_search.setClearButtonEnabled(True)
+        cv = QLineEdit()
+        cv.setPlaceholderText("CV shape filter (Phonetic) — Stage 2")
+        cv.setEnabled(False)
+        row = self._row(bl, self.all_search, cv, stretch=False)
+        row.setStretch(0, 2)
+        row.setStretch(1, 1)
+        bl.addWidget(self.all_count)
+        bl.addStretch(1)
+        return bar
+
+    def _matrix_bar(self, tab) -> dict:
+        bar, bl = self._bar()
+        d = {"widget": bar}
+        self._row(bl, tool("Add", "add", self.add_token, "Add a token in the selected cell"),
+                  tool("Delete", "delete", self.delete_token, "Delete the selected token (Delete)"),
+                  tool("Edit", "edit", self.edit_token, "Edit the selected token (Enter)"),
+                  tool("Play", "play", self.play_selected, "Play the selected token"))
+        d["cls"] = QComboBox()
+        d["cls"].setMinimumWidth(120)
+        d["cls"].setToolTip("A matrix shows one word class at a time" if tab == LEMMA_TAG
+                            else "Set by the selected lemma")
+        if tab == TAG_TAG:
+            d["cls"].setEnabled(False)
+        else:
+            d["cls"].activated.connect(lambda _: self._class_chosen())
+        d["saved"] = QComboBox()
+        d["saved"].setMinimumWidth(170)
+        d["saved"].setToolTip("Saved matrices for this word class")
+        d["saved"].activated.connect(lambda i, tab=tab: self._saved_chosen(tab, i))
+        d["autoplay"] = QCheckBox("Auto-play token soundfile")
+        key = f"matrix/autoplay_{KINDS[tab]}"
+        d["autoplay"].setChecked(self.prefs.get_bool(key))
+        d["autoplay"].toggled.connect(lambda on, key=key: self.prefs.set_value(key, bool(on)))
+        self._row(bl, QLabel("Matrix class"), d["cls"],
+                  tool("Configure cell", "gear", lambda tab=tab: self.configure_cell(tab)),
+                  tool("Configure matrix", "gear", lambda tab=tab: self.configure_matrix(tab)))
+        self._row(bl, QLabel("Matrix"), d["saved"],
+                  tool("Save matrix…", None, lambda tab=tab: self.save_matrix(tab)),
+                  tool("Delete saved", None, lambda tab=tab: self.delete_saved_matrix(tab)),
+                  d["autoplay"])
+        bl.addStretch(1)
+        return d
+
+    def _session_panel(self) -> QWidget:
+        f, sl = self._bar()
+        t = QLabel("Current Session")
+        t.setStyleSheet("font-weight: 700; font-size: 15px;")
+        sl.addWidget(t)
         self.sess_file = QLabel()
         self.sess_file.setStyleSheet("font-style: italic;")
         self.sess_codes = QLabel()
@@ -194,63 +275,24 @@ class MainWindow(QMainWindow):
         self.sess_codes.setToolTip("Language and variety codes, set in Settings → Metadata")
         self.sess_speaker = QComboBox()
         self.sess_speaker.setToolTip("Speaker for new tokens and recordings (may be empty)")
+        self.sess_speaker.currentTextChanged.connect(lambda t: setattr(self.prefs, "speaker", t))
         self.sess_date = QDateEdit(QDate.currentDate())
         self.sess_date.setDisplayFormat("yyyy-MM-dd")
         self.sess_date.setCalendarPopup(True)
-        self.sess_date.setToolTip("Collection date for new tokens; resets to today each time "
-                                  "Lemmatrix opens")
+        self.sess_date.setToolTip("Collection date for new tokens and recordings; resets to today "
+                                  "each time Lemmatrix opens")
         self.sess_nodate = QPushButton("No date")
         self.sess_nodate.setCheckable(True)
-        self.sess_nodate.setToolTip("Leave the collection date empty on new tokens")
+        self.sess_nodate.toggled.connect(self.sess_date.setDisabled)
         for w in (self.sess_file, self.sess_codes, self.sess_speaker):
             sl.addWidget(w)
         dr = QHBoxLayout()
         dr.addWidget(self.sess_date, 1)
         dr.addWidget(self.sess_nodate)
         sl.addLayout(dr)
-        sess.setMaximumWidth(260)
-        bottom.addWidget(sess)
-        rl.addLayout(bottom)
-        split.addWidget(right)
-        split.setSizes([480, 1020])
-
-        # ---- signals ---------------------------------------------------
-        # Refreshes are coalesced: many filter signals in a row give one redraw,
-        # and typing in a search box waits for a short pause.
-        self._refresh_timer = QTimer(self)
-        self._refresh_timer.setSingleShot(True)
-        self._refresh_timer.timeout.connect(self.refresh_matrix)
-        self._lemma_search_timer = QTimer(self)
-        self._lemma_search_timer.setSingleShot(True)
-        self._lemma_search_timer.setInterval(250)
-        self._lemma_search_timer.timeout.connect(
-            lambda: self.lemmas.proxy.set_text(self.lemma_search.text()))
-        self._token_search_timer = QTimer(self)
-        self._token_search_timer.setSingleShot(True)
-        self._token_search_timer.setInterval(250)
-        self._token_search_timer.timeout.connect(lambda: self._token_search(self.token_search.text()))
-        self.lemmas.filtersChanged.connect(self.schedule_refresh)
-        self.lemmas.currentEntryChanged.connect(self._entry_selected)
-        self.lemmas.entryActivated.connect(lambda e: self.edit_entry())
-        self.lemma_search.textChanged.connect(lambda _: self._lemma_search_timer.start())
-        self.tabs.currentChanged.connect(self._tab_changed)
-        self.add_token_btn.clicked.connect(self.add_token)
-        self.setup_btn.clicked.connect(self.setup_display)
-        self.filter_btn.clicked.connect(self.filter_tokens)
-        self.play_cell_btn.clicked.connect(self.play_cell)
-        self.matching.currentIndexChanged.connect(self._matching_changed)
-        self.token_search.textChanged.connect(lambda _: self._token_search_timer.start())
-        self.views.activated.connect(self._view_chosen)
-        self.save_view_btn.clicked.connect(self.save_view)
-        self.sess_speaker.currentTextChanged.connect(lambda t: setattr(self.prefs, "speaker", t))
-        self.sess_nodate.toggled.connect(self.sess_date.setDisabled)
-        p = self.matrix.paradigm
-        p.cellActivated.connect(self._cell_activated)
-        p.cellClicked.connect(self._cell_clicked)
-        p.switchRequested.connect(self.switch_axes)
-        self.matrix.all_view.doubleClicked.connect(self._row_activated)
-        self.matrix.all_view.clicked.connect(self._row_clicked)
-        self.matrix.all_model.edited.connect(self._cell_edited)
+        sl.addStretch(1)
+        f.setMaximumWidth(260)
+        return f
 
     def _build_menus(self):
         mb = self.menuBar()
@@ -263,33 +305,29 @@ class MainWindow(QMainWindow):
         self._act(f, "Save &as…", self.save_as, QKeySequence.SaveAs)
         f.addSeparator()
         self._act(f, "E&xit", self.close, QKeySequence.Quit)
-
         e = mb.addMenu("&Edit")
-        e.addAction(self.undo_action)
-        e.addAction(self.redo_action)
-
+        undo = self.doc.undo.createUndoAction(self, "Undo")
+        undo.setShortcut(QKeySequence.Undo)
+        redo = self.doc.undo.createRedoAction(self, "Redo")
+        redo.setShortcut(QKeySequence.Redo)
+        e.addAction(undo)
+        e.addAction(redo)
         s = mb.addMenu("&Settings")
         self._act(s, "&Metadata (language, variety, speakers)…", self.edit_metadata)
+        self._act(s, "&Fields…", self.edit_fields)
         self._act(s, "&Tag structure…", self.edit_tags)
         self._act(s, "&Settings…", self.edit_settings, QKeySequence.Preferences)
-
         t = mb.addMenu("&Tools")
         self._act(t, "Update all sound file names", self.update_all_names)
         self._act(t, "Check for duplicate file names", self.check_duplicates)
         self._act(t, "Open the sound folder", self.open_sound_folder)
-
         v = mb.addMenu("&View")
-        self.column_menu = v.addMenu("Lemma list columns")
-        self._act(v, "Swap rows and columns", self.switch_axes, "Ctrl+T")
-        self._act(v, "Set up token display…", self.setup_display)
-
+        self._act(v, "Swap rows and columns", lambda: self.switch_axes(self.tabs.currentIndex()), "Ctrl+T")
         a = mb.addMenu("&Analyze")
         x = a.addAction("Analysis tools arrive with the analysis engine (Stage 2)")
         x.setEnabled(False)
-
         h = mb.addMenu("&Help")
         self._act(h, "About Lemmatrix", self.about)
-
 
     def _act(self, menu, text, fn, shortcut=None):
         a = QAction(text, self)
@@ -299,9 +337,132 @@ class MainWindow(QMainWindow):
         menu.addAction(a)
         return a
 
-    def _connect_doc(self):
-        self.doc.changed.connect(self._doc_changed)
-        self.doc.dirtyChanged.connect(lambda d: self._update_title())
+    # ============================================================ columns
+    def _lemma_columns(self) -> list[Column]:
+        db = self.doc.db
+        s = db.settings
+        cols = [Column("ref", "Reference", lambda e: e.ref)]
+        for f in s.entry_fields:
+            if f.multilingual:
+                for lang in s.gloss_languages:
+                    cols.append(Column(f"{f.name}:{lang}", f"{f.title} ({lang})" if len(s.gloss_languages) > 1
+                                       else f.title, lambda e, n=f.name, l=lang: e.get(n, l)))
+            else:
+                cols.append(Column(f.name, f.title, lambda e, n=f.name: e.get(n), closed=f.closed,
+                                   tree=(lambda f=f: s.list_items(f)) if f.closed else None,
+                                   ipa=f.role == "lemma"))
+        return cols
+
+    def _default_lemma_keys(self) -> list[str]:
+        s = self.doc.db.settings
+        keys = ["ref"]
+        for f in s.entry_fields:
+            if f.role == "lemma":
+                keys.append(f.name)
+            elif f.role == "gloss":
+                keys.append(f"{f.name}:{s.primary_gloss}")
+            elif f.role == "word-class":
+                keys.append(f.name)
+        return keys
+
+    def _all_columns(self) -> list[Column]:
+        db = self.doc.db
+        s = db.settings
+        defaults = mx.default_names(db)
+        wcf = s.entry_field("word-class")
+        gf = s.entry_field("gloss")
+
+        def tag_tree():
+            from ..model import ListItem
+            out = []
+            for wc in s.tags.word_classes:
+                out.append(ListItem(wc.name, [self._group_item(g) for g in wc.groups]))
+            out.append(ListItem("All classes", [self._group_item(g) for g in s.tags.all_classes]))
+            return out
+
+        cols = [
+            Column("ref", "Reference", lambda r: r.entry.ref),
+            Column("lemma", "Lemma", lambda r: db.lemma(r.entry), ipa=True),
+            Column("gloss", "Gloss", lambda r: db.gloss(r.entry)),
+            Column("wordclass", wcf.title if wcf else "Word Class", lambda r: db.word_class(r.entry),
+                   closed=True, tree=lambda: s.list_items(wcf) if wcf else []),
+            Column("tags", "Tags", lambda r: list(r.token.tags), closed=True, tree=tag_tree, multi=True,
+                   unmarked=defaults, kind="chips",
+                   tooltip=lambda r: ", ".join(r.token.tags) or "Citation (no tags)"),
+            Column("drawing", "Pitch drawing", lambda r: r.token.get("Pitch"), kind="drawing"),
+        ]
+        for f in s.token_fields:
+            cols.append(Column(
+                "f:" + f.name, f.title,
+                (lambda r, n=f.name, ml=f.multilingual: r.token.get(n, s.primary_gloss if ml else None)),
+                closed=f.closed, tree=(lambda f=f: s.list_items(f)) if f.closed else None,
+                ipa=f.role in ("phonetic", "phonemic"),
+                edit=lambda r, text: None))
+        cols += [
+            Column("speaker", "Speaker", lambda r: r.token.speaker),
+            Column("date", "Date", lambda r: r.token.collected),
+            Column("file", "Sound file", lambda r: r.token.file or db.expected_filename(r.entry, r.token),
+                   color=lambda r: QColor("#888") if not r.token.file else
+                   (QColor("#c62828") if r.token.file != db.expected_filename(r.entry, r.token) else None),
+                   tooltip=lambda r: (f"Recorded as {r.token.file}\nExpected: "
+                                      f"{db.expected_filename(r.entry, r.token)}") if r.token.file
+                   else "Not recorded yet"),
+        ]
+        return cols
+
+    def _group_item(self, g):
+        from ..model import ListItem
+        return ListItem(g.name, [ListItem(t.name) for t in g.tags] + [self._group_item(x) for x in g.groups])
+
+    def _default_all_keys(self) -> list[str]:
+        keys = ["ref", "lemma", "tags", "drawing"]
+        keys += ["f:" + f.name for f in self.doc.db.settings.token_fields]
+        return keys + ["speaker", "date", "file"]
+
+    def _setup_columns(self):
+        db = self.doc.db
+        cols = self._lemma_columns()
+        saved = self.prefs.get_list("columns/lemma")
+        keys = [k for k in saved if any(c.key == k for c in cols)] or self._default_lemma_keys()
+        self.lemmas.set_columns(cols, keys)
+        self.lemmas.resizeColumnsToContents()
+        cols = self._all_columns()
+        saved = self.prefs.get_list("columns/alldata")
+        keys = [k for k in saved if any(c.key == k for c in cols)] or self._default_all_keys()
+        self.all_table.set_columns(cols, keys)
+        defaults = mx.default_names(db)
+        self.all_table.set_delegate("tags", ChipsDelegate(
+            lambda r: mx.chips(db, mx.marked(r.token.tags, defaults), db.word_class(r.entry) or None)
+            if r is not None else [], self.all_table))
+        self.all_table.set_delegate("drawing", DrawingDelegate(
+            lambda: (db.settings.pitch_low, db.settings.pitch_high), self.all_table))
+        self._all_sized = False
+
+    def configure_lemma_columns(self):
+        cols = self._lemma_columns()
+        dlg = ConfigureColumnsDialog(self, [(c.key, c.title) for c in cols], self.lemmas.visible_keys())
+        if dlg.exec():
+            self.prefs.set_list("columns/lemma", dlg.chosen())
+            self.lemmas.set_columns(cols, dlg.chosen())
+            self.lemmas.set_rows(self.doc.db.entries)
+            self.lemmas.resizeColumnsToContents()
+
+    def configure_all_columns(self):
+        cols = self._all_columns()
+        dlg = ConfigureColumnsDialog(self, [(c.key, c.title) for c in cols], self.all_table.visible_keys())
+        if dlg.exec():
+            self.prefs.set_list("columns/alldata", dlg.chosen())
+            self._setup_columns()
+            self.all_table.set_columns(cols, dlg.chosen())
+            db = self.doc.db
+            defaults = mx.default_names(db)
+            self.all_table.set_delegate("tags", ChipsDelegate(
+                lambda r: mx.chips(db, mx.marked(r.token.tags, defaults), db.word_class(r.entry) or None)
+                if r is not None else [], self.all_table))
+            self.all_table.set_delegate("drawing", DrawingDelegate(
+                lambda: (db.settings.pitch_low, db.settings.pitch_high), self.all_table))
+            self._all_sized = False
+            self.refresh()
 
     # ============================================================ database
     def load_database(self, db: Database):
@@ -310,25 +471,22 @@ class MainWindow(QMainWindow):
         self.doc.undo.clear()
         self.doc.undo.setClean()
         self.doc._settings_dirty = False
-        self.lemmas.set_database(db)
-        self.matrix.set_database(db)
-        self._all_sized = False
-        self.state = ViewState()
-        self.matrix.paradigm.state = self.state
-        self.tfilter = mx.TokenFilter()
+        self.configs.clear()
+        for v in (self.lt_view, self.tt_view):
+            v.set_database(db)
+        self._setup_columns()
+        self.lemmas.set_rows(db.entries)
         self.lemma_search.clear()
-        self.token_search.clear()
+        self.all_search.clear()
         self._fill_session()
-        self._fill_views()
-        self._fill_column_menu()
+        self._fill_classes()
         self.tabs.blockSignals(True)
-        self.tabs.setCurrentIndex(ENTRY_TAG)
+        self.tabs.setCurrentIndex(ALL_DATA)
         self.tabs.blockSignals(False)
-        self._set_mode(ENTRY_TAG)
+        self._tab_changed(ALL_DATA)
         if db.entries:
             self.lemmas.selectRow(0)
         self._update_title()
-        self.refresh_matrix()
 
     def _fill_session(self):
         db = self.doc.db
@@ -347,25 +505,21 @@ class MainWindow(QMainWindow):
             self.sess_speaker.setCurrentText(self.prefs.speaker)
         self.sess_speaker.blockSignals(False)
 
-    def _fill_column_menu(self):
-        self.column_menu.clear()
-        m = self.lemmas.model_
-        visible = [c[0] for c in m.columns]
-        for key, title, _ in m.all_columns:
-            a = self.column_menu.addAction(title)
-            a.setCheckable(True)
-            a.setChecked(key in visible)
-            a.toggled.connect(self._columns_changed)
-
-    def _columns_changed(self):
-        m = self.lemmas.model_
-        keys = [m.all_columns[i][0] for i, a in enumerate(self.column_menu.actions()) if a.isChecked()]
-        self.lemmas.set_visible_columns(keys or ["ref"])
-        self.refresh_matrix()
-
-    def _clear_lemma_filters(self):
-        self.lemma_search.clear()
-        self.lemmas.clear_filters()
+    def _fill_classes(self):
+        names = self.doc.db.settings.tags.word_class_names() + [mx.NO_CLASS]
+        for bar in (self.lt_bar, self.tt_bar):
+            cb = bar["cls"]
+            current = cb.currentData()
+            cb.blockSignals(True)
+            cb.clear()
+            for n in names:
+                cb.addItem(mx.class_label(n), n)
+            i = cb.findData(current) if current is not None else -1
+            if i < 0:
+                e = self.lemmas.current_row()
+                i = cb.findData(mx.class_of(self.doc.db, e)) if e else 0
+            cb.setCurrentIndex(max(0, i))
+            cb.blockSignals(False)
 
     def session_speaker(self) -> str:
         return self.sess_speaker.currentText()
@@ -379,7 +533,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"{'*' if self.doc.dirty else ''}{name} — Lemmatrix")
 
     def _doc_changed(self):
-        self.lemmas.refresh()
+        self.lemmas.set_rows(self.doc.db.entries)
         self.schedule_refresh()
         self._update_title()
 
@@ -388,167 +542,198 @@ class MainWindow(QMainWindow):
 
     # ============================================================== matrix
     def _tab_changed(self, i):
-        self.state.mode = i
-        self._set_mode(i)
-        self.refresh_matrix()
+        self.views.setCurrentIndex(i)
+        self.options.setCurrentIndex(i)
+        if i == LEMMA_TAG:
+            e = self.lemmas.current_row()
+            if e is not None:
+                self._set_class(LEMMA_TAG, mx.class_of(self.doc.db, e))
+        self.refresh()
 
-    def _set_mode(self, mode):
-        self.state.mode = mode
-        self.matrix.setCurrentIndex(0 if mode == ALL_DATA else 1)
-        self.matching.setEnabled(mode != ALL_DATA)
-        self.setup_btn.setEnabled(mode != ALL_DATA)
+    def _lemma_selected(self):
+        e = self.lemmas.current_row()
+        tab = self.tabs.currentIndex()
+        if e is not None and tab == LEMMA_TAG and mx.class_of(self.doc.db, e) != self.lt_bar["cls"].currentData():
+            self._set_class(LEMMA_TAG, mx.class_of(self.doc.db, e))
+            self.refresh()
+        elif tab == TAG_TAG:
+            self.refresh()
 
-    def _matching_changed(self):
-        self.state.matching = self.matching.currentData()
-        self.refresh_matrix()
+    def _set_class(self, tab, wc):
+        cb = (self.lt_bar if tab == LEMMA_TAG else self.tt_bar)["cls"]
+        i = cb.findData(wc)
+        if i >= 0:
+            cb.setCurrentIndex(i)
 
-    def _token_search(self, text):
-        self.tfilter.text = text.strip()
-        self.refresh_matrix()
+    def _class_chosen(self):
+        self.refresh()
 
-    def _entry_selected(self, entry):
-        if self.state.mode == TAG_TAG:
-            self.refresh_matrix()
+    def _class_for(self, tab) -> str:
+        if tab == TAG_TAG:
+            e = self.lemmas.current_row()
+            return mx.class_of(self.doc.db, e) if e is not None else mx.NO_CLASS
+        return self.lt_bar["cls"].currentData() or mx.NO_CLASS
 
-    def _tag_tag_groups(self, entry):
-        db = self.doc.db
-        wc = db.word_class(entry)
-        rg = find_group(db, self.state.row_group, wc) if self.state.row_group else None
-        cg = find_group(db, self.state.col_group, wc) if self.state.col_group else None
-        if rg is None or cg is None or rg is cg:
-            # Default: the first two groups this entry's tokens actually use.
-            used = []
-            groups = db.settings.tags.leaf_groups_for(wc)
-            for path, g in groups:
-                names = {t.name for t in g.tags if not t.default}
-                if any(names & set(t.tags) for t in entry.tokens):
-                    used.append(g)
-            for path, g in groups:
-                if g not in used:
-                    used.append(g)
-            if rg is None:
-                rg = used[0] if used else None
-            if cg is None or cg is rg:
-                cg = next((g for g in used if g is not rg), None)
-        return rg, cg
+    def config_for(self, tab) -> mx.MatrixConfig:
+        wc = self._class_for(tab)
+        key = (KINDS[tab], wc)
+        if key not in self.configs:
+            self.configs[key] = mx.MatrixConfig(kind=KINDS[tab], word_class=wc)
+        return self.configs[key]
 
-    def refresh_matrix(self):
-        db = self.doc.db
-        visible = self.lemmas.visible_entries()
-        self.lemma_count.setText(f"{len(visible)} of {len(db.entries)}")
-        self.matching.blockSignals(True)
-        self.matching.setCurrentIndex(0 if self.state.matching == mx.EXACTLY else 1)
-        self.matching.blockSignals(False)
-        notes = []
-        if any(self.tfilter.tags.values()) or self.tfilter.citation_only or self.tfilter.speakers \
-                or self.tfilter.dates:
-            notes.append("Token filters on")
-        self.filter_note.setText(" · ".join(notes))
-        if self.state.mode == ALL_DATA:
-            vis = set(map(id, visible))
-            rows = [(e, i) for e in db.entries if id(e) in vis
-                    for i, t in enumerate(e.tokens) if self.tfilter.accepts(t)]
-            self.matrix.all_model.set_rows(rows)
-            if not getattr(self, "_all_sized", False) and rows:
-                self.matrix.all_view.resizeColumnsToContents()   # first time only
-                self._all_sized = True
-            self.matrix_title.setText(f"{len(rows)} tokens")
-            self.layout_ = None
-            return
-        if self.state.mode == ENTRY_TAG:
-            lay = mx.entry_tag_layout(db, visible, self.state.headers, self.state.matching,
-                                      self.tfilter, self.state.entry_label)
-            self.matrix_title.setText(f"{len(visible)} entries")
-        else:
-            entry = self.lemmas.current_entry()
-            if entry is not None and entry not in visible:
-                entry = None
-            rg, cg = self._tag_tag_groups(entry) if entry else (None, None)
-            lay = mx.tag_tag_layout(db, entry, rg, cg, self.state.matching, self.tfilter)
-            if entry is not None:
-                self.matrix_title.setText(f"{entry.ref}  {db.lemma(entry)}  “{db.gloss(entry)}”"
-                                          + (f"   —   {rg.name} × {cg.name}" if rg and cg else ""))
-            else:
-                self.matrix_title.setText("")
-        if self.state.switched:
-            lay = lay.transposed()
-        self.layout_ = lay
-        self.matrix.paradigm.state = self.state
-        self.matrix.paradigm.set_layout(lay)
-        if lay.message and not lay.rows:
-            self.matrix_title.setText(lay.message)
+    def _fill_saved(self, tab):
+        cb = (self.lt_bar if tab == LEMMA_TAG else self.tt_bar)["saved"]
+        cfg = self.config_for(tab)
+        cb.blockSignals(True)
+        cb.clear()
+        cb.addItem("(current)" if (cfg.x or cfg.y) else
+                   ("(automatic)" if tab == LEMMA_TAG else "(not configured)"))
+        for m in self.doc.db.settings.matrices:
+            if m.kind == cfg.kind and m.word_class == cfg.word_class:
+                cb.addItem(m.name)
+        i = cb.findText(cfg.name) if cfg.name else 0
+        cb.setCurrentIndex(max(0, i))
+        cb.blockSignals(False)
 
-    def switch_axes(self):
-        if self.state.mode == ALL_DATA:
-            return
-        self.state.switched = not self.state.switched
-        self.refresh_matrix()
-
-    def setup_display(self):
-        if self.state.mode == ALL_DATA:
-            return
-        dlg = DisplaySetupDialog(self, self.doc.db, self.state, self.lemmas.visible_entries(),
-                                 self.lemmas.current_entry())
-        if dlg.exec():
-            dlg.apply()
-            self.refresh_matrix()
-
-    def filter_tokens(self):
-        dlg = TokenFilterDialog(self, self.doc.db, self.tfilter)
-        if dlg.exec():
-            dlg.apply()
-            self.refresh_matrix()
-
-    # ---- saved views ---------------------------------------------------
-    def _fill_views(self):
-        self.views.blockSignals(True)
-        self.views.clear()
-        self.views.addItem("(current layout)")
-        for v in self.doc.db.settings.views:
-            self.views.addItem(v.get("name", "?"))
-        self.views.blockSignals(False)
-
-    def _view_chosen(self, i):
+    def _saved_chosen(self, tab, i):
         if i <= 0:
             return
-        d = self.doc.db.settings.views[i - 1]
-        self.state = ViewState.from_dict(d)
-        self.matrix.paradigm.state = self.state
-        self.tabs.blockSignals(True)
-        self.tabs.setCurrentIndex(self.state.mode)
-        self.tabs.blockSignals(False)
-        self._set_mode(self.state.mode)
-        self.refresh_matrix()
+        cb = (self.lt_bar if tab == LEMMA_TAG else self.tt_bar)["saved"]
+        cfg = self.config_for(tab)
+        for m in self.doc.db.settings.matrices:
+            if m.kind == cfg.kind and m.word_class == cfg.word_class and m.name == cb.itemText(i):
+                self.configs[(cfg.kind, cfg.word_class)] = m.copy()
+        self.refresh()
 
-    def save_view(self):
-        name, ok = QInputDialog.getText(self, "Save view", "Name for this layout:",
-                                        text=self.views.currentText() if self.views.currentIndex() > 0 else "")
-        if not ok or not name.strip():
+    def refresh(self):
+        db = self.doc.db
+        tab = self.tabs.currentIndex()
+        visible = self.lemmas.visible_rows()
+        self.lemma_count.setText(f"{len(visible)} of {len(db.entries)} lemmas shown")
+        if tab == ALL_DATA:
+            vis = set(map(id, visible))
+            rows = [TokenRow(e, i) for e in db.entries if id(e) in vis for i in range(len(e.tokens))]
+            self.all_table.set_rows(rows)
+            if not getattr(self, "_all_sized", False) and rows:
+                self.all_table.resizeColumnsToContents()
+                self._all_sized = True
+            self._update_counts()
             return
-        views = self.doc.db.settings.views
-        d = self.state.to_dict(name.strip())
-        for i, v in enumerate(views):
-            if v.get("name") == d["name"]:
-                views[i] = d
-                break
+        cfg = self.config_for(tab)
+        self._fill_saved(tab)
+        if tab == LEMMA_TAG:
+            ents = mx.in_class(db, visible, cfg.word_class)
+            lay = mx.lemma_tag_layout(db, ents, cfg)
+            view = self.lt_view
+            total = len(mx.in_class(db, db.entries, cfg.word_class))
+            self.count_line.setText(f"{len(ents)} {mx.class_label(cfg.word_class)} lemmas shown "
+                                    f"of {total}  ·  {len(db.entries)} lemmas in all")
         else:
-            views.append(d)
+            e = self.lemmas.current_row()
+            if e is not None and e not in visible:
+                e = None
+            self._set_class(TAG_TAG, self._class_for(TAG_TAG))
+            lay = mx.tag_tag_layout(db, e, cfg)
+            view = self.tt_view
+            self.count_line.setText(f"{e.ref}  {db.lemma(e)}  “{db.gloss(e)}”  ·  "
+                                    f"{mx.class_label(mx.class_of(db, e))}" if e else "")
+        if lay.message:
+            self.count_line.setText((self.count_line.text() + "  ·  " if self.count_line.text() else "")
+                                    + lay.message)
+        if self.switched[tab]:
+            lay = lay.transposed()
+        self.layouts[tab] = lay
+        view.set_layout(lay, cfg.cell)
+
+    def _update_counts(self):
+        shown = self.all_table.proxy.rowCount()
+        total = self.all_table.model_.rowCount()
+        n = self.all_table.active_filters()
+        self.all_count.setText(f"{shown} of {total} tokens shown"
+                               + (f"  ·  {n} column filter{'s' if n != 1 else ''} on" if n else ""))
+        if self.tabs.currentIndex() == ALL_DATA:
+            self.count_line.setText(f"{shown} tokens shown")
+
+    def switch_axes(self, tab):
+        if tab == ALL_DATA:
+            return
+        self.switched[tab] = not self.switched[tab]
+        self.refresh()
+
+    def configure_cell(self, tab):
+        cfg = self.config_for(tab)
+        dlg = ConfigureCellDialog(self, self.doc.db, cfg.cell)
+        if dlg.exec():
+            cfg.cell = dlg.chosen()
+            self.refresh()
+
+    def configure_matrix(self, tab):
+        cfg = self.config_for(tab)
+        if tab == TAG_TAG and self.lemmas.current_row() is None:
+            QMessageBox.information(self, "Configure matrix", "Select a lemma first: its word class "
+                                    "decides which tags are available.")
+            return
+        ents = mx.in_class(self.doc.db, self.lemmas.visible_rows(), cfg.word_class)
+        start = cfg
+        if tab == LEMMA_TAG and not cfg.x:
+            start = cfg.copy()
+            start.x = mx.auto_specs(self.doc.db, ents)
+        dlg = ConfigureMatrixDialog(self, self.doc.db, start, ents)
+        if dlg.exec():
+            new = dlg.result_config()
+            new.name = ""
+            self.configs[(cfg.kind, cfg.word_class)] = new
+            self.refresh()
+
+    def save_matrix(self, tab):
+        cfg = self.config_for(tab)
+        if tab == TAG_TAG and not (cfg.x and cfg.y):
+            QMessageBox.information(self, "Save matrix", "Configure the matrix first.")
+            return
+        mats = self.doc.db.settings.matrices
+        existing = [m.name for m in mats if m.kind == cfg.kind and m.word_class == cfg.word_class]
+        name = ask_matrix_name(self, existing, cfg.name)
+        if not name:
+            return
+        saved = cfg.copy()
+        if tab == LEMMA_TAG and not saved.x:
+            saved.x = mx.auto_specs(self.doc.db, mx.in_class(self.doc.db, self.lemmas.visible_rows(),
+                                                             cfg.word_class))
+        saved.name = name
+        mats[:] = [m for m in mats if not (m.kind == saved.kind and m.word_class == saved.word_class
+                                           and m.name == name)] + [saved]
+        self.configs[(cfg.kind, cfg.word_class)] = saved.copy()
         self.doc.settings_changed()
-        self._fill_views()
-        self.views.setCurrentText(d["name"])
+
+    def delete_saved_matrix(self, tab):
+        cfg = self.config_for(tab)
+        if not cfg.name:
+            QMessageBox.information(self, "Delete saved matrix", "Choose a saved matrix first.")
+            return
+        if QMessageBox.question(self, "Delete saved matrix", f"Delete the saved matrix “{cfg.name}”?") \
+                != QMessageBox.Yes:
+            return
+        mats = self.doc.db.settings.matrices
+        mats[:] = [m for m in mats if not (m.kind == cfg.kind and m.word_class == cfg.word_class
+                                           and m.name == cfg.name)]
+        cfg.name = ""
+        self.doc.settings_changed()
 
     # ================================================ tokens and playback
-    def _slots(self) -> list[Slot]:
+    def _view(self, tab):
+        return self.lt_view if tab == LEMMA_TAG else self.tt_view
+
+    def _slots(self, tab) -> list[Slot]:
         """Every place Back/Next visits, in reading order."""
+        if tab == ALL_DATA:
+            return [Slot(r.entry, r.index) for r in self.all_table.visible_rows()]
+        lay = self.layouts.get(tab)
         slots = []
-        if self.state.mode == ALL_DATA:
-            for e, i in self.matrix.all_model.rows:
-                slots.append(Slot(e, i))
-            return slots
-        lay = self.layout_
         if lay is None:
             return slots
         for r, c in lay.reading_order():
+            if (r, c) in lay.greyed:
+                continue
             hits = lay.tokens(r, c)
             if hits:
                 for e, t in hits:
@@ -559,86 +744,139 @@ class MainWindow(QMainWindow):
                     slots.append(Slot(entry, None, tuple(tags), defaults=True))
         return slots
 
-    def _open_dialog(self, slots, index):
+    def _open_dialog(self, slots, index, tab):
         if not slots:
             return
+        self.dialog_autoplay = tab != ALL_DATA and \
+            (self.lt_bar if tab == LEMMA_TAG else self.tt_bar)["autoplay"].isChecked()
         dlg = TokenDialog(self, slots, index)
         dlg.exec()
-        self.refresh_matrix()
+        self.refresh()
 
-    def _cell_activated(self, r, c, n):
-        lay = self.layout_
-        if lay is None:
+    def _cell_activated(self, tab, r, c, n):
+        lay = self.layouts.get(tab)
+        if lay is None or (r, c) in lay.greyed:
             return
-        slots = self._slots()
+        slots = self._slots(tab)
         hits = lay.tokens(r, c)
         if hits and n >= 0:
             e, t = hits[n]
-            idx = next((i for i, s in enumerate(slots) if s.entry is e and s.index == e.tokens.index(t)), 0)
+            i = e.tokens.index(t)
+            idx = next((k for k, s in enumerate(slots) if s.entry is e and s.index == i), 0)
+        elif hits:
+            return
         else:
             entry, tags = lay.target(r, c)
             if entry is None:
                 return
-            idx = next((i for i, s in enumerate(slots) if s.entry is entry and s.index is None
+            idx = next((k for k, s in enumerate(slots) if s.entry is entry and s.index is None
                         and set(s.tags) == set(tags)), None)
             if idx is None:
                 slots.append(Slot(entry, None, tuple(tags), defaults=True))
                 idx = len(slots) - 1
             slots[idx].explicit = True
-        self._open_dialog(slots, idx)
+        self._open_dialog(slots, idx, tab)
 
-    def _row_activated(self, index):
-        key = self.matrix.all_model.columns[index.column()][0]
-        if key.startswith("f:"):
-            return                     # editing in place
-        self._open_dialog(self._slots(), index.row())
+    def _token_clicked(self, tab, r, c, n):
+        bar = self.lt_bar if tab == LEMMA_TAG else self.tt_bar
+        if n >= 0 and bar["autoplay"].isChecked():
+            self.play_selected()
 
-    def _row_clicked(self, index):
-        if self.doc.db.settings.play_cell_on_click:
-            self.play_cell()
-
-    def _cell_clicked(self, r, c):
-        if self.doc.db.settings.play_cell_on_click:
-            self.play_cell()
-
-    def _cell_edited(self, entry, i, name, text):
+    def _cell_edited(self, row, key, text):
         s = self.doc.db.settings
+        name = key[2:]
         f = s.token_field(name)
+        if f.role == "pitch":
+            from .. import pitch as pitchmod
+            text = pitchmod.normalise(text)
 
-        def change(e):
+        def change(e, i=row.index):
             e.tokens[i].set(name, text.strip(), s.primary_gloss if f.multilingual else None, f.multilingual)
-        self.doc.edit_entry(entry, change, f"Edit {name}")
+        self.doc.edit_entry(row.entry, change, f"Edit {f.title}")
+
+    def selected_token(self):
+        """(entry, token index) of the selected token in the current tab, or None."""
+        tab = self.tabs.currentIndex()
+        if tab == ALL_DATA:
+            r = self.all_table.current_row()
+            return (r.entry, r.index) if r else None
+        hit = self._view(tab).selected_token()
+        if hit:
+            e, t = hit
+            return e, e.tokens.index(t)
+        return None
 
     def add_token(self):
-        entry = None
-        if self.state.mode == ALL_DATA:
-            idx = self.matrix.all_view.currentIndex()
-            if idx.isValid():
-                entry = self.matrix.all_model.rows[idx.row()][0]
-        elif self.layout_ is not None:
-            idx = self.matrix.paradigm.currentIndex()
-            if idx.isValid():
-                entry = self.layout_.target(idx.row(), idx.column())[0]
-        entry = entry or self.lemmas.current_entry()
+        tab = self.tabs.currentIndex()
+        if tab != ALL_DATA:
+            view = self._view(tab)
+            lay = self.layouts.get(tab)
+            if view.selected and lay is not None:
+                r, c, _ = view.selected
+                if (r, c) in lay.greyed:
+                    return
+                entry, tags = lay.target(r, c)
+                if entry is not None:
+                    self._open_dialog([Slot(entry, None, tuple(tags), explicit=True, defaults=True)], 0, tab)
+                    return
+        row = self.all_table.current_row() if tab == ALL_DATA else None
+        entry = row.entry if row else self.lemmas.current_row()
         if entry is None:
-            QMessageBox.information(self, "Add new token", "Select an entry first.")
+            QMessageBox.information(self, "Add token", "Select a lemma first.")
             return
-        self._open_dialog([Slot(entry, None, (), explicit=True, defaults=True)], 0)
+        self._open_dialog([Slot(entry, None, (), explicit=True, defaults=True)], 0, tab)
 
-    def selected_tokens(self):
-        if self.state.mode == ALL_DATA:
-            idx = self.matrix.all_view.currentIndex()
-            return [self.matrix.all_model.token(idx.row())] if idx.isValid() else []
-        idx = self.matrix.paradigm.currentIndex()
-        if not idx.isValid() or self.layout_ is None:
-            return []
-        return self.layout_.tokens(idx.row(), idx.column())
+    def edit_token(self):
+        tab = self.tabs.currentIndex()
+        if tab != ALL_DATA:
+            view = self._view(tab)
+            if view.selected:
+                self._cell_activated(tab, *view.selected)
+            return
+        sel = self.selected_token()
+        if sel is None:
+            return
+        slots = self._slots(tab)
+        e, i = sel
+        idx = next((k for k, s in enumerate(slots) if s.entry is e and s.index == i), 0)
+        self._open_dialog(slots, idx, tab)
 
-    def play_cell(self):
-        folder = storage.sound_folder(self.doc.db)
-        paths = [folder / t.file for e, t in self.selected_tokens() if t.file]
+    def delete_token(self):
+        sel = self.selected_token()
+        if sel is None:
+            return
+        e, i = sel
+        t = e.tokens[i]
+        db = self.doc.db
+        tags = " + ".join(mx.chips(db, t.tags, db.word_class(e) or None)) or "citation"
+        with_file = bool(t.file) and self.prefs.delete_recordings_with_tokens
+        msg = f"Delete the {tags} token of {e.ref} {db.lemma(e)}?"
+        if with_file:
+            msg += f"\nIts recording ({t.file}) goes to the Recycle Bin."
+        if QMessageBox.question(self, "Delete token", msg) != QMessageBox.Yes:
+            return
+        if with_file:
+            path = storage.sound_folder(db) / t.file
+            self.player.stop()
+            if path.exists():
+                QFile.moveToTrash(str(path))
+        self.doc.edit_entry(e, lambda en, i=i: en.tokens.pop(i), f"Delete token from {e.ref}")
+
+    def play_selected(self):
+        tab = self.tabs.currentIndex()
+        db = self.doc.db
+        folder = storage.sound_folder(db)
+        paths = []
+        sel = self.selected_token()
+        if sel:
+            e, i = sel
+            if e.tokens[i].file:
+                paths = [folder / e.tokens[i].file]
+        elif tab != ALL_DATA and self._view(tab).selected:
+            r, c, _ = self._view(tab).selected
+            paths = [folder / t.file for _, t in self.layouts[tab].tokens(r, c) if t.file]
         if not paths:
-            self.statusBar().showMessage("Nothing recorded in this cell.", 3000)
+            self.statusBar().showMessage("Nothing recorded here.", 3000)
             return
         try:
             if not self.player.play(paths):
@@ -646,16 +884,57 @@ class MainWindow(QMainWindow):
         except audio.AudioError as exc:
             QMessageBox.warning(self, "Play", str(exc))
 
+    # ---- context menus -------------------------------------------------
+    def _menu(self, items, pos):
+        m = QMenu(self)
+        for item in items:
+            if item is None:
+                m.addSeparator()
+                continue
+            text, icon_name, fn = item
+            a = m.addAction(icon(icon_name, 16), text) if icon_name else m.addAction(text)
+            a.triggered.connect(fn)
+        m.exec(pos)
+
+    def _lemma_menu(self, row, pos):
+        if row is not None:
+            self.lemmas.select_row(row)
+        self._menu([("Add lemma", "add", self.add_entry), ("Delete lemma", "delete", self.delete_entry),
+                    ("Edit lemma", "edit", self.edit_entry), None,
+                    ("Configure columns", "gear", self.configure_lemma_columns),
+                    ("Clear all filters", None, self._clear_lemma_filters)], pos)
+
+    def _all_menu(self, row, pos):
+        if row is not None:
+            self.all_table.select_row(row)
+        self._menu([("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
+                    ("Edit token", "edit", self.edit_token), ("Play", "play", self.play_selected), None,
+                    ("Configure columns", "gear", self.configure_all_columns),
+                    ("Clear all filters", None, self._clear_all_filters)], pos)
+
+    def _matrix_menu(self, tab, pos):
+        self._menu([("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
+                    ("Edit token", "edit", self.edit_token), ("Play", "play", self.play_selected)], pos)
+
+    def _clear_lemma_filters(self):
+        self.lemma_search.clear()
+        self.lemmas.clear_filters()
+
+    def _clear_all_filters(self):
+        self.all_search.clear()
+        self.all_table.clear_filters()
+
     # ============================================================= entries
     def add_entry(self):
         dlg = EntryDialog(self, self.doc.db)
         if dlg.exec():
             e = dlg.new_entry(self.session_speaker(), self.session_date())
             self.doc.add_entry(e)
-            self.lemmas.select_entry(e)
+            self.lemmas.set_rows(self.doc.db.entries)
+            self.lemmas.select_row(e)
 
     def edit_entry(self):
-        e = self.lemmas.current_entry()
+        e = self.lemmas.current_row()
         if e is None:
             return
         dlg = EntryDialog(self, self.doc.db, e)
@@ -663,11 +942,11 @@ class MainWindow(QMainWindow):
             self.doc.edit_entry(e, dlg.apply, f"Edit {e.ref}")
 
     def delete_entry(self):
-        e = self.lemmas.current_entry()
+        e = self.lemmas.current_row()
         if e is None:
             return
         n = len(e.tokens)
-        if QMessageBox.question(self, "Delete entry",
+        if QMessageBox.question(self, "Delete lemma",
                                 f"Delete {e.ref} {self.doc.db.lemma(e)} and its {n} token(s)?\n"
                                 "Its recordings stay in the sound folder. You can undo this.") \
                 != QMessageBox.Yes:
@@ -681,7 +960,16 @@ class MainWindow(QMainWindow):
             dlg.apply()
             self.doc.settings_changed()
             self._fill_session()
+            self._setup_columns()
             self._maybe_update_names()
+
+    def edit_fields(self):
+        dlg = FieldsDialog(self, self.doc.db)
+        if dlg.exec():
+            if dlg.apply():
+                self.doc.undo.clear()             # renamed fields can't be undone safely
+            self._setup_columns()
+            self.doc.settings_changed()
 
     def edit_tags(self):
         dlg = TagStructureDialog(self, self.doc.db)
@@ -699,6 +987,9 @@ class MainWindow(QMainWindow):
                                                        [tag_renames.get(x, x) for x in t.tags])
             if tag_renames or class_renames:
                 self.doc.undo.clear()     # renames can't be undone safely
+            self.configs.clear()
+            self._fill_classes()
+            self._setup_columns()
             self.doc.settings_changed()
             self._maybe_update_names()
 
@@ -707,6 +998,7 @@ class MainWindow(QMainWindow):
         if dlg.exec():
             names_changed = dlg.apply()
             self._apply_autosave()
+            self.all_table.model_.ipa.setPointSize(self.prefs.ipa_size)
             self.lemmas.model_.ipa.setPointSize(self.prefs.ipa_size)
             self.doc.settings_changed()
             if names_changed:
@@ -766,10 +1058,11 @@ class MainWindow(QMainWindow):
         if not dups:
             QMessageBox.information(self, "Duplicate file names", "No two tokens share a file name.")
             return
+        db = self.doc.db
         lines = []
         for name, items in list(dups.items())[:40]:
-            refs = ", ".join(f"{e.ref} ({self.doc.db.settings.tags.display(self.doc.db.word_class(e), t.tags)}"
-                             f"{', ' + t.speaker if t.speaker else ''})" for e, t in items)
+            refs = ", ".join(f"{e.ref} ({' + '.join(mx.chips(db, t.tags, db.word_class(e) or None)) or 'citation'})"
+                             for e, t in items)
             lines.append(f"{name}: {refs}")
         QMessageBox.warning(self, "Duplicate file names",
                             "These tokens would get the same file name:\n\n" + "\n".join(lines))
@@ -838,7 +1131,9 @@ class MainWindow(QMainWindow):
         shutil.copy2(SAMPLE, dst)
         sounds = SAMPLE.parent / "Soundfiles"
         if sounds.exists():
-            shutil.copytree(sounds, target / "Soundfiles", dirs_exist_ok=True)
+            if (target / "Soundfiles").exists():
+                shutil.rmtree(target / "Soundfiles", ignore_errors=True)
+            shutil.copytree(sounds, target / "Soundfiles")
         self.open_file(str(dst))
 
     def save(self) -> bool:

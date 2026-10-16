@@ -13,8 +13,10 @@ import shutil
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from .model import (Database, Entry, FieldDef, Group, Metadata, Participant, RefCategory,
-                    Settings, Tag, TagStructure, Token, WordClass, nfc)
+from . import pitch as pitchmod
+from .matrix import CITATION, EXACT, LOOSE, MatrixConfig, Spec
+from .model import (Database, Entry, FieldDef, Group, ListItem, Metadata, Participant,
+                    RefCategory, Settings, Tag, TagStructure, Token, WordClass, nfc)
 
 FORMAT_VERSION = "1"
 BACKUPS_KEPT = 10
@@ -38,10 +40,18 @@ def _bool(value: str | None, default: bool = False) -> bool:
     return value.strip().lower() in ("yes", "true", "1", "on")
 
 
+def _load_item(el) -> ListItem:
+    return ListItem(nfc(el.get("name", "")), [_load_item(c) for c in el.findall("item")])
+
+
 def _load_field(el) -> FieldDef:
     f = FieldDef(name=el.get("name", ""), label=el.get("label", ""), role=el.get("role", ""),
-                 is_list=_bool(el.get("list")))
-    f.values = [_text(v) for v in el.findall("value") if _text(v)]
+                 closed=_bool(el.get("closed")) or _bool(el.get("list")))
+    f.items = [_load_item(i) for i in el.findall("item")]
+    # Older prototype files kept a flat <value> list.
+    f.items += [ListItem(_text(v)) for v in el.findall("value") if _text(v)]
+    if f.role == "word-class":
+        f.closed = True
     return f
 
 
@@ -73,24 +83,28 @@ def _load_tags(el) -> TagStructure:
 KNOWN_SETTINGS = {"entry-fields", "token-fields", "glosses", "tag-structure", "references",
                   "sounds", "pitch", "playback", "display"}
 
-VIEW_KEYS = ("mode", "matching", "switched", "row-group", "col-group", "cell-fields", "entry-label")
+def _load_specs(el, tag: str) -> list[Spec]:
+    out = []
+    for c in el.findall(tag):
+        match = c.get("match", EXACT)
+        tags = frozenset(nfc(t.strip()) for t in (c.get("tags") or "").split(",") if t.strip())
+        out.append(Spec(frozenset() if match == CITATION else tags, match))
+    return out
 
 
-def _load_views(el) -> list[dict]:
-    views = []
+def _load_matrices(el) -> list[MatrixConfig]:
+    out = []
     if el is None:
-        return views
-    for v in el.findall("view"):
-        d = {"name": nfc(v.get("name", ""))}
-        for k in VIEW_KEYS:
-            if v.get(k) is not None:
-                d[k] = nfc(v.get(k))
-        hs = v.findall("header")
-        if hs:
-            d["headers"] = [[nfc(t.strip()) for t in (h.get("tags") or "").split(",") if t.strip()]
-                            for h in hs]
-        views.append(d)
-    return views
+        return out
+    for m in el.findall("matrix"):
+        cfg = MatrixConfig(name=nfc(m.get("name", "")), kind=m.get("kind", "lemma-tag"),
+                           word_class=nfc(m.get("word-class", "")))
+        cfg.y = _load_specs(m, "y")
+        cfg.x = _load_specs(m, "x")
+        if m.get("cell") is not None:
+            cfg.cell = m.get("cell").split()
+        out.append(cfg)
+    return out
 
 
 def _load_settings(el) -> Settings:
@@ -121,7 +135,7 @@ def _load_settings(el) -> Settings:
         s.pitch_style = x.get("style", "contours")
     if (x := el.find("playback")) is not None:
         s.play_cell_on_click = _bool(x.get("play-cell-on-click"))
-    s.views = _load_views(el.find("display"))
+    s.matrices = _load_matrices(el.find("display"))
     s.extra = [child for child in el if child.tag not in KNOWN_SETTINGS]
     return s
 
@@ -162,6 +176,7 @@ def load(path: str | os.PathLike) -> Database:
     settings = _load_settings(root.find("settings"))
     entry_multi = {f.name for f in settings.entry_fields if f.multilingual}
     token_multi = {f.name for f in settings.token_fields if f.multilingual}
+    pitch_fields = [f.name for f in settings.token_fields if f.role == "pitch"]
 
     db = Database(metadata=md, settings=settings, path=path)
     for el in root.findall("entry"):
@@ -172,6 +187,9 @@ def load(path: str | os.PathLike) -> Database:
             t = Token(tags=tags, speaker=nfc(tel.get("speaker", "")),
                       collected=tel.get("collected", ""), file=nfc(tel.get("file", "")))
             _load_values(tel, t, token_multi, skip=())
+            for name in pitch_fields:               # older data: lone digits become 55
+                if t.values.get(name):
+                    t.values[name] = pitchmod.normalise(t.values[name])
             e.tokens.append(t)
         db.entries.append(e)
     return db
@@ -185,16 +203,23 @@ def _yes(b: bool) -> str:
     return "yes" if b else "no"
 
 
+def _save_item(parent, item: ListItem):
+    el = ET.SubElement(parent, "item", name=item.name)
+    for c in item.children:
+        _save_item(el, c)
+
+
 def _save_field(parent, f: FieldDef):
     el = ET.SubElement(parent, "field", name=f.name)
     if f.label:
         el.set("label", f.label)
     if f.role:
         el.set("role", f.role)
-    if f.is_list:
-        el.set("list", "yes")
-        for v in f.values:
-            ET.SubElement(el, "value").text = v
+    if f.closed:
+        el.set("closed", "yes")
+        if f.role != "word-class":           # the word classes live in the tag structure
+            for item in f.items:
+                _save_item(el, item)
 
 
 def _save_group(parent, g: Group):
@@ -272,16 +297,18 @@ def to_element(db: Database) -> ET.Element:
                                  "auto-update-names": _yes(s.auto_update_names)})
     ET.SubElement(st, "pitch", {"display-range": f"{s.pitch_low}-{s.pitch_high}",
                                 "style": s.pitch_style})
-    ET.SubElement(st, "playback", {"play-cell-on-click": _yes(s.play_cell_on_click)})
-    if s.views:
+    if s.matrices:
         disp = ET.SubElement(st, "display")
-        for v in s.views:
-            vel = ET.SubElement(disp, "view", name=v.get("name", ""))
-            for k in VIEW_KEYS:
-                if v.get(k) not in (None, ""):
-                    vel.set(k, str(v[k]))
-            for h in v.get("headers") or []:
-                ET.SubElement(vel, "header", tags=", ".join(h))
+        for m in s.matrices:
+            mel = ET.SubElement(disp, "matrix", {"name": m.name, "kind": m.kind,
+                                                 "word-class": m.word_class,
+                                                 "cell": " ".join(m.cell)})
+            for axis, specs in (("y", m.y), ("x", m.x)):
+                for sp in specs:
+                    a = {"match": sp.match}
+                    if sp.tags:
+                        a["tags"] = ", ".join(s.tags.sort(m.word_class or None, list(sp.tags)))
+                    ET.SubElement(mel, axis, a)
     for extra in s.extra:
         st.append(extra)
 

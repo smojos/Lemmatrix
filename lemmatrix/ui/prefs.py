@@ -52,6 +52,28 @@ class Prefs:
     def auto_play(self, v): self.q.setValue("playback/autoplay", bool(v))
 
     @property
+    def delete_recordings_with_tokens(self) -> bool:
+        return self._get("safety/delete_recordings_with_tokens", True, bool)
+
+    @delete_recordings_with_tokens.setter
+    def delete_recordings_with_tokens(self, v): self.q.setValue("safety/delete_recordings_with_tokens", bool(v))
+
+    def get_bool(self, key: str, default: bool = False) -> bool:
+        return self._get(key, default, bool)
+
+    def set_value(self, key: str, value):
+        self.q.setValue(key, value)
+
+    def get_list(self, key: str) -> list[str]:
+        v = self.q.value(key, [])
+        if isinstance(v, str):
+            return [x for x in v.split("|") if x]
+        return list(v or [])
+
+    def set_list(self, key: str, values: list[str]):
+        self.q.setValue(key, "|".join(values))
+
+    @property
     def confirm_delete(self) -> bool:
         return self._get("safety/confirm_delete", True, bool)
 

@@ -79,7 +79,7 @@ def test_changing_tags_renames_the_recording(win):
     dlg.tags.buttons["Ergative"].setChecked(True)
     dlg._ok()
     t = goat.tokens[i]
-    assert t.file == "LXX-VXX-SP1_D001_goat_SG-ERG.wav"
+    assert t.file == "LXX-VXX_D001_goat_SG-ERG.wav"
     assert (folder / t.file).exists() and not (folder / old).exists()
 
 
@@ -94,16 +94,111 @@ def test_tag_buttons_are_exclusive_within_a_group(win):
     dlg.reject()
 
 
-def test_matrix_modes_render(win):
-    from lemmatrix.ui.matrix_view import ALL_DATA, ENTRY_TAG, TAG_TAG
-    for mode in (ALL_DATA, TAG_TAG, ENTRY_TAG):
-        win.tabs.setCurrentIndex(mode)
-    assert win.layout_ is not None and win.layout_.rows
-    slots = win._slots()
-    assert slots and all(s.entry is not None for s in slots)
+def test_matrix_tabs_render(win):
+    from lemmatrix import matrix as mx
+    from lemmatrix.ui.main_window import ALL_DATA, LEMMA_TAG, TAG_TAG
+    assert win.tabs.currentIndex() == ALL_DATA                   # All data is the default
+    assert win.all_table.model_.rowCount() > 0
+    win.lemmas.select_row(win.doc.db.entry_by_ref("D001"))
+    win.tabs.setCurrentIndex(LEMMA_TAG)
+    lay = win.layouts[LEMMA_TAG]
+    assert lay.rows and all(mx.class_of(win.doc.db, r.entry) == "NOUN" for r in lay.rows)
+    assert "NOUN lemmas shown" in win.count_line.text()
+    win.tabs.setCurrentIndex(TAG_TAG)
+    assert win.layouts[TAG_TAG].message == "Please configure a matrix."
+    cfg = win.config_for(TAG_TAG)
+    cfg.y = [mx.Spec(frozenset({"Singular"})), mx.Spec(frozenset({"Plural"}))]
+    cfg.x = [mx.Spec(frozenset()), mx.Spec(frozenset({"Genitive"}))]
+    win.refresh()
+    lay = win.layouts[TAG_TAG]
+    assert len(lay.rows) == 2 and lay.tokens(1, 1)               # PL + GEN exists for goat
+    assert all(s.entry is not None for s in win._slots(TAG_TAG))
+
+
+def test_selecting_a_verb_switches_matrix_class(win):
+    from lemmatrix.ui.main_window import LEMMA_TAG
+    win.tabs.setCurrentIndex(LEMMA_TAG)
+    win.lemmas.select_row(win.doc.db.entry_by_ref("V001"))
+    assert win.lt_bar["cls"].currentData() == "VERB"
+    assert all(r.entry.ref.startswith("V") for r in win.layouts[LEMMA_TAG].rows)
+
+
+def test_tag_filter_in_all_data(win):
+    from lemmatrix import filters as fl
+    t = win.all_table
+    total = t.proxy.rowCount()
+    t.proxy.set_filter("tags", fl.ChoiceFilter({"Plural"}))
+    some = t.proxy.rowCount()
+    t.proxy.set_filter("tags", fl.ChoiceFilter({"Plural"}, fl.NONE))
+    rest = t.proxy.rowCount()
+    assert 0 < some < total and some + rest == total
+    t.proxy.set_filter("tags", fl.ChoiceFilter({"Plural", "Genitive"}, fl.EXACTLY))
+    assert t.proxy.rowCount() == 3                               # goat, lion and duck PL + GEN
+    t.clear_filters()
+    assert t.proxy.rowCount() == total
+
+
+def test_delete_token_recycles_recording(win, monkeypatch):
+    from PySide6.QtCore import QFile
+    trashed = []
+    monkeypatch.setattr(QFile, "moveToTrash", lambda path: trashed.append(path) or True)
+    goat = win.doc.db.entry_by_ref("D001")
+    i = next(i for i, t in enumerate(goat.tokens) if t.file)
+    n = len(goat.tokens)
+    win.all_table.select_row(next(r for r in win.all_table.model_.rows if r.entry is goat and r.index == i))
+    win.delete_token()
+    assert len(goat.tokens) == n - 1 and len(trashed) == 1
+    win.doc.undo.undo()
+    assert len(goat.tokens) == n
+    win.prefs.delete_recordings_with_tokens = False
+    win.refresh()
+    win.all_table.select_row(next(r for r in win.all_table.model_.rows if r.entry is goat and r.index == i))
+    win.delete_token()
+    assert len(trashed) == 1                                     # kept this time
+    win.prefs.delete_recordings_with_tokens = True
 
 
 def test_save_and_reload(win):
     win.save()
     back = storage.load(win.doc.db.path)
     assert storage.to_string(back) == storage.to_string(win.doc.db)
+
+
+def test_fields_dialog_renames_and_adds(win):
+    from lemmatrix.ui.fields_dialog import FieldsDialog
+    db = win.doc.db
+    dlg = FieldsDialog(win, db)
+    lemma = dlg.lists["lemma"]
+    tone = next(f for f in lemma if f.name == "ToneClass")
+    tone.name = "Tone"
+    dlg.accept()
+    assert dlg.result() == 1                                     # accepted
+    assert dlg.apply()                                           # a rename happened
+    goat = db.entry_by_ref("D001")
+    assert goat.get("Tone") == "L/H" and not goat.get("ToneClass")
+    dlg._preview()
+    assert "<Tone>" in dlg.preview.toPlainText()
+    win._setup_columns()
+    assert any(c.key == "Tone" for c in win.lemmas.model_.all_columns)
+
+
+def test_configure_matrix_dialog_round_trip(win):
+    from lemmatrix import matrix as mx
+    from lemmatrix.ui.matrix_dialogs import ConfigureMatrixDialog
+    cfg = mx.MatrixConfig(kind=mx.TAG_TAG, word_class="VERB", y=[mx.Spec(frozenset({"1SG.A"}))],
+                          x=[mx.Spec.citation()])
+    dlg = ConfigureMatrixDialog(win, win.doc.db, cfg)
+    out = dlg.result_config()
+    assert out.y == cfg.y and out.x == cfg.x
+
+
+def test_save_matrix_is_stored_with_its_class(win, monkeypatch):
+    from lemmatrix.ui import main_window
+    from lemmatrix.ui.main_window import LEMMA_TAG
+    monkeypatch.setattr(main_window, "ask_matrix_name", lambda *a, **k: "Noun overview")
+    win.lemmas.select_row(win.doc.db.entry_by_ref("D001"))
+    win.tabs.setCurrentIndex(LEMMA_TAG)
+    win.save_matrix(LEMMA_TAG)
+    saved = win.doc.db.settings.matrices
+    assert [m.name for m in saved] == ["Noun overview"] and saved[0].word_class == "NOUN"
+    assert saved[0].x                                            # automatic columns were fixed

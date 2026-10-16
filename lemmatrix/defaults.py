@@ -66,9 +66,9 @@ def default_settings() -> Settings:
     s.entry_fields = [
         FieldDef("Lemma", role="lemma"),
         FieldDef("Gloss", role="gloss"),
-        FieldDef("WordClass", "Word Class", role="word-class"),
-        FieldDef("ToneClass", "Tone Class", is_list=True),
-        FieldDef("InflectionClass", "Inflection Class", is_list=True),
+        FieldDef("WordClass", "Word Class", role="word-class", closed=True),
+        FieldDef("ToneClass", "Tone Class", closed=True),
+        FieldDef("InflectionClass", "Inflection Class", closed=True),
         FieldDef("Comment"),
     ]
     s.token_fields = [

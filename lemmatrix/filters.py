@@ -1,0 +1,127 @@
+"""Column filters for the lemma list and All data (no Qt here).
+
+Every column filter is one of:
+    None           show all
+    Blanks()       empty values only
+    NonBlanks()    non-empty values only
+    TextFilter     "Filter for…" on open fields
+    ChoiceFilter   "Choose…" on closed fields (lists, word class, tags)
+"""
+
+from __future__ import annotations
+
+import re
+import unicodedata
+from dataclasses import dataclass, field
+
+ANYWHERE, WHOLE, START, END, REGEX = "anywhere", "whole", "start", "end", "regex"
+ANY, NONE, EXACTLY = "any", "none", "exactly"
+
+
+def fold_diacritics(text: str) -> str:
+    """Remove combining marks and modifier letters (ʰ ʷ ʲ ː …), keep base letters."""
+    out = []
+    for ch in unicodedata.normalize("NFD", text):
+        if unicodedata.combining(ch):
+            continue
+        if unicodedata.category(ch) == "Lm":       # modifier letters: ʰ ʷ ʲ ˠ ˤ ː ˑ ʼ …
+            continue
+        out.append(ch)
+    return unicodedata.normalize("NFC", "".join(out))
+
+
+@dataclass
+class Blanks:
+    def describe(self) -> str:
+        return "Blanks"
+
+
+@dataclass
+class NonBlanks:
+    def describe(self) -> str:
+        return "Non-blanks"
+
+
+@dataclass
+class TextFilter:
+    text: str
+    mode: str = ANYWHERE
+    match_case: bool = False
+    match_diacritics: bool = False
+
+    def _prep(self, s: str) -> str:
+        if not self.match_diacritics:
+            s = fold_diacritics(s)
+        if not self.match_case:
+            s = s.casefold()
+        return s
+
+    def compiled(self):
+        if self.mode != REGEX:
+            return None
+        flags = 0 if self.match_case else re.IGNORECASE
+        return re.compile(self.text, flags)
+
+    def matches(self, value: str) -> bool:
+        value = value or ""
+        if self.mode == REGEX:
+            try:
+                rx = self.compiled()
+            except re.error:
+                return False
+            target = value if self.match_diacritics else fold_diacritics(value)
+            return bool(rx.search(target))
+        v, t = self._prep(value), self._prep(self.text)
+        if self.mode == WHOLE:
+            return v == t
+        if self.mode == START:
+            return v.startswith(t)
+        if self.mode == END:
+            return v.endswith(t)
+        return t in v
+
+    def describe(self) -> str:
+        how = {ANYWHERE: "contains", WHOLE: "is", START: "starts with", END: "ends with",
+               REGEX: "matches"}[self.mode]
+        return f'{how} “{self.text}”'
+
+
+@dataclass
+class ChoiceFilter:
+    selected: set = field(default_factory=set)
+    mode: str = ANY                 # any, none, exactly (exactly: tags only)
+
+    def matches_values(self, values: set, unmarked: set = frozenset()) -> bool:
+        """values: the item(s) a row has (one for a list field, several for tags)."""
+        if self.mode == NONE:
+            return not (values & self.selected)
+        if self.mode == EXACTLY:
+            marked_vals = values - unmarked
+            marked_sel = self.selected - unmarked
+            return self.selected <= values and marked_vals == marked_sel
+        return bool(values & self.selected)
+
+    def describe(self) -> str:
+        how = {ANY: "any of", NONE: "none of", EXACTLY: "exactly"}[self.mode]
+        items = ", ".join(sorted(self.selected))
+        return f"{how} {items}" if items else how
+
+
+def matches(flt, value, unmarked: set = frozenset()) -> bool:
+    """Apply a column filter. value is a string, or a set/list for multi-valued columns."""
+    if flt is None:
+        return True
+    multi = isinstance(value, (set, frozenset, list, tuple))
+    empty = (not value) if multi else not (value or "").strip()
+    if isinstance(flt, Blanks):
+        return empty
+    if isinstance(flt, NonBlanks):
+        return not empty
+    if isinstance(flt, TextFilter):
+        if multi:
+            return any(flt.matches(v) for v in value)
+        return flt.matches(value)
+    if isinstance(flt, ChoiceFilter):
+        vals = set(value) if multi else ({value} if value else set())
+        return flt.matches_values(vals, unmarked)
+    return True
