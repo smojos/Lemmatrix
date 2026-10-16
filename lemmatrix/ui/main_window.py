@@ -428,8 +428,8 @@ class MainWindow(QMainWindow):
             # shown: the recording, or the name it would get, in grey.
             Column("file", "Sound file", lambda r: r.token.file if r.token.file in self.sound_files else "",
                    display=lambda r: r.token.file or db.expected_filename(r.entry, r.token),
-                   color=lambda r: QColor("#888") if not r.token.file else
-                   (QColor("#c62828") if (r.token.file not in self.sound_files or
+                   color=lambda r: theme.colour("dim") if not r.token.file else
+                   (theme.colour("error") if (r.token.file not in self.sound_files or
                                           r.token.file != db.expected_filename(r.entry, r.token)) else None),
                    tooltip=lambda r: ("Not recorded yet" if not r.token.file else
                                       f"{r.token.file} isn't in the sound folder" if r.token.file not in self.sound_files

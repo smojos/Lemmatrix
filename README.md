@@ -56,7 +56,8 @@ If something goes wrong, a message box shows the details, and they're also writt
 - **Edit menu:** metadata, Fields (lemma and token fields, open or closed, with an XML preview),
   tag structure (duplicate names and codes show in red), and Settings: General (autosave),
   Sound (file-name pattern, recording, deleting recordings with their tokens), Display (light
-  or dark theme, accent colour, IPA font size), Pitch (display range, trace colour).
+  or dark theme, accent colour for highlights, chips and pitch traces, IPA font size), Pitch
+  (display range).
 - **Undo and redo** for all changes to entries and tokens.
 
 ## Not in this version yet

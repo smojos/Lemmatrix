@@ -109,13 +109,6 @@ class Prefs:
     @accent.setter
     def accent(self, v): self.q.setValue("display/accent", v)
 
-    @property
-    def pitch_colour(self) -> str:
-        return self._get("display/pitch_colour", "#1f4fd1")
-
-    @pitch_colour.setter
-    def pitch_colour(self, v): self.q.setValue("display/pitch_colour", v)
-
     # the last view of each database (tab, lemma, matrices), as JSON
     @staticmethod
     def _view_key(path: str) -> str:

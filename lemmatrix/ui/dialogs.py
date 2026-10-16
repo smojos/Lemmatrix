@@ -347,12 +347,9 @@ class PreferencesDialog(QDialog):
         self.theme.addItem("Light", "light")
         self.theme.addItem("Dark", "dark")
         self.theme.setCurrentIndex(max(0, self.theme.findData(prefs.theme)))
-        self.theme.setToolTip("The interface only: the lemma list, All data and matrices stay "
-                              "black on white")
+        self.theme.setToolTip("Light or dark, for the whole program")
         self.accent = ColourButton(prefs.accent, theme.DEFAULT_ACCENT,
-                                   "Selected tabs, highlights and tag chips")
-        self.pitch_colour = ColourButton(prefs.pitch_colour, theme.DEFAULT_PITCH,
-                                         "The colour of drawn pitch traces")
+                                   "Selected tabs, highlights, tag chips and pitch traces")
 
         def page(title, sections):
             w = QWidget()
@@ -378,8 +375,7 @@ class PreferencesDialog(QDialog):
         page("Display", [("This computer", [("Theme", self.theme), ("Accent colour", self.accent),
                                             ("IPA font size", self.ipa)])])
         page("Pitch", [("This database", [("Lowest pitch digit", self.low),
-                                          ("Highest pitch digit", self.high)]),
-                       ("This computer", [("Pitch trace colour", self.pitch_colour)])])
+                                          ("Highest pitch digit", self.high)])])
         lay.addWidget(_buttons(self))
 
     def accept(self):
@@ -414,7 +410,6 @@ class PreferencesDialog(QDialog):
         p.ipa_size = self.ipa.value()
         p.theme = self.theme.currentData()
         p.accent = self.accent.colour()
-        p.pitch_colour = self.pitch_colour.colour()
         return old != (s.filename_pattern, s.tag_separator)
 
 
@@ -445,7 +440,7 @@ class TagStructureDialog(QDialog):
         self.tree.itemChanged.connect(self._changed)
         lay.addWidget(self.tree, 1)
         self.problem_note = QLabel()
-        self.problem_note.setStyleSheet("color: #d32f2f;")
+        self.problem_note.setStyleSheet(f"color: {theme.colour('error_text').name()};")
         lay.addWidget(self.problem_note)
         row = QHBoxLayout()
         for text, fn in (("Add word class", self._add_wc), ("Add group", self._add_group),
@@ -541,7 +536,7 @@ class TagStructureDialog(QDialog):
 
     def _mark_problems(self):
         bad_names, bad_codes, missing = self._problems()
-        red, pale = QBrush(QColor("#d32f2f")), QBrush(QColor("#fde0e0"))
+        red, pale = QBrush(theme.colour("error_text")), QBrush(theme.colour("error_fill"))
         self.tree.blockSignals(True)
         for top in (self.tree.topLevelItem(i) for i in range(self.tree.topLevelItemCount())):
             for it in self._tag_items(top):

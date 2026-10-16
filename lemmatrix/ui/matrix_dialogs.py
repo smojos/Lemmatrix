@@ -127,7 +127,7 @@ class SpecDelegate(QStyledItemDelegate):
         painter.save()
         f = option.font
         kind = {mx.CITATION: "Citation", mx.EXACT: "Exact", mx.LOOSE: "Loose"}[spec.match]
-        painter.setPen(Qt.black)
+        painter.setPen(theme.colour("text"))
         painter.drawText(QRectF(option.rect).adjusted(8, 0, 0, 0), Qt.AlignVCenter, kind)
         if spec.match != mx.CITATION:
             _, h = chip_metrics(f)

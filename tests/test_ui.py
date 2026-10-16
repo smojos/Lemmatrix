@@ -392,19 +392,21 @@ def test_settings_tabs_theme_and_pitch(win):
     assert [tabs.tabText(i) for i in range(tabs.count())] == ["General", "Sound", "Display", "Pitch"]
     dlg.theme.setCurrentIndex(dlg.theme.findData("dark"))
     dlg.accent.set_colour(theme.QColor("#2e9e44"))
-    dlg.pitch_colour.set_colour(theme.QColor("#aa0000"))
     dlg.apply()
     try:
         theme.from_prefs(win.prefs)
         win._restyle()
-        assert theme.pitch_colour().name() == "#aa0000"
         assert QApplication.instance().palette().color(QPalette.Window).lightness() < 80
-        # the data views stay black on white
-        assert win.all_table.palette().color(QPalette.Base).name() == "#ffffff"
-        assert win.lt_view.palette().color(QPalette.Text).name() == "#111111"
+        # the data views are dark too, with light text
+        assert win.all_table.palette().color(QPalette.Base).lightness() < 60
+        assert win.lt_view.palette().color(QPalette.Text).lightness() > 200
+        # pitch traces follow the accent, brightened enough to show on dark grey
+        p = theme.colour("pitch")
+        assert p.green() > p.red() and p.lightness() > theme.accent().lightness()
     finally:
-        win.prefs.theme, win.prefs.accent, win.prefs.pitch_colour = "light", "#3a78d4", "#1f4fd1"
+        win.prefs.theme, win.prefs.accent = "light", "#3a78d4"
         theme.from_prefs(win.prefs)
+    assert theme.colour("pitch").name() == "#3a78d4"
     menus = [a.text() for a in win.menuBar().actions()]
     assert "&Settings" not in menus
     edit = next(a.menu() for a in win.menuBar().actions() if a.text() == "&Edit")

@@ -28,7 +28,7 @@ def draw_sound_mark(p: QPainter, x: float, y: float, state: str):
     """A small speaker: green = recording on disk, red = recorded but missing, grey outline = none."""
     from PySide6.QtCore import QPointF
     from PySide6.QtGui import QPolygonF
-    color = {"ok": QColor("#2e9e44"), "missing": QColor("#d93030")}.get(state, QColor("#b5b5b5"))
+    color = theme.colour({"ok": "sound_ok", "missing": "sound_missing"}.get(state, "no_sound"))
     p.save()
     p.setRenderHint(QPainter.Antialiasing)
     body = QPolygonF([QPointF(x, y + 4), QPointF(x + 3, y + 4), QPointF(x + 7, y + 1),
@@ -141,13 +141,13 @@ class ChipHeader(QHeaderView):
         painter.save()
         opt_rect = QRect(rect)
         painter.fillRect(opt_rect, self.palette().button())
-        painter.setPen(QPen(QColor("#c8c8c8")))
+        painter.setPen(QPen(theme.colour("grid")))
         painter.drawRect(opt_rect.adjusted(0, 0, -1, -1))
         _, h = chip_metrics(self.chip_font)
         x = paint_chips(painter, rect.left() + 6, rect.center().y() - h / 2, chips or ["(no tags)"],
                         self.chip_font, max_right=rect.right() - 4)
         if self.model().headerData(index, self.orientation(), Qt.UserRole + 1):
-            painter.setPen(QColor("#444"))
+            painter.setPen(theme.colour("muted"))
             painter.drawText(QRectF(x, rect.top(), 30, rect.height()), Qt.AlignVCenter, "…")
         painter.restore()
 
@@ -243,14 +243,14 @@ class TokenCellDelegate(QStyledItemDelegate):
         rect = option.rect
         if (r, c) in lay.greyed:
             painter.setClipRect(rect)
-            painter.fillRect(rect, QColor("#e4e4e4"))
-            painter.setPen(QPen(QColor("#cfcfcf"), 1))
+            painter.fillRect(rect, theme.colour("greyed"))
+            painter.setPen(QPen(theme.colour("hatch"), 1))
             for k in range(-rect.height(), rect.width(), 10):
                 painter.drawLine(rect.left() + k, rect.bottom(), rect.left() + k + rect.height(), rect.top())
             painter.restore()
             return
         if option.state & QStyle.State_Selected:
-            painter.fillRect(rect, theme.tint(0.92))
+            painter.fillRect(rect, theme.colour("selected_cell"))
         hits = index.data(Qt.UserRole) or []
         if not hits:
             painter.restore()
@@ -264,8 +264,8 @@ class TokenCellDelegate(QStyledItemDelegate):
             y = rect.top() + PAD
             state = "none" if not t.file else ("ok" if t.file in self.view.sound_files else "missing")
             if sel == (r, c, n):
-                painter.setPen(QPen(theme.tint(0.25), 1.5))
-                painter.setBrush(theme.tint(0.84))
+                painter.setPen(QPen(theme.colour("selected_token_line"), 1.5))
+                painter.setBrush(theme.colour("selected_token"))
                 painter.drawRoundedRect(QRectF(x - 5, rect.top() + 3, w + 10, rect.height() - 6), 5, 5)
             if chip_row:
                 chips = self.chips_for(r, c, t)
@@ -281,7 +281,7 @@ class TokenCellDelegate(QStyledItemDelegate):
                 fm = QFontMetrics(font)
                 text = self._text(t, name)
                 painter.setFont(font)
-                painter.setPen(QColor("#111") if text else QColor("#bbb"))
+                painter.setPen(theme.colour("text") if text else theme.colour("faint"))
                 painter.drawText(QRect(int(x), int(y), int(w) + 2, fm.height()),
                                  Qt.AlignLeft | Qt.AlignVCenter, text or "—")
                 y += fm.height() + 1

@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QButtonGroup, QC
 
 from .. import filters as fl
 from ..model import ListItem
+from . import theme
 from .icons import icon
 from .widgets import ipa_font
 
@@ -48,7 +49,7 @@ class FilterForDialog(QDialog):
         grid.addWidget(self.diacritics, 1, 2)
         lay.addLayout(grid)
         self.error = QLabel()
-        self.error.setStyleSheet("color: #c62828;")
+        self.error.setStyleSheet(f"color: {theme.colour('error').name()};")
         lay.addWidget(self.error)
         b = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         b.accepted.connect(self.accept)

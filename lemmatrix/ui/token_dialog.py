@@ -92,7 +92,7 @@ class TokenDialog(QDialog):
             self.edits[f.name] = ed
             row += 1
         self.pitch_note = QLabel()
-        self.pitch_note.setStyleSheet("color: #b26a00;")
+        self.pitch_note.setStyleSheet(f"color: {theme.colour('warning').name()};")
         left.addWidget(self.pitch_note, row, 1)
         left.setRowStretch(row + 1, 1)
         lw = QWidget()
@@ -124,7 +124,7 @@ class TokenDialog(QDialog):
         self.filename.setTextInteractionFlags(Qt.TextSelectableByMouse)
         rl.addWidget(self.filename, 0, 0, 1, 5)
         self.name_note = QLabel()
-        self.name_note.setStyleSheet("color: #c62828;")
+        self.name_note.setStyleSheet(f"color: {theme.colour('error').name()};")
         rl.addWidget(self.name_note, 1, 0, 1, 5)
         rl.addWidget(QLabel("Speaker"), 2, 3, Qt.AlignRight)
         self.speaker = QComboBox()
@@ -449,7 +449,7 @@ class TokenDialog(QDialog):
         if self.recorder:
             self.meter.setValue(int(min(1.0, self.recorder.level) * 100))
             clip = self.recorder.level >= 0.99
-            self.meter.setStyleSheet("QProgressBar::chunk { background: %s; }" % ("#c62828" if clip else "#43a047"))
+            self.meter.setStyleSheet("QProgressBar::chunk { background: %s; }" % (theme.colour("error").name() if clip else theme.colour("sound_ok").name()))
 
     def _play(self):
         if self.recorder:

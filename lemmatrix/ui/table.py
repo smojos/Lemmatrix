@@ -39,7 +39,6 @@ class Column:
     color: Callable | None = None
 
 
-READ_ONLY = QColor("#ececec")
 
 
 def _text(value) -> str:
@@ -100,7 +99,7 @@ class RowModel(QAbstractTableModel):
         if role == Qt.ForegroundRole and col.color:
             return col.color(row)
         if role == Qt.BackgroundRole and not col.edit:
-            return READ_ONLY            # grey: not editable here
+            return theme.colour("read_only")     # grey: not editable here
         return None
 
     def flags(self, index):
@@ -201,7 +200,7 @@ class ChipsDelegate(QStyledItemDelegate):
         labels = self.labels(row)
         if not labels:
             painter.save()
-            painter.setPen(QColor("#888"))
+            painter.setPen(theme.colour("dim"))
             painter.drawText(option.rect.adjusted(6, 0, 0, 0), Qt.AlignVCenter, "Citation")
             painter.restore()
             return
