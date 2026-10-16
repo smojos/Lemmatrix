@@ -514,3 +514,11 @@ def test_export_csv(win, tmp_path, monkeypatch):
     rows = list(csv.reader(open(out, encoding="utf-8-sig")))
     assert rows[0][1:] == ["Citation", "PL"]
     assert rows[1][0].startswith("D001") and "goat" in rows[1][1]
+
+
+def test_app_icon_has_every_size(app):
+    from lemmatrix.ui.icons import app_icon
+    ic = app_icon()
+    assert not ic.isNull()
+    sizes = {(s.width(), s.height()) for s in ic.availableSizes()}
+    assert {(16, 16), (32, 32), (256, 256)} <= sizes

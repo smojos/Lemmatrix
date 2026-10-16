@@ -3,3 +3,6 @@
 *.bat text eol=crlf
 *.sh text eol=lf
 *.wav binary
+*.ps1 text eol=crlf
+*.png binary
+*.ico binary

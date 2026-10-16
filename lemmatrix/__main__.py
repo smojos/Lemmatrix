@@ -41,11 +41,20 @@ def main() -> int:
     from . import storage
     from .ui.main_window import SAMPLE, MainWindow
 
+    if sys.platform.startswith("win"):
+        # Lets Windows show Lemmatrix's own icon on the taskbar instead of Python's.
+        try:
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Lemmatrix.Lemmatrix")
+        except (AttributeError, OSError):
+            pass
     app = QApplication(sys.argv)
     _install_error_handler()
     app.setApplicationName("Lemmatrix")
     app.setOrganizationName("Lemmatrix")
     app.setStyle("Fusion")
+    from .ui.icons import app_icon
+    app.setWindowIcon(app_icon())
 
     win = MainWindow()
     path = sys.argv[1] if len(sys.argv) > 1 else win.prefs.last_file

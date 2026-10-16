@@ -16,7 +16,15 @@ behaves; no Dekereke code is used. The full working spec is in [DESIGN.md](DESIG
 3. Choose **Open a copy of the sample** to try it with invented data. The copy goes to
    `Documents\Lemmatrix Sample`, so the sample in the repository stays untouched.
 
+4. Once it has run, double-click **`Make desktop shortcut.bat`** to put a Lemmatrix shortcut,
+   with its icon, on the desktop and in the Start menu. The shortcut starts Lemmatrix without
+   the black console window. If an update needs new packages, it opens `Run Lemmatrix.bat`
+   for you to install them first.
+
 On Mac or Linux, run `./run_lemmatrix.sh` instead.
+
+The icon is drawn in `lemmatrix/resources/lemmatrix.svg`; `tools/make_icons.py` makes the
+PNG sizes and `lemmatrix.ico` from it (needs `cairosvg` and Pillow).
 
 For heavier testing there's also **`samples/Test-300.xml`**: 300 invented lemmas with about
 7,450 tagged forms and no recordings (File → Open). It's rebuilt by
