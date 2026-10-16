@@ -332,7 +332,7 @@ class ParadigmView(QTableView):
         self.setWordWrap(False)
         self.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.horizontalHeader().setDefaultSectionSize(180)
-        self.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.verticalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.verticalHeader().setMinimumWidth(90)
         self.verticalHeader().setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.setShowGrid(True)
@@ -344,7 +344,14 @@ class ParadigmView(QTableView):
 
     def set_layout(self, layout: mx.Layout):
         self.model_.set_layout(layout)
-        self.resizeRowsToContents()
+        # Row heights from the number of stacked tokens (much faster than measuring every cell).
+        most = [0] * len(layout.rows)
+        for (r, c), hits in layout.cells.items():
+            most[r] = max(most[r], len(hits))
+        bh = self.delegate.block_height()
+        vh = self.verticalHeader()
+        for r, n in enumerate(most):
+            vh.resizeSection(r, n * bh + 6 if n else 40)
         self._place_switch()
 
     def _place_switch(self):
@@ -387,6 +394,7 @@ class MatrixStack(QStackedWidget):
         self.all_view.setEditTriggers(QAbstractItemView.DoubleClicked | QAbstractItemView.EditKeyPressed
                                       | QAbstractItemView.SelectedClicked)
         self.all_view.horizontalHeader().setStretchLastSection(True)
+        self.all_view.horizontalHeader().setResizeContentsPrecision(200)
         self.all_view.verticalHeader().setDefaultSectionSize(26)
         self.drawn = DrawnPitchDelegate(lambda: self.all_model.db, self.all_view)
         self.all_view.setItemDelegateForColumn(3, self.drawn)

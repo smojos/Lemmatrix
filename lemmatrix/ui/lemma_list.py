@@ -127,6 +127,7 @@ class LemmaList(QTableView):
         self.verticalHeader().hide()
         self.verticalHeader().setDefaultSectionSize(26)
         self.horizontalHeader().setStretchLastSection(True)
+        self.horizontalHeader().setResizeContentsPrecision(200)
         self.header_.filterClicked.connect(self._filter_menu)
         self.doubleClicked.connect(lambda idx: self.entryActivated.emit(self.entry_at(idx)))
         self.selectionModel().currentRowChanged.connect(

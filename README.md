@@ -18,6 +18,11 @@ behaves; no Dekereke code is used. The full working spec is in [DESIGN.md](DESIG
 
 On Mac or Linux, run `./run_lemmatrix.sh` instead.
 
+For heavier testing there's also **`samples/Test-300.xml`**: 300 invented lemmas with about
+7,500 tagged forms and no recordings (File → Open). It's rebuilt by
+`samples/make_test_database.py`. If you save changes to it, GitHub Desktop will list the file
+as changed; discard that change to get the original back.
+
 To run the automated tests, double-click **`Run tests.bat`** (after the first run).
 
 If something goes wrong, a message box shows the details, and they're also written to

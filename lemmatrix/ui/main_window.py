@@ -215,17 +215,31 @@ class MainWindow(QMainWindow):
         split.setSizes([480, 1020])
 
         # ---- signals ---------------------------------------------------
-        self.lemmas.filtersChanged.connect(self.refresh_matrix)
+        # Refreshes are coalesced: many filter signals in a row give one redraw,
+        # and typing in a search box waits for a short pause.
+        self._refresh_timer = QTimer(self)
+        self._refresh_timer.setSingleShot(True)
+        self._refresh_timer.timeout.connect(self.refresh_matrix)
+        self._lemma_search_timer = QTimer(self)
+        self._lemma_search_timer.setSingleShot(True)
+        self._lemma_search_timer.setInterval(250)
+        self._lemma_search_timer.timeout.connect(
+            lambda: self.lemmas.proxy.set_text(self.lemma_search.text()))
+        self._token_search_timer = QTimer(self)
+        self._token_search_timer.setSingleShot(True)
+        self._token_search_timer.setInterval(250)
+        self._token_search_timer.timeout.connect(lambda: self._token_search(self.token_search.text()))
+        self.lemmas.filtersChanged.connect(self.schedule_refresh)
         self.lemmas.currentEntryChanged.connect(self._entry_selected)
         self.lemmas.entryActivated.connect(lambda e: self.edit_entry())
-        self.lemma_search.textChanged.connect(self.lemmas.proxy.set_text)
+        self.lemma_search.textChanged.connect(lambda _: self._lemma_search_timer.start())
         self.tabs.currentChanged.connect(self._tab_changed)
         self.add_token_btn.clicked.connect(self.add_token)
         self.setup_btn.clicked.connect(self.setup_display)
         self.filter_btn.clicked.connect(self.filter_tokens)
         self.play_cell_btn.clicked.connect(self.play_cell)
         self.matching.currentIndexChanged.connect(self._matching_changed)
-        self.token_search.textChanged.connect(self._token_search)
+        self.token_search.textChanged.connect(lambda _: self._token_search_timer.start())
         self.views.activated.connect(self._view_chosen)
         self.save_view_btn.clicked.connect(self.save_view)
         self.sess_speaker.currentTextChanged.connect(lambda t: setattr(self.prefs, "speaker", t))
@@ -298,6 +312,7 @@ class MainWindow(QMainWindow):
         self.doc._settings_dirty = False
         self.lemmas.set_database(db)
         self.matrix.set_database(db)
+        self._all_sized = False
         self.state = ViewState()
         self.matrix.paradigm.state = self.state
         self.tfilter = mx.TokenFilter()
@@ -365,8 +380,11 @@ class MainWindow(QMainWindow):
 
     def _doc_changed(self):
         self.lemmas.refresh()
-        self.refresh_matrix()
+        self.schedule_refresh()
         self._update_title()
+
+    def schedule_refresh(self, delay: int = 0):
+        self._refresh_timer.start(delay)
 
     # ============================================================== matrix
     def _tab_changed(self, i):
@@ -431,7 +449,9 @@ class MainWindow(QMainWindow):
             rows = [(e, i) for e in db.entries if id(e) in vis
                     for i, t in enumerate(e.tokens) if self.tfilter.accepts(t)]
             self.matrix.all_model.set_rows(rows)
-            self.matrix.all_view.resizeColumnsToContents()
+            if not getattr(self, "_all_sized", False) and rows:
+                self.matrix.all_view.resizeColumnsToContents()   # first time only
+                self._all_sized = True
             self.matrix_title.setText(f"{len(rows)} tokens")
             self.layout_ = None
             return

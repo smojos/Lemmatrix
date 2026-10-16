@@ -171,18 +171,34 @@ def entry_tag_layout(db: Database, entries: list[Entry], headers: list[frozenset
     tfilter = tfilter or TokenFilter()
     if not entries:
         return Layout(message="No entries to show. Check the lemma list's search and filters.")
+    defaults = default_names(db)
+    order = global_order(db)
+    # Filter each entry's tokens once and index them by their marked tags,
+    # so each cell is a dictionary lookup rather than a scan.
+    shown: list[list[Token]] = []
+    index: list[dict] = []
+    found = set()
+    for e in entries:
+        toks = [t for t in e.tokens if tfilter.accepts(t)]
+        shown.append(toks)
+        idx: dict = {}
+        for t in toks:
+            key = marked(t.tags, defaults)
+            idx.setdefault(key, []).append(t)
+            found.add(key)
+        index.append(idx)
     if headers is None:
-        headers = auto_headers(db, entries, tfilter)
+        headers = sorted(found, key=lambda s: sort_key(s, order))
         if mode == INCLUDES:
             # Keep only the smallest combinations; the larger ones become their sub-rows.
             headers = [h for h in headers
                        if not h or not any(o and o < h for o in headers)]
-    defaults = default_names(db)
 
     def tokens_for_header(h):
-        for e in entries:
-            for t in e.tokens:
-                if tfilter.accepts(t) and set(h) <= set(t.tags):
+        hs = set(h)
+        for toks in shown:
+            for t in toks:
+                if hs <= set(t.tags):
                     yield t.tags
 
     rows = _expand(db, headers, tokens_for_header, mode)
@@ -196,10 +212,14 @@ def entry_tag_layout(db: Database, entries: list[Entry], headers: list[frozenset
             text = db.lemma(e) or e.ref
         cols.append(AxisItem(text, entry=e))
     lay = Layout(rows=rows, cols=cols)
+    row_keys = [(marked(row.tags, defaults), set(row.tags)) for row in rows]
     for c, col in enumerate(cols):
-        for r, row in enumerate(rows):
-            hits = [(col.entry, t) for t in col.entry.tokens
-                    if tfilter.accepts(t) and fits(t.tags, row.tags, defaults)]
+        idx = index[c]
+        for r, (key, need) in enumerate(row_keys):
+            cand = idx.get(key)
+            if not cand:
+                continue
+            hits = [(col.entry, t) for t in cand if need <= set(t.tags)]
             if hits:
                 lay.cells[(r, c)] = hits
     if not rows:
