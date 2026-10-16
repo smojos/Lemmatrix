@@ -40,16 +40,27 @@ def underscore_unit(font: QFont) -> float:
     return max(4.0, QFontMetricsF(font).horizontalAdvance("_"))
 
 
-def pitch_width(text: str, unit: float = 8.0) -> float:
-    """How wide a pitch drawing is: steps x unit, plus small gaps between syllables."""
-    items = pitchmod.parse(text)
-    w = 0.0
-    for n, item in enumerate(items):
+SYLLABLE_GAP = 1.0     # space between syllables, in underscores
+PAUSE_GAP = 2.0        # space for a comma, in underscores (instead of the syllable gap)
+
+
+def _gaps(items):
+    """(gap before, syllable) pairs for a parsed pitch string; gaps are in units."""
+    out = []
+    pending = 0.0
+    for item in items:
         if item == pitchmod.PAUSE:
-            w += unit * 1.2
-        else:
-            w += unit * item.length + (unit * 0.5 if n else 0)
-    return w
+            pending = PAUSE_GAP if out else 0.0       # a comma widens the gap to the next syllable
+            continue
+        gap = (max(pending, SYLLABLE_GAP) if out else 0.0)
+        out.append((gap, item))
+        pending = 0.0
+    return out
+
+
+def pitch_width(text: str, unit: float = 8.0) -> float:
+    """How wide a pitch drawing is: steps x unit, plus the gaps between syllables."""
+    return sum(unit * (gap + item.length) for gap, item in _gaps(pitchmod.parse(text)))
 
 
 def draw_pitch(p: QPainter, rect: QRectF, text: str, low: int = 1, high: int = 5,
@@ -57,8 +68,9 @@ def draw_pitch(p: QPainter, rect: QRectF, text: str, low: int = 1, high: int = 5
     """Draw pitch notation as contours inside rect, from the left edge.
 
     One short step is `unit` wide (about an underscore), a long step twice
-    that. A comma leaves a gap; points outside the display range are drawn
-    past the edge in red so the scale stays the same for every token.
+    that. Syllables are one unit apart, two across a comma. Points outside the
+    display range are drawn past the edge in red, so the scale stays the same
+    for every token.
     """
     items = pitchmod.parse(text)
     if not items:
@@ -73,12 +85,8 @@ def draw_pitch(p: QPainter, rect: QRectF, text: str, low: int = 1, high: int = 5
     p.save()
     p.setRenderHint(QPainter.Antialiasing)
     x = rect.left()
-    for n, item in enumerate(items):
-        if item == pitchmod.PAUSE:
-            x += unit * 1.2
-            continue
-        if n:
-            x += unit * 0.5
+    for gap, item in _gaps(items):
+        x += unit * gap
         bad = any(d < low or d > high for d in item.points)
         pen = QPen(theme.colour("error") if bad else color, width)
         pen.setCapStyle(Qt.RoundCap)

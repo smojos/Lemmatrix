@@ -5,7 +5,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import QDate, QFile, QSize, Qt, QTimer, QUrl
+from PySide6.QtCore import QDate, QDir, QFile, QSize, Qt, QTimer, QUrl
 from PySide6.QtGui import QAction, QColor, QDesktopServices, QFont, QKeySequence
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QFileDialog, QFrame, QGroupBox,
                                QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMenu, QMessageBox,
@@ -27,6 +27,11 @@ from .prefs import Prefs
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, ListEditDelegate
 from .token_dialog import Slot, TokenDialog
 from .widgets import ipa_font
+
+def pitchmod_parse(text):
+    from .. import pitch
+    return pitch.parse(text or "")
+
 
 SAMPLE = Path(__file__).resolve().parent.parent.parent / "samples" / "Sample.xml"
 ALL_DATA, LEMMA_TAG, TAG_TAG = 0, 1, 2
@@ -250,7 +255,9 @@ class MainWindow(QMainWindow):
                   tool("Configure cell", "gear", lambda tab=tab: self.configure_cell(tab),
                        "Choose what each cell shows"),
                   tool("Configure matrix", "gear", lambda tab=tab: self.configure_matrix(tab),
-                       "Choose the rows and columns"))
+                       "Choose the rows and columns"),
+                  tool("Clear matrix", "broom", lambda tab=tab: self.clear_matrix(tab),
+                       "Empty the view: no rows or columns"))
         d["cls"] = QComboBox()
         d["cls"].setMinimumWidth(120)
         d["cls"].setToolTip("A matrix shows one word class at a time" if tab == LEMMA_TAG
@@ -274,9 +281,7 @@ class MainWindow(QMainWindow):
                   tool("Rename matrix", None, lambda tab=tab: self.rename_matrix(tab),
                        "Rename the chosen saved matrix"),
                   tool("Delete matrix", None, lambda tab=tab: self.delete_saved_matrix(tab),
-                       "Delete the chosen saved matrix"),
-                  tool("Clear matrix", None, lambda tab=tab: self.clear_matrix(tab),
-                       "Empty the view: no rows or columns"))
+                       "Delete the chosen saved matrix"))
         bl.addStretch(1)
         return d
 
@@ -433,7 +438,8 @@ class MainWindow(QMainWindow):
                                           r.token.file != db.expected_filename(r.entry, r.token)) else None),
                    tooltip=lambda r: ("Not recorded yet" if not r.token.file else
                                       f"{r.token.file} isn't in the sound folder" if r.token.file not in self.sound_files
-                                      else f"Recorded as {r.token.file}\nExpected: {db.expected_filename(r.entry, r.token)}")),
+                                      else f"Recorded as {r.token.file}\nExpected: {db.expected_filename(r.entry, r.token)}"
+                                      f"\n{QDir.toNativeSeparators(str(storage.sound_folder(db) / r.token.file))}")),
         ]
         return cols
 
@@ -1065,6 +1071,83 @@ class MainWindow(QMainWindow):
         except audio.AudioError as exc:
             QMessageBox.warning(self, "Play", str(exc))
 
+    # ---- pitch playback and Praat --------------------------------------
+    def play_pitch(self, text: str):
+        """Play pitch notation in the voice chosen in Settings → Pitch."""
+        from .. import pitchsound
+        if not pitchmod_parse(text):
+            self.statusBar().showMessage("No pitch to play.", 3000)
+            return
+        s = self.doc.db.settings
+        samples = pitchsound.synthesise(text, s.pitch_low, s.pitch_high, self.prefs.pitch_voice)
+        try:
+            self.player.play_samples(samples, pitchsound.RATE)
+        except audio.AudioError as exc:
+            QMessageBox.warning(self, "Play pitch", str(exc))
+
+    def play_selected_pitch(self):
+        sel = self.selected_token()
+        if sel is None:
+            self.statusBar().showMessage("Select a token first.", 3000)
+            return
+        e, i = sel
+        self.play_pitch(e.tokens[i].get("Pitch"))
+
+    def sound_path(self, token) -> Path | None:
+        """The token's recording, if it's in the sound folder."""
+        if not token.file:
+            return None
+        p = storage.sound_folder(self.doc.db) / token.file
+        return p if p.exists() else None
+
+    def ask_praat_path(self, parent=None) -> str:
+        """Ask where Praat is; remembers the answer. Returns "" if cancelled."""
+        import sys
+        flt = "Praat (Praat.exe);;Programs (*.exe)" if sys.platform.startswith("win") else "All files (*)"
+        path, _ = QFileDialog.getOpenFileName(parent or self, "Where is Praat?",
+                                              str(Path(self.prefs.praat_path).parent)
+                                              if self.prefs.praat_path else str(Path.home()), flt)
+        if path:
+            self.prefs.praat_path = path
+        return path
+
+    def open_in_praat(self, path, parent=None):
+        from .. import praat
+        parent = parent or self
+        if path is None:
+            QMessageBox.information(parent, "Open in Praat", "This token has no recording yet.")
+            return
+        exe = self.prefs.praat_path
+        if not exe or not praat.executable(exe).exists():
+            QMessageBox.information(parent, "Open in Praat",
+                                    "Lemmatrix doesn't know where Praat is yet. Please show it where "
+                                    "Praat is (you can change this later in Edit → Settings → Sound).")
+            exe = self.ask_praat_path(parent)
+            if not exe:
+                return
+        try:
+            praat.open_sound(exe, path)
+        except praat.PraatError as exc:
+            QMessageBox.warning(parent, "Open in Praat", str(exc))
+
+    def open_selected_in_praat(self):
+        sel = self.selected_token()
+        if sel is None:
+            self.statusBar().showMessage("Select a token first.", 3000)
+            return
+        e, i = sel
+        self.open_in_praat(self.sound_path(e.tokens[i]))
+
+    def _token_items(self) -> list:
+        """Menu items for the selected token: play, play pitch, Open in Praat."""
+        sel = self.selected_token()
+        tok = sel[0].tokens[sel[1]] if sel else None
+        has_sound = tok is not None and self.sound_path(tok) is not None
+        has_pitch = tok is not None and bool(pitchmod_parse(tok.get("Pitch")))
+        return [("Play", "play", self.play_selected, has_sound),
+                ("Play pitch", "play-pitch", self.play_selected_pitch, has_pitch),
+                ("Open in Praat", "praat", self.open_selected_in_praat, has_sound)]
+
     # ---- context menus -------------------------------------------------
     def _menu(self, items, pos):
         m = QMenu(self)
@@ -1072,9 +1155,10 @@ class MainWindow(QMainWindow):
             if item is None:
                 m.addSeparator()
                 continue
-            text, icon_name, fn = item
+            text, icon_name, fn = item[:3]
             a = m.addAction(icon(icon_name, 16), text) if icon_name else m.addAction(text)
-            a.triggered.connect(fn)
+            a.setEnabled(item[3] if len(item) > 3 else True)
+            a.triggered.connect(lambda *_, fn=fn: fn())
         m.exec(pos)
 
     def _lemma_menu(self, row, pos):
@@ -1089,13 +1173,13 @@ class MainWindow(QMainWindow):
         if row is not None:
             self.all_table.select_row(row)
         self._menu([("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
-                    ("Edit token", "edit", self.edit_token), ("Play", "play", self.play_selected), None,
+                    ("Edit token", "edit", self.edit_token), None, *self._token_items(), None,
                     ("Configure columns", "gear", self.configure_all_columns),
                     ("Clear all filters", None, self._clear_all_filters)], pos)
 
     def _matrix_menu(self, tab, pos):
         self._menu([("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
-                    ("Edit token", "edit", self.edit_token), ("Play", "play", self.play_selected)], pos)
+                    ("Edit token", "edit", self.edit_token), None, *self._token_items()], pos)
 
     def _clear_lemma_filters(self):
         self.lemma_search.clear()

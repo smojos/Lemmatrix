@@ -437,3 +437,47 @@ def test_last_view_is_restored(app, tmp_path, monkeypatch):
         assert w2.switched[mw.TAG_TAG]
     finally:
         w2.close()
+
+
+def test_token_dialogue_praat_and_pitch_buttons(win, monkeypatch):
+    from lemmatrix.ui.token_dialog import Slot, TokenDialog
+    e = win.doc.db.entry_by_ref("D001")
+    recorded = next(i for i, t in enumerate(e.tokens) if t.file)
+    dlg = TokenDialog(win, [Slot(e, recorded)], 0)
+    assert dlg.praat_btn.isEnabled()
+    assert "Soundfiles" in dlg.location.text()
+    opened, played = [], []
+    monkeypatch.setattr(win, "open_in_praat", lambda path, parent=None: opened.append(path))
+    monkeypatch.setattr(win, "play_pitch", lambda text: played.append(text))
+    dlg._open_in_praat()
+    dlg._play_pitch()
+    assert opened and opened[0].name == e.tokens[recorded].file
+    assert played == [dlg.canvas.text]
+    new = TokenDialog(win, [Slot(e, None, ("Plural",), explicit=True)], 0)
+    assert not new.praat_btn.isEnabled()
+    assert new.location.text().startswith("Will be saved as ")
+
+
+def test_token_menus_and_clear_matrix_button(win):
+    from PySide6.QtWidgets import QToolButton
+    from lemmatrix.ui import main_window as mw
+    win.lemmas.select_row(win.doc.db.entry_by_ref("D001"))
+    win.tabs.setCurrentIndex(mw.ALL_DATA)
+    win.all_table.selectRow(1)
+    names = [i[0] for i in win._token_items()]
+    assert names == ["Play", "Play pitch", "Open in Praat"]
+    first_row = win.lt_bar["widget"].layout().itemAt(0).layout()
+    texts = [first_row.itemAt(i).widget().text() for i in range(first_row.count())
+             if isinstance(first_row.itemAt(i).widget(), QToolButton)]
+    assert texts[-2:] == ["Configure matrix", "Clear matrix"]
+
+
+def test_sound_folder_setting_shows_full_path_and_stores_relative(win, tmp_path):
+    from lemmatrix.ui.dialogs import PreferencesDialog
+    dlg = PreferencesDialog(win, win.doc.db, win.prefs)
+    assert dlg.folder.text().endswith("Soundfiles") and len(dlg.folder.text()) > len("Soundfiles")
+    assert dlg._stored_folder() == "Soundfiles"            # unchanged stays as it was
+    dlg.folder.edit.setText(str(Path(win.doc.db.path).parent / "Recordings" / "2026"))
+    assert dlg._stored_folder() == "Recordings/2026"
+    dlg.folder.edit.setText(str(tmp_path.parent / "elsewhere"))
+    assert dlg._stored_folder() == str(tmp_path.parent / "elsewhere")

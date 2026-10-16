@@ -209,10 +209,18 @@ class Player:
         self._thread = None
 
     def play(self, paths, on_done=None):
-        self.stop()
         paths = [Path(p) for p in paths if p and Path(p).exists()]
         if not paths:
+            self.stop()
             return False
+        return self._start([lambda p=p: read_wav(p) for p in paths], on_done)
+
+    def play_samples(self, samples, rate: int, on_done=None):
+        """Play samples made by the program (e.g. a pitch rendering)."""
+        return self._start([lambda: (samples, rate)], on_done)
+
+    def _start(self, sources, on_done=None):
+        self.stop()
         try:
             import sounddevice as sd
         except (ImportError, OSError) as exc:
@@ -221,10 +229,10 @@ class Player:
 
         def run():
             try:
-                for p in paths:
+                for source in sources:
                     if self._stop.is_set():
                         break
-                    data, rate = read_wav(p)
+                    data, rate = source()
                     sd.play(data, rate)
                     while sd.get_stream().active and not self._stop.is_set():
                         self._stop.wait(0.05)

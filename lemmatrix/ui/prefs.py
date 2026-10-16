@@ -109,6 +109,24 @@ class Prefs:
     @accent.setter
     def accent(self, v): self.q.setValue("display/accent", v)
 
+    @property
+    def praat_path(self) -> str:
+        v = self._get("programs/praat", "")
+        if not v:
+            from ..praat import find_praat
+            v = find_praat()
+        return v
+
+    @praat_path.setter
+    def praat_path(self, v): self.q.setValue("programs/praat", v)
+
+    @property
+    def pitch_voice(self) -> str:
+        return self._get("pitch/voice", "hum")
+
+    @pitch_voice.setter
+    def pitch_voice(self, v): self.q.setValue("pitch/voice", v)
+
     # the last view of each database (tab, lemma, matrices), as JSON
     @staticmethod
     def _view_key(path: str) -> str:

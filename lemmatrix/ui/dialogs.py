@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import re
 
-from PySide6.QtCore import Qt
+from pathlib import Path
+
+from PySide6.QtCore import QDir, Qt
 from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QColorDialog, QComboBox, QDialog, QDialogButtonBox,
                                QFormLayout, QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
@@ -22,6 +24,38 @@ def _buttons(dlg) -> QDialogButtonBox:
     b.accepted.connect(dlg.accept)
     b.rejected.connect(dlg.reject)
     return b
+
+
+class PathEdit(QWidget):
+    """A path in a text box with a Browse… button."""
+
+    def __init__(self, text: str, folder: bool, title: str, parent=None):
+        super().__init__(parent)
+        self.folder, self.title = folder, title
+        lay = QHBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        self.edit = QLineEdit(text)
+        self.edit.setMinimumWidth(300)
+        browse = QPushButton("Browse…")
+        browse.clicked.connect(lambda *_: self._browse())
+        lay.addWidget(self.edit, 1)
+        lay.addWidget(browse)
+
+    def setToolTip(self, tip):
+        self.edit.setToolTip(tip)
+
+    def text(self) -> str:
+        return self.edit.text()
+
+    def _browse(self):
+        from PySide6.QtWidgets import QFileDialog
+        start = self.edit.text() or str(Path.home())
+        if self.folder:
+            path = QFileDialog.getExistingDirectory(self, self.title, start)
+        else:
+            path, _ = QFileDialog.getOpenFileName(self, self.title, str(Path(start).parent))
+        if path:
+            self.edit.setText(QDir.toNativeSeparators(path))
 
 
 class ColourButton(QWidget):
@@ -296,7 +330,7 @@ class PreferencesDialog(QDialog):
         self.db, self.prefs = db, prefs
         s = db.settings
         self.setWindowTitle("Settings")
-        self.resize(580, 460)
+        self.resize(640, 500)
         lay = QVBoxLayout(self)
         tabs = QTabWidget()
         lay.addWidget(tabs)
@@ -307,8 +341,17 @@ class PreferencesDialog(QDialog):
                                 "is left out.")
         self.separator = QLineEdit(s.tag_separator)
         self.separator.setMaxLength(3)
-        self.folder = QLineEdit(s.sound_folder)
-        self.folder.setToolTip("Relative to the database file, unless it's a full path.")
+        from .. import storage
+        self._folder_shown = (QDir.toNativeSeparators(str(storage.sound_folder(db))) if db.path
+                              else s.sound_folder)
+        self.folder = PathEdit(self._folder_shown, folder=True, title="Sound folder")
+        self.folder.setToolTip("Where the recordings are. A folder inside the database's folder is "
+                               "stored relative to it, so the two can be moved together."
+                               + ("" if db.path else "\nThis database isn't saved yet, so the folder "
+                                  "will be next to wherever you save it."))
+        self.praat = PathEdit(prefs.praat_path, folder=False, title="Where is Praat?")
+        self.praat.setToolTip("The Praat program, used by Open in Praat (Praat.exe on Windows)")
+        self.praat.edit.setPlaceholderText("not found: click Browse to show where Praat is")
         self.auto_names = QCheckBox("Update sound file names automatically")
         self.auto_names.setChecked(s.auto_update_names)
 
@@ -350,6 +393,23 @@ class PreferencesDialog(QDialog):
         self.theme.setToolTip("Light or dark, for the whole program")
         self.accent = ColourButton(prefs.accent, theme.DEFAULT_ACCENT,
                                    "Selected tabs, highlights, tag chips and pitch traces")
+        from .. import pitchsound
+        self.voice = QComboBox()
+        for key, label in pitchsound.VOICES.items():
+            self.voice.addItem(label, key)
+        self.voice.setItemData(0, "A robotic buzz that follows the trace exactly", Qt.ToolTipRole)
+        self.voice.setItemData(1, "A human-like hum: mmm mmm mmm", Qt.ToolTipRole)
+        self.voice.setItemData(2, "A human-like whistle", Qt.ToolTipRole)
+        self.voice.setCurrentIndex(max(0, self.voice.findData(prefs.pitch_voice)))
+        listen = QPushButton("Listen")
+        listen.setToolTip("Play an example (22 4:42 , 1:4 55) in this voice")
+        listen.clicked.connect(lambda *_: self._listen())
+        voice_row = QWidget()
+        vr = QHBoxLayout(voice_row)
+        vr.setContentsMargins(0, 0, 0, 0)
+        vr.addWidget(self.voice)
+        vr.addWidget(listen)
+        vr.addStretch(1)
 
         def page(title, sections):
             w = QWidget()
@@ -371,12 +431,43 @@ class PreferencesDialog(QDialog):
             ("This database", [("File name pattern", self.pattern), ("Tag separator", self.separator),
                                ("Sound folder", self.folder), (None, self.auto_names)]),
             ("This computer", [("Recording source", self.source), ("Bit depth", self.bits),
-                               ("Sample rate", self.rate), (None, self.with_tokens), (None, self.confirm)])])
+                               ("Sample rate", self.rate), (None, self.with_tokens), (None, self.confirm),
+                               ("Path to Praat", self.praat)])])
         page("Display", [("This computer", [("Theme", self.theme), ("Accent colour", self.accent),
                                             ("IPA font size", self.ipa)])])
         page("Pitch", [("This database", [("Lowest pitch digit", self.low),
-                                          ("Highest pitch digit", self.high)])])
+                                          ("Highest pitch digit", self.high)]),
+                       ("This computer", [("Pitch playback", voice_row)])])
         lay.addWidget(_buttons(self))
+
+    def _stored_folder(self) -> str:
+        """What goes in the database: unchanged, relative to the database folder, or a full path."""
+        text = self.folder.text().strip()
+        if not text:
+            return "Soundfiles"
+        if text == self._folder_shown:
+            return self.db.settings.sound_folder
+        p = Path(QDir.fromNativeSeparators(text))
+        if self.db.path and p.is_absolute():
+            base = Path(self.db.path).resolve().parent
+            try:
+                return p.resolve().relative_to(base).as_posix() or "."
+            except ValueError:
+                return str(p)
+        return text
+
+    def _listen(self):
+        from .. import audio, pitchsound
+        main = self.parent()
+        player = getattr(main, "player", None)
+        if player is None:
+            return
+        samples = pitchsound.synthesise("22 4:42 , 1:4 55", self.low.value(), max(self.high.value(),
+                                        self.low.value() + 1), self.voice.currentData())
+        try:
+            player.play_samples(samples, pitchsound.RATE)
+        except audio.AudioError as exc:
+            QMessageBox.warning(self, "Listen", str(exc))
 
     def accept(self):
         if self.low.value() >= self.high.value():
@@ -397,7 +488,7 @@ class PreferencesDialog(QDialog):
         old = (s.filename_pattern, s.tag_separator)
         s.filename_pattern = self.pattern.text().strip()
         s.tag_separator = self.separator.text()
-        s.sound_folder = self.folder.text().strip() or "Soundfiles"
+        s.sound_folder = self._stored_folder()
         s.auto_update_names = self.auto_names.isChecked()
         s.pitch_low, s.pitch_high = self.low.value(), self.high.value()
         p = self.prefs
@@ -410,6 +501,8 @@ class PreferencesDialog(QDialog):
         p.ipa_size = self.ipa.value()
         p.theme = self.theme.currentData()
         p.accent = self.accent.colour()
+        p.praat_path = self.praat.text().strip()
+        p.pitch_voice = self.voice.currentData()
         return old != (s.filename_pattern, s.tag_separator)
 
 

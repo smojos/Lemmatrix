@@ -5,11 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from PySide6.QtCore import QRegularExpression, Qt, QTimer
+from PySide6.QtCore import QDir, QRegularExpression, Qt, QTimer
 from PySide6.QtGui import QFont, QKeySequence, QRegularExpressionValidator, QShortcut
 from PySide6.QtWidgets import (QComboBox, QDialog, QFrame, QGridLayout, QGroupBox, QHBoxLayout,
-                               QLabel, QLineEdit, QMessageBox, QProgressBar, QPushButton,
-                               QScrollArea, QSizePolicy, QVBoxLayout, QWidget)
+                               QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton,
+                               QScrollArea, QSizePolicy, QToolButton, QVBoxLayout, QWidget)
 from PySide6.QtCore import QFile
 
 from .. import audio, pitch as pitchmod, storage
@@ -71,7 +71,21 @@ class TokenDialog(QDialog):
         left.addWidget(title, 0, 1)
         self.canvas = PitchCanvas(low=s.pitch_low, high=s.pitch_high, font=ipa_font(self.main.prefs.ipa_size + 3))
         self.canvas.setMinimumHeight(70)
-        left.addWidget(QLabel("Pitch\nRendering"), 1, 0)
+        self.canvas.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.canvas.customContextMenuRequested.connect(self._canvas_menu)
+        self.canvas.setToolTip("Right-click to play the pitch")
+        pitch_label = QVBoxLayout()
+        pitch_label.addWidget(QLabel("Pitch\nRendering"))
+        self.pitch_play = QToolButton()
+        self.pitch_play.setIcon(icon("play-pitch", 22))
+        self.pitch_play.setIconSize(QSize(22, 22))
+        self.pitch_play.setAutoRaise(True)
+        self.pitch_play.setToolTip("Play the pitch (Ctrl+Shift+Space); the sound is set in "
+                                   "Edit → Settings → Pitch")
+        self.pitch_play.clicked.connect(lambda *_: self._play_pitch())
+        pitch_label.addWidget(self.pitch_play)
+        pitch_label.addStretch(1)
+        left.addLayout(pitch_label, 1, 0)
         left.addWidget(self.canvas, 1, 1)
         self.edits: dict[str, QLineEdit] = {}
         row = 2
@@ -123,25 +137,30 @@ class TokenDialog(QDialog):
         self.filename.setFont(ff)
         self.filename.setTextInteractionFlags(Qt.TextSelectableByMouse)
         rl.addWidget(self.filename, 0, 0, 1, 5)
+        self.location = QLabel()
+        self.location.setStyleSheet(f"color: {theme.muted()};")
+        self.location.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.location.setWordWrap(True)
+        rl.addWidget(self.location, 1, 0, 1, 5)
         self.name_note = QLabel()
         self.name_note.setStyleSheet(f"color: {theme.colour('error').name()};")
-        rl.addWidget(self.name_note, 1, 0, 1, 5)
-        rl.addWidget(QLabel("Speaker"), 2, 3, Qt.AlignRight)
+        rl.addWidget(self.name_note, 2, 0, 1, 5)
+        rl.addWidget(QLabel("Speaker"), 3, 3, Qt.AlignRight)
         self.speaker = QComboBox()
         self.speaker.addItem("")
         for p in self.db.metadata.participants:
             self.speaker.addItem(p.code)
         self.speaker.currentTextChanged.connect(self._fields_changed)
         self.speaker.setFixedWidth(130)
-        rl.addWidget(self.speaker, 2, 4)
-        rl.addWidget(QLabel("Date"), 3, 3, Qt.AlignRight)
+        rl.addWidget(self.speaker, 3, 4)
+        rl.addWidget(QLabel("Date"), 4, 3, Qt.AlignRight)
         self.date = QLineEdit()
         self.date.setPlaceholderText("YYYY-MM-DD")
         self.date.setValidator(QRegularExpressionValidator(
             QRegularExpression(r"(\d{4}-\d{2}-\d{2})?"), self.date))
         self.date.textChanged.connect(self._fields_changed)
         self.date.setFixedWidth(130)
-        rl.addWidget(self.date, 3, 4)
+        rl.addWidget(self.date, 4, 4)
 
         buttons = QHBoxLayout()
         def icon_button(name, tip):
@@ -158,19 +177,23 @@ class TokenDialog(QDialog):
         self.play_btn = icon_button("play", "Play (Ctrl+Space)")
         self.delete_btn = icon_button("delete-recording", "Delete recording")
         self.update_btn = icon_button("update", "Update file name")
+        self.praat_btn = icon_button("praat", "Open in Praat")
         buttons.addStretch(1)
         self.record_btn.clicked.connect(self._record)
         self.play_btn.clicked.connect(self._play)
         self.delete_btn.clicked.connect(self._delete_recording)
         self.update_btn.clicked.connect(self._update_name)
-        rl.addLayout(buttons, 2, 0, 2, 2)
+        self.praat_btn.clicked.connect(lambda *_: self._open_in_praat())
+        rl.addLayout(buttons, 3, 0, 2, 2)
+        rec.setContextMenuPolicy(Qt.CustomContextMenu)
+        rec.customContextMenuRequested.connect(lambda pos, rec=rec: self._recording_menu(rec.mapToGlobal(pos)))
         self.meter = QProgressBar()
         self.meter.setRange(0, 100)
         self.meter.setTextVisible(False)
         self.meter.setMaximumHeight(10)
         self.meter.setToolTip("Recording level")
         self.meter.setFixedWidth(220)
-        rl.addWidget(self.meter, 4, 0, 1, 2)
+        rl.addWidget(self.meter, 5, 0, 1, 2)
         rl.setColumnStretch(2, 1)
         outer.addWidget(rec)
 
@@ -198,6 +221,7 @@ class TokenDialog(QDialog):
 
         QShortcut(QKeySequence("Ctrl+R"), self, self._record)
         QShortcut(QKeySequence("Ctrl+Space"), self, self._play)
+        QShortcut(QKeySequence("Ctrl+Shift+Space"), self, self._play_pitch)
         QShortcut(QKeySequence("Alt+Left"), self, lambda: self._move(-1))
         QShortcut(QKeySequence("Alt+Right"), self, lambda: self._move(1))
 
@@ -299,6 +323,11 @@ class TokenDialog(QDialog):
         has_file = bool(t.file) and self._path(t.file).exists()
         self.play_btn.setEnabled(has_file)
         self.delete_btn.setEnabled(has_file)
+        self.praat_btn.setEnabled(has_file)
+        folder = storage.sound_folder(self.db)
+        shown = folder / (t.file if has_file else exp)
+        self.location.setText(("" if has_file else "Will be saved as ")
+                              + QDir.toNativeSeparators(str(shown)))
         self.update_btn.setEnabled(bool(t.file) and t.file != exp and has_file
                                    and not self.db.settings.auto_update_names)
         if self.db.settings.auto_update_names and t.file and t.file != exp:
@@ -461,6 +490,37 @@ class TokenDialog(QDialog):
             self.main.player.play([self._path(t.file)])
         except audio.AudioError as exc:
             QMessageBox.warning(self, "Play", str(exc))
+
+    def _play_pitch(self):
+        if self.recorder:
+            return
+        self.main.play_pitch(self.canvas.text)
+
+    def _open_in_praat(self):
+        t = self.token
+        path = self._path(t.file) if t.file and self._path(t.file).exists() else None
+        self.main.open_in_praat(path, self)
+
+    def _canvas_menu(self, pos):
+        m = QMenu(self)
+        a = m.addAction(icon("play-pitch", 16), "Play pitch")
+        a.setEnabled(bool(pitchmod.parse(self.canvas.text)))
+        a.triggered.connect(lambda *_: self._play_pitch())
+        m.exec(self.canvas.mapToGlobal(pos))
+
+    def _recording_menu(self, global_pos):
+        m = QMenu(self)
+        for text, name, fn, on in (
+                ("Stop recording" if self.recorder else "Record", "stop" if self.recorder else "record",
+                 self._record, True),
+                ("Play", "play", self._play, self.play_btn.isEnabled()),
+                ("Open in Praat", "praat", self._open_in_praat, self.praat_btn.isEnabled()),
+                ("Delete recording", "delete-recording", self._delete_recording, self.delete_btn.isEnabled()),
+                ("Update file name", "update", self._update_name, self.update_btn.isEnabled())):
+            a = m.addAction(icon(name, 16), text)
+            a.setEnabled(on)
+            a.triggered.connect(lambda *_, fn=fn: fn())
+        m.exec(global_pos)
 
     def _delete_recording(self):
         t = self.token

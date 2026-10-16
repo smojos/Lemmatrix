@@ -320,3 +320,47 @@ def test_wav_24_bit(tmp_path):
     audio.write_wav(p, samples, 48000, 24)
     data, _ = audio.read_wav(p)
     assert np.allclose(data, samples, atol=1e-5)
+
+
+def test_pitch_drawing_gaps():
+    from lemmatrix.ui.widgets import pitch_width
+    # 11 is one step; one unit between syllables; a comma makes it two
+    assert pitch_width("11", 1) == 1
+    assert pitch_width("11 11", 1) == 3
+    assert pitch_width("11 , 11", 1) == 4
+    assert pitch_width("1:1 4:42", 1) == 2 + 1 + 3
+
+
+def test_pitch_sound_voices_follow_the_tune():
+    import numpy as np
+    from lemmatrix import pitchsound as ps
+    for voice in ps.VOICES:
+        a = ps.synthesise("11", 1, 5, voice, seed=1)
+        b = ps.synthesise("55", 1, 5, voice, seed=1)
+        assert np.isfinite(a).all() and 0 < np.abs(a).max() <= 1
+        # higher digits sound higher: compare where the energy sits
+        def centroid(x):
+            sp = np.abs(np.fft.rfft(x))
+            f = np.fft.rfftfreq(len(x), 1 / ps.RATE)
+            return (sp * f).sum() / sp.sum()
+        assert centroid(b) > centroid(a)
+    # a comma is a longer silence than a syllable break
+    assert len(ps.synthesise("11 , 11", voice="buzz")) > len(ps.synthesise("11 11", voice="buzz"))
+
+
+def test_open_in_praat_runs_a_view_and_edit_script(tmp_path, monkeypatch):
+    from lemmatrix import praat
+    wav = tmp_path / 'a "quoted" name.wav'
+    wav.write_bytes(b"RIFF")
+    exe = tmp_path / "Praat.exe"
+    exe.write_bytes(b"")
+    calls = []
+    monkeypatch.setattr(praat.subprocess, "Popen", lambda args, **kw: calls.append(args))
+    praat.open_sound(str(exe), wav)
+    args = calls[0]
+    assert args[0] == str(exe) and "--send" in args
+    script = open(args[-1], encoding="utf-8").read()
+    assert 'a ""quoted"" name.wav' in script and "View & Edit" in script
+    import pytest
+    with pytest.raises(praat.PraatError):
+        praat.open_sound(str(tmp_path / "missing.exe"), wav)
