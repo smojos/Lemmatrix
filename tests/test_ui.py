@@ -522,3 +522,61 @@ def test_app_icon_has_every_size(app):
     assert not ic.isNull()
     sizes = {(s.width(), s.height()) for s in ic.availableSizes()}
     assert {(16, 16), (32, 32), (256, 256)} <= sizes
+
+
+def _set_singular_code(win, monkeypatch, code):
+    from lemmatrix.ui import main_window as mw
+    from lemmatrix.ui.dialogs import TagStructureDialog
+
+    class D(TagStructureDialog):
+        def exec(self):
+            for i in range(self.tree.topLevelItemCount()):
+                for it in self._tag_items(self.tree.topLevelItem(i)):
+                    if it.text(0) == "Singular":
+                        it.setText(1, code)
+            return True
+    monkeypatch.setattr(mw, "TagStructureDialog", D)
+    win.edit_tags()
+
+
+def _missing(win):
+    folder = storage.sound_folder(win.doc.db)
+    return [t.file for e in win.doc.db.entries for t in e.tokens if t.file and not (folder / t.file).exists()]
+
+
+def test_changed_tag_code_then_undo_keeps_recordings_linked(win, monkeypatch):
+    db = win.doc.db
+    assert db.settings.auto_update_names
+    folder = storage.sound_folder(db)
+    _set_singular_code(win, monkeypatch, "VG")
+    assert (folder / "LXX-VXX_D001_goat_VG.wav").exists() and not _missing(win)
+    while win.doc.undo.canUndo():
+        win.doc.undo.undo()
+    assert not _missing(win)                                  # files renamed back with the tokens
+    assert (folder / "LXX-VXX_D001_goat_SG.wav").exists()
+    while win.doc.undo.canRedo():
+        win.doc.undo.redo()
+    assert not _missing(win) and (folder / "LXX-VXX_D001_goat_VG.wav").exists()
+
+
+def test_discarding_changes_puts_recording_names_back(win, monkeypatch):
+    db = win.doc.db
+    folder = storage.sound_folder(db)
+    _set_singular_code(win, monkeypatch, "VG")
+    assert (folder / "LXX-VXX_D001_goat_VG.wav").exists()
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Discard)
+    assert win._confirm_discard()
+    saved = storage.load(db.path)                              # what's on disk now
+    missing = [t.file for e in saved.entries for t in e.tokens if t.file and not (folder / t.file).exists()]
+    assert not missing and (folder / "LXX-VXX_D001_goat_SG.wav").exists()
+
+
+def test_find_missing_recordings_relinks_renamed_files(win, monkeypatch):
+    db = win.doc.db
+    folder = storage.sound_folder(db)
+    (folder / "LXX-VXX_D001_goat_SG.wav").rename(folder / "LXX-VXX_D001_goat_VG.wav")   # renamed outside
+    assert "LXX-VXX_D001_goat_SG.wav" in _missing(win)
+    found, lost = win.missing_recordings()
+    assert [(e.ref, n) for e, i, n in found] == [("D001", "LXX-VXX_D001_goat_VG.wav")] and not lost
+    win.find_missing_recordings()
+    assert not _missing(win)

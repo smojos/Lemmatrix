@@ -43,6 +43,7 @@ class TokenDialog(QDialog):
         self.token: Token | None = None
         self.original: Token | None = None
         self.recorder: audio.Recorder | None = None
+        self._renames: list = []                  # recordings renamed, to go with the next commit
         self.unknown_tags: list[str] = []
         self.setWindowTitle("Edit Token")
         self.resize(920, 780)
@@ -351,7 +352,9 @@ class TokenDialog(QDialog):
             if not (t.has_content() or keep_empty or self.slot.explicit):
                 return True                       # passing through an empty cell
             token = t.copy()
-            self.doc.edit_entry(e, lambda en: en.tokens.append(token), f"Add token to {e.ref}")
+            renames, self._renames = self._renames, []
+            self.doc.edit_entry(e, lambda en: en.tokens.append(token), f"Add token to {e.ref}",
+                                renames=renames)
             self.slot.index = len(e.tokens) - 1
             self.original = e.tokens[self.slot.index]
         elif self.original != t:
@@ -360,7 +363,8 @@ class TokenDialog(QDialog):
 
             def change(en, idx=idx, token=token):
                 en.tokens[idx] = token
-            self.doc.edit_entry(e, change, f"Edit token in {e.ref}")
+            renames, self._renames = self._renames, []
+            self.doc.edit_entry(e, change, f"Edit token in {e.ref}", renames=renames)
             self.original = e.tokens[idx]
         self.token = self.original.copy()
         return True
@@ -380,6 +384,7 @@ class TokenDialog(QDialog):
         except OSError as exc:
             QMessageBox.warning(self, "File name", f"Couldn't rename {t.file}: {exc}")
             return False
+        self._renames.append((src, dst))
         t.file = exp
         return True
 

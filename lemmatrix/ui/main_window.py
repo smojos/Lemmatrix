@@ -352,6 +352,7 @@ class MainWindow(QMainWindow):
         t = mb.addMenu("&Tools")
         self._act(t, "Update all sound file names", self.update_all_names)
         self._act(t, "Check for duplicate file names", self.check_duplicates)
+        self._act(t, "Find missing recordings…", self.find_missing_recordings)
         self._act(t, "Open the sound folder", self.open_sound_folder)
         v = mb.addMenu("&View")
         self._act(v, "Swap rows and columns", lambda: self.switch_axes(self.tabs.currentIndex()), "Ctrl+T")
@@ -510,6 +511,7 @@ class MainWindow(QMainWindow):
         self.doc.undo.clear()
         self.doc.undo.setClean()
         self.doc._settings_dirty = False
+        self.doc.renamed.clear()
         self.configs.clear()
         for v in (self.lt_view, self.tt_view):
             v.set_database(db)
@@ -527,6 +529,7 @@ class MainWindow(QMainWindow):
             self.lemmas.selectRow(0)
         self._restore_view()
         self._update_title()
+        self._report_missing()
 
     def _fill_session(self):
         db = self.doc.db
@@ -1323,12 +1326,83 @@ class MainWindow(QMainWindow):
                 problems.append(f"{t.file}: {exc}")
                 continue
             self.doc.edit_entry(e, lambda en, i=i, new=new: setattr(en.tokens[i], "file", new),
-                                "Rename sound file")
+                                "Rename sound file", renames=[(src, dst)])
             done += 1
         msg = f"Renamed {done} recording(s)."
         if problems:
             msg += "\n\nNot renamed:\n" + "\n".join(problems[:30])
         QMessageBox.information(self, "Sound file names", msg)
+
+    def missing_recordings(self):
+        """Tokens whose recording isn't in the sound folder, each with the file it most
+        likely is: an unclaimed recording of the same lemma (by reference and gloss)
+        whose name is closest to the expected or the stored name."""
+        import difflib
+        db = self.doc.db
+        folder = storage.sound_folder(db)
+        try:
+            on_disk = {p.name for p in folder.iterdir() if p.is_file() and p.suffix.lower() == ".wav"}
+        except OSError:
+            on_disk = set()
+        claimed = {t.file.lower() for e in db.entries for t in e.tokens if t.file and t.file in on_disk}
+        free = [n for n in on_disk if n.lower() not in claimed]
+        found, lost = [], []
+        taken = set()
+        for e in db.entries:
+            missing = [i for i, t in enumerate(e.tokens) if t.file and t.file not in on_disk]
+            if not missing:
+                continue
+            stems = {f"_{e.ref}_{e.file_gloss or db.gloss(e)}".lower()}
+            candidates = [n for n in free if any(st in n.lower() for st in stems) and n not in taken]
+            for i in missing:
+                t = e.tokens[i]
+                exp = db.expected_filename(e, t)
+                if exp in on_disk and exp not in taken and exp.lower() not in claimed:
+                    best = exp
+                else:
+                    scored = sorted(((max(difflib.SequenceMatcher(None, c.lower(), x.lower()).ratio()
+                                          for x in (exp, t.file)), c) for c in candidates if c not in taken),
+                                    reverse=True)
+                    best = scored[0][1] if scored and scored[0][0] > 0.8 and \
+                        (len(scored) == 1 or scored[0][0] - scored[1][0] > 0.02) else None
+                if best:
+                    taken.add(best)
+                    found.append((e, i, best))
+                else:
+                    lost.append((e, i))
+        return found, lost
+
+    def find_missing_recordings(self):
+        db = self.doc.db
+        found, lost = self.missing_recordings()
+        if not found and not lost:
+            QMessageBox.information(self, "Missing recordings", "Every token's recording is in the sound folder.")
+            return
+        lines = [f"{e.ref}: {e.tokens[i].file}  →  {name}" for e, i, name in found]
+        msg = ""
+        if found:
+            msg += f"These {len(found)} recording(s) seem to have a different name now:\n\n" + \
+                "\n".join(lines[:40]) + ("\n…" if len(lines) > 40 else "")
+        if lost:
+            msg += ("\n\n" if msg else "") + f"{len(lost)} recording(s) couldn't be found at all:\n" + \
+                "\n".join(f"{e.ref}: {e.tokens[i].file}" for e, i in lost[:20])
+        if not found:
+            QMessageBox.information(self, "Missing recordings", msg)
+            return
+        if QMessageBox.question(self, "Missing recordings",
+                                msg + "\n\nLink the tokens to the files found?") != QMessageBox.Yes:
+            return
+        for e, i, name in found:
+            self.doc.edit_entry(e, lambda en, i=i, name=name: setattr(en.tokens[i], "file", name),
+                                "Link recording")
+        self._maybe_update_names()
+
+    def _report_missing(self):
+        """A status-bar note when recordings can't be found (e.g. renamed outside Lemmatrix)."""
+        found, lost = self.missing_recordings()
+        if found or lost:
+            self.statusBar().showMessage(f"{len(found) + len(lost)} recording(s) aren't where their tokens "
+                                         "say: Tools → Find missing recordings.", 15000)
 
     def check_duplicates(self):
         dups = self.doc.db.duplicate_filenames()
@@ -1451,6 +1525,14 @@ class MainWindow(QMainWindow):
                                  QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
         if r == QMessageBox.Save:
             return self.save()
+        if r == QMessageBox.Discard and self.doc.renamed:
+            # recordings renamed since the last save get the names the saved database expects
+            problems = self.doc.revert_renames()
+            if problems:
+                QMessageBox.warning(self, "Sound file names",
+                                    "These recordings couldn't get their old names back, so "
+                                    "Tools → Find missing recordings may be needed next time:\n\n"
+                                    + "\n".join(problems[:30]))
         return r == QMessageBox.Discard
 
     def new_file(self):
