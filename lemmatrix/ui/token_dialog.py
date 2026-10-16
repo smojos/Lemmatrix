@@ -371,7 +371,7 @@ class TokenDialog(QDialog):
         src, dst = self._path(t.file), self._path(exp)
         if not src.exists():
             return False
-        if dst.exists() and dst.resolve() != src.resolve():
+        if dst.exists() and not storage.same_file(src, dst):     # a case-only rename is fine
             QMessageBox.warning(self, "File name", f"Can't rename {t.file}: a file called {exp} "
                                 "already exists. Check for duplicate tokens.")
             return False

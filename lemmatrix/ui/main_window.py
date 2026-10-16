@@ -1314,7 +1314,7 @@ class MainWindow(QMainWindow):
             if not src.exists():
                 problems.append(f"{t.file}: not in the sound folder")
                 continue
-            if dst.exists():
+            if dst.exists() and not storage.same_file(src, dst):     # a case-only rename is fine
                 problems.append(f"{t.file}: {new} already exists")
                 continue
             try:

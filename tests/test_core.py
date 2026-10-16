@@ -364,3 +364,24 @@ def test_open_in_praat_runs_a_view_and_edit_script(tmp_path, monkeypatch):
     import pytest
     with pytest.raises(praat.PraatError):
         praat.open_sound(str(tmp_path / "missing.exe"), wav)
+
+
+def test_dekereke_pitch_conversion():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("convert_dekereke", Path(__file__).resolve().parent.parent / "tools" / "convert_dekereke.py")
+    cd = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cd)
+    assert cd.pitch_joined("[523]", "x") == "55 22 33"
+    assert cd.pitch_joined("[a]", "x") == "21"
+    assert cd.pitch_joined("[333K2j]", "x") == "33 33 33 35 22 42"
+    assert cd.pitch_joined("[33 334]", "x") == "33 33 , 33 33 44"         # Dekereke space -> comma
+    assert cd.pitch_groups("[3335][5223]", "x") == ["33 33 33 55", "55 22 22 33"]
+    assert cd.pitch_joined("[Ee]", "x") == "56 65"
+
+
+def test_same_file_allows_case_only_renames(tmp_path):
+    from lemmatrix import storage
+    a = tmp_path / "x-F1.wav"
+    a.write_bytes(b"RIFF")
+    assert storage.same_file(a, a)
+    assert not storage.same_file(a, tmp_path / "other.wav")

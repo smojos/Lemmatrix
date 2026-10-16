@@ -379,6 +379,14 @@ def save(db: Database, path: str | os.PathLike | None = None, backup: bool = Tru
     db.path = path
 
 
+def same_file(a: Path, b: Path) -> bool:
+    """True if two paths are one file (e.g. names differing only in case on Windows)."""
+    try:
+        return a.exists() and b.exists() and os.path.samefile(a, b)
+    except OSError:
+        return False
+
+
 def sound_folder(db: Database) -> Path:
     """Absolute folder for recordings: relative paths are relative to the database file."""
     folder = Path(db.settings.sound_folder or ".")

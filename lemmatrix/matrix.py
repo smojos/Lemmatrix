@@ -146,16 +146,36 @@ def combine(a: Spec, b: Spec) -> Spec:
     return Spec(a.tags | b.tags, match)
 
 
-def global_order(db: Database) -> dict[str, int]:
-    order: dict[str, int] = {}
-    for _, g in db.settings.tags.all_leaf_groups():
+UNKNOWN = 10 ** 9
+
+
+class Order(dict):
+    """tag name -> place in the tag order; .frames holds the frame tags."""
+    frames: frozenset = frozenset()
+
+
+def global_order(db: Database) -> Order:
+    order = Order()
+    frames = set()
+    for path, g in db.settings.tags.all_leaf_groups():
         for t in g.tags:
             order.setdefault(t.name, len(order))
+            if any(p.lower() == "frames" for p in (*path, g.name)):
+                frames.add(t.name)
+    order.frames = frozenset(frames)
     return order
 
 
 def sort_key(tags, order: dict[str, int]):
-    return (len(tags) > 0, sorted(order.get(t, 10_000) for t in tags), sorted(tags))
+    """Tag order, with frames as a second key: each form comes first on its own, then in
+    its frames (Citation, f1, f2, PL, PL f1, PL f2 ...)."""
+    frames = getattr(order, "frames", frozenset())
+    base = [t for t in tags if t not in frames]
+    framed = [t for t in tags if t in frames]
+
+    def key(ts):
+        return (len(ts) > 0, sorted(order.get(t, UNKNOWN) for t in ts), sorted(ts))
+    return key(base), key(framed)
 
 
 def chips(db: Database, tags, word_class: str | None = None) -> list[str]:
@@ -230,7 +250,7 @@ def auto_tag_specs(db: Database, entries) -> list[Spec]:
     defaults = default_names(db)
     order = global_order(db)
     found = {t for e in entries for tok in e.tokens for t in marked(tok.tags, defaults)}
-    return [Spec(frozenset([t]), LOOSE) for t in sorted(found, key=lambda t: (order.get(t, 10_000), t))]
+    return [Spec(frozenset([t]), LOOSE) for t in sorted(found, key=lambda t: (order.get(t, UNKNOWN), t))]
 
 
 def _sorted_hits(hits, order, defaults=frozenset()):
