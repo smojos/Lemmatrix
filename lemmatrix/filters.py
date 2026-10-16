@@ -17,6 +17,9 @@ from dataclasses import dataclass, field
 ANYWHERE, WHOLE, START, END, REGEX = "anywhere", "whole", "start", "end", "regex"
 ANY, NONE, EXACTLY = "any", "none", "exactly"
 
+# In the tag filter's Choose list: stands for "no tags at all" (the citation token).
+CITATION_ITEM = "Citation (no tags)"
+
 
 def fold_diacritics(text: str) -> str:
     """Remove combining marks and modifier letters (ʰ ʷ ʲ ː …), keep base letters."""
@@ -123,5 +126,7 @@ def matches(flt, value, unmarked: set = frozenset()) -> bool:
         return flt.matches(value)
     if isinstance(flt, ChoiceFilter):
         vals = set(value) if multi else ({value} if value else set())
+        if multi and not vals:
+            vals = {CITATION_ITEM}
         return flt.matches_values(vals, unmarked)
     return True

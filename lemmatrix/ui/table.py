@@ -12,7 +12,8 @@ from typing import Callable
 
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, QRectF, QSize, QSortFilterProxyModel, Qt, Signal
 from PySide6.QtGui import QAction, QColor
-from PySide6.QtWidgets import (QAbstractItemView, QMenu, QStyle, QStyledItemDelegate, QTableView)
+from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QMenu, QStyle, QStyledItemDelegate,
+                               QTableView)
 
 from .. import filters as fl
 from ..model import ListItem
@@ -35,6 +36,9 @@ class Column:
     display: Callable | None = None                 # row -> text shown (if not the value)
     tooltip: Callable | None = None
     color: Callable | None = None
+
+
+READ_ONLY = QColor("#ececec")
 
 
 def _text(value) -> str:
@@ -94,6 +98,8 @@ class RowModel(QAbstractTableModel):
             return self.ipa
         if role == Qt.ForegroundRole and col.color:
             return col.color(row)
+        if role == Qt.BackgroundRole and not col.edit:
+            return READ_ONLY            # grey: not editable here
         return None
 
     def flags(self, index):
@@ -158,6 +164,27 @@ class RowFilter(QSortFilterProxyModel):
             else:
                 return False
         return True
+
+
+class ListEditDelegate(QStyledItemDelegate):
+    """In-place editing of a closed field: pick from its list, or type a new value."""
+
+    def __init__(self, values: Callable, parent=None):
+        super().__init__(parent)
+        self.values = values                      # () -> list of values
+
+    def createEditor(self, parent, option, index):
+        cb = QComboBox(parent)
+        cb.setEditable(True)
+        cb.addItem("")
+        cb.addItems(self.values())
+        return cb
+
+    def setEditorData(self, editor, index):
+        editor.setCurrentText(index.data(Qt.EditRole) or "")
+
+    def setModelData(self, editor, model, index):
+        model.setData(index, editor.currentText(), Qt.EditRole)
 
 
 class ChipsDelegate(QStyledItemDelegate):
@@ -228,7 +255,7 @@ class FilterTable(QTableView):
         self.sortByColumn(-1, Qt.AscendingOrder)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.setAlternatingRowColors(True)
+        self.setAlternatingRowColors(False)
         self.verticalHeader().hide()
         self.verticalHeader().setDefaultSectionSize(26)
         self.horizontalHeader().setStretchLastSection(True)
@@ -357,12 +384,14 @@ class FilterTable(QTableView):
             counts: dict[str, int] = {}
             for row in self.model_.rows:
                 v = col.get(row)
+                if col.multi and not v:
+                    v = [fl.CITATION_ITEM]
                 for x in (v if isinstance(v, (list, set, tuple, frozenset)) else [v]):
                     if x:
                         counts[x] = counts.get(x, 0) + 1
             tree = col.tree() if col.tree else []
             known = {i.name for top in tree for i in top.walk()}
-            others = sorted(k for k in counts if k not in known)
+            others = sorted(k for k in counts if k not in known and k != fl.CITATION_ITEM)
             if others:
                 tree = tree + [ListItem("(other values)", [ListItem(o) for o in others])]
             dlg = ChooseDialog(self, col.title, tree, counts,

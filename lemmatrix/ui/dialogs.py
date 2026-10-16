@@ -265,8 +265,6 @@ class PreferencesDialog(QDialog):
         tabs = QTabWidget()
         lay.addWidget(tabs)
 
-        w = QWidget()
-        f = QFormLayout(w)
         self.pattern = QLineEdit(s.filename_pattern)
         self.pattern.setToolTip("Placeholders: {language} {variety} {speaker} {reference} {gloss} "
                                 "{tags} {date}, or any field name. A separator before an empty part "
@@ -277,26 +275,14 @@ class PreferencesDialog(QDialog):
         self.folder.setToolTip("Relative to the database file, unless it's a full path.")
         self.auto_names = QCheckBox("Update sound file names automatically")
         self.auto_names.setChecked(s.auto_update_names)
-        f.addRow("File name pattern", self.pattern)
-        f.addRow("Tag separator", self.separator)
-        f.addRow("Sound folder", self.folder)
-        f.addRow(self.auto_names)
-        tabs.addTab(w, "Sound files (database)")
 
-        w = QWidget()
-        f = QFormLayout(w)
         self.low = QSpinBox()
         self.low.setRange(0, 9)
         self.low.setValue(s.pitch_low)
         self.high = QSpinBox()
         self.high.setRange(0, 9)
         self.high.setValue(s.pitch_high)
-        f.addRow("Lowest pitch digit", self.low)
-        f.addRow("Highest pitch digit", self.high)
-        tabs.addTab(w, "Display (database)")
 
-        w = QWidget()
-        f = QFormLayout(w)
         self.source = QComboBox()
         self.source.addItem("Microphone", "microphone")
         self.source.addItem("Computer audio", "computer")
@@ -321,14 +307,25 @@ class PreferencesDialog(QDialog):
         self.ipa = QSpinBox()
         self.ipa.setRange(8, 30)
         self.ipa.setValue(prefs.ipa_size)
-        f.addRow("Recording source", self.source)
-        f.addRow("Bit depth", self.bits)
-        f.addRow("Sample rate", self.rate)
-        f.addRow(self.with_tokens)
-        f.addRow(self.confirm)
-        f.addRow("Autosave every", self.autosave)
-        f.addRow("IPA font size", self.ipa)
-        tabs.addTab(w, "This computer")
+        def page(title, rows):
+            w = QWidget()
+            f = QFormLayout(w)
+            for label, widget in rows:
+                if label:
+                    f.addRow(label, widget)
+                else:
+                    f.addRow(widget)
+            tabs.addTab(w, title)
+
+        page("Sound", [
+            ("File name pattern", self.pattern), ("Tag separator", self.separator),
+            ("Sound folder", self.folder), (None, self.auto_names),
+            (None, QLabel("<b>On this computer</b>")),
+            ("Recording source", self.source), ("Bit depth", self.bits), ("Sample rate", self.rate),
+            (None, self.with_tokens), (None, self.confirm)])
+        page("Display", [("Lowest pitch digit", self.low), ("Highest pitch digit", self.high),
+                         ("IPA font size (this computer)", self.ipa)])
+        page("General", [("Autosave every (this computer)", self.autosave)])
         lay.addWidget(_buttons(self))
 
     def accept(self):
@@ -395,7 +392,7 @@ class TagStructureDialog(QDialog):
                          ("Add tag", self._add_tag), ("Delete", self._delete),
                          ("Move up", lambda: self._move(-1)), ("Move down", lambda: self._move(1))):
             b = QPushButton(text)
-            b.clicked.connect(fn)
+            b.clicked.connect(lambda *_, fn=fn: fn())   # ignore the 'checked' flag
             row.addWidget(b)
         lay.addLayout(row)
         lay.addWidget(_buttons(self))

@@ -202,3 +202,57 @@ def test_save_matrix_is_stored_with_its_class(win, monkeypatch):
     saved = win.doc.db.settings.matrices
     assert [m.name for m in saved] == ["Noun overview"] and saved[0].word_class == "NOUN"
     assert saved[0].x                                            # automatic columns were fixed
+
+
+def _button(widget, text):
+    from PySide6.QtWidgets import QToolButton
+    return next(b for b in widget.findChildren(QToolButton) if b.text() == text)
+
+
+def test_option_buttons_actually_work(win, monkeypatch):
+    """Clicking passes a 'checked' flag; it must not replace the button's own arguments."""
+    from PySide6.QtWidgets import QDialog
+    from lemmatrix.ui.main_window import LEMMA_TAG, TAG_TAG
+    opened = []
+    monkeypatch.setattr(QDialog, "exec", lambda self: opened.append(type(self).__name__) or 0)
+    win.lemmas.select_row(win.doc.db.entry_by_ref("V001"))
+    for tab, bar in ((LEMMA_TAG, win.lt_bar), (TAG_TAG, win.tt_bar)):
+        win.tabs.setCurrentIndex(tab)
+        _button(bar["widget"], "Configure cell").click()
+        _button(bar["widget"], "Configure matrix").click()
+    assert opened == ["ConfigureCellDialog", "ConfigureMatrixDialog"] * 2
+
+
+def test_fields_dialog_add_buttons(win, monkeypatch):
+    from PySide6.QtWidgets import QInputDialog, QToolButton
+    from lemmatrix.ui.fields_dialog import FieldsDialog
+    monkeypatch.setattr(QInputDialog, "getText", lambda *a, **k: ("Syllables", True))
+    dlg = FieldsDialog(win, win.doc.db)
+    adds = [b for b in dlg.findChildren(QToolButton) if b.toolTip() == "Add a token field"]
+    adds[0].click()
+    assert dlg.lists["token"][-1].name == "Syllables"
+
+
+def test_citation_and_sound_file_filters(win):
+    from lemmatrix import filters as fl
+    t = win.all_table
+    t.proxy.set_filter("tags", fl.ChoiceFilter({fl.CITATION_ITEM}))
+    cit = t.proxy.rowCount()
+    assert cit == len(win.doc.db.entries)                        # one citation token per lemma
+    t.proxy.set_filter("tags", fl.ChoiceFilter({fl.CITATION_ITEM}, fl.NONE))
+    assert t.proxy.rowCount() == t.model_.rowCount() - cit
+    t.clear_filters()
+    t.proxy.set_filter("file", fl.Blanks())
+    blanks = t.proxy.rowCount()
+    t.proxy.set_filter("file", fl.NonBlanks())
+    recorded = t.proxy.rowCount()
+    assert recorded == len(win.sound_files) and blanks + recorded == t.model_.rowCount()
+
+
+def test_lemma_fields_edit_in_place(win):
+    goat = win.doc.db.entry_by_ref("D001")
+    win._lemma_edited(goat, "ToneClass", "H/H")
+    assert goat.get("ToneClass") == "H/H"
+    assert "H/H" in win.doc.db.settings.entry_field("ToneClass").all_values()
+    win._lemma_edited(goat, "Gloss:en", "he/she")              # refused: / isn't allowed
+    assert win.doc.db.gloss(goat) == "goat"

@@ -26,7 +26,7 @@ def _tool(name, tip, fn):
     b.setIcon(icon(name, 20))
     b.setToolTip(tip)
     b.setAutoRaise(True)
-    b.clicked.connect(fn)
+    b.clicked.connect(lambda *_, fn=fn: fn())   # ignore the 'checked' flag
     return b
 
 

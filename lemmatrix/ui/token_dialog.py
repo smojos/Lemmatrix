@@ -81,8 +81,8 @@ class TokenDialog(QDialog):
             else:
                 ed.setFont(ipa_font(self.main.prefs.ipa_size + 1))
             if f.role == "pitch":
-                ed.setValidator(QRegularExpressionValidator(QRegularExpression(r"[0-9 ,]*"), ed))
-                ed.setPlaceholderText("e.g. 12 33 41")
+                ed.setValidator(QRegularExpressionValidator(QRegularExpression(r"[0-9 ,:]*"), ed))
+                ed.setPlaceholderText("e.g. 11 4:42 1:4")
                 ed.textChanged.connect(self._pitch_changed)
             ed.textChanged.connect(self._fields_changed)
             label = f.title + (f" ({s.primary_gloss})" if f.multilingual and len(s.gloss_languages) > 1 else "")

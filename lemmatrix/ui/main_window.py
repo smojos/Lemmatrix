@@ -12,9 +12,9 @@ from PySide6.QtWidgets import (QCheckBox, QComboBox, QDateEdit, QFileDialog, QFr
                                QPushButton, QSplitter, QStackedWidget, QTabBar, QToolButton,
                                QVBoxLayout, QWidget)
 
-from .. import __version__, audio, matrix as mx, storage
+from .. import __version__, audio, filters as fl, matrix as mx, storage
 from ..defaults import new_database
-from ..model import Database, Entry
+from ..model import Database, Entry, ListItem, forbidden_in
 from .dialogs import EntryDialog, MetadataDialog, PreferencesDialog, TagStructureDialog
 from .document import Document
 from .fields_dialog import FieldsDialog
@@ -23,7 +23,7 @@ from .icons import icon
 from .matrix_dialogs import ConfigureCellDialog, ConfigureMatrixDialog, ask_matrix_name
 from .matrix_view import MatrixView
 from .prefs import Prefs
-from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable
+from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, ListEditDelegate
 from .token_dialog import Slot, TokenDialog
 from .widgets import ipa_font
 
@@ -59,7 +59,7 @@ def tool(text: str, icon_name: str | None, fn, tip: str = "") -> QToolButton:
         b.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
     b.setToolTip(tip or text)
     b.setAutoRaise(True)
-    b.clicked.connect(fn)
+    b.clicked.connect(lambda *_, fn=fn: fn())   # ignore the 'checked' flag
     return b
 
 
@@ -74,6 +74,7 @@ class MainWindow(QMainWindow):
         self.switched = {LEMMA_TAG: False, TAG_TAG: False}
         self.layouts: dict = {}
         self.dialog_autoplay = False
+        self.sound_files: set[str] = set()       # names in the sound folder, refreshed with the views
         self.resize(1500, 920)
         self._build()
         self._build_menus()
@@ -200,6 +201,7 @@ class MainWindow(QMainWindow):
         self.all_table.deleteRequested.connect(self.delete_token)
         self.all_table.contextRequested.connect(self._all_menu)
         self.all_table.model_.edited.connect(self._cell_edited)
+        self.lemmas.model_.edited.connect(self._lemma_edited)
         self.tabs.currentChanged.connect(self._tab_changed)
         for view, tab in ((self.lt_view, LEMMA_TAG), (self.tt_view, TAG_TAG)):
             view.tokenClicked.connect(lambda r, c, n, tab=tab: self._token_clicked(tab, r, c, n))
@@ -341,16 +343,17 @@ class MainWindow(QMainWindow):
     def _lemma_columns(self) -> list[Column]:
         db = self.doc.db
         s = db.settings
+        edit = lambda row, text: None           # marks a column as editable in place
         cols = [Column("ref", "Reference", lambda e: e.ref)]
         for f in s.entry_fields:
             if f.multilingual:
                 for lang in s.gloss_languages:
                     cols.append(Column(f"{f.name}:{lang}", f"{f.title} ({lang})" if len(s.gloss_languages) > 1
-                                       else f.title, lambda e, n=f.name, l=lang: e.get(n, l)))
+                                       else f.title, lambda e, n=f.name, l=lang: e.get(n, l), edit=edit))
             else:
                 cols.append(Column(f.name, f.title, lambda e, n=f.name: e.get(n), closed=f.closed,
                                    tree=(lambda f=f: s.list_items(f)) if f.closed else None,
-                                   ipa=f.role == "lemma"))
+                                   ipa=f.role == "lemma", edit=edit))
         return cols
 
     def _default_lemma_keys(self) -> list[str]:
@@ -373,8 +376,7 @@ class MainWindow(QMainWindow):
         gf = s.entry_field("gloss")
 
         def tag_tree():
-            from ..model import ListItem
-            out = []
+            out = [ListItem(fl.CITATION_ITEM)]
             for wc in s.tags.word_classes:
                 out.append(ListItem(wc.name, [self._group_item(g) for g in wc.groups]))
             out.append(ListItem("All classes", [self._group_item(g) for g in s.tags.all_classes]))
@@ -401,17 +403,20 @@ class MainWindow(QMainWindow):
         cols += [
             Column("speaker", "Speaker", lambda r: r.token.speaker),
             Column("date", "Date", lambda r: r.token.collected),
-            Column("file", "Sound file", lambda r: r.token.file or db.expected_filename(r.entry, r.token),
+            # Value: the recording if it exists on disk, otherwise blank (so Blanks = no recording);
+            # shown: the recording, or the name it would get, in grey.
+            Column("file", "Sound file", lambda r: r.token.file if r.token.file in self.sound_files else "",
+                   display=lambda r: r.token.file or db.expected_filename(r.entry, r.token),
                    color=lambda r: QColor("#888") if not r.token.file else
-                   (QColor("#c62828") if r.token.file != db.expected_filename(r.entry, r.token) else None),
-                   tooltip=lambda r: (f"Recorded as {r.token.file}\nExpected: "
-                                      f"{db.expected_filename(r.entry, r.token)}") if r.token.file
-                   else "Not recorded yet"),
+                   (QColor("#c62828") if (r.token.file not in self.sound_files or
+                                          r.token.file != db.expected_filename(r.entry, r.token)) else None),
+                   tooltip=lambda r: ("Not recorded yet" if not r.token.file else
+                                      f"{r.token.file} isn't in the sound folder" if r.token.file not in self.sound_files
+                                      else f"Recorded as {r.token.file}\nExpected: {db.expected_filename(r.entry, r.token)}")),
         ]
         return cols
 
     def _group_item(self, g):
-        from ..model import ListItem
         return ListItem(g.name, [ListItem(t.name) for t in g.tags] + [self._group_item(x) for x in g.groups])
 
     def _default_all_keys(self) -> list[str]:
@@ -425,6 +430,7 @@ class MainWindow(QMainWindow):
         saved = self.prefs.get_list("columns/lemma")
         keys = [k for k in saved if any(c.key == k for c in cols)] or self._default_lemma_keys()
         self.lemmas.set_columns(cols, keys)
+        self._closed_editors(self.lemmas)
         self.lemmas.resizeColumnsToContents()
         cols = self._all_columns()
         saved = self.prefs.get_list("columns/alldata")
@@ -436,7 +442,15 @@ class MainWindow(QMainWindow):
             if r is not None else [], self.all_table))
         self.all_table.set_delegate("drawing", DrawingDelegate(
             lambda: (db.settings.pitch_low, db.settings.pitch_high), self.all_table))
+        self._closed_editors(self.all_table)
         self._all_sized = False
+
+    def _closed_editors(self, table):
+        """Closed fields edited in place get a drop-down of their list."""
+        for c in table.model_.columns:
+            if c.closed and c.edit and c.tree and not c.multi:
+                table.set_delegate(c.key, ListEditDelegate(
+                    lambda c=c: [i.name for top in c.tree() for i in top.walk()], table))
 
     def configure_lemma_columns(self):
         cols = self._lemma_columns()
@@ -444,6 +458,7 @@ class MainWindow(QMainWindow):
         if dlg.exec():
             self.prefs.set_list("columns/lemma", dlg.chosen())
             self.lemmas.set_columns(cols, dlg.chosen())
+            self._closed_editors(self.lemmas)
             self.lemmas.set_rows(self.doc.db.entries)
             self.lemmas.resizeColumnsToContents()
 
@@ -453,15 +468,6 @@ class MainWindow(QMainWindow):
         if dlg.exec():
             self.prefs.set_list("columns/alldata", dlg.chosen())
             self._setup_columns()
-            self.all_table.set_columns(cols, dlg.chosen())
-            db = self.doc.db
-            defaults = mx.default_names(db)
-            self.all_table.set_delegate("tags", ChipsDelegate(
-                lambda r: mx.chips(db, mx.marked(r.token.tags, defaults), db.word_class(r.entry) or None)
-                if r is not None else [], self.all_table))
-            self.all_table.set_delegate("drawing", DrawingDelegate(
-                lambda: (db.settings.pitch_low, db.settings.pitch_high), self.all_table))
-            self._all_sized = False
             self.refresh()
 
     # ============================================================ database
@@ -605,9 +611,19 @@ class MainWindow(QMainWindow):
                 self.configs[(cfg.kind, cfg.word_class)] = m.copy()
         self.refresh()
 
+    def _scan_sound_folder(self):
+        folder = storage.sound_folder(self.doc.db)
+        try:
+            self.sound_files = {p.name for p in folder.iterdir() if p.is_file()}
+        except OSError:
+            self.sound_files = set()
+        for v in (self.lt_view, self.tt_view):
+            v.sound_files = self.sound_files
+
     def refresh(self):
         db = self.doc.db
         tab = self.tabs.currentIndex()
+        self._scan_sound_folder()
         visible = self.lemmas.visible_rows()
         self.lemma_count.setText(f"{len(visible)} of {len(db.entries)} lemmas shown")
         if tab == ALL_DATA:
@@ -793,6 +809,28 @@ class MainWindow(QMainWindow):
         def change(e, i=row.index):
             e.tokens[i].set(name, text.strip(), s.primary_gloss if f.multilingual else None, f.multilingual)
         self.doc.edit_entry(row.entry, change, f"Edit {f.title}")
+
+    def _lemma_edited(self, entry, key, text):
+        s = self.doc.db.settings
+        name, _, lang = key.partition(":")
+        f = s.entry_field(name)
+        if f is None:
+            return
+        text = text.strip()
+        if f.role == "gloss" and forbidden_in(text):
+            QMessageBox.warning(self, "Gloss", f"{forbidden_in(text)} can't be used in a gloss, "
+                                "because glosses can end up in file names.")
+            return
+        if f.role == "word-class" and text and text not in s.tags.word_class_names():
+            QMessageBox.warning(self, "Word class", f"“{text}” isn't a word class. Add it in "
+                                "Settings → Tag structure first.")
+            return
+        if f.closed and f.role != "word-class" and text:
+            f.add_value(text)
+
+        def change(e):
+            e.set(name, text, lang or None, f.multilingual)
+        self.doc.edit_entry(entry, change, f"Edit {f.title}")
 
     def selected_token(self):
         """(entry, token index) of the selected token in the current tab, or None."""

@@ -157,7 +157,7 @@ class SpecList(QWidget):
             b.setIcon(icon(name, 20))
             b.setToolTip(tip)
             b.setAutoRaise(True)
-            b.clicked.connect(fn)
+            b.clicked.connect(lambda *_, fn=fn: fn())   # ignore the 'checked' flag
             head.addWidget(b)
         lay.addLayout(head)
         self.list = QListWidget()

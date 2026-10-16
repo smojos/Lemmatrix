@@ -20,6 +20,31 @@ from .widgets import (PITCH_BLUE, chip_metrics, chips_width, draw_pitch, ipa_fon
 
 PAD = 8          # inside a cell
 GAP = 14         # between side-by-side tokens
+SOUND_W = 16     # room for the recording symbol at the top right of each token
+
+
+def draw_sound_mark(p: QPainter, x: float, y: float, state: str):
+    """A small speaker: green = recording on disk, red = recorded but missing, grey outline = none."""
+    from PySide6.QtCore import QPointF
+    from PySide6.QtGui import QPolygonF
+    color = {"ok": QColor("#2e9e44"), "missing": QColor("#d93030")}.get(state, QColor("#b5b5b5"))
+    p.save()
+    p.setRenderHint(QPainter.Antialiasing)
+    body = QPolygonF([QPointF(x, y + 4), QPointF(x + 3, y + 4), QPointF(x + 7, y + 1),
+                      QPointF(x + 7, y + 11), QPointF(x + 3, y + 8), QPointF(x, y + 8)])
+    if state == "none":
+        p.setPen(QPen(color, 1))
+        p.setBrush(Qt.NoBrush)
+    else:
+        p.setPen(Qt.NoPen)
+        p.setBrush(color)
+    p.drawPolygon(body)
+    if state != "none":
+        p.setPen(QPen(color, 1.2))
+        p.setBrush(Qt.NoBrush)
+        p.drawArc(QRectF(x + 5, y + 2.5, 5, 7), -60 * 16, 120 * 16)
+        p.drawArc(QRectF(x + 5, y, 8, 12), -60 * 16, 120 * 16)
+    p.restore()
 IPA_FIELDS = {"Phonetic", "Phonemic"}
 
 
@@ -28,6 +53,10 @@ class MatrixModel(QAbstractTableModel):
         super().__init__()
         self.db = db
         self.layout_ = mx.Layout()
+
+    def view_sound_files(self):
+        v = self.parent() if hasattr(self, "parent") else None
+        return getattr(v, "sound_files", set())
 
     def set_layout(self, layout: mx.Layout):
         self.beginResetModel()
@@ -56,7 +85,9 @@ class MatrixModel(QAbstractTableModel):
             wc = mx.class_of(self.db, entry)
             lines = [f"{entry.ref}  {self.db.lemma(entry)}  “{self.db.gloss(entry)}”"]
             for _, t in hits:
-                lines.append(" + ".join(mx.chips(self.db, t.tags, wc or None)) or "Citation")
+                rec = ("recorded" if t.file in self.view_sound_files() else "recording missing") if t.file \
+                    else "not recorded"
+                lines.append((" + ".join(mx.chips(self.db, t.tags, wc or None)) or "Citation") + f"  ({rec})")
             if not hits:
                 lines.append("Double-click to add a token here")
             return "\n".join(lines)
@@ -174,7 +205,7 @@ class TokenCellDelegate(QStyledItemDelegate):
             chips = self.chips_for(r, c, t)
             if chips:
                 w = max(w, chips_width(chips, self.small))
-            out.append(int(w) + 4)
+            out.append(int(w) + 4 + SOUND_W)
         return out
 
     def chip_row_needed(self, r, c, hits) -> bool:
@@ -230,6 +261,7 @@ class TokenCellDelegate(QStyledItemDelegate):
         x = rect.left() + PAD
         for n, ((e, t), w) in enumerate(zip(hits, widths)):
             y = rect.top() + PAD
+            state = "none" if not t.file else ("ok" if t.file in self.view.sound_files else "missing")
             if sel == (r, c, n):
                 painter.setPen(QPen(QColor("#5b8fd6"), 1.5))
                 painter.setBrush(QColor("#dce8fb"))
@@ -252,6 +284,7 @@ class TokenCellDelegate(QStyledItemDelegate):
                 painter.drawText(QRect(int(x), int(y), int(w) + 2, fm.height()),
                                  Qt.AlignLeft | Qt.AlignVCenter, text or "—")
                 y += fm.height() + 1
+            draw_sound_mark(painter, x + w - SOUND_W + 2, rect.top() + PAD, state)
             x += w + GAP
         painter.restore()
 
@@ -276,7 +309,9 @@ class MatrixView(QTableView):
         self.defaults = mx.default_names(db)
         self.cell_fields = list(mx.DEFAULT_CELL)
         self.selected: tuple | None = None      # (row, column, token number)
+        self.sound_files: set[str] = set()      # recordings present in the sound folder
         self.model_ = MatrixModel(db)
+        self.model_.setParent(self)
         self.setModel(self.model_)
         self.setHorizontalHeader(ChipHeader(Qt.Horizontal, self))
         self.setVerticalHeader(ChipHeader(Qt.Vertical, self))
