@@ -16,6 +16,7 @@ from .. import audio, pitch as pitchmod, storage
 from ..model import Entry, Token
 from PySide6.QtCore import QSize
 
+from . import theme
 from .icons import icon
 from .tagpanel import TagPanel
 from .widgets import PitchCanvas, ipa_font
@@ -179,7 +180,7 @@ class TokenDialog(QDialog):
         self.next_btn = QPushButton("Next ▶")
         self.next_btn.setToolTip("Save and go to the next token (Alt+Right)")
         self.position = QLabel()
-        self.position.setStyleSheet("color: #666;")
+        self.position.setStyleSheet(f"color: {theme.muted()};")
         ok = QPushButton("OK")
         ok.setDefault(True)
         cancel = QPushButton("Cancel")

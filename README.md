@@ -39,21 +39,24 @@ If something goes wrong, a message box shows the details, and they're also writt
   - *All data* (the default): one row per token, the same column filters (Tags is a closed
     list with Any / Exactly / No selected), Configure columns, in-place editing, right-click menu.
   - *Lemma/Tag:* lemmas of one Matrix class down the side, tag columns (Citation / Exact /
-    Loose) across the top; Configure cell, Configure matrix, Save matrix, auto-play.
+    Loose) across the top; Configure cell, Configure matrix (duplicate a line, Remove all,
+    Restore all present), Save / Rename / Delete / Clear matrix, auto-play.
   - *Tag/Tag:* the selected lemma's paradigm from a configured matrix; contradictory cells
     are greyed out.
   - Tokens matching one cell sit side by side with chips for what they add (e.g. +GEN).
   - Double-click a token to edit it; double-click an empty cell to add one there;
-    Delete and Enter work on the selected token; the ⇄ button swaps rows and columns.
+    Delete, Enter and Space (play) work on the selected token; the ⇄ button swaps rows and columns.
+  - The last view of each database (tab, lemma, matrices) comes back when you reopen it.
 - **Token dialogue:** live pitch drawing, tag chips (one per group, defaults pre-selected),
   live file name, record / stop with a level meter, play, delete recording, update file name,
   Back / Next column by column, Ctrl+R, Ctrl+Space, Alt+← / Alt+→. Recording sets the token's
   speaker and date to the current session's.
 - **Pitch notation:** digits are points; each colon lengthens the step between two points
   (`4:42` long high level then a quick fall). A lone digit becomes a short level (`5` → `55`).
-- **Settings:** metadata, Fields (lemma and token fields, open or closed, with an XML preview),
-  tag structure, file-name pattern, pitch display range, recording, deleting recordings with
-  their tokens, confirm before deleting, IPA font size.
+- **Edit menu:** metadata, Fields (lemma and token fields, open or closed, with an XML preview),
+  tag structure (duplicate names and codes show in red), and Settings: General (autosave),
+  Sound (file-name pattern, recording, deleting recordings with their tokens), Display (light
+  or dark theme, accent colour, IPA font size), Pitch (display range, trace colour).
 - **Undo and redo** for all changes to entries and tokens.
 
 ## Not in this version yet

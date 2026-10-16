@@ -6,13 +6,14 @@ import shutil
 from pathlib import Path
 
 from PySide6.QtCore import QDate, QFile, QSize, Qt, QTimer, QUrl
-from PySide6.QtGui import QAction, QColor, QDesktopServices, QKeySequence
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QDateEdit, QFileDialog, QFrame, QGroupBox,
+from PySide6.QtGui import QAction, QColor, QDesktopServices, QFont, QKeySequence
+from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QFileDialog, QFrame, QGroupBox,
                                QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMenu, QMessageBox,
                                QPushButton, QSplitter, QStackedWidget, QTabBar, QToolButton,
                                QVBoxLayout, QWidget)
 
 from .. import __version__, audio, filters as fl, matrix as mx, storage
+from . import theme
 from ..defaults import new_database
 from ..model import Database, Entry, ListItem, forbidden_in
 from .dialogs import EntryDialog, MetadataDialog, PreferencesDialog, TagStructureDialog
@@ -76,8 +77,11 @@ class MainWindow(QMainWindow):
         self.dialog_autoplay = False
         self.sound_files: set[str] = set()       # names in the sound folder, refreshed with the views
         self.resize(1500, 920)
+        theme.from_prefs(self.prefs)
         self._build()
         self._build_menus()
+        self._restyle()
+        self._restore_window()
         self.doc.changed.connect(self._doc_changed)
         self.doc.dirtyChanged.connect(self._dirty_changed)
         self.autosave = QTimer(self)
@@ -105,16 +109,15 @@ class MainWindow(QMainWindow):
         return row
 
     def _build(self):
-        main = QSplitter(Qt.Horizontal)
+        main = self.main_split = QSplitter(Qt.Horizontal)
         self.setCentralWidget(main)
 
         # ---- left: lemma list + its options -------------------------------
-        left = QSplitter(Qt.Vertical)
+        left = self.left_split = QSplitter(Qt.Vertical)
         self.lemmas = FilterTable()
         left.addWidget(self.lemmas)
         bar, bl = self._bar()
         self.lemma_count = QLabel()
-        self.lemma_count.setStyleSheet("color: #555;")
         self._row(bl, tool("Add", "add", self.add_entry, "Add a lemma"),
                   tool("Delete", "delete", self.delete_entry, "Delete the selected lemma (Delete)"),
                   tool("Edit", "edit", self.edit_entry, "Edit the selected lemma (Enter)"),
@@ -136,21 +139,20 @@ class MainWindow(QMainWindow):
         main.addWidget(left)
 
         # ---- right: Matrix + options + session ----------------------------
-        right = QSplitter(Qt.Vertical)
-        box = QGroupBox("Matrix")
-        box.setStyleSheet("QGroupBox { font-weight: 700; }")
+        right = self.right_split = QSplitter(Qt.Vertical)
+        box = self.matrix_box = QGroupBox("Matrix")
+        f = QFont(box.font())
+        f.setBold(True)
+        box.setFont(f)                 # the title only: the contents get the normal font below
         bxl = QVBoxLayout(box)
         top = QHBoxLayout()
         self.count_line = QLabel()
-        self.count_line.setStyleSheet("color: #444; font-weight: normal;")
         top.addWidget(self.count_line)
         top.addStretch(1)
         self.tabs = QTabBar()
         for name in ("All data", "Lemma/Tag", "Tag/Tag"):
             self.tabs.addTab(name)
         self.tabs.setExpanding(False)
-        self.tabs.setStyleSheet("QTabBar::tab { padding: 6px 14px; font-weight: normal; } "
-                                "QTabBar::tab:selected { background: #5b8fd6; color: white; }")
         top.addWidget(self.tabs)
         bxl.addLayout(top)
         self.views = QStackedWidget()
@@ -160,6 +162,10 @@ class MainWindow(QMainWindow):
         for w in (self.all_table, self.lt_view, self.tt_view):
             self.views.addWidget(w)
         bxl.addWidget(self.views, 1)
+        normal = QFont(box.font())
+        normal.setBold(False)              # set explicitly, or it would be inherited bold
+        for w in (self.count_line, self.tabs, self.views):
+            w.setFont(normal)
         right.addWidget(box)
 
         bottom = QWidget()
@@ -200,6 +206,8 @@ class MainWindow(QMainWindow):
         self.all_table.rowActivated.connect(lambda r: self.edit_token())
         self.all_table.deleteRequested.connect(self.delete_token)
         self.all_table.contextRequested.connect(self._all_menu)
+        self.all_table.space_plays = True
+        self.all_table.playRequested.connect(self.play_selected)
         self.all_table.model_.edited.connect(self._cell_edited)
         self.lemmas.model_.edited.connect(self._lemma_edited)
         self.tabs.currentChanged.connect(self._tab_changed)
@@ -209,11 +217,11 @@ class MainWindow(QMainWindow):
             view.contextRequested.connect(lambda r, c, n, pos, tab=tab: self._matrix_menu(tab, pos))
             view.deleteRequested.connect(self.delete_token)
             view.switchRequested.connect(lambda tab=tab: self.switch_axes(tab))
+            view.playRequested.connect(self.play_selected)
 
     def _all_data_bar(self) -> QWidget:
         bar, bl = self._bar()
         self.all_count = QLabel()
-        self.all_count.setStyleSheet("color: #555;")
         self._row(bl, tool("Add", "add", self.add_token, "Add a token"),
                   tool("Delete", "delete", self.delete_token, "Delete the selected token (Delete)"),
                   tool("Edit", "edit", self.edit_token, "Edit the selected token (Enter)"),
@@ -238,7 +246,11 @@ class MainWindow(QMainWindow):
         self._row(bl, tool("Add", "add", self.add_token, "Add a token in the selected cell"),
                   tool("Delete", "delete", self.delete_token, "Delete the selected token (Delete)"),
                   tool("Edit", "edit", self.edit_token, "Edit the selected token (Enter)"),
-                  tool("Play", "play", self.play_selected, "Play the selected token"))
+                  tool("Play", "play", self.play_selected, "Play the selected token (Space)"),
+                  tool("Configure cell", "gear", lambda tab=tab: self.configure_cell(tab),
+                       "Choose what each cell shows"),
+                  tool("Configure matrix", "gear", lambda tab=tab: self.configure_matrix(tab),
+                       "Choose the rows and columns"))
         d["cls"] = QComboBox()
         d["cls"].setMinimumWidth(120)
         d["cls"].setToolTip("A matrix shows one word class at a time" if tab == LEMMA_TAG
@@ -255,26 +267,34 @@ class MainWindow(QMainWindow):
         key = f"matrix/autoplay_{KINDS[tab]}"
         d["autoplay"].setChecked(self.prefs.get_bool(key))
         d["autoplay"].toggled.connect(lambda on, key=key: self.prefs.set_value(key, bool(on)))
-        self._row(bl, QLabel("Matrix class"), d["cls"],
-                  tool("Configure cell", "gear", lambda tab=tab: self.configure_cell(tab)),
-                  tool("Configure matrix", "gear", lambda tab=tab: self.configure_matrix(tab)))
+        self._row(bl, QLabel("Matrix class"), d["cls"], d["autoplay"])
         self._row(bl, QLabel("Matrix"), d["saved"],
-                  tool("Save matrix…", None, lambda tab=tab: self.save_matrix(tab)),
-                  tool("Delete saved", None, lambda tab=tab: self.delete_saved_matrix(tab)),
-                  d["autoplay"])
+                  tool("Save matrix", None, lambda tab=tab: self.save_matrix(tab),
+                       "Save this matrix under a name"),
+                  tool("Rename matrix", None, lambda tab=tab: self.rename_matrix(tab),
+                       "Rename the chosen saved matrix"),
+                  tool("Delete matrix", None, lambda tab=tab: self.delete_saved_matrix(tab),
+                       "Delete the chosen saved matrix"),
+                  tool("Clear matrix", None, lambda tab=tab: self.clear_matrix(tab),
+                       "Empty the view: no rows or columns"))
         bl.addStretch(1)
         return d
 
     def _session_panel(self) -> QWidget:
-        f, sl = self._bar()
-        t = QLabel("Current Session")
-        t.setStyleSheet("font-weight: 700; font-size: 15px;")
-        sl.addWidget(t)
-        self.sess_file = QLabel()
-        self.sess_file.setStyleSheet("font-style: italic;")
-        self.sess_codes = QLabel()
-        self.sess_codes.setStyleSheet("font-weight: 600;")
-        self.sess_codes.setToolTip("Language and variety codes, set in Settings → Metadata")
+        panel, sl = self._bar()
+
+        def styled(text="", bold=False, italic=False, scale=1.0):
+            lbl = QLabel(text)
+            fnt = QFont(lbl.font())
+            fnt.setBold(bold)
+            fnt.setItalic(italic)
+            fnt.setPointSizeF(fnt.pointSizeF() * scale)
+            lbl.setFont(fnt)
+            return lbl
+        sl.addWidget(styled("Current Session", bold=True, scale=1.25))
+        self.sess_file = styled(italic=True)
+        self.sess_codes = styled(bold=True)
+        self.sess_codes.setToolTip("Language and variety codes, set in Edit → Metadata")
         self.sess_speaker = QComboBox()
         self.sess_speaker.setToolTip("Speaker for new tokens and recordings (may be empty)")
         self.sess_speaker.currentTextChanged.connect(lambda t: setattr(self.prefs, "speaker", t))
@@ -293,8 +313,8 @@ class MainWindow(QMainWindow):
         dr.addWidget(self.sess_nodate)
         sl.addLayout(dr)
         sl.addStretch(1)
-        f.setMaximumWidth(260)
-        return f
+        panel.setMaximumWidth(260)
+        return panel
 
     def _build_menus(self):
         mb = self.menuBar()
@@ -314,11 +334,12 @@ class MainWindow(QMainWindow):
         redo.setShortcut(QKeySequence.Redo)
         e.addAction(undo)
         e.addAction(redo)
-        s = mb.addMenu("&Settings")
-        self._act(s, "&Metadata (language, variety, speakers)…", self.edit_metadata)
-        self._act(s, "&Fields…", self.edit_fields)
-        self._act(s, "&Tag structure…", self.edit_tags)
-        self._act(s, "&Settings…", self.edit_settings, QKeySequence.Preferences)
+        e.addSeparator()
+        self._act(e, "&Metadata (language, variety, speakers)…", self.edit_metadata)
+        self._act(e, "&Fields…", self.edit_fields)
+        self._act(e, "&Tag structure…", self.edit_tags)
+        e.addSeparator()
+        self._act(e, "&Settings…", self.edit_settings, QKeySequence.Preferences)
         t = mb.addMenu("&Tools")
         self._act(t, "Update all sound file names", self.update_all_names)
         self._act(t, "Check for duplicate file names", self.check_duplicates)
@@ -473,6 +494,8 @@ class MainWindow(QMainWindow):
     # ============================================================ database
     def load_database(self, db: Database):
         self.player.stop()
+        if self.doc.db is not db:
+            self._save_view()
         self.doc.db = db
         self.doc.undo.clear()
         self.doc.undo.setClean()
@@ -492,6 +515,7 @@ class MainWindow(QMainWindow):
         self._tab_changed(ALL_DATA)
         if db.entries:
             self.lemmas.selectRow(0)
+        self._restore_view()
         self._update_title()
 
     def _fill_session(self):
@@ -549,6 +573,99 @@ class MainWindow(QMainWindow):
     def schedule_refresh(self, delay: int = 0):
         self._refresh_timer.start(delay)
 
+    # ========================================================= theme, view
+    def _restyle(self):
+        """Colours that follow the theme and accent (the data views stay black on white)."""
+        a = theme.accent()
+        muted = theme.muted()
+        for lbl in (self.lemma_count, self.all_count):
+            lbl.setStyleSheet(f"color: {muted};")
+        self.count_line.setStyleSheet(f"color: {muted}; font-weight: normal;")
+        self.tabs.setStyleSheet(
+            "QTabBar::tab { padding: 6px 14px; font-weight: normal; } "
+            f"QTabBar::tab:selected {{ background: {a.name()}; color: {theme.text_on(a).name()}; }}")
+        for w in (self.lemmas, self.all_table, self.lt_view, self.tt_view):
+            theme.as_data(w)
+            w.viewport().update()
+
+    @staticmethod
+    def _spec_json(sp: mx.Spec) -> dict:
+        return {"m": sp.match, "t": sorted(sp.tags)}
+
+    @staticmethod
+    def _spec_from(d) -> mx.Spec:
+        match = d.get("m", mx.EXACT)
+        if match == mx.CITATION:
+            return mx.Spec.citation()
+        return mx.Spec(frozenset(d.get("t", [])), match)
+
+    def _save_view(self):
+        """Remember this database's view (tab, lemma, matrices) for next time."""
+        db = self.doc.db
+        if not db.path:
+            return
+        e = self.lemmas.current_row()
+        view = {
+            "tab": self.tabs.currentIndex(),
+            "lemma": e.ref if e is not None else "",
+            "lt_class": self.lt_bar["cls"].currentData() or "",
+            "switched": {KINDS[t]: on for t, on in self.switched.items()},
+            "configs": [{"kind": c.kind, "class": c.word_class, "name": c.name, "blank": c.blank,
+                         "cell": list(c.cell), "x": [self._spec_json(x) for x in c.x],
+                         "y": [self._spec_json(y) for y in c.y]} for c in self.configs.values()],
+        }
+        self.prefs.set_view_for(db.path, view)
+
+    def _restore_view(self):
+        db = self.doc.db
+        if not db.path:
+            return
+        view = self.prefs.view_for(db.path)
+        if not view:
+            return
+        try:
+            names = {(m.kind, m.word_class, m.name) for m in db.settings.matrices}
+            for c in view.get("configs", []):
+                cfg = mx.MatrixConfig(kind=c.get("kind", mx.LEMMA_TAG), word_class=c.get("class", ""),
+                                      blank=bool(c.get("blank")))
+                cfg.x = [self._spec_from(x) for x in c.get("x", [])]
+                cfg.y = [self._spec_from(y) for y in c.get("y", [])]
+                cfg.cell = list(c.get("cell") or mx.DEFAULT_CELL)
+                name = c.get("name", "")
+                cfg.name = name if (cfg.kind, cfg.word_class, name) in names else ""
+                self.configs[(cfg.kind, cfg.word_class)] = cfg
+            for t in (LEMMA_TAG, TAG_TAG):
+                self.switched[t] = bool(view.get("switched", {}).get(KINDS[t], False))
+            ref = view.get("lemma")
+            e = db.entry_by_ref(ref) if ref else None
+            if e is not None:
+                self.lemmas.select_row(e)
+            tab = int(view.get("tab", ALL_DATA))
+            if tab in (ALL_DATA, LEMMA_TAG, TAG_TAG):
+                self.tabs.blockSignals(True)
+                self.tabs.setCurrentIndex(tab)
+                self.tabs.blockSignals(False)
+                self._tab_changed(tab)
+            if tab == LEMMA_TAG and view.get("lt_class") is not None:
+                self._set_class(LEMMA_TAG, view.get("lt_class"))
+                self.refresh()
+        except (TypeError, ValueError, AttributeError, KeyError):
+            pass                                  # an unreadable view is simply forgotten
+
+    def _save_window(self):
+        self.prefs.set_value("window/geometry", self.saveGeometry())
+        for name, sp in (("main", self.main_split), ("left", self.left_split), ("right", self.right_split)):
+            self.prefs.set_value(f"window/{name}", sp.saveState())
+
+    def _restore_window(self):
+        g = self.prefs.get_bytes("window/geometry")
+        if g:
+            self.restoreGeometry(g)
+        for name, sp in (("main", self.main_split), ("left", self.left_split), ("right", self.right_split)):
+            st = self.prefs.get_bytes(f"window/{name}")
+            if st:
+                sp.restoreState(st)
+
     # ============================================================== matrix
     def _tab_changed(self, i):
         self.views.setCurrentIndex(i)
@@ -595,7 +712,7 @@ class MainWindow(QMainWindow):
         cfg = self.config_for(tab)
         cb.blockSignals(True)
         cb.clear()
-        cb.addItem("(current)" if (cfg.x or cfg.y) else
+        cb.addItem("(current)" if (cfg.x or cfg.y) else "(blank)" if cfg.blank else
                    ("(automatic)" if tab == LEMMA_TAG else "(not configured)"))
         for m in self.doc.db.settings.matrices:
             if m.kind == cfg.kind and m.word_class == cfg.word_class:
@@ -694,7 +811,7 @@ class MainWindow(QMainWindow):
             return
         ents = mx.in_class(self.doc.db, self.lemmas.visible_rows(), cfg.word_class)
         start = cfg
-        if tab == LEMMA_TAG and not cfg.x:
+        if tab == LEMMA_TAG and not cfg.x and not cfg.blank:
             start = cfg.copy()
             start.x = mx.auto_specs(self.doc.db, ents)
         dlg = ConfigureMatrixDialog(self, self.doc.db, start, ents)
@@ -706,7 +823,7 @@ class MainWindow(QMainWindow):
 
     def save_matrix(self, tab):
         cfg = self.config_for(tab)
-        if tab == TAG_TAG and not (cfg.x and cfg.y):
+        if (tab == TAG_TAG and not (cfg.x and cfg.y)) or cfg.blank:
             QMessageBox.information(self, "Save matrix", "Configure the matrix first.")
             return
         mats = self.doc.db.settings.matrices
@@ -724,12 +841,35 @@ class MainWindow(QMainWindow):
         self.configs[(cfg.kind, cfg.word_class)] = saved.copy()
         self.doc.settings_changed()
 
+    def rename_matrix(self, tab):
+        cfg = self.config_for(tab)
+        if not cfg.name:
+            QMessageBox.information(self, "Rename matrix", "Choose a saved matrix first.")
+            return
+        mats = self.doc.db.settings.matrices
+        same = [m for m in mats if m.kind == cfg.kind and m.word_class == cfg.word_class]
+        name = ask_matrix_name(self, [m.name for m in same], cfg.name, "Rename matrix", replace=False)
+        if not name or name == cfg.name:
+            return
+        for m in same:
+            if m.name == cfg.name:
+                m.name = name
+        cfg.name = name
+        self.doc.settings_changed()
+
+    def clear_matrix(self, tab):
+        """Back to a blank view: no rows or columns, nothing chosen."""
+        cfg = self.config_for(tab)
+        new = mx.MatrixConfig(kind=cfg.kind, word_class=cfg.word_class, cell=list(cfg.cell), blank=True)
+        self.configs[(cfg.kind, cfg.word_class)] = new
+        self.refresh()
+
     def delete_saved_matrix(self, tab):
         cfg = self.config_for(tab)
         if not cfg.name:
-            QMessageBox.information(self, "Delete saved matrix", "Choose a saved matrix first.")
+            QMessageBox.information(self, "Delete matrix", "Choose a saved matrix first.")
             return
-        if QMessageBox.question(self, "Delete saved matrix", f"Delete the saved matrix “{cfg.name}”?") \
+        if QMessageBox.question(self, "Delete matrix", f"Delete the saved matrix “{cfg.name}”?") \
                 != QMessageBox.Yes:
             return
         mats = self.doc.db.settings.matrices
@@ -826,7 +966,7 @@ class MainWindow(QMainWindow):
             return
         if f.role == "word-class" and text and text not in s.tags.word_class_names():
             QMessageBox.warning(self, "Word class", f"“{text}” isn't a word class. Add it in "
-                                "Settings → Tag structure first.")
+                                "Edit → Tag structure first.")
             return
         if f.closed and f.role != "word-class" and text:
             f.add_value(text)
@@ -1028,7 +1168,13 @@ class MainWindow(QMainWindow):
                                                        [tag_renames.get(x, x) for x in t.tags])
             if tag_renames or class_renames:
                 self.doc.undo.clear()     # renames can't be undone safely
-            self.configs.clear()
+                for m in db.settings.matrices:            # saved matrices follow too
+                    m.rename(tag_renames, class_renames)
+                old = dict(self.configs)
+                self.configs.clear()
+                for cfg in old.values():                  # and the matrices on screen
+                    cfg.rename(tag_renames, class_renames)
+                    self.configs[(cfg.kind, cfg.word_class)] = cfg
             self._fill_classes()
             self._setup_columns()
             self.doc.settings_changed()
@@ -1039,6 +1185,8 @@ class MainWindow(QMainWindow):
         if dlg.exec():
             names_changed = dlg.apply()
             self._apply_autosave()
+            theme.from_prefs(self.prefs)
+            self._restyle()
             self.all_table.model_.ipa.setPointSize(self.prefs.ipa_size)
             self.lemmas.model_.ipa.setPointSize(self.prefs.ipa_size)
             self.doc.settings_changed()
@@ -1214,6 +1362,11 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         if self._confirm_discard():
             self.player.stop()
+            try:
+                self._save_view()
+                self._save_window()
+            except Exception:                           # never stop the window closing
+                pass
             # Nothing should react to the undo history being thrown away as the window closes.
             self.doc.undo.blockSignals(True)
             self.doc.blockSignals(True)

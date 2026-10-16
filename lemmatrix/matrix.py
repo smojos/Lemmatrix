@@ -49,10 +49,20 @@ class MatrixConfig:
     y: list = field(default_factory=list)      # Tag/Tag rows
     x: list = field(default_factory=list)      # columns
     cell: list = field(default_factory=lambda: list(DEFAULT_CELL))
+    blank: bool = False      # cleared on purpose (a Lemma/Tag matrix with no columns isn't automatic)
 
     def copy(self) -> "MatrixConfig":
         return MatrixConfig(self.name, self.kind, self.word_class, list(self.y), list(self.x),
-                            list(self.cell))
+                            list(self.cell), self.blank)
+
+    def rename(self, tags: dict[str, str], classes: dict[str, str]) -> None:
+        """Follow renamed tags and word classes (old name -> new name)."""
+        self.word_class = classes.get(self.word_class, self.word_class)
+
+        def fix(spec):
+            return Spec(frozenset(tags.get(t, t) for t in spec.tags), spec.match)
+        self.x = [fix(s) for s in self.x]
+        self.y = [fix(s) for s in self.y]
 
 
 @dataclass
@@ -215,6 +225,14 @@ def auto_specs(db: Database, entries) -> list[Spec]:
     return specs
 
 
+def auto_tag_specs(db: Database, entries) -> list[Spec]:
+    """A Loose line for every (non-default) tag present, in tag order: for Tag/Tag axes."""
+    defaults = default_names(db)
+    order = global_order(db)
+    found = {t for e in entries for tok in e.tokens for t in marked(tok.tags, defaults)}
+    return [Spec(frozenset([t]), LOOSE) for t in sorted(found, key=lambda t: (order.get(t, 10_000), t))]
+
+
 def _sorted_hits(hits, order, defaults=frozenset()):
     """Side-by-side tokens in tag order (group defaults ignored)."""
     return sorted(hits, key=lambda et: sort_key(marked(et[1].tags, defaults), order))
@@ -225,6 +243,8 @@ def lemma_tag_layout(db: Database, entries: list[Entry], config: MatrixConfig | 
     """Lemmas (already limited to one class) down the side, specs across the top."""
     if not entries:
         return Layout(message="No lemmas of this class pass the lemma list's search and filters.")
+    if config is not None and config.blank and not config.x:
+        return Layout(message="Blank matrix: use Configure matrix to add columns, or choose a saved matrix.")
     defaults = default_names(db)
     order = global_order(db)
     specs = list(config.x) if (config and config.x) else auto_specs(db, entries)

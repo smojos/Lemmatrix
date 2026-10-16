@@ -95,6 +95,48 @@ class Prefs:
     @ipa_size.setter
     def ipa_size(self, v): self.q.setValue("display/ipa_size", int(v))
 
+    @property
+    def theme(self) -> str:
+        return self._get("display/theme", "light")
+
+    @theme.setter
+    def theme(self, v): self.q.setValue("display/theme", v)
+
+    @property
+    def accent(self) -> str:
+        return self._get("display/accent", "#3a78d4")
+
+    @accent.setter
+    def accent(self, v): self.q.setValue("display/accent", v)
+
+    @property
+    def pitch_colour(self) -> str:
+        return self._get("display/pitch_colour", "#1f4fd1")
+
+    @pitch_colour.setter
+    def pitch_colour(self, v): self.q.setValue("display/pitch_colour", v)
+
+    # the last view of each database (tab, lemma, matrices), as JSON
+    @staticmethod
+    def _view_key(path: str) -> str:
+        import hashlib
+        return "views/" + hashlib.md5(os.path.normcase(os.path.abspath(path)).encode("utf-8")).hexdigest()
+
+    def view_for(self, path: str) -> dict:
+        import json
+        try:
+            v = json.loads(self._get(self._view_key(path), "") or "{}")
+            return v if isinstance(v, dict) else {}
+        except ValueError:
+            return {}
+
+    def set_view_for(self, path: str, view: dict):
+        import json
+        self.q.setValue(self._view_key(path), json.dumps(view, ensure_ascii=False))
+
+    def get_bytes(self, key: str):
+        return self.q.value(key)
+
     # session and files
     @property
     def speaker(self) -> str:

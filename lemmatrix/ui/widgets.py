@@ -8,8 +8,8 @@ from PySide6.QtWidgets import (QHeaderView, QLayout, QSizePolicy, QStyle, QStyle
                                QWidget)
 
 from .. import pitch as pitchmod
+from . import theme
 
-PITCH_BLUE = QColor("#1f4fd1")
 OUT_OF_RANGE = QColor("#c62828")
 
 
@@ -54,7 +54,7 @@ def pitch_width(text: str, unit: float = 8.0) -> float:
 
 
 def draw_pitch(p: QPainter, rect: QRectF, text: str, low: int = 1, high: int = 5,
-               color: QColor = PITCH_BLUE, width: float = 2.0, unit: float = 8.0) -> None:
+               color: QColor | None = None, width: float = 2.0, unit: float = 8.0) -> None:
     """Draw pitch notation as contours inside rect, from the left edge.
 
     One short step is `unit` wide (about an underscore), a long step twice
@@ -64,6 +64,7 @@ def draw_pitch(p: QPainter, rect: QRectF, text: str, low: int = 1, high: int = 5
     items = pitchmod.parse(text)
     if not items:
         return
+    color = color or theme.pitch_colour()
     span = max(high - low, 1)
     top, bottom = rect.top() + 2, rect.bottom() - 2
 
@@ -109,7 +110,7 @@ class PitchCanvas(QWidget):
 
     def paintEvent(self, event):
         p = QPainter(self)
-        p.fillRect(self.rect(), self.palette().base())
+        p.fillRect(self.rect(), QColor("white"))      # data: white in either theme
         r = QRectF(self.rect()).adjusted(10, 6, -10, -6)
         draw_pitch(p, r, self.text, self.low, self.high, width=2.6, unit=self.unit)
 
@@ -118,9 +119,17 @@ class PitchCanvas(QWidget):
 # Tag chips
 # --------------------------------------------------------------------------
 
-CHIP_FILL = QColor("#d3e5fb")
-CHIP_BORDER = QColor("#8db4ea")
-CHIP_TEXT = QColor("#0f2f5c")
+# Chip colours follow the accent colour (blue by default).
+def chip_fill() -> QColor:
+    return theme.tint(0.80)
+
+
+def chip_border() -> QColor:
+    return theme.tint(0.45)
+
+
+def chip_text() -> QColor:
+    return theme.shade(0.62)
 
 
 def chip_metrics(font: QFont):
@@ -146,10 +155,10 @@ def paint_chips(p: QPainter, x: float, y: float, labels, font: QFont, gap: int =
         if max_right is not None and x + w > max_right:
             break
         r = QRectF(x, y, w, h)
-        p.setPen(QPen(CHIP_BORDER, 1))
-        p.setBrush(CHIP_FILL if filled else QColor("white"))
+        p.setPen(QPen(chip_border(), 1))
+        p.setBrush(chip_fill() if filled else QColor("white"))
         p.drawRoundedRect(r.adjusted(0.5, 0.5, -0.5, -0.5), h / 2.6, h / 2.6)
-        p.setPen(CHIP_TEXT)
+        p.setPen(chip_text())
         p.drawText(r, Qt.AlignCenter, t)
         x += w + gap
     p.restore()
@@ -182,10 +191,13 @@ class ChipButton(QAbstractButton):
         p.setRenderHint(QPainter.Antialiasing)
         r = QRectF(self.rect()).adjusted(1, 1, -1, -1)
         on = self.isChecked()
-        p.setPen(QPen(CHIP_BORDER.darker(125) if (self.underMouse() or on) else CHIP_BORDER, 1.5))
-        p.setBrush(QColor("#b9d5f8") if on else QColor("white"))
+        border = chip_border()
+        if not self.isEnabled():
+            border = QColor("#c4c4c4")
+        p.setPen(QPen(border.darker(125) if (self.underMouse() or on) else border, 1.5))
+        p.setBrush(theme.tint(0.70) if on else QColor("white"))
         p.drawRoundedRect(r, r.height() / 2.4, r.height() / 2.4)
-        p.setPen(CHIP_TEXT if on else QColor("#3c5d8a"))
+        p.setPen(QColor("#a0a0a0") if not self.isEnabled() else chip_text() if on else theme.shade(0.35))
         p.setFont(self.font())
         p.drawText(r, Qt.AlignCenter, self.text())
 
@@ -289,15 +301,15 @@ class FilterHeader(QHeaderView):
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
         on = index in self.active
-        painter.setPen(QPen(QColor("#1f4fd1") if on else QColor("#555"), 1))
-        painter.setBrush(QColor("#1f4fd1") if on else QColor("#f4f4f4"))
+        painter.setPen(QPen(theme.accent() if on else QColor("#555"), 1))
+        painter.setBrush(theme.accent() if on else QColor("#f4f4f4"))
         painter.drawRoundedRect(QRectF(br).adjusted(0.5, 0.5, -0.5, -0.5), 2, 2)
         funnel = QPolygonF([QPointF(br.left() + 3, br.top() + 4), QPointF(br.right() - 3, br.top() + 4),
                             QPointF(br.center().x() + 1.5, br.center().y() + 1),
                             QPointF(br.center().x() + 1.5, br.bottom() - 3),
                             QPointF(br.center().x() - 1.5, br.bottom() - 4),
                             QPointF(br.center().x() - 1.5, br.center().y() + 1)])
-        painter.setBrush(QColor("white") if on else QColor("#333"))
+        painter.setBrush(theme.text_on(theme.accent()) if on else QColor("#333"))
         painter.setPen(Qt.NoPen)
         painter.drawPolygon(funnel)
         painter.restore()

@@ -1,4 +1,4 @@
-"""Settings → Fields: lemma and token fields, open or closed, with a live XML preview."""
+"""Edit → Fields: lemma and token fields, open or closed, with a live XML preview."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (QButtonGroup, QDialog, QDialogButtonBox, QFormLay
 
 from .. import storage
 from ..model import Database, Entry, FieldDef, ListItem, Settings, Token, nfc
+from . import theme
 from .icons import icon
 
 NAME_RX = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]*$")
@@ -180,7 +181,7 @@ class FieldsDialog(QDialog):
         tw.setLayout(type_row)
         self.note = QLabel()
         self.note.setWordWrap(True)
-        self.note.setStyleSheet("color: #555;")
+        self.note.setStyleSheet(f"color: {theme.muted()};")
         self.list_editor = ListEditor()
         form.addRow("Label", self.label)
         form.addRow("Element name", self.name)
@@ -257,7 +258,7 @@ class FieldsDialog(QDialog):
         self.name.setReadOnly(f.builtin)
         if f.role == "word-class":
             self.note.setText("Word Class is built in and always closed. Its list is the word classes "
-                              "in Settings → Tag structure.")
+                              "in Edit → Tag structure.")
             self.list_editor.setVisible(False)
         else:
             self.note.setText("Built in: it can be relabelled and moved, but not deleted." if f.builtin else "")

@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QMenu, QStyle, QSty
 
 from .. import filters as fl
 from ..model import ListItem
+from . import theme
 from .filter_dialogs import ChooseDialog, FilterForDialog
 from .widgets import FilterHeader, chips_width, draw_pitch, ipa_font, paint_chips, underscore_unit
 
@@ -242,6 +243,7 @@ class FilterTable(QTableView):
     rowActivated = Signal(object)                 # double-click (outside editable cells) or Enter
     deleteRequested = Signal()
     contextRequested = Signal(object, object)     # row (or None), global position
+    playRequested = Signal()                      # spacebar
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -256,6 +258,8 @@ class FilterTable(QTableView):
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setAlternatingRowColors(False)
+        theme.as_data(self)
+        self.space_plays = False                  # True: the spacebar asks to play (All data)
         self.verticalHeader().hide()
         self.verticalHeader().setDefaultSectionSize(26)
         self.horizontalHeader().setStretchLastSection(True)
@@ -420,5 +424,10 @@ class FilterTable(QTableView):
                 return
         if event.key() == Qt.Key_Delete and self.state() != QAbstractItemView.EditingState:
             self.deleteRequested.emit()
+            return
+        if (event.key() == Qt.Key_Space and not event.modifiers()
+                and self.state() != QAbstractItemView.EditingState
+                and self.space_plays):
+            self.playRequested.emit()
             return
         super().keyPressEvent(event)

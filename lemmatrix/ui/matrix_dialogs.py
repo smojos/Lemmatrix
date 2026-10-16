@@ -6,11 +6,12 @@ from PySide6.QtCore import QRectF, QSize, Qt
 from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import (QAbstractItemView, QButtonGroup, QDialog, QDialogButtonBox,
                                QFrame, QGroupBox, QHBoxLayout, QInputDialog, QLabel, QListWidget,
-                               QListWidgetItem, QMessageBox, QPushButton, QRadioButton, QScrollArea,
+                               QListWidgetItem, QMenu, QMessageBox, QPushButton, QRadioButton, QScrollArea,
                                QStyledItemDelegate, QToolButton, QVBoxLayout, QWidget)
 
 from .. import matrix as mx
 from ..model import Database
+from . import theme
 from .icons import icon
 from .tagpanel import TagPanel
 from .widgets import chip_metrics, chips_width, paint_chips
@@ -63,9 +64,10 @@ class ConfigureCellDialog(QDialog):
 class SpecDialog(QDialog):
     """Pick the tags and match type for one matrix column or row."""
 
-    def __init__(self, parent, db: Database, word_class: str, spec: mx.Spec | None = None):
+    def __init__(self, parent, db: Database, word_class: str, spec: mx.Spec | None = None,
+                 title: str = "Matrix line"):
         super().__init__(parent)
-        self.setWindowTitle("Matrix column")
+        self.setWindowTitle(title)
         self.resize(560, 620)
         lay = QVBoxLayout(self)
         row = QHBoxLayout()
@@ -88,7 +90,7 @@ class SpecDialog(QDialog):
         scroll.setWidget(self.tags)
         lay.addWidget(scroll, 1)
         lay.addWidget(_buttons(self))
-        self.radios[spec.match if spec else mx.EXACT].setChecked(True)
+        self.radios[spec.match if spec else mx.LOOSE].setChecked(True)
         for rb in self.radios.values():
             rb.toggled.connect(self._mode)
         self._mode()
@@ -138,11 +140,13 @@ class SpecDelegate(QStyledItemDelegate):
 
 
 class SpecList(QWidget):
-    """A list of specs with add / remove / up / down."""
+    """A list of specs with add / duplicate / remove / up / down, Remove all and Restore all present."""
 
-    def __init__(self, db: Database, word_class: str, specs: list, title: str, parent=None):
+    def __init__(self, db: Database, word_class: str, specs: list, title: str, parent=None,
+                 present=None, present_tip: str = ""):
         super().__init__(parent)
         self.db, self.wc = db, word_class
+        self.present = present                    # () -> specs for "Restore all present"
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         head = QHBoxLayout()
@@ -150,7 +154,10 @@ class SpecList(QWidget):
         lbl.setStyleSheet("font-weight: 600;")
         head.addWidget(lbl)
         head.addStretch(1)
-        for name, tip, fn in (("add", "Add a column", self._add), ("delete", "Remove", self._remove),
+        for name, tip, fn in (("add", "Add a line", self._add),
+                              ("duplicate", "Duplicate the selected line, then change what differs",
+                               self._duplicate),
+                              ("delete", "Remove the selected line", self._remove),
                               ("up", "Move up", lambda: self._shift(-1)),
                               ("down", "Move down", lambda: self._shift(1))):
             b = QToolButton()
@@ -161,9 +168,23 @@ class SpecList(QWidget):
             head.addWidget(b)
         lay.addLayout(head)
         self.list = QListWidget()
+        theme.as_data(self.list)
         self.list.setItemDelegate(SpecDelegate(db, word_class, self.list))
         self.list.itemDoubleClicked.connect(self._edit)
+        self.list.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.list.customContextMenuRequested.connect(self._menu)
         lay.addWidget(self.list)
+        foot = QHBoxLayout()
+        clear = QPushButton("Remove all")
+        clear.clicked.connect(lambda *_: self.list.clear())
+        foot.addWidget(clear)
+        if present is not None:
+            restore = QPushButton("Restore all present")
+            restore.setToolTip(present_tip)
+            restore.clicked.connect(lambda *_: self.set_specs(self.present()))
+            foot.addWidget(restore)
+        foot.addStretch(1)
+        lay.addLayout(foot)
         lay.addWidget(QLabel("Double-click a line to change it."))
         for s in specs:
             self._append(s)
@@ -185,6 +206,16 @@ class SpecList(QWidget):
             it = self._append(dlg.spec(), r + 1 if r >= 0 else None)
             self.list.setCurrentItem(it)
 
+    def _duplicate(self):
+        """Open the selected line's settings as a new line just below it."""
+        it = self.list.currentItem()
+        if it is None:
+            return
+        dlg = SpecDialog(self, self.db, self.wc, it.data(Qt.UserRole), title="Duplicate line")
+        if dlg.exec():
+            new = self._append(dlg.spec(), self.list.row(it) + 1)
+            self.list.setCurrentItem(new)
+
     def _edit(self, it):
         dlg = SpecDialog(self, self.db, self.wc, it.data(Qt.UserRole))
         if dlg.exec():
@@ -203,6 +234,21 @@ class SpecList(QWidget):
         self.list.insertItem(r + step, it)
         self.list.setCurrentRow(r + step)
 
+    def _menu(self, pos):
+        it = self.list.itemAt(pos)
+        m = QMenu(self)
+        if it is not None:
+            self.list.setCurrentItem(it)
+            m.addAction(icon("edit", 16), "Change…").triggered.connect(lambda *_: self._edit(it))
+            m.addAction(icon("duplicate", 16), "Duplicate…").triggered.connect(lambda *_: self._duplicate())
+            m.addAction(icon("delete", 16), "Remove").triggered.connect(lambda *_: self._remove())
+            m.addSeparator()
+        m.addAction(icon("add", 16), "Add…").triggered.connect(lambda *_: self._add())
+        m.addAction("Remove all").triggered.connect(lambda *_: self.list.clear())
+        if self.present is not None:
+            m.addAction("Restore all present").triggered.connect(lambda *_: self.set_specs(self.present()))
+        m.exec(self.list.viewport().mapToGlobal(pos))
+
     def set_specs(self, specs):
         self.list.clear()
         for s in specs:
@@ -219,17 +265,24 @@ class ConfigureMatrixDialog(QDialog):
         super().__init__(parent)
         self.db, self.config = db, config.copy()
         tag_tag = config.kind == mx.TAG_TAG
+        entries = list(entries or [])
         self.setWindowTitle(f"Configure matrix — {mx.class_label(config.word_class)}")
         self.setWindowIcon(icon("gear"))
-        self.resize(900 if tag_tag else 560, 560)
+        self.resize(900 if tag_tag else 560, 600)
         lay = QVBoxLayout(self)
-        lay.addWidget(QLabel("Each line is a set of tags with a match type: Citation (no tags), "
-                             "Exact (exactly these tags; group defaults don't count) or Loose "
-                             "(at least these tags)."))
+        intro = QLabel("Each line is a set of tags with a match type: Citation (no tags), "
+                       "Exact (exactly these tags; group defaults don't count) or Loose "
+                       "(at least these tags).")
+        intro.setWordWrap(True)
+        lay.addWidget(intro)
         row = QHBoxLayout()
         if tag_tag:
-            self.y = SpecList(db, config.word_class, config.y, "Rows (Y)")
+            tip = "One Loose line for each tag the lemmas of this class use"
+            self.y = SpecList(db, config.word_class, config.y, "Rows (Y)",
+                              present=lambda: mx.auto_tag_specs(db, entries), present_tip=tip)
             row.addWidget(self.y)
+            self.x = SpecList(db, config.word_class, config.x, "Columns (X)",
+                              present=lambda: mx.auto_tag_specs(db, entries), present_tip=tip)
         else:
             self.y = None
             lab = QGroupBox("Rows (Y)")
@@ -237,13 +290,12 @@ class ConfigureMatrixDialog(QDialog):
             ll.addWidget(QLabel("Lemma\n(from the lemma list)"))
             lab.setMaximumWidth(160)
             row.addWidget(lab)
-        self.x = SpecList(db, config.word_class, config.x, "Columns (X)")
+            self.x = SpecList(db, config.word_class, config.x, "Columns (X)",
+                              present=lambda: mx.auto_specs(db, entries),
+                              present_tip="Citation, then one Exact column for every tag "
+                                          "combination the shown lemmas have")
         row.addWidget(self.x, 1)
         lay.addLayout(row, 1)
-        if not tag_tag and entries is not None:
-            fill = QPushButton("Start from every combination present")
-            fill.clicked.connect(lambda: self.x.set_specs(mx.auto_specs(db, entries)))
-            lay.addWidget(fill)
         lay.addWidget(_buttons(self))
 
     def result_config(self) -> mx.MatrixConfig:
@@ -251,15 +303,20 @@ class ConfigureMatrixDialog(QDialog):
         cfg.x = self.x.specs()
         if self.y is not None:
             cfg.y = self.y.specs()
+        cfg.blank = not cfg.x and not cfg.y
         return cfg
 
 
-def ask_matrix_name(parent, existing: list[str], current: str = "") -> str | None:
-    name, ok = QInputDialog.getText(parent, "Save matrix", "Name for this matrix:", text=current)
+def ask_matrix_name(parent, existing: list[str], current: str = "", title: str = "Save matrix",
+                    replace: bool = True) -> str | None:
+    name, ok = QInputDialog.getText(parent, title, "Name for this matrix:", text=current)
     name = name.strip()
     if not ok or not name:
         return None
     if name in existing and name != current:
-        if QMessageBox.question(parent, "Save matrix", f"Replace the saved matrix “{name}”?") != QMessageBox.Yes:
+        if not replace:
+            QMessageBox.information(parent, title, f"There is already a matrix called “{name}”.")
+            return None
+        if QMessageBox.question(parent, title, f"Replace the saved matrix “{name}”?") != QMessageBox.Yes:
             return None
     return name

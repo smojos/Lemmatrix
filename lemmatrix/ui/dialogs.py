@@ -5,13 +5,15 @@ from __future__ import annotations
 import re
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
+from PySide6.QtGui import QBrush, QColor
+from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QColorDialog, QComboBox, QDialog, QDialogButtonBox,
                                QFormLayout, QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
                                QListWidget, QListWidgetItem, QMessageBox, QPushButton, QSpinBox,
                                QTableWidget, QTableWidgetItem, QTabWidget, QTreeWidget,
                                QTreeWidgetItem, QVBoxLayout, QWidget, QInputDialog)
 
 from ..model import (Database, Entry, Group, Participant, Tag, WordClass, forbidden_in, nfc)
+from . import theme
 from .widgets import ipa_font
 
 
@@ -20,6 +22,40 @@ def _buttons(dlg) -> QDialogButtonBox:
     b.accepted.connect(dlg.accept)
     b.rejected.connect(dlg.reject)
     return b
+
+
+class ColourButton(QWidget):
+    """A colour square to click for a colour chooser, with a Default button."""
+
+    def __init__(self, colour: str, default: str, tip: str = "", parent=None):
+        super().__init__(parent)
+        self._colour, self._default = QColor(colour), default
+        lay = QHBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        self.swatch = QPushButton()
+        self.swatch.setFixedSize(44, 24)
+        self.swatch.setToolTip((tip + "\n" if tip else "") + "Click to choose another colour")
+        self.swatch.clicked.connect(lambda *_: self._choose())
+        reset = QPushButton("Default")
+        reset.clicked.connect(lambda *_: self.set_colour(QColor(self._default)))
+        lay.addWidget(self.swatch)
+        lay.addWidget(reset)
+        lay.addStretch(1)
+        self.set_colour(self._colour)
+
+    def set_colour(self, c: QColor):
+        if c.isValid():
+            self._colour = QColor(c)
+        self.swatch.setStyleSheet(f"QPushButton {{ background: {self._colour.name()}; "
+                                  "border: 1px solid #777; border-radius: 3px; }")
+
+    def _choose(self):
+        c = QColorDialog.getColor(self._colour, self, "Choose a colour")
+        if c.isValid():
+            self.set_colour(c)
+
+    def colour(self) -> str:
+        return self._colour.name()
 
 
 class NoForbidden(QLineEdit):
@@ -260,7 +296,7 @@ class PreferencesDialog(QDialog):
         self.db, self.prefs = db, prefs
         s = db.settings
         self.setWindowTitle("Settings")
-        self.resize(560, 420)
+        self.resize(580, 460)
         lay = QVBoxLayout(self)
         tabs = QTabWidget()
         lay.addWidget(tabs)
@@ -307,25 +343,43 @@ class PreferencesDialog(QDialog):
         self.ipa = QSpinBox()
         self.ipa.setRange(8, 30)
         self.ipa.setValue(prefs.ipa_size)
-        def page(title, rows):
+        self.theme = QComboBox()
+        self.theme.addItem("Light", "light")
+        self.theme.addItem("Dark", "dark")
+        self.theme.setCurrentIndex(max(0, self.theme.findData(prefs.theme)))
+        self.theme.setToolTip("The interface only: the lemma list, All data and matrices stay "
+                              "black on white")
+        self.accent = ColourButton(prefs.accent, theme.DEFAULT_ACCENT,
+                                   "Selected tabs, highlights and tag chips")
+        self.pitch_colour = ColourButton(prefs.pitch_colour, theme.DEFAULT_PITCH,
+                                         "The colour of drawn pitch traces")
+
+        def page(title, sections):
             w = QWidget()
-            f = QFormLayout(w)
-            for label, widget in rows:
-                if label:
-                    f.addRow(label, widget)
-                else:
-                    f.addRow(widget)
+            v = QVBoxLayout(w)
+            for heading, rows in sections:
+                box = QGroupBox(heading)
+                f = QFormLayout(box)
+                for label, widget in rows:
+                    if label:
+                        f.addRow(label, widget)
+                    else:
+                        f.addRow(widget)
+                v.addWidget(box)
+            v.addStretch(1)
             tabs.addTab(w, title)
 
+        page("General", [("This computer", [("Autosave every", self.autosave)])])
         page("Sound", [
-            ("File name pattern", self.pattern), ("Tag separator", self.separator),
-            ("Sound folder", self.folder), (None, self.auto_names),
-            (None, QLabel("<b>On this computer</b>")),
-            ("Recording source", self.source), ("Bit depth", self.bits), ("Sample rate", self.rate),
-            (None, self.with_tokens), (None, self.confirm)])
-        page("Display", [("Lowest pitch digit", self.low), ("Highest pitch digit", self.high),
-                         ("IPA font size (this computer)", self.ipa)])
-        page("General", [("Autosave every (this computer)", self.autosave)])
+            ("This database", [("File name pattern", self.pattern), ("Tag separator", self.separator),
+                               ("Sound folder", self.folder), (None, self.auto_names)]),
+            ("This computer", [("Recording source", self.source), ("Bit depth", self.bits),
+                               ("Sample rate", self.rate), (None, self.with_tokens), (None, self.confirm)])])
+        page("Display", [("This computer", [("Theme", self.theme), ("Accent colour", self.accent),
+                                            ("IPA font size", self.ipa)])])
+        page("Pitch", [("This database", [("Lowest pitch digit", self.low),
+                                          ("Highest pitch digit", self.high)]),
+                       ("This computer", [("Pitch trace colour", self.pitch_colour)])])
         lay.addWidget(_buttons(self))
 
     def accept(self):
@@ -358,6 +412,9 @@ class PreferencesDialog(QDialog):
         p.confirm_delete = self.confirm.isChecked()
         p.autosave_minutes = self.autosave.value()
         p.ipa_size = self.ipa.value()
+        p.theme = self.theme.currentData()
+        p.accent = self.accent.colour()
+        p.pitch_colour = self.pitch_colour.colour()
         return old != (s.filename_pattern, s.tag_separator)
 
 
@@ -387,6 +444,9 @@ class TagStructureDialog(QDialog):
         self.tree.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.tree.itemChanged.connect(self._changed)
         lay.addWidget(self.tree, 1)
+        self.problem_note = QLabel()
+        self.problem_note.setStyleSheet("color: #d32f2f;")
+        lay.addWidget(self.problem_note)
         row = QHBoxLayout()
         for text, fn in (("Add word class", self._add_wc), ("Add group", self._add_group),
                          ("Add tag", self._add_tag), ("Delete", self._delete),
@@ -437,6 +497,75 @@ class TagStructureDialog(QDialog):
             self._fill_group(ai, g)
         self.tree.expandAll()
         self.tree.blockSignals(False)
+        self._mark_problems()
+
+    # duplicate and missing names/codes, shown in red as you edit -----------
+    def _tag_items(self, item) -> list:
+        out = []
+        for i in range(item.childCount()):
+            c = item.child(i)
+            if c.data(0, Qt.UserRole) == KIND_TAG:
+                out.append(c)
+            else:
+                out += self._tag_items(c)
+        return out
+
+    def _problems(self) -> tuple[dict, dict, set]:
+        """({item: why} for names, {item: why} for codes, items missing a code)."""
+        tops = [self.tree.topLevelItem(i) for i in range(self.tree.topLevelItemCount())]
+        shared = [t for t in tops if t.data(0, Qt.UserRole) == KIND_ALL]
+        shared_items = self._tag_items(shared[0]) if shared else []
+        scopes = [(t.text(0), self._tag_items(t) + shared_items)
+                  for t in tops if t.data(0, Qt.UserRole) == KIND_WC]
+        scopes.append(("All classes", shared_items))
+        bad_names, bad_codes, missing = {}, {}, set()
+        for scope, items in scopes:
+            by_name, by_code = {}, {}
+            for it in items:
+                by_name.setdefault(nfc(it.text(0).strip()), []).append(it)
+                default = it.checkState(2) == Qt.Checked
+                code = nfc(it.text(1).strip())
+                if not default and not code:
+                    missing.add(id(it))
+                if code and not default:
+                    by_code.setdefault(code, []).append(it)
+            for name, its in by_name.items():
+                if len(its) > 1:
+                    for it in its:
+                        bad_names[id(it)] = f"{scope}: {len(its)} tags are called “{name}”"
+            for code, its in by_code.items():
+                if len(its) > 1:
+                    for it in its:
+                        bad_codes[id(it)] = f"{scope}: {len(its)} tags share the code {code}"
+        return bad_names, bad_codes, missing
+
+    def _mark_problems(self):
+        bad_names, bad_codes, missing = self._problems()
+        red, pale = QBrush(QColor("#d32f2f")), QBrush(QColor("#fde0e0"))
+        self.tree.blockSignals(True)
+        for top in (self.tree.topLevelItem(i) for i in range(self.tree.topLevelItemCount())):
+            for it in self._tag_items(top):
+                k = id(it)
+                # None clears a colour (an empty QBrush would hide the text)
+                it.setData(0, Qt.ForegroundRole, red if k in bad_names else None)
+                it.setData(1, Qt.ForegroundRole, red if k in bad_codes else None)
+                it.setData(1, Qt.BackgroundRole, pale if k in missing else None)
+                f = it.font(0)
+                f.setBold(k in bad_names)
+                it.setFont(0, f)
+                f = it.font(1)
+                f.setBold(k in bad_codes)
+                it.setFont(1, f)
+                tips = [bad_names.get(k, ""), bad_codes.get(k, ""),
+                        "This tag needs a code (only a group's default can be without one)" if k in missing else ""]
+                tip = "\n".join(t for t in tips if t)
+                it.setToolTip(0, tip)
+                it.setToolTip(1, tip)
+        self.tree.blockSignals(False)
+        n = len(bad_names) + len(bad_codes) + len(missing)
+        self.problem_note.setText("" if not n else
+                                  "Red: tags with the same name or code in one word class, or a missing "
+                                  "code. Hover over them to see why.")
 
     def _read_group(self, gi) -> Group:
         g = Group(nfc(gi.text(0).strip()))
@@ -499,6 +628,7 @@ class TagStructureDialog(QDialog):
             item.setText(1, "".join(c for c in item.text(1) if not forbidden_in(c)))
             item.setText(0, item.text(0).replace(",", ""))
         self.tree.blockSignals(False)
+        self._mark_problems()
 
     def _selected(self):
         return self.tree.currentItem()
@@ -510,6 +640,7 @@ class TagStructureDialog(QDialog):
             it = self._item(KIND_WC, name.strip())
             self.tree.insertTopLevelItem(max(idx, 0), it)
             self.tree.setCurrentItem(it)
+            self._mark_problems()
 
     def _add_group(self):
         cur = self._selected()
@@ -539,6 +670,7 @@ class TagStructureDialog(QDialog):
             cur.addChild(it)
             cur.setExpanded(True)
             self.tree.setCurrentItem(it)
+            self._mark_problems()
 
     def _used(self, names: set[str]) -> int:
         return sum(1 for e in self.db.entries for t in e.tokens if names & set(t.tags))
@@ -569,6 +701,7 @@ class TagStructureDialog(QDialog):
             parent.removeChild(cur)
         else:
             self.tree.takeTopLevelItem(self.tree.indexOfTopLevelItem(cur))
+        self._mark_problems()
 
     def _move(self, step):
         cur = self._selected()
@@ -592,11 +725,13 @@ class TagStructureDialog(QDialog):
 
     def accept(self):
         ts = self.structure()
+        bad_names, _, _ = self._problems()
+        if bad_names:
+            QMessageBox.warning(self, "Tag structure", "Two tags in one word class have the same name "
+                                "(shown in red). Tokens store tag names, so they couldn't be told apart:\n\n"
+                                + "\n".join(sorted(set(bad_names.values()))))
+            return
         for _, g in ts.all_leaf_groups():
-            names = [t.name for t in g.tags]
-            if len(set(names)) != len(names):
-                QMessageBox.warning(self, "Tag structure", f"The group “{g.name}” has two tags with the same name.")
-                return
             for t in g.tags:
                 if not t.default and not t.code:
                     QMessageBox.warning(self, "Tag structure",

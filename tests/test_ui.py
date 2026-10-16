@@ -277,3 +277,161 @@ def test_closing_with_unsaved_changes_and_discarding(app, tmp_path, monkeypatch)
     from PySide6.QtCore import QCoreApplication, QEvent
     QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
     assert errors == []
+
+
+def test_new_matrix_lines_default_to_loose_and_duplicate(win, monkeypatch):
+    from lemmatrix import matrix as mx
+    from lemmatrix.ui import matrix_dialogs as md
+    dlg = md.SpecDialog(win, win.doc.db, "NOUN")
+    assert dlg.radios[mx.LOOSE].isChecked()
+    lst = md.SpecList(win.doc.db, "NOUN", [mx.Spec(frozenset({"Plural", "before H"}), mx.EXACT)], "X",
+                      present=lambda: [mx.Spec.citation()])
+    lst.list.setCurrentRow(0)
+    monkeypatch.setattr(md.SpecDialog, "exec", lambda self: True)
+    lst._duplicate()
+    assert lst.specs() == [mx.Spec(frozenset({"Plural", "before H"}), mx.EXACT)] * 2
+    lst.list.clear()
+    assert lst.specs() == []
+    lst.set_specs(lst.present())
+    assert lst.specs() == [mx.Spec.citation()]
+
+
+def test_clear_and_rename_matrix(win, monkeypatch):
+    from lemmatrix import matrix as mx
+    from lemmatrix.ui import main_window as mw
+    win.lemmas.select_row(win.doc.db.entry_by_ref("D001"))
+    win.tabs.setCurrentIndex(mw.LEMMA_TAG)
+    win.clear_matrix(mw.LEMMA_TAG)
+    assert win.layouts[mw.LEMMA_TAG].cols == [] and win.layouts[mw.LEMMA_TAG].rows == []
+    assert win.lt_bar["saved"].itemText(0) == "(blank)"
+    cfg = win.config_for(mw.LEMMA_TAG)
+    cfg.x = [mx.Spec(frozenset({"Plural"}), mx.LOOSE)]
+    cfg.blank = False
+    monkeypatch.setattr(mw, "ask_matrix_name", lambda *a, **k: "Plurals")
+    win.save_matrix(mw.LEMMA_TAG)
+    monkeypatch.setattr(mw, "ask_matrix_name", lambda *a, **k: "All plurals")
+    win.rename_matrix(mw.LEMMA_TAG)
+    names = [m.name for m in win.doc.db.settings.matrices]
+    assert "All plurals" in names and "Plurals" not in names
+    assert win.config_for(mw.LEMMA_TAG).name == "All plurals"
+
+
+def test_renamed_tags_follow_into_matrices(win, monkeypatch):
+    from lemmatrix import matrix as mx
+    from lemmatrix.ui import main_window as mw
+    db = win.doc.db
+    db.settings.matrices.append(mx.MatrixConfig("Pl", mx.LEMMA_TAG, "NOUN",
+                                                x=[mx.Spec(frozenset({"Plural"}), mx.LOOSE)]))
+    win.configs[(mx.TAG_TAG, "NOUN")] = mx.MatrixConfig(kind=mx.TAG_TAG, word_class="NOUN",
+                                                        y=[mx.Spec(frozenset({"Plural"}), mx.LOOSE)],
+                                                        x=[mx.Spec(frozenset({"before H"}), mx.LOOSE)])
+
+    class Fake:
+        def __init__(self, *a):
+            pass
+
+        def exec(self):
+            return True
+
+        def renames(self):
+            return {"Plural": "Many"}, {}
+
+        def structure(self):
+            ts = db.settings.tags
+            for _, g in ts.all_leaf_groups():
+                for t in g.tags:
+                    if t.name == "Plural":
+                        t.name = "Many"
+            return ts
+    monkeypatch.setattr(mw, "TagStructureDialog", Fake)
+    win.edit_tags()
+    assert db.settings.matrices[-1].x == [mx.Spec(frozenset({"Many"}), mx.LOOSE)]
+    assert win.configs[(mx.TAG_TAG, "NOUN")].y == [mx.Spec(frozenset({"Many"}), mx.LOOSE)]
+    assert any("Many" in t.tags for e in db.entries for t in e.tokens)
+
+
+def test_duplicate_tags_are_red_and_block_ok(win, monkeypatch):
+    from PySide6.QtCore import Qt
+    from lemmatrix.ui.dialogs import KIND_TAG, TagStructureDialog
+    dlg = TagStructureDialog(win, win.doc.db)
+    noun = dlg.tree.topLevelItem(0)
+    tags = [it for it in dlg._tag_items(noun) if it.data(0, Qt.UserRole) == KIND_TAG]
+    assert tags[0].data(0, Qt.ForegroundRole) is None
+    tags[1].setText(0, tags[0].text(0))            # e.g. two "Singular"s
+    assert tags[0].data(0, Qt.ForegroundRole) is not None
+    assert tags[1].data(0, Qt.ForegroundRole) is not None
+    assert dlg.problem_note.text()
+    accepted = []
+    monkeypatch.setattr(type(dlg).__mro__[1], "accept", lambda self: accepted.append(1))
+    dlg.accept()
+    assert not accepted
+
+
+def test_spacebar_plays_in_matrix_and_all_data(win, monkeypatch):
+    from PySide6.QtCore import QEvent, Qt
+    from PySide6.QtGui import QKeyEvent
+    from lemmatrix.ui import main_window as mw
+    played = []
+    monkeypatch.setattr(mw.MainWindow, "play_selected", lambda self: played.append(1))
+    # the signals were connected to the bound originals, so watch the signals instead
+    win.lt_view.playRequested.connect(lambda: played.append("lt"))
+    win.all_table.playRequested.connect(lambda: played.append("all"))
+    space = QKeyEvent(QEvent.KeyPress, Qt.Key_Space, Qt.NoModifier, " ")
+    win.lt_view.keyPressEvent(space)
+    win.all_table.keyPressEvent(space)
+    assert "lt" in played and "all" in played
+
+
+def test_settings_tabs_theme_and_pitch(win):
+    from PySide6.QtGui import QPalette
+    from PySide6.QtWidgets import QTabWidget
+    from lemmatrix.ui import theme
+    from lemmatrix.ui.dialogs import PreferencesDialog
+    dlg = PreferencesDialog(win, win.doc.db, win.prefs)
+    tabs = dlg.findChild(QTabWidget)
+    assert [tabs.tabText(i) for i in range(tabs.count())] == ["General", "Sound", "Display", "Pitch"]
+    dlg.theme.setCurrentIndex(dlg.theme.findData("dark"))
+    dlg.accent.set_colour(theme.QColor("#2e9e44"))
+    dlg.pitch_colour.set_colour(theme.QColor("#aa0000"))
+    dlg.apply()
+    try:
+        theme.from_prefs(win.prefs)
+        win._restyle()
+        assert theme.pitch_colour().name() == "#aa0000"
+        assert QApplication.instance().palette().color(QPalette.Window).lightness() < 80
+        # the data views stay black on white
+        assert win.all_table.palette().color(QPalette.Base).name() == "#ffffff"
+        assert win.lt_view.palette().color(QPalette.Text).name() == "#111111"
+    finally:
+        win.prefs.theme, win.prefs.accent, win.prefs.pitch_colour = "light", "#3a78d4", "#1f4fd1"
+        theme.from_prefs(win.prefs)
+    menus = [a.text() for a in win.menuBar().actions()]
+    assert "&Settings" not in menus
+    edit = next(a.menu() for a in win.menuBar().actions() if a.text() == "&Edit")
+    assert any("Settings" in a.text() for a in edit.actions())
+
+
+def test_last_view_is_restored(app, tmp_path, monkeypatch):
+    from lemmatrix import matrix as mx
+    from lemmatrix.ui import main_window as mw
+    shutil.copy2(SAMPLES / "Sample.xml", tmp_path / "Sample.xml")
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Discard)
+    w = mw.MainWindow()
+    w.load_database(storage.load(tmp_path / "Sample.xml"))
+    w.lemmas.select_row(w.doc.db.entry_by_ref("V001"))
+    w.tabs.setCurrentIndex(mw.TAG_TAG)
+    cfg = w.config_for(mw.TAG_TAG)
+    cfg.y = [mx.Spec(frozenset({"Past"}), mx.LOOSE)]
+    cfg.x = [mx.Spec(frozenset({"Negative"}), mx.LOOSE)]
+    w.switch_axes(mw.TAG_TAG)
+    w.close()
+    w2 = mw.MainWindow()
+    w2.load_database(storage.load(tmp_path / "Sample.xml"))
+    try:
+        assert w2.tabs.currentIndex() == mw.TAG_TAG
+        assert w2.lemmas.current_row().ref == "V001"
+        got = w2.config_for(mw.TAG_TAG)
+        assert got.y == cfg.y and got.x == cfg.x
+        assert w2.switched[mw.TAG_TAG]
+    finally:
+        w2.close()

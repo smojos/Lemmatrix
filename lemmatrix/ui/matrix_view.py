@@ -15,7 +15,8 @@ from PySide6.QtWidgets import (QAbstractItemView, QHeaderView, QStyle, QStyledIt
 from .. import matrix as mx
 from ..model import Database
 from .icons import icon
-from .widgets import (PITCH_BLUE, chip_metrics, chips_width, draw_pitch, ipa_font, paint_chips,
+from . import theme
+from .widgets import (chip_metrics, chips_width, draw_pitch, ipa_font, paint_chips,
                       pitch_width, underscore_unit)
 
 PAD = 8          # inside a cell
@@ -249,7 +250,7 @@ class TokenCellDelegate(QStyledItemDelegate):
             painter.restore()
             return
         if option.state & QStyle.State_Selected:
-            painter.fillRect(rect, QColor("#eef3fc"))
+            painter.fillRect(rect, theme.tint(0.92))
         hits = index.data(Qt.UserRole) or []
         if not hits:
             painter.restore()
@@ -263,8 +264,8 @@ class TokenCellDelegate(QStyledItemDelegate):
             y = rect.top() + PAD
             state = "none" if not t.file else ("ok" if t.file in self.view.sound_files else "missing")
             if sel == (r, c, n):
-                painter.setPen(QPen(QColor("#5b8fd6"), 1.5))
-                painter.setBrush(QColor("#dce8fb"))
+                painter.setPen(QPen(theme.tint(0.25), 1.5))
+                painter.setBrush(theme.tint(0.84))
                 painter.drawRoundedRect(QRectF(x - 5, rect.top() + 3, w + 10, rect.height() - 6), 5, 5)
             if chip_row:
                 chips = self.chips_for(r, c, t)
@@ -273,7 +274,7 @@ class TokenCellDelegate(QStyledItemDelegate):
                 y += chip_metrics(self.small)[1] + 4
             if "drawing" in self.view.cell_fields:
                 draw_pitch(painter, QRectF(x, y, w, 22), t.get("Pitch"), db.settings.pitch_low,
-                           db.settings.pitch_high, color=PITCH_BLUE, width=2.2, unit=self.unit)
+                           db.settings.pitch_high, width=2.2, unit=self.unit)
                 y += 26
             for name in self._lines():
                 font = self._font(name)
@@ -302,6 +303,7 @@ class MatrixView(QTableView):
     contextRequested = Signal(int, int, int, object)
     deleteRequested = Signal()
     switchRequested = Signal()
+    playRequested = Signal()                  # spacebar
 
     def __init__(self, db: Database, parent=None):
         super().__init__(parent)
@@ -320,6 +322,7 @@ class MatrixView(QTableView):
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setCornerButtonEnabled(False)
+        theme.as_data(self)
         self.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.verticalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.verticalHeader().setMinimumWidth(90)
@@ -410,6 +413,9 @@ class MatrixView(QTableView):
                 return
         if event.key() == Qt.Key_Delete:
             self.deleteRequested.emit()
+            return
+        if event.key() == Qt.Key_Space and not event.modifiers():
+            self.playRequested.emit()
             return
         super().keyPressEvent(event)
         idx = self.currentIndex()

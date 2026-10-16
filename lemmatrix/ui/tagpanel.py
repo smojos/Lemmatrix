@@ -5,6 +5,7 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
 
+from . import theme
 from .widgets import ChipButton, FlowLayout
 
 
@@ -30,7 +31,7 @@ class TagPanel(QWidget):
             parents = path[1:-1]
             if parents and parents != last_parent:
                 head = QLabel(" → ".join(parents))
-                head.setStyleSheet("font-weight: 600; color: #333; margin-top: 4px;")
+                head.setStyleSheet("font-weight: 600; margin-top: 4px;")
                 self.box.addWidget(head)
             last_parent = parents
             line = QFrame()
@@ -38,7 +39,7 @@ class TagPanel(QWidget):
             line.setStyleSheet("color: #9aa;")
             self.box.addWidget(line)
             title = QLabel(g.name.lower())
-            title.setStyleSheet("font-style: italic; color: #444;")
+            title.setStyleSheet(f"font-style: italic; color: {theme.muted()};")
             title.setAlignment(Qt.AlignRight)
             self.box.addWidget(title)
             holder = QWidget()
