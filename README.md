@@ -59,6 +59,9 @@ If something goes wrong, a message box shows the details, and they're also writt
   Sound (file-name pattern, sound folder, recording, deleting recordings with their tokens,
   path to Praat), Display (light or dark theme, accent colour for highlights, chips and pitch
   traces, IPA font size), Pitch (display range, playback voice).
+- **Export** (File → Export) as CSV: the filtered database (what the current tab shows: All
+  data's rows and columns, or the matrix grid) or the entire database (one row per token with
+  every lemma and token field). UTF-8, so Excel shows IPA correctly.
 - **Undo and redo** for all changes to entries and tokens.
 
 ## Not in this version yet

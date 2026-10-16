@@ -331,6 +331,10 @@ class MainWindow(QMainWindow):
         self._act(f, "&Save", self.save, QKeySequence.Save)
         self._act(f, "Save &as…", self.save_as, QKeySequence.SaveAs)
         f.addSeparator()
+        ex = f.addMenu("&Export")
+        self._act(ex, "&Filtered database (current tab) as CSV…", lambda: self.export_csv(filtered=True))
+        self._act(ex, "&Entire database as CSV…", lambda: self.export_csv(filtered=False))
+        f.addSeparator()
         self._act(f, "E&xit", self.close, QKeySequence.Quit)
         e = mb.addMenu("&Edit")
         undo = self.doc.undo.createUndoAction(self, "Undo")
@@ -1349,6 +1353,95 @@ class MainWindow(QMainWindow):
         QMessageBox.about(self, "About Lemmatrix",
                           f"<b>Lemmatrix</b> {__version__}<br>A phonology fieldwork database of lemmas "
                           "and their tokens.<br><br>Prototype (Stage 1).")
+
+    # ============================================================== export
+    def _visible_table(self):
+        """What the current tab shows, as (header, rows)."""
+        tab = self.tabs.currentIndex()
+        if tab == ALL_DATA:
+            t = self.all_table
+            cols = [c for c in t.model_.columns if c.kind != "drawing"]
+            header = [c.title for c in cols]
+            rows = []
+            for r in t.visible_rows():
+                out = []
+                for c in cols:
+                    v = c.display(r) if c.display else c.get(r)
+                    if c.key == "tags" and not v:
+                        v = "Citation"
+                    out.append(", ".join(v) if isinstance(v, (list, tuple, set, frozenset)) else (v or ""))
+                rows.append(out)
+            return header, rows
+        return self._matrix_table(tab)
+
+    def _matrix_table(self, tab):
+        db = self.doc.db
+        lay = self.layouts.get(tab)
+        cfg = self.config_for(tab)
+        if lay is None or not (lay.rows and lay.cols):
+            return [], []
+        defaults = mx.default_names(db)
+        fields = [f for f in cfg.cell if f != "drawing"]
+        if "drawing" in cfg.cell and not any(db.settings.token_field(f) and
+                                             db.settings.token_field(f).role == "pitch" for f in fields):
+            pitch = next((f.name for f in db.settings.token_fields if f.role == "pitch"), None)
+            if pitch:
+                fields.insert(0, pitch)             # the drawing exports as its pitch digits
+
+        def label(item):
+            return f"{item.entry.ref} {item.label}" if item.entry is not None else item.label
+
+        def text(t, name):
+            f = db.settings.token_field(name)
+            return t.get(name, db.settings.primary_gloss) if f and f.multilingual else t.get(name)
+
+        corner = (f"{lay.entry.ref} {db.lemma(lay.entry)}" if lay.entry is not None else "")
+        header = [corner] + [label(c) for c in lay.cols]
+        rows = []
+        for r, row in enumerate(lay.rows):
+            out = [label(row)]
+            for c in range(len(lay.cols)):
+                hits = lay.tokens(r, c)
+                entry, _ = lay.target(r, c)
+                wc = mx.class_of(db, entry) if entry is not None else None
+                blocks = []
+                for _, t in hits:
+                    lines = []
+                    if len(hits) > 1:
+                        extra = mx.extra_chips(db, t, lay.spec_at(r, c), wc or None, defaults)
+                        if extra:
+                            lines.append(" ".join(extra))
+                    lines += [text(t, n) for n in fields if text(t, n)]
+                    blocks.append("\n".join(lines))
+                out.append("\n\n".join(blocks))
+            rows.append(out)
+        return header, rows
+
+    def export_csv(self, filtered: bool):
+        from .. import export
+        db = self.doc.db
+        tab = self.tabs.currentIndex()
+        if filtered:
+            header, rows = self._visible_table()
+            what = {ALL_DATA: "All data", LEMMA_TAG: "Lemma-Tag", TAG_TAG: "Tag-Tag"}[tab]
+            if not rows:
+                QMessageBox.information(self, "Export", "Nothing is showing in this tab to export.")
+                return
+        else:
+            header, rows = export.database_table(db)
+            what = "entire database"
+        stem = Path(db.path).stem if db.path else "Lemmatrix"
+        start = Path(db.path).parent if db.path else Path.home() / "Documents"
+        path, _ = QFileDialog.getSaveFileName(self, "Export as CSV", str(start / f"{stem} - {what}.csv"),
+                                              "CSV (comma-separated) (*.csv)")
+        if not path:
+            return
+        try:
+            n = export.write_csv(path, header, rows)
+        except OSError as exc:
+            QMessageBox.warning(self, "Export", f"Couldn't write {Path(path).name}: {exc}")
+            return
+        self.statusBar().showMessage(f"Exported {n} rows to {QDir.toNativeSeparators(path)}.", 8000)
 
     # =============================================================== files
     def _confirm_discard(self) -> bool:

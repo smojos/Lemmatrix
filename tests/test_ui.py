@@ -481,3 +481,36 @@ def test_sound_folder_setting_shows_full_path_and_stores_relative(win, tmp_path)
     assert dlg._stored_folder() == "Recordings/2026"
     dlg.folder.edit.setText(str(tmp_path.parent / "elsewhere"))
     assert dlg._stored_folder() == str(tmp_path.parent / "elsewhere")
+
+
+def test_export_csv(win, tmp_path, monkeypatch):
+    import csv
+    from PySide6.QtWidgets import QFileDialog
+    from lemmatrix import matrix as mx
+    from lemmatrix.ui import main_window as mw
+    db = win.doc.db
+    out = tmp_path / "out.csv"
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *a, **k: (str(out), ""))
+    # entire database: one row per token, plus lemmas without tokens
+    win.export_csv(filtered=False)
+    rows = list(csv.reader(open(out, encoding="utf-8-sig")))
+    assert rows[0][0] == "Reference" and "Tags" in rows[0] and "Sound file" in rows[0]
+    assert len(rows) - 1 == sum(max(1, len(e.tokens)) for e in db.entries)
+    assert open(out, "rb").read(3) == b"\xef\xbb\xbf"           # BOM, so Excel reads IPA
+    # filtered: All data, after a quick search
+    win.tabs.setCurrentIndex(mw.ALL_DATA)
+    win.all_table.proxy.set_search("goat")
+    win.export_csv(filtered=True)
+    rows = list(csv.reader(open(out, encoding="utf-8-sig")))
+    assert len(rows) - 1 == win.all_table.proxy.rowCount() and all("D001" in r[0] for r in rows[1:])
+    # filtered: the Lemma/Tag grid as shown
+    win.all_table.proxy.set_search("")
+    win.lemmas.select_row(db.entry_by_ref("D001"))
+    win.tabs.setCurrentIndex(mw.LEMMA_TAG)
+    cfg = win.config_for(mw.LEMMA_TAG)
+    cfg.x = [mx.Spec.citation(), mx.Spec(frozenset({"Plural"}), mx.EXACT)]
+    win.refresh()
+    win.export_csv(filtered=True)
+    rows = list(csv.reader(open(out, encoding="utf-8-sig")))
+    assert rows[0][1:] == ["Citation", "PL"]
+    assert rows[1][0].startswith("D001") and "goat" in rows[1][1]
