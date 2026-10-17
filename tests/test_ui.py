@@ -984,21 +984,3 @@ def test_save_button_saves(win):
     win.save = lambda: called.append(1) or True
     win.save_btn.click()
     assert called
-
-
-def test_ctrl_arrows_move_between_tokens_even_in_a_text_field(win):
-    from PySide6.QtCore import Qt
-    from PySide6.QtTest import QTest
-    from lemmatrix.ui.token_dialog import Slot, TokenDialog
-    chʊʊ = win.doc.db.entry_by_ref("E001")
-    dlg = TokenDialog(win, [Slot(chʊʊ, 0), Slot(chʊʊ, 1)], 0)
-    dlg.show()
-    field = dlg.edits["Phonetic"]
-    field.setFocus()
-    QTest.keyClick(field, Qt.Key_Right, Qt.ControlModifier)
-    assert dlg.pos == 1
-    QTest.keyClick(dlg.edits["Phonetic"], Qt.Key_Left, Qt.ControlModifier)
-    assert dlg.pos == 0
-    QTest.keyClick(dlg.edits["Phonetic"], Qt.Key_Right, Qt.ControlModifier | Qt.ShiftModifier)
-    assert dlg.pos == 0                          # Ctrl+Shift+arrow still selects a word
-    dlg.reject()

@@ -5,9 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from PySide6.QtCore import QDir, QEvent, QRegularExpression, Qt, QTimer
+from PySide6.QtCore import QDir, QRegularExpression, Qt, QTimer
 from PySide6.QtGui import QFont, QKeySequence, QRegularExpressionValidator, QShortcut, QValidator
-from PySide6.QtWidgets import (QApplication, QComboBox, QDialog, QFrame, QGridLayout, QGroupBox, QHBoxLayout,
+from PySide6.QtWidgets import (QComboBox, QDialog, QFrame, QGridLayout, QGroupBox, QHBoxLayout,
                                QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton,
                                QScrollArea, QSizePolicy, QToolButton, QVBoxLayout, QWidget)
 from PySide6.QtCore import QFile
@@ -209,9 +209,9 @@ class TokenDialog(QDialog):
 
         nav = QHBoxLayout()
         self.back_btn = QPushButton("◀ Back")
-        self.back_btn.setToolTip("Save and go to the previous token (Ctrl+Left or Alt+Left)")
+        self.back_btn.setToolTip("Save and go to the previous token (Alt+Left)")
         self.next_btn = QPushButton("Next ▶")
-        self.next_btn.setToolTip("Save and go to the next token (Ctrl+Right or Alt+Right)")
+        self.next_btn.setToolTip("Save and go to the next token (Alt+Right)")
         self.position = QLabel()
         self.position.setStyleSheet(f"color: {theme.muted()};")
         ok = QPushButton("OK")
@@ -234,10 +234,6 @@ class TokenDialog(QDialog):
         QShortcut(QKeySequence("Ctrl+Shift+Space"), self, self._play_pitch)
         QShortcut(QKeySequence("Alt+Left"), self, lambda: self._move(-1))
         QShortcut(QKeySequence("Alt+Right"), self, lambda: self._move(1))
-        # Ctrl+Left / Ctrl+Right too. The text fields would take them (jump a word), so they are
-        # caught before any widget in this dialogue sees them.
-        QApplication.instance().installEventFilter(self)
-        self.finished.connect(lambda *_: QApplication.instance().removeEventFilter(self))
 
         self.timer = QTimer(self)
         self.timer.setInterval(50)
@@ -410,18 +406,6 @@ class TokenDialog(QDialog):
         self._renames.append((src, dst))
         t.file = exp
         return True
-
-    def eventFilter(self, obj, event):
-        if (event.type() in (QEvent.KeyPress, QEvent.ShortcutOverride)
-                and event.key() in (Qt.Key_Left, Qt.Key_Right)
-                and event.modifiers() == Qt.ControlModifier
-                and isinstance(obj, QWidget) and (obj is self or self.isAncestorOf(obj))
-                and not QApplication.activePopupWidget()):
-            if event.type() == QEvent.KeyPress and not event.isAutoRepeat():
-                self._move(-1 if event.key() == Qt.Key_Left else 1)
-            event.accept()
-            return True
-        return super().eventFilter(obj, event)
 
     def _move(self, step: int):
         if self.recorder:
