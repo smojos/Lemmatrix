@@ -76,8 +76,8 @@ class PeopleEditor(QWidget):
         self.table.setColumnWidth(2, min(max(self.table.columnWidth(2), 160), 260))
         lay.addWidget(self.table, 1)
         row = QHBoxLayout()
-        row.addWidget(_tool("add", "Add a person", lambda: self._add_row(Person(""), edit=True), "Add"))
-        row.addWidget(_tool("delete", "Remove the selected person", self._remove, "Remove"))
+        row.addWidget(_tool("add", "Add a person", lambda: self._add_row(Person(""), edit=True)))
+        row.addWidget(_tool("delete", "Remove the selected person", self._remove))
         row.addWidget(_tool("up", "Move up", lambda: self._shift(-1)))
         row.addWidget(_tool("down", "Move down", lambda: self._shift(1)))
         if consent:
@@ -244,8 +244,7 @@ class LocationEditor(QWidget):
         row.addWidget(_tool("add", "Add a place next to the selected one", self._add, "Add place"))
         row.addWidget(_tool("add", "Add a place inside the selected one (a village in a region)",
                             self._add_inside, "Add place inside"))
-        row.addWidget(_tool("delete", "Remove the selected place (and the places in it)", self._remove,
-                            "Remove"))
+        row.addWidget(_tool("delete", "Remove the selected place (and the places in it)", self._remove))
         row.addWidget(_tool("up", "Move up", lambda: self._shift(-1)))
         row.addWidget(_tool("down", "Move down", lambda: self._shift(1)))
         row.addStretch(1)

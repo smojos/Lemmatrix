@@ -58,13 +58,16 @@ class TokenRow:
         return hash((id(self.entry), self.index))
 
 
+ICON_ONLY = {"add", "delete", "edit", "play", "broom"}   # obvious, shared actions: the name is in the tooltip
+
+
 def tool(text: str, icon_name: str | None, fn, tip: str = "") -> QToolButton:
     b = QToolButton()
     b.setText(text)
     if icon_name:
         b.setIcon(icon(icon_name, 20))
         b.setIconSize(QSize(20, 20))
-        b.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        b.setToolButtonStyle(Qt.ToolButtonIconOnly if icon_name in ICON_ONLY else Qt.ToolButtonTextBesideIcon)
     b.setToolTip(tip or text)
     b.setAutoRaise(True)
     b.clicked.connect(lambda *_, fn=fn: fn())   # ignore the 'checked' flag
@@ -153,7 +156,7 @@ class MainWindow(QMainWindow):
                   tool("Delete", "delete", self.delete_entry, "Delete the selected lemma (Delete)"),
                   tool("Edit", "edit", self.edit_entry, "Edit the selected lemma (Enter)"),
                   tool("Configure columns", "gear", self.configure_lemma_columns),
-                  tool("Clear all filters", "broom", self._clear_lemma_filters))
+                  tool("Clear all filters", "broom", self._clear_lemma_filters, "Clear all filters"))
         self.lemma_search = QLineEdit()
         self.lemma_search.setPlaceholderText("quick search of the visible columns")
         self.lemma_search.setClearButtonEnabled(True)
@@ -306,7 +309,7 @@ class MainWindow(QMainWindow):
                   tool("Configure matrix", "gear", lambda tab=tab: self.configure_matrix(tab),
                        "Choose the rows and columns"),
                   tool("Clear matrix", "broom", lambda tab=tab: self.clear_matrix(tab),
-                       "Empty the view: no rows or columns"))
+                       "Clear matrix: empty the view, no rows or columns"))
         d["cls"] = QComboBox()
         d["cls"].setMinimumWidth(120)
         d["cls"].setToolTip("A matrix shows one word class at a time" if tab == LEMMA_TAG
