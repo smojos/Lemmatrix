@@ -408,6 +408,17 @@ class TokenDialog(QDialog):
         t.file = exp
         return True
 
+    def focusNextPrevChild(self, forward: bool) -> bool:
+        """Tab and Shift+Tab go round the token's fields only (tags and buttons are for the mouse)."""
+        fields = [e for e in self.edits.values() if e.isVisible() and e.isEnabled()]
+        current = self.focusWidget()
+        if current in fields:
+            i = (fields.index(current) + (1 if forward else -1)) % len(fields)
+            fields[i].setFocus(Qt.TabFocusReason)
+            fields[i].selectAll()
+            return True
+        return super().focusNextPrevChild(forward)
+
     def _move(self, step: int):
         if self.recorder:
             self._stop_recording()

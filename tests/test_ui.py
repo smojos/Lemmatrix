@@ -984,3 +984,22 @@ def test_save_button_saves(win):
     win.save = lambda: called.append(1) or True
     win.save_btn.click()
     assert called
+
+
+def test_tab_goes_round_the_token_fields_only(win):
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+    from lemmatrix.ui.token_dialog import Slot, TokenDialog
+    from PySide6.QtWidgets import QApplication
+    dlg = TokenDialog(win, [Slot(win.doc.db.entry_by_ref("E001"), 0)], 0)
+    dlg.show()
+    edits = list(dlg.edits.values())
+    edits[0].setFocus()
+    dlg.activateWindow()
+    QApplication.processEvents()
+    for nxt in edits[1:] + edits[:1]:
+        QTest.keyClick(dlg.focusWidget(), Qt.Key_Tab)
+        assert dlg.focusWidget() is nxt
+    QTest.keyClick(dlg.focusWidget(), Qt.Key_Backtab)
+    assert dlg.focusWidget() is edits[-1]
+    dlg.reject()
