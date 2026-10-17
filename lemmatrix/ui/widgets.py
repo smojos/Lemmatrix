@@ -108,8 +108,17 @@ class PitchCanvas(QWidget):
         self.text = ""
         self.low, self.high = low, high
         self.unit = underscore_unit(font or ipa_font(16))
-        self.setMinimumHeight(56)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.set_range(low, high)
+
+    LEVEL = 0.65         # height of one pitch level, in underscores (the drawing's own scale)
+    PAD = 8
+
+    def set_range(self, low: int, high: int):
+        """The height follows the display range: one level is a fixed fraction of a step."""
+        self.low, self.high = low, high
+        self.setFixedHeight(int(max(1, high - low) * self.unit * self.LEVEL) + 2 * self.PAD)
+        self.update()
 
     def set_pitch(self, text: str):
         self.text = text
@@ -118,7 +127,7 @@ class PitchCanvas(QWidget):
     def paintEvent(self, event):
         p = QPainter(self)
         p.fillRect(self.rect(), theme.colour("base"))
-        r = QRectF(self.rect()).adjusted(10, 6, -10, -6)
+        r = QRectF(self.rect()).adjusted(10, self.PAD - 2, -10, -(self.PAD - 2))
         draw_pitch(p, r, self.text, self.low, self.high, width=2.6, unit=self.unit)
 
 

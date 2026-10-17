@@ -113,6 +113,28 @@ class Prefs:
     def accent(self, v): self.q.setValue("display/accent", v)
 
     @property
+    def backup_folder(self) -> str:
+        """"" = a Backups folder next to each database."""
+        return self._get("safety/backup_folder", "")
+
+    @backup_folder.setter
+    def backup_folder(self, v): self.q.setValue("safety/backup_folder", v)
+
+    @property
+    def pitch_volume(self) -> int:
+        return self._get("pitch/volume", 70, int)
+
+    @pitch_volume.setter
+    def pitch_volume(self, v): self.q.setValue("pitch/volume", int(v))
+
+    @property
+    def only_lemmas_with_data(self) -> bool:
+        return self._get("matrix/only_with_data", False, bool)
+
+    @only_lemmas_with_data.setter
+    def only_lemmas_with_data(self, v): self.q.setValue("matrix/only_with_data", bool(v))
+
+    @property
     def praat_path(self) -> str:
         v = self._get("programs/praat", "")
         if not v:

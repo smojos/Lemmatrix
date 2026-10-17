@@ -49,7 +49,7 @@ def test_fill_an_empty_cell_and_undo(win):
     dlg._ok()
     assert len(rʉʉr.tokens) == before + 1
     new = rʉʉr.tokens[-1]
-    assert new.tags == ["Plural", "before H", "in isolation"]
+    assert new.tags == ["Plural", "before H", "isolation"]
     assert new.get("Phonetic") == "rʉʉɲ kɒ"
     win.doc.undo.undo()
     assert len(rʉʉr.tokens) == before
@@ -71,7 +71,7 @@ def test_changing_tags_renames_the_recording(win):
     from lemmatrix.ui.token_dialog import Slot, TokenDialog
     db = win.doc.db
     goat = db.entry_by_ref("D001")
-    i = next(i for i, t in enumerate(goat.tokens) if t.tags == ["Singular", "in isolation"])
+    i = next(i for i, t in enumerate(goat.tokens) if t.tags == ["Singular", "isolation"])
     old = goat.tokens[i].file
     folder = storage.sound_folder(db)
     assert (folder / old).exists()
@@ -679,3 +679,53 @@ def test_open_elsewhere_warning(app, tmp_path, monkeypatch):
         monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Discard)
         w.close()
     assert not lock.lock_path(path).exists()           # removed on close
+
+
+def test_only_lemmas_with_data_and_backup_folder(win, tmp_path):
+    from lemmatrix.ui import main_window as mw
+    db = win.doc.db
+    win.lemmas.select_row(db.entry_by_ref("D001"))
+    win.tabs.setCurrentIndex(mw.LEMMA_TAG)
+    win.lt_bar["only_data"].setChecked(False)
+    db.entries.append(db.new_entry("D099", gloss="unrecorded"))
+    db.entries[-1].tokens.clear()
+    db.entries[-1].set("WordClass", "NOUN")
+    win.lemmas.set_rows(db.entries)
+    win.refresh()
+    all_rows = len(win.layouts[mw.LEMMA_TAG].rows)
+    win.lt_bar["only_data"].setChecked(True)
+    rows = win.layouts[mw.LEMMA_TAG].rows
+    assert len(rows) == all_rows - 1 and all(r.entry.ref != "D099" for r in rows)
+    assert "hidden" in win.count_line.text()
+    win.lt_bar["only_data"].setChecked(False)
+    # backups go to the chosen folder
+    win.prefs.backup_folder = str(tmp_path / "MyBackups")
+    try:
+        win.save()
+        win.save()
+        assert list((tmp_path / "MyBackups").glob("Sample_*.xml"))
+    finally:
+        win.prefs.backup_folder = ""
+
+
+def test_pitch_length_mark_and_compact_drawing(win):
+    from lemmatrix import pitch
+    from lemmatrix.ui.token_dialog import PitchValidator, Slot, TokenDialog
+    assert pitch.normalise("4ː42 1ː1") == "4:42 1:1"
+    v = PitchValidator()
+    state, text, _ = v.validate("4ː42", 2)
+    assert state == PitchValidator.Acceptable and text == "4:42"
+    assert v.validate("4a", 1)[0] == PitchValidator.Invalid
+    e = win.doc.db.entry_by_ref("D001")
+    dlg = TokenDialog(win, [Slot(e, 0)], 0)
+    assert dlg.canvas.height() < 60                     # 1-5: a compact drawing
+    dlg.canvas.set_range(0, 9)
+    assert dlg.canvas.height() > 60                     # a wider range draws taller
+
+
+def test_pitch_volume_scales_the_sound():
+    import numpy as np
+    from lemmatrix import pitchsound as ps
+    loud = ps.synthesise("22 44", voice="buzz", volume=1.0, seed=1)
+    quiet = ps.synthesise("22 44", voice="buzz", volume=0.25, seed=1)
+    assert np.isclose(np.abs(quiet).max() * 4, np.abs(loud).max(), rtol=0.01)

@@ -42,8 +42,8 @@ def default_tag_structure() -> TagStructure:
         Group("Syntactic", groups=[
             Group("Position vis predicate", _tags(("preverbal", "PREV"), ("postverbal", "POSTV"),
                                                   ("non-verbal predicate", "PRED"))),
-            Group("Utterance position", _tags("in isolation", ("utterance-initial", "INI"),
-                                              ("utterance-final", "FIN"), default="in isolation")),
+            Group("Utterance position", _tags("isolation", ("utterance-initial", "INI"),
+                                              ("utterance-final", "FIN"), default="isolation")),
         ]),
         Group("Frames", _tags("f1", "f2", "f3", "f4")),
     ]

@@ -4,9 +4,9 @@ A matrix configuration is a list of *specs* per axis. Each spec is a set of
 tags plus a match type:
 
     Citation   the token with no tags at all
-    Exact      exactly these tags; group defaults (Simple, in isolation, …)
+    Exact      exactly these tags; group defaults (Simple, isolation, …)
                are unmarked and don't count, so Exact PL still shows
-               PL + in isolation
+               PL + isolation
     Loose      at least these tags (Loose SG shows SG, SG + GEN, …)
 
 Lemma/Tag: lemmas down the side (Y), specs across the top (X).
@@ -239,7 +239,7 @@ def auto_specs(db: Database, entries) -> list[Spec]:
                 found.add(marked(t.tags, defaults))
     specs = [Spec.citation()] if has_citation else []
     specs += [Spec(k, EXACT) for k in sorted(found, key=lambda s: sort_key(s, order)) if k]
-    # A token carrying only defaults (e.g. just "in isolation") still needs a column.
+    # A token carrying only defaults (e.g. just "isolation") still needs a column.
     if frozenset() in found:
         specs.append(Spec(frozenset(), EXACT))
     return specs

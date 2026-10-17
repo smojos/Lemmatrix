@@ -169,8 +169,8 @@ class Document(QObject):
         self.changed.emit()
 
     # ---- saving --------------------------------------------------------
-    def save(self, path: str | None = None):
-        storage.save(self.db, path)
+    def save(self, path: str | None = None, backup_dir: str | None = None):
+        storage.save(self.db, path, backup_dir=backup_dir or None)
         self.renamed.clear()                    # the saved database now has the new names
         self._settings_dirty = False
         self.undo.setClean()

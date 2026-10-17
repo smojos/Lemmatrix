@@ -359,7 +359,7 @@ class FieldsDialog(QDialog):
                     vals = [i.name for i in s.list_items(f)] if f.role == "word-class" else f.all_values()
                     value = vals[0] if vals else f.name
                 e.values[f.name] = value
-        t = Token(tags=["Plural", "in isolation"], speaker="SP1", collected="2026-10-16",
+        t = Token(tags=["Plural", "isolation"], speaker="SP1", collected="2026-10-16",
                   file="LXX-VXX_D001_Gloss_PL.wav")
         for f in s.token_fields:
             if f.multilingual:

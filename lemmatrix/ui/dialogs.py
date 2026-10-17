@@ -10,7 +10,7 @@ from PySide6.QtCore import QDir, Qt
 from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QColorDialog, QComboBox, QDialog, QDialogButtonBox,
                                QFormLayout, QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
-                               QListWidget, QListWidgetItem, QMessageBox, QPushButton, QSpinBox,
+                               QListWidget, QListWidgetItem, QMessageBox, QPushButton, QSlider, QSpinBox,
                                QTableWidget, QTableWidgetItem, QTabWidget, QTreeWidget,
                                QTreeWidgetItem, QVBoxLayout, QWidget, QInputDialog)
 
@@ -404,6 +404,23 @@ class PreferencesDialog(QDialog):
         listen = QPushButton("Listen")
         listen.setToolTip("Play an example (22 4:42 , 1:4 55) in this voice")
         listen.clicked.connect(lambda *_: self._listen())
+        self.volume = QSlider(Qt.Horizontal)
+        self.volume.setRange(0, 100)
+        self.volume.setValue(prefs.pitch_volume)
+        self.volume.setFixedWidth(180)
+        vol_label = QLabel(f"{prefs.pitch_volume}%")
+        vol_label.setMinimumWidth(40)
+        self.volume.valueChanged.connect(lambda v: vol_label.setText(f"{v}%"))
+        volume_row = QWidget()
+        vl = QHBoxLayout(volume_row)
+        vl.setContentsMargins(0, 0, 0, 0)
+        vl.addWidget(self.volume)
+        vl.addWidget(vol_label)
+        vl.addStretch(1)
+        self.backups = PathEdit(prefs.backup_folder, folder=True, title="Folder for backups")
+        self.backups.edit.setPlaceholderText("a Backups folder next to each database")
+        self.backups.setToolTip("Where the previous version goes each time you save (the last 10 "
+                                "are kept). Leave empty for a Backups folder next to the database.")
         voice_row = QWidget()
         vr = QHBoxLayout(voice_row)
         vr.setContentsMargins(0, 0, 0, 0)
@@ -426,7 +443,8 @@ class PreferencesDialog(QDialog):
             v.addStretch(1)
             tabs.addTab(w, title)
 
-        page("General", [("This computer", [("Autosave every", self.autosave)])])
+        page("General", [("This computer", [("Autosave every", self.autosave),
+                                            ("Backup folder", self.backups)])])
         page("Sound", [
             ("This database", [("File name pattern", self.pattern), ("Tag separator", self.separator),
                                ("Sound folder", self.folder), (None, self.auto_names)]),
@@ -437,7 +455,8 @@ class PreferencesDialog(QDialog):
                                             ("IPA font size", self.ipa)])])
         page("Pitch", [("This database", [("Lowest pitch digit", self.low),
                                           ("Highest pitch digit", self.high)]),
-                       ("This computer", [("Pitch playback", voice_row)])])
+                       ("This computer", [("Pitch playback", voice_row),
+                                          ("Playback volume", volume_row)])])
         lay.addWidget(_buttons(self))
 
     def _stored_folder(self) -> str:
@@ -463,7 +482,8 @@ class PreferencesDialog(QDialog):
         if player is None:
             return
         samples = pitchsound.synthesise("22 4:42 , 1:4 55", self.low.value(), max(self.high.value(),
-                                        self.low.value() + 1), self.voice.currentData())
+                                        self.low.value() + 1), self.voice.currentData(),
+                                        volume=self.volume.value() / 100)
         try:
             player.play_samples(samples, pitchsound.RATE)
         except audio.AudioError as exc:
@@ -503,6 +523,8 @@ class PreferencesDialog(QDialog):
         p.accent = self.accent.colour()
         p.praat_path = self.praat.text().strip()
         p.pitch_voice = self.voice.currentData()
+        p.pitch_volume = self.volume.value()
+        p.backup_folder = self.backups.text().strip()
         return old != (s.filename_pattern, s.tag_separator)
 
 

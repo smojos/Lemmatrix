@@ -19,6 +19,7 @@ import re
 from dataclasses import dataclass
 
 PAUSE = ","
+LENGTH_MARK = "\u02d0"          # ː, typed out of habit: means the same as a colon
 
 
 @dataclass
@@ -62,7 +63,7 @@ def _syllable(text: str) -> Syllable | None:
 def parse(text: str) -> list:
     """A list of Syllable objects and PAUSE markers. Other characters are ignored."""
     items: list = []
-    for tok in _TOKEN.findall(text or ""):
+    for tok in _TOKEN.findall((text or "").replace(LENGTH_MARK, ":")):
         if tok == ",":
             items.append(PAUSE)
             continue
@@ -73,9 +74,11 @@ def parse(text: str) -> list:
 
 
 def normalise(text: str) -> str:
-    """Double lone digits (5 -> 55) and tidy spacing; everything else as typed."""
+    """Double lone digits (5 -> 55) and tidy spacing; everything else as typed.
+    The IPA length mark (ː) counts as a colon."""
     if not text:
         return ""
+    text = text.replace(LENGTH_MARK, ":")
     out = []
     for tok in _TOKEN.findall(text):
         if tok == ",":

@@ -338,17 +338,19 @@ def to_string(db: Database) -> str:
     return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(root, encoding="unicode") + "\n"
 
 
-def backup_folder(path: str | os.PathLike) -> Path:
-    return Path(path).parent / "Backups"
+def backup_folder(path: str | os.PathLike, chosen: str | os.PathLike | None = None) -> Path:
+    """Where backups of a database go: the chosen folder, or "Backups" next to it."""
+    return Path(chosen) if chosen else Path(path).parent / "Backups"
 
 
-def make_backup(path: str | os.PathLike, keep: int = BACKUPS_KEPT) -> Path | None:
-    """Copy the current file into the Backups folder and prune old copies."""
+def make_backup(path: str | os.PathLike, keep: int = BACKUPS_KEPT,
+                folder: str | os.PathLike | None = None) -> Path | None:
+    """Copy the current file into the backup folder and prune old copies."""
     p = Path(path)
     if not p.exists():
         return None
-    folder = backup_folder(p)
-    folder.mkdir(exist_ok=True)
+    folder = backup_folder(p, folder)
+    folder.mkdir(parents=True, exist_ok=True)
     stamp = _dt.datetime.now().strftime("%Y-%m-%d_%H%M%S")
     target = folder / f"{p.stem}_{stamp}{p.suffix}"
     n = 1
@@ -365,7 +367,10 @@ def make_backup(path: str | os.PathLike, keep: int = BACKUPS_KEPT) -> Path | Non
     return target
 
 
-def save(db: Database, path: str | os.PathLike | None = None, backup: bool = True) -> None:
+def save(db: Database, path: str | os.PathLike | None = None, backup: bool = True,
+         backup_dir: str | os.PathLike | None = None) -> None:
+    """Write the database (atomically). The previous version goes to the Backups folder
+    next to it, or to backup_dir if given."""
     path = str(path or db.path)
     if not path:
         raise ValueError("No file name given")
@@ -374,7 +379,7 @@ def save(db: Database, path: str | os.PathLike | None = None, backup: bool = Tru
     with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(text)
     if backup:
-        make_backup(path)
+        make_backup(path, folder=backup_dir)
     os.replace(tmp, path)
     db.path = path
 

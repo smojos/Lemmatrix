@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from PySide6.QtCore import QDir, QRegularExpression, Qt, QTimer
-from PySide6.QtGui import QFont, QKeySequence, QRegularExpressionValidator, QShortcut
+from PySide6.QtGui import QFont, QKeySequence, QRegularExpressionValidator, QShortcut, QValidator
 from PySide6.QtWidgets import (QComboBox, QDialog, QFrame, QGridLayout, QGroupBox, QHBoxLayout,
                                QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton,
                                QScrollArea, QSizePolicy, QToolButton, QVBoxLayout, QWidget)
@@ -20,6 +20,16 @@ from . import theme
 from .icons import icon
 from .tagpanel import TagPanel
 from .widgets import PitchCanvas, ipa_font
+
+
+class PitchValidator(QValidator):
+    """Digits, spaces, commas and colons; the IPA length mark ː becomes a colon as you type."""
+    ALLOWED = QRegularExpression(r"^[0-9 ,:]*$")
+
+    def validate(self, text, pos):
+        text = text.replace(pitchmod.LENGTH_MARK, ":")
+        ok = self.ALLOWED.match(text).hasMatch()
+        return (QValidator.Acceptable if ok else QValidator.Invalid), text, pos
 
 
 @dataclass
@@ -71,12 +81,9 @@ class TokenDialog(QDialog):
         title.setFont(tf)
         left.addWidget(title, 0, 1)
         self.canvas = PitchCanvas(low=s.pitch_low, high=s.pitch_high, font=ipa_font(self.main.prefs.ipa_size + 3))
-        self.canvas.setMinimumHeight(70)
         self.canvas.setContextMenuPolicy(Qt.CustomContextMenu)
         self.canvas.customContextMenuRequested.connect(self._canvas_menu)
         self.canvas.setToolTip("Right-click to play the pitch")
-        pitch_label = QVBoxLayout()
-        pitch_label.addWidget(QLabel("Pitch\nRendering"))
         self.pitch_play = QToolButton()
         self.pitch_play.setIcon(icon("play-pitch", 22))
         self.pitch_play.setIconSize(QSize(22, 22))
@@ -84,10 +91,12 @@ class TokenDialog(QDialog):
         self.pitch_play.setToolTip("Play the pitch (Ctrl+Shift+Space); the sound is set in "
                                    "Edit → Settings → Pitch")
         self.pitch_play.clicked.connect(lambda *_: self._play_pitch())
-        pitch_label.addWidget(self.pitch_play)
-        pitch_label.addStretch(1)
-        left.addLayout(pitch_label, 1, 0)
-        left.addWidget(self.canvas, 1, 1)
+        drawing = QHBoxLayout()                 # the drawing, with its play button beside it
+        drawing.setContentsMargins(0, 0, 0, 0)
+        drawing.addWidget(self.canvas, 1)
+        drawing.addWidget(self.pitch_play, 0, Qt.AlignVCenter)
+        left.addWidget(QLabel("Pitch\nRendering"), 1, 0, Qt.AlignVCenter)
+        left.addLayout(drawing, 1, 1)
         self.edits: dict[str, QLineEdit] = {}
         row = 2
         for f in s.token_fields:
@@ -97,7 +106,7 @@ class TokenDialog(QDialog):
             else:
                 ed.setFont(ipa_font(self.main.prefs.ipa_size + 1))
             if f.role == "pitch":
-                ed.setValidator(QRegularExpressionValidator(QRegularExpression(r"[0-9 ,:]*"), ed))
+                ed.setValidator(PitchValidator(ed))
                 ed.setPlaceholderText("e.g. 11 4:42 1:4")
                 ed.textChanged.connect(self._pitch_changed)
             ed.textChanged.connect(self._fields_changed)
@@ -253,7 +262,7 @@ class TokenDialog(QDialog):
             ed.blockSignals(True)
             ed.setText(t.get(name, s.primary_gloss) if f.multilingual else t.get(name))
             ed.blockSignals(False)
-        self.canvas.low, self.canvas.high = s.pitch_low, s.pitch_high
+        self.canvas.set_range(s.pitch_low, s.pitch_high)
         self._pitch_changed(t.get("Pitch"))
         wc = self.db.word_class(e)
         known = {tg.name for tg, _ in s.tags.tags_for(wc)}

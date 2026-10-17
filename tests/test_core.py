@@ -72,10 +72,10 @@ def test_forbidden_characters():
 def test_defaults_are_preselected_except_on_citation(db):
     e = db.entries[0]
     assert e.tokens[0].tags == []                         # citation stays tagless
-    assert e.tokens[1].tags == ["Plural", "in isolation"]
+    assert e.tokens[1].tags == ["Plural", "isolation"]
     v = db.new_entry("V001", "cəm", "eat", "VERB")
     t = db.new_token(v, ["Past", "Negative"])
-    assert t.tags == ["Simple", "Past", "Indicative", "Negative", "in isolation"]
+    assert t.tags == ["Simple", "Past", "Indicative", "Negative", "isolation"]
 
 
 def test_defaults_add_nothing_to_file_names(db):
@@ -124,13 +124,13 @@ def test_round_trip(tmp_path, db):
     assert back.lemma(e) == "ɗæær"
     assert back.gloss(e) == "goat"
     assert e.tokens[1].get("Translation", "en") == "goats"
-    assert e.tokens[2].tags == ["Plural", "Genitive", "before H", "in isolation"]
+    assert e.tokens[2].tags == ["Plural", "Genitive", "before H", "isolation"]
 
 
 def test_empty_fields_not_written(db):
     text = storage.to_string(db)
     assert "<Comment" not in text
-    assert 'tags="Plural, in isolation"' in text
+    assert 'tags="Plural, isolation"' in text
 
 
 def test_save_keeps_backups(tmp_path, db):
@@ -200,10 +200,10 @@ def test_choice_filters():
     from lemmatrix.filters import ChoiceFilter, Blanks, NonBlanks, matches, ANY, NONE, EXACTLY
     assert matches(ChoiceFilter({"NOUN"}), "NOUN") and not matches(ChoiceFilter({"NOUN"}), "VERB")
     assert matches(ChoiceFilter({"NOUN"}, NONE), "VERB")
-    tags = ["Plural", "Genitive", "in isolation"]
+    tags = ["Plural", "Genitive", "isolation"]
     assert matches(ChoiceFilter({"Plural"}), tags)
-    assert not matches(ChoiceFilter({"Plural"}, EXACTLY), tags, {"in isolation"})
-    assert matches(ChoiceFilter({"Plural", "Genitive"}, EXACTLY), tags, {"in isolation"})
+    assert not matches(ChoiceFilter({"Plural"}, EXACTLY), tags, {"isolation"})
+    assert matches(ChoiceFilter({"Plural", "Genitive"}, EXACTLY), tags, {"isolation"})
     assert matches(Blanks(), "") and matches(NonBlanks(), "x") and matches(Blanks(), [])
 
 
@@ -232,8 +232,8 @@ def test_exact_ignores_defaults_loose_takes_extras():
     assert [c.label for c in lay.cols] == ["Citation", "SG …", "PL"]
     assert len(lay.tokens(0, 0)) == 1                       # citation
     assert len(lay.tokens(0, 1)) == 3                       # SG, SG+GEN, SG+GEN+xH side by side
-    assert [t.tags[:2] for _, t in lay.tokens(0, 1)][0] == ["Singular", "in isolation"]
-    assert len(lay.tokens(0, 2)) == 1                       # exact PL (has in isolation too)
+    assert [t.tags[:2] for _, t in lay.tokens(0, 1)][0] == ["Singular", "isolation"]
+    assert len(lay.tokens(0, 2)) == 1                       # exact PL (has isolation too)
 
 
 def test_extra_chips_for_side_by_side_tokens():

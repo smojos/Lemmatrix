@@ -132,7 +132,7 @@ class MainWindow(QMainWindow):
                   tool("Delete", "delete", self.delete_entry, "Delete the selected lemma (Delete)"),
                   tool("Edit", "edit", self.edit_entry, "Edit the selected lemma (Enter)"),
                   tool("Configure columns", "gear", self.configure_lemma_columns),
-                  tool("Clear all filters", None, self._clear_lemma_filters))
+                  tool("Clear all filters", "broom", self._clear_lemma_filters))
         self.lemma_search = QLineEdit()
         self.lemma_search.setPlaceholderText("quick search of the visible columns")
         self.lemma_search.setClearButtonEnabled(True)
@@ -237,7 +237,7 @@ class MainWindow(QMainWindow):
                   tool("Edit", "edit", self.edit_token, "Edit the selected token (Enter)"),
                   tool("Play", "play", self.play_selected, "Play the selected token (Ctrl+Space)"),
                   tool("Configure columns", "gear", self.configure_all_columns),
-                  tool("Clear all filters", None, self._clear_all_filters))
+                  tool("Clear all filters", "broom", self._clear_all_filters))
         self.all_search = QLineEdit()
         self.all_search.setPlaceholderText("quick search of the visible columns")
         self.all_search.setClearButtonEnabled(True)
@@ -280,7 +280,14 @@ class MainWindow(QMainWindow):
         key = f"matrix/autoplay_{KINDS[tab]}"
         d["autoplay"].setChecked(self.prefs.get_bool(key))
         d["autoplay"].toggled.connect(lambda on, key=key: self.prefs.set_value(key, bool(on)))
-        self._row(bl, QLabel("Matrix class"), d["cls"], d["autoplay"])
+        if tab == LEMMA_TAG:
+            d["only_data"] = QCheckBox("Show only lemmas with token data")
+            d["only_data"].setToolTip("Hide lemmas with nothing in any of this matrix's columns")
+            d["only_data"].setChecked(self.prefs.only_lemmas_with_data)
+            d["only_data"].toggled.connect(self._only_data_toggled)
+            self._row(bl, QLabel("Matrix class"), d["cls"], d["autoplay"], d["only_data"])
+        else:
+            self._row(bl, QLabel("Matrix class"), d["cls"], d["autoplay"])
         self._row(bl, QLabel("Matrix"), d["saved"],
                   tool("Save matrix", None, lambda tab=tab: self.save_matrix(tab),
                        "Save this matrix under a name"),
@@ -758,6 +765,10 @@ class MainWindow(QMainWindow):
                 self.configs[(cfg.kind, cfg.word_class)] = m.copy()
         self.refresh()
 
+    def _only_data_toggled(self, on):
+        self.prefs.only_lemmas_with_data = bool(on)
+        self.refresh()
+
     def _scan_sound_folder(self):
         folder = storage.sound_folder(self.doc.db)
         self.sound_files, self.cloud_files = storage.scan_sound_folder(folder)
@@ -785,10 +796,19 @@ class MainWindow(QMainWindow):
         if tab == LEMMA_TAG:
             ents = mx.in_class(db, visible, cfg.word_class)
             lay = mx.lemma_tag_layout(db, ents, cfg)
+            hidden = ""
+            if self.lt_bar["only_data"].isChecked() and lay.rows:
+                with_data = {lay.rows[r].entry.ref for r, _ in lay.cells}
+                kept = [e for e in ents if e.ref in with_data]
+                if len(kept) != len(ents):
+                    hidden = f"  ·  {len(ents) - len(kept)} without token data hidden"
+                    ents = kept
+                    lay = mx.lemma_tag_layout(db, ents, cfg) if ents else \
+                        mx.Layout(message="No lemma has token data in these columns.")
             view = self.lt_view
             total = len(mx.in_class(db, db.entries, cfg.word_class))
             self.count_line.setText(f"{len(ents)} {mx.class_label(cfg.word_class)} lemmas shown "
-                                    f"of {total}  ·  {len(db.entries)} lemmas in all")
+                                    f"of {total}{hidden}  ·  {len(db.entries)} lemmas in all")
         else:
             e = self.lemmas.current_row()
             if e is not None and e not in visible:
@@ -1098,7 +1118,8 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("No pitch to play.", 3000)
             return
         s = self.doc.db.settings
-        samples = pitchsound.synthesise(text, s.pitch_low, s.pitch_high, self.prefs.pitch_voice)
+        samples = pitchsound.synthesise(text, s.pitch_low, s.pitch_high, self.prefs.pitch_voice,
+                                        volume=self.prefs.pitch_volume / 100)
         try:
             self.player.play_samples(samples, pitchsound.RATE)
         except audio.AudioError as exc:
@@ -1186,7 +1207,7 @@ class MainWindow(QMainWindow):
         self._menu([("Add lemma", "add", self.add_entry), ("Delete lemma", "delete", self.delete_entry),
                     ("Edit lemma", "edit", self.edit_entry), None,
                     ("Configure columns", "gear", self.configure_lemma_columns),
-                    ("Clear all filters", None, self._clear_lemma_filters)], pos)
+                    ("Clear all filters", "broom", self._clear_lemma_filters)], pos)
 
     def _all_menu(self, row, pos):
         if row is not None:
@@ -1194,7 +1215,7 @@ class MainWindow(QMainWindow):
         self._menu([("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
                     ("Edit token", "edit", self.edit_token), None, *self._token_items(), None,
                     ("Configure columns", "gear", self.configure_all_columns),
-                    ("Clear all filters", None, self._clear_all_filters)], pos)
+                    ("Clear all filters", "broom", self._clear_all_filters)], pos)
 
     def _matrix_menu(self, tab, pos):
         self._menu([("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
@@ -1623,13 +1644,14 @@ class MainWindow(QMainWindow):
         if not self.doc.db.path:
             return self.save_as()
         try:
-            self.doc.save()
+            self.doc.save(backup_dir=self.prefs.backup_folder)
         except OSError as exc:
             QMessageBox.warning(self, "Save", f"Couldn't save: {exc}")
             return False
         self.prefs.last_file = self.doc.db.path
         self._fill_session()
-        self.statusBar().showMessage("Saved. The previous version is in the Backups folder.", 4000)
+        where = QDir.toNativeSeparators(str(storage.backup_folder(self.doc.db.path, self.prefs.backup_folder)))
+        self.statusBar().showMessage(f"Saved. The previous version is in {where}.", 5000)
         return True
 
     def save_as(self) -> bool:

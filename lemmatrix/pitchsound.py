@@ -127,8 +127,8 @@ def _syllable(semis: np.ndarray, voice: str, rate: int, rng: np.random.Generator
 
 
 def synthesise(text: str, low: int = 1, high: int = 5, voice: str = HUM,
-               rate: int = RATE, seed: int | None = None) -> np.ndarray:
-    """Mono float samples (-1..1) of the pitch notation in the chosen voice."""
+               rate: int = RATE, seed: int | None = None, volume: float = 0.7) -> np.ndarray:
+    """Mono float samples (-1..1) of the pitch notation in the chosen voice, at volume 0..1."""
     if voice not in VOICES:
         voice = HUM
     rng = np.random.default_rng(seed)
@@ -142,5 +142,5 @@ def synthesise(text: str, low: int = 1, high: int = 5, voice: str = HUM,
     out = np.concatenate(parts)
     peak = np.abs(out).max()
     if peak > 0:
-        out = out / peak * 0.6
+        out = out / peak * 0.9 * max(0.0, min(1.0, volume))      # volume 0..1
     return out.astype(np.float32)
