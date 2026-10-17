@@ -353,7 +353,7 @@ class MainWindow(QMainWindow):
         t = mb.addMenu("&Tools")
         self._act(t, "Update all sound file names", self.update_all_names)
         self._act(t, "Check for duplicate file names", self.check_duplicates)
-        self._act(t, "Find missing recordings…", self.find_missing_recordings)
+        self._act(t, "Find missing or unlinked recordings…", self.find_missing_recordings)
         self._act(t, "Open the sound folder", self.open_sound_folder)
         v = mb.addMenu("&View")
         self._act(v, "Swap rows and columns", lambda: self.switch_axes(self.tabs.currentIndex()), "Ctrl+T")
@@ -1340,9 +1340,16 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, "Sound file names", msg)
 
     def missing_recordings(self):
-        """Tokens whose recording isn't in the sound folder, each with the file it most
-        likely is: an unclaimed recording of the same lemma (by reference and gloss)
-        whose name is closest to the expected or the stored name."""
+        """Recordings in the sound folder that belong to tokens but aren't linked to them.
+
+        Two kinds of token are looked at: those whose stored recording isn't in the folder
+        (renamed outside Lemmatrix, say), and those with no recording at all (a recording
+        added to the folder by hand, e.g. one cut out of a longer one). Each is matched with
+        a recording of the same lemma (reference and gloss) that no other token uses: the
+        one with the expected name if there is one, otherwise the closest name, best
+        matches first. Returns ([(entry, token index, file name, had a name before)],
+        [(entry, token index)] for stored recordings that couldn't be found at all).
+        """
         import difflib
         db = self.doc.db
         folder = storage.sound_folder(db)
@@ -1350,44 +1357,58 @@ class MainWindow(QMainWindow):
             on_disk = {p.name for p in folder.iterdir() if p.is_file() and p.suffix.lower() == ".wav"}
         except OSError:
             on_disk = set()
-        claimed = {t.file.lower() for e in db.entries for t in e.tokens if t.file and t.file in on_disk}
-        free = [n for n in on_disk if n.lower() not in claimed]
+        lower = {n.lower(): n for n in on_disk}
+        claimed = {t.file.lower() for e in db.entries for t in e.tokens if t.file and t.file.lower() in lower}
+        free = {n for n in on_disk if n.lower() not in claimed}
         found, lost = [], []
-        taken = set()
         for e in db.entries:
-            missing = [i for i, t in enumerate(e.tokens) if t.file and t.file not in on_disk]
-            if not missing:
+            needy = [i for i, t in enumerate(e.tokens) if not t.file or t.file.lower() not in lower]
+            if not needy:
                 continue
-            stems = {f"_{e.ref}_{e.file_gloss or db.gloss(e)}".lower()}
-            candidates = [n for n in free if any(st in n.lower() for st in stems) and n not in taken]
-            for i in missing:
+            stem = f"_{e.ref}_{e.file_gloss or db.gloss(e)}".lower()
+            candidates = {n for n in free if stem in n.lower()}
+            if not candidates:
+                lost += [(e, i) for i in needy if e.tokens[i].file]
+                continue
+            pairs = []
+            for i in needy:
                 t = e.tokens[i]
                 exp = db.expected_filename(e, t)
-                if exp in on_disk and exp not in taken and exp.lower() not in claimed:
-                    best = exp
-                else:
-                    scored = sorted(((max(difflib.SequenceMatcher(None, c.lower(), x.lower()).ratio()
-                                          for x in (exp, t.file)), c) for c in candidates if c not in taken),
-                                    reverse=True)
-                    best = scored[0][1] if scored and scored[0][0] > 0.8 and \
-                        (len(scored) == 1 or scored[0][0] - scored[1][0] > 0.02) else None
-                if best:
-                    taken.add(best)
-                    found.append((e, i, best))
-                else:
-                    lost.append((e, i))
+                for c in candidates:
+                    if c.lower() == exp.lower():
+                        score = 2.0                       # exactly the name it should have
+                    else:
+                        names = [exp] + ([t.file] if t.file else [])
+                        score = max(difflib.SequenceMatcher(None, c.lower(), x.lower()).ratio() for x in names)
+                    if score > 0.8:
+                        pairs.append((score, i, c))
+            done_tokens, done_files = set(), set()
+            for score, i, c in sorted(pairs, key=lambda p: -p[0]):     # best matches first
+                if i in done_tokens or c in done_files:
+                    continue
+                done_tokens.add(i)
+                done_files.add(c)
+                found.append((e, i, c, bool(e.tokens[i].file)))
+            free -= done_files
+            lost += [(e, i) for i in needy if i not in done_tokens and e.tokens[i].file]
         return found, lost
 
     def find_missing_recordings(self):
-        db = self.doc.db
         found, lost = self.missing_recordings()
         if not found and not lost:
-            QMessageBox.information(self, "Missing recordings", "Every token's recording is in the sound folder.")
+            QMessageBox.information(self, "Missing recordings",
+                                    "Every recording is linked to its token, and no token's recording is missing.")
             return
-        lines = [f"{e.ref}: {e.tokens[i].file}  →  {name}" for e, i, name in found]
+
+        def label(e, i):
+            t = e.tokens[i]
+            tags = " + ".join(mx.chips(self.doc.db, t.tags, self.doc.db.word_class(e) or None)) or "citation"
+            return f"{e.ref} {tags}"
+        lines = [f"{label(e, i)}: {e.tokens[i].file}  →  {name}" if had else
+                 f"{label(e, i)} (no recording yet)  →  {name}" for e, i, name, had in found]
         msg = ""
         if found:
-            msg += f"These {len(found)} recording(s) seem to have a different name now:\n\n" + \
+            msg += f"These {len(found)} recording(s) seem to belong to these tokens:\n\n" + \
                 "\n".join(lines[:40]) + ("\n…" if len(lines) > 40 else "")
         if lost:
             msg += ("\n\n" if msg else "") + f"{len(lost)} recording(s) couldn't be found at all:\n" + \
@@ -1396,19 +1417,19 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Missing recordings", msg)
             return
         if QMessageBox.question(self, "Missing recordings",
-                                msg + "\n\nLink the tokens to the files found?") != QMessageBox.Yes:
+                                msg + "\n\nLink the tokens to these recordings?") != QMessageBox.Yes:
             return
-        for e, i, name in found:
+        for e, i, name, _ in found:
             self.doc.edit_entry(e, lambda en, i=i, name=name: setattr(en.tokens[i], "file", name),
                                 "Link recording")
         self._maybe_update_names()
 
     def _report_missing(self):
-        """A status-bar note when recordings can't be found (e.g. renamed outside Lemmatrix)."""
+        """A status-bar note when recordings aren't linked to their tokens."""
         found, lost = self.missing_recordings()
         if found or lost:
-            self.statusBar().showMessage(f"{len(found) + len(lost)} recording(s) aren't where their tokens "
-                                         "say: Tools → Find missing recordings.", 15000)
+            self.statusBar().showMessage(f"{len(found) + len(lost)} recording(s) aren't linked to their tokens: "
+                                         "Tools → Find missing recordings.", 15000)
 
     def check_duplicates(self):
         dups = self.doc.db.duplicate_filenames()

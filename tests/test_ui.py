@@ -577,7 +577,7 @@ def test_find_missing_recordings_relinks_renamed_files(win, monkeypatch):
     (folder / "LXX-VXX_D001_goat_SG.wav").rename(folder / "LXX-VXX_D001_goat_VG.wav")   # renamed outside
     assert "LXX-VXX_D001_goat_SG.wav" in _missing(win)
     found, lost = win.missing_recordings()
-    assert [(e.ref, n) for e, i, n in found] == [("D001", "LXX-VXX_D001_goat_VG.wav")] and not lost
+    assert [(e.ref, n) for e, i, n, had in found] == [("D001", "LXX-VXX_D001_goat_VG.wav")] and not lost
     win.find_missing_recordings()
     assert not _missing(win)
 
@@ -603,3 +603,25 @@ def test_ctrl_space_plays_in_all_data_and_matrices(win, monkeypatch):
         QTest.keyClick(view, Qt.Key_Space, Qt.ControlModifier | Qt.ShiftModifier)
         assert played == ["sound", "pitch"], (tab, played)
     assert win.play_action.shortcut().toString() == "Ctrl+Space"
+
+
+def test_find_recordings_added_by_hand_for_tokens_without_one(win):
+    from lemmatrix import audio
+    db = win.doc.db
+    folder = storage.sound_folder(db)
+    e = db.entry_by_ref("D001")
+    fileless = [i for i, t in enumerate(e.tokens) if not t.file]
+    assert fileless
+    i = fileless[0]
+    t = e.tokens[i]
+    # Josh's case: a frame recording cut from a longer one, saved in the old Dekereke style
+    old_style = "LXX-VXX_D001_goat-F2.wav"
+    exact = db.expected_filename(e, t)
+    audio.write_wav(folder / exact, [0.0] * 100, 8000)
+    found, _ = win.missing_recordings()
+    assert (e.ref, i, exact) in [(x.ref, k, n) for x, k, n, had in found]
+    (folder / exact).rename(folder / old_style)                # a near name is found too
+    found, _ = win.missing_recordings()
+    assert [n for x, k, n, had in found if x is e] == [old_style]
+    win.find_missing_recordings()
+    assert any(tok.file == old_style or tok.file == exact for tok in e.tokens)
