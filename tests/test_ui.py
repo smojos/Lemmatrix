@@ -729,3 +729,40 @@ def test_pitch_volume_scales_the_sound():
     loud = ps.synthesise("22 44", voice="buzz", volume=1.0, seed=1)
     quiet = ps.synthesise("22 44", voice="buzz", volume=0.25, seed=1)
     assert np.isclose(np.abs(quiet).max() * 4, np.abs(loud).max(), rtol=0.01)
+
+
+def test_ctrl_click_makes_a_line_for_each_combination(win):
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+    from lemmatrix import matrix as mx
+    from lemmatrix.ui import matrix_dialogs as md
+    old = mx.Spec(frozenset({"3SG.A", "Past"}), mx.LOOSE)
+    dlg = md.SpecDialog(win, win.doc.db, "VERB", old)       # opening with a spec works
+    dlg.show()
+    b = dlg.tags.buttons
+    QTest.mouseClick(b["3PL.A"], Qt.LeftButton, Qt.ControlModifier)     # 3SG.A and 3PL.A
+    QTest.mouseClick(b["Present"], Qt.LeftButton, Qt.ControlModifier)   # Past and Present
+    QTest.mouseClick(b["Negative"], Qt.LeftButton)                       # one Polarity
+    specs = dlg.specs()
+    assert len(specs) == 4 and "4 lines" in dlg.count.text()
+    assert {frozenset(s.tags) for s in specs} == {
+        frozenset({p, t, "Negative"}) for p in ("3SG.A", "3PL.A") for t in ("Past", "Present")}
+    QTest.mouseClick(b["1SG.A"], Qt.LeftButton)              # a plain click still replaces
+    assert not b["3SG.A"].isChecked() and not b["3PL.A"].isChecked()
+    assert len(dlg.specs()) == 2
+    # editing a line in the list puts the extra combinations just below it
+    lst = md.SpecList(win.doc.db, "VERB", [old, mx.Spec.citation()], "X")
+    lst.list.setCurrentRow(0)
+    class Fake:
+        def __init__(self, *a, **k): pass
+        def exec(self): return True
+        def specs(self): return specs
+    import pytest
+    mp = pytest.MonkeyPatch()
+    mp.setattr(md, "SpecDialog", Fake)
+    try:
+        lst._edit(lst.list.item(0))
+    finally:
+        mp.undo()
+    assert lst.specs() == specs + [mx.Spec.citation()]
+    dlg.close()

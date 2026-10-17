@@ -84,7 +84,16 @@ class SpecDialog(QDialog):
         row.addStretch(1)
         lay.addLayout(row)
         self.tags = TagPanel()
+        self.tags.multi = True
+        self.tags.on_change = self._update_count
         self.tags.build(db, word_class or None, set(spec.tags) if spec else set())
+        hint = QLabel("Ctrl+click to pick more than one tag in a group: you get one line for "
+                      "each combination (e.g. 3SG.A, 3PL.A × FUT1, FUT2 = 4 lines).")
+        hint.setWordWrap(True)
+        lay.addWidget(hint)
+        self.count = QLabel()
+        self.count.setStyleSheet("font-weight: 600;")
+        lay.addWidget(self.count)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(self.tags)
@@ -97,12 +106,25 @@ class SpecDialog(QDialog):
 
     def _mode(self, *_):
         self.tags.set_enabled_all(not self.radios[mx.CITATION].isChecked())
+        self._update_count()
 
-    def spec(self) -> mx.Spec:
+    def _update_count(self):
+        if not hasattr(self, "count") or not hasattr(self, "radios"):
+            return                                # still being built
+        n = len(self.specs())
+        self.count.setText(f"→ {n} lines" if n > 1 else "")
+
+    def specs(self) -> list:
+        """Every line this dialogue makes: one per combination of the picked tags."""
         match = next(k for k, rb in self.radios.items() if rb.isChecked())
         if match == mx.CITATION:
-            return mx.Spec.citation()
-        return mx.Spec(frozenset(self.tags.selected()), match)
+            return [mx.Spec.citation()]
+        return [mx.Spec(frozenset(c), match) for c in self.tags.combinations() if c]
+
+    def spec(self) -> mx.Spec:
+        specs = self.specs()
+        return specs[0] if specs else mx.Spec(frozenset(), next(
+            k for k, rb in self.radios.items() if rb.isChecked()))
 
     def accept(self):
         s = self.spec()
@@ -199,12 +221,19 @@ class SpecList(QWidget):
             self.list.insertItem(row, it)
         return it
 
+    def _insert(self, specs, row):
+        """Insert lines from row on (None: at the end); selects the last one."""
+        it = None
+        for k, sp in enumerate(specs):
+            it = self._append(sp, None if row is None else row + k)
+        if it is not None:
+            self.list.setCurrentItem(it)
+
     def _add(self):
         dlg = SpecDialog(self, self.db, self.wc)
         if dlg.exec():
             r = self.list.currentRow()
-            it = self._append(dlg.spec(), r + 1 if r >= 0 else None)
-            self.list.setCurrentItem(it)
+            self._insert(dlg.specs(), r + 1 if r >= 0 else None)
 
     def _duplicate(self):
         """Open the selected line's settings as a new line just below it."""
@@ -213,13 +242,15 @@ class SpecList(QWidget):
             return
         dlg = SpecDialog(self, self.db, self.wc, it.data(Qt.UserRole), title="Duplicate line")
         if dlg.exec():
-            new = self._append(dlg.spec(), self.list.row(it) + 1)
-            self.list.setCurrentItem(new)
+            self._insert(dlg.specs(), self.list.row(it) + 1)
 
     def _edit(self, it):
         dlg = SpecDialog(self, self.db, self.wc, it.data(Qt.UserRole))
         if dlg.exec():
-            it.setData(Qt.UserRole, dlg.spec())
+            specs = dlg.specs()
+            it.setData(Qt.UserRole, specs[0])
+            if len(specs) > 1:                    # the extra combinations go just below
+                self._insert(specs[1:], self.list.row(it) + 1)
 
     def _remove(self):
         r = self.list.currentRow()

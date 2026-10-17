@@ -1,9 +1,15 @@
-"""Tag chips grouped by group, one tag per group (token dialogue and Configure matrix)."""
+"""Tag chips grouped by group, one tag per group (token dialogue and Configure matrix).
+
+With `multi` on (Configure matrix), Ctrl+click picks a further tag in the same group
+instead of replacing the one picked; combinations() then gives one tag set for every
+combination of the picked tags."""
 
 from __future__ import annotations
 
+import itertools
+
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QApplication, QFrame, QLabel, QVBoxLayout, QWidget
 
 from . import theme
 from .widgets import ChipButton, FlowLayout
@@ -15,6 +21,7 @@ class TagPanel(QWidget):
         self.buttons: dict[str, ChipButton] = {}
         self.groups: list[set[str]] = []
         self.on_change = None
+        self.multi = False                    # Ctrl+click adds a tag within a group
         self.box = QVBoxLayout(self)
         self.box.setContentsMargins(6, 6, 6, 6)
         self.box.setSpacing(4)
@@ -63,7 +70,8 @@ class TagPanel(QWidget):
         self.box.addStretch(1)
 
     def _toggled(self, name, on):
-        if on:
+        ctrl = bool(QApplication.keyboardModifiers() & Qt.ControlModifier)
+        if on and not (self.multi and ctrl):
             for names in self.groups:
                 if name in names:
                     for other in names - {name}:
@@ -78,6 +86,15 @@ class TagPanel(QWidget):
 
     def selected(self) -> list[str]:
         return [n for n, b in self.buttons.items() if b.isChecked()]
+
+    def combinations(self) -> list[list[str]]:
+        """One tag list per combination: groups with several picked tags multiply."""
+        picked = [[n for n in self.buttons if n in names and self.buttons[n].isChecked()]
+                  for names in self.groups]
+        picked = [p for p in picked if p]
+        if not picked:
+            return [[]]
+        return [list(c) for c in itertools.product(*picked)]
 
     def set_enabled_all(self, on: bool):
         for b in self.buttons.values():
