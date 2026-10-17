@@ -270,9 +270,6 @@ class MainWindow(QMainWindow):
             view.contextRequested.connect(lambda r, c, n, pos, tab=tab: self._matrix_menu(tab, pos))
             view.deleteRequested.connect(self.delete_token)
             view.switchRequested.connect(lambda tab=tab: self.switch_axes(tab))
-            view.switch.setContextMenuPolicy(Qt.CustomContextMenu)   # to try the two arrow styles
-            view.switch.customContextMenuRequested.connect(
-                lambda pos, v=view: self._switch_style_menu(v.switch.mapToGlobal(pos)))
             view.playRequested.connect(self.play_selected)
 
     def _all_data_bar(self) -> QWidget:
@@ -414,9 +411,7 @@ class MainWindow(QMainWindow):
     def _build_menus(self):
         mb = self.menuBar()
         self.save_btn = QToolButton()               # top right, in the theme colour (see _notebook_icons)
-        self.save_btn.setText("Save")
-        self.save_btn.setToolTip("Save the database (Ctrl+S)")
-        self.save_btn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.save_btn.setToolTip("Save database (Ctrl+S)")   # icon only: the name is in the tooltip
         self.save_btn.setIconSize(QSize(18, 18))
         self.save_btn.setCursor(Qt.PointingHandCursor)
         self.save_btn.clicked.connect(lambda *_: self.save())
@@ -758,24 +753,12 @@ class MainWindow(QMainWindow):
         self.save_btn.setIcon(icon("save", 18, a))
         self.save_btn.setStyleSheet(
             f"QToolButton {{ background: {a}; color: {theme.text_on(theme.accent()).name()}; "
-            "border: none; border-radius: 4px; padding: 2px 10px 2px 6px; font-weight: bold; } "
+            "border: none; border-radius: 4px; padding: 3px 8px; } "
             f"QToolButton:hover {{ background: {theme.mix(theme.accent(), QColor('white'), 0.15).name()}; }} "
             f"QToolButton:pressed {{ background: {theme.mix(theme.accent(), QColor('black'), 0.15).name()}; }}")
-        swap = theme.colour("pitch").name() if self.prefs.get_value("display/swap_icon") == "theme" else None
-        for v in (self.lt_view, self.tt_view):
-            v.switch.setIcon(icon("switch", 22, swap))
+        for v in (self.lt_view, self.tt_view):           # the accent, lighter on dark
+            v.switch.setIcon(icon("switch", 22, theme.colour("pitch").name()))
             v.switch.setIconSize(QSize(22, 22))
-
-    def _switch_style_menu(self, pos):
-        menu = QMenu(self)
-        now = self.prefs.get_value("display/swap_icon") or "black"
-        for key, label in (("black", "Black arrows"), ("theme", "Arrows in the theme colour")):
-            a = menu.addAction(label)
-            a.setCheckable(True)
-            a.setChecked(now == key)
-            a.triggered.connect(lambda *_, k=key: (self.prefs.set_value("display/swap_icon", k),
-                                                   self._notebook_icons()))
-        menu.exec(pos)
 
     def _load_notebook(self):
         problem = self.doc.load_notebook()
