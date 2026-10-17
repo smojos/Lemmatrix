@@ -248,6 +248,7 @@ class MainWindow(QMainWindow):
             t.timeout.connect(lambda e=edit, f=fn: f(e.text()))
             edit.textChanged.connect(lambda _, t=t: t.start())
             self._search_timers[name] = t
+        self.lemmas.ctrl_click_pins = True
         self.lemmas.filtersChanged.connect(lambda: self.schedule_refresh())
         self.lemmas.rowActivated.connect(lambda e: self.edit_entry())
         self.lemmas.deleteRequested.connect(self.delete_entry)
@@ -269,6 +270,9 @@ class MainWindow(QMainWindow):
             view.contextRequested.connect(lambda r, c, n, pos, tab=tab: self._matrix_menu(tab, pos))
             view.deleteRequested.connect(self.delete_token)
             view.switchRequested.connect(lambda tab=tab: self.switch_axes(tab))
+            view.switch.setContextMenuPolicy(Qt.CustomContextMenu)   # to try the two arrow styles
+            view.switch.customContextMenuRequested.connect(
+                lambda pos, v=view: self._switch_style_menu(v.switch.mapToGlobal(pos)))
             view.playRequested.connect(self.play_selected)
 
     def _all_data_bar(self) -> QWidget:
@@ -409,6 +413,18 @@ class MainWindow(QMainWindow):
 
     def _build_menus(self):
         mb = self.menuBar()
+        self.save_btn = QToolButton()               # top right, in the theme colour (see _notebook_icons)
+        self.save_btn.setText("Save")
+        self.save_btn.setToolTip("Save the database (Ctrl+S)")
+        self.save_btn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.save_btn.setIconSize(QSize(18, 18))
+        self.save_btn.setCursor(Qt.PointingHandCursor)
+        self.save_btn.clicked.connect(lambda *_: self.save())
+        corner = self._corner = QWidget()      # kept: PySide does not take ownership of it
+        cl = QHBoxLayout(corner)
+        cl.setContentsMargins(0, 2, 6, 2)
+        cl.addWidget(self.save_btn)
+        mb.setCornerWidget(corner, Qt.TopRightCorner)
         f = mb.addMenu("&File")
         self._act(f, "&New database…", self.new_file, QKeySequence.New)
         self._act(f, "&Open…", self.open_file, QKeySequence.Open)
@@ -739,6 +755,27 @@ class MainWindow(QMainWindow):
         a = theme.accent().name()
         self.notebook_btn.setIcon(icon("notebook", 34, a))
         self.write_btn.setIcon(icon("write-notebook", 34))
+        self.save_btn.setIcon(icon("save", 18, a))
+        self.save_btn.setStyleSheet(
+            f"QToolButton {{ background: {a}; color: {theme.text_on(theme.accent()).name()}; "
+            "border: none; border-radius: 4px; padding: 2px 10px 2px 6px; font-weight: bold; } "
+            f"QToolButton:hover {{ background: {theme.mix(theme.accent(), QColor('white'), 0.15).name()}; }} "
+            f"QToolButton:pressed {{ background: {theme.mix(theme.accent(), QColor('black'), 0.15).name()}; }}")
+        swap = theme.colour("pitch").name() if self.prefs.get_value("display/swap_icon") == "theme" else None
+        for v in (self.lt_view, self.tt_view):
+            v.switch.setIcon(icon("switch", 22, swap))
+            v.switch.setIconSize(QSize(22, 22))
+
+    def _switch_style_menu(self, pos):
+        menu = QMenu(self)
+        now = self.prefs.get_value("display/swap_icon") or "black"
+        for key, label in (("black", "Black arrows"), ("theme", "Arrows in the theme colour")):
+            a = menu.addAction(label)
+            a.setCheckable(True)
+            a.setChecked(now == key)
+            a.triggered.connect(lambda *_, k=key: (self.prefs.set_value("display/swap_icon", k),
+                                                   self._notebook_icons()))
+        menu.exec(pos)
 
     def _load_notebook(self):
         problem = self.doc.load_notebook()
@@ -1031,7 +1068,10 @@ class MainWindow(QMainWindow):
         tab = self.tabs.currentIndex()
         self._scan_sound_folder()
         visible = self.lemmas.visible_rows()
-        self.lemma_count.setText(f"{len(visible)} of {len(db.entries)} lemmas shown")
+        pin = self.lemmas.pinned_row()
+        self.lemma_count.setText(f"{len(visible)} of {len(db.entries)} lemmas shown"
+                                 + (f"  ·  only {pin.ref} {db.lemma(pin)} (Ctrl+click again to show all)"
+                                    if pin is not None else ""))
         only_data = self.only_data.isChecked()
         if tab == ALL_DATA:
             vis = set(map(id, visible))

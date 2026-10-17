@@ -955,3 +955,32 @@ def test_questions_window(win):
     dlg.tree.setCurrentItem(dlg.tree.topLevelItem(0))
     dlg.toggle()
     assert not s.questions[0].is_open and win.doc.dirty
+
+
+def test_ctrl_click_shows_only_that_lemma(win):
+    from PySide6.QtCore import QPoint, Qt
+    from PySide6.QtTest import QTest
+    t = win.lemmas
+    total = t.proxy.rowCount()
+    goat = win.doc.db.entry_by_ref("D002")
+    t.select_row(goat)
+    rect = t.visualRect(t.currentIndex())
+    QTest.mouseClick(t.viewport(), Qt.LeftButton, Qt.ControlModifier, rect.center())
+    assert t.visible_rows() == [goat]
+    assert t.current_row() is goat
+    win.refresh()
+    assert "only D002" in win.lemma_count.text()
+    rect = t.visualRect(t.currentIndex())
+    QTest.mouseClick(t.viewport(), Qt.LeftButton, Qt.ControlModifier, rect.center())
+    assert t.proxy.rowCount() == total and t.current_row() is goat
+    t.toggle_pin(goat)
+    win._clear_lemma_filters()                   # Clear all filters undoes it too
+    assert t.proxy.rowCount() == total
+
+
+def test_save_button_saves(win):
+    win.doc.db.entry_by_ref("D002").values["Comment"] = "x"
+    called = []
+    win.save = lambda: called.append(1) or True
+    win.save_btn.click()
+    assert called

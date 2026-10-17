@@ -61,6 +61,9 @@ class Prefs:
     def get_bool(self, key: str, default: bool = False) -> bool:
         return self._get(key, default, bool)
 
+    def get_value(self, key: str, default: str = "") -> str:
+        return self._get(key, default)
+
     def set_value(self, key: str, value):
         self.q.setValue(key, value)
 

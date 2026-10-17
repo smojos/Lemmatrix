@@ -125,6 +125,7 @@ class RowFilter(QSortFilterProxyModel):
     def __init__(self):
         super().__init__()
         self.filters: dict[str, object] = {}       # column key -> filter
+        self.pinned: str | None = None             # Ctrl+click: the id of the only row shown
         self.search = ""
         self.setSortCaseSensitivity(Qt.CaseInsensitive)
         self.setSortRole(Qt.DisplayRole)
@@ -150,6 +151,8 @@ class RowFilter(QSortFilterProxyModel):
     def filterAcceptsRow(self, r, parent):
         m: RowModel = self.sourceModel()
         row = m.rows[r]
+        if self.pinned is not None and getattr(row, "id", None) != self.pinned:
+            return False
         by_key = {c.key: c for c in m.all_columns}
         for key, flt in self.filters.items():
             col = by_key.get(key)
@@ -259,6 +262,7 @@ class FilterTable(QTableView):
         self.setAlternatingRowColors(False)
         theme.as_data(self)
         self.space_plays = False                  # True: the spacebar asks to play (All data)
+        self.ctrl_click_pins = False              # True: Ctrl+click shows only that row (the lemma list)
         self.verticalHeader().hide()
         self.verticalHeader().setDefaultSectionSize(26)
         self.horizontalHeader().setStretchLastSection(True)
@@ -329,17 +333,32 @@ class FilterTable(QTableView):
 
     # ---- filters ---------------------------------------------------------
     def _refresh_header(self):
-        self.header_.active = {i for i, c in enumerate(self.model_.columns) if c.key in self.proxy.filters}
+        self.header_.active = {i for i, c in enumerate(self.model_.columns)
+                               if c.key in self.proxy.filters or (self.proxy.pinned and i == 0)}
         self.header_.viewport().update()
 
     def clear_filters(self):
         self.proxy.filters.clear()
+        self.proxy.pinned = None
         self.proxy.refilter()
         self._refresh_header()
         self.filtersChanged.emit()
 
     def active_filters(self) -> int:
-        return len(self.proxy.filters)
+        return len(self.proxy.filters) + (self.proxy.pinned is not None)
+
+    def toggle_pin(self, row):
+        """Ctrl+click: show only this row; again (on any row): show them all again."""
+        self.proxy.pinned = None if self.proxy.pinned is not None or row is None else getattr(row, "id", None)
+        self.proxy.refilter()
+        self._refresh_header()
+        self.select_row(row)
+        self.filtersChanged.emit()
+
+    def pinned_row(self):
+        if self.proxy.pinned is None:
+            return None
+        return next((r for r in self.model_.rows if getattr(r, "id", None) == self.proxy.pinned), None)
 
     def _filter_menu(self, column: int, pos):
         col = self.model_.columns[column]
@@ -409,6 +428,15 @@ class FilterTable(QTableView):
         return dlg.result_filter() if dlg.exec() else None
 
     # ---- keys and clicks -------------------------------------------------
+    def mousePressEvent(self, event):
+        if self.ctrl_click_pins and event.button() == Qt.LeftButton and event.modifiers() & Qt.ControlModifier:
+            idx = self.indexAt(event.position().toPoint())
+            if idx.isValid():
+                self.toggle_pin(self.row_at(idx))
+                event.accept()
+                return
+        super().mousePressEvent(event)
+
     def _double(self, idx):
         col = self.model_.columns[idx.column()]
         if col.edit:
