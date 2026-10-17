@@ -216,6 +216,11 @@ class MainWindow(QMainWindow):
         opts.addSpacing(16)
         opts.addWidget(self.only_data)
         opts.addStretch(1)
+        self.panels_btn = QToolButton()          # hides or shows the option panels below
+        self.panels_btn.setAutoRaise(True)
+        self.panels_btn.setIconSize(QSize(18, 18))
+        self.panels_btn.clicked.connect(lambda *_: self.toggle_panels())
+        opts.addWidget(self.panels_btn)
         bxl.addLayout(opts)
         normal = QFont(box.font())
         normal.setBold(False)              # set explicitly, or it would be inherited bold
@@ -237,6 +242,11 @@ class MainWindow(QMainWindow):
         right.addWidget(bottom)
         right.setSizes([720, 150])
         main.addWidget(right)
+        for sp in (left, right):                  # the option panels can be dragged out of sight
+            sp.setCollapsible(0, False)
+            sp.setCollapsible(1, True)
+            sp.splitterMoved.connect(lambda *_: self._panels_icon())
+        self._panel_sizes = {"left": 170, "right": 150}   # heights to give back when shown again
         main.setSizes([470, 1030])
 
         # ---- signals -----------------------------------------------------
@@ -414,16 +424,16 @@ class MainWindow(QMainWindow):
 
     def _build_menus(self):
         mb = self.menuBar()
-        self.save_btn = QToolButton()               # top right, in the theme colour (see _notebook_icons)
+        self.save_btn = QToolButton()               # top left, before File, in the theme colour (see _notebook_icons)
         self.save_btn.setToolTip("Save database (Ctrl+S)")   # icon only: the name is in the tooltip
         self.save_btn.setIconSize(QSize(18, 18))
         self.save_btn.setCursor(Qt.PointingHandCursor)
         self.save_btn.clicked.connect(lambda *_: self.save())
         corner = self._corner = QWidget()      # kept: PySide does not take ownership of it
         cl = QHBoxLayout(corner)
-        cl.setContentsMargins(0, 2, 6, 2)
+        cl.setContentsMargins(4, 2, 2, 2)
         cl.addWidget(self.save_btn)
-        mb.setCornerWidget(corner, Qt.TopRightCorner)
+        mb.setCornerWidget(corner, Qt.TopLeftCorner)        # away from the window's close button
         f = mb.addMenu("&File")
         self._act(f, "&New database…", self.new_file, QKeySequence.New)
         self._act(f, "&Open…", self.open_file, QKeySequence.Open)
@@ -462,6 +472,7 @@ class MainWindow(QMainWindow):
         self._act(v, "&Notebook", self.open_notebook, "Ctrl+B")
         self._act(v, "&Questions", self.open_questions)
         v.addSeparator()
+        self._act(v, "Hide or show the option panels", self.toggle_panels)
         self._act(v, "Swap rows and columns", lambda: self.switch_axes(self.tabs.currentIndex()), "Ctrl+T")
         v.addSeparator()
         # the same keys as in the token dialogue
@@ -764,9 +775,35 @@ class MainWindow(QMainWindow):
             "border: none; border-radius: 4px; padding: 3px 8px; } "
             f"QToolButton:hover {{ background: {theme.mix(theme.accent(), QColor('white'), 0.15).name()}; }} "
             f"QToolButton:pressed {{ background: {theme.mix(theme.accent(), QColor('black'), 0.15).name()}; }}")
+        self._panels_icon()
         for v in (self.lt_view, self.tt_view):           # the accent, lighter on dark
             v.switch.setIcon(icon("switch", 22, theme.colour("pitch").name()))
             v.switch.setIconSize(QSize(22, 22))
+
+    # ---- option panels -------------------------------------------------
+    def panels_hidden(self) -> bool:
+        return all(sp.sizes()[1] == 0 for sp in (self.left_split, self.right_split))
+
+    def toggle_panels(self):
+        """Hide both option panels (lemma options; matrix options and Current Session), or show them."""
+        hide = not self.panels_hidden()
+        for name, sp in (("left", self.left_split), ("right", self.right_split)):
+            top, bottom = sp.sizes()
+            if hide:
+                if bottom:
+                    self._panel_sizes[name] = bottom
+                sp.setSizes([top + bottom, 0])
+            elif bottom == 0:
+                h = self._panel_sizes[name]
+                sp.setSizes([max(100, top - h), h])
+        self._panels_icon()
+
+    def _panels_icon(self):
+        hidden = self.panels_hidden()
+        self.panels_btn.setIcon(icon("chevron-up" if hidden else "chevron-down", 18, theme.colour("pitch").name()))
+        self.panels_btn.setToolTip("Show the option panels" if hidden else
+                                   "Hide the option panels (the lemma options, the matrix options and "
+                                   "Current Session); they can also be dragged down out of sight")
 
     def _load_notebook(self):
         problem = self.doc.load_notebook()

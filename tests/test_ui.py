@@ -1141,3 +1141,15 @@ def test_bulk_window_screenshot_layout(win):
     assert w.tables["tokens"].model_.rowCount() > 0
     w.close()
     assert win.bulk_window is None
+
+
+def test_option_panels_hide_and_show(win):
+    win.show()
+    win.left_split.setSizes([600, 170])
+    win.right_split.setSizes([600, 150])
+    win.toggle_panels()
+    assert win.panels_hidden()
+    assert win.left_split.sizes()[1] == 0 and win.right_split.sizes()[1] == 0
+    win.toggle_panels()
+    assert not win.panels_hidden()
+    assert win.left_split.sizes()[1] > 0 and win.right_split.sizes()[1] > 0
