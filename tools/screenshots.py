@@ -104,6 +104,43 @@ def main(out: Path):
     shot(d, "13-configure-columns.png")
     d.close()
 
+    from lemmatrix import bulk
+    from lemmatrix.ui import bulk_window as bw
+    from lemmatrix.ui.conversion_dialog import TagConversionDialog
+    win.tabs.setCurrentIndex(ALL_DATA)
+    win.open_bulk_edit()
+    b = win.bulk_window
+    b.resize(1360, 900)
+    b.ops.setCurrentIndex(bw.REPLACE)
+    b.r_field.setCurrentIndex(b.r_field.findData("f:Phonetic"))
+    b.r_find.setText("ee")
+    b.r_repl.setText("ææ")
+    b.set_ticked([r for r in b.tables[bulk.TOKENS].visible_rows() if r.entry.ref == "D002"], False)
+    b.preview()
+    shot(b, "15-bulk-replace.png")
+    b.set_ticked(b.tables[bulk.TOKENS].visible_rows(), True)
+    b.ops.setCurrentIndex(bw.SHORTCUTS)
+    b.s_which.setCurrentIndex(b.s_which.findData("pitch"))
+    b.preview()
+    shot(b, "16-bulk-pitch-error.png")
+    b.levels.setCurrentIndex(0)
+    b.ops.setCurrentIndex(bw.SET)
+    shot(b, "17-bulk-lemmas.png")
+    b.close()
+    d = TagConversionDialog(win, win.doc.db, [win.doc.db.entry_by_ref("V002")], "NOUN")
+    from lemmatrix.model import TagAction
+    for row in d.rows:
+        if row.stranded.name == "Past":
+            row.set(TagAction(bulk.CONVERT, "Plural"))
+        elif row.stranded.name == "3SG.S":
+            row.set(TagAction(bulk.NEW, "3rd person", "3P", "Person"))
+        elif row.stranded.name != "1SG.S":
+            row.set(TagAction(bulk.DELETE))
+    d._check()
+    d.show()
+    shot(d, "18-tag-conversion.png")
+    d.close()
+
     big = HERE / "samples" / "Test-300.xml"
     if big.exists():
         win.load_database(storage.load(big))

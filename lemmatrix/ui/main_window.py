@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QF
                                QPushButton, QSplitter, QStackedWidget, QTabBar, QToolButton,
                                QVBoxLayout, QWidget)
 
-from .. import __version__, audio, filters as fl, lock as lockmod, matrix as mx, storage
+from .. import __version__, audio, bulk, filters as fl, lock as lockmod, matrix as mx, storage
 from . import theme
 from ..defaults import new_database
 from .. import notebook as nbmod
@@ -86,6 +86,7 @@ class MainWindow(QMainWindow):
         self.layouts: dict = {}
         self.dialog_autoplay = False
         self.notebook_dialog = None               # the notebook window, once opened
+        self.bulk_window = None                   # the bulk edit window, while it's open
         self.sound_files: set[str] = set()       # names in the sound folder, refreshed with the views
         self.cloud_files: set[str] = set()       # those of them that are online-only (OneDrive)
         self.resize(1500, 920)
@@ -449,6 +450,8 @@ class MainWindow(QMainWindow):
         self._act(e, "&Lists (people, places, field lists, tags)…", self.edit_lists)
         self._act(e, "&Tag structure…", lambda: self.edit_lists("tags"))
         e.addSeparator()
+        self._act(e, "&Bulk edit…", self.open_bulk_edit, "Ctrl+E")
+        e.addSeparator()
         self._act(e, "&Settings…", self.edit_settings, QKeySequence.Preferences)
         t = mb.addMenu("&Tools")
         self._act(t, "Update all sound file names", self.update_all_names)
@@ -619,6 +622,8 @@ class MainWindow(QMainWindow):
     # ============================================================ database
     def load_database(self, db: Database):
         self.player.stop()
+        if self.bulk_window is not None:          # it belongs to the database being closed
+            self.bulk_window.close()
         if self.doc.db is not db:
             self._save_view()
         self._mark_open(db.path)
@@ -1296,6 +1301,11 @@ class MainWindow(QMainWindow):
             return
         if f.closed and f.role != "word-class" and text:
             f.add_value(text)
+        if f.role == "word-class" and text != self.doc.db.word_class(entry):
+            after = entry.copy()
+            after.set(name, text)
+            self.change_word_class(entry, after)
+            return
 
         def change(e):
             e.set(name, text, lang or None, f.multilingual)
@@ -1525,7 +1535,65 @@ class MainWindow(QMainWindow):
             return
         dlg = EntryDialog(self, self.doc.db, e)
         if dlg.exec():
-            self.doc.edit_entry(e, dlg.apply, f"Edit {e.ref}")
+            after = e.copy()
+            dlg.apply(after)
+            if self.doc.db.word_class(after) != self.doc.db.word_class(e):
+                self.change_word_class(e, after)
+            else:
+                self.doc.edit_entry(e, dlg.apply, f"Edit {e.ref}")
+
+    def change_word_class(self, entry: Entry, after: Entry) -> bool:
+        """Apply an edited copy of an entry whose word class changed, converting its tokens' tags.
+
+        Tags the new class doesn't keep go through the tag conversion dialogue. Recordings are
+        renamed if "Update sound file names automatically" is on. One undo step.
+        """
+        from .conversion_dialog import TagConversionDialog
+        db = self.doc.db
+        old_wc, new_wc = db.word_class(entry), db.word_class(after)
+        need, _ = bulk.stranded_tags(db, [entry], new_wc)
+        actions = {}
+        if need:
+            dlg = TagConversionDialog(self, db, [entry], new_wc, on_saved=self.doc.settings_changed)
+            if not dlg.exec():
+                return False
+            actions = dlg.actions()
+        new_tags = bulk.new_tags_for(new_wc, actions)
+        ts = bulk.structure_with(db.settings.tags, new_tags)
+        try:
+            for t in after.tokens:
+                t.tags = bulk.convert_tags(ts, old_wc, new_wc, t.tags, actions)
+        except bulk.RowError as exc:
+            QMessageBox.warning(self, "Word class", f"The word class wasn't changed: {exc}.")
+            return False
+        folder = storage.sound_folder(db)
+        on_disk = storage.scan_sound_folder(folder)[0]
+        plan = bulk.plan_edit(db, entry, after, bulk.Options(rename_files=db.settings.auto_update_names),
+                              folder, on_disk, new_tags)
+        if not plan.ok:
+            QMessageBox.warning(self, "Word class", "The word class wasn't changed:\n\n"
+                                + "\n".join(p.message for p in plan.problems[:12]))
+            return False
+        if new_tags:
+            bulk.install_new_tags(db, new_tags)
+        problems = self.doc.apply_changes(f"Edit {entry.ref}", plan.pairs, plan.renames)
+        if problems:
+            QMessageBox.warning(self, "Word class", "The word class wasn't changed: " + "; ".join(problems))
+            return False
+        if new_tags:
+            self.doc.settings_changed()
+            self._fill_classes()
+            self._setup_columns()
+        return True
+
+    def open_bulk_edit(self):
+        """Edit → Bulk edit…: change many lemmas or tokens at once, in a window of its own."""
+        from .bulk_window import BulkEditWindow
+        if self.bulk_window is None:
+            self.bulk_window = BulkEditWindow(self)
+        self.bulk_window.show()
+        self.bulk_window.raise_()
+        self.bulk_window.activateWindow()
 
     def delete_entry(self):
         e = self.lemmas.current_row()

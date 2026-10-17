@@ -77,6 +77,15 @@ If something goes wrong, a message box shows the details, and they're also writt
   Sound (file-name pattern, sound folder, recording, deleting recordings with their tokens,
   path to Praat), Display (light or dark theme, accent colour for highlights, chips and pitch
   traces, IPA font size), Pitch (display range, playback voice).
+- **Bulk edit** (Edit → Bulk edit…, Ctrl+E): a window of its own with a Lemmas tab and a
+  Tokens tab, which start with the main window's filters, and a tick on every row. Operations:
+  Replace (plain text or a regular expression), Shortcuts (y / j, tie bars on affricates,
+  raise or lower pitch), Set value (a field, a tag added or removed, the speaker, the date,
+  the word class), Copy and Clear. Preview shows every change in the grid first; any problem
+  cancels the whole operation; Apply is one undo step, recordings renamed included.
+- **Changing a word class** (in bulk edit, the lemma list or the entry dialogue) opens the tag
+  conversion: convert each tag the new class lacks, make a new tag for it, or delete it.
+  Conversions can be saved by name.
 - **Export** (File → Export) as CSV: the filtered database (what the current tab shows: All
   data's rows and columns, or the matrix grid) or the entire database (one row per token with
   every lemma and token field). UTF-8, so Excel shows IPA correctly.
@@ -95,6 +104,7 @@ If something goes wrong, a message box shows the details, and they're also writt
 ```
 lemmatrix/            the program
   model.py            entries, tokens, tag structure, people, places (no user interface)
+  bulk.py             bulk edit: what an operation would change (no user interface)
   storage.py          reading and writing the XML file, backups
   notebook.py         the notebook: sessions, the record of comments, the .notebook file
   filenames.py        building sound file names from the pattern

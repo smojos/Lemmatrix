@@ -15,8 +15,8 @@ from pathlib import Path
 
 from . import pitch as pitchmod
 from .matrix import CITATION, EXACT, LOOSE, MatrixConfig, Spec
-from .model import (Database, Entry, FieldDef, Group, ListItem, Location, Metadata, Person,
-                    RefCategory, Settings, Tag, TagStructure, Token, WordClass, new_id, nfc)
+from .model import (Conversion, Database, Entry, FieldDef, Group, ListItem, Location, Metadata, Person,
+                    RefCategory, Settings, Tag, TagAction, TagStructure, Token, WordClass, new_id, nfc)
 
 FORMAT_VERSION = "1"
 BACKUPS_KEPT = 10
@@ -81,7 +81,7 @@ def _load_tags(el) -> TagStructure:
 
 
 KNOWN_SETTINGS = {"entry-fields", "token-fields", "glosses", "tag-structure", "references",
-                  "sounds", "pitch", "playback", "display"}
+                  "sounds", "pitch", "playback", "display", "tag-conversions"}
 
 def _load_specs(el, tag: str) -> list[Spec]:
     out = []
@@ -104,6 +104,20 @@ def _load_matrices(el) -> list[MatrixConfig]:
         if m.get("cell") is not None:
             cfg.cell = m.get("cell").split()
         out.append(cfg)
+    return out
+
+
+def _load_conversions(el) -> list[Conversion]:
+    """<tag-conversions><conversion name="…" from="VERB" to="NOUN"><tag name="…" action="…"/>…"""
+    out = []
+    if el is None:
+        return out
+    for c in el.findall("conversion"):
+        conv = Conversion(nfc(c.get("name", "")), nfc(c.get("from", "")), nfc(c.get("to", "")))
+        for t in c.findall("tag"):
+            conv.actions[nfc(t.get("name", ""))] = TagAction(
+                t.get("action", ""), nfc(t.get("to", "")), nfc(t.get("code", "")), nfc(t.get("group", "")))
+        out.append(conv)
     return out
 
 
@@ -136,6 +150,7 @@ def _load_settings(el) -> Settings:
     if (x := el.find("playback")) is not None:
         s.play_cell_on_click = _bool(x.get("play-cell-on-click"))
     s.matrices = _load_matrices(el.find("display"))
+    s.conversions = _load_conversions(el.find("tag-conversions"))
     s.extra = [child for child in el if child.tag not in KNOWN_SETTINGS]
     return s
 
@@ -366,6 +381,19 @@ def to_element(db: Database) -> ET.Element:
                     if sp.tags:
                         a["tags"] = ", ".join(s.tags.sort(m.word_class or None, list(sp.tags)))
                     ET.SubElement(mel, axis, a)
+    if s.conversions:
+        cel = ET.SubElement(st, "tag-conversions")
+        for c in s.conversions:
+            el = ET.SubElement(cel, "conversion", {"name": c.name, "from": c.from_class, "to": c.to_class})
+            for name, act in c.actions.items():
+                a = {"name": name, "action": act.kind}
+                if act.tag:
+                    a["to"] = act.tag
+                if act.code:
+                    a["code"] = act.code
+                if act.group:
+                    a["group"] = act.group
+                ET.SubElement(el, "tag", a)
     for extra in s.extra:
         st.append(extra)
 

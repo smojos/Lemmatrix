@@ -1,0 +1,250 @@
+"""Bulk edit engine: replace, shortcuts, set value, copy, clear, word class conversion, renames."""
+
+import shutil
+from pathlib import Path
+
+import pytest
+
+from lemmatrix import bulk, storage
+from lemmatrix.model import TagAction
+
+SAMPLES = Path(__file__).resolve().parent.parent / "samples"
+
+
+@pytest.fixture
+def db(tmp_path):
+    shutil.copy2(SAMPLES / "Sample.xml", tmp_path / "Sample.xml")
+    shutil.copytree(SAMPLES / "Soundfiles", tmp_path / "Soundfiles")
+    return storage.load(tmp_path / "Sample.xml")
+
+
+def token_rows(db, entries=None):
+    return [(e, i) for e in (entries or db.entries) for i in range(len(e.tokens))]
+
+
+def disk(db):
+    folder = storage.sound_folder(db)
+    return folder, storage.scan_sound_folder(folder)[0]
+
+
+# ---- text ------------------------------------------------------------------
+
+def test_replace_keeps_diacritics_by_default():
+    rx = bulk.compile_find("y", False, False)
+    assert bulk.replace_text("ỹə̀ə̀", rx, "j") == "j̃ə̀ə̀"
+    assert bulk.replace_text("ʔə̀yə́", rx, "j") == "ʔə̀jə́"
+    assert bulk.replace_text("yʷɒ̀r", rx, "j") == "jʷɒ̀r"        # a modifier letter is its own letter
+    assert bulk.replace_text("ý", rx, "j") == "j́"
+
+
+def test_replace_without_keep_diacritics_leaves_marked_letters():
+    rx = bulk.compile_find("y", False, False)
+    assert bulk.replace_text("ỹəy", rx, "j", keep_diacritics=False) == "ỹəj"
+
+
+def test_replace_match_case_and_regex():
+    rx = bulk.compile_find("Y", False, False)
+    assert bulk.replace_text("yY", rx, "j") == "jj"
+    rx = bulk.compile_find("Y", False, True)
+    assert bulk.replace_text("yY", rx, "j") == "yj"
+    rx = bulk.compile_find(r"(a)(a)", True, True)
+    assert bulk.replace_text("kaa", rx, r"\1ː", regex=True) == "kəː"
+    with pytest.raises(bulk.BulkError):
+        bulk.compile_find("(", True, False)
+
+
+def test_tie_bars_only_on_affricates():
+    assert bulk.add_tie_bars("tʃə dʒʊ ts") == "t͡ʃə d͡ʒʊ t͡s"
+    assert bulk.add_tie_bars("t͡ʃə") == "t͡ʃə"                     # already tied
+    assert bulk.add_tie_bars("tka") == "tka"
+    assert bulk.remove_tie_bars("t͡ʃə k͡pə") == "tʃə k͡pə"          # labial-velars keep theirs
+    assert bulk.add_tie_bars("t̪s̪") == "t̪͡s̪"
+
+
+def test_pitch_shift_errors_at_the_edges():
+    assert bulk.shift_pitch("21, 4:42", 1, 1, 5) == "32, 5:53"
+    with pytest.raises(bulk.RowError):
+        bulk.shift_pitch("55", 1, 1, 5)
+    with pytest.raises(bulk.RowError):
+        bulk.shift_pitch("12", -1, 1, 5)
+    assert bulk.shift_pitch("23", -1, 1, 5) == "12"
+
+
+# ---- plans -----------------------------------------------------------------
+
+def test_replace_plan_changes_only_ticked_rows(db):
+    goat = db.entry_by_ref("D001")
+    rows = token_rows(db, [goat])
+    before = [t.get("Phonetic") for t in goat.tokens]
+    p = bulk.plan(db, bulk.TOKENS, rows[:1], bulk.Replace("f:Phonetic", "ee", "ææ"))
+    assert p.ok
+    assert [t.get("Phonetic") for t in goat.tokens] == before     # nothing changed yet
+    assert all(c.row == rows[0] for c in p.changes)
+    assert p.changes and p.changes[0].new == "dæær"
+
+
+def test_pitch_error_cancels_the_whole_operation(db):
+    rows = token_rows(db)
+    tops = [r for r in rows if "5" in r[0].tokens[r[1]].get("Pitch")]
+    assert tops, "the sample needs a pitch at the top of the range"
+    p = bulk.plan(db, bulk.TOKENS, rows, bulk.RunShortcut("f:Pitch", "pitch", "up"))
+    assert not p.ok
+    assert {bulk.row_key(pr.row) for pr in p.problems} >= {bulk.row_key(r) for r in tops}
+
+
+def test_shortcut_only_on_its_fields(db):
+    with pytest.raises(bulk.BulkError):
+        bulk.plan(db, bulk.TOKENS, token_rows(db), bulk.RunShortcut("f:Pitch", "yj", "y>j"))
+
+
+def test_add_tag_replaces_the_group_and_renames(db):
+    folder, names = disk(db)
+    goat = db.entry_by_ref("D001")
+    i = next(i for i, t in enumerate(goat.tokens) if t.tags == ["Singular", "isolation"])
+    p = bulk.plan(db, bulk.TOKENS, [(goat, i)], bulk.SetValue("tags", "Plural", bulk.ADD_TAG),
+                  folder=folder, on_disk=names)
+    pl = next((k for k, t in enumerate(goat.tokens) if t.tags == ["Plural", "isolation"]), None)
+    if pl is not None:                       # the sample already has PL: a duplicate, so an error
+        assert not p.ok
+        return
+    assert p.ok and p.changes[0].new == "Plural, isolation"
+    assert p.renames and p.renames[0][1].name == "LXX-VXX_D001_goat_PL.wav"
+
+
+def test_adding_a_tag_the_class_lacks_is_an_error(db):
+    verb = next(e for e in db.entries if db.word_class(e) == "VERB")
+    p = bulk.plan(db, bulk.TOKENS, [(verb, 0)], bulk.SetValue("tags", "Plural"))
+    assert not p.ok and "has no tag Plural" in p.problems[0].message
+
+
+def test_removing_a_tag_that_would_make_duplicates_is_an_error(db):
+    goat = db.entry_by_ref("D001")
+    rows = token_rows(db, [goat])
+    p = bulk.plan(db, bulk.TOKENS, rows, bulk.SetValue("tags", "Singular", bulk.REMOVE_TAG))
+    sg = [t for t in goat.tokens if "Singular" in t.tags]
+    plain = [t for t in goat.tokens if set(t.tags) == set(sg[0].tags) - {"Singular"}] if sg else []
+    if plain:
+        assert not p.ok and "would both be" in p.problems[0].message
+
+
+def test_copy_and_clear(db):
+    rows = token_rows(db)
+    p = bulk.plan(db, bulk.TOKENS, rows, bulk.CopyField("f:Phonetic", "f:Phonemic", bulk.ONLY_EMPTY))
+    assert p.ok
+    assert all(c.old == "" for c in p.changes)
+    p = bulk.plan(db, bulk.TOKENS, rows, bulk.ClearField("f:Comment"))
+    assert p.ok
+    with pytest.raises(bulk.BulkError):
+        bulk.plan(db, bulk.TOKENS, rows, bulk.ClearField("tags"))
+
+
+def test_comment_dates_are_an_option(db):
+    rows = token_rows(db)
+    op = bulk.SetValue("f:Comment", "checked")
+    assert not bulk.plan(db, bulk.TOKENS, rows, op).comment_dates
+    assert bulk.plan(db, bulk.TOKENS, rows, op, bulk.Options(update_comment_dates=True)).comment_dates
+
+
+def test_rename_off_leaves_names_out_of_date(db):
+    folder, names = disk(db)
+    goat = db.entry_by_ref("D001")
+    p = bulk.plan(db, bulk.LEMMAS, [(goat, None)], bulk.SetValue("file_gloss", "she-goat"),
+                  bulk.Options(rename_files=False), folder, names)
+    assert p.ok and not p.renames and p.stale == sum(1 for t in goat.tokens if t.file)
+    p = bulk.plan(db, bulk.LEMMAS, [(goat, None)], bulk.SetValue("file_gloss", "she-goat"),
+                  folder=folder, on_disk=names)
+    assert len(p.renames) == sum(1 for t in goat.tokens if t.file in names)
+    assert all("she-goat" in new.name for _, new in p.renames)
+
+
+def test_rename_onto_an_existing_file_is_an_error(db):
+    folder, names = disk(db)
+    goat = db.entry_by_ref("D001")
+    recorded = next(t for t in goat.tokens if t.file in names)
+    other = next(e for e in db.entries if e is not goat and any(t.file in names for t in e.tokens))
+    # give the goat the other lemma's reference-free name parts so a name collides
+    (folder / db.expected_filename(goat, recorded).replace("goat", "taken")).write_bytes(b"x")
+    names = storage.scan_sound_folder(folder)[0]
+    p = bulk.plan(db, bulk.LEMMAS, [(goat, None)], bulk.SetValue("file_gloss", "taken"),
+                  folder=folder, on_disk=names)
+    assert not p.ok and "already in the sound folder" in p.problems[0].message
+    assert other is not None
+
+
+def test_forbidden_characters_are_refused(db):
+    goat = db.entry_by_ref("D001")
+    with pytest.raises(bulk.BulkError):
+        bulk.plan(db, bulk.LEMMAS, [(goat, None)], bulk.SetValue("file_gloss", "a/b"))
+    p = bulk.plan(db, bulk.LEMMAS, [(goat, None)], bulk.Replace("file_gloss", "goat", "go?at"))
+    assert not p.ok
+
+
+# ---- word class ------------------------------------------------------------
+
+def test_stranded_tags_and_suggestions(db):
+    goat = db.entry_by_ref("D001")
+    need, kept = bulk.stranded_tags(db, [goat], "VERB")
+    names = {s.name for s in need}
+    assert "Singular" in names and all(not s.suggested.kind for s in need)
+    assert all(bulk.all_classes_tag(db.settings.tags, k) for k in kept)
+    need, _ = bulk.stranded_tags(db, [goat], "NOUN")
+    assert need == []                          # already a noun
+
+
+def test_word_class_change_with_conversion(db):
+    folder, names = disk(db)
+    goat = db.entry_by_ref("D001")
+    need, _ = bulk.stranded_tags(db, [goat], "ADJECTIVE")
+    actions = {}
+    for s in need:
+        if s.name == "Plural":
+            actions[s.name] = TagAction(bulk.NEW, "Plural", "PL", "Number")
+        else:
+            actions[s.name] = TagAction(bulk.DELETE)
+    wcf = db.settings.entry_field("word-class").name
+    p = bulk.plan(db, bulk.LEMMAS, [(goat, None)], bulk.SetValue(wcf, "ADJECTIVE", conversion=actions),
+                  folder=folder, on_disk=names)
+    # deleting every case/number tag but Plural leaves many tokens identical: an error
+    assert not p.ok and any("would both be" in pr.message for pr in p.problems)
+
+
+def test_word_class_change_to_a_class_with_the_same_tags(db):
+    """A noun made a noun-like class keeps its tags when the names match."""
+    from lemmatrix.model import Group, Tag, WordClass
+    ts = db.settings.tags
+    noun = ts.word_class("NOUN")
+    import copy
+    ts.word_classes.append(WordClass("NOMINAL", copy.deepcopy(noun.groups)))
+    goat = db.entry_by_ref("D001")
+    need, _ = bulk.stranded_tags(db, [goat], "NOMINAL")
+    assert all(s.suggested.kind == bulk.CONVERT for s in need)
+    actions = {s.name: s.suggested for s in need}
+    wcf = db.settings.entry_field("word-class").name
+    p = bulk.plan(db, bulk.LEMMAS, [(goat, None)], bulk.SetValue(wcf, "NOMINAL", conversion=actions))
+    assert p.ok
+    _, after = p.pairs[0]
+    assert [t.tags for t in after.tokens] == [t.tags for t in goat.tokens]
+    assert Group and Tag
+
+
+def test_check_conversion_requires_every_choice(db):
+    goat = db.entry_by_ref("D001")
+    need, _ = bulk.stranded_tags(db, [goat], "VERB")
+    msgs = bulk.check_conversion(db, "VERB", {}, need)
+    assert len(msgs) == len(need)
+    actions = {s.name: TagAction(bulk.CONVERT, "Past") for s in need}
+    assert bulk.check_conversion(db, "VERB", actions, need) == []
+
+
+def test_saved_conversions_round_trip(db, tmp_path):
+    from lemmatrix.model import Conversion
+    db.settings.conversions.append(Conversion("VERB → NOUN", "VERB", "NOUN", {
+        "Imperative": TagAction(bulk.NEW, "Vocative", "VOC", "Case"),
+        "Simple": TagAction(bulk.DELETE),
+        "Past": TagAction(bulk.CONVERT, "Singular")}))
+    storage.save(db, tmp_path / "Copy.xml", backup=False)
+    again = storage.load(tmp_path / "Copy.xml")
+    c = again.settings.conversions[0]
+    assert (c.name, c.from_class, c.to_class) == ("VERB → NOUN", "VERB", "NOUN")
+    assert c.actions["Imperative"] == TagAction(bulk.NEW, "Vocative", "VOC", "Case")
+    assert c.actions["Simple"].kind == bulk.DELETE

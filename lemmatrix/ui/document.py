@@ -68,6 +68,38 @@ class EntryCommand(QUndoCommand):
         self._apply(self.after, self.before)
 
 
+class BulkCommand(QUndoCommand):
+    """Many entries changed at once (a bulk edit), with their recordings renamed: one undo step.
+
+    Renames are done in the plan's order (a recording moves out of a name before another
+    moves in) and undone in reverse.
+    """
+
+    def __init__(self, doc: "Document", label: str, changes, renames=()):
+        super().__init__(label)
+        self.doc = doc
+        self.changes = list(changes)          # (entry, before snapshot, after snapshot)
+        self.renames = list(renames)
+        self._skip = True                     # already applied once
+
+    def redo(self):
+        if self._skip:
+            self._skip = False
+            return
+        for old, new in self.renames:
+            self.doc.move_file(old, new)
+        for entry, _, after in self.changes:
+            _restore(entry, after)
+        self.doc.changed.emit()
+
+    def undo(self):
+        for old, new in reversed(self.renames):
+            self.doc.move_file(new, old)
+        for entry, before, _ in self.changes:
+            _restore(entry, before)
+        self.doc.changed.emit()
+
+
 class Document(QObject):
     changed = Signal()            # entries or tokens changed
     settingsChanged = Signal()    # metadata or settings changed
@@ -117,6 +149,49 @@ class Document(QObject):
         idx = self.db.entries.index(entry) if entry in self.db.entries else len(self.db.entries)
         self.undo.push(EntryCommand(self, label, entry, before, after, idx, renames=renames))
         self.changed.emit()
+
+    def apply_changes(self, label: str, pairs, renames=(), stamp: bool = True) -> list[str]:
+        """Change many entries at once as one undo step (bulk edit, word class changes).
+
+        pairs: (entry, the changed copy); renames: (old, new) paths in the order to rename them.
+        The recordings are renamed first; if one can't be, those already renamed go back and
+        nothing changes. stamp: date the changed comment fields with the session's date.
+        Returns the problems (empty when it worked).
+        """
+        done = []
+        for old, new in renames:
+            old, new = Path(old), Path(new)
+            problem = ""
+            if not old.exists():
+                problem = f"{old.name} isn't in the sound folder"
+            elif new.exists() and not storage.same_file(old, new):
+                problem = f"{new.name} already exists"
+            else:
+                try:
+                    old.rename(new)
+                except OSError as exc:
+                    problem = f"{old.name}: {exc}"
+            if problem:
+                for o, n in reversed(done):
+                    try:
+                        n.rename(o)
+                    except OSError:
+                        pass
+                return [problem]
+            done.append((old, new))
+        changes = []
+        for entry, after in pairs:
+            before = entry.copy()
+            _restore(entry, after)
+            if stamp:
+                self.db.stamp_comments(before, entry, self.work_date())
+            changes.append((entry, before, entry.copy()))
+        for old, new in done:
+            self._note_rename(old, new)
+        if changes or done:
+            self.undo.push(BulkCommand(self, label, changes, done))
+            self.changed.emit()
+        return []
 
     # ---- recordings renamed since the last save ------------------------
     def _note_rename(self, old: Path, new: Path):

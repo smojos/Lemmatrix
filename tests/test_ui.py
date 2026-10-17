@@ -1003,3 +1003,141 @@ def test_tab_goes_round_the_token_fields_only(win):
     QTest.keyClick(dlg.focusWidget(), Qt.Key_Backtab)
     assert dlg.focusWidget() is edits[-1]
     dlg.reject()
+
+
+# ---- bulk edit ----------------------------------------------------------------
+
+def _bulk(win):
+    win.open_bulk_edit()
+    return win.bulk_window
+
+
+def test_bulk_replace_preview_apply_and_undo(win):
+    from lemmatrix import bulk
+    from lemmatrix.ui import bulk_window as bw
+    w = _bulk(win)
+    assert w.level == bulk.TOKENS
+    w.ops.setCurrentIndex(bw.REPLACE)
+    w.r_field.setCurrentIndex(w.r_field.findData("f:Phonetic"))
+    w.r_find.setText("ee")
+    w.r_repl.setText("ææ")
+    w.preview()
+    assert w.plan is not None and w.plan.ok and w.apply_btn.isEnabled()
+    goat = win.doc.db.entry_by_ref("D001")
+    before = [t.get("Phonetic") for t in goat.tokens]
+    assert "ee" in before[0]                               # nothing changed by the preview
+    model = w.tables[bulk.TOKENS].model_
+    assert any(c.new == "dæær" for c in model.preview.values())
+    w.apply()
+    assert goat.tokens[0].get("Phonetic") == "dæær"
+    win.doc.undo.undo()                                     # one step undoes everything
+    assert [t.get("Phonetic") for t in goat.tokens] == before
+
+
+def test_bulk_unticked_rows_are_left_alone(win):
+    from lemmatrix import bulk
+    from lemmatrix.ui import bulk_window as bw
+    w = _bulk(win)
+    goat = win.doc.db.entry_by_ref("D001")
+    rows = [r for r in w.tables[bulk.TOKENS].visible_rows() if r.entry is goat]
+    w.set_ticked(rows, False)
+    w.ops.setCurrentIndex(bw.REPLACE)
+    w.r_field.setCurrentIndex(w.r_field.findData("f:Phonetic"))
+    w.r_find.setText("ee")
+    w.r_repl.setText("ææ")
+    w.preview()
+    w.apply()
+    assert goat.tokens[0].get("Phonetic") == "dɪɪr"
+    assert win.doc.db.entry_by_ref("D003").tokens[0].get("Phonetic") == "kæær"
+
+
+def test_bulk_pitch_error_blocks_apply(win):
+    from lemmatrix.ui import bulk_window as bw
+    w = _bulk(win)
+    w.ops.setCurrentIndex(bw.SHORTCUTS)
+    w.s_which.setCurrentIndex(w.s_which.findData("pitch"))
+    w.s_dir.setCurrentIndex(w.s_dir.findData("up"))
+    w.preview()
+    assert w.plan is not None and not w.plan.ok
+    assert not w.apply_btn.isEnabled()
+    assert "highest pitch" in w.summary.text()
+
+
+def test_bulk_tag_change_renames_and_undo_renames_back(win):
+    from lemmatrix import bulk
+    from lemmatrix.ui import bulk_window as bw
+    db = win.doc.db
+    folder = storage.sound_folder(db)
+    w = _bulk(win)
+    chʊʊ = db.entry_by_ref("E001")
+    rows = [r for r in w.tables[bulk.TOKENS].visible_rows()]
+    w.set_ticked(rows, False)
+    target = next(r for r in rows if r.entry is chʊʊ and r.token.tags == ["Singular", "isolation"])
+    w.set_ticked([target], True)
+    w.ops.setCurrentIndex(bw.SET)
+    w.v_field.setCurrentIndex(w.v_field.findData("tags"))
+    w.v_tag_action.setCurrentIndex(w.v_tag_action.findData(bulk.ADD_TAG))
+    w.v_tag.setCurrentIndex(w.v_tag.findData("Genitive"))
+    w.preview()
+    assert w.plan.ok and len(w.plan.renames) == 1
+    w.apply()
+    t = target.token
+    assert t.tags == ["Singular", "Genitive", "isolation"]
+    assert t.file == "LXX-VXX_E001_duck_SG-GEN.wav" and (folder / t.file).exists()
+    win.doc.undo.undo()
+    t = target.token                                       # undo restores a fresh copy
+    assert t.tags == ["Singular", "isolation"]
+    assert (folder / "LXX-VXX_E001_duck_SG.wav").exists()
+    assert not (folder / "LXX-VXX_E001_duck_SG-GEN.wav").exists()
+
+
+def test_word_class_change_opens_the_conversion(win, monkeypatch):
+    from lemmatrix import bulk
+    from lemmatrix.ui import conversion_dialog as cd
+    db = win.doc.db
+    nɨn = db.entry_by_ref("V002")
+    seen = {}
+
+    def fake_exec(self):
+        seen["tags"] = [s.name for s in self.stranded]
+        assert not self.buttons.button(cd.QDialogButtonBox.Ok).isEnabled()   # nothing chosen yet
+        for row in self.rows:
+            if row.stranded.name == "Past":
+                row.set(cd.TagAction(bulk.CONVERT, "Plural"))
+            elif row.stranded.name in ("1SG.S", "3SG.S"):
+                row.set(cd.TagAction(bulk.NEW, "Person " + row.stranded.name[0], row.stranded.name[0], "Person"))
+            else:
+                row.set(cd.TagAction(bulk.DELETE))
+        self._check()
+        return self.buttons.button(cd.QDialogButtonBox.Ok).isEnabled()
+    monkeypatch.setattr(cd.TagConversionDialog, "exec", fake_exec)
+    wcf = db.settings.entry_field("word-class").name
+    win._lemma_edited(nɨn, wcf, "NOUN")
+    assert "Simple" in seen["tags"] and "isolation" not in seen["tags"]
+    assert db.word_class(nɨn) == "NOUN"
+    tags = [set(t.tags) for t in nɨn.tokens]
+    assert {"Person 3", "Plural", "isolation"} in tags
+    assert db.settings.tags.find("NOUN", "Person 1") is not None
+    win.doc.undo.undo()
+    assert db.word_class(nɨn) == "VERB"
+    assert any("Simple" in t.tags for t in nɨn.tokens)
+
+
+def test_word_class_change_cancelled_changes_nothing(win, monkeypatch):
+    from lemmatrix.ui import conversion_dialog as cd
+    db = win.doc.db
+    goat = db.entry_by_ref("D001")
+    monkeypatch.setattr(cd.TagConversionDialog, "exec", lambda self: False)
+    wcf = db.settings.entry_field("word-class").name
+    win._lemma_edited(goat, wcf, "VERB")
+    assert db.word_class(goat) == "NOUN"
+
+
+def test_bulk_window_screenshot_layout(win):
+    w = _bulk(win)
+    w.resize(1360, 900)
+    w.show()
+    QApplication.processEvents()
+    assert w.tables["tokens"].model_.rowCount() > 0
+    w.close()
+    assert win.bulk_window is None

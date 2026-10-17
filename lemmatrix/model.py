@@ -289,6 +289,24 @@ class RefCategory:
 
 
 @dataclass
+class TagAction:
+    """What happens to one tag when a lemma changes word class (the tag conversion dialogue)."""
+    kind: str = ""               # convert, new, delete ("" = not chosen yet)
+    tag: str = ""                # convert: the new class's tag; new: the new tag's name
+    code: str = ""               # new: its file-name code
+    group: str = ""              # new: the group of the new class it goes in (made if missing)
+
+
+@dataclass
+class Conversion:
+    """A saved tag conversion, e.g. "VERB → NOUN (nominalisation)"."""
+    name: str
+    from_class: str = ""
+    to_class: str = ""
+    actions: dict[str, TagAction] = field(default_factory=dict)   # old tag name -> action
+
+
+@dataclass
 class Settings:
     entry_fields: list[FieldDef] = field(default_factory=list)
     token_fields: list[FieldDef] = field(default_factory=list)
@@ -307,6 +325,7 @@ class Settings:
     pitch_style: str = "contours"
     play_cell_on_click: bool = False
     matrices: list = field(default_factory=list)      # saved MatrixConfig objects
+    conversions: list[Conversion] = field(default_factory=list)   # saved tag conversions
     extra: list = field(default_factory=list)   # unknown settings elements, kept as-is
 
     def entry_field(self, role_or_name: str) -> FieldDef | None:
