@@ -230,6 +230,7 @@ class MainWindow(QMainWindow):
         self._row(bl, tool("Add", "add", self.add_token, "Add a token"),
                   tool("Delete", "delete", self.delete_token, "Delete the selected token (Delete)"),
                   tool("Edit", "edit", self.edit_token, "Edit the selected token (Enter)"),
+                  tool("Play", "play", self.play_selected, "Play the selected token (Ctrl+Space)"),
                   tool("Configure columns", "gear", self.configure_all_columns),
                   tool("Clear all filters", None, self._clear_all_filters))
         self.all_search = QLineEdit()
@@ -251,7 +252,7 @@ class MainWindow(QMainWindow):
         self._row(bl, tool("Add", "add", self.add_token, "Add a token in the selected cell"),
                   tool("Delete", "delete", self.delete_token, "Delete the selected token (Delete)"),
                   tool("Edit", "edit", self.edit_token, "Edit the selected token (Enter)"),
-                  tool("Play", "play", self.play_selected, "Play the selected token (Space)"),
+                  tool("Play", "play", self.play_selected, "Play the selected token (Ctrl+Space)"),
                   tool("Configure cell", "gear", lambda tab=tab: self.configure_cell(tab),
                        "Choose what each cell shows"),
                   tool("Configure matrix", "gear", lambda tab=tab: self.configure_matrix(tab),
@@ -356,6 +357,11 @@ class MainWindow(QMainWindow):
         self._act(t, "Open the sound folder", self.open_sound_folder)
         v = mb.addMenu("&View")
         self._act(v, "Swap rows and columns", lambda: self.switch_axes(self.tabs.currentIndex()), "Ctrl+T")
+        v.addSeparator()
+        # the same keys as in the token dialogue
+        self.play_action = self._act(v, "Play the selected token", self.play_selected, "Ctrl+Space")
+        self.play_pitch_action = self._act(v, "Play the selected token's pitch", self.play_selected_pitch,
+                                           "Ctrl+Shift+Space")
         a = mb.addMenu("&Analyze")
         x = a.addAction("Analysis tools arrive with the analysis engine (Stage 2)")
         x.setEnabled(False)
@@ -1151,8 +1157,8 @@ class MainWindow(QMainWindow):
         tok = sel[0].tokens[sel[1]] if sel else None
         has_sound = tok is not None and self.sound_path(tok) is not None
         has_pitch = tok is not None and bool(pitchmod_parse(tok.get("Pitch")))
-        return [("Play", "play", self.play_selected, has_sound),
-                ("Play pitch", "play-pitch", self.play_selected_pitch, has_pitch),
+        return [("Play\tCtrl+Space", "play", self.play_selected, has_sound),
+                ("Play pitch\tCtrl+Shift+Space", "play-pitch", self.play_selected_pitch, has_pitch),
                 ("Open in Praat", "praat", self.open_selected_in_praat, has_sound)]
 
     # ---- context menus -------------------------------------------------

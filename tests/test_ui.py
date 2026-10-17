@@ -464,7 +464,7 @@ def test_token_menus_and_clear_matrix_button(win):
     win.lemmas.select_row(win.doc.db.entry_by_ref("D001"))
     win.tabs.setCurrentIndex(mw.ALL_DATA)
     win.all_table.selectRow(1)
-    names = [i[0] for i in win._token_items()]
+    names = [i[0].split("\t")[0] for i in win._token_items()]
     assert names == ["Play", "Play pitch", "Open in Praat"]
     first_row = win.lt_bar["widget"].layout().itemAt(0).layout()
     texts = [first_row.itemAt(i).widget().text() for i in range(first_row.count())
@@ -580,3 +580,26 @@ def test_find_missing_recordings_relinks_renamed_files(win, monkeypatch):
     assert [(e.ref, n) for e, i, n in found] == [("D001", "LXX-VXX_D001_goat_VG.wav")] and not lost
     win.find_missing_recordings()
     assert not _missing(win)
+
+
+def test_ctrl_space_plays_in_all_data_and_matrices(win, monkeypatch):
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+    from lemmatrix.ui import main_window as mw
+    played = []
+    monkeypatch.setattr(mw.MainWindow, "play_selected", lambda self: played.append("sound"))
+    monkeypatch.setattr(mw.MainWindow, "play_selected_pitch", lambda self: played.append("pitch"))
+    win.play_action.triggered.disconnect()
+    win.play_pitch_action.triggered.disconnect()
+    win.play_action.triggered.connect(lambda *_: win.play_selected())
+    win.play_pitch_action.triggered.connect(lambda *_: win.play_selected_pitch())
+    win.show()
+    for tab, view in ((mw.ALL_DATA, win.all_table), (mw.LEMMA_TAG, win.lt_view)):
+        win.tabs.setCurrentIndex(tab)
+        view.setFocus()
+        QApplication.processEvents()
+        played.clear()
+        QTest.keyClick(view, Qt.Key_Space, Qt.ControlModifier)
+        QTest.keyClick(view, Qt.Key_Space, Qt.ControlModifier | Qt.ShiftModifier)
+        assert played == ["sound", "pitch"], (tab, played)
+    assert win.play_action.shortcut().toString() == "Ctrl+Space"
