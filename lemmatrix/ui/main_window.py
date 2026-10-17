@@ -112,6 +112,16 @@ class MainWindow(QMainWindow):
         lay.setSpacing(4)
         return f, lay
 
+    def _heading(self, text: str) -> QLabel:
+        """A pane's title ("Lemma", "Matrix"): medium-large, in the theme colour (set in _restyle)."""
+        lbl = QLabel(text)
+        f = QFont(lbl.font())
+        f.setBold(True)
+        f.setPointSizeF(f.pointSizeF() * 1.45)
+        lbl.setFont(f)
+        lbl.setContentsMargins(4, 2, 0, 0)
+        return lbl
+
     def _row(self, lay, *widgets, stretch=True) -> QHBoxLayout:
         row = QHBoxLayout()
         row.setSpacing(4)
@@ -129,7 +139,14 @@ class MainWindow(QMainWindow):
         # ---- left: lemma list + its options -------------------------------
         left = self.left_split = QSplitter(Qt.Vertical)
         self.lemmas = FilterTable()
-        left.addWidget(self.lemmas)
+        lemma_box = QWidget()
+        lb = QVBoxLayout(lemma_box)
+        lb.setContentsMargins(0, 0, 0, 0)
+        lb.setSpacing(2)
+        self.lemma_title = self._heading("Lemma")
+        lb.addWidget(self.lemma_title)
+        lb.addWidget(self.lemmas, 1)
+        left.addWidget(lemma_box)
         bar, bl = self._bar()
         self.lemma_count = QLabel()
         self._row(bl, tool("Add", "add", self.add_entry, "Add a lemma"),
@@ -154,11 +171,12 @@ class MainWindow(QMainWindow):
 
         # ---- right: Matrix + options + session ----------------------------
         right = self.right_split = QSplitter(Qt.Vertical)
-        box = self.matrix_box = QGroupBox("Matrix")
-        f = QFont(box.font())
-        f.setBold(True)
-        box.setFont(f)                 # the title only: the contents get the normal font below
+        box = self.matrix_box = QWidget()
         bxl = QVBoxLayout(box)
+        bxl.setContentsMargins(0, 0, 0, 0)
+        bxl.setSpacing(2)
+        self.matrix_title = self._heading("Matrix")
+        bxl.addWidget(self.matrix_title)
         top = QHBoxLayout()
         self.count_line = QLabel()
         top.addWidget(self.count_line)
@@ -328,8 +346,8 @@ class MainWindow(QMainWindow):
         self.notebook_btn = big_button("notebook", "Open notebook", self.open_notebook)
         self.write_btn = big_button("write-notebook", "Write to notebook: the session's day gets these "
                                     "people and places and that day's comments", self.write_notebook)
+        head.addWidget(self.write_btn)            # its arrow points at the notebook beside it
         head.addWidget(self.notebook_btn)
-        head.addWidget(self.write_btn)
         sl.addLayout(head)
         self.sess_file = styled(italic=True)
         self.sess_codes = styled(bold=True)
@@ -421,8 +439,8 @@ class MainWindow(QMainWindow):
         self._act(v, "Swap rows and columns", lambda: self.switch_axes(self.tabs.currentIndex()), "Ctrl+T")
         v.addSeparator()
         # the same keys as in the token dialogue
-        self.play_action = self._act(v, "Play the selected token", self.play_selected, "Ctrl+Space")
-        self.play_pitch_action = self._act(v, "Play the selected token's pitch", self.play_selected_pitch,
+        self.play_action = self._act(None, "Play the selected token", self.play_selected, "Ctrl+Space")
+        self.play_pitch_action = self._act(None, "Play the selected token's pitch", self.play_selected_pitch,
                                            "Ctrl+Shift+Space")
         a = mb.addMenu("&Analyze")
         x = a.addAction("Analysis tools arrive with the analysis engine (Stage 2)")
@@ -435,7 +453,10 @@ class MainWindow(QMainWindow):
         if shortcut:
             a.setShortcut(QKeySequence(shortcut))
         a.triggered.connect(fn)
-        menu.addAction(a)
+        if menu is None:                  # a shortcut only, not in a menu
+            self.addAction(a)
+        else:
+            menu.addAction(a)
         return a
 
     # ============================================================ columns
@@ -708,7 +729,7 @@ class MainWindow(QMainWindow):
     def _notebook_icons(self):
         a = theme.accent().name()
         self.notebook_btn.setIcon(icon("notebook", 34, a))
-        self.write_btn.setIcon(icon("write-notebook", 34, a))
+        self.write_btn.setIcon(icon("write-notebook", 34))
 
     def _load_notebook(self):
         problem = self.doc.load_notebook()
@@ -829,6 +850,8 @@ class MainWindow(QMainWindow):
         """Colours that follow the theme and accent (the data views stay black on white)."""
         self._notebook_icons()
         a = theme.accent()
+        for lbl in (self.lemma_title, self.matrix_title):
+            lbl.setStyleSheet(f"color: {theme.colour('pitch').name()};")   # the accent, lighter on dark
         muted = theme.muted()
         for lbl in (self.lemma_count, self.all_count):
             lbl.setStyleSheet(f"color: {muted};")

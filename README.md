@@ -70,7 +70,7 @@ If something goes wrong, a message box shows the details, and they're also writt
 - **Current Session:** researcher, participant and location chips, the speaker (the first
   participant, until another is chosen), the date.
 - **Edit menu:** metadata (language, variety, author), Fields (lemma and token fields, open or
-  closed, with an XML preview), Lists (researchers, participants with their consent folders,
+  closed, with an XML preview), Lists (researchers, participants with their consent files,
   locations, the closed fields' lists, and the tag structure, where duplicate names and codes
   show in red), and Settings: General (autosave),
   Sound (file-name pattern, sound folder, recording, deleting recordings with their tokens,

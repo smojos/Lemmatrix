@@ -1,6 +1,6 @@
 """Edit → Lists: every list in one place.
 
-Researchers, participants (with a folder of consent documentation), locations
+Researchers, participants (with the file documenting their consent), locations
 (hierarchical, with codes and descriptions), the closed fields' lists (Tone Class,
 Inflection Class...), and the tag structure (whose top level is the Word Class list).
 Codes renamed here are followed everywhere: token speakers and notebook sessions.
@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QDialog, QDialogButtonBox, QFi
 
 from ..model import Database, Location, Person, forbidden_in, nfc
 from . import theme
-from .chiprow import LOCATIONS, PARTICIPANTS, RESEARCHERS, consent_folder
+from .chiprow import LOCATIONS, PARTICIPANTS, RESEARCHERS, consent_path
 from .dialogs import TagStructureDialog
 from .fields_dialog import ListEditor
 from .icons import icon
@@ -54,14 +54,14 @@ def _note(text) -> QLabel:
 # --------------------------------------------------------------------------
 
 class PeopleEditor(QWidget):
-    """Researchers or participants: code, name, description (and a consent folder)."""
+    """Researchers or participants: code, name, description (and a consent file)."""
 
     def __init__(self, db: Database, people: list[Person], consent: bool, used, parent=None):
         super().__init__(parent)
         self.db, self.consent, self.used = db, consent, used
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
-        cols = ["Code", "Name", "Description"] + (["Consent folder"] if consent else [])
+        cols = ["Code", "Name", "Description"] + (["Consent file"] if consent else [])
         self.table = QTableWidget(0, len(cols))
         self.table.setHorizontalHeaderLabels(cols)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
@@ -82,10 +82,11 @@ class PeopleEditor(QWidget):
         row.addWidget(_tool("down", "Move down", lambda: self._shift(1)))
         if consent:
             row.addSpacing(12)
-            row.addWidget(_tool(None, "Choose the folder with this participant's consent documentation",
-                                self._choose_consent, "Choose consent folder…"))
-            row.addWidget(_tool(None, "Open the selected participant's consent folder",
-                                self._open_consent, "Open consent folder"))
+            row.addWidget(_tool(None, "Choose the file documenting this participant's consent",
+                                self._choose_consent, "Choose consent file…"))
+            row.addWidget(_tool(None, "Open the selected participant's consent file",
+                                self._open_consent, "Open consent file"))
+            self.table.cellClicked.connect(self._cell_clicked)
         row.addStretch(1)
         lay.addLayout(row)
 
@@ -94,7 +95,7 @@ class PeopleEditor(QWidget):
         self.table.insertRow(r)
         values = [p.code, p.name, p.description] + ([p.consent] if self.consent else [])
         for c, v in enumerate(values):
-            it = QTableWidgetItem(v)
+            it = self._consent_item(v) if c == 3 else QTableWidgetItem(v)
             if c == 2:
                 it.setToolTip(v)
             self.table.setItem(r, c, it)
@@ -102,6 +103,23 @@ class PeopleEditor(QWidget):
         if edit:
             self.table.setCurrentCell(r, 0)
             self.table.editItem(self.table.item(r, 0))
+
+    def _consent_item(self, path: str) -> QTableWidgetItem:
+        """The consent file, as a link: click to open it (Choose consent file… changes it)."""
+        it = QTableWidgetItem(path)
+        it.setFlags(it.flags() & ~Qt.ItemIsEditable)
+        if path:
+            f = QFont(self.table.font())
+            f.setUnderline(True)
+            it.setFont(f)
+            it.setForeground(theme.accent())
+            full = consent_path(self.db, path)
+            it.setToolTip(f"Click to open {full}" + ("" if full and full.exists() else "\n(the file isn't there)"))
+        return it
+
+    def _cell_clicked(self, r, c):
+        if c == 3 and self._text(r, 3):
+            self._open_consent()
 
     def _text(self, r, c) -> str:
         it = self.table.item(r, c)
@@ -135,10 +153,10 @@ class PeopleEditor(QWidget):
         if r < 0:
             QMessageBox.information(self, "Consent", "Select a participant first.")
             return
-        current = consent_folder(self.db, self._text(r, 3))
+        current = consent_path(self.db, self._text(r, 3))
         start = str(current) if current and current.exists() else (
             str(Path(self.db.path).parent) if self.db.path else str(Path.home()))
-        path = QFileDialog.getExistingDirectory(self, f"Consent documentation for {self._text(r, 0)}", start)
+        path, _ = QFileDialog.getOpenFileName(self, f"Consent documentation for {self._text(r, 0)}", start)
         if not path:
             return
         p = Path(path)
@@ -147,19 +165,19 @@ class PeopleEditor(QWidget):
                 p = p.relative_to(Path(self.db.path).parent)
             except ValueError:
                 pass
-        self.table.setItem(r, 3, QTableWidgetItem(QDir.toNativeSeparators(str(p))))
+        self.table.setItem(r, 3, self._consent_item(QDir.toNativeSeparators(str(p))))
 
     def _open_consent(self):
         r = self.table.currentRow()
         if r < 0:
             return
-        folder = consent_folder(self.db, self._text(r, 3))
-        if folder is None:
-            QMessageBox.information(self, "Consent", "No consent folder is set for this participant.")
-        elif not folder.exists():
-            QMessageBox.warning(self, "Consent", f"The folder isn't there:\n{folder}")
+        path = consent_path(self.db, self._text(r, 3))
+        if path is None:
+            QMessageBox.information(self, "Consent", "No consent file is set for this participant.")
+        elif not path.exists():
+            QMessageBox.warning(self, "Consent", f"The file isn't there:\n{path}")
         else:
-            QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
 
     def people(self) -> list[Person]:
         out = []
@@ -380,8 +398,8 @@ class ListsDialog(QDialog):
         self.participants = PeopleEditor(db, md.participants, True, self._participant_use)
         self._page(PARTICIPANTS, "Participants", self.participants,
                    "The participants (speakers). The code is the tokens' speaker; renaming it renames it "
-                   "in the tokens and the notebook too. The consent folder holds the documentation of "
-                   "informed consent (a folder inside the database's folder is kept relative to it).")
+                   "in the tokens and the notebook too. The consent file documents their informed consent: "
+                   "click it to open it (a file inside the database's folder is kept relative to it).")
         self.locations = LocationEditor(md.locations, self._location_use)
         self._page(LOCATIONS, "Locations", self.locations,
                    "Places, from countries down to villages. Double-click a name or code to edit it; "

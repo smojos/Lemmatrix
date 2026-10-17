@@ -2,7 +2,7 @@
 
 Used in the Current Session panel and in the notebook. Researchers and participants
 show their codes, locations their names; the tooltip gives the rest. Clicking a chip
-offers to remove it (and, for a participant, to open the consent folder).
+offers to remove it (and, for a participant, to open the consent file).
 """
 
 from __future__ import annotations
@@ -22,8 +22,8 @@ RESEARCHERS, PARTICIPANTS, LOCATIONS = "researchers", "participants", "locations
 TITLES = {RESEARCHERS: "Researchers", PARTICIPANTS: "Participants", LOCATIONS: "Locations"}
 
 
-def consent_folder(db: Database, consent: str) -> Path | None:
-    """The consent folder as a full path (a relative one is relative to the database)."""
+def consent_path(db: Database, consent: str) -> Path | None:
+    """The consent file as a full path (a relative one is relative to the database)."""
     if not consent:
         return None
     p = Path(consent)
@@ -34,15 +34,15 @@ def consent_folder(db: Database, consent: str) -> Path | None:
 
 def open_consent(parent, db: Database, code: str):
     p = db.metadata.participant(code)
-    folder = consent_folder(db, p.consent) if p else None
-    if folder is None:
-        QMessageBox.information(parent, "Consent", f"No consent folder is set for {code}.\n"
+    path = consent_path(db, p.consent) if p else None
+    if path is None:
+        QMessageBox.information(parent, "Consent", f"No consent file is set for {code}.\n"
                                 "Set one in Edit → Lists → Participants.")
         return
-    if not folder.exists():
-        QMessageBox.warning(parent, "Consent", f"The consent folder for {code} isn't there:\n{folder}")
+    if not path.exists():
+        QMessageBox.warning(parent, "Consent", f"The consent file for {code} isn't there:\n{path}")
         return
-    QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
+    QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
 
 
 class Chip(ChipButton):
@@ -168,7 +168,7 @@ class ChipRow(QWidget):
             m.addAction(icon("delete", 16), f"Remove {chip.text()}").triggered.connect(
                 lambda *_: self._remove(key))
         if self.kind == PARTICIPANTS:
-            m.addAction("Open consent folder").triggered.connect(
+            m.addAction("Open consent file").triggered.connect(
                 lambda *_: open_consent(self, self.db, key))
         m.exec(chip.mapToGlobal(chip.rect().bottomLeft()))
 

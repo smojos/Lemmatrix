@@ -338,7 +338,7 @@ class Person:
     code: str
     name: str = ""
     description: str = ""
-    consent: str = ""             # participants: folder with the informed-consent documentation
+    consent: str = ""             # participants: the file documenting informed consent
 
 
 Participant = Person              # the older name
