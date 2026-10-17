@@ -328,7 +328,9 @@ class TokenDialog(QDialog):
         folder = storage.sound_folder(self.db)
         shown = folder / (t.file if has_file else exp)
         self.location.setText(("" if has_file else "Will be saved as ")
-                              + QDir.toNativeSeparators(str(shown)))
+                              + QDir.toNativeSeparators(str(shown))
+                              + ("   (online only: needs internet to play)"
+                                 if has_file and storage.is_cloud_only(shown) else ""))
         self.update_btn.setEnabled(bool(t.file) and t.file != exp and has_file
                                    and not self.db.settings.auto_update_names)
         if self.db.settings.auto_update_names and t.file and t.file != exp:

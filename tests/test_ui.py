@@ -625,3 +625,28 @@ def test_find_recordings_added_by_hand_for_tokens_without_one(win):
     assert [n for x, k, n, had in found if x is e] == [old_style]
     win.find_missing_recordings()
     assert any(tok.file == old_style or tok.file == exact for tok in e.tokens)
+
+
+def test_online_only_recordings_are_marked_and_explained(win, monkeypatch):
+    from lemmatrix import audio
+    from lemmatrix.ui import main_window as mw
+    db = win.doc.db
+    folder = storage.sound_folder(db)
+    cloudy = "LXX-VXX_D001_goat_SG.wav"
+    real_scan = storage.scan_sound_folder
+    monkeypatch.setattr(storage, "scan_sound_folder", lambda f: (real_scan(f)[0], {cloudy}))
+    win.lemmas.select_row(db.entry_by_ref("D001"))
+    win.tabs.setCurrentIndex(mw.LEMMA_TAG)
+    win.refresh()
+    assert win.lt_view.cloud_files == {cloudy}
+    lay = win.layouts[mw.LEMMA_TAG]
+    tips = [win.lt_view.model_.data(win.lt_view.model_.index(r, c), mw.Qt.ToolTipRole) or ""
+            for r in range(len(lay.rows)) for c in range(len(lay.cols))]
+    assert any("online only" in t for t in tips)
+    win.lt_view.grab()                                        # paints the cloud mark without errors
+    # a read that fails on an online-only file says why, in plain words
+    monkeypatch.setattr(storage, "is_cloud_only", lambda p: True)
+    monkeypatch.setattr(audio, "read_wav", lambda p: (_ for _ in ()).throw(OSError(22, "cloud provider")))
+    import pytest
+    with pytest.raises(audio.AudioError, match="online only"):
+        audio.load_for_playing(folder / cloudy)

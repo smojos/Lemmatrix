@@ -25,12 +25,27 @@ SOUND_W = 16     # room for the recording symbol at the top right of each token
 
 
 def draw_sound_mark(p: QPainter, x: float, y: float, state: str):
-    """A small speaker: green = recording on disk, red = recorded but missing, grey outline = none."""
+    """A small speaker: green = recording on disk, red = recorded but missing, grey outline = none;
+    a cloud = the recording is online only (OneDrive) and needs internet to play."""
     from PySide6.QtCore import QPointF
     from PySide6.QtGui import QPolygonF
-    color = theme.colour({"ok": "sound_ok", "missing": "sound_missing"}.get(state, "no_sound"))
     p.save()
     p.setRenderHint(QPainter.Antialiasing)
+    if state == "cloud":
+        from PySide6.QtGui import QPainterPath
+        c = theme.colour("sound_cloud")
+        path = QPainterPath()
+        path.setFillRule(Qt.WindingFill)        # overlapping puffs fill solid
+        path.addEllipse(QRectF(x, y + 4, 6, 6))
+        path.addEllipse(QRectF(x + 3, y + 1.5, 7, 7))
+        path.addEllipse(QRectF(x + 7, y + 4, 6, 6))
+        path.addRect(QRectF(x + 3, y + 6.5, 7, 3.5))
+        p.setPen(Qt.NoPen)
+        p.setBrush(c)
+        p.drawPath(path.simplified())
+        p.restore()
+        return
+    color = theme.colour({"ok": "sound_ok", "missing": "sound_missing"}.get(state, "no_sound"))
     body = QPolygonF([QPointF(x, y + 4), QPointF(x + 3, y + 4), QPointF(x + 7, y + 1),
                       QPointF(x + 7, y + 11), QPointF(x + 3, y + 8), QPointF(x, y + 8)])
     if state == "none":
@@ -86,7 +101,10 @@ class MatrixModel(QAbstractTableModel):
             wc = mx.class_of(self.db, entry)
             lines = [f"{entry.ref}  {self.db.lemma(entry)}  “{self.db.gloss(entry)}”"]
             for _, t in hits:
-                rec = ("recorded" if t.file in self.view_sound_files() else "recording missing") if t.file \
+                v = self.parent()
+                cloud = getattr(v, "cloud_files", set())
+                rec = (("recorded, online only: needs internet to play" if t.file in cloud else "recorded")
+                       if t.file in self.view_sound_files() else "recording missing") if t.file \
                     else "not recorded"
                 lines.append((" + ".join(mx.chips(self.db, t.tags, wc or None)) or "Citation") + f"  ({rec})")
             if not hits:
@@ -262,7 +280,8 @@ class TokenCellDelegate(QStyledItemDelegate):
         x = rect.left() + PAD
         for n, ((e, t), w) in enumerate(zip(hits, widths)):
             y = rect.top() + PAD
-            state = "none" if not t.file else ("ok" if t.file in self.view.sound_files else "missing")
+            state = "none" if not t.file else (("cloud" if t.file in self.view.cloud_files else "ok")
+                                               if t.file in self.view.sound_files else "missing")
             if sel == (r, c, n):
                 painter.setPen(QPen(theme.colour("selected_token_line"), 1.5))
                 painter.setBrush(theme.colour("selected_token"))
@@ -312,6 +331,7 @@ class MatrixView(QTableView):
         self.cell_fields = list(mx.DEFAULT_CELL)
         self.selected: tuple | None = None      # (row, column, token number)
         self.sound_files: set[str] = set()      # recordings present in the sound folder
+        self.cloud_files: set[str] = set()      # those that are online-only
         self.model_ = MatrixModel(db)
         self.model_.setParent(self)
         self.setModel(self.model_)

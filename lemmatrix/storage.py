@@ -379,6 +379,45 @@ def save(db: Database, path: str | os.PathLike | None = None, backup: bool = Tru
     db.path = path
 
 
+# Windows marks files that OneDrive (or another cloud service) keeps online only:
+_RECALL_ON_DATA_ACCESS = 0x00400000
+_RECALL_ON_OPEN = 0x00040000
+_OFFLINE = 0x00001000
+_MAC_DATALESS = 0x40000000          # macOS SF_DATALESS (iCloud / OneDrive "online only")
+
+
+def is_cloud_only(entry) -> bool:
+    """True if a file (an os.DirEntry or a path) is online-only: reading it needs a download."""
+    try:
+        st = entry.stat() if hasattr(entry, "stat") and not isinstance(entry, (str, Path)) \
+            else os.stat(entry)
+    except OSError:
+        return False
+    attrs = getattr(st, "st_file_attributes", 0)
+    if attrs & (_RECALL_ON_DATA_ACCESS | _RECALL_ON_OPEN | _OFFLINE):
+        return True
+    return bool(getattr(st, "st_flags", 0) & _MAC_DATALESS)
+
+
+def scan_sound_folder(folder: Path) -> tuple[set[str], set[str]]:
+    """(names of the files in the folder, names of those that are online-only)."""
+    names, cloud = set(), set()
+    try:
+        with os.scandir(folder) as it:
+            for entry in it:
+                try:
+                    if not entry.is_file():
+                        continue
+                except OSError:
+                    continue
+                names.add(entry.name)
+                if is_cloud_only(entry):
+                    cloud.add(entry.name)
+    except OSError:
+        pass
+    return names, cloud
+
+
 def same_file(a: Path, b: Path) -> bool:
     """True if two paths are one file (e.g. names differing only in case on Windows)."""
     try:

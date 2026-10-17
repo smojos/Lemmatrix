@@ -29,7 +29,7 @@ _FIXED = {
         "read_only": "#ececec",             # cells not editable in place
         "grid": "#c8c8c8",
         "greyed": "#e4e4e4", "hatch": "#cfcfcf",   # contradictory Tag/Tag cells
-        "no_sound": "#b5b5b5", "sound_ok": "#2e9e44", "sound_missing": "#d93030",
+        "no_sound": "#b5b5b5", "sound_ok": "#2e9e44", "sound_missing": "#d93030", "sound_cloud": "#3d8bd9",
         "error": "#c62828", "error_text": "#d32f2f", "error_fill": "#fde0e0",
         "warning": "#b26a00",
         "filter_off": "#f4f4f4", "filter_off_line": "#555555", "filter_off_mark": "#333333",
@@ -47,7 +47,7 @@ _FIXED = {
         "read_only": "#2a2b2f",
         "grid": "#45474c",
         "greyed": "#303236", "hatch": "#3d3f44",
-        "no_sound": "#6a6c70", "sound_ok": "#4cc265", "sound_missing": "#ff5c5c",
+        "no_sound": "#6a6c70", "sound_ok": "#4cc265", "sound_missing": "#ff5c5c", "sound_cloud": "#6fb0ff",
         "error": "#ff6b6b", "error_text": "#ff7070", "error_fill": "#5a2a2a",
         "warning": "#e0a040",
         "filter_off": "#3a3c40", "filter_off_line": "#9a9a9a", "filter_off_mark": "#d0d0d0",

@@ -201,6 +201,21 @@ class Recorder:
 # Playback
 # --------------------------------------------------------------------------
 
+def load_for_playing(path: Path) -> tuple[np.ndarray, int]:
+    """Read a recording, explaining in plain words why if it can't be read."""
+    from .storage import is_cloud_only
+    cloud = is_cloud_only(path)
+    try:
+        return read_wav(path)
+    except (OSError, EOFError, wave.Error, AudioError, ValueError) as exc:
+        if cloud:
+            raise AudioError(
+                f"{path.name} is stored online only, and it couldn't be downloaded just now "
+                "(are you offline?).\n\nTo keep recordings playable without internet, right-click "
+                "the sound folder in File Explorer and choose \"Always keep on this device\".") from exc
+        raise AudioError(f"Couldn't play {path.name}: {exc}") from exc
+
+
 class Player:
     """Plays one or more WAV files in turn, in the background."""
 
@@ -209,11 +224,15 @@ class Player:
         self._thread = None
 
     def play(self, paths, on_done=None):
+        """Play WAV files in turn. They are read first, so a file that can't be read
+        (e.g. online-only while offline) raises AudioError here with the reason."""
         paths = [Path(p) for p in paths if p and Path(p).exists()]
         if not paths:
             self.stop()
             return False
-        return self._start([lambda p=p: read_wav(p) for p in paths], on_done)
+        self.stop()
+        sounds = [load_for_playing(p) for p in paths]
+        return self._start([lambda s=s: s for s in sounds], on_done)
 
     def play_samples(self, samples, rate: int, on_done=None):
         """Play samples made by the program (e.g. a pitch rendering)."""

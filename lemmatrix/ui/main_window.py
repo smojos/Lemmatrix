@@ -81,6 +81,7 @@ class MainWindow(QMainWindow):
         self.layouts: dict = {}
         self.dialog_autoplay = False
         self.sound_files: set[str] = set()       # names in the sound folder, refreshed with the views
+        self.cloud_files: set[str] = set()       # those of them that are online-only (OneDrive)
         self.resize(1500, 920)
         theme.from_prefs(self.prefs)
         self._build()
@@ -450,7 +451,9 @@ class MainWindow(QMainWindow):
                    tooltip=lambda r: ("Not recorded yet" if not r.token.file else
                                       f"{r.token.file} isn't in the sound folder" if r.token.file not in self.sound_files
                                       else f"Recorded as {r.token.file}\nExpected: {db.expected_filename(r.entry, r.token)}"
-                                      f"\n{QDir.toNativeSeparators(str(storage.sound_folder(db) / r.token.file))}")),
+                                      f"\n{QDir.toNativeSeparators(str(storage.sound_folder(db) / r.token.file))}"
+                                      + ("\nOnline only: needs internet to play" if r.token.file in self.cloud_files
+                                         else ""))),
         ]
         return cols
 
@@ -752,12 +755,10 @@ class MainWindow(QMainWindow):
 
     def _scan_sound_folder(self):
         folder = storage.sound_folder(self.doc.db)
-        try:
-            self.sound_files = {p.name for p in folder.iterdir() if p.is_file()}
-        except OSError:
-            self.sound_files = set()
+        self.sound_files, self.cloud_files = storage.scan_sound_folder(folder)
         for v in (self.lt_view, self.tt_view):
             v.sound_files = self.sound_files
+            v.cloud_files = self.cloud_files
 
     def refresh(self):
         db = self.doc.db
