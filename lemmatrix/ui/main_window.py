@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QF
                                QPushButton, QSplitter, QStackedWidget, QTabBar, QToolButton,
                                QVBoxLayout, QWidget)
 
-from .. import __version__, audio, filters as fl, matrix as mx, storage
+from .. import __version__, audio, filters as fl, lock as lockmod, matrix as mx, storage
 from . import theme
 from ..defaults import new_database
 from ..model import Database, Entry, ListItem, forbidden_in
@@ -92,6 +92,10 @@ class MainWindow(QMainWindow):
         self.doc.dirtyChanged.connect(self._dirty_changed)
         self.autosave = QTimer(self)
         self.autosave.timeout.connect(self._autosave)
+        self._locked_path = ""                    # the database this window has marked as open
+        self.heartbeat = QTimer(self)             # keeps the "last active" time in the marker fresh
+        self.heartbeat.setInterval(5 * 60_000)
+        self.heartbeat.timeout.connect(lambda: self._locked_path and lockmod.claim(self._locked_path))
         self._apply_autosave()
         self.load_database(self.doc.db)
 
@@ -516,6 +520,7 @@ class MainWindow(QMainWindow):
         self.player.stop()
         if self.doc.db is not db:
             self._save_view()
+        self._mark_open(db.path)
         self.doc.db = db
         self.doc.undo.clear()
         self.doc.undo.setClean()
@@ -1590,6 +1595,8 @@ class MainWindow(QMainWindow):
         except (storage.FormatError, OSError) as exc:
             QMessageBox.warning(self, "Open", f"Couldn't open {Path(path).name}:\n{exc}")
             return
+        if not self._open_elsewhere_ok(path):
+            return
         self.prefs.last_file = path
         self.load_database(db)
 
@@ -1633,7 +1640,46 @@ class MainWindow(QMainWindow):
             return False
         self.doc.db.path = path
         self._update_title()
-        return self.save()
+        if self.save():
+            self._mark_open(path)
+            return True
+        return False
+
+    # ------------------------------------------- open on another computer
+    def _open_elsewhere_ok(self, path: str) -> bool:
+        """Warn if the database is open in another Lemmatrix (another computer, usually)."""
+        info = lockmod.held_elsewhere(path)
+        if info is None or str(Path(path).resolve()) == self._locked_path:
+            return True
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Warning)
+        box.setWindowTitle("Open elsewhere")
+        same = info.computer == lockmod.this_computer()
+        box.setText(f"{Path(path).name} seems to be open "
+                    + ("in another Lemmatrix window on this computer" if same else f"on {info.computer}") + ".")
+        box.setInformativeText(
+            f"{info.describe()}.\n\nIf it's open in two places and both save, OneDrive keeps one version "
+            "and makes a conflict copy of the other, and the changes have to be merged by hand.\n\n"
+            "If Lemmatrix on that computer was closed or crashed without tidying up, it's safe to open "
+            "anyway.")
+        anyway = box.addButton("Open anyway", QMessageBox.AcceptRole)
+        box.addButton("Don't open", QMessageBox.RejectRole)
+        box.exec()
+        return box.clickedButton() is anyway
+
+    def _mark_open(self, path: str):
+        """Move this window's open-marker to the given database ("" for none)."""
+        new = str(Path(path).resolve()) if path else ""
+        if new == self._locked_path:
+            return
+        if self._locked_path:
+            lockmod.release(self._locked_path)
+        self._locked_path = new
+        if new:
+            lockmod.claim(new)
+            self.heartbeat.start()
+        else:
+            self.heartbeat.stop()
 
     def _apply_autosave(self):
         m = self.prefs.autosave_minutes
@@ -1652,6 +1698,7 @@ class MainWindow(QMainWindow):
             try:
                 self._save_view()
                 self._save_window()
+                self._mark_open("")
             except Exception:                           # never stop the window closing
                 pass
             # Nothing should react to the undo history being thrown away as the window closes.

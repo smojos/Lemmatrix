@@ -185,3 +185,6 @@ Backups/
 *.saving
 *.part
 screenshots/
+
+# Lemmatrix marks a database as open with this file
+*.lemmatrix-lock

@@ -385,3 +385,26 @@ def test_same_file_allows_case_only_renames(tmp_path):
     a.write_bytes(b"RIFF")
     assert storage.same_file(a, a)
     assert not storage.same_file(a, tmp_path / "other.wav")
+
+
+def test_open_marker_lifecycle(tmp_path, monkeypatch):
+    import json
+    import os
+    from lemmatrix import lock
+    db = tmp_path / "x.xml"
+    db.write_text("<database/>")
+    assert lock.held_elsewhere(db) is None
+    lock.claim(db)
+    assert lock.read(db).mine() and lock.held_elsewhere(db) is None
+    lock.release(db)
+    assert not lock.lock_path(db).exists()
+    # another computer's marker is reported
+    lock.lock_path(db).write_text(json.dumps({"computer": "LAPTOP", "user": "josh", "pid": 1,
+                                              "opened": "2026-10-17 09:14:00", "seen": "2026-10-17 09:40:00"}))
+    info = lock.held_elsewhere(db)
+    assert info and info.computer == "LAPTOP" and "09:40" in info.describe()
+    lock.release(db)                                   # not ours: left alone
+    assert lock.lock_path(db).exists()
+    # a marker left by a crash on this computer is ignored
+    lock.lock_path(db).write_text(json.dumps({"computer": lock.this_computer(), "pid": 999999999}))
+    assert lock.held_elsewhere(db) is None

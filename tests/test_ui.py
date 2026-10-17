@@ -650,3 +650,32 @@ def test_online_only_recordings_are_marked_and_explained(win, monkeypatch):
     import pytest
     with pytest.raises(audio.AudioError, match="online only"):
         audio.load_for_playing(folder / cloudy)
+
+
+def test_open_elsewhere_warning(app, tmp_path, monkeypatch):
+    import json
+    from lemmatrix import lock
+    from lemmatrix.ui import main_window as mw
+    shutil.copy2(SAMPLES / "Sample.xml", tmp_path / "Sample.xml")
+    path = str(tmp_path / "Sample.xml")
+    lock.lock_path(path).write_text(json.dumps({"computer": "LAPTOP", "user": "josh", "pid": 1,
+                                                "opened": "2026-10-17 09:14:00"}))
+    choice = {"text": "Don't open"}
+    shown = []
+    monkeypatch.setattr(QMessageBox, "exec", lambda self: shown.append(self.text()) or 0)
+    monkeypatch.setattr(QMessageBox, "clickedButton",
+                        lambda self: next(b for b in self.buttons() if b.text() == choice["text"]))
+    w = mw.MainWindow()
+    try:
+        w.open_file(path)
+        assert shown and "LAPTOP" in shown[0] and w.doc.db.path != path
+        choice["text"] = "Open anyway"
+        w.open_file(path)
+        assert w.doc.db.path == path
+        assert lock.read(path).mine()                  # the marker is now this window's
+    finally:
+        w.doc.undo.setClean()
+        w.doc._settings_dirty = False
+        monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Discard)
+        w.close()
+    assert not lock.lock_path(path).exists()           # removed on close

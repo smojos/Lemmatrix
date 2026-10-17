@@ -38,7 +38,6 @@ def _install_error_handler():
 def main() -> int:
     from PySide6.QtWidgets import QApplication, QMessageBox
 
-    from . import storage
     from .ui.main_window import SAMPLE, MainWindow
 
     if sys.platform.startswith("win"):
@@ -58,14 +57,9 @@ def main() -> int:
 
     win = MainWindow()
     path = sys.argv[1] if len(sys.argv) > 1 else win.prefs.last_file
-    if path and Path(path).exists():
-        try:
-            db = storage.load(path)
-            win.prefs.last_file = path
-            win.load_database(db)
-        except (storage.FormatError, OSError) as exc:
-            QMessageBox.warning(win, "Lemmatrix", f"Couldn't open {Path(path).name}:\n{exc}")
     win.show()
+    if path and Path(path).exists():
+        win.open_file(path)                 # warns if it's open on another computer
     if not win.doc.db.path:
         box = QMessageBox(win)
         box.setWindowTitle("Welcome to Lemmatrix")
