@@ -62,8 +62,17 @@ If something goes wrong, a message box shows the details, and they're also writt
   speaker and date to the current session's.
 - **Pitch notation:** digits are points; each colon lengthens the step between two points
   (`4:42` long high level then a quick fall). A lone digit becomes a short level (`5` → `55`).
-- **Edit menu:** metadata, Fields (lemma and token fields, open or closed, with an XML preview),
-  tag structure (duplicate names and codes show in red), and Settings: General (autosave),
+- **Notebook:** one page a day, in `<database>.notebook` beside the database: researchers,
+  participants and locations, notes (in Charis), the day's comments with links to their
+  lemmas and tokens, the day's recordings, and questions (open or resolved). View → Notebook
+  (Ctrl+B) or the notepad in the Current Session; the pencil writes the day's session.
+  View → Questions lists every question. Add a note for a past day; no future days.
+- **Current Session:** researcher, participant and location chips, the speaker (the first
+  participant, until another is chosen), the date.
+- **Edit menu:** metadata (language, variety, author), Fields (lemma and token fields, open or
+  closed, with an XML preview), Lists (researchers, participants with their consent folders,
+  locations, the closed fields' lists, and the tag structure, where duplicate names and codes
+  show in red), and Settings: General (autosave),
   Sound (file-name pattern, sound folder, recording, deleting recordings with their tokens,
   path to Praat), Display (light or dark theme, accent colour for highlights, chips and pitch
   traces, IPA font size), Pitch (display range, playback voice).
@@ -84,8 +93,9 @@ If something goes wrong, a message box shows the details, and they're also writt
 
 ```
 lemmatrix/            the program
-  model.py            entries, tokens, tag structure (no user interface)
+  model.py            entries, tokens, tag structure, people, places (no user interface)
   storage.py          reading and writing the XML file, backups
+  notebook.py         the notebook: sessions, the record of comments, the .notebook file
   filenames.py        building sound file names from the pattern
   matrix.py           laying out tokens for the paradigm views
   pitch.py            pitch notation
@@ -95,4 +105,5 @@ lemmatrix/            the program
 samples/              invented sample database with synthetic recordings
 tests/                automated tests
 tools/screenshots.py  renders the windows to PNG files, for checking layouts
+tools/*.py            one-off conversions of Josh's Dekereke and FLEx data
 ```

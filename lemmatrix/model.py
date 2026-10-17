@@ -9,6 +9,7 @@ from __future__ import annotations
 import copy
 import datetime as _dt
 import unicodedata
+import uuid
 from dataclasses import dataclass, field
 
 # Characters Windows forbids in file names. Glosses, codes and references
@@ -34,6 +35,12 @@ def forbidden_in(text: str) -> str:
 
 def today() -> str:
     return _dt.date.today().isoformat()
+
+
+def new_id() -> str:
+    """A short unique id for an entry or token: notebook links point at it, so they
+    survive changes to the reference or the tags."""
+    return uuid.uuid4().hex[:10]
 
 
 # --------------------------------------------------------------------------
@@ -256,6 +263,11 @@ class FieldDef:
         return self.role in ("gloss", "translation")
 
     @property
+    def is_comment(self) -> bool:
+        """Comment fields are the ones the notebook records (by name: Comment, Comments...)."""
+        return not self.multilingual and (self.role == "comment" or "comment" in self.name.lower())
+
+    @property
     def builtin(self) -> bool:
         """Built-in fields can be relabelled and moved but not deleted."""
         return self.role in ("lemma", "gloss", "word-class", "phonetic", "phonemic", "pitch",
@@ -321,9 +333,35 @@ class Settings:
 # --------------------------------------------------------------------------
 
 @dataclass
-class Participant:
+class Person:
+    """A researcher or a participant (speaker)."""
     code: str
     name: str = ""
+    description: str = ""
+    consent: str = ""             # participants: folder with the informed-consent documentation
+
+
+Participant = Person              # the older name
+
+
+@dataclass
+class Location:
+    """A place in the hierarchical list of locations (country > region > village)."""
+    name: str
+    code: str = ""
+    description: str = ""
+    children: list["Location"] = field(default_factory=list)
+
+    @property
+    def key(self) -> str:
+        """What sessions store: the code, or the name for a place without one."""
+        return self.code or self.name
+
+    def walk(self, path: tuple = ()):
+        """(path of names above it, location) for this place and everything in it."""
+        yield path, self
+        for c in self.children:
+            yield from c.walk(path + (self.name,))
 
 
 @dataclass
@@ -332,9 +370,32 @@ class Metadata:
     language_name: str = ""
     variety_code: str = ""
     variety_name: str = ""
-    researcher: str = ""
-    participants: list[Participant] = field(default_factory=list)
+    author: str = ""              # who owns the database
+    researchers: list[Person] = field(default_factory=list)
+    participants: list[Person] = field(default_factory=list)
+    locations: list[Location] = field(default_factory=list)
     description: str = ""
+
+    def researcher(self, code: str) -> Person | None:
+        return next((p for p in self.researchers if p.code == code), None)
+
+    def participant(self, code: str) -> Person | None:
+        return next((p for p in self.participants if p.code == code), None)
+
+    def all_locations(self):
+        """(path of names above it, location) for every place, in list order."""
+        for top in self.locations:
+            yield from top.walk()
+
+    def location(self, key: str) -> Location | None:
+        return next((loc for _, loc in self.all_locations() if loc.key == key), None)
+
+    def location_path(self, key: str) -> str:
+        """"Sudan › Blue Nile District › Sample variety village" for a location key."""
+        for path, loc in self.all_locations():
+            if loc.key == key:
+                return " › ".join(path + (loc.name,))
+        return key
 
 
 @dataclass
@@ -345,6 +406,8 @@ class Token:
     file: str = ""                                      # actual recording name on disk
     values: dict[str, str] = field(default_factory=dict)            # Phonetic, Pitch, ...
     multi: dict[str, dict[str, str]] = field(default_factory=dict)  # Translation -> {lang: text}
+    changed: dict[str, str] = field(default_factory=dict)  # comment field -> date it was last changed
+    id: str = field(default_factory=new_id, compare=False)
 
     @property
     def is_citation(self) -> bool:
@@ -387,6 +450,8 @@ class Entry:
     values: dict[str, str] = field(default_factory=dict)            # Lemma, WordClass, ...
     multi: dict[str, dict[str, str]] = field(default_factory=dict)  # Gloss -> {lang: text}
     tokens: list[Token] = field(default_factory=list)
+    changed: dict[str, str] = field(default_factory=dict)  # comment field -> date it was last changed
+    id: str = field(default_factory=new_id, compare=False)
 
     def get(self, name: str, lang: str | None = None) -> str:
         if name in self.multi:
@@ -440,6 +505,34 @@ class Database:
             if e.ref == ref:
                 return e
         return None
+
+    def entry_by_id(self, ident: str) -> Entry | None:
+        return next((e for e in self.entries if e.id == ident), None) if ident else None
+
+    def comment_fields(self) -> tuple[list[str], list[str]]:
+        """Names of the comment fields: (entry fields, token fields)."""
+        s = self.settings
+        return ([f.name for f in s.entry_fields if f.is_comment],
+                [f.name for f in s.token_fields if f.is_comment])
+
+    def stamp_comments(self, before: Entry | None, after: Entry, date: str):
+        """Give comment fields that changed between before and after the date of the change.
+
+        Tokens are matched by id, so a token edited through a copy still counts as itself;
+        a new token's comments count as changed.
+        """
+        if not date:
+            return
+        efields, tfields = self.comment_fields()
+        for name in efields:
+            if (before.get(name) if before else "") != after.get(name):
+                after.changed[name] = date
+        old = {t.id: t for t in before.tokens} if before else {}
+        for t in after.tokens:
+            prev = old.get(t.id)
+            for name in tfields:
+                if (prev.get(name) if prev else "") != t.get(name):
+                    t.changed[name] = date
 
     # ---- references --------------------------------------------------
     def suggest_reference(self, letter: str) -> str:
@@ -496,3 +589,6 @@ class Database:
 
     def participant_codes(self) -> list[str]:
         return [p.code for p in self.metadata.participants]
+
+    def researcher_codes(self) -> list[str]:
+        return [p.code for p in self.metadata.researchers]

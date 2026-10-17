@@ -410,6 +410,8 @@ class FieldsDialog(QDialog):
                     obj.values[new] = obj.values.pop(old)
                 if old in obj.multi:
                     obj.multi[new] = obj.multi.pop(old)
+                if old in obj.changed:                # a comment's date goes with it
+                    obj.changed[new] = obj.changed.pop(old)
         for e in self.db.entries:
             move(e, renames["lemma"])
             for t in e.tokens:

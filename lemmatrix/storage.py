@@ -15,8 +15,8 @@ from pathlib import Path
 
 from . import pitch as pitchmod
 from .matrix import CITATION, EXACT, LOOSE, MatrixConfig, Spec
-from .model import (Database, Entry, FieldDef, Group, ListItem, Metadata, Participant,
-                    RefCategory, Settings, Tag, TagStructure, Token, WordClass, nfc)
+from .model import (Database, Entry, FieldDef, Group, ListItem, Location, Metadata, Person,
+                    RefCategory, Settings, Tag, TagStructure, Token, WordClass, new_id, nfc)
 
 FORMAT_VERSION = "1"
 BACKUPS_KEPT = 10
@@ -149,6 +149,50 @@ def _load_values(el, target, multilingual_names: set[str], skip=("token",)):
             target.multi.setdefault(child.tag, {})[lang or ""] = _text(child)
         else:
             target.values[child.tag] = _text(child)
+            if child.get("changed"):
+                target.changed[child.tag] = child.get("changed")
+
+
+def _load_person(el, older: bool = False) -> Person:
+    """<participant code="SP1" name="...">description</participant>; older files had the name as text."""
+    if el.get("name") is None and older:
+        return Person(nfc(el.get("code", "")), _text(el))
+    return Person(nfc(el.get("code", "")), nfc(el.get("name", "")), _text(el), nfc(el.get("consent", "")))
+
+
+def _load_location(el) -> Location:
+    return Location(nfc(el.get("name", "")), nfc(el.get("code", "")), _text(el.find("description")),
+                    [_load_location(c) for c in el.findall("location")])
+
+
+def _load_metadata(m) -> Metadata:
+    md = Metadata()
+    if m is None:
+        return md
+    if (x := m.find("language")) is not None:
+        md.language_code, md.language_name = nfc(x.get("code", "")), _text(x)
+    if (x := m.find("variety")) is not None:
+        md.variety_code, md.variety_name = nfc(x.get("code", "")), _text(x)
+    md.author = _text(m.find("author"))
+    for r in m.findall("researcher"):
+        if r.get("code") is None:                # older files: one researcher, who owns the database
+            md.author = md.author or _text(r)
+        else:
+            md.researchers.append(_load_person(r))
+    md.participants = [_load_person(p, older=True) for p in m.findall("participant")]
+    md.locations = [_load_location(x) for x in m.findall("location")]
+    md.description = _text(m.find("description"))
+    return md
+
+
+def _unique_ids(db: Database):
+    """Every entry and token gets an id, and no two share one (copies made outside Lemmatrix)."""
+    seen = set()
+    for e in db.entries:
+        for obj in [e, *e.tokens]:
+            if not obj.id or obj.id in seen:
+                obj.id = new_id()
+            seen.add(obj.id)
 
 
 def load(path: str | os.PathLike) -> Database:
@@ -163,15 +207,7 @@ def load(path: str | os.PathLike) -> Database:
         raise FormatError(f"This database uses format {root.get('format')}, "
                           f"which this version of Lemmatrix can't read.")
 
-    md = Metadata()
-    if (m := root.find("metadata")) is not None:
-        if (x := m.find("language")) is not None:
-            md.language_code, md.language_name = nfc(x.get("code", "")), _text(x)
-        if (x := m.find("variety")) is not None:
-            md.variety_code, md.variety_name = nfc(x.get("code", "")), _text(x)
-        md.researcher = _text(m.find("researcher"))
-        md.participants = [Participant(nfc(p.get("code", "")), _text(p)) for p in m.findall("participant")]
-        md.description = _text(m.find("description"))
+    md = _load_metadata(root.find("metadata"))
 
     settings = _load_settings(root.find("settings"))
     entry_multi = {f.name for f in settings.entry_fields if f.multilingual}
@@ -180,18 +216,21 @@ def load(path: str | os.PathLike) -> Database:
 
     db = Database(metadata=md, settings=settings, path=path)
     for el in root.findall("entry"):
-        e = Entry(ref=nfc(el.get("ref", "")), file_gloss=nfc(el.get("file-gloss", "")))
+        e = Entry(ref=nfc(el.get("ref", "")), file_gloss=nfc(el.get("file-gloss", "")),
+                  id=el.get("id", ""))
         _load_values(el, e, entry_multi)
         for tel in el.findall("token"):
             tags = [nfc(t.strip()) for t in (tel.get("tags") or "").split(",") if t.strip()]
             t = Token(tags=tags, speaker=nfc(tel.get("speaker", "")),
-                      collected=tel.get("collected", ""), file=nfc(tel.get("file", "")))
+                      collected=tel.get("collected", ""), file=nfc(tel.get("file", "")),
+                      id=tel.get("id", ""))
             _load_values(tel, t, token_multi, skip=())
             for name in pitch_fields:               # older data: lone digits become 55
                 if t.values.get(name):
                     t.values[name] = pitchmod.normalise(t.values[name])
             e.tokens.append(t)
         db.entries.append(e)
+    _unique_ids(db)
     return db
 
 
@@ -250,7 +289,10 @@ def _save_values(el, obj, field_order: list[FieldDef], languages: list[str]):
                         child.set("lang", lang)
                     child.text = d[lang]
         elif obj.values.get(name):
-            ET.SubElement(el, name).text = obj.values[name]
+            child = ET.SubElement(el, name)
+            child.text = obj.values[name]
+            if obj.changed.get(name):
+                child.set("changed", obj.changed[name])
 
 
 def to_element(db: Database) -> ET.Element:
@@ -261,10 +303,25 @@ def to_element(db: Database) -> ET.Element:
         ET.SubElement(m, "language", code=md.language_code).text = md.language_name or None
     if md.variety_code or md.variety_name:
         ET.SubElement(m, "variety", code=md.variety_code).text = md.variety_name or None
-    if md.researcher:
-        ET.SubElement(m, "researcher").text = md.researcher
-    for p in md.participants:
-        ET.SubElement(m, "participant", code=p.code).text = p.name or None
+    if md.author:
+        ET.SubElement(m, "author").text = md.author
+    for tag, people in (("researcher", md.researchers), ("participant", md.participants)):
+        for p in people:
+            a = {"code": p.code, "name": p.name}
+            if p.consent:
+                a["consent"] = p.consent
+            ET.SubElement(m, tag, a).text = p.description or None
+    def location(parent, loc: Location):
+        a = {"name": loc.name}
+        if loc.code:
+            a["code"] = loc.code
+        el = ET.SubElement(parent, "location", a)
+        if loc.description:
+            ET.SubElement(el, "description").text = loc.description
+        for c in loc.children:
+            location(el, c)
+    for loc in md.locations:
+        location(m, loc)
     if md.description:
         ET.SubElement(m, "description").text = md.description
 
@@ -317,6 +374,7 @@ def to_element(db: Database) -> ET.Element:
         attrs = {"ref": e.ref}
         if e.file_gloss:
             attrs["file-gloss"] = e.file_gloss
+        attrs["id"] = e.id
         el = ET.SubElement(root, "entry", attrs)
         _save_values(el, e, s.entry_fields, langs)
         for t in e.tokens:
@@ -327,6 +385,7 @@ def to_element(db: Database) -> ET.Element:
             for key, val in (("speaker", t.speaker), ("collected", t.collected), ("file", t.file)):
                 if val:
                     tattrs[key] = val
+            tattrs["id"] = t.id
             tel = ET.SubElement(el, "token", tattrs)
             _save_values(tel, t, s.token_fields, langs)
     return root

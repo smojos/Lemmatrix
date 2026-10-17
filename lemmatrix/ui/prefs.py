@@ -170,6 +170,20 @@ class Prefs:
         import json
         self.q.setValue(self._view_key(path), json.dumps(view, ensure_ascii=False))
 
+    def session_for(self, path: str) -> dict:
+        """The Current Session's people and places last used with a database."""
+        import json
+        try:
+            v = json.loads(self._get(self._view_key(path).replace("views/", "sessions/"), "") or "{}")
+            return v if isinstance(v, dict) else {}
+        except ValueError:
+            return {}
+
+    def set_session_for(self, path: str, session: dict):
+        import json
+        self.q.setValue(self._view_key(path).replace("views/", "sessions/"),
+                        json.dumps(session, ensure_ascii=False))
+
     def get_bytes(self, key: str):
         return self.q.value(key)
 

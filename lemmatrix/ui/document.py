@@ -9,6 +9,11 @@ To prevent that, renames travel with their undo step (undo renames the files
 back), and Document remembers every rename since the last save, so discarding
 the changes can put the files' names back too. Re-recording or deleting a
 recording isn't undone (deleted recordings go to the Recycle Bin).
+
+The notebook (<database>.notebook) belongs to the document too: it is saved with
+the database, and its unsaved changes count as unsaved changes. Every change to
+a comment field is dated with the session's date (work_date), which is what the
+notebook's record of comments goes by.
 """
 
 from __future__ import annotations
@@ -19,8 +24,8 @@ from pathlib import Path
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QUndoCommand, QUndoStack
 
-from .. import storage
-from ..model import Database, Entry
+from .. import notebook as nbmod, storage
+from ..model import Database, Entry, today
 
 
 def _restore(target: Entry, snapshot: Entry):
@@ -74,6 +79,9 @@ class Document(QObject):
         self.undo = QUndoStack(self)
         self._settings_dirty = False
         self.renamed: dict[Path, Path] = {}     # recording's path now -> its path at the last save
+        self.notebook = nbmod.Notebook()
+        self.notebook_unreadable = False        # then it is never written over
+        self.work_date = today                  # the session's date (set by the main window)
         self.undo.cleanChanged.connect(self._clean_changed)
 
     def _clean_changed(self, clean: bool):
@@ -84,7 +92,12 @@ class Document(QObject):
 
     @property
     def dirty(self) -> bool:
-        return self._settings_dirty or not self.undo.isClean()
+        return self._settings_dirty or not self.undo.isClean() or self.notebook.dirty
+
+    def notebook_changed(self):
+        """The notebook was edited: mark it unsaved."""
+        self.notebook.dirty = True
+        self.dirtyChanged.emit(True)
 
     # ---- entry changes -------------------------------------------------
     def edit_entry(self, entry: Entry, change, label: str = "Edit", renames=()):
@@ -95,6 +108,7 @@ class Document(QObject):
         """
         before = entry.copy()
         change(entry)
+        self.db.stamp_comments(before, entry, self.work_date())
         after = entry.copy()
         for old, new in renames:
             self._note_rename(Path(old), Path(new))
@@ -150,6 +164,7 @@ class Document(QObject):
 
     def add_entry(self, entry: Entry, index: int | None = None):
         idx = len(self.db.entries) if index is None else index
+        self.db.stamp_comments(None, entry, self.work_date())
         self.db.entries.insert(idx, entry)
         self.undo.push(EntryCommand(self, f"Add {entry.ref}", entry, None, entry.copy(), idx))
         self.changed.emit()
@@ -174,4 +189,34 @@ class Document(QObject):
         self.renamed.clear()                    # the saved database now has the new names
         self._settings_dirty = False
         self.undo.setClean()
+        self.save_notebook(backup_dir)
         self.dirtyChanged.emit(False)
+
+    # ---- the notebook --------------------------------------------------
+    def load_notebook(self) -> str:
+        """Read the database's notebook (none yet is fine). Returns a problem to report, or ""."""
+        self.notebook = nbmod.Notebook()
+        if not self.db.path:
+            return ""
+        path = nbmod.path_for(self.db.path)
+        try:
+            self.notebook = nbmod.load(path)
+        except (nbmod.NotebookError, OSError) as exc:
+            self.notebook = nbmod.Notebook(path=str(path))
+            self.notebook_unreadable = True
+            return str(exc)
+        self.notebook_unreadable = False
+        return ""
+
+    def save_notebook(self, backup_dir: str | None = None):
+        """Write the notebook next to the database, if it has anything in it."""
+        nb = self.notebook
+        if not self.db.path or self.notebook_unreadable:
+            return                              # never write over a notebook that couldn't be read
+        path = nbmod.path_for(self.db.path)
+        if not nb.sessions and not path.exists():
+            nb.dirty = False
+            return
+        if nb.dirty or Path(nb.path or "") != path or not path.exists():
+            storage.make_backup(path, folder=backup_dir or None)
+            nbmod.save(nb, path, Path(self.db.path).name)

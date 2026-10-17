@@ -8,14 +8,16 @@ from pathlib import Path
 from PySide6.QtCore import QDate, QDir, QFile, QSize, Qt, QTimer, QUrl
 from PySide6.QtGui import QAction, QColor, QDesktopServices, QFont, QKeySequence
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QFileDialog, QFrame, QGroupBox,
-                               QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMenu, QMessageBox,
+                               QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMenu, QMessageBox,
                                QPushButton, QSplitter, QStackedWidget, QTabBar, QToolButton,
                                QVBoxLayout, QWidget)
 
 from .. import __version__, audio, filters as fl, lock as lockmod, matrix as mx, storage
 from . import theme
 from ..defaults import new_database
-from ..model import Database, Entry, ListItem, forbidden_in
+from .. import notebook as nbmod
+from ..model import Database, Entry, ListItem, Person, forbidden_in, today
+from . import chiprow as chips
 from .dialogs import EntryDialog, MetadataDialog, PreferencesDialog, TagStructureDialog
 from .document import Document
 from .fields_dialog import FieldsDialog
@@ -80,6 +82,7 @@ class MainWindow(QMainWindow):
         self.switched = {LEMMA_TAG: False, TAG_TAG: False}
         self.layouts: dict = {}
         self.dialog_autoplay = False
+        self.notebook_dialog = None               # the notebook window, once opened
         self.sound_files: set[str] = set()       # names in the sound folder, refreshed with the views
         self.cloud_files: set[str] = set()       # those of them that are online-only (OneDrive)
         self.resize(1500, 920)
@@ -88,6 +91,7 @@ class MainWindow(QMainWindow):
         self._build_menus()
         self._restyle()
         self._restore_window()
+        self.doc.work_date = self.work_date
         self.doc.changed.connect(self._doc_changed)
         self.doc.dirtyChanged.connect(self._dirty_changed)
         self.autosave = QTimer(self)
@@ -309,29 +313,71 @@ class MainWindow(QMainWindow):
             fnt.setPointSizeF(fnt.pointSizeF() * scale)
             lbl.setFont(fnt)
             return lbl
-        sl.addWidget(styled("Current Session", bold=True, scale=1.25))
+
+        def big_button(name, tip, fn):
+            b = QToolButton()
+            b.setIconSize(QSize(34, 34))
+            b.setAutoRaise(True)
+            b.setToolTip(tip)
+            b.clicked.connect(lambda *_: fn())
+            b.setProperty("icon_name", name)
+            return b
+        head = QHBoxLayout()
+        head.addWidget(styled("Current Session", bold=True, scale=1.25))
+        head.addStretch(1)
+        self.notebook_btn = big_button("notebook", "Open notebook", self.open_notebook)
+        self.write_btn = big_button("write-notebook", "Write to notebook: the session's day gets these "
+                                    "people and places and that day's comments", self.write_notebook)
+        head.addWidget(self.notebook_btn)
+        head.addWidget(self.write_btn)
+        sl.addLayout(head)
         self.sess_file = styled(italic=True)
         self.sess_codes = styled(bold=True)
         self.sess_codes.setToolTip("Language and variety codes, set in Edit → Metadata")
+        sl.addWidget(self.sess_file)
+        sl.addWidget(self.sess_codes)
+
+        grid = QGridLayout()
+        grid.setHorizontalSpacing(6)
+        grid.setVerticalSpacing(3)
+        self.sess_rows = {}
+        for r, (kind, title) in enumerate(((chips.RESEARCHERS, "Researchers"),
+                                           (chips.PARTICIPANTS, "Participants"),
+                                           (chips.LOCATIONS, "Locations"))):
+            row = chips.ChipRow(kind, lambda: self.doc.db, compact=True, edit_list=self.edit_lists)
+            row.changed.connect(self._session_people_changed)
+            self.sess_rows[kind] = row
+            lbl = QLabel(title)
+            grid.addWidget(lbl, r if r < 2 else 3, 0, Qt.AlignTop | Qt.AlignRight)
+            grid.addWidget(row, r if r < 2 else 3, 1)
         self.sess_speaker = QComboBox()
-        self.sess_speaker.setToolTip("Speaker for new tokens and recordings (may be empty)")
-        self.sess_speaker.currentTextChanged.connect(lambda t: setattr(self.prefs, "speaker", t))
+        self.sess_speaker.setToolTip("Speaker of new tokens and recordings: the first participant, "
+                                     "until another is chosen here or in the token dialogue")
+        self.sess_speaker.activated.connect(lambda _: self.set_speaker(self.sess_speaker.currentText()))
+        grid.addWidget(QLabel("Speaker"), 2, 0, Qt.AlignRight)
+        grid.addWidget(self.sess_speaker, 2, 1)
+        grid.setColumnStretch(1, 1)
+        sl.addLayout(grid)
         self.sess_date = QDateEdit(QDate.currentDate())
         self.sess_date.setDisplayFormat("yyyy-MM-dd")
         self.sess_date.setCalendarPopup(True)
-        self.sess_date.setToolTip("Collection date for new tokens and recordings; resets to today "
-                                  "each time Lemmatrix opens")
+        self.sess_date.setMaximumDate(QDate.currentDate())
+        self.sess_date.setToolTip("The session's date: for new tokens and recordings, for comments, "
+                                  "and the notebook's day. Resets to today each time Lemmatrix opens; "
+                                  "it can't be a day that hasn't come yet.")
+        self.sess_date.dateChanged.connect(lambda *_: self._session_date_changed())
         self.sess_nodate = QPushButton("No date")
         self.sess_nodate.setCheckable(True)
         self.sess_nodate.toggled.connect(self.sess_date.setDisabled)
-        for w in (self.sess_file, self.sess_codes, self.sess_speaker):
-            sl.addWidget(w)
+        self.sess_nodate.toggled.connect(lambda *_: self._session_date_changed())
         dr = QHBoxLayout()
+        dr.addWidget(QLabel("Date"))
         dr.addWidget(self.sess_date, 1)
         dr.addWidget(self.sess_nodate)
         sl.addLayout(dr)
         sl.addStretch(1)
-        panel.setMaximumWidth(260)
+        panel.setMaximumWidth(330)
+        panel.setMinimumWidth(250)
         return panel
 
     def _build_menus(self):
@@ -357,9 +403,10 @@ class MainWindow(QMainWindow):
         e.addAction(undo)
         e.addAction(redo)
         e.addSeparator()
-        self._act(e, "&Metadata (language, variety, speakers)…", self.edit_metadata)
+        self._act(e, "&Metadata (language, variety, author)…", self.edit_metadata)
         self._act(e, "&Fields…", self.edit_fields)
-        self._act(e, "&Tag structure…", self.edit_tags)
+        self._act(e, "&Lists (people, places, field lists, tags)…", self.edit_lists)
+        self._act(e, "&Tag structure…", lambda: self.edit_lists("tags"))
         e.addSeparator()
         self._act(e, "&Settings…", self.edit_settings, QKeySequence.Preferences)
         t = mb.addMenu("&Tools")
@@ -368,6 +415,9 @@ class MainWindow(QMainWindow):
         self._act(t, "Find missing or unlinked recordings…", self.find_missing_recordings)
         self._act(t, "Open the sound folder", self.open_sound_folder)
         v = mb.addMenu("&View")
+        self._act(v, "&Notebook", self.open_notebook, "Ctrl+B")
+        self._act(v, "&Questions", self.open_questions)
+        v.addSeparator()
         self._act(v, "Swap rows and columns", lambda: self.switch_axes(self.tabs.currentIndex()), "Ctrl+T")
         v.addSeparator()
         # the same keys as in the token dialogue
@@ -533,6 +583,7 @@ class MainWindow(QMainWindow):
         self.doc.undo.setClean()
         self.doc._settings_dirty = False
         self.doc.renamed.clear()
+        self._load_notebook()
         self.configs.clear()
         for v in (self.lt_view, self.tt_view):
             v.set_database(db)
@@ -551,23 +602,88 @@ class MainWindow(QMainWindow):
         self._restore_view()
         self._update_title()
         self._report_missing()
+        if self.notebook_dialog is not None:
+            self.notebook_dialog.reload()
 
     def _fill_session(self):
+        """The Current Session panel: the file, the codes, and the session's people and places.
+
+        If the notebook has a session for the date, the panel shows its people and places;
+        otherwise the ones last used with this database."""
         db = self.doc.db
         md = db.metadata
         self.sess_file.setText(Path(db.path).name if db.path else "(not saved yet)")
         self.sess_codes.setText("  ".join(x for x in (md.language_code, md.variety_code) if x)
                                 or "no language code")
+        s = self.doc.notebook.session(self.session_date()) if self.session_date() else None
+        if s is not None:
+            keys = {chips.RESEARCHERS: s.researchers, chips.PARTICIPANTS: s.participants,
+                    chips.LOCATIONS: s.locations}
+        else:
+            last = self.prefs.session_for(db.path) if db.path else {}
+            keys = {k: [x for x in last.get(k, []) if isinstance(x, str)] for k in self.sess_rows}
+            if not db.path and not keys[chips.PARTICIPANTS] and self.prefs.speaker in db.participant_codes():
+                keys[chips.PARTICIPANTS] = [self.prefs.speaker]
+        for kind, row in self.sess_rows.items():
+            row.set_keys(keys.get(kind, []))
+        self._fill_speakers()
+
+    def speaker_choices(self) -> list[str]:
+        """Who can be the speaker: the session's participants (all participants if none are picked)."""
+        codes = self.sess_rows[chips.PARTICIPANTS].keys
+        return list(codes) or self.doc.db.participant_codes()
+
+    def _fill_speakers(self):
+        """The speaker list follows the session's participants; the speaker stays if still there,
+        otherwise it is the first participant."""
+        md = self.doc.db.metadata
+        choices = self.speaker_choices()
+        current = self.prefs.speaker
+        if current and current not in choices:
+            current = ""
+        if not current and self.sess_rows[chips.PARTICIPANTS].keys:
+            current = choices[0]
         self.sess_speaker.blockSignals(True)
         self.sess_speaker.clear()
         self.sess_speaker.addItem("")
-        for p in md.participants:
-            self.sess_speaker.addItem(p.code)
-            if p.name:
+        for code in choices:
+            self.sess_speaker.addItem(code)
+            p = md.participant(code)
+            if p and p.name:
                 self.sess_speaker.setItemData(self.sess_speaker.count() - 1, p.name, Qt.ToolTipRole)
-        if self.prefs.speaker and self.sess_speaker.findText(self.prefs.speaker) >= 0:
-            self.sess_speaker.setCurrentText(self.prefs.speaker)
+        self.sess_speaker.setCurrentText(current)
         self.sess_speaker.blockSignals(False)
+        self.prefs.speaker = current
+
+    def set_speaker(self, code: str):
+        """The speaker for the next tokens and recordings (from here or the token dialogue)."""
+        self.prefs.speaker = code
+        self.sess_speaker.blockSignals(True)
+        if code and self.sess_speaker.findText(code) < 0:
+            self.sess_speaker.addItem(code)
+        self.sess_speaker.setCurrentText(code)
+        self.sess_speaker.blockSignals(False)
+
+    def session_keys(self) -> dict[str, list[str]]:
+        return {k: list(row.keys) for k, row in self.sess_rows.items()}
+
+    def _session_people_changed(self):
+        if self.doc.db.path:
+            self.prefs.set_session_for(self.doc.db.path, self.session_keys())
+        self._fill_speakers()
+
+    def _session_date_changed(self):
+        s = self.doc.notebook.session(self.session_date()) if self.session_date() else None
+        if s is not None:                     # a day with notes: its people and places
+            for kind, keys in ((chips.RESEARCHERS, s.researchers), (chips.PARTICIPANTS, s.participants),
+                               (chips.LOCATIONS, s.locations)):
+                self.sess_rows[kind].set_keys(keys)
+            self._fill_speakers()
+        self.write_btn.setEnabled(bool(self.session_date()))
+
+    def work_date(self) -> str:
+        """The day comments are dated with: the session's date, or today without one."""
+        return self.session_date() or today()
 
     def _fill_classes(self):
         names = self.doc.db.settings.tags.word_class_names() + [mx.NO_CLASS]
@@ -587,6 +703,107 @@ class MainWindow(QMainWindow):
 
     def session_speaker(self) -> str:
         return self.sess_speaker.currentText()
+
+    # ============================================================= notebook
+    def _notebook_icons(self):
+        a = theme.accent().name()
+        self.notebook_btn.setIcon(icon("notebook", 34, a))
+        self.write_btn.setIcon(icon("write-notebook", 34, a))
+
+    def _load_notebook(self):
+        problem = self.doc.load_notebook()
+        if problem:
+            QMessageBox.warning(self, "Notebook", problem + "\n\nThe notebook won't be saved over, "
+                                "so nothing in it is lost. Check the file, then open the database again.")
+        # people found in the notebook join the lists (Q8)
+        md = self.doc.db.metadata
+        researchers, participants = self.doc.notebook.people()
+        for codes, people in ((researchers, md.researchers), (participants, md.participants)):
+            have = {p.code for p in people}
+            people += [Person(c) for c in codes if c not in have]
+
+    def _record_comments(self):
+        """Bring the day's notebook session up to date with today's comments (on saving).
+
+        A day with comments but no session yet gets one, with the panel's people and places."""
+        date = self.session_date()
+        if not date:
+            return
+        nb = self.doc.notebook
+        s = nb.session(date)
+        if s is not None:
+            if nbmod.refresh_comments(self.doc.db, s):
+                nb.dirty = True
+        elif nbmod.dated_comments(self.doc.db, date):
+            k = self.session_keys()
+            nbmod.write_session(nb, self.doc.db, date, k[chips.RESEARCHERS], k[chips.PARTICIPANTS],
+                                k[chips.LOCATIONS])
+
+    def write_notebook(self):
+        """Write to notebook: the day's session gets the panel's people and places and the
+        day's comments; its notes and questions are left as they are. The notebook is saved."""
+        date = self.session_date()
+        if not date:
+            QMessageBox.information(self, "Notebook", "The session has no date (No date is on), so "
+                                    "there's no day to write to.")
+            return
+        k = self.session_keys()
+        try:
+            s = nbmod.write_session(self.doc.notebook, self.doc.db, date, k[chips.RESEARCHERS],
+                                    k[chips.PARTICIPANTS], k[chips.LOCATIONS])
+        except nbmod.NotebookError as exc:
+            QMessageBox.warning(self, "Notebook", str(exc))
+            return
+        if not self.doc.db.path:
+            self.doc.notebook_changed()
+            self.statusBar().showMessage("Written to the notebook; it is saved with the database.", 6000)
+        else:
+            try:
+                self.doc.notebook.dirty = True
+                self.doc.save_notebook(self.prefs.backup_folder)
+            except OSError as exc:
+                QMessageBox.warning(self, "Notebook", f"Couldn't save the notebook: {exc}")
+                return
+            self.doc.dirtyChanged.emit(self.doc.dirty)
+            n = len(s.comments)
+            self.statusBar().showMessage(
+                f"Written to the notebook for {date}" + (f", with {n} comment(s)." if n else "."), 6000)
+        if self.notebook_dialog is not None:
+            self.notebook_dialog.reload(date)
+
+    def open_notebook(self, date: str | None = None):
+        from .notebook_dialog import NotebookDialog
+        if self.notebook_dialog is None:
+            self.notebook_dialog = NotebookDialog(self)
+        self.notebook_dialog.reload(date or self.session_date() or None)
+        self.notebook_dialog.show()
+        self.notebook_dialog.raise_()
+        self.notebook_dialog.activateWindow()
+
+    def open_questions(self):
+        from .notebook_dialog import QuestionsDialog
+        dlg = QuestionsDialog(self)
+        dlg.exec()
+        if self.notebook_dialog is not None:
+            self.notebook_dialog.reload()
+
+    def go_to(self, entry, index=None):
+        """Show a lemma (and one of its tokens) from a notebook link."""
+        if entry not in self.doc.db.entries:
+            return False
+        if entry not in self.lemmas.visible_rows():
+            self._clear_lemma_filters()
+        self.lemmas.select_row(entry)
+        if index is not None:
+            self.tabs.setCurrentIndex(ALL_DATA)
+            row = TokenRow(entry, index)
+            if row not in self.all_table.visible_rows():
+                self._clear_all_filters()
+                self.refresh()
+            self.all_table.select_row(row)
+        self.raise_()
+        self.activateWindow()
+        return True
 
     def session_date(self) -> str:
         return "" if self.sess_nodate.isChecked() else self.sess_date.date().toString("yyyy-MM-dd")
@@ -610,6 +827,7 @@ class MainWindow(QMainWindow):
     # ========================================================= theme, view
     def _restyle(self):
         """Colours that follow the theme and accent (the data views stay black on white)."""
+        self._notebook_icons()
         a = theme.accent()
         muted = theme.muted()
         for lbl in (self.lemma_count, self.all_count):
@@ -1277,32 +1495,62 @@ class MainWindow(QMainWindow):
             self.doc.settings_changed()
 
     def edit_tags(self):
-        dlg = TagStructureDialog(self, self.doc.db)
-        if dlg.exec():
-            db = self.doc.db
-            tag_renames, class_renames = dlg.renames()
-            db.settings.tags = dlg.structure()
-            wc_field = db.settings.entry_field("word-class")
-            for e in db.entries:          # follow renamed tags and word classes
-                if wc_field and e.get(wc_field.name) in class_renames:
-                    e.set(wc_field.name, class_renames[e.get(wc_field.name)])
+        self.edit_lists("tags")
+
+    def edit_lists(self, start: str | None = None):
+        """Edit → Lists: people, places, field lists and the tag structure, in one dialogue."""
+        from .lists_dialog import ListsDialog
+        dlg = ListsDialog(self, self.doc.db, self.doc.notebook, start if isinstance(start, str) else None)
+        if not dlg.exec():
+            return
+        db = self.doc.db
+        renames = dlg.apply()
+        speakers = renames[chips.PARTICIPANTS]
+        if speakers:                              # the tokens' speakers follow renamed codes
+            for e in db.entries:
                 for t in e.tokens:
-                    if any(x in tag_renames for x in t.tags):
-                        t.tags = db.settings.tags.sort(db.word_class(e),
-                                                       [tag_renames.get(x, x) for x in t.tags])
-            if tag_renames or class_renames:
-                self.doc.undo.clear()     # renames can't be undone safely
-                for m in db.settings.matrices:            # saved matrices follow too
-                    m.rename(tag_renames, class_renames)
-                old = dict(self.configs)
-                self.configs.clear()
-                for cfg in old.values():                  # and the matrices on screen
-                    cfg.rename(tag_renames, class_renames)
-                    self.configs[(cfg.kind, cfg.word_class)] = cfg
-            self._fill_classes()
-            self._setup_columns()
-            self.doc.settings_changed()
-            self._maybe_update_names()
+                    if t.speaker in speakers:
+                        t.speaker = speakers[t.speaker]
+            self.doc.undo.clear()                 # renames can't be undone safely
+            if self.prefs.speaker in speakers:
+                self.prefs.speaker = speakers[self.prefs.speaker]
+        if any(renames.values()):
+            self.doc.notebook.rename(renames[chips.RESEARCHERS], speakers, renames[chips.LOCATIONS])
+            keys = self.session_keys()
+            for kind, row in self.sess_rows.items():
+                row.set_keys([renames[kind].get(k, k) for k in keys[kind]])
+            self._session_people_changed()
+        self._apply_tags(dlg.tags)
+        self._fill_session()
+        if self.notebook_dialog is not None:
+            self.notebook_dialog.reload()
+
+    def _apply_tags(self, dlg):
+        """Use the tag structure from the tag editor; renamed tags are followed everywhere."""
+        db = self.doc.db
+        tag_renames, class_renames = dlg.renames()
+        db.settings.tags = dlg.structure()
+        wc_field = db.settings.entry_field("word-class")
+        for e in db.entries:          # follow renamed tags and word classes
+            if wc_field and e.get(wc_field.name) in class_renames:
+                e.set(wc_field.name, class_renames[e.get(wc_field.name)])
+            for t in e.tokens:
+                if any(x in tag_renames for x in t.tags):
+                    t.tags = db.settings.tags.sort(db.word_class(e),
+                                                   [tag_renames.get(x, x) for x in t.tags])
+        if tag_renames or class_renames:
+            self.doc.undo.clear()     # renames can't be undone safely
+            for m in db.settings.matrices:            # saved matrices follow too
+                m.rename(tag_renames, class_renames)
+            old = dict(self.configs)
+            self.configs.clear()
+            for cfg in old.values():                  # and the matrices on screen
+                cfg.rename(tag_renames, class_renames)
+                self.configs[(cfg.kind, cfg.word_class)] = cfg
+        self._fill_classes()
+        self._setup_columns()
+        self.doc.settings_changed()
+        self._maybe_update_names()
 
     def edit_settings(self):
         dlg = PreferencesDialog(self, self.doc.db, self.prefs)
@@ -1643,6 +1891,7 @@ class MainWindow(QMainWindow):
     def save(self) -> bool:
         if not self.doc.db.path:
             return self.save_as()
+        self._record_comments()
         try:
             self.doc.save(backup_dir=self.prefs.backup_folder)
         except OSError as exc:

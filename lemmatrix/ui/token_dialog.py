@@ -157,10 +157,10 @@ class TokenDialog(QDialog):
         rl.addWidget(self.name_note, 2, 0, 1, 5)
         rl.addWidget(QLabel("Speaker"), 3, 3, Qt.AlignRight)
         self.speaker = QComboBox()
-        self.speaker.addItem("")
-        for p in self.db.metadata.participants:
-            self.speaker.addItem(p.code)
+        self.speaker.setToolTip("The token's speaker. Choosing one makes them the speaker of the "
+                                "next recordings too, until another is chosen.")
         self.speaker.currentTextChanged.connect(self._fields_changed)
+        self.speaker.activated.connect(lambda _: self.main.set_speaker(self.speaker.currentText()))
         self.speaker.setFixedWidth(130)
         rl.addWidget(self.speaker, 3, 4)
         rl.addWidget(QLabel("Date"), 4, 3, Qt.AlignRight)
@@ -268,11 +268,7 @@ class TokenDialog(QDialog):
         known = {tg.name for tg, _ in s.tags.tags_for(wc)}
         self.unknown_tags = [x for x in t.tags if x not in known]
         self.tags.build(self.db, wc, set(t.tags))
-        self.speaker.blockSignals(True)
-        if t.speaker and self.speaker.findText(t.speaker) < 0:
-            self.speaker.addItem(t.speaker)
-        self.speaker.setCurrentText(t.speaker)
-        self.speaker.blockSignals(False)
+        self._fill_speakers(t.speaker)
         self.date.blockSignals(True)
         self.date.setText(t.collected)
         self.date.blockSignals(False)
@@ -283,6 +279,18 @@ class TokenDialog(QDialog):
         self._refresh_name()
         if getattr(self.main, "dialog_autoplay", False) and t.file:
             QTimer.singleShot(150, self._play)
+
+    def _fill_speakers(self, current: str):
+        """The session's participants (and the token's own speaker, if someone else)."""
+        self.speaker.blockSignals(True)
+        self.speaker.clear()
+        self.speaker.addItem("")
+        for code in self.main.speaker_choices():
+            self.speaker.addItem(code)
+        if current and self.speaker.findText(current) < 0:
+            self.speaker.addItem(current)
+        self.speaker.setCurrentText(current)
+        self.speaker.blockSignals(False)
 
     def _collect(self):
         """Copy the widgets into the working token."""
@@ -462,17 +470,13 @@ class TokenDialog(QDialog):
             return
         self._collect()
         t = self.token
-        # Whoever records now is the token's speaker; the date is the session's.
+        # Whoever is the session's speaker now (perhaps no one) is the token's speaker;
+        # the date is the session's.
         speaker, date = self.main.session_speaker(), self.main.session_date()
-        if speaker:
-            t.speaker = speaker
+        t.speaker = speaker
         if date:
             t.collected = date
-        self.speaker.blockSignals(True)
-        if t.speaker and self.speaker.findText(t.speaker) < 0:
-            self.speaker.addItem(t.speaker)
-        self.speaker.setCurrentText(t.speaker)
-        self.speaker.blockSignals(False)
+        self._fill_speakers(t.speaker)
         self.date.blockSignals(True)
         self.date.setText(t.collected)
         self.date.blockSignals(False)

@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QColorDialog, QComb
                                QTableWidget, QTableWidgetItem, QTabWidget, QTreeWidget,
                                QTreeWidgetItem, QVBoxLayout, QWidget, QInputDialog)
 
-from ..model import (Database, Entry, Group, Participant, Tag, WordClass, forbidden_in, nfc)
+from ..model import (Database, Entry, Group, Tag, WordClass, forbidden_in, nfc)
 from . import theme
 from .widgets import ipa_font
 
@@ -234,67 +234,43 @@ class EntryDialog(QDialog):
 # ==========================================================================
 
 class MetadataDialog(QDialog):
+    """Language, variety, the database's author, description and gloss languages.
+
+    Researchers, participants and locations are lists: Edit → Lists."""
+
     def __init__(self, parent, db: Database):
         super().__init__(parent)
         self.db = db
         md = db.metadata
         self.setWindowTitle("Database metadata")
-        self.resize(560, 520)
+        self.resize(560, 300)
         lay = QVBoxLayout(self)
         form = QFormLayout()
         self.lang_code = NoForbidden(md.language_code)
         self.lang_name = QLineEdit(md.language_name)
         self.var_code = NoForbidden(md.variety_code)
         self.var_name = QLineEdit(md.variety_name)
-        self.researcher = QLineEdit(md.researcher)
+        self.author = QLineEdit(md.author)
+        self.author.setToolTip("Who owns this database. The researchers of each session are in "
+                               "Edit → Lists → Researchers.")
         self.description = QLineEdit(md.description)
         form.addRow("Language code", self.lang_code)
         form.addRow("Language name", self.lang_name)
         form.addRow("Variety code", self.var_code)
         form.addRow("Variety name", self.var_name)
-        form.addRow("Researcher", self.researcher)
+        form.addRow("Author / owner", self.author)
         form.addRow("Description", self.description)
         self.glosses = QLineEdit(" ".join(db.settings.gloss_languages))
         self.glosses.setToolTip("Gloss languages, separated by spaces; the first is the primary one.")
         form.addRow("Gloss languages", self.glosses)
         lay.addLayout(form)
-        lay.addWidget(QLabel("Participants (speakers)"))
-        self.table = QTableWidget(0, 2)
-        self.table.setHorizontalHeaderLabels(["Code", "Name (optional)"])
-        self.table.horizontalHeader().setStretchLastSection(True)
-        for p in md.participants:
-            self._add_row(p.code, p.name)
-        lay.addWidget(self.table)
-        row = QHBoxLayout()
-        add = QPushButton("Add participant")
-        rem = QPushButton("Remove selected")
-        add.clicked.connect(lambda: self._add_row("", ""))
-        rem.clicked.connect(lambda: self.table.removeRow(self.table.currentRow()))
-        row.addWidget(add)
-        row.addWidget(rem)
-        row.addStretch(1)
-        lay.addLayout(row)
+        note = QLabel("Researchers, participants (speakers) and locations: Edit → Lists.")
+        note.setStyleSheet(f"color: {theme.muted()};")
+        lay.addWidget(note)
+        lay.addStretch(1)
         lay.addWidget(_buttons(self))
 
-    def _add_row(self, code, name):
-        r = self.table.rowCount()
-        self.table.insertRow(r)
-        self.table.setItem(r, 0, QTableWidgetItem(code))
-        self.table.setItem(r, 1, QTableWidgetItem(name))
-
     def accept(self):
-        codes = []
-        for r in range(self.table.rowCount()):
-            code = (self.table.item(r, 0).text() if self.table.item(r, 0) else "").strip()
-            if forbidden_in(code):
-                QMessageBox.warning(self, "Metadata", f"The code {code} contains {forbidden_in(code)}, "
-                                    "which isn't allowed in file names.")
-                return
-            if code in codes:
-                QMessageBox.warning(self, "Metadata", f"The code {code} is listed twice.")
-                return
-            if code:
-                codes.append(code)
         langs = self.glosses.text().split()
         if not langs:
             QMessageBox.warning(self, "Metadata", "Give at least one gloss language, e.g. en.")
@@ -307,14 +283,8 @@ class MetadataDialog(QDialog):
         md.language_name = nfc(self.lang_name.text().strip())
         md.variety_code = nfc(self.var_code.text().strip())
         md.variety_name = nfc(self.var_name.text().strip())
-        md.researcher = nfc(self.researcher.text().strip())
+        md.author = nfc(self.author.text().strip())
         md.description = nfc(self.description.text().strip())
-        md.participants = []
-        for r in range(self.table.rowCount()):
-            code = (self.table.item(r, 0).text() if self.table.item(r, 0) else "").strip()
-            name = (self.table.item(r, 1).text() if self.table.item(r, 1) else "").strip()
-            if code:
-                md.participants.append(Participant(nfc(code), nfc(name)))
         langs = self.glosses.text().split()
         self.db.settings.gloss_languages = langs
         self.db.settings.primary_gloss = langs[0]
@@ -565,7 +535,8 @@ class TagStructureDialog(QDialog):
             b.clicked.connect(lambda *_, fn=fn: fn())   # ignore the 'checked' flag
             row.addWidget(b)
         lay.addLayout(row)
-        lay.addWidget(_buttons(self))
+        self.button_box = _buttons(self)
+        lay.addWidget(self.button_box)
         self._fill()
 
     # tree <-> structure ------------------------------------------------
@@ -834,22 +805,27 @@ class TagStructureDialog(QDialog):
         cur.setExpanded(True)
 
     def accept(self):
+        if self.validate():
+            super().accept()
+
+    def validate(self) -> bool:
+        """Check the structure before it's used: False (after saying why) if it can't be."""
         ts = self.structure()
         bad_names, _, _ = self._problems()
         if bad_names:
             QMessageBox.warning(self, "Tag structure", "Two tags in one word class have the same name "
                                 "(shown in red). Tokens store tag names, so they couldn't be told apart:\n\n"
                                 + "\n".join(sorted(set(bad_names.values()))))
-            return
+            return False
         for _, g in ts.all_leaf_groups():
             for t in g.tags:
                 if not t.default and not t.code:
                     QMessageBox.warning(self, "Tag structure",
                                         f"“{t.name}” needs a code. Only a group's default can be without one.")
-                    return
+                    return False
         dups = ts.duplicate_codes()
         if dups and QMessageBox.question(self, "Tag structure", "Some codes are shared, so file names "
                                          "couldn't be told apart:\n" + "\n".join(dups) +
                                          "\n\nKeep them anyway?") != QMessageBox.Yes:
-            return
-        super().accept()
+            return False
+        return True

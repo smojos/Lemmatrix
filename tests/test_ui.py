@@ -343,7 +343,7 @@ def test_renamed_tags_follow_into_matrices(win, monkeypatch):
                     if t.name == "Plural":
                         t.name = "Many"
             return ts
-    monkeypatch.setattr(mw, "TagStructureDialog", Fake)
+    _tag_editor(monkeypatch, lambda dlg: Fake())
     win.edit_tags()
     assert db.settings.matrices[-1].x == [mx.Spec(frozenset({"Many"}), mx.LOOSE)]
     assert win.configs[(mx.TAG_TAG, "NOUN")].y == [mx.Spec(frozenset({"Many"}), mx.LOOSE)]
@@ -524,18 +524,28 @@ def test_app_icon_has_every_size(app):
     assert {(16, 16), (32, 32), (256, 256)} <= sizes
 
 
-def _set_singular_code(win, monkeypatch, code):
-    from lemmatrix.ui import main_window as mw
-    from lemmatrix.ui.dialogs import TagStructureDialog
+def _tag_editor(monkeypatch, change):
+    """Edit → Lists answers OK at once, with change(dialogue) applied to its tag editor
+    (or the tag editor replaced by what change returns)."""
+    from lemmatrix.ui import lists_dialog as ld
+    real_init = ld.ListsDialog.__init__
 
-    class D(TagStructureDialog):
-        def exec(self):
-            for i in range(self.tree.topLevelItemCount()):
-                for it in self._tag_items(self.tree.topLevelItem(i)):
-                    if it.text(0) == "Singular":
-                        it.setText(1, code)
-            return True
-    monkeypatch.setattr(mw, "TagStructureDialog", D)
+    def init(self, *a, **k):
+        real_init(self, *a, **k)
+        replacement = change(self.tags)
+        if replacement is not None:
+            self.tags = replacement
+    monkeypatch.setattr(ld.ListsDialog, "__init__", init)
+    monkeypatch.setattr(ld.ListsDialog, "exec", lambda self: True)
+
+
+def _set_singular_code(win, monkeypatch, code):
+    def change(tags):
+        for i in range(tags.tree.topLevelItemCount()):
+            for it in tags._tag_items(tags.tree.topLevelItem(i)):
+                if it.text(0) == "Singular":
+                    it.setText(1, code)
+    _tag_editor(monkeypatch, change)
     win.edit_tags()
 
 
@@ -766,3 +776,171 @@ def test_ctrl_click_makes_a_line_for_each_combination(win):
         mp.undo()
     assert lst.specs() == specs + [mx.Spec.citation()]
     dlg.close()
+
+
+# ---- notebook ---------------------------------------------------------------
+
+def _today():
+    from lemmatrix.model import today
+    return today()
+
+
+def test_saving_records_todays_comments_in_the_notebook(win, tmp_path):
+    from lemmatrix import notebook as nb
+    from lemmatrix.model import Person
+    db = win.doc.db
+    db.metadata.researchers = [Person("JS", "Josh")]
+    win.sess_rows["researchers"].set_keys(["JS"])
+    win.sess_rows["participants"].set_keys(["SP1"])
+    win._session_people_changed()
+    e = db.entry_by_ref("D002")
+    win.doc.edit_entry(e, lambda x: x.set("Comment", "check the vowel"), "comment")
+    assert e.changed == {"Comment": _today()}
+    win.save()
+    book = nb.load(tmp_path / "Sample.notebook")
+    s = book.session(_today())
+    assert s.researchers == ["JS"] and s.participants == ["SP1"]
+    assert [c.text for c in s.comments] == ["check the vowel"]
+    # undoing the comment and saving again takes it out of today's record
+    win.doc.undo.undo()
+    win.save()
+    assert nb.load(tmp_path / "Sample.notebook").session(_today()).comments == []
+
+
+def test_write_to_notebook_keeps_notes_and_saves_the_notebook(win, tmp_path):
+    from lemmatrix import notebook as nb
+    win.sess_rows["participants"].set_keys(["ABC"])
+    win._session_people_changed()
+    win.write_notebook()
+    path = tmp_path / "Sample.notebook"
+    assert path.exists()
+    win.doc.notebook.session(_today()).notes = "my notes"
+    win.sess_rows["participants"].set_keys(["SP1", "ABC"])
+    win.write_notebook()
+    s = nb.load(path).session(_today())
+    assert s.notes == "my notes" and s.participants == ["SP1", "ABC"]
+
+
+def test_first_participant_is_the_speaker_until_another_is_chosen(win):
+    from lemmatrix.ui.token_dialog import Slot, TokenDialog
+    win.prefs.speaker = ""
+    win.sess_rows["participants"].set_keys(["ABC", "SP1"])
+    win._session_people_changed()
+    assert win.session_speaker() == "ABC"
+    e = win.doc.db.entry_by_ref("D002")
+    dlg = TokenDialog(win, [Slot(e, 0)], 0)
+    items = [dlg.speaker.itemText(i) for i in range(dlg.speaker.count())]
+    assert items[:3] == ["", "ABC", "SP1"]
+    dlg.speaker.setCurrentText("SP1")
+    dlg.speaker.activated.emit(dlg.speaker.currentIndex())
+    assert win.session_speaker() == "SP1"
+    dlg.reject()
+    win.sess_rows["participants"].set_keys(["ABC"])        # SP1 leaves the session
+    win._session_people_changed()
+    assert win.session_speaker() == "ABC"
+
+
+def test_notebook_window_edits_and_links(win, tmp_path):
+    from lemmatrix import notebook as nb
+    from lemmatrix.ui.notebook_dialog import NotebookDialog
+    db = win.doc.db
+    e = db.entry_by_ref("D002")
+    win.doc.edit_entry(e, lambda x: x.tokens[0].set("Comment", "token note"), "comment")
+    win.open_notebook()
+    d = win.notebook_dialog
+    assert isinstance(d, NotebookDialog) and d.session is None    # no notes yet
+    d.add_note(_today())
+    assert d.session.date == _today()
+    assert [c.text for c in d.session.comments] == ["token note"]
+    assert d.comments.topLevelItemCount() == 1
+    d.notes.setPlainText("ɗæær [ATR]")
+    assert d.session.notes == "ɗæær [ATR]" and win.doc.dirty
+    d.session.questions.append(nb.Question("Why?", _today()))
+    d._fill_questions()
+    d.questions.setCurrentItem(d.questions.topLevelItem(0))
+    d.toggle_resolved()
+    assert d.session.questions[0].resolved == _today()
+    # the link goes to the token
+    d._follow(d.comments.topLevelItem(0))
+    assert win.all_table.current_row() == type(win.all_table.current_row())(e, 0)
+    win.save()
+    assert nb.load(tmp_path / "Sample.notebook").session(_today()).notes == "ɗæær [ATR]"
+    # search, and a past day pulls its speakers
+    d.search.setText("ATR")
+    d._search_changed()
+    assert d.days.count() == 1
+    d.search.setText("zzz")
+    d._search_changed()
+    assert d.days.count() == 0
+    d.search.clear()
+    d._search_changed()
+    d.add_note("2026-10-09")
+    assert d.session.participants == ["SP1"]                  # who spoke the tokens of that day
+    assert d.recordings.topLevelItemCount() > 0
+    d.delete_note()
+    assert win.doc.notebook.session("2026-10-09") is None
+
+
+def test_deleted_lemma_link_says_so(win):
+    from lemmatrix import notebook as nb
+    db = win.doc.db
+    e = db.entry_by_ref("D002")
+    s = win.doc.notebook.add_session("2026-10-01")
+    s.comments.append(nb.NoteComment("old", e.id, "", e.ref, "D002 x"))
+    win.doc.delete_entry(e)
+    win.open_notebook("2026-10-01")
+    it = win.notebook_dialog.comments.topLevelItem(0)
+    assert "no longer exists" in it.text(1)
+
+
+def test_lists_rename_a_participant_everywhere(win, monkeypatch):
+    from lemmatrix.ui import lists_dialog as ld
+    db = win.doc.db
+    s = win.doc.notebook.add_session("2026-10-01")
+    s.participants = ["SP1"]
+    n = sum(1 for e in db.entries for t in e.tokens if t.speaker == "SP1")
+    assert n
+
+    def run(self):
+        t = self.participants.table
+        t.item(0, 0).setText("KD")
+        return True
+    monkeypatch.setattr(ld.ListsDialog, "exec", run)
+    win.edit_lists("participants")
+    assert db.participant_codes()[0] == "KD"
+    assert sum(1 for e in db.entries for t in e.tokens if t.speaker == "KD") == n
+    assert s.participants == ["KD"]
+
+
+def test_lists_dialog_reads_and_writes_people_and_places(win):
+    from lemmatrix.model import Location, Person
+    from lemmatrix.ui.lists_dialog import ListsDialog
+    db = win.doc.db
+    db.metadata.locations = [Location("Sudan", "SU", children=[Location("Sample variety village", "VXX-V", "village")])]
+    dlg = ListsDialog(win, db, win.doc.notebook, "locations")
+    dlg.researchers._add_row(Person("JS", "Josh"))
+    tree = dlg.locations.tree
+    tree.setCurrentItem(tree.topLevelItem(0))
+    dlg.locations._add_inside()
+    tree.currentItem().setText(0, "Blue Nile")
+    tree.currentItem().setText(1, "BND")
+    dlg.apply()
+    assert db.metadata.researcher("JS").name == "Josh"
+    assert db.metadata.location_path("BND") == "Sudan › Blue Nile"
+    assert db.metadata.location("VXX-V").description == "village"
+    dlg.participants._add_row(Person("SP1"))                  # twice
+    assert "twice" in dlg.participants.problem()
+
+
+def test_questions_window(win):
+    from lemmatrix import notebook as nb
+    from lemmatrix.ui.notebook_dialog import QuestionsDialog
+    s = win.doc.notebook.add_session("2026-10-01")
+    s.questions = [nb.Question("open one", "2026-10-01"), nb.Question("done", "2026-10-01", "", "2026-10-02")]
+    dlg = QuestionsDialog(win)
+    assert dlg.tree.topLevelItemCount() == 1                   # open ones first
+    dlg.show_which.setCurrentIndex(dlg.show_which.findData("all"))
+    assert dlg.tree.topLevelItemCount() == 2
+    dlg.tree.setCurrentItem(dlg.tree.topLevelItem(0))
+    dlg.toggle()
+    assert not s.questions[0].is_open and win.doc.dirty
