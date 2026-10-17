@@ -133,6 +133,7 @@ class TokenDialog(QDialog):
         self.tags.setFont(self.font())
         self.tags.on_change = self._tags_changed
         scroll = QScrollArea()
+        scroll.setFocusPolicy(Qt.NoFocus)          # not a stop of its own when tabbing
         scroll.setWidgetResizable(True)
         scroll.setWidget(self.tags)
         scroll.setFrameShape(QFrame.NoFrame)
