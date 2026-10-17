@@ -128,6 +128,17 @@ class Prefs:
     def pitch_volume(self, v): self.q.setValue("pitch/volume", int(v))
 
     @property
+    def autoplay_tokens(self) -> bool:
+        """One Auto-play setting for every tab (before, each matrix had its own)."""
+        v = self.q.value("matrix/autoplay")
+        if v is None:
+            return self.get_bool("matrix/autoplay_lemma-tag") or self.get_bool("matrix/autoplay_tag-tag")
+        return self._get("matrix/autoplay", False, bool)
+
+    @autoplay_tokens.setter
+    def autoplay_tokens(self, v): self.q.setValue("matrix/autoplay", bool(v))
+
+    @property
     def only_lemmas_with_data(self) -> bool:
         return self._get("matrix/only_with_data", False, bool)
 

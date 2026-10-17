@@ -696,18 +696,29 @@ def test_only_lemmas_with_data_and_backup_folder(win, tmp_path):
     db = win.doc.db
     win.lemmas.select_row(db.entry_by_ref("D001"))
     win.tabs.setCurrentIndex(mw.LEMMA_TAG)
-    win.lt_bar["only_data"].setChecked(False)
+    win.only_data.setChecked(False)
     db.entries.append(db.new_entry("D099", gloss="unrecorded"))
     db.entries[-1].tokens.clear()
     db.entries[-1].set("WordClass", "NOUN")
     win.lemmas.set_rows(db.entries)
     win.refresh()
     all_rows = len(win.layouts[mw.LEMMA_TAG].rows)
-    win.lt_bar["only_data"].setChecked(True)
+    win.only_data.setChecked(True)
     rows = win.layouts[mw.LEMMA_TAG].rows
     assert len(rows) == all_rows - 1 and all(r.entry.ref != "D099" for r in rows)
     assert "hidden" in win.count_line.text()
-    win.lt_bar["only_data"].setChecked(False)
+    # the same tick works in All data and Tag/Tag
+    db.entries[-1].tokens.append(db.new_token(db.entries[-1]))      # an empty token: no data
+    win.tabs.setCurrentIndex(mw.ALL_DATA)
+    win.refresh()
+    assert all(r.entry.ref != "D099" for r in win.all_table.model_.rows)
+    win.lemmas.select_row(db.entry_by_ref("D099"))
+    win.tabs.setCurrentIndex(mw.TAG_TAG)
+    win.refresh()
+    assert "no token data" in win.count_line.text()
+    win.only_data.setChecked(False)
+    win.tabs.setCurrentIndex(mw.ALL_DATA)
+    assert any(r.entry.ref == "D099" for r in win.all_table.model_.rows)
     # backups go to the chosen folder
     win.prefs.backup_folder = str(tmp_path / "MyBackups")
     try:

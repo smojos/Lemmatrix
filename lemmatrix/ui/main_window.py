@@ -194,9 +194,28 @@ class MainWindow(QMainWindow):
         for w in (self.all_table, self.lt_view, self.tt_view):
             self.views.addWidget(w)
         bxl.addWidget(self.views, 1)
+        # options for every tab
+        self.autoplay = QCheckBox("Auto-play token soundfile")
+        self.autoplay.setToolTip("Play a token's recording when you click it (in any tab) and when "
+                                 "the token dialogue opens on it")
+        self.autoplay.setChecked(self.prefs.autoplay_tokens)
+        self.autoplay.toggled.connect(lambda on: setattr(self.prefs, "autoplay_tokens", bool(on)))
+        self.only_data = QCheckBox("Show only lemmas with token data")
+        self.only_data.setToolTip("All data: leave out lemmas whose tokens are all empty. Lemma/Tag: "
+                                  "leave out lemmas with nothing in any of the matrix's columns. "
+                                  "Tag/Tag: show nothing for a lemma without token data.")
+        self.only_data.setChecked(self.prefs.only_lemmas_with_data)
+        self.only_data.toggled.connect(self._only_data_toggled)
+        opts = QHBoxLayout()
+        opts.setContentsMargins(4, 0, 0, 0)
+        opts.addWidget(self.autoplay)
+        opts.addSpacing(16)
+        opts.addWidget(self.only_data)
+        opts.addStretch(1)
+        bxl.addLayout(opts)
         normal = QFont(box.font())
         normal.setBold(False)              # set explicitly, or it would be inherited bold
-        for w in (self.count_line, self.tabs, self.views):
+        for w in (self.count_line, self.tabs, self.views, self.autoplay, self.only_data):
             w.setFont(normal)
         right.addWidget(box)
 
@@ -240,6 +259,7 @@ class MainWindow(QMainWindow):
         self.all_table.contextRequested.connect(self._all_menu)
         self.all_table.space_plays = True
         self.all_table.playRequested.connect(self.play_selected)
+        self.all_table.clicked.connect(lambda *_: self.autoplay.isChecked() and self.play_selected())
         self.all_table.model_.edited.connect(self._cell_edited)
         self.lemmas.model_.edited.connect(self._lemma_edited)
         self.tabs.currentChanged.connect(self._tab_changed)
@@ -298,18 +318,7 @@ class MainWindow(QMainWindow):
         d["saved"].setMinimumWidth(170)
         d["saved"].setToolTip("Saved matrices for this word class")
         d["saved"].activated.connect(lambda i, tab=tab: self._saved_chosen(tab, i))
-        d["autoplay"] = QCheckBox("Auto-play token soundfile")
-        key = f"matrix/autoplay_{KINDS[tab]}"
-        d["autoplay"].setChecked(self.prefs.get_bool(key))
-        d["autoplay"].toggled.connect(lambda on, key=key: self.prefs.set_value(key, bool(on)))
-        if tab == LEMMA_TAG:
-            d["only_data"] = QCheckBox("Show only lemmas with token data")
-            d["only_data"].setToolTip("Hide lemmas with nothing in any of this matrix's columns")
-            d["only_data"].setChecked(self.prefs.only_lemmas_with_data)
-            d["only_data"].toggled.connect(self._only_data_toggled)
-            self._row(bl, QLabel("Matrix class"), d["cls"], d["autoplay"], d["only_data"])
-        else:
-            self._row(bl, QLabel("Matrix class"), d["cls"], d["autoplay"])
+        self._row(bl, QLabel("Matrix class"), d["cls"])
         self._row(bl, QLabel("Matrix"), d["saved"],
                   tool("Save matrix", None, lambda tab=tab: self.save_matrix(tab),
                        "Save this matrix under a name"),
@@ -1023,9 +1032,12 @@ class MainWindow(QMainWindow):
         self._scan_sound_folder()
         visible = self.lemmas.visible_rows()
         self.lemma_count.setText(f"{len(visible)} of {len(db.entries)} lemmas shown")
+        only_data = self.only_data.isChecked()
         if tab == ALL_DATA:
             vis = set(map(id, visible))
-            rows = [TokenRow(e, i) for e in db.entries if id(e) in vis for i in range(len(e.tokens))]
+            rows = [TokenRow(e, i) for e in db.entries if id(e) in vis
+                    and (not only_data or any(t.has_content() for t in e.tokens))
+                    for i in range(len(e.tokens))]
             self.all_table.set_rows(rows)
             if not getattr(self, "_all_sized", False) and rows:
                 self.all_table.resizeColumnsToContents()
@@ -1038,7 +1050,7 @@ class MainWindow(QMainWindow):
             ents = mx.in_class(db, visible, cfg.word_class)
             lay = mx.lemma_tag_layout(db, ents, cfg)
             hidden = ""
-            if self.lt_bar["only_data"].isChecked() and lay.rows:
+            if only_data and lay.rows:
                 with_data = {lay.rows[r].entry.ref for r, _ in lay.cells}
                 kept = [e for e in ents if e.ref in with_data]
                 if len(kept) != len(ents):
@@ -1055,7 +1067,11 @@ class MainWindow(QMainWindow):
             if e is not None and e not in visible:
                 e = None
             self._set_class(TAG_TAG, self._class_for(TAG_TAG))
-            lay = mx.tag_tag_layout(db, e, cfg)
+            if only_data and e is not None and not any(t.has_content() for t in e.tokens):
+                lay = mx.Layout(message="This lemma has no token data (Show only lemmas with token "
+                                        "data is on).")
+            else:
+                lay = mx.tag_tag_layout(db, e, cfg)
             view = self.tt_view
             self.count_line.setText(f"{e.ref}  {db.lemma(e)}  “{db.gloss(e)}”  ·  "
                                     f"{mx.class_label(mx.class_of(db, e))}" if e else "")
@@ -1192,8 +1208,7 @@ class MainWindow(QMainWindow):
     def _open_dialog(self, slots, index, tab):
         if not slots:
             return
-        self.dialog_autoplay = tab != ALL_DATA and \
-            (self.lt_bar if tab == LEMMA_TAG else self.tt_bar)["autoplay"].isChecked()
+        self.dialog_autoplay = self.autoplay.isChecked()
         dlg = TokenDialog(self, slots, index)
         dlg.exec()
         self.refresh()
@@ -1223,8 +1238,7 @@ class MainWindow(QMainWindow):
         self._open_dialog(slots, idx, tab)
 
     def _token_clicked(self, tab, r, c, n):
-        bar = self.lt_bar if tab == LEMMA_TAG else self.tt_bar
-        if n >= 0 and bar["autoplay"].isChecked():
+        if n >= 0 and self.autoplay.isChecked():
             self.play_selected()
 
     def _cell_edited(self, row, key, text):

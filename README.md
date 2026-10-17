@@ -48,12 +48,13 @@ If something goes wrong, a message box shows the details, and they're also writt
     list with Any / Exactly / No selected), Configure columns, in-place editing, right-click menu.
   - *Lemma/Tag:* lemmas of one Matrix class down the side, tag columns (Citation / Exact /
     Loose) across the top; Configure cell, Configure matrix (duplicate a line, Remove all,
-    Restore all present), Save / Rename / Delete / Clear matrix, auto-play.
+    Restore all present), Save / Rename / Delete / Clear matrix.
   - *Tag/Tag:* the selected lemma's paradigm from a configured matrix; contradictory cells
     are greyed out.
   - Tokens matching one cell sit side by side with chips for what they add (e.g. +GEN).
   - Double-click a token to edit it; double-click an empty cell to add one there;
     Delete, Enter, Ctrl+Space (play) and Ctrl+Shift+Space (play the pitch) work on the selected token; the ⇄ button swaps rows and columns.
+  - One options row for every tab: Auto-play token soundfile, Show only lemmas with token data.
   - The last view of each database (tab, lemma, matrices) comes back when you reopen it.
 - **Token dialogue:** live pitch drawing, tag chips (one per group, defaults pre-selected),
   live file name with its full path, record / stop with a level meter, play, delete recording,
