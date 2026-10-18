@@ -44,8 +44,20 @@ def new_id() -> str:
 
 
 # --------------------------------------------------------------------------
-# Tag structure: word class -> groups (nested) -> tags
+# Tag structure: groups (nested) -> tags
 # --------------------------------------------------------------------------
+#
+# One hierarchy for the whole database, organised however the user likes (by word
+# class, by construction, by frame...). Any tag can go on any token. Two rules stay:
+# a token takes at most one tag from each lowest-level group, and tag names are
+# unique in the whole structure (tokens store the names).
+#
+# A group can say which word classes it is *usual* for (e.g. Verbal: VERB). This is
+# only a hint: it decides which groups the token dialogue shows first, which
+# defaults new tokens get, and which tags are marked as unusual. Subgroups take
+# their parent's hint unless they have their own; a group without one (at any
+# level) is usual for every lemma.
+
 
 @dataclass
 class Tag:
@@ -67,6 +79,7 @@ class Group:
     name: str
     tags: list[Tag] = field(default_factory=list)
     groups: list["Group"] = field(default_factory=list)
+    usual: list[str] = field(default_factory=list)    # word classes it's usual for ([]: its parent's)
 
     def leaf_groups(self, path: tuple[str, ...] = ()):
         """Yield (path, group) for every group that directly holds tags, in order."""
@@ -76,6 +89,11 @@ class Group:
         for sub in self.groups:
             yield from sub.leaf_groups(here)
 
+    def walk(self):
+        yield self
+        for sub in self.groups:
+            yield from sub.walk()
+
     def default_tag(self) -> Tag | None:
         for t in self.tags:
             if t.default:
@@ -84,91 +102,94 @@ class Group:
 
 
 @dataclass
-class WordClass:
-    name: str
+class TagStructure:
     groups: list[Group] = field(default_factory=list)
 
-
-@dataclass
-class TagStructure:
-    word_classes: list[WordClass] = field(default_factory=list)
-    all_classes: list[Group] = field(default_factory=list)
-
     # ---- lookups -------------------------------------------------------
-    def word_class(self, name: str) -> WordClass | None:
-        for wc in self.word_classes:
-            if wc.name == name:
-                return wc
-        return None
+    def leaf_groups(self) -> list[tuple[tuple[str, ...], Group]]:
+        """(path, group) for every group that holds tags, in tag order."""
+        return [x for g in self.groups for x in g.leaf_groups()]
 
-    def word_class_names(self) -> list[str]:
-        return [wc.name for wc in self.word_classes]
+    def all_groups(self):
+        for g in self.groups:
+            yield from g.walk()
 
-    def leaf_groups_for(self, word_class: str | None):
-        """(path, group) for every tag group open to a word class, in tag order.
+    def tags(self) -> list[tuple[Tag, Group]]:
+        return [(t, g) for _, g in self.leaf_groups() for t in g.tags]
 
-        Word-class groups come first, then the all-classes groups. An unknown
-        or empty word class gets only the all-classes groups.
-        """
-        out = []
-        wc = self.word_class(word_class) if word_class else None
-        if wc:
-            for g in wc.groups:
-                out.extend(g.leaf_groups((wc.name,)))
-        for g in self.all_classes:
-            out.extend(g.leaf_groups(("All classes",)))
-        return out
-
-    def all_leaf_groups(self):
-        """Every leaf group in the structure, word classes first."""
-        out = []
-        for wc in self.word_classes:
-            for g in wc.groups:
-                out.extend(g.leaf_groups((wc.name,)))
-        for g in self.all_classes:
-            out.extend(g.leaf_groups(("All classes",)))
-        return out
-
-    def tags_for(self, word_class: str | None) -> list[tuple[Tag, Group]]:
-        return [(t, g) for _, g in self.leaf_groups_for(word_class) for t in g.tags]
-
-    def find(self, word_class: str | None, name: str) -> tuple[Tag, Group] | None:
-        for t, g in self.tags_for(word_class):
+    def find(self, name: str) -> tuple[Tag, Group] | None:
+        for t, g in self.tags():
             if t.name == name:
                 return t, g
         return None
 
-    def find_anywhere(self, name: str) -> Tag | None:
-        for _, g in self.all_leaf_groups():
-            for t in g.tags:
-                if t.name == name:
-                    return t
-        return None
+    def tag(self, name: str) -> Tag | None:
+        hit = self.find(name)
+        return hit[0] if hit else None
+
+    def path_of(self, group: Group) -> tuple[str, ...]:
+        for path, g in self.leaf_groups():
+            if g is group:
+                return path
+        return (group.name,)
+
+    # ---- usual-for hints -----------------------------------------------
+    def usual_map(self) -> dict[int, tuple[str, ...]]:
+        """id(group) -> the word classes it is usual for, inherited ((): every lemma)."""
+        out: dict[int, tuple[str, ...]] = {}
+
+        def walk(g: Group, inherited: tuple[str, ...]):
+            mine = tuple(g.usual) or inherited
+            out[id(g)] = mine
+            for sub in g.groups:
+                walk(sub, mine)
+        for g in self.groups:
+            walk(g, ())
+        return out
+
+    def is_usual(self, group: Group, classes, usual: dict | None = None) -> bool:
+        """classes: the lemma's word class and the classes above it in the Word Class list."""
+        hint = (usual or self.usual_map()).get(id(group), ())
+        return not hint or bool(set(hint) & set(classes))
+
+    def usual_groups(self, classes) -> list[tuple[tuple[str, ...], Group]]:
+        usual = self.usual_map()
+        return [(p, g) for p, g in self.leaf_groups() if self.is_usual(g, classes, usual)]
+
+    def unusual(self, classes, names) -> list[str]:
+        """The tags among names whose group isn't usual for a lemma of these classes."""
+        usual = self.usual_map()
+        out = []
+        for n in names:
+            hit = self.find(n)
+            if hit and not self.is_usual(hit[1], classes, usual):
+                out.append(n)
+        return out
+
+    def rename_classes(self, renames: dict[str, str]):
+        """Follow renamed word classes in the hints."""
+        if not renames:
+            return
+        for g in self.all_groups():
+            g.usual = list(dict.fromkeys(renames.get(c, c) for c in g.usual))
 
     # ---- ordering and checking ----------------------------------------
-    def sort(self, word_class: str | None, names) -> list[str]:
+    def sort(self, names) -> list[str]:
         """Sort tag names into tag order. Unknown names keep their order, last."""
-        order = {}
-        if self.word_class(word_class or ""):
-            order = {t.name: i for i, (t, _) in enumerate(self.tags_for(word_class))}
-        # Tags from other word classes (or with no word class given) fall back to
-        # the order of the whole structure.
-        for _, g in self.all_leaf_groups():
-            for t in g.tags:
-                order.setdefault(t.name, 1000 + len(order))
+        order = {t.name: i for i, (t, _) in enumerate(self.tags())}
         names = list(dict.fromkeys(names))  # drop duplicates, keep first
         known = sorted((n for n in names if n in order), key=order.get)
         unknown = [n for n in names if n not in order]
         return known + unknown
 
-    def conflicts(self, word_class: str | None, names) -> list[str]:
-        """Describe tags that break the one-tag-per-group rule or don't belong."""
+    def conflicts(self, names) -> list[str]:
+        """Describe tags that break the one-tag-per-group rule or aren't in the structure."""
         problems = []
         seen: dict[int, str] = {}
         for n in names:
-            hit = self.find(word_class, n)
+            hit = self.find(n)
             if hit is None:
-                problems.append(f'"{n}" is not a tag for {word_class or "entries without a word class"}')
+                problems.append(f'"{n}" is not in the tag structure')
                 continue
             _, g = hit
             if id(g) in seen:
@@ -177,56 +198,59 @@ class TagStructure:
                 seen[id(g)] = n
         return problems
 
-    def with_defaults(self, word_class: str | None, names) -> list[str]:
-        """Add each group's default where the group has no tag yet."""
+    def with_defaults(self, names, classes=()) -> list[str]:
+        """Add the default of each group usual for the lemma, where the group has no tag yet."""
         names = list(names)
         used_groups = set()
         for n in names:
-            hit = self.find(word_class, n)
+            hit = self.find(n)
             if hit:
                 used_groups.add(id(hit[1]))
-        for _, g in self.leaf_groups_for(word_class):
+        for _, g in self.usual_groups(classes):
             d = g.default_tag()
             if d and id(g) not in used_groups:
                 names.append(d.name)
-        return self.sort(word_class, names)
+        return self.sort(names)
 
-    def file_codes(self, word_class: str | None, names) -> list[str]:
+    def file_codes(self, names) -> list[str]:
         codes = []
-        for n in self.sort(word_class, names):
-            hit = self.find(word_class, n)
-            code = hit[0].file_code() if hit else n
+        for n in self.sort(names):
+            t = self.tag(n)
+            code = t.file_code() if t else n
             if code:
                 codes.append(code)
         return codes
 
-    def display(self, word_class: str | None, names) -> str:
+    def display(self, names) -> str:
         """Short label for a tag combination, e.g. 'PL + GEN'."""
-        names = self.sort(word_class, names)
+        names = self.sort(names)
         if not names:
             return "Citation"
         labels = []
         for n in names:
-            t = self.find(word_class, n)
-            t = t[0] if t else self.find_anywhere(n)
+            t = self.tag(n)
             labels.append(t.display() if t else n)
         return " + ".join(labels)
 
+    def duplicate_names(self) -> list[str]:
+        seen: dict[str, int] = {}
+        for t, _ in self.tags():
+            seen[t.name] = seen.get(t.name, 0) + 1
+        return [n for n, k in seen.items() if k > 1]
+
     def duplicate_codes(self) -> list[str]:
-        """Codes shared by two tags open to the same word class."""
+        """Codes shared by two tags: their file names couldn't be told apart."""
         problems = []
-        classes = self.word_class_names() + [None]
-        for wc in classes:
-            seen: dict[str, str] = {}
-            for t, _ in self.tags_for(wc):
-                c = t.file_code()
-                if not c:
-                    continue
-                if c in seen and seen[c] != t.name:
-                    msg = f'{wc or "All classes"}: "{seen[c]}" and "{t.name}" share the code {c}'
-                    if msg not in problems:
-                        problems.append(msg)
-                seen.setdefault(c, t.name)
+        seen: dict[str, str] = {}
+        for t, _ in self.tags():
+            c = t.file_code()
+            if not c:
+                continue
+            if c in seen and seen[c] != t.name:
+                msg = f'"{seen[c]}" and "{t.name}" share the code {c}'
+                if msg not in problems:
+                    problems.append(msg)
+            seen.setdefault(c, t.name)
         return problems
 
 
@@ -289,24 +313,6 @@ class RefCategory:
 
 
 @dataclass
-class TagAction:
-    """What happens to one tag when a lemma changes word class (the tag conversion dialogue)."""
-    kind: str = ""               # convert, new, delete ("" = not chosen yet)
-    tag: str = ""                # convert: the new class's tag; new: the new tag's name
-    code: str = ""               # new: its file-name code
-    group: str = ""              # new: the group of the new class it goes in (made if missing)
-
-
-@dataclass
-class Conversion:
-    """A saved tag conversion, e.g. "VERB → NOUN (nominalisation)"."""
-    name: str
-    from_class: str = ""
-    to_class: str = ""
-    actions: dict[str, TagAction] = field(default_factory=dict)   # old tag name -> action
-
-
-@dataclass
 class Settings:
     entry_fields: list[FieldDef] = field(default_factory=list)
     token_fields: list[FieldDef] = field(default_factory=list)
@@ -325,7 +331,6 @@ class Settings:
     pitch_style: str = "contours"
     play_cell_on_click: bool = False
     matrices: list = field(default_factory=list)      # saved MatrixConfig objects
-    conversions: list[Conversion] = field(default_factory=list)   # saved tag conversions
     extra: list = field(default_factory=list)   # unknown settings elements, kept as-is
 
     def entry_field(self, role_or_name: str) -> FieldDef | None:
@@ -341,10 +346,30 @@ class Settings:
         return None
 
     def list_items(self, f: FieldDef) -> list[ListItem]:
-        """The list behind a closed field (the word classes for Word Class)."""
-        if f.role == "word-class":
-            return [ListItem(n) for n in self.tags.word_class_names()]
+        """The list behind a closed field."""
         return f.items
+
+    def word_classes(self) -> list[str]:
+        """Every value in the Word Class list, nested ones included, in list order."""
+        f = self.entry_field("word-class")
+        return f.all_values() if f else []
+
+    def class_and_above(self, word_class: str) -> list[str]:
+        """A word class and the classes above it in the Word Class list (Kinship -> Relational, NOUN)."""
+        if not word_class:
+            return []
+        f = self.entry_field("word-class")
+
+        def find(items, path):
+            for it in items:
+                if it.name == word_class:
+                    return path + [it.name]
+                hit = find(it.children, path + [it.name])
+                if hit:
+                    return hit
+            return None
+        path = find(f.items, []) if f else None
+        return list(reversed(path)) if path else [word_class]
 
 
 # --------------------------------------------------------------------------
@@ -505,6 +530,7 @@ class Database:
     settings: Settings = field(default_factory=Settings)
     entries: list[Entry] = field(default_factory=list)
     path: str = ""                                    # where it was loaded from / saved to
+    load_notes: list = field(default_factory=list, compare=False)   # e.g. what an upgrade changed
 
     # ---- convenience accessors ---------------------------------------
     def lemma(self, e: Entry) -> str:
@@ -518,6 +544,14 @@ class Database:
     def word_class(self, e: Entry) -> str:
         f = self.settings.entry_field("word-class")
         return e.get(f.name) if f else ""
+
+    def classes(self, e: Entry) -> list[str]:
+        """The entry's word class and those above it: what the tag groups' hints are matched with."""
+        return self.settings.class_and_above(self.word_class(e))
+
+    def unusual_tags(self, e: Entry, names) -> list[str]:
+        """Tags among names that aren't usual for the entry's word class (the soft warning)."""
+        return self.settings.tags.unusual(self.classes(e), names)
 
     def entry_by_ref(self, ref: str) -> Entry | None:
         for e in self.entries:
@@ -586,12 +620,11 @@ class Database:
         tagless; pass defaults=True to pre-select the defaults anyway (e.g. for
         "Add new token", where the tags are picked afterwards).
         """
-        wc = self.word_class(e)
         tags = list(tags)
         if defaults is None:
             defaults = bool(tags)
         if defaults:
-            tags = self.settings.tags.with_defaults(wc, tags)
+            tags = self.settings.tags.with_defaults(tags, self.classes(e))
         return Token(tags=tags, speaker=speaker, collected=date)
 
     # ---- sound files -------------------------------------------------

@@ -15,10 +15,14 @@ from pathlib import Path
 
 from . import pitch as pitchmod
 from .matrix import CITATION, EXACT, LOOSE, MatrixConfig, Spec
-from .model import (Conversion, Database, Entry, FieldDef, Group, ListItem, Location, Metadata, Person,
-                    RefCategory, Settings, Tag, TagAction, TagStructure, Token, WordClass, new_id, nfc)
+from .model import (Database, Entry, FieldDef, Group, ListItem, Location, Metadata, Person,
+                    RefCategory, Settings, Tag, TagStructure, Token, new_id, nfc)
 
-FORMAT_VERSION = "1"
+FORMAT_VERSION = "2"
+# Format 1 (to 18 October 2026) tied tags to word classes: <word-class> sections of the tag
+# structure plus <all-classes>, and the Word Class list lived there. Format 2 has one free
+# hierarchy of groups with "usual for" hints; format 1 files are upgraded when opened.
+READABLE = ("1", "2")
 BACKUPS_KEPT = 10
 
 
@@ -55,8 +59,12 @@ def _load_field(el) -> FieldDef:
     return f
 
 
+def _split(text: str | None) -> list[str]:
+    return [nfc(x.strip()) for x in (text or "").split(",") if x.strip()]
+
+
 def _load_group(el) -> Group:
-    g = Group(name=nfc(el.get("name", "")))
+    g = Group(name=nfc(el.get("name", "")), usual=_split(el.get("usual")))
     for child in el:
         if child.tag == "tag":
             g.tags.append(Tag(name=nfc(child.get("name", "")), code=nfc(child.get("code", "")),
@@ -67,17 +75,26 @@ def _load_group(el) -> Group:
     return g
 
 
-def _load_tags(el) -> TagStructure:
+def _load_tags(el) -> tuple[TagStructure, list[str]]:
+    """The tag structure, and (format 1) the word classes that were its top level."""
     ts = TagStructure()
+    classes: list[str] = []
     if el is None:
-        return ts
+        return ts, classes
+    shared = []
     for child in el:
-        if child.tag == "word-class":
-            ts.word_classes.append(WordClass(nfc(child.get("name", "")),
-                                             [_load_group(g) for g in child.findall("group")]))
-        elif child.tag == "all-classes":
-            ts.all_classes = [_load_group(g) for g in child.findall("group")]
-    return ts
+        if child.tag == "group":
+            ts.groups.append(_load_group(child))
+        elif child.tag == "word-class":             # format 1: a word class's own groups
+            name = nfc(child.get("name", ""))
+            classes.append(name)
+            groups = [_load_group(g) for g in child.findall("group")]
+            if groups:
+                ts.groups.append(Group(name, groups=groups, usual=[name]))
+        elif child.tag == "all-classes":            # format 1: groups open to every class
+            shared = [_load_group(g) for g in child.findall("group")]
+    ts.groups += shared
+    return ts, classes
 
 
 KNOWN_SETTINGS = {"entry-fields", "token-fields", "glosses", "tag-structure", "references",
@@ -97,27 +114,13 @@ def _load_matrices(el) -> list[MatrixConfig]:
     if el is None:
         return out
     for m in el.findall("matrix"):
-        cfg = MatrixConfig(name=nfc(m.get("name", "")), kind=m.get("kind", "lemma-tag"),
-                           word_class=nfc(m.get("word-class", "")))
+        cfg = MatrixConfig(name=nfc(m.get("name", "")), kind=m.get("kind", "lemma-tag"))
+        cfg.old_class = nfc(m.get("word-class", ""))      # format 1 only, for the upgrade
         cfg.y = _load_specs(m, "y")
         cfg.x = _load_specs(m, "x")
         if m.get("cell") is not None:
             cfg.cell = m.get("cell").split()
         out.append(cfg)
-    return out
-
-
-def _load_conversions(el) -> list[Conversion]:
-    """<tag-conversions><conversion name="…" from="VERB" to="NOUN"><tag name="…" action="…"/>…"""
-    out = []
-    if el is None:
-        return out
-    for c in el.findall("conversion"):
-        conv = Conversion(nfc(c.get("name", "")), nfc(c.get("from", "")), nfc(c.get("to", "")))
-        for t in c.findall("tag"):
-            conv.actions[nfc(t.get("name", ""))] = TagAction(
-                t.get("action", ""), nfc(t.get("to", "")), nfc(t.get("code", "")), nfc(t.get("group", "")))
-        out.append(conv)
     return out
 
 
@@ -132,7 +135,7 @@ def _load_settings(el) -> Settings:
     if (x := el.find("glosses")) is not None:
         s.gloss_languages = (x.get("languages") or "en").split()
         s.primary_gloss = x.get("primary") or s.gloss_languages[0]
-    s.tags = _load_tags(el.find("tag-structure"))
+    s.tags, s.old_classes = _load_tags(el.find("tag-structure"))
     if (x := el.find("references")) is not None:
         s.ref_scheme = x.get("scheme", "categories")
         s.ref_digits = int(x.get("digits", "3") or 3)
@@ -150,7 +153,6 @@ def _load_settings(el) -> Settings:
     if (x := el.find("playback")) is not None:
         s.play_cell_on_click = _bool(x.get("play-cell-on-click"))
     s.matrices = _load_matrices(el.find("display"))
-    s.conversions = _load_conversions(el.find("tag-conversions"))
     s.extra = [child for child in el if child.tag not in KNOWN_SETTINGS]
     return s
 
@@ -218,7 +220,8 @@ def load(path: str | os.PathLike) -> Database:
         raise FormatError(f"This file isn't readable XML: {exc}") from exc
     if root.tag != "database":
         raise FormatError("This isn't a Lemmatrix database (the top element should be <database>).")
-    if root.get("format", FORMAT_VERSION) != FORMAT_VERSION:
+    version = root.get("format", FORMAT_VERSION)
+    if version not in READABLE:
         raise FormatError(f"This database uses format {root.get('format')}, "
                           f"which this version of Lemmatrix can't read.")
 
@@ -246,7 +249,90 @@ def load(path: str | os.PathLike) -> Database:
             e.tokens.append(t)
         db.entries.append(e)
     _unique_ids(db)
+    if version == "1":
+        _upgrade_from_1(db)
     return db
+
+
+def _upgrade_from_1(db: Database):
+    """Format 1 → 2: tags no longer belong to word classes.
+
+    Each word class's groups become a top-level group of the same name, usual for that
+    class; the all-classes groups follow, with no hint. The Word Class list, which was the
+    tag structure's top level, becomes the Word Class field's own list. Tag names must now
+    be unique in the whole structure: a name used under two word classes keeps it under the
+    first, and is "Name (CLASS)" under the others, in the tokens and saved matrices too.
+    Saved matrices are no longer filed by word class; a name used twice gets "(CLASS)".
+    Nothing else changes: codes, so sound file names, stay as they were.
+    """
+    s = db.settings
+    classes = getattr(s, "old_classes", [])
+    notes = ["This database was made with an earlier Lemmatrix, in which tags belonged to word "
+             "classes. Its tag structure has been upgraded: each word class's groups are now a "
+             "group of the same name, usual for that word class, and any tag can go on any token. "
+             "The file is saved in the new format (a backup of the old one is kept)."]
+    wcf = s.entry_field("word-class")
+    if wcf is not None and not wcf.items:
+        wcf.items = [ListItem(c) for c in classes]
+    # A tag name used under two word classes. The same tag (name, code and group name all
+    # alike, e.g. Plural PL in NOUN, ADJECTIVE and QUANT › Number) becomes one: the first
+    # class's group is made usual for the other classes too. Different tags with one name
+    # keep it under the first class and get "Name (CLASS)" under the others.
+    renames: dict[str, dict[str, str]] = {}              # word class -> {old name: new name}
+    taken = {t.name for t, _ in s.tags.tags()}
+    first: dict[str, tuple] = {}                         # tag name -> (tag, group, top group)
+    for top in list(s.tags.groups):
+        owner = top.usual[0] if top.usual else ""
+        for g in list(top.walk()):
+            for t in list(g.tags):
+                if t.name not in first:
+                    first[t.name] = (t, g, top)
+                    continue
+                if not owner:
+                    continue
+                t0, g0, top0 = first[t.name]
+                if (t0.code, t0.default, g0.name) == (t.code, t.default, g.name):
+                    hint = g0.usual or list(top0.usual)
+                    if owner not in hint:
+                        g0.usual = hint + [owner]
+                    g.tags.remove(t)
+                    note = (f"“{t.name}” was a tag of several word classes; it is now one tag, in "
+                            f"{top0.name} › {g0.name}, usual for {', '.join(g0.usual)}.")
+                    if note not in notes:
+                        notes = [n for n in notes if not n.startswith(f"“{t.name}” was a tag of several")]
+                        notes.append(note)
+                    continue
+                new = f"{t.name} ({owner})"
+                k = 2
+                while new in taken:
+                    new, k = f"{t.name} ({owner} {k})", k + 1
+                taken.add(new)
+                renames.setdefault(owner, {})[t.name] = new
+                notes.append(f"The tag “{t.name}” was used under more than one word class with a different "
+                             f"code or group: under {owner} it is now “{new}”. Rename it in Edit → Lists → "
+                             "Tag structure.")
+                t.name = new
+
+    def prune(g):
+        g.groups = [x for x in g.groups if prune(x)]
+        return bool(g.tags or g.groups)
+    s.tags.groups = [g for g in s.tags.groups if prune(g)]
+    if renames:
+        for e in db.entries:
+            r = renames.get(db.word_class(e))
+            if r:
+                for tok in e.tokens:
+                    tok.tags = [r.get(x, x) for x in tok.tags]
+    names: set[tuple[str, str]] = set()
+    for m in s.matrices:
+        old = getattr(m, "old_class", "")
+        if old in renames:
+            m.rename(renames[old], {})
+        if (m.kind, m.name) in names:
+            m.name = f"{m.name} ({old or '(none)'})"
+            notes.append(f"Two saved matrices were called the same; one is now “{m.name}”.")
+        names.add((m.kind, m.name))
+    db.load_notes = notes
 
 
 # --------------------------------------------------------------------------
@@ -271,13 +357,14 @@ def _save_field(parent, f: FieldDef):
         el.set("role", f.role)
     if f.closed:
         el.set("closed", "yes")
-        if f.role != "word-class":           # the word classes live in the tag structure
-            for item in f.items:
-                _save_item(el, item)
+        for item in f.items:
+            _save_item(el, item)
 
 
 def _save_group(parent, g: Group):
     el = ET.SubElement(parent, "group", name=g.name)
+    if g.usual:
+        el.set("usual", ", ".join(g.usual))
     for t in g.tags:
         tel = ET.SubElement(el, "tag", name=t.name)
         if t.code and not t.default:
@@ -350,14 +437,8 @@ def to_element(db: Database) -> ET.Element:
         _save_field(x, f)
     ET.SubElement(st, "glosses", languages=" ".join(s.gloss_languages), primary=s.primary_gloss)
     x = ET.SubElement(st, "tag-structure")
-    for wc in s.tags.word_classes:
-        wel = ET.SubElement(x, "word-class", name=wc.name)
-        for g in wc.groups:
-            _save_group(wel, g)
-    if s.tags.all_classes:
-        ael = ET.SubElement(x, "all-classes")
-        for g in s.tags.all_classes:
-            _save_group(ael, g)
+    for g in s.tags.groups:
+        _save_group(x, g)
     x = ET.SubElement(st, "references", scheme=s.ref_scheme, digits=str(s.ref_digits))
     for c in s.ref_categories:
         cel = ET.SubElement(x, "category", letter=c.letter)
@@ -373,27 +454,13 @@ def to_element(db: Database) -> ET.Element:
         disp = ET.SubElement(st, "display")
         for m in s.matrices:
             mel = ET.SubElement(disp, "matrix", {"name": m.name, "kind": m.kind,
-                                                 "word-class": m.word_class,
                                                  "cell": " ".join(m.cell)})
             for axis, specs in (("y", m.y), ("x", m.x)):
                 for sp in specs:
                     a = {"match": sp.match}
                     if sp.tags:
-                        a["tags"] = ", ".join(s.tags.sort(m.word_class or None, list(sp.tags)))
+                        a["tags"] = ", ".join(s.tags.sort(list(sp.tags)))
                     ET.SubElement(mel, axis, a)
-    if s.conversions:
-        cel = ET.SubElement(st, "tag-conversions")
-        for c in s.conversions:
-            el = ET.SubElement(cel, "conversion", {"name": c.name, "from": c.from_class, "to": c.to_class})
-            for name, act in c.actions.items():
-                a = {"name": name, "action": act.kind}
-                if act.tag:
-                    a["to"] = act.tag
-                if act.code:
-                    a["code"] = act.code
-                if act.group:
-                    a["group"] = act.group
-                ET.SubElement(el, "tag", a)
     for extra in s.extra:
         st.append(extra)
 
@@ -407,9 +474,8 @@ def to_element(db: Database) -> ET.Element:
         _save_values(el, e, s.entry_fields, langs)
         for t in e.tokens:
             tattrs = {}
-            wc = db.word_class(e)
             if t.tags:
-                tattrs["tags"] = ", ".join(s.tags.sort(wc, t.tags))
+                tattrs["tags"] = ", ".join(s.tags.sort(t.tags))
             for key, val in (("speaker", t.speaker), ("collected", t.collected), ("file", t.file)):
                 if val:
                     tattrs[key] = val

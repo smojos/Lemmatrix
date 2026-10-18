@@ -156,7 +156,7 @@ def describe(db: Database, e: Entry, t: Token | None = None) -> str:
         return base
     from .matrix import chips, default_names
     names = [x for x in t.tags if x not in default_names(db)]
-    label = " + ".join(chips(db, names, db.word_class(e) or None)) or "citation"
+    label = " + ".join(chips(db, names)) or "citation"
     return f"{base} · {label}"
 
 

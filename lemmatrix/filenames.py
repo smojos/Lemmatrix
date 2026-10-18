@@ -41,14 +41,13 @@ def split_pattern(pattern: str) -> tuple[str, list[tuple[str, str]]]:
 def placeholder_values(db: Database, e: Entry, t: Token) -> dict[str, str]:
     md = db.metadata
     s = db.settings
-    wc = db.word_class(e)
     values = {
         "language": md.language_code,
         "variety": md.variety_code,
         "speaker": t.speaker,
         "reference": e.ref,
         "gloss": e.file_gloss,
-        "tags": s.tag_separator.join(s.tags.file_codes(wc, t.tags)),
+        "tags": s.tag_separator.join(s.tags.file_codes(t.tags)),
         "date": t.collected,
     }
     # Any entry or token field by name (first language for multilingual ones).

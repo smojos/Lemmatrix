@@ -77,6 +77,14 @@ class Prefs:
         self.q.setValue(key, "|".join(values))
 
     @property
+    def warn_unusual_tags(self) -> bool:
+        """Mark tags that aren't usual for their lemma's word class (Settings → General → Warnings)."""
+        return self._get("warnings/unusual_tags", True, bool)
+
+    @warn_unusual_tags.setter
+    def warn_unusual_tags(self, v): self.q.setValue("warnings/unusual_tags", bool(v))
+
+    @property
     def confirm_delete(self) -> bool:
         return self._get("safety/confirm_delete", True, bool)
 

@@ -102,8 +102,13 @@ def test_matrix_tabs_render(win):
     win.lemmas.select_row(win.doc.db.entry_by_ref("D001"))
     win.tabs.setCurrentIndex(LEMMA_TAG)
     lay = win.layouts[LEMMA_TAG]
-    assert lay.rows and all(mx.class_of(win.doc.db, r.entry) == "NOUN" for r in lay.rows)
-    assert "NOUN lemmas shown" in win.count_line.text()
+    assert not lay.cols and "Blank matrix" in win.count_line.text()      # blank until configured
+    cfg = win.config_for(LEMMA_TAG)
+    cfg.x = [mx.Spec.citation(), mx.Spec(frozenset({"Plural"}), mx.LOOSE)]
+    win.refresh()
+    lay = win.layouts[LEMMA_TAG]
+    assert len(lay.rows) == len(win.doc.db.entries)                      # every word class
+    assert "lemmas shown" in win.count_line.text()
     win.tabs.setCurrentIndex(TAG_TAG)
     assert win.layouts[TAG_TAG].message == "Please configure a matrix."
     cfg = win.config_for(TAG_TAG)
@@ -113,14 +118,6 @@ def test_matrix_tabs_render(win):
     lay = win.layouts[TAG_TAG]
     assert len(lay.rows) == 2 and lay.tokens(1, 1)               # PL + GEN exists for goat
     assert all(s.entry is not None for s in win._slots(TAG_TAG))
-
-
-def test_selecting_a_verb_switches_matrix_class(win):
-    from lemmatrix.ui.main_window import LEMMA_TAG
-    win.tabs.setCurrentIndex(LEMMA_TAG)
-    win.lemmas.select_row(win.doc.db.entry_by_ref("V001"))
-    assert win.lt_bar["cls"].currentData() == "VERB"
-    assert all(r.entry.ref.startswith("V") for r in win.layouts[LEMMA_TAG].rows)
 
 
 def test_tag_filter_in_all_data(win):
@@ -185,23 +182,30 @@ def test_fields_dialog_renames_and_adds(win):
 def test_configure_matrix_dialog_round_trip(win):
     from lemmatrix import matrix as mx
     from lemmatrix.ui.matrix_dialogs import ConfigureMatrixDialog
-    cfg = mx.MatrixConfig(kind=mx.TAG_TAG, word_class="VERB", y=[mx.Spec(frozenset({"1SG.A"}))],
+    cfg = mx.MatrixConfig(kind=mx.TAG_TAG, y=[mx.Spec(frozenset({"1SG.A"}))],
                           x=[mx.Spec.citation()])
     dlg = ConfigureMatrixDialog(win, win.doc.db, cfg)
     out = dlg.result_config()
     assert out.y == cfg.y and out.x == cfg.x
 
 
-def test_save_matrix_is_stored_with_its_class(win, monkeypatch):
+def test_save_matrix(win, monkeypatch):
+    from lemmatrix import matrix as mx
     from lemmatrix.ui import main_window
     from lemmatrix.ui.main_window import LEMMA_TAG
     monkeypatch.setattr(main_window, "ask_matrix_name", lambda *a, **k: "Noun overview")
     win.lemmas.select_row(win.doc.db.entry_by_ref("D001"))
     win.tabs.setCurrentIndex(LEMMA_TAG)
+    win.save_matrix(LEMMA_TAG)                                   # a blank matrix isn't saved
+    assert win.doc.db.settings.matrices == []
+    win.config_for(LEMMA_TAG).x = [mx.Spec(frozenset({"Plural"}), mx.LOOSE)]
     win.save_matrix(LEMMA_TAG)
     saved = win.doc.db.settings.matrices
-    assert [m.name for m in saved] == ["Noun overview"] and saved[0].word_class == "NOUN"
-    assert saved[0].x                                            # automatic columns were fixed
+    assert [m.name for m in saved] == ["Noun overview"] and saved[0].x
+    win.tabs.setCurrentIndex(main_window.TAG_TAG)               # Tag/Tag lists only its own kind
+    assert win.tt_bar["saved"].findText("Noun overview") < 0
+    win.tabs.setCurrentIndex(LEMMA_TAG)
+    assert win.lt_bar["saved"].findText("Noun overview") > 0
 
 
 def _button(widget, text):
@@ -282,9 +286,9 @@ def test_closing_with_unsaved_changes_and_discarding(app, tmp_path, monkeypatch)
 def test_new_matrix_lines_default_to_loose_and_duplicate(win, monkeypatch):
     from lemmatrix import matrix as mx
     from lemmatrix.ui import matrix_dialogs as md
-    dlg = md.SpecDialog(win, win.doc.db, "NOUN")
+    dlg = md.SpecDialog(win, win.doc.db)
     assert dlg.radios[mx.LOOSE].isChecked()
-    lst = md.SpecList(win.doc.db, "NOUN", [mx.Spec(frozenset({"Plural", "before H"}), mx.EXACT)], "X",
+    lst = md.SpecList(win.doc.db, [mx.Spec(frozenset({"Plural", "before H"}), mx.EXACT)], "X",
                       present=lambda: [mx.Spec.citation()])
     lst.list.setCurrentRow(0)
     monkeypatch.setattr(md.SpecDialog, "exec", lambda self: True)
@@ -320,10 +324,10 @@ def test_renamed_tags_follow_into_matrices(win, monkeypatch):
     from lemmatrix import matrix as mx
     from lemmatrix.ui import main_window as mw
     db = win.doc.db
-    db.settings.matrices.append(mx.MatrixConfig("Pl", mx.LEMMA_TAG, "NOUN",
+    db.settings.matrices.append(mx.MatrixConfig("Pl", mx.LEMMA_TAG,
                                                 x=[mx.Spec(frozenset({"Plural"}), mx.LOOSE)]))
-    win.configs[(mx.TAG_TAG, "NOUN")] = mx.MatrixConfig(kind=mx.TAG_TAG, word_class="NOUN",
-                                                        y=[mx.Spec(frozenset({"Plural"}), mx.LOOSE)],
+    win.configs[mx.TAG_TAG] = mx.MatrixConfig(kind=mx.TAG_TAG,
+                                              y=[mx.Spec(frozenset({"Plural"}), mx.LOOSE)],
                                                         x=[mx.Spec(frozenset({"before H"}), mx.LOOSE)])
 
     class Fake:
@@ -334,11 +338,11 @@ def test_renamed_tags_follow_into_matrices(win, monkeypatch):
             return True
 
         def renames(self):
-            return {"Plural": "Many"}, {}
+            return {"Plural": "Many"}
 
         def structure(self):
             ts = db.settings.tags
-            for _, g in ts.all_leaf_groups():
+            for _, g in ts.leaf_groups():
                 for t in g.tags:
                     if t.name == "Plural":
                         t.name = "Many"
@@ -346,7 +350,7 @@ def test_renamed_tags_follow_into_matrices(win, monkeypatch):
     _tag_editor(monkeypatch, lambda dlg: Fake())
     win.edit_tags()
     assert db.settings.matrices[-1].x == [mx.Spec(frozenset({"Many"}), mx.LOOSE)]
-    assert win.configs[(mx.TAG_TAG, "NOUN")].y == [mx.Spec(frozenset({"Many"}), mx.LOOSE)]
+    assert win.configs[mx.TAG_TAG].y == [mx.Spec(frozenset({"Many"}), mx.LOOSE)]
     assert any("Many" in t.tags for e in db.entries for t in e.tokens)
 
 
@@ -638,7 +642,7 @@ def test_find_recordings_added_by_hand_for_tokens_without_one(win):
 
 
 def test_online_only_recordings_are_marked_and_explained(win, monkeypatch):
-    from lemmatrix import audio
+    from lemmatrix import audio, matrix as mx
     from lemmatrix.ui import main_window as mw
     db = win.doc.db
     folder = storage.sound_folder(db)
@@ -647,6 +651,7 @@ def test_online_only_recordings_are_marked_and_explained(win, monkeypatch):
     monkeypatch.setattr(storage, "scan_sound_folder", lambda f: (real_scan(f)[0], {cloudy}))
     win.lemmas.select_row(db.entry_by_ref("D001"))
     win.tabs.setCurrentIndex(mw.LEMMA_TAG)
+    win.config_for(mw.LEMMA_TAG).x = mx.auto_specs(db, db.entries)
     win.refresh()
     assert win.lt_view.cloud_files == {cloudy}
     lay = win.layouts[mw.LEMMA_TAG]
@@ -696,6 +701,8 @@ def test_only_lemmas_with_data_and_backup_folder(win, tmp_path):
     db = win.doc.db
     win.lemmas.select_row(db.entry_by_ref("D001"))
     win.tabs.setCurrentIndex(mw.LEMMA_TAG)
+    from lemmatrix import matrix as mx
+    win.config_for(mw.LEMMA_TAG).x = mx.auto_specs(db, db.entries)
     win.only_data.setChecked(False)
     db.entries.append(db.new_entry("D099", gloss="unrecorded"))
     db.entries[-1].tokens.clear()
@@ -758,7 +765,7 @@ def test_ctrl_click_makes_a_line_for_each_combination(win):
     from lemmatrix import matrix as mx
     from lemmatrix.ui import matrix_dialogs as md
     old = mx.Spec(frozenset({"3SG.A", "Past"}), mx.LOOSE)
-    dlg = md.SpecDialog(win, win.doc.db, "VERB", old)       # opening with a spec works
+    dlg = md.SpecDialog(win, win.doc.db, old)              # opening with a spec works
     dlg.show()
     b = dlg.tags.buttons
     QTest.mouseClick(b["3PL.A"], Qt.LeftButton, Qt.ControlModifier)     # 3SG.A and 3PL.A
@@ -772,7 +779,7 @@ def test_ctrl_click_makes_a_line_for_each_combination(win):
     assert not b["3SG.A"].isChecked() and not b["3PL.A"].isChecked()
     assert len(dlg.specs()) == 2
     # editing a line in the list puts the extra combinations just below it
-    lst = md.SpecList(win.doc.db, "VERB", [old, mx.Spec.citation()], "X")
+    lst = md.SpecList(win.doc.db, [old, mx.Spec.citation()], "X")
     lst.list.setCurrentRow(0)
     class Fake:
         def __init__(self, *a, **k): pass
@@ -1091,46 +1098,47 @@ def test_bulk_tag_change_renames_and_undo_renames_back(win):
     assert not (folder / "LXX-VXX_E001_duck_SG-GEN.wav").exists()
 
 
-def test_word_class_change_opens_the_conversion(win, monkeypatch):
-    from lemmatrix import bulk
-    from lemmatrix.ui import conversion_dialog as cd
+def test_word_class_is_an_ordinary_field_now(win):
     db = win.doc.db
     nɨn = db.entry_by_ref("V002")
-    seen = {}
-
-    def fake_exec(self):
-        seen["tags"] = [s.name for s in self.stranded]
-        assert not self.buttons.button(cd.QDialogButtonBox.Ok).isEnabled()   # nothing chosen yet
-        for row in self.rows:
-            if row.stranded.name == "Past":
-                row.set(cd.TagAction(bulk.CONVERT, "Plural"))
-            elif row.stranded.name in ("1SG.S", "3SG.S"):
-                row.set(cd.TagAction(bulk.NEW, "Person " + row.stranded.name[0], row.stranded.name[0], "Person"))
-            else:
-                row.set(cd.TagAction(bulk.DELETE))
-        self._check()
-        return self.buttons.button(cd.QDialogButtonBox.Ok).isEnabled()
-    monkeypatch.setattr(cd.TagConversionDialog, "exec", fake_exec)
-    wcf = db.settings.entry_field("word-class").name
-    win._lemma_edited(nɨn, wcf, "NOUN")
-    assert "Simple" in seen["tags"] and "isolation" not in seen["tags"]
-    assert db.word_class(nɨn) == "NOUN"
-    tags = [set(t.tags) for t in nɨn.tokens]
-    assert {"Person 3", "Plural", "isolation"} in tags
-    assert db.settings.tags.find("NOUN", "Person 1") is not None
+    before = [list(t.tags) for t in nɨn.tokens]
+    wcf = db.settings.entry_field("word-class")
+    win._lemma_edited(nɨn, wcf.name, "NOMINAL")             # a new class goes into the list
+    assert db.word_class(nɨn) == "NOMINAL" and "NOMINAL" in wcf.all_values()
+    assert [t.tags for t in nɨn.tokens] == before            # the tags stay
+    assert db.unusual_tags(nɨn, nɨn.tokens[1].tags)          # and are now marked as unusual
     win.doc.undo.undo()
     assert db.word_class(nɨn) == "VERB"
-    assert any("Simple" in t.tags for t in nɨn.tokens)
 
 
-def test_word_class_change_cancelled_changes_nothing(win, monkeypatch):
-    from lemmatrix.ui import conversion_dialog as cd
+def test_token_dialog_shows_usual_groups_first(win):
+    from lemmatrix.ui.token_dialog import Slot, TokenDialog
     db = win.doc.db
     goat = db.entry_by_ref("D001")
-    monkeypatch.setattr(cd.TagConversionDialog, "exec", lambda self: False)
-    wcf = db.settings.entry_field("word-class").name
-    win._lemma_edited(goat, wcf, "VERB")
-    assert db.word_class(goat) == "NOUN"
+    dlg = TokenDialog(win, [Slot(goat, 1)], 0)
+    assert "Plural" in dlg.tags.buttons and "Past" not in dlg.tags.buttons
+    assert dlg.show_all_btn.isVisibleTo(dlg) and "more group" in dlg.show_all_btn.text()
+    dlg.show_all_btn.setChecked(True)
+    assert "Past" in dlg.tags.buttons and dlg.tags.buttons["Past"].unusual
+    dlg.tags.buttons["Past"].setChecked(True)
+    assert not dlg.unusual_note.isHidden() and "isn't usual for NOUN" in dlg.unusual_note.text()
+    dlg._ok()
+    assert "Past" in goat.tokens[1].tags                     # allowed, only marked
+    dlg = TokenDialog(win, [Slot(goat, 1)], 0)                # a group with a picked tag always shows
+    assert "Past" in dlg.tags.buttons
+    dlg._stop_unusual_warning()                               # "Don't show this again"
+    assert not win.prefs.warn_unusual_tags
+    win.set_unusual_warning(True)
+
+
+def test_upgrading_an_old_database_is_reported(win, tmp_path, monkeypatch):
+    shown = []
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: shown.append(a[2]))
+    old = Path(__file__).resolve().parent / "data" / "Sample-format1.xml"
+    shutil.copy2(old, tmp_path / "Old.xml")
+    win.load_database(storage.load(tmp_path / "Old.xml"))
+    assert shown and "upgraded" in shown[0]
+    assert win.doc.dirty                                     # so saving writes the new format
 
 
 def test_bulk_window_screenshot_layout(win):
@@ -1153,3 +1161,20 @@ def test_option_panels_hide_and_show(win):
     win.toggle_panels()
     assert not win.panels_hidden()
     assert win.left_split.sizes()[1] > 0 and win.right_split.sizes()[1] > 0
+
+
+def test_renaming_a_word_class_follows_into_lemmas_and_hints(win):
+    from lemmatrix.ui.lists_dialog import ListsDialog
+    db = win.doc.db
+    dlg = ListsDialog(win, db, win.doc.notebook)
+    tree = dlg.class_list.tree
+    verb = next(tree.topLevelItem(i) for i in range(tree.topLevelItemCount())
+                if tree.topLevelItem(i).text(0) == "VERB")
+    verb.setText(0, "Verbal")
+    assert next(g for g in dlg.tags.structure().groups if g.name == "VERB").usual == ["Verbal"]
+    assert dlg.value_renames() == {"WordClass": {"VERB": "Verbal"}}
+    dlg.apply()
+    win._apply_tags(dlg.tags, dlg.value_renames())
+    assert db.word_class(db.entry_by_ref("V001")) == "Verbal"
+    assert "Verbal" in db.settings.word_classes()
+    assert db.unusual_tags(db.entry_by_ref("V001"), ["Past"]) == []     # still usual

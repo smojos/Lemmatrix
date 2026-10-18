@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 
 from lemmatrix import bulk, storage
-from lemmatrix.model import TagAction
 
 SAMPLES = Path(__file__).resolve().parent.parent / "samples"
 
@@ -111,10 +110,12 @@ def test_add_tag_replaces_the_group_and_renames(db):
     assert p.renames and p.renames[0][1].name == "LXX-VXX_D001_goat_PL.wav"
 
 
-def test_adding_a_tag_the_class_lacks_is_an_error(db):
+def test_adding_an_unusual_tag_is_a_warning_not_an_error(db):
     verb = next(e for e in db.entries if db.word_class(e) == "VERB")
-    p = bulk.plan(db, bulk.TOKENS, [(verb, 0)], bulk.SetValue("tags", "Plural"))
-    assert not p.ok and "has no tag Plural" in p.problems[0].message
+    p = bulk.plan(db, bulk.TOKENS, [(verb, 1)], bulk.SetValue("tags", "Plural"))
+    assert p.ok and p.unusual == 1
+    assert any("isn't usual" in line for line in bulk.summary(p, bulk.TOKENS))
+    assert not any("isn't usual" in line for line in bulk.summary(p, bulk.TOKENS, warn_unusual=False))
 
 
 def test_removing_a_tag_that_would_make_duplicates_is_an_error(db):
@@ -179,72 +180,20 @@ def test_forbidden_characters_are_refused(db):
     assert not p.ok
 
 
-# ---- word class ------------------------------------------------------------
+# ---- word class ----------------------------------------------------------------
 
-def test_stranded_tags_and_suggestions(db):
+def test_word_class_change_keeps_the_tags(db):
     goat = db.entry_by_ref("D001")
-    need, kept = bulk.stranded_tags(db, [goat], "VERB")
-    names = {s.name for s in need}
-    assert "Singular" in names and all(not s.suggested.kind for s in need)
-    assert all(bulk.all_classes_tag(db.settings.tags, k) for k in kept)
-    need, _ = bulk.stranded_tags(db, [goat], "NOUN")
-    assert need == []                          # already a noun
-
-
-def test_word_class_change_with_conversion(db):
-    folder, names = disk(db)
-    goat = db.entry_by_ref("D001")
-    need, _ = bulk.stranded_tags(db, [goat], "ADJECTIVE")
-    actions = {}
-    for s in need:
-        if s.name == "Plural":
-            actions[s.name] = TagAction(bulk.NEW, "Plural", "PL", "Number")
-        else:
-            actions[s.name] = TagAction(bulk.DELETE)
     wcf = db.settings.entry_field("word-class").name
-    p = bulk.plan(db, bulk.LEMMAS, [(goat, None)], bulk.SetValue(wcf, "ADJECTIVE", conversion=actions),
-                  folder=folder, on_disk=names)
-    # deleting every case/number tag but Plural leaves many tokens identical: an error
-    assert not p.ok and any("would both be" in pr.message for pr in p.problems)
-
-
-def test_word_class_change_to_a_class_with_the_same_tags(db):
-    """A noun made a noun-like class keeps its tags when the names match."""
-    from lemmatrix.model import Group, Tag, WordClass
-    ts = db.settings.tags
-    noun = ts.word_class("NOUN")
-    import copy
-    ts.word_classes.append(WordClass("NOMINAL", copy.deepcopy(noun.groups)))
-    goat = db.entry_by_ref("D001")
-    need, _ = bulk.stranded_tags(db, [goat], "NOMINAL")
-    assert all(s.suggested.kind == bulk.CONVERT for s in need)
-    actions = {s.name: s.suggested for s in need}
-    wcf = db.settings.entry_field("word-class").name
-    p = bulk.plan(db, bulk.LEMMAS, [(goat, None)], bulk.SetValue(wcf, "NOMINAL", conversion=actions))
+    p = bulk.plan(db, bulk.LEMMAS, [(goat, None)], bulk.SetValue(wcf, "VERB"))
     assert p.ok
     _, after = p.pairs[0]
     assert [t.tags for t in after.tokens] == [t.tags for t in goat.tokens]
-    assert Group and Tag
+    assert p.unusual == sum(1 for t in goat.tokens if db.settings.tags.unusual(["VERB"], t.tags))
 
 
-def test_check_conversion_requires_every_choice(db):
+def test_a_new_word_class_is_added_to_the_list(db):
     goat = db.entry_by_ref("D001")
-    need, _ = bulk.stranded_tags(db, [goat], "VERB")
-    msgs = bulk.check_conversion(db, "VERB", {}, need)
-    assert len(msgs) == len(need)
-    actions = {s.name: TagAction(bulk.CONVERT, "Past") for s in need}
-    assert bulk.check_conversion(db, "VERB", actions, need) == []
-
-
-def test_saved_conversions_round_trip(db, tmp_path):
-    from lemmatrix.model import Conversion
-    db.settings.conversions.append(Conversion("VERB → NOUN", "VERB", "NOUN", {
-        "Imperative": TagAction(bulk.NEW, "Vocative", "VOC", "Case"),
-        "Simple": TagAction(bulk.DELETE),
-        "Past": TagAction(bulk.CONVERT, "Singular")}))
-    storage.save(db, tmp_path / "Copy.xml", backup=False)
-    again = storage.load(tmp_path / "Copy.xml")
-    c = again.settings.conversions[0]
-    assert (c.name, c.from_class, c.to_class) == ("VERB → NOUN", "VERB", "NOUN")
-    assert c.actions["Imperative"] == TagAction(bulk.NEW, "Vocative", "VOC", "Case")
-    assert c.actions["Simple"].kind == bulk.DELETE
+    wcf = db.settings.entry_field("word-class").name
+    p = bulk.plan(db, bulk.LEMMAS, [(goat, None)], bulk.SetValue(wcf, "NOMINAL"))
+    assert p.ok and (wcf, "NOMINAL") in p.new_values

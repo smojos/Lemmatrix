@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (QComboBox, QDialog, QFrame, QGridLayout, QGroupBo
                                QScrollArea, QSizePolicy, QToolButton, QVBoxLayout, QWidget)
 from PySide6.QtCore import QFile
 
-from .. import audio, pitch as pitchmod, storage
+from .. import audio, matrix as mx, pitch as pitchmod, storage
 from ..model import Entry, Token
 from PySide6.QtCore import QSize
 
@@ -20,6 +20,10 @@ from . import theme
 from .icons import icon
 from .tagpanel import TagPanel
 from .widgets import PitchCanvas, ipa_font
+
+
+def _esc(text: str) -> str:
+    return (text or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
 class PitchValidator(QValidator):
@@ -138,6 +142,20 @@ class TokenDialog(QDialog):
         scroll.setWidget(self.tags)
         scroll.setFrameShape(QFrame.NoFrame)
         tl.addWidget(scroll)
+        self.show_all = False                     # Show all tags: stays on for Back and Next
+        self.show_all_btn = QPushButton()
+        self.show_all_btn.setFont(self.font())
+        self.show_all_btn.setCheckable(True)
+        self.show_all_btn.setToolTip("Shown first: the tag groups usual for this lemma's word class, "
+                                     "and any group the token has a tag in")
+        self.show_all_btn.toggled.connect(self._show_all_toggled)
+        tl.addWidget(self.show_all_btn, 0, Qt.AlignLeft)
+        self.unusual_note = QLabel()
+        self.unusual_note.setFont(self.font())
+        self.unusual_note.setWordWrap(True)
+        self.unusual_note.setTextFormat(Qt.RichText)
+        self.unusual_note.linkActivated.connect(lambda *_: self._stop_unusual_warning())
+        tl.addWidget(self.unusual_note)
         top.addWidget(tags_box, 2)
 
         rec = QGroupBox()
@@ -265,10 +283,9 @@ class TokenDialog(QDialog):
             ed.blockSignals(False)
         self.canvas.set_range(s.pitch_low, s.pitch_high)
         self._pitch_changed(t.get("Pitch"))
-        wc = self.db.word_class(e)
-        known = {tg.name for tg, _ in s.tags.tags_for(wc)}
+        known = {tg.name for tg, _ in s.tags.tags()}
         self.unknown_tags = [x for x in t.tags if x not in known]
-        self.tags.build(self.db, wc, set(t.tags))
+        self._build_tags(set(t.tags))
         self._fill_speakers(t.speaker)
         self.date.blockSignals(True)
         self.date.setText(t.collected)
@@ -306,8 +323,7 @@ class TokenDialog(QDialog):
                 t.set(name, text, s.primary_gloss)
             else:
                 t.set(name, text)
-        wc = self.db.word_class(self.slot.entry)
-        t.tags = s.tags.sort(wc, self.tags.selected() + self.unknown_tags)
+        t.tags = s.tags.sort(self.tags.selected() + self.unknown_tags)
         t.speaker = self.speaker.currentText()
         t.collected = self.date.text().strip()
 
@@ -317,6 +333,51 @@ class TokenDialog(QDialog):
 
     def _tags_changed(self):
         self._fields_changed()
+        self._update_unusual()
+
+    def _build_tags(self, selected: set):
+        hidden = self.tags.build(self.db, selected, classes=self.db.classes(self.slot.entry),
+                                 show_all=self.show_all)
+        b = self.show_all_btn
+        b.blockSignals(True)
+        b.setChecked(self.show_all)
+        b.blockSignals(False)
+        if self.show_all:
+            b.setText("Show usual tags only")
+            b.setVisible(True)
+        else:
+            b.setText(f"Show all tags ({hidden} more group{'s' if hidden != 1 else ''})")
+            b.setVisible(hidden > 0)
+        self._update_unusual()
+
+    def _show_all_toggled(self, on: bool):
+        self.show_all = bool(on)
+        self._collect()
+        self._build_tags(set(self.token.tags))
+
+    def _update_unusual(self):
+        """The soft warning: tags that aren't usual for this lemma's word class."""
+        if not self.main.prefs.warn_unusual_tags:
+            self.unusual_note.hide()
+            return
+        notes = mx.unusual_notes(self.db, self.slot.entry, self.tags.selected())
+        if not notes:
+            self.unusual_note.hide()
+            return
+        colour = theme.colour("warning").name()
+        text = "<br>".join(f"⚠ {_esc(n)}" for n in notes)
+        self.unusual_note.setText(f"<span style='color:{colour}'>{text}</span> "
+                                  "<a href='off'>Don't show this again</a>")
+        self.unusual_note.setToolTip("Any tag can go on any token; this only says it's unusual. "
+                                     "The warning can be turned back on in Settings → General.")
+        self.unusual_note.show()
+
+    def _stop_unusual_warning(self):
+        self.main.set_unusual_warning(False)
+        self.unusual_note.hide()
+        self.tags.update()
+        for b in self.tags.buttons.values():
+            b.update()
 
     def _pitch_changed(self, text):
         self.canvas.set_pitch(text)
@@ -360,8 +421,7 @@ class TokenDialog(QDialog):
         self._collect()
         e = self.slot.entry
         t = self.token
-        wc = self.db.word_class(e)
-        problems = self.db.settings.tags.conflicts(wc, [x for x in t.tags if x not in self.unknown_tags])
+        problems = self.db.settings.tags.conflicts([x for x in t.tags if x not in self.unknown_tags])
         if problems:
             QMessageBox.warning(self, "Tags", "\n".join(problems))
             return False

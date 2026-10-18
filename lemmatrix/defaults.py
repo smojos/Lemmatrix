@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from .model import (Database, FieldDef, Group, Metadata, RefCategory, Settings, Tag,
-                    TagStructure, WordClass)
+from .model import Database, FieldDef, Group, ListItem, Metadata, RefCategory, Settings, Tag, TagStructure
+
+WORD_CLASSES = ["NOUN", "VERB", "PRONOUN", "QUANT", "ADJECTIVE", "ADVERB"]
 
 
 def _tags(*pairs, default: str | None = None) -> list[Tag]:
@@ -18,12 +19,12 @@ def default_tag_structure() -> TagStructure:
     persons = ["1SG", "2SG", "3SG", "1PL", "2PL", "3PL"]
     subjects = [f"{p}.{r}" for p in persons for r in ("A", "S")]
     objects = [f"{p}.O" for p in persons]
-    noun = WordClass("NOUN", [
+    noun = Group("NOUN", groups=[
         Group("Number", _tags(("Singular", "SG"), ("Plural", "PL"))),
         Group("Case", _tags(("Nominative", "NOM"), ("Accusative", "ACC"), ("Ergative", "ERG"),
                             ("Absolutive", "ABS"), ("Genitive", "GEN"), ("Oblique", "OBL"))),
-    ])
-    verb = WordClass("VERB", [
+    ], usual=["NOUN"])
+    verb = Group("VERB", groups=[
         Group("Subject", _tags(*subjects)),
         Group("Object", _tags(*objects)),
         Group("Stem", _tags("Simple", ("Passive", "PASS"), ("Antipassive", "AP"),
@@ -32,9 +33,8 @@ def default_tag_structure() -> TagStructure:
         Group("Aspect", _tags(("Perfective", "PFV"), ("Imperfective", "IPFV"))),
         Group("Mood", _tags("Indicative", ("Imperative", "IMP"), default="Indicative")),
         Group("Polarity", _tags("Affirmative", ("Negative", "NEG"), default="Affirmative")),
-    ])
-    others = [WordClass(n) for n in ("PRONOUN", "QUANT", "ADJECTIVE", "ADVERB")]
-    all_classes = [
+    ], usual=["VERB"])
+    shared = [                                  # no hint: usual for every lemma
         Group("Phonological", groups=[
             Group("Following tone", _tags(("before H", "xH"), ("before L", "xL"))),
             Group("Preceding tone", _tags(("after H", "Hx"), ("after L", "Lx"))),
@@ -47,7 +47,7 @@ def default_tag_structure() -> TagStructure:
         ]),
         Group("Frames", _tags("f1", "f2", "f3", "f4")),
     ]
-    return TagStructure([noun, verb, *others], all_classes)
+    return TagStructure([noun, verb, *shared])
 
 
 DEFAULT_CATEGORIES = [
@@ -66,7 +66,8 @@ def default_settings() -> Settings:
     s.entry_fields = [
         FieldDef("Lemma", role="lemma"),
         FieldDef("Gloss", role="gloss"),
-        FieldDef("WordClass", "Word Class", role="word-class", closed=True),
+        FieldDef("WordClass", "Word Class", role="word-class", closed=True,
+                 items=[ListItem(n) for n in WORD_CLASSES]),
         FieldDef("ToneClass", "Tone Class", closed=True),
         FieldDef("InflectionClass", "Inflection Class", closed=True),
         FieldDef("Comment"),

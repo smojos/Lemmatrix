@@ -24,7 +24,6 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDateEdi
 from .. import bulk, matrix as mx, storage
 from ..model import ListItem, today
 from . import theme
-from .conversion_dialog import TagConversionDialog
 from .filter_dialogs import ConfigureColumnsDialog
 from .icons import icon
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, RowModel
@@ -338,6 +337,7 @@ class BulkEditWindow(QDialog):
         self.summary = QLabel()
         self.summary.setWordWrap(True)
         self.summary.setTextFormat(Qt.RichText)
+        self.summary.linkActivated.connect(self._link)
         self.summary.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.summary.setMinimumWidth(300)
         self.summary_box = QFrame()
@@ -421,7 +421,6 @@ class BulkEditWindow(QDialog):
         self.v_list = QComboBox()
         self.v_list.setEditable(True)
         self.v_list.setToolTip("Pick from the list, or type a new value to add it to the list")
-        self.v_class = QComboBox()
         tags = QWidget()
         tl = QHBoxLayout(tags)
         tl.setContentsMargins(0, 0, 0, 0)
@@ -438,7 +437,7 @@ class BulkEditWindow(QDialog):
         self.v_date.setCalendarPopup(True)
         self.v_date.setDisplayFormat("yyyy-MM-dd")
         self.v_date.setMaximumDate(QDate.currentDate())
-        for x in (self.v_text, self.v_list, self.v_class, tags, self.v_speaker, self.v_date):
+        for x in (self.v_text, self.v_list, tags, self.v_speaker, self.v_date):
             self.v_stack.addWidget(x)
         self.v_stack.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.v_stack.setFixedHeight(max(x.sizeHint().height() for x in (self.v_text, self.v_list, tags)))
@@ -448,7 +447,7 @@ class BulkEditWindow(QDialog):
         form.addRow("Value", self.v_stack)
         form.addRow(self.v_note)
         self.v_field.currentIndexChanged.connect(lambda *_: self._set_field_chosen())
-        self._watch(self.v_field, self.v_text, self.v_list, self.v_class, self.v_tag_action, self.v_tag,
+        self._watch(self.v_field, self.v_text, self.v_list, self.v_tag_action, self.v_tag,
                     self.v_speaker, self.v_date)
         return w
 
@@ -543,8 +542,8 @@ class BulkEditWindow(QDialog):
         table.setItemDelegate(PreviewDelegate(None, table))
         if level == bulk.TOKENS:
             defaults = mx.default_names(db)
-            chips = ChipsDelegate(lambda r: mx.chips(db, mx.marked(r.token.tags, defaults),
-                                                     db.word_class(r.entry) or None) if r is not None else [],
+            chips = ChipsDelegate(lambda r: mx.chips(db, mx.marked(r.token.tags, defaults), r.entry)
+                                  if r is not None else [],
                                   table)
             table.set_delegate("tags", PreviewDelegate(chips, table))
             draw = DrawingDelegate(lambda: (db.settings.pitch_low, db.settings.pitch_high), table)
@@ -694,32 +693,21 @@ class BulkEditWindow(QDialog):
         t = bulk.target(self.db, self.level, key)
         s = self.db.settings
         note = ""
-        if t.role == "word-class":
-            self.v_class.clear()
-            self.v_class.addItem("(none)", "")
-            for n in s.tags.word_class_names():
-                self.v_class.addItem(n, n)
-            self.v_stack.setCurrentIndex(2)
-            note = "You'll choose what happens to the tokens' tags next."
-        elif t.kind == "tags":
+        if t.kind == "tags":
             self.v_tag.clear()
-            for wc in s.tags.word_classes:
-                for top in wc.groups:
-                    for _, g in top.leaf_groups():
-                        for tg in g.tags:
-                            self.v_tag.addItem(f"{tg.name}   ({wc.name} › {g.name})", tg.name)
-            for _, g in s.tags.leaf_groups_for(None):
+            for path, g in s.tags.leaf_groups():
                 for tg in g.tags:
-                    self.v_tag.addItem(f"{tg.name}   (all classes › {g.name})", tg.name)
-            self.v_stack.setCurrentIndex(3)
-            note = "Adding a tag takes off any other tag of its group. Tokens whose word class lacks it are an error."
+                    self.v_tag.addItem(f"{tg.name}   ({' › '.join(path)})", tg.name)
+            self.v_stack.setCurrentIndex(2)
+            note = ("Adding a tag takes off any other tag of its group. A tag that isn't usual for a "
+                    "lemma's word class is allowed, and marked.")
         elif t.kind == "speaker":
             self.v_speaker.clear()
             self.v_speaker.addItems(self.db.participant_codes())
             self.v_speaker.setCurrentText(self.main.session_speaker())
-            self.v_stack.setCurrentIndex(4)
+            self.v_stack.setCurrentIndex(3)
         elif t.kind == "date":
-            self.v_stack.setCurrentIndex(5)
+            self.v_stack.setCurrentIndex(4)
         elif t.closed:
             f = s.entry_field(t.name) if t.kind == "entry" else s.token_field(t.name)
             self.v_list.clear()
@@ -759,8 +747,6 @@ class BulkEditWindow(QDialog):
         if op == SET:
             key = self.v_field.currentData()
             t = bulk.target(self.db, self.level, key)
-            if t.role == "word-class":
-                return bulk.SetValue(key, self.v_class.currentData() or "")
             if t.kind == "tags":
                 return bulk.SetValue(key, self.v_tag.currentData() or "", self.v_tag_action.currentData())
             if t.kind == "speaker":
@@ -775,19 +761,6 @@ class BulkEditWindow(QDialog):
         if op == CLEAR:
             return bulk.ClearField(self.x_field.currentData())
         raise bulk.BulkError("Conditions arrive with the analysis engine (Stage 2).")
-
-    def _ask_conversion(self, op) -> bool:
-        """For a word class change: the tag conversion dialogue, if any tags need a decision."""
-        entries = [e for e, _ in self.chosen_rows()]
-        need, _ = bulk.stranded_tags(self.db, entries, op.value)
-        if not need:
-            op.conversion = {}
-            return True
-        dlg = TagConversionDialog(self, self.db, entries, op.value, on_saved=self.doc.settings_changed)
-        if not dlg.exec():
-            return False
-        op.conversion = dlg.actions()
-        return True
 
     def _make_plan(self, op) -> bulk.Plan:
         folder = storage.sound_folder(self.db)
@@ -806,8 +779,6 @@ class BulkEditWindow(QDialog):
             keys = self.tables[self.level].visible_keys()
             if op.target not in keys:            # make sure the changed column can be seen
                 self._set_columns(self.level, keys + [op.target])
-            if isinstance(op, bulk.SetValue) and t.role == "word-class" and not self._ask_conversion(op):
-                return
             plan = self._make_plan(op)
         except bulk.BulkError as exc:
             self._show(str(exc), error=True)
@@ -850,8 +821,11 @@ class BulkEditWindow(QDialog):
             self._show(f"No ticked {noun} would change.")
             self.apply_btn.setEnabled(False)
             return
-        lines = "".join(f"<li>{_esc(x)}</li>" for x in bulk.summary(plan, self.level))
-        warn = bool(plan.renames or plan.comment_dates)
+        warn_unusual = self.main.prefs.warn_unusual_tags
+        lines = "".join(f"<li>{_esc(x)}</li>" for x in bulk.summary(plan, self.level, warn_unusual))
+        if plan.unusual and warn_unusual:
+            lines += "<li><a href='unusual-off'>Don't show this warning again</a></li>"
+        warn = bool(plan.renames or plan.comment_dates or (plan.unusual and warn_unusual))
         self._show(f"<b>{changed} of {ticked} ticked {noun}{'s' if ticked != 1 else ''} will change.</b>"
                    f"<ul>{lines}</ul>" + ("" if not plan.renames else
                                           "<span>Renamed: " + _esc(", ".join(
@@ -872,9 +846,6 @@ class BulkEditWindow(QDialog):
             self._show_plan(plan, self._op)
             return
         settings_changed = False
-        if plan.new_tags:
-            bulk.install_new_tags(self.db, plan.new_tags)
-            settings_changed = True
         for name, value in plan.new_values:
             f = self.db.settings.entry_field(name) if plan.level == bulk.LEMMAS else self.db.settings.token_field(name)
             if f is not None:
@@ -888,7 +859,6 @@ class BulkEditWindow(QDialog):
             self._applying = False
         if settings_changed:
             self.doc.settings_changed()
-            self.main._fill_classes()
             self.main._setup_columns()
             self.main.refresh()
         self._fill_rows()
@@ -914,6 +884,16 @@ class BulkEditWindow(QDialog):
                 m.refresh_all()
         if hasattr(self, "summary") and not self._applying:
             self._show("Choose an operation, then Preview to see what would change.")
+
+    def _link(self, href: str):
+        if href == "unusual-off":                    # "Don't show this warning again"
+            self.main.set_unusual_warning(False)
+            if self.plan is not None and self._op is not None:
+                self._show_plan(self.plan, self._op)
+
+    def tables_repaint(self):
+        for t in self.tables.values():
+            t.viewport().update()
 
     def _show(self, text: str, error=False, warn=False, rich=False):
         self.summary.setTextFormat(Qt.RichText if rich else Qt.PlainText)

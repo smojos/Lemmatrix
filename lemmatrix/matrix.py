@@ -9,7 +9,9 @@ tags plus a match type:
                PL + isolation
     Loose      at least these tags (Loose SG shows SG, SG + GEN, …)
 
-Lemma/Tag: lemmas down the side (Y), specs across the top (X).
+Lemma/Tag: lemmas down the side (Y), specs across the top (X). The lemmas are the
+           ones the lemma list shows, whatever their word class. Until a matrix is
+           configured or chosen it is blank.
 Tag/Tag:   one lemma; specs on both axes. A cell asks for the row's and
            column's tags together; it is Loose if either side is Loose.
            Cells whose tags contradict (two tags of one group) are greyed.
@@ -26,7 +28,6 @@ from .model import Database, Entry, Token
 
 CITATION, EXACT, LOOSE = "citation", "exact", "loose"
 LEMMA_TAG, TAG_TAG = "lemma-tag", "tag-tag"
-NO_CLASS = ""                     # the "(none)" matrix class
 
 DEFAULT_CELL = ["drawing", "Phonetic", "Phonemic", "Translation"]
 
@@ -45,19 +46,16 @@ class Spec:
 class MatrixConfig:
     name: str = ""
     kind: str = LEMMA_TAG
-    word_class: str = NO_CLASS
     y: list = field(default_factory=list)      # Tag/Tag rows
     x: list = field(default_factory=list)      # columns
     cell: list = field(default_factory=lambda: list(DEFAULT_CELL))
     blank: bool = False      # cleared on purpose (a Lemma/Tag matrix with no columns isn't automatic)
 
     def copy(self) -> "MatrixConfig":
-        return MatrixConfig(self.name, self.kind, self.word_class, list(self.y), list(self.x),
-                            list(self.cell), self.blank)
+        return MatrixConfig(self.name, self.kind, list(self.y), list(self.x), list(self.cell), self.blank)
 
-    def rename(self, tags: dict[str, str], classes: dict[str, str]) -> None:
-        """Follow renamed tags and word classes (old name -> new name)."""
-        self.word_class = classes.get(self.word_class, self.word_class)
+    def rename(self, tags: dict[str, str], classes: dict[str, str] | None = None) -> None:
+        """Follow renamed tags (old name -> new name)."""
 
         def fix(spec):
             return Spec(frozenset(tags.get(t, t) for t in spec.tags), spec.match)
@@ -116,7 +114,7 @@ class Layout:
 # --------------------------------------------------------------------------
 
 def default_names(db: Database) -> set[str]:
-    return {t.name for _, g in db.settings.tags.all_leaf_groups() for t in g.tags if t.default}
+    return {t.name for t, _ in db.settings.tags.tags() if t.default}
 
 
 def marked(tags, defaults: set[str]) -> frozenset:
@@ -157,7 +155,7 @@ class Order(dict):
 def global_order(db: Database) -> Order:
     order = Order()
     frames = set()
-    for path, g in db.settings.tags.all_leaf_groups():
+    for path, g in db.settings.tags.leaf_groups():
         for t in g.tags:
             order.setdefault(t.name, len(order))
             if any(p.lower() == "frames" for p in (*path, g.name)):
@@ -178,47 +176,67 @@ def sort_key(tags, order: dict[str, int]):
     return key(base), key(framed)
 
 
-def chips(db: Database, tags, word_class: str | None = None) -> list[str]:
-    """Short labels (codes, or names for defaults) for a set of tags, in tag order."""
+class Unusual(str):
+    """A chip label for a tag that isn't usual for its lemma's word class (the soft warning).
+
+    It is an ordinary string everywhere; the chip painter draws it differently.
+    """
+    note: str = ""
+
+
+def chips(db: Database, tags, entry: Entry | None = None) -> list[str]:
+    """Short labels (codes, or names for defaults) for a set of tags, in tag order.
+
+    With an entry, tags that aren't usual for its word class come back as Unusual labels.
+    """
     ts = db.settings.tags
+    odd = set(db.unusual_tags(entry, tags)) if entry is not None else set()
     out = []
-    for n in ts.sort(word_class, list(tags)):
-        hit = ts.find(word_class, n)
-        t = hit[0] if hit else ts.find_anywhere(n)
-        out.append(t.display() if t else n)
+    for n in ts.sort(list(tags)):
+        t = ts.tag(n)
+        label = t.display() if t else n
+        if n in odd:
+            label = Unusual(label)
+            label.note = unusual_note(db, entry, n)
+        out.append(label)
     return out
 
 
-def spec_label(db: Database, spec: Spec, word_class: str | None = None) -> str:
+def unusual_note(db: Database, entry: Entry, name: str) -> str:
+    """“Plural isn't usual for VERB lemmas (NOUN › Number is usual for NOUN)”."""
+    ts = db.settings.tags
+    hit = ts.find(name)
+    if hit is None:
+        return ""
+    hint = ts.usual_map().get(id(hit[1]), ())
+    wc = db.word_class(entry) or "(no word class)"
+    return (f"{name} isn't usual for {wc} lemmas ({' › '.join(ts.path_of(hit[1]))} is usual for "
+            f"{', '.join(hint)})")
+
+
+def unusual_notes(db: Database, entry: Entry, names) -> list[str]:
+    return [unusual_note(db, entry, n) for n in db.unusual_tags(entry, names)]
+
+
+def spec_label(db: Database, spec: Spec, entry: Entry | None = None) -> str:
     if spec.match == CITATION:
         return "Citation"
-    text = " + ".join(chips(db, spec.tags, word_class)) or "(no tags)"
+    text = " + ".join(chips(db, spec.tags, entry)) or "(no tags)"
     return text + (" …" if spec.match == LOOSE else "")
 
 
-def extra_chips(db: Database, token: Token, spec: Spec | None, word_class: str | None,
+def extra_chips(db: Database, token: Token, spec: Spec | None, entry: Entry | None,
                 defaults: set[str]) -> list[str]:
     """What a token adds to its cell's tags (shown on side-by-side tokens)."""
     base = spec.tags if spec else frozenset()
     extra = marked(set(token.tags) - set(base), defaults)
-    return ["+" + c for c in chips(db, extra, word_class)]
+    return ["+" + c if not isinstance(c, Unusual) else _plus(c) for c in chips(db, extra, entry)]
 
 
-# --------------------------------------------------------------------------
-# Word classes
-# --------------------------------------------------------------------------
-
-def class_of(db: Database, e: Entry) -> str:
-    wc = db.word_class(e)
-    return wc if wc in db.settings.tags.word_class_names() else NO_CLASS
-
-
-def in_class(db: Database, entries, word_class: str) -> list[Entry]:
-    return [e for e in entries if class_of(db, e) == word_class]
-
-
-def class_label(word_class: str) -> str:
-    return word_class or "(none)"
+def _plus(c: "Unusual") -> "Unusual":
+    u = Unusual("+" + c)
+    u.note = c.note
+    return u
 
 
 # --------------------------------------------------------------------------
@@ -260,16 +278,19 @@ def _sorted_hits(hits, order, defaults=frozenset()):
 
 def lemma_tag_layout(db: Database, entries: list[Entry], config: MatrixConfig | None,
                      entry_label: str = "lemma") -> Layout:
-    """Lemmas (already limited to one class) down the side, specs across the top."""
-    if not entries:
-        return Layout(message="No lemmas of this class pass the lemma list's search and filters.")
-    if config is not None and config.blank and not config.x:
+    """The lemma list's lemmas down the side, the configured columns across the top.
+
+    Blank until a matrix is configured or chosen (Configure matrix → Restore all present
+    fills in every tag combination the lemmas have).
+    """
+    if config is None or not config.x:
         return Layout(message="Blank matrix: use Configure matrix to add columns, or choose a saved matrix.")
+    if not entries:
+        return Layout(message="No lemmas pass the lemma list's search and filters.")
     defaults = default_names(db)
     order = global_order(db)
-    specs = list(config.x) if (config and config.x) else auto_specs(db, entries)
-    wc = class_of(db, entries[0])
-    cols = [AxisItem(spec_label(db, s, wc), [] if s.match == CITATION else chips(db, s.tags, wc), s)
+    specs = list(config.x)
+    cols = [AxisItem(spec_label(db, s), [] if s.match == CITATION else chips(db, s.tags), s)
             for s in specs]
     rows = []
     for e in entries:
@@ -282,8 +303,6 @@ def lemma_tag_layout(db: Database, entries: list[Entry], config: MatrixConfig | 
             hits = [(row.entry, t) for t in toks if fits(t.tags, col.spec, defaults)]
             if hits:
                 lay.cells[(r, c)] = _sorted_hits(hits, order, defaults)
-    if not cols:
-        lay.message = "These lemmas have no tokens yet."
     return lay
 
 
@@ -293,16 +312,12 @@ def tag_tag_layout(db: Database, entry: Entry | None, config: MatrixConfig | Non
         return Layout(message="Select a lemma in the lemma list to show its paradigm.")
     if config is None or not config.x or not config.y:
         return Layout(entry=entry, message="Please configure a matrix.")
-    wc = class_of(db, entry)
-    if config.word_class != wc:
-        return Layout(entry=entry, message=f"This matrix is for {class_label(config.word_class)} "
-                                           f"lemmas; {entry.ref} is {class_label(wc)}.")
     defaults = default_names(db)
     order = global_order(db)
     ts = db.settings.tags
 
     def item(s):
-        return AxisItem(spec_label(db, s, wc), [] if s.match == CITATION else chips(db, s.tags, wc), s)
+        return AxisItem(spec_label(db, s, entry), [] if s.match == CITATION else chips(db, s.tags, entry), s)
 
     rows = [item(s) for s in config.y]
     cols = [item(s) for s in config.x]
@@ -310,7 +325,7 @@ def tag_tag_layout(db: Database, entry: Entry | None, config: MatrixConfig | Non
     for r, row in enumerate(rows):
         for c, col in enumerate(cols):
             spec = combine(row.spec, col.spec)
-            if ts.conflicts(wc or None, list(spec.tags)):
+            if ts.conflicts(list(spec.tags)):
                 lay.greyed.add((r, c))
                 continue
             hits = [(entry, t) for t in entry.tokens if fits(t.tags, spec, defaults)]

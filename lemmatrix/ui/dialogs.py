@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QColorDialog, QComb
                                QTableWidget, QTableWidgetItem, QTabWidget, QTreeWidget,
                                QTreeWidgetItem, QVBoxLayout, QWidget, QInputDialog)
 
-from ..model import (Database, Entry, Group, Tag, WordClass, forbidden_in, nfc)
+from ..model import (Database, Entry, Group, Tag, forbidden_in, nfc)
 from . import theme
 from .widgets import ipa_font
 
@@ -152,13 +152,6 @@ class EntryDialog(QDialog):
                     ed.setText(entry.get(f.name, lang) if entry else "")
                     form.addRow(f"{f.title} ({lang})", ed)
                     self.fields[(f.name, lang)] = ed
-            elif f.role == "word-class":
-                cb = QComboBox()
-                cb.addItem("")
-                cb.addItems(s.tags.word_class_names())
-                cb.setCurrentText(entry.get(f.name) if entry else "")
-                form.addRow(f.title, cb)
-                self.fields[(f.name, "")] = cb
             elif f.closed:
                 cb = QComboBox()
                 cb.setEditable(True)
@@ -214,7 +207,7 @@ class EntryDialog(QDialog):
             text = w.currentText() if isinstance(w, QComboBox) else w.text()
             f = s.entry_field(name)
             e.set(name, text.strip(), lang if f.multilingual else None, f.multilingual)
-            if f.closed and f.role != "word-class" and text.strip():
+            if f.closed and text.strip():
                 f.add_value(text.strip())
         if self.entry is not None:
             e.file_gloss = nfc(self.file_gloss.text().strip())
@@ -348,6 +341,11 @@ class PreferencesDialog(QDialog):
         self.with_tokens.setChecked(prefs.delete_recordings_with_tokens)
         self.confirm = QCheckBox("Confirm before deleting recordings")
         self.confirm.setChecked(prefs.confirm_delete)
+        self.unusual = QCheckBox("Mark tags that aren't usual for their lemma's word class")
+        self.unusual.setToolTip("A dashed amber outline on the tag's chip, and a note in the token "
+                                "dialogue and bulk edit. Any tag can still go on any token.\n"
+                                "“Don't show this again” on the note turns this off.")
+        self.unusual.setChecked(prefs.warn_unusual_tags)
         self.autosave = QSpinBox()
         self.autosave.setRange(0, 120)
         self.autosave.setSuffix(" min")
@@ -414,12 +412,13 @@ class PreferencesDialog(QDialog):
             tabs.addTab(w, title)
 
         page("General", [("This computer", [("Autosave every", self.autosave),
-                                            ("Backup folder", self.backups)])])
+                                            ("Backup folder", self.backups)]),
+                         ("Warnings (this computer)", [(None, self.unusual), (None, self.confirm)])])
         page("Sound", [
             ("This database", [("File name pattern", self.pattern), ("Tag separator", self.separator),
                                ("Sound folder", self.folder), (None, self.auto_names)]),
             ("This computer", [("Recording source", self.source), ("Bit depth", self.bits),
-                               ("Sample rate", self.rate), (None, self.with_tokens), (None, self.confirm),
+                               ("Sample rate", self.rate), (None, self.with_tokens),
                                ("Path to Praat", self.praat)])])
         page("Display", [("This computer", [("Theme", self.theme), ("Accent colour", self.accent),
                                             ("IPA font size", self.ipa)])])
@@ -487,6 +486,7 @@ class PreferencesDialog(QDialog):
         p.sample_rate = self.rate.currentData()
         p.delete_recordings_with_tokens = self.with_tokens.isChecked()
         p.confirm_delete = self.confirm.isChecked()
+        p.warn_unusual_tags = self.unusual.isChecked()
         p.autosave_minutes = self.autosave.value()
         p.ipa_size = self.ipa.value()
         p.theme = self.theme.currentData()
@@ -502,36 +502,109 @@ class PreferencesDialog(QDialog):
 # Tag structure editor
 # ==========================================================================
 
-KIND_WC, KIND_ALL, KIND_GROUP, KIND_TAG = "word class", "all classes", "group", "tag"
+KIND_GROUP, KIND_TAG = "group", "tag"
+NAME, CODE, DEFAULT, USUAL, DESC = range(5)
+USUAL_ROLE = Qt.UserRole + 2                  # a group's own "usual for" word classes
+
+
+class UsualDialog(QDialog):
+    """Which word classes a tag group is usual for (none ticked: its parent's, or every lemma)."""
+
+    def __init__(self, parent, group: str, classes: list, chosen: list[str], inherited: tuple):
+        super().__init__(parent)
+        self.setWindowTitle("Usual for")
+        lay = QVBoxLayout(self)
+        note = QLabel(f"Which word classes is “{group}” usual for? Its groups are shown first in the "
+                      "token dialogue for lemmas of these classes, their defaults go on new tokens, and "
+                      "on other lemmas its tags are marked as unusual (they're still allowed). A class "
+                      "includes the classes nested under it in the Word Class list.\n\n"
+                      + ("Nothing ticked: as its parent group (" + ", ".join(inherited) + ")."
+                         if inherited else "Nothing ticked: usual for every lemma."))
+        note.setWordWrap(True)
+        lay.addWidget(note)
+        self.tree = QTreeWidget()
+        self.tree.setHeaderHidden(True)
+        lay.addWidget(self.tree, 1)
+        known = set()
+
+        def add(parent, item):
+            it = QTreeWidgetItem([item.name])
+            it.setFlags(it.flags() | Qt.ItemIsUserCheckable)
+            it.setCheckState(0, Qt.Checked if item.name in chosen else Qt.Unchecked)
+            known.add(item.name)
+            (parent.addChild(it) if parent else self.tree.addTopLevelItem(it))
+            for c in item.children:
+                add(it, c)
+        for item in classes:
+            add(None, item)
+        for name in chosen:                       # a class since removed from the list
+            if name not in known:
+                it = QTreeWidgetItem([f"{name}  (no longer in the Word Class list)"])
+                it.setData(0, Qt.UserRole, name)
+                it.setFlags(it.flags() | Qt.ItemIsUserCheckable)
+                it.setCheckState(0, Qt.Checked)
+                it.setForeground(0, QBrush(theme.colour("dim")))
+                self.tree.addTopLevelItem(it)
+        self.tree.expandAll()
+        if not classes:
+            lay.addWidget(QLabel("The Word Class list is empty: add classes in Edit → Lists → Word Class."))
+        lay.addWidget(_buttons(self))
+        self.resize(420, 460)
+
+    def chosen(self) -> list[str]:
+        out = []
+
+        def walk(it):
+            if it.checkState(0) == Qt.Checked:
+                out.append(it.data(0, Qt.UserRole) or it.text(0))
+            for i in range(it.childCount()):
+                walk(it.child(i))
+        for i in range(self.tree.topLevelItemCount()):
+            walk(self.tree.topLevelItem(i))
+        return out
 
 
 class TagStructureDialog(QDialog):
-    """Edit word classes, groups (nested) and tags, with codes and defaults."""
+    """Edit the tag groups (nested), their tags, codes and defaults, and what they're usual for."""
 
-    def __init__(self, parent, db: Database):
+    def __init__(self, parent, db: Database, word_classes=None):
         super().__init__(parent)
         self.db = db
+        # () -> the Word Class list (ListItems); Edit → Lists passes its own, being edited
+        self.word_classes = word_classes or (lambda: (db.settings.entry_field("word-class").items
+                                                      if db.settings.entry_field("word-class") else []))
         self.setWindowTitle("Tag structure")
-        self.resize(760, 640)
+        self.resize(860, 640)
         lay = QVBoxLayout(self)
-        lay.addWidget(QLabel("Word classes, then groups, then tags. A token takes at most one tag from "
-                             "each group. The order here is the tag order in file names.\n"
-                             "Double-click a name, code or description to edit it. A group's default "
-                             "has no code and adds nothing to file names."))
+        intro = QLabel("Groups, then tags, organised however you like. Any tag can go on any token, but a "
+                       "token takes at most one tag from each group. The order here is the tag order in "
+                       "file names. Double-click a name, code or description to edit it; a group's "
+                       "default has no code. “Usual for” is a hint: which word classes a group is for "
+                       "(double-click it to choose).")
+        intro.setWordWrap(True)
+        lay.addWidget(intro)
         self.tree = QTreeWidget()
-        self.tree.setColumnCount(4)
-        self.tree.setHeaderLabels(["Name", "Code", "Default", "Description"])
-        self.tree.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.tree.setColumnCount(5)
+        self.tree.setHeaderLabels(["Name", "Code", "Default", "Usual for", "Description"])
+        self.tree.header().setSectionResizeMode(NAME, QHeaderView.ResizeToContents)
+        self.tree.setColumnWidth(USUAL, 170)
         self.tree.itemChanged.connect(self._changed)
+        self.tree.itemDoubleClicked.connect(self._double_clicked)
         lay.addWidget(self.tree, 1)
         self.problem_note = QLabel()
+        self.problem_note.setWordWrap(True)
         self.problem_note.setStyleSheet(f"color: {theme.colour('error_text').name()};")
         lay.addWidget(self.problem_note)
         row = QHBoxLayout()
-        for text, fn in (("Add word class", self._add_wc), ("Add group", self._add_group),
-                         ("Add tag", self._add_tag), ("Delete", self._delete),
-                         ("Move up", lambda: self._move(-1)), ("Move down", lambda: self._move(1))):
+        for text, fn, tip in (("Add group", self._add_top, "A new group at the top level"),
+                              ("Add sub-group", self._add_group, "A new group inside the selected group"),
+                              ("Add tag", self._add_tag, "A new tag in the selected group"),
+                              ("Usual for…", self._choose_usual, "Which word classes the selected group is for"),
+                              ("Delete", self._delete, ""), ("Move up", lambda: self._move(-1), ""),
+                              ("Move down", lambda: self._move(1), "")):
             b = QPushButton(text)
+            if tip:
+                b.setToolTip(tip)
             b.clicked.connect(lambda *_, fn=fn: fn())   # ignore the 'checked' flag
             row.addWidget(b)
         lay.addLayout(row)
@@ -540,25 +613,26 @@ class TagStructureDialog(QDialog):
         self._fill()
 
     # tree <-> structure ------------------------------------------------
-    def _item(self, kind, name, code="", default=False, desc=""):
-        it = QTreeWidgetItem([name, code if kind == KIND_TAG else "", "", desc])
-        it.setData(0, Qt.UserRole, kind)
-        it.setData(0, Qt.UserRole + 1, name)          # original name, to follow renames
-        flags = it.flags()
-        if kind != KIND_ALL:
-            flags |= Qt.ItemIsEditable
-        it.setFlags(flags)
+    def _item(self, kind, name, code="", default=False, desc="", usual=()):
+        it = QTreeWidgetItem([name, code if kind == KIND_TAG else "", "", "", desc])
+        it.setData(NAME, Qt.UserRole, kind)
+        it.setData(NAME, Qt.UserRole + 1, name)          # original name, to follow renames
+        it.setFlags(it.flags() | Qt.ItemIsEditable)
         if kind == KIND_TAG:
-            it.setCheckState(2, Qt.Checked if default else Qt.Unchecked)
-        if kind in (KIND_WC, KIND_ALL):
-            f = it.font(0)
+            it.setCheckState(DEFAULT, Qt.Checked if default else Qt.Unchecked)
+        else:
+            it.setData(NAME, USUAL_ROLE, list(usual))
+            f = it.font(NAME)
             f.setBold(True)
-            it.setFont(0, f)
+            it.setFont(NAME, f)
         return it
 
     def _fill_group(self, parent_item, g: Group):
-        gi = self._item(KIND_GROUP, g.name)
-        parent_item.addChild(gi)
+        gi = self._item(KIND_GROUP, g.name, usual=g.usual)
+        if parent_item is None:
+            self.tree.addTopLevelItem(gi)
+        else:
+            parent_item.addChild(gi)
         for t in g.tags:
             gi.addChild(self._item(KIND_TAG, t.name, t.code, t.default, t.description))
         for sub in g.groups:
@@ -566,26 +640,93 @@ class TagStructureDialog(QDialog):
 
     def _fill(self):
         self.tree.blockSignals(True)
-        ts = self.db.settings.tags
-        for wc in ts.word_classes:
-            wi = self._item(KIND_WC, wc.name)
-            self.tree.addTopLevelItem(wi)
-            for g in wc.groups:
-                self._fill_group(wi, g)
-        ai = self._item(KIND_ALL, "All classes")
-        self.tree.addTopLevelItem(ai)
-        for g in ts.all_classes:
-            self._fill_group(ai, g)
+        for g in self.db.settings.tags.groups:
+            self._fill_group(None, g)
         self.tree.expandAll()
         self.tree.blockSignals(False)
+        self._show_usual()
         self._mark_problems()
 
+    def _tops(self):
+        return [self.tree.topLevelItem(i) for i in range(self.tree.topLevelItemCount())]
+
+    # "usual for", shown on every group: its own (bold) or inherited (grey) ------
+    def _show_usual(self):
+        known = {i.name for top in self.word_classes() for i in top.walk()}
+        self.tree.blockSignals(True)
+
+        def walk(it, inherited):
+            if it.data(NAME, Qt.UserRole) != KIND_GROUP:
+                return
+            own = it.data(NAME, USUAL_ROLE) or []
+            if own:
+                missing = [c for c in own if c not in known]
+                it.setText(USUAL, ", ".join(own))
+                it.setForeground(USUAL, QBrush(theme.colour("error_text")) if missing else QBrush())
+                it.setToolTip(USUAL, (f"{', '.join(missing)}: no longer in the Word Class list\n" if missing
+                                      else "") + "Double-click to change")
+            else:
+                it.setText(USUAL, f"({', '.join(inherited)})" if inherited else "every lemma")
+                it.setForeground(USUAL, QBrush(theme.colour("dim")))
+                it.setToolTip(USUAL, "As its parent group; double-click to choose" if inherited
+                              else "No hint: usual for every lemma. Double-click to choose word classes.")
+            for i in range(it.childCount()):
+                walk(it.child(i), tuple(own) or inherited)
+        for top in self._tops():
+            walk(top, ())
+        self.tree.blockSignals(False)
+
+    def _inherited(self, it) -> tuple:
+        p = it.parent()
+        while p is not None:
+            own = p.data(NAME, USUAL_ROLE) or []
+            if own:
+                return tuple(own)
+            p = p.parent()
+        return ()
+
+    def _double_clicked(self, item, column):
+        if column == USUAL and item.data(NAME, Qt.UserRole) == KIND_GROUP:
+            self._choose_usual(item)
+
+    def _choose_usual(self, item=None):
+        item = item or self._selected()
+        while item is not None and item.data(NAME, Qt.UserRole) == KIND_TAG:
+            item = item.parent()
+        if item is None:
+            QMessageBox.information(self, "Usual for", "Select a group first.")
+            return
+        dlg = UsualDialog(self, item.text(NAME), self.word_classes(), item.data(NAME, USUAL_ROLE) or [],
+                          self._inherited(item))
+        if dlg.exec():
+            item.setData(NAME, USUAL_ROLE, dlg.chosen())
+            self._show_usual()
+
+    def refresh_usual(self):
+        """The Word Class list changed (Edit → Lists): redraw the hints."""
+        self._show_usual()
+
+    def rename_classes(self, renames: dict[str, str]):
+        """Follow word classes renamed in the Word Class list while this editor is open."""
+        if not renames:
+            return
+
+        def walk(it):
+            own = it.data(NAME, USUAL_ROLE)
+            if own:
+                it.setData(NAME, USUAL_ROLE, list(dict.fromkeys(renames.get(c, c) for c in own)))
+            for i in range(it.childCount()):
+                walk(it.child(i))
+        for top in self._tops():
+            walk(top)
+        self._show_usual()
+
     # duplicate and missing names/codes, shown in red as you edit -----------
-    def _tag_items(self, item) -> list:
+    def _tag_items(self, item=None) -> list:
+        kids = self._tops() if item is None else [item.child(i) for i in range(item.childCount())]
         out = []
-        for i in range(item.childCount()):
-            c = item.child(i)
-            if c.data(0, Qt.UserRole) == KIND_TAG:
+        for c in kids:
+            if c.data(NAME, Qt.UserRole) == KIND_TAG:
                 out.append(c)
             else:
                 out += self._tag_items(c)
@@ -593,158 +734,130 @@ class TagStructureDialog(QDialog):
 
     def _problems(self) -> tuple[dict, dict, set]:
         """({item: why} for names, {item: why} for codes, items missing a code)."""
-        tops = [self.tree.topLevelItem(i) for i in range(self.tree.topLevelItemCount())]
-        shared = [t for t in tops if t.data(0, Qt.UserRole) == KIND_ALL]
-        shared_items = self._tag_items(shared[0]) if shared else []
-        scopes = [(t.text(0), self._tag_items(t) + shared_items)
-                  for t in tops if t.data(0, Qt.UserRole) == KIND_WC]
-        scopes.append(("All classes", shared_items))
         bad_names, bad_codes, missing = {}, {}, set()
-        for scope, items in scopes:
-            by_name, by_code = {}, {}
-            for it in items:
-                by_name.setdefault(nfc(it.text(0).strip()), []).append(it)
-                default = it.checkState(2) == Qt.Checked
-                code = nfc(it.text(1).strip())
-                if not default and not code:
-                    missing.add(id(it))
-                if code and not default:
-                    by_code.setdefault(code, []).append(it)
-            for name, its in by_name.items():
-                if len(its) > 1:
-                    for it in its:
-                        bad_names[id(it)] = f"{scope}: {len(its)} tags are called “{name}”"
-            for code, its in by_code.items():
-                if len(its) > 1:
-                    for it in its:
-                        bad_codes[id(it)] = f"{scope}: {len(its)} tags share the code {code}"
+        by_name, by_code = {}, {}
+        for it in self._tag_items():
+            by_name.setdefault(nfc(it.text(NAME).strip()), []).append(it)
+            default = it.checkState(DEFAULT) == Qt.Checked
+            code = nfc(it.text(CODE).strip())
+            if not default and not code:
+                missing.add(id(it))
+            if code and not default:
+                by_code.setdefault(code, []).append(it)
+        for name, its in by_name.items():
+            if len(its) > 1:
+                for it in its:
+                    bad_names[id(it)] = f"{len(its)} tags are called “{name}”"
+        for code, its in by_code.items():
+            if len(its) > 1:
+                for it in its:
+                    bad_codes[id(it)] = f"{len(its)} tags share the code {code}"
         return bad_names, bad_codes, missing
 
     def _mark_problems(self):
         bad_names, bad_codes, missing = self._problems()
         red, pale = QBrush(theme.colour("error_text")), QBrush(theme.colour("error_fill"))
         self.tree.blockSignals(True)
-        for top in (self.tree.topLevelItem(i) for i in range(self.tree.topLevelItemCount())):
-            for it in self._tag_items(top):
-                k = id(it)
-                # None clears a colour (an empty QBrush would hide the text)
-                it.setData(0, Qt.ForegroundRole, red if k in bad_names else None)
-                it.setData(1, Qt.ForegroundRole, red if k in bad_codes else None)
-                it.setData(1, Qt.BackgroundRole, pale if k in missing else None)
-                f = it.font(0)
-                f.setBold(k in bad_names)
-                it.setFont(0, f)
-                f = it.font(1)
-                f.setBold(k in bad_codes)
-                it.setFont(1, f)
-                tips = [bad_names.get(k, ""), bad_codes.get(k, ""),
-                        "This tag needs a code (only a group's default can be without one)" if k in missing else ""]
-                tip = "\n".join(t for t in tips if t)
-                it.setToolTip(0, tip)
-                it.setToolTip(1, tip)
+        for it in self._tag_items():
+            k = id(it)
+            # None clears a colour (an empty QBrush would hide the text)
+            it.setData(NAME, Qt.ForegroundRole, red if k in bad_names else None)
+            it.setData(CODE, Qt.ForegroundRole, red if k in bad_codes else None)
+            it.setData(CODE, Qt.BackgroundRole, pale if k in missing else None)
+            f = it.font(NAME)
+            f.setBold(k in bad_names)
+            it.setFont(NAME, f)
+            f = it.font(CODE)
+            f.setBold(k in bad_codes)
+            it.setFont(CODE, f)
+            tips = [bad_names.get(k, ""), bad_codes.get(k, ""),
+                    "This tag needs a code (only a group's default can be without one)" if k in missing else ""]
+            tip = "\n".join(t for t in tips if t)
+            it.setToolTip(NAME, tip)
+            it.setToolTip(CODE, tip)
         self.tree.blockSignals(False)
         n = len(bad_names) + len(bad_codes) + len(missing)
         self.problem_note.setText("" if not n else
-                                  "Red: tags with the same name or code in one word class, or a missing "
-                                  "code. Hover over them to see why.")
+                                  "Red: tags with the same name or code, or a missing code. Tag names must "
+                                  "be unique in the whole structure. Hover over them to see why.")
 
     def _read_group(self, gi) -> Group:
-        g = Group(nfc(gi.text(0).strip()))
+        g = Group(nfc(gi.text(NAME).strip()), usual=list(gi.data(NAME, USUAL_ROLE) or []))
         for i in range(gi.childCount()):
             c = gi.child(i)
-            if c.data(0, Qt.UserRole) == KIND_TAG:
-                default = c.checkState(2) == Qt.Checked
-                g.tags.append(Tag(nfc(c.text(0).strip()), "" if default else nfc(c.text(1).strip()),
-                                  default, nfc(c.text(3).strip())))
+            if c.data(NAME, Qt.UserRole) == KIND_TAG:
+                default = c.checkState(DEFAULT) == Qt.Checked
+                g.tags.append(Tag(nfc(c.text(NAME).strip()), "" if default else nfc(c.text(CODE).strip()),
+                                  default, nfc(c.text(DESC).strip())))
             else:
                 g.groups.append(self._read_group(c))
         return g
 
     def structure(self):
         from ..model import TagStructure
-        ts = TagStructure()
-        for i in range(self.tree.topLevelItemCount()):
-            top = self.tree.topLevelItem(i)
-            groups = [self._read_group(top.child(j)) for j in range(top.childCount())]
-            if top.data(0, Qt.UserRole) == KIND_ALL:
-                ts.all_classes = groups
-            else:
-                ts.word_classes.append(WordClass(nfc(top.text(0).strip()), groups))
-        return ts
+        return TagStructure([self._read_group(top) for top in self._tops()])
 
-    def renames(self) -> tuple[dict[str, str], dict[str, str]]:
-        """(tag renames, word-class renames) made in this dialogue: old name -> new name."""
-        tags, classes = {}, {}
-
-        def walk(item):
-            kind = item.data(0, Qt.UserRole)
-            old, new = item.data(0, Qt.UserRole + 1), nfc(item.text(0).strip())
+    def renames(self) -> dict[str, str]:
+        """Tags renamed in this dialogue: old name -> new name."""
+        tags = {}
+        for it in self._tag_items():
+            old, new = it.data(NAME, Qt.UserRole + 1), nfc(it.text(NAME).strip())
             if old and old != new:
-                if kind == KIND_TAG:
-                    tags[old] = new
-                elif kind == KIND_WC:
-                    classes[old] = new
-            for i in range(item.childCount()):
-                walk(item.child(i))
-        for i in range(self.tree.topLevelItemCount()):
-            walk(self.tree.topLevelItem(i))
-        return tags, classes
+                tags[old] = new
+        return tags
 
     # editing -----------------------------------------------------------
     def _changed(self, item, column):
-        kind = item.data(0, Qt.UserRole)
-        if kind != KIND_TAG:
+        if item.data(NAME, Qt.UserRole) != KIND_TAG:
             return
         self.tree.blockSignals(True)
-        if column == 2 and item.checkState(2) == Qt.Checked:
+        if column == DEFAULT and item.checkState(DEFAULT) == Qt.Checked:
             parent = item.parent()
             for i in range(parent.childCount()):
                 sib = parent.child(i)
-                if sib is not item and sib.data(0, Qt.UserRole) == KIND_TAG:
-                    sib.setCheckState(2, Qt.Unchecked)
-            item.setText(1, "")
-        if column in (0, 1) and (forbidden_in(item.text(1)) or "," in item.text(0)):
+                if sib is not item and sib.data(NAME, Qt.UserRole) == KIND_TAG:
+                    sib.setCheckState(DEFAULT, Qt.Unchecked)
+            item.setText(CODE, "")
+        if column in (NAME, CODE) and (forbidden_in(item.text(CODE)) or "," in item.text(NAME)):
             QMessageBox.warning(self, "Tag structure", "Codes can't contain / \\ : * ? \" < > |, "
                                 "and tag names can't contain commas.")
-            item.setText(1, "".join(c for c in item.text(1) if not forbidden_in(c)))
-            item.setText(0, item.text(0).replace(",", ""))
+            item.setText(CODE, "".join(c for c in item.text(CODE) if not forbidden_in(c)))
+            item.setText(NAME, item.text(NAME).replace(",", ""))
         self.tree.blockSignals(False)
         self._mark_problems()
 
     def _selected(self):
         return self.tree.currentItem()
 
-    def _add_wc(self):
-        name, ok = QInputDialog.getText(self, "Add word class", "Name (e.g. NUMERAL):")
+    def _add_top(self):
+        name, ok = QInputDialog.getText(self, "Add group", "Group name (e.g. Nominal):")
         if ok and name.strip():
-            idx = self.tree.topLevelItemCount() - 1
-            it = self._item(KIND_WC, name.strip())
-            self.tree.insertTopLevelItem(max(idx, 0), it)
+            it = self._item(KIND_GROUP, name.strip())
+            self.tree.addTopLevelItem(it)
             self.tree.setCurrentItem(it)
-            self._mark_problems()
+            self._show_usual()
 
     def _add_group(self):
         cur = self._selected()
         if cur is None:
-            return
-        while cur.data(0, Qt.UserRole) == KIND_TAG:
+            return self._add_top()
+        while cur.data(NAME, Qt.UserRole) == KIND_TAG:
             cur = cur.parent()
-        name, ok = QInputDialog.getText(self, "Add group", "Group name:")
+        name, ok = QInputDialog.getText(self, "Add sub-group", f"Group name (inside “{cur.text(NAME)}”):")
         if ok and name.strip():
             it = self._item(KIND_GROUP, name.strip())
             cur.addChild(it)
             cur.setExpanded(True)
             self.tree.setCurrentItem(it)
+            self._show_usual()
 
     def _add_tag(self):
         cur = self._selected()
         if cur is None:
-            return
-        if cur.data(0, Qt.UserRole) == KIND_TAG:
-            cur = cur.parent()
-        if cur.data(0, Qt.UserRole) != KIND_GROUP:
             QMessageBox.information(self, "Add tag", "Select a group first: tags always belong to a group.")
             return
+        if cur.data(NAME, Qt.UserRole) == KIND_TAG:
+            cur = cur.parent()
         name, ok = QInputDialog.getText(self, "Add tag", "Tag name:")
         if ok and name.strip():
             it = self._item(KIND_TAG, name.strip().replace(",", ""), name.strip()[:6].upper())
@@ -758,23 +871,20 @@ class TagStructureDialog(QDialog):
 
     def _names_under(self, item) -> set[str]:
         out = set()
-        if item.data(0, Qt.UserRole) == KIND_TAG:
-            out.add(item.text(0))
+        if item.data(NAME, Qt.UserRole) == KIND_TAG:
+            out.add(item.text(NAME))
         for i in range(item.childCount()):
             out |= self._names_under(item.child(i))
         return out
 
     def _delete(self):
         cur = self._selected()
-        if cur is None or cur.data(0, Qt.UserRole) == KIND_ALL:
+        if cur is None:
             return
-        names = self._names_under(cur)
-        n = self._used(names)
-        if cur.data(0, Qt.UserRole) == KIND_WC:
-            n += sum(1 for e in self.db.entries if self.db.word_class(e) == cur.text(0))
-        msg = f"Delete {cur.data(0, Qt.UserRole)} “{cur.text(0)}”?"
+        n = self._used(self._names_under(cur))
+        msg = f"Delete {cur.data(NAME, Qt.UserRole)} “{cur.text(NAME)}”?"
         if n:
-            msg += f"\n{n} entries or tokens still use it; their tags are kept but no longer recognised."
+            msg += f"\n{n} tokens still use it; their tags are kept but no longer recognised."
         if QMessageBox.question(self, "Delete", msg) != QMessageBox.Yes:
             return
         parent = cur.parent()
@@ -782,11 +892,12 @@ class TagStructureDialog(QDialog):
             parent.removeChild(cur)
         else:
             self.tree.takeTopLevelItem(self.tree.indexOfTopLevelItem(cur))
+        self._show_usual()
         self._mark_problems()
 
     def _move(self, step):
         cur = self._selected()
-        if cur is None or cur.data(0, Qt.UserRole) == KIND_ALL:
+        if cur is None:
             return
         parent = cur.parent()
         if parent:
@@ -798,7 +909,7 @@ class TagStructureDialog(QDialog):
         else:
             i = self.tree.indexOfTopLevelItem(cur)
             j = i + step
-            if 0 <= j < self.tree.topLevelItemCount() - 1:     # All classes stays last
+            if 0 <= j < self.tree.topLevelItemCount():
                 self.tree.takeTopLevelItem(i)
                 self.tree.insertTopLevelItem(j, cur)
         self.tree.setCurrentItem(cur)
@@ -813,16 +924,15 @@ class TagStructureDialog(QDialog):
         ts = self.structure()
         bad_names, _, _ = self._problems()
         if bad_names:
-            QMessageBox.warning(self, "Tag structure", "Two tags in one word class have the same name "
-                                "(shown in red). Tokens store tag names, so they couldn't be told apart:\n\n"
+            QMessageBox.warning(self, "Tag structure", "Two tags have the same name (shown in red). Tokens "
+                                "store tag names, so they couldn't be told apart:\n\n"
                                 + "\n".join(sorted(set(bad_names.values()))))
             return False
-        for _, g in ts.all_leaf_groups():
-            for t in g.tags:
-                if not t.default and not t.code:
-                    QMessageBox.warning(self, "Tag structure",
-                                        f"“{t.name}” needs a code. Only a group's default can be without one.")
-                    return False
+        for t, _ in ts.tags():
+            if not t.default and not t.code:
+                QMessageBox.warning(self, "Tag structure",
+                                    f"“{t.name}” needs a code. Only a group's default can be without one.")
+                return False
         dups = ts.duplicate_codes()
         if dups and QMessageBox.question(self, "Tag structure", "Some codes are shared, so file names "
                                          "couldn't be told apart:\n" + "\n".join(dups) +

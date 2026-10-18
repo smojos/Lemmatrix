@@ -440,7 +440,7 @@ class NotebookDialog(QDialog):
         rows = nbmod.recordings(db, self.session.date)
         for e, i in rows:
             t = e.tokens[i]
-            tags = " + ".join(mx.chips(db, [x for x in t.tags if x not in defaults], db.word_class(e) or None))
+            tags = " + ".join(mx.chips(db, [x for x in t.tags if x not in defaults]))
             it = QTreeWidgetItem([f"{e.ref} {db.lemma(e)} “{db.gloss(e)}”", tags or "citation", t.speaker, t.file])
             it.setFont(0, ipa_font(self.main.prefs.ipa_size))
             it.setData(0, Qt.UserRole, (e, i))

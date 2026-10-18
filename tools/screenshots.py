@@ -48,7 +48,7 @@ def main(out: Path):
     shot(win, "01-all-data.png")
     win.lemmas.select_row(win.doc.db.entry_by_ref("D001"))
     win.tabs.setCurrentIndex(LEMMA_TAG)
-    shot(win, "02-lemma-tag-automatic.png")
+    shot(win, "02-lemma-tag-blank.png")
     cfg = win.config_for(LEMMA_TAG)
     cfg.x = [mx.Spec.citation(), mx.Spec(frozenset({"Singular"}), mx.LOOSE),
              mx.Spec(frozenset({"Plural"}), mx.EXACT)]
@@ -70,7 +70,7 @@ def main(out: Path):
     dlg.show()
     shot(dlg, "07-configure-matrix.png")
     dlg.close()
-    dlg = SpecDialog(win, win.doc.db, "NOUN", mx.Spec(frozenset({"Singular"}), mx.LOOSE))
+    dlg = SpecDialog(win, win.doc.db, mx.Spec(frozenset({"Singular"}), mx.LOOSE))
     dlg.show()
     shot(dlg, "08-matrix-column.png")
     dlg.close()
@@ -106,7 +106,6 @@ def main(out: Path):
 
     from lemmatrix import bulk
     from lemmatrix.ui import bulk_window as bw
-    from lemmatrix.ui.conversion_dialog import TagConversionDialog
     win.tabs.setCurrentIndex(ALL_DATA)
     win.open_bulk_edit()
     b = win.bulk_window
@@ -127,18 +126,22 @@ def main(out: Path):
     b.ops.setCurrentIndex(bw.SET)
     shot(b, "17-bulk-lemmas.png")
     b.close()
-    d = TagConversionDialog(win, win.doc.db, [win.doc.db.entry_by_ref("V002")], "NOUN")
-    from lemmatrix.model import TagAction
-    for row in d.rows:
-        if row.stranded.name == "Past":
-            row.set(TagAction(bulk.CONVERT, "Plural"))
-        elif row.stranded.name == "3SG.S":
-            row.set(TagAction(bulk.NEW, "3rd person", "3P", "Person"))
-        elif row.stranded.name != "1SG.S":
-            row.set(TagAction(bulk.DELETE))
-    d._check()
+    from lemmatrix.ui.dialogs import PreferencesDialog, TagStructureDialog
+    goat = win.doc.db.entry_by_ref("D001")
+    d = TokenDialog(win, [Slot(goat, 1)], 0)
     d.show()
-    shot(d, "18-tag-conversion.png")
+    shot(d, "18-token-usual-tags.png")
+    d.show_all_btn.setChecked(True)
+    d.tags.buttons["Past"].setChecked(True)
+    shot(d, "19-token-all-tags-unusual.png")
+    d.reject()
+    d = TagStructureDialog(win, win.doc.db)
+    d.show()
+    shot(d, "20-tag-structure.png")
+    d.close()
+    d = PreferencesDialog(win, win.doc.db, win.prefs)
+    d.show()
+    shot(d, "21-settings-general.png")
     d.close()
 
     big = HERE / "samples" / "Test-300.xml"

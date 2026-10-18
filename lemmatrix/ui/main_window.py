@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QF
                                QPushButton, QSplitter, QStackedWidget, QTabBar, QToolButton,
                                QVBoxLayout, QWidget)
 
-from .. import __version__, audio, bulk, filters as fl, lock as lockmod, matrix as mx, storage
+from .. import __version__, audio, filters as fl, lock as lockmod, matrix as mx, storage
 from . import theme
 from ..defaults import new_database
 from .. import notebook as nbmod
@@ -28,6 +28,7 @@ from .matrix_view import MatrixView
 from .prefs import Prefs
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, ListEditDelegate
 from .token_dialog import Slot, TokenDialog
+from . import widgets
 from .widgets import ipa_font
 
 def pitchmod_parse(text):
@@ -91,6 +92,7 @@ class MainWindow(QMainWindow):
         self.cloud_files: set[str] = set()       # those of them that are online-only (OneDrive)
         self.resize(1500, 920)
         theme.from_prefs(self.prefs)
+        widgets.SHOW_UNUSUAL = self.prefs.warn_unusual_tags
         self._build()
         self._build_menus()
         self._restyle()
@@ -321,19 +323,11 @@ class MainWindow(QMainWindow):
                        "Choose the rows and columns"),
                   tool("Clear matrix", "broom", lambda tab=tab: self.clear_matrix(tab),
                        "Clear matrix: empty the view, no rows or columns"))
-        d["cls"] = QComboBox()
-        d["cls"].setMinimumWidth(120)
-        d["cls"].setToolTip("A matrix shows one word class at a time" if tab == LEMMA_TAG
-                            else "Set by the selected lemma")
-        if tab == TAG_TAG:
-            d["cls"].setEnabled(False)
-        else:
-            d["cls"].activated.connect(lambda _: self._class_chosen())
         d["saved"] = QComboBox()
         d["saved"].setMinimumWidth(170)
-        d["saved"].setToolTip("Saved matrices for this word class")
+        d["saved"].setToolTip("Saved matrices" + (": the lemmas are the ones the lemma list shows"
+                                                  if tab == LEMMA_TAG else ""))
         d["saved"].activated.connect(lambda i, tab=tab: self._saved_chosen(tab, i))
-        self._row(bl, QLabel("Matrix class"), d["cls"])
         self._row(bl, QLabel("Matrix"), d["saved"],
                   tool("Save matrix", None, lambda tab=tab: self.save_matrix(tab),
                        "Save this matrix under a name"),
@@ -534,9 +528,7 @@ class MainWindow(QMainWindow):
 
         def tag_tree():
             out = [ListItem(fl.CITATION_ITEM)]
-            for wc in s.tags.word_classes:
-                out.append(ListItem(wc.name, [self._group_item(g) for g in wc.groups]))
-            out.append(ListItem("All classes", [self._group_item(g) for g in s.tags.all_classes]))
+            out += [self._group_item(g) for g in s.tags.groups]
             return out
 
         cols = [
@@ -547,7 +539,9 @@ class MainWindow(QMainWindow):
                    closed=True, tree=lambda: s.list_items(wcf) if wcf else []),
             Column("tags", "Tags", lambda r: list(r.token.tags), closed=True, tree=tag_tree, multi=True,
                    unmarked=defaults, kind="chips",
-                   tooltip=lambda r: ", ".join(r.token.tags) or "Citation (no tags)"),
+                   tooltip=lambda r: (", ".join(r.token.tags) or "Citation (no tags)")
+                   + "".join("\n⚠ " + n for n in (mx.unusual_notes(db, r.entry, r.token.tags)
+                                                    if self.prefs.warn_unusual_tags else []))),
             Column("drawing", "Pitch drawing", lambda r: r.token.get("Pitch"), kind="drawing"),
         ]
         for f in s.token_fields:
@@ -598,7 +592,7 @@ class MainWindow(QMainWindow):
         self.all_table.set_columns(cols, keys)
         defaults = mx.default_names(db)
         self.all_table.set_delegate("tags", ChipsDelegate(
-            lambda r: mx.chips(db, mx.marked(r.token.tags, defaults), db.word_class(r.entry) or None)
+            lambda r: mx.chips(db, mx.marked(r.token.tags, defaults), r.entry)
             if r is not None else [], self.all_table))
         self.all_table.set_delegate("drawing", DrawingDelegate(
             lambda: (db.settings.pitch_low, db.settings.pitch_high), self.all_table))
@@ -652,7 +646,6 @@ class MainWindow(QMainWindow):
         self.lemma_search.clear()
         self.all_search.clear()
         self._fill_session()
-        self._fill_classes()
         self.tabs.blockSignals(True)
         self.tabs.setCurrentIndex(ALL_DATA)
         self.tabs.blockSignals(False)
@@ -664,6 +657,20 @@ class MainWindow(QMainWindow):
         self._report_missing()
         if self.notebook_dialog is not None:
             self.notebook_dialog.reload()
+        if db.load_notes:                         # e.g. an older file upgraded to the current format
+            notes, db.load_notes = db.load_notes, []
+            self.doc.settings_changed()           # unsaved, so saving writes the new format
+            QMessageBox.information(self, "Database upgraded", "\n\n".join(notes))
+
+    def set_unusual_warning(self, on: bool):
+        """The soft warning for tags that aren't usual for their lemma's word class (Settings →
+        General → Warnings; "Don't show this again" turns it off)."""
+        self.prefs.warn_unusual_tags = bool(on)
+        widgets.SHOW_UNUSUAL = bool(on)
+        for w in (self.all_table, self.lt_view, self.tt_view):
+            w.viewport().update()
+        if self.bulk_window is not None:
+            self.bulk_window.tables_repaint()
 
     def _fill_session(self):
         """The Current Session panel: the file, the codes, and the session's people and places.
@@ -744,22 +751,6 @@ class MainWindow(QMainWindow):
     def work_date(self) -> str:
         """The day comments are dated with: the session's date, or today without one."""
         return self.session_date() or today()
-
-    def _fill_classes(self):
-        names = self.doc.db.settings.tags.word_class_names() + [mx.NO_CLASS]
-        for bar in (self.lt_bar, self.tt_bar):
-            cb = bar["cls"]
-            current = cb.currentData()
-            cb.blockSignals(True)
-            cb.clear()
-            for n in names:
-                cb.addItem(mx.class_label(n), n)
-            i = cb.findData(current) if current is not None else -1
-            if i < 0:
-                e = self.lemmas.current_row()
-                i = cb.findData(mx.class_of(self.doc.db, e)) if e else 0
-            cb.setCurrentIndex(max(0, i))
-            cb.blockSignals(False)
 
     def session_speaker(self) -> str:
         return self.sess_speaker.currentText()
@@ -957,9 +948,8 @@ class MainWindow(QMainWindow):
         view = {
             "tab": self.tabs.currentIndex(),
             "lemma": e.ref if e is not None else "",
-            "lt_class": self.lt_bar["cls"].currentData() or "",
             "switched": {KINDS[t]: on for t, on in self.switched.items()},
-            "configs": [{"kind": c.kind, "class": c.word_class, "name": c.name, "blank": c.blank,
+            "configs": [{"kind": c.kind, "name": c.name, "blank": c.blank,
                          "cell": list(c.cell), "x": [self._spec_json(x) for x in c.x],
                          "y": [self._spec_json(y) for y in c.y]} for c in self.configs.values()],
         }
@@ -973,16 +963,18 @@ class MainWindow(QMainWindow):
         if not view:
             return
         try:
-            names = {(m.kind, m.word_class, m.name) for m in db.settings.matrices}
+            names = {(m.kind, m.name) for m in db.settings.matrices}
             for c in view.get("configs", []):
-                cfg = mx.MatrixConfig(kind=c.get("kind", mx.LEMMA_TAG), word_class=c.get("class", ""),
-                                      blank=bool(c.get("blank")))
+                kind = c.get("kind", mx.LEMMA_TAG)
+                if kind in self.configs:              # views saved before 18 October had one per class
+                    continue
+                cfg = mx.MatrixConfig(kind=kind, blank=bool(c.get("blank")))
                 cfg.x = [self._spec_from(x) for x in c.get("x", [])]
                 cfg.y = [self._spec_from(y) for y in c.get("y", [])]
                 cfg.cell = list(c.get("cell") or mx.DEFAULT_CELL)
                 name = c.get("name", "")
-                cfg.name = name if (cfg.kind, cfg.word_class, name) in names else ""
-                self.configs[(cfg.kind, cfg.word_class)] = cfg
+                cfg.name = name if (cfg.kind, name) in names else ""
+                self.configs[cfg.kind] = cfg
             for t in (LEMMA_TAG, TAG_TAG):
                 self.switched[t] = bool(view.get("switched", {}).get(KINDS[t], False))
             ref = view.get("lemma")
@@ -995,9 +987,6 @@ class MainWindow(QMainWindow):
                 self.tabs.setCurrentIndex(tab)
                 self.tabs.blockSignals(False)
                 self._tab_changed(tab)
-            if tab == LEMMA_TAG and view.get("lt_class") is not None:
-                self._set_class(LEMMA_TAG, view.get("lt_class"))
-                self.refresh()
         except (TypeError, ValueError, AttributeError, KeyError):
             pass                                  # an unreadable view is simply forgotten
 
@@ -1019,41 +1008,18 @@ class MainWindow(QMainWindow):
     def _tab_changed(self, i):
         self.views.setCurrentIndex(i)
         self.options.setCurrentIndex(i)
-        if i == LEMMA_TAG:
-            e = self.lemmas.current_row()
-            if e is not None:
-                self._set_class(LEMMA_TAG, mx.class_of(self.doc.db, e))
         self.refresh()
 
     def _lemma_selected(self):
         e = self.lemmas.current_row()
         tab = self.tabs.currentIndex()
-        if e is not None and tab == LEMMA_TAG and mx.class_of(self.doc.db, e) != self.lt_bar["cls"].currentData():
-            self._set_class(LEMMA_TAG, mx.class_of(self.doc.db, e))
-            self.refresh()
-        elif tab == TAG_TAG:
-            self.refresh()
-
-    def _set_class(self, tab, wc):
-        cb = (self.lt_bar if tab == LEMMA_TAG else self.tt_bar)["cls"]
-        i = cb.findData(wc)
-        if i >= 0:
-            cb.setCurrentIndex(i)
-
-    def _class_chosen(self):
-        self.refresh()
-
-    def _class_for(self, tab) -> str:
         if tab == TAG_TAG:
-            e = self.lemmas.current_row()
-            return mx.class_of(self.doc.db, e) if e is not None else mx.NO_CLASS
-        return self.lt_bar["cls"].currentData() or mx.NO_CLASS
+            self.refresh()
 
     def config_for(self, tab) -> mx.MatrixConfig:
-        wc = self._class_for(tab)
-        key = (KINDS[tab], wc)
+        key = KINDS[tab]
         if key not in self.configs:
-            self.configs[key] = mx.MatrixConfig(kind=KINDS[tab], word_class=wc)
+            self.configs[key] = mx.MatrixConfig(kind=key)
         return self.configs[key]
 
     def _fill_saved(self, tab):
@@ -1061,10 +1027,9 @@ class MainWindow(QMainWindow):
         cfg = self.config_for(tab)
         cb.blockSignals(True)
         cb.clear()
-        cb.addItem("(current)" if (cfg.x or cfg.y) else "(blank)" if cfg.blank else
-                   ("(automatic)" if tab == LEMMA_TAG else "(not configured)"))
+        cb.addItem("(current)" if (cfg.x or cfg.y) else "(blank)")
         for m in self.doc.db.settings.matrices:
-            if m.kind == cfg.kind and m.word_class == cfg.word_class:
+            if m.kind == cfg.kind:
                 cb.addItem(m.name)
         i = cb.findText(cfg.name) if cfg.name else 0
         cb.setCurrentIndex(max(0, i))
@@ -1076,8 +1041,8 @@ class MainWindow(QMainWindow):
         cb = (self.lt_bar if tab == LEMMA_TAG else self.tt_bar)["saved"]
         cfg = self.config_for(tab)
         for m in self.doc.db.settings.matrices:
-            if m.kind == cfg.kind and m.word_class == cfg.word_class and m.name == cb.itemText(i):
-                self.configs[(cfg.kind, cfg.word_class)] = m.copy()
+            if m.kind == cfg.kind and m.name == cb.itemText(i):
+                self.configs[cfg.kind] = m.copy()
         self.refresh()
 
     def _only_data_toggled(self, on):
@@ -1115,7 +1080,7 @@ class MainWindow(QMainWindow):
         cfg = self.config_for(tab)
         self._fill_saved(tab)
         if tab == LEMMA_TAG:
-            ents = mx.in_class(db, visible, cfg.word_class)
+            ents = list(visible)
             lay = mx.lemma_tag_layout(db, ents, cfg)
             hidden = ""
             if only_data and lay.rows:
@@ -1127,22 +1092,20 @@ class MainWindow(QMainWindow):
                     lay = mx.lemma_tag_layout(db, ents, cfg) if ents else \
                         mx.Layout(message="No lemma has token data in these columns.")
             view = self.lt_view
-            total = len(mx.in_class(db, db.entries, cfg.word_class))
-            self.count_line.setText(f"{len(ents)} {mx.class_label(cfg.word_class)} lemmas shown "
-                                    f"of {total}{hidden}  ·  {len(db.entries)} lemmas in all")
+            self.count_line.setText(f"{len(ents)} lemmas shown of {len(db.entries)}{hidden}"
+                                    if cfg.x else "")
         else:
             e = self.lemmas.current_row()
             if e is not None and e not in visible:
                 e = None
-            self._set_class(TAG_TAG, self._class_for(TAG_TAG))
             if only_data and e is not None and not any(t.has_content() for t in e.tokens):
                 lay = mx.Layout(message="This lemma has no token data (Show only lemmas with token "
                                         "data is on).")
             else:
                 lay = mx.tag_tag_layout(db, e, cfg)
             view = self.tt_view
-            self.count_line.setText(f"{e.ref}  {db.lemma(e)}  “{db.gloss(e)}”  ·  "
-                                    f"{mx.class_label(mx.class_of(db, e))}" if e else "")
+            self.count_line.setText(f"{e.ref}  {db.lemma(e)}  “{db.gloss(e)}”"
+                                    + (f"  ·  {db.word_class(e)}" if db.word_class(e) else "") if e else "")
         if lay.message:
             self.count_line.setText((self.count_line.text() + "  ·  " if self.count_line.text() else "")
                                     + lay.message)
@@ -1175,40 +1138,28 @@ class MainWindow(QMainWindow):
 
     def configure_matrix(self, tab):
         cfg = self.config_for(tab)
-        if tab == TAG_TAG and self.lemmas.current_row() is None:
-            QMessageBox.information(self, "Configure matrix", "Select a lemma first: its word class "
-                                    "decides which tags are available.")
-            return
-        ents = mx.in_class(self.doc.db, self.lemmas.visible_rows(), cfg.word_class)
-        start = cfg
-        if tab == LEMMA_TAG and not cfg.x and not cfg.blank:
-            start = cfg.copy()
-            start.x = mx.auto_specs(self.doc.db, ents)
-        dlg = ConfigureMatrixDialog(self, self.doc.db, start, ents)
+        ents = self.lemmas.visible_rows()
+        dlg = ConfigureMatrixDialog(self, self.doc.db, cfg, ents)
         if dlg.exec():
             new = dlg.result_config()
             new.name = ""
-            self.configs[(cfg.kind, cfg.word_class)] = new
+            self.configs[cfg.kind] = new
             self.refresh()
 
     def save_matrix(self, tab):
         cfg = self.config_for(tab)
-        if (tab == TAG_TAG and not (cfg.x and cfg.y)) or cfg.blank:
+        if not cfg.x or (tab == TAG_TAG and not cfg.y):
             QMessageBox.information(self, "Save matrix", "Configure the matrix first.")
             return
         mats = self.doc.db.settings.matrices
-        existing = [m.name for m in mats if m.kind == cfg.kind and m.word_class == cfg.word_class]
+        existing = [m.name for m in mats if m.kind == cfg.kind]
         name = ask_matrix_name(self, existing, cfg.name)
         if not name:
             return
         saved = cfg.copy()
-        if tab == LEMMA_TAG and not saved.x:
-            saved.x = mx.auto_specs(self.doc.db, mx.in_class(self.doc.db, self.lemmas.visible_rows(),
-                                                             cfg.word_class))
         saved.name = name
-        mats[:] = [m for m in mats if not (m.kind == saved.kind and m.word_class == saved.word_class
-                                           and m.name == name)] + [saved]
-        self.configs[(cfg.kind, cfg.word_class)] = saved.copy()
+        mats[:] = [m for m in mats if not (m.kind == saved.kind and m.name == name)] + [saved]
+        self.configs[cfg.kind] = saved.copy()
         self.doc.settings_changed()
 
     def rename_matrix(self, tab):
@@ -1217,7 +1168,7 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Rename matrix", "Choose a saved matrix first.")
             return
         mats = self.doc.db.settings.matrices
-        same = [m for m in mats if m.kind == cfg.kind and m.word_class == cfg.word_class]
+        same = [m for m in mats if m.kind == cfg.kind]
         name = ask_matrix_name(self, [m.name for m in same], cfg.name, "Rename matrix", replace=False)
         if not name or name == cfg.name:
             return
@@ -1230,8 +1181,8 @@ class MainWindow(QMainWindow):
     def clear_matrix(self, tab):
         """Back to a blank view: no rows or columns, nothing chosen."""
         cfg = self.config_for(tab)
-        new = mx.MatrixConfig(kind=cfg.kind, word_class=cfg.word_class, cell=list(cfg.cell), blank=True)
-        self.configs[(cfg.kind, cfg.word_class)] = new
+        new = mx.MatrixConfig(kind=cfg.kind, cell=list(cfg.cell), blank=True)
+        self.configs[cfg.kind] = new
         self.refresh()
 
     def delete_saved_matrix(self, tab):
@@ -1243,8 +1194,7 @@ class MainWindow(QMainWindow):
                 != QMessageBox.Yes:
             return
         mats = self.doc.db.settings.matrices
-        mats[:] = [m for m in mats if not (m.kind == cfg.kind and m.word_class == cfg.word_class
-                                           and m.name == cfg.name)]
+        mats[:] = [m for m in mats if not (m.kind == cfg.kind and m.name == cfg.name)]
         cfg.name = ""
         self.doc.settings_changed()
 
@@ -1332,17 +1282,9 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Gloss", f"{forbidden_in(text)} can't be used in a gloss, "
                                 "because glosses can end up in file names.")
             return
-        if f.role == "word-class" and text and text not in s.tags.word_class_names():
-            QMessageBox.warning(self, "Word class", f"“{text}” isn't a word class. Add it in "
-                                "Edit → Tag structure first.")
-            return
-        if f.closed and f.role != "word-class" and text:
+        if f.closed and text and text not in f.all_values():
             f.add_value(text)
-        if f.role == "word-class" and text != self.doc.db.word_class(entry):
-            after = entry.copy()
-            after.set(name, text)
-            self.change_word_class(entry, after)
-            return
+            self.doc.settings_changed()
 
         def change(e):
             e.set(name, text, lang or None, f.multilingual)
@@ -1402,7 +1344,7 @@ class MainWindow(QMainWindow):
         e, i = sel
         t = e.tokens[i]
         db = self.doc.db
-        tags = " + ".join(mx.chips(db, t.tags, db.word_class(e) or None)) or "citation"
+        tags = " + ".join(mx.chips(db, t.tags)) or "citation"
         with_file = bool(t.file) and self.prefs.delete_recordings_with_tokens
         msg = f"Delete the {tags} token of {e.ref} {db.lemma(e)}?"
         if with_file:
@@ -1572,56 +1514,7 @@ class MainWindow(QMainWindow):
             return
         dlg = EntryDialog(self, self.doc.db, e)
         if dlg.exec():
-            after = e.copy()
-            dlg.apply(after)
-            if self.doc.db.word_class(after) != self.doc.db.word_class(e):
-                self.change_word_class(e, after)
-            else:
-                self.doc.edit_entry(e, dlg.apply, f"Edit {e.ref}")
-
-    def change_word_class(self, entry: Entry, after: Entry) -> bool:
-        """Apply an edited copy of an entry whose word class changed, converting its tokens' tags.
-
-        Tags the new class doesn't keep go through the tag conversion dialogue. Recordings are
-        renamed if "Update sound file names automatically" is on. One undo step.
-        """
-        from .conversion_dialog import TagConversionDialog
-        db = self.doc.db
-        old_wc, new_wc = db.word_class(entry), db.word_class(after)
-        need, _ = bulk.stranded_tags(db, [entry], new_wc)
-        actions = {}
-        if need:
-            dlg = TagConversionDialog(self, db, [entry], new_wc, on_saved=self.doc.settings_changed)
-            if not dlg.exec():
-                return False
-            actions = dlg.actions()
-        new_tags = bulk.new_tags_for(new_wc, actions)
-        ts = bulk.structure_with(db.settings.tags, new_tags)
-        try:
-            for t in after.tokens:
-                t.tags = bulk.convert_tags(ts, old_wc, new_wc, t.tags, actions)
-        except bulk.RowError as exc:
-            QMessageBox.warning(self, "Word class", f"The word class wasn't changed: {exc}.")
-            return False
-        folder = storage.sound_folder(db)
-        on_disk = storage.scan_sound_folder(folder)[0]
-        plan = bulk.plan_edit(db, entry, after, bulk.Options(rename_files=db.settings.auto_update_names),
-                              folder, on_disk, new_tags)
-        if not plan.ok:
-            QMessageBox.warning(self, "Word class", "The word class wasn't changed:\n\n"
-                                + "\n".join(p.message for p in plan.problems[:12]))
-            return False
-        if new_tags:
-            bulk.install_new_tags(db, new_tags)
-        problems = self.doc.apply_changes(f"Edit {entry.ref}", plan.pairs, plan.renames)
-        if problems:
-            QMessageBox.warning(self, "Word class", "The word class wasn't changed: " + "; ".join(problems))
-            return False
-        if new_tags:
-            self.doc.settings_changed()
-            self._fill_classes()
-            self._setup_columns()
-        return True
+            self.doc.edit_entry(e, dlg.apply, f"Edit {e.ref}")
 
     def open_bulk_edit(self):
         """Edit → Bulk edit…: change many lemmas or tokens at once, in a window of its own."""
@@ -1688,34 +1581,40 @@ class MainWindow(QMainWindow):
             for kind, row in self.sess_rows.items():
                 row.set_keys([renames[kind].get(k, k) for k in keys[kind]])
             self._session_people_changed()
-        self._apply_tags(dlg.tags)
+        self._apply_tags(dlg.tags, dlg.value_renames())
         self._fill_session()
         if self.notebook_dialog is not None:
             self.notebook_dialog.reload()
 
-    def _apply_tags(self, dlg):
-        """Use the tag structure from the tag editor; renamed tags are followed everywhere."""
+    def _apply_tags(self, dlg, value_renames: dict | None = None):
+        """Use the tag structure from the tag editor; renamed tags, and values renamed in the
+        closed fields' lists (word classes included), are followed everywhere."""
         db = self.doc.db
-        tag_renames, class_renames = dlg.renames()
-        db.settings.tags = dlg.structure()
-        wc_field = db.settings.entry_field("word-class")
-        for e in db.entries:          # follow renamed tags and word classes
-            if wc_field and e.get(wc_field.name) in class_renames:
-                e.set(wc_field.name, class_renames[e.get(wc_field.name)])
+        s = db.settings
+        tag_renames = dlg.renames()
+        value_renames = value_renames or {}
+        s.tags = dlg.structure()
+        wcf = s.entry_field("word-class")
+        if wcf is not None:                         # the hints follow renamed word classes
+            s.tags.rename_classes(value_renames.get(wcf.name, {}))
+        fields = [(f, True) for f in s.entry_fields] + [(f, False) for f in s.token_fields]
+        for e in db.entries:
+            for f, on_entry in fields:
+                r = value_renames.get(f.name)
+                if not r:
+                    continue
+                for obj in ([e] if on_entry else e.tokens):
+                    if obj.get(f.name) in r:
+                        obj.set(f.name, r[obj.get(f.name)])
             for t in e.tokens:
                 if any(x in tag_renames for x in t.tags):
-                    t.tags = db.settings.tags.sort(db.word_class(e),
-                                                   [tag_renames.get(x, x) for x in t.tags])
-        if tag_renames or class_renames:
+                    t.tags = s.tags.sort([tag_renames.get(x, x) for x in t.tags])
+        if tag_renames or any(value_renames.values()):
             self.doc.undo.clear()     # renames can't be undone safely
-            for m in db.settings.matrices:            # saved matrices follow too
-                m.rename(tag_renames, class_renames)
-            old = dict(self.configs)
-            self.configs.clear()
-            for cfg in old.values():                  # and the matrices on screen
-                cfg.rename(tag_renames, class_renames)
-                self.configs[(cfg.kind, cfg.word_class)] = cfg
-        self._fill_classes()
+            for m in s.matrices:                      # saved matrices follow too
+                m.rename(tag_renames)
+            for cfg in self.configs.values():         # and the matrices on screen
+                cfg.rename(tag_renames)
         self._setup_columns()
         self.doc.settings_changed()
         self._maybe_update_names()
@@ -1724,6 +1623,7 @@ class MainWindow(QMainWindow):
         dlg = PreferencesDialog(self, self.doc.db, self.prefs)
         if dlg.exec():
             names_changed = dlg.apply()
+            self.set_unusual_warning(self.prefs.warn_unusual_tags)
             self._apply_autosave()
             theme.from_prefs(self.prefs)
             self._restyle()
@@ -1845,7 +1745,7 @@ class MainWindow(QMainWindow):
 
         def label(e, i):
             t = e.tokens[i]
-            tags = " + ".join(mx.chips(self.doc.db, t.tags, self.doc.db.word_class(e) or None)) or "citation"
+            tags = " + ".join(mx.chips(self.doc.db, t.tags)) or "citation"
             return f"{e.ref} {tags}"
         lines = [f"{label(e, i)}: {e.tokens[i].file}  →  {name}" if had else
                  f"{label(e, i)} (no recording yet)  →  {name}" for e, i, name, had in found]
@@ -1882,7 +1782,7 @@ class MainWindow(QMainWindow):
         db = self.doc.db
         lines = []
         for name, items in list(dups.items())[:40]:
-            refs = ", ".join(f"{e.ref} ({' + '.join(mx.chips(db, t.tags, db.word_class(e) or None)) or 'citation'})"
+            refs = ", ".join(f"{e.ref} ({' + '.join(mx.chips(db, t.tags)) or 'citation'})"
                              for e, t in items)
             lines.append(f"{name}: {refs}")
         QMessageBox.warning(self, "Duplicate file names",
@@ -1947,12 +1847,11 @@ class MainWindow(QMainWindow):
             for c in range(len(lay.cols)):
                 hits = lay.tokens(r, c)
                 entry, _ = lay.target(r, c)
-                wc = mx.class_of(db, entry) if entry is not None else None
                 blocks = []
                 for _, t in hits:
                     lines = []
                     if len(hits) > 1:
-                        extra = mx.extra_chips(db, t, lay.spec_at(r, c), wc or None, defaults)
+                        extra = mx.extra_chips(db, t, lay.spec_at(r, c), entry, defaults)
                         if extra:
                             lines.append(" ".join(extra))
                     lines += [text(t, n) for n in fields if text(t, n)]

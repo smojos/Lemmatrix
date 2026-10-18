@@ -64,7 +64,7 @@ class ConfigureCellDialog(QDialog):
 class SpecDialog(QDialog):
     """Pick the tags and match type for one matrix column or row."""
 
-    def __init__(self, parent, db: Database, word_class: str, spec: mx.Spec | None = None,
+    def __init__(self, parent, db: Database, spec: mx.Spec | None = None,
                  title: str = "Matrix line"):
         super().__init__(parent)
         self.setWindowTitle(title)
@@ -86,7 +86,7 @@ class SpecDialog(QDialog):
         self.tags = TagPanel()
         self.tags.multi = True
         self.tags.on_change = self._update_count
-        self.tags.build(db, word_class or None, set(spec.tags) if spec else set())
+        self.tags.build(db, set(spec.tags) if spec else set())
         hint = QLabel("Ctrl+click to pick more than one tag in a group: you get one line for "
                       "each combination (e.g. 3SG.A, 3PL.A × FUT1, FUT2 = 4 lines).")
         hint.setWordWrap(True)
@@ -137,9 +137,9 @@ class SpecDialog(QDialog):
 class SpecDelegate(QStyledItemDelegate):
     """Shows a spec as its match type plus tag chips."""
 
-    def __init__(self, db: Database, word_class: str, parent=None):
+    def __init__(self, db: Database, parent=None):
         super().__init__(parent)
-        self.db, self.wc = db, word_class
+        self.db = db
 
     def paint(self, painter: QPainter, option, index):
         super().paint(painter, option, index)
@@ -154,7 +154,7 @@ class SpecDelegate(QStyledItemDelegate):
         if spec.match != mx.CITATION:
             _, h = chip_metrics(f)
             paint_chips(painter, option.rect.left() + 80, option.rect.center().y() - h / 2,
-                        mx.chips(self.db, spec.tags, self.wc or None), f)
+                        mx.chips(self.db, spec.tags), f)
         painter.restore()
 
     def sizeHint(self, option, index):
@@ -164,10 +164,10 @@ class SpecDelegate(QStyledItemDelegate):
 class SpecList(QWidget):
     """A list of specs with add / duplicate / remove / up / down, Remove all and Restore all present."""
 
-    def __init__(self, db: Database, word_class: str, specs: list, title: str, parent=None,
+    def __init__(self, db: Database, specs: list, title: str, parent=None,
                  present=None, present_tip: str = ""):
         super().__init__(parent)
-        self.db, self.wc = db, word_class
+        self.db = db
         self.present = present                    # () -> specs for "Restore all present"
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -191,7 +191,7 @@ class SpecList(QWidget):
         lay.addLayout(head)
         self.list = QListWidget()
         theme.as_data(self.list)
-        self.list.setItemDelegate(SpecDelegate(db, word_class, self.list))
+        self.list.setItemDelegate(SpecDelegate(db, self.list))
         self.list.itemDoubleClicked.connect(self._edit)
         self.list.setContextMenuPolicy(Qt.CustomContextMenu)
         self.list.customContextMenuRequested.connect(self._menu)
@@ -230,7 +230,7 @@ class SpecList(QWidget):
             self.list.setCurrentItem(it)
 
     def _add(self):
-        dlg = SpecDialog(self, self.db, self.wc)
+        dlg = SpecDialog(self, self.db)
         if dlg.exec():
             r = self.list.currentRow()
             self._insert(dlg.specs(), r + 1 if r >= 0 else None)
@@ -240,12 +240,12 @@ class SpecList(QWidget):
         it = self.list.currentItem()
         if it is None:
             return
-        dlg = SpecDialog(self, self.db, self.wc, it.data(Qt.UserRole), title="Duplicate line")
+        dlg = SpecDialog(self, self.db, it.data(Qt.UserRole), title="Duplicate line")
         if dlg.exec():
             self._insert(dlg.specs(), self.list.row(it) + 1)
 
     def _edit(self, it):
-        dlg = SpecDialog(self, self.db, self.wc, it.data(Qt.UserRole))
+        dlg = SpecDialog(self, self.db, it.data(Qt.UserRole))
         if dlg.exec():
             specs = dlg.specs()
             it.setData(Qt.UserRole, specs[0])
@@ -297,7 +297,7 @@ class ConfigureMatrixDialog(QDialog):
         self.db, self.config = db, config.copy()
         tag_tag = config.kind == mx.TAG_TAG
         entries = list(entries or [])
-        self.setWindowTitle(f"Configure matrix — {mx.class_label(config.word_class)}")
+        self.setWindowTitle("Configure matrix")
         self.setWindowIcon(icon("gear"))
         self.resize(900 if tag_tag else 560, 600)
         lay = QVBoxLayout(self)
@@ -308,11 +308,11 @@ class ConfigureMatrixDialog(QDialog):
         lay.addWidget(intro)
         row = QHBoxLayout()
         if tag_tag:
-            tip = "One Loose line for each tag the lemmas of this class use"
-            self.y = SpecList(db, config.word_class, config.y, "Rows (Y)",
+            tip = "One Loose line for each tag the shown lemmas use"
+            self.y = SpecList(db, config.y, "Rows (Y)",
                               present=lambda: mx.auto_tag_specs(db, entries), present_tip=tip)
             row.addWidget(self.y)
-            self.x = SpecList(db, config.word_class, config.x, "Columns (X)",
+            self.x = SpecList(db, config.x, "Columns (X)",
                               present=lambda: mx.auto_tag_specs(db, entries), present_tip=tip)
         else:
             self.y = None
@@ -321,7 +321,7 @@ class ConfigureMatrixDialog(QDialog):
             ll.addWidget(QLabel("Lemma\n(from the lemma list)"))
             lab.setMaximumWidth(160)
             row.addWidget(lab)
-            self.x = SpecList(db, config.word_class, config.x, "Columns (X)",
+            self.x = SpecList(db, config.x, "Columns (X)",
                               present=lambda: mx.auto_specs(db, entries),
                               present_tip="Citation, then one Exact column for every tag "
                                           "combination the shown lemmas have")

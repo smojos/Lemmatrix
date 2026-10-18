@@ -7,7 +7,7 @@ import pytest
 
 from lemmatrix import audio, matrix, pitch, storage
 from lemmatrix.defaults import new_database
-from lemmatrix.model import Participant, Token, forbidden_in
+from lemmatrix.model import ListItem, Participant, Token, forbidden_in
 
 
 @pytest.fixture
@@ -88,11 +88,36 @@ def test_defaults_add_nothing_to_file_names(db):
 def test_one_tag_per_group():
     d = new_database()
     ts = d.settings.tags
-    assert ts.conflicts("VERB", ["1SG.A", "3SG.O"]) == []
-    assert ts.conflicts("VERB", ["1SG.A", "3SG.A"])
-    assert ts.conflicts("VERB", ["before H", "after L"]) == []
-    assert ts.conflicts("VERB", ["before H", "before L"])
-    assert ts.conflicts("NOUN", ["Past"])                 # not a noun tag
+    assert ts.conflicts(["1SG.A", "3SG.O"]) == []
+    assert ts.conflicts(["1SG.A", "3SG.A"])
+    assert ts.conflicts(["before H", "after L"]) == []
+    assert ts.conflicts(["before H", "before L"])
+    assert ts.conflicts(["Past", "Plural"]) == []          # any tag can go on any token
+    assert ts.conflicts(["Nonsense"])                      # but it must be in the structure
+
+
+def test_usual_for_hints():
+    d = new_database()
+    ts = d.settings.tags
+    assert ts.unusual(["NOUN"], ["Past", "Plural", "isolation"]) == ["Past"]
+    assert ts.unusual(["VERB"], ["Past", "Plural"]) == ["Plural"]
+    assert ts.unusual([], ["Past"]) == ["Past"]            # no word class: only hint-less groups are usual
+    assert ts.with_defaults(["Plural"], ["NOUN"]) == ["Plural", "isolation"]
+    assert ts.with_defaults(["Past"], ["VERB"]) == ["Simple", "Past", "Indicative", "Affirmative", "isolation"]
+    # a nested word class counts as the class above it
+    wcf = d.settings.entry_field("word-class")
+    noun = next(i for i in wcf.items if i.name == "NOUN")
+    noun.children.append(ListItem("Relational"))
+    e = d.new_entry("C001", "bəə", "father", "Relational")
+    assert d.classes(e) == ["Relational", "NOUN"]
+    assert d.unusual_tags(e, ["Plural", "Past"]) == ["Past"]
+    # subgroups inherit their parent's hint unless they have their own
+    verb = next(g for g in ts.groups if g.name == "VERB")
+    tense = next(g for g in verb.groups if g.name == "Tense")
+    tense.usual = ["VERB", "NOUN"]
+    assert d.unusual_tags(e, ["Past", "Negative"]) == ["Negative"]
+    ts.rename_classes({"VERB": "Verbal"})
+    assert verb.usual == ["Verbal"] and tense.usual == ["Verbal", "NOUN"]
 
 
 def test_default_structure_has_no_duplicate_codes():
@@ -241,13 +266,16 @@ def test_extra_chips_for_side_by_side_tokens():
     spec = S("Singular", match=matrix.LOOSE)
     lay = matrix.lemma_tag_layout(d, d.entries, matrix.MatrixConfig(x=[spec]))
     defaults = matrix.default_names(d)
-    labels = [matrix.extra_chips(d, t, spec, "NOUN", defaults) for _, t in lay.tokens(0, 0)]
+    labels = [matrix.extra_chips(d, t, spec, d.entries[0], defaults) for _, t in lay.tokens(0, 0)]
     assert labels == [[], ["+GEN"], ["+GEN", "+xH"]]
 
 
-def test_automatic_columns():
+def test_lemma_tag_starts_blank_and_restore_all_present():
     d = _noun_db()
     lay = matrix.lemma_tag_layout(d, d.entries, None)
+    assert not lay.cols and "Blank matrix" in lay.message
+    cfg = matrix.MatrixConfig(x=matrix.auto_specs(d, d.entries))   # Configure matrix → Restore all present
+    lay = matrix.lemma_tag_layout(d, d.entries, cfg)
     assert [c.label for c in lay.cols] == ["Citation", "SG", "SG + GEN", "SG + GEN + xH",
                                            "PL", "PL + GEN"]
 
@@ -258,26 +286,21 @@ def test_tag_tag_paradigm_and_contradictions():
     for s_ in ("1SG.A", "3SG.A"):
         for o in ("1SG.O", "3SG.O"):
             v.tokens.append(d.new_token(v, [s_, o]))
-    cfg = matrix.MatrixConfig(kind=matrix.TAG_TAG, word_class="VERB",
+    cfg = matrix.MatrixConfig(kind=matrix.TAG_TAG,
                               y=[S("1SG.A"), S("3SG.A")], x=[S("1SG.O"), S("3SG.O"), S("1SG.A")])
     lay = matrix.tag_tag_layout(d, v, cfg)
     (entry, tok), = lay.tokens(1, 0)
     assert {"3SG.A", "1SG.O"} <= set(tok.tags)
     assert (1, 2) in lay.greyed and (0, 2) not in lay.greyed  # 3SG.A + 1SG.A contradict
-    other = matrix.MatrixConfig(kind=matrix.TAG_TAG, word_class="NOUN", y=[S("Plural")], x=[S("Genitive")])
-    assert "for NOUN" in matrix.tag_tag_layout(d, v, other).message
+    other = matrix.MatrixConfig(kind=matrix.TAG_TAG, y=[S("Plural")], x=[S("Genitive")])
+    lay = matrix.tag_tag_layout(d, v, other)                 # any matrix works for any lemma
+    assert not lay.message and not lay.cells
+    assert all(isinstance(c, matrix.Unusual) for c in lay.rows[0].chips)   # nominal tags on a verb
     assert matrix.tag_tag_layout(d, v, None).message == "Please configure a matrix."
 
 
-def test_matrix_class():
-    d = _noun_db()
-    d.entries.append(d.new_entry("X001", "zz", "thing", ""))
-    assert len(matrix.in_class(d, d.entries, "NOUN")) == 2
-    assert len(matrix.in_class(d, d.entries, matrix.NO_CLASS)) == 1
-
-
 def test_saved_matrices_round_trip(tmp_path, db):
-    cfg = matrix.MatrixConfig(name="Noun cases", kind=matrix.LEMMA_TAG, word_class="NOUN",
+    cfg = matrix.MatrixConfig(name="Noun cases", kind=matrix.LEMMA_TAG,
                               x=[matrix.Spec.citation(), S("Singular", match=matrix.LOOSE)],
                               cell=["Phonetic"])
     db.settings.matrices.append(cfg)
@@ -408,3 +431,49 @@ def test_open_marker_lifecycle(tmp_path, monkeypatch):
     # a marker left by a crash on this computer is ignored
     lock.lock_path(db).write_text(json.dumps({"computer": lock.this_computer(), "pid": 999999999}))
     assert lock.held_elsewhere(db) is None
+
+
+# ---- upgrading format 1 files ------------------------------------------------------
+
+DATA = Path(__file__).resolve().parent / "data"
+
+
+def test_format_1_is_upgraded(tmp_path):
+    old = storage.load(DATA / "Sample-format1.xml")
+    assert old.load_notes                                  # the main window reports these
+    ts = old.settings.tags
+    assert [g.name for g in ts.groups] == ["NOUN", "VERB", "Phonological", "Syntactic", "Frames"]
+    assert [g.usual for g in ts.groups[:2]] == [["NOUN"], ["VERB"]]
+    assert old.settings.word_classes() == ["NOUN", "VERB", "PRONOUN", "QUANT", "ADJECTIVE", "ADVERB"]
+    names = {e.ref: [t.file for t in e.tokens] for e in old.entries}
+    storage.save(old, tmp_path / "S.xml", backup=False)
+    again = storage.load(tmp_path / "S.xml")
+    assert not again.load_notes
+    assert {e.ref: [t.file for t in e.tokens] for e in again.entries} == names
+    assert all(again.expected_filename(e, t) == t.file for e in again.entries for t in e.tokens if t.file)
+
+
+def test_format_1_tags_shared_by_word_classes(tmp_path):
+    text = (DATA / "Sample-format1.xml").read_text(encoding="utf-8")
+    # like Josh's database: ADJECTIVE and QUANT had their own Number › Plural (PL);
+    # PRONOUN a different Plural (code PLU), which can't be merged
+    text = text.replace('<word-class name="QUANT" />', '<word-class name="QUANT"><group name="Number">'
+                        '<tag name="Plural" code="PL" /></group></word-class>')
+    text = text.replace('<word-class name="ADJECTIVE" />', '<word-class name="ADJECTIVE"><group name="Number">'
+                        '<tag name="Plural" code="PL" /></group></word-class>')
+    text = text.replace('<word-class name="PRONOUN" />', '<word-class name="PRONOUN"><group name="Number">'
+                        '<tag name="Plural" code="PLU" /></group></word-class>')
+    text = text.replace('<WordClass>VERB</WordClass>', '<WordClass>PRONOUN</WordClass>', 1)
+    path = tmp_path / "Old.xml"
+    path.write_text(text, encoding="utf-8")
+    pron = next(e for e in storage.load(DATA / "Sample-format1.xml").entries
+                if "VERB" in e.get("WordClass"))
+    db = storage.load(path)
+    ts = db.settings.tags
+    noun_number = ts.find("Plural")[1]
+    assert noun_number.usual == ["NOUN", "QUANT", "ADJECTIVE"]
+    assert ts.find("Plural (PRONOUN)") is not None
+    assert [g.name for g in ts.groups].count("ADJECTIVE") == 0     # its only group was merged
+    assert ts.duplicate_names() == []
+    assert any("Plural (PRONOUN)" in n for n in db.load_notes)
+    assert db.entry_by_ref(pron.ref) is not None

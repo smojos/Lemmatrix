@@ -148,6 +148,21 @@ def chip_text() -> QColor:
     return theme.colour("chip_text")
 
 
+# Unusual tags (not usual for their lemma's word class) are drawn with a dashed amber
+# outline, while the warning is on (Settings → General → Warnings; the main window sets this).
+SHOW_UNUSUAL = True
+
+
+def is_unusual(label) -> bool:
+    return SHOW_UNUSUAL and getattr(label, "note", None) is not None and type(label).__name__ == "Unusual"
+
+
+def unusual_pen(width: float = 1.4) -> QPen:
+    pen = QPen(theme.colour("warning"), width)
+    pen.setStyle(Qt.DashLine)
+    return pen
+
+
 def chip_metrics(font: QFont):
     from PySide6.QtGui import QFontMetrics
     fm = QFontMetrics(font)
@@ -171,10 +186,11 @@ def paint_chips(p: QPainter, x: float, y: float, labels, font: QFont, gap: int =
         if max_right is not None and x + w > max_right:
             break
         r = QRectF(x, y, w, h)
-        p.setPen(QPen(chip_border(), 1))
+        odd = is_unusual(t)
+        p.setPen(unusual_pen() if odd else QPen(chip_border(), 1))
         p.setBrush(chip_fill() if filled else theme.colour("chip_blank"))
         p.drawRoundedRect(r.adjusted(0.5, 0.5, -0.5, -0.5), h / 2.6, h / 2.6)
-        p.setPen(chip_text())
+        p.setPen(theme.colour("warning") if odd else chip_text())
         p.drawText(r, Qt.AlignCenter, t)
         x += w + gap
     p.restore()
@@ -192,6 +208,7 @@ class ChipButton(QAbstractButton):
         self.setText(text)
         self.setCheckable(True)
         self.setCursor(Qt.PointingHandCursor)
+        self.unusual = False                   # drawn with a dashed amber outline when picked
         f = self.font()
         f.setPointSize(f.pointSize() + 2)
         f.setBold(True)
@@ -210,7 +227,8 @@ class ChipButton(QAbstractButton):
         border = chip_border()
         if not self.isEnabled():
             border = theme.colour("chip_disabled")
-        p.setPen(QPen(border.darker(125) if (self.underMouse() or on) else border, 1.5))
+        odd = on and self.unusual and SHOW_UNUSUAL
+        p.setPen(unusual_pen(2) if odd else QPen(border.darker(125) if (self.underMouse() or on) else border, 1.5))
         p.setBrush(theme.colour("chip_on") if on else theme.colour("chip_blank"))
         p.drawRoundedRect(r, r.height() / 2.4, r.height() / 2.4)
         p.setPen(theme.colour("chip_disabled_text") if not self.isEnabled() else chip_text() if on

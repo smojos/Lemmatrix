@@ -2,8 +2,9 @@
 
 Researchers, participants (with the file documenting their consent), locations
 (hierarchical, with codes and descriptions), the closed fields' lists (Tone Class,
-Inflection Class...), and the tag structure (whose top level is the Word Class list).
-Codes renamed here are followed everywhere: token speakers and notebook sessions.
+Inflection Class, Word Class...), and the tag structure. Codes renamed here are followed
+everywhere: token speakers and notebook sessions; renamed list values are followed in the
+lemmas and tokens, and renamed word classes in the tag groups' "usual for" hints.
 """
 
 from __future__ import annotations
@@ -406,30 +407,29 @@ class ListsDialog(QDialog):
 
         self._heading("Field lists")
         self.field_lists = []
+        self.class_list = None                  # the Word Class list's editor
         s = db.settings
         for kind, fields in (("lemma", s.entry_fields), ("token", s.token_fields)):
             for f in fields:
                 if not f.closed:
                     continue
-                if f.role == "word-class":
-                    w = QWidget()
-                    wl = QVBoxLayout(w)
-                    wl.addWidget(_note("The word classes are the top level of the tag structure, so they "
-                                       "are edited under Tags."))
-                    b = QPushButton("Edit the word classes in Tags")
-                    b.clicked.connect(lambda *_: self.show_page(TAGS))
-                    wl.addWidget(b, 0, Qt.AlignLeft)
-                    wl.addStretch(1)
-                    self._page(f"field:{f.name}", f.title, w, "")
-                    continue
                 ed = ListEditor()
                 ed.set_items(f.items)
                 self.field_lists.append((f, ed))
-                self._page(f"field:{f.name}", f.title, ed,
-                           f"The values of the {kind} field {f.title}. Values can be nested.")
+                note = f"The values of the {kind} field {f.title}. Values can be nested."
+                if f.role == "word-class":
+                    self.class_list = ed
+                    note += (" Tag groups can be marked as usual for word classes (under Tags); a class "
+                             "includes those nested under it. Renaming a class renames it in the lemmas "
+                             "and the tag groups.")
+                self._page(f"field:{f.name}", f.title, ed, note)
 
         self._heading("Tags")
-        self.tags = TagStructureDialog(self, db)
+        self.tags = TagStructureDialog(
+            self, db, (lambda: self.class_list.items()) if self.class_list is not None else None)
+        if self.class_list is not None:
+            self._class_names = {}
+            self.class_list.changed = self._classes_changed
         self.tags.setWindowFlags(Qt.Widget)
         self.tags.button_box.hide()
         self._page(TAGS, "Tag structure", self.tags, "")
@@ -472,6 +472,25 @@ class ListsDialog(QDialog):
         it = self.index.item(row)
         if it is not None and it.data(Qt.UserRole) is not None:
             self.pages.setCurrentIndex(it.data(Qt.UserRole))
+
+    def _classes_changed(self):
+        """The Word Class list was edited: the tag editor's hints follow renamed classes."""
+        now = self.class_list.renames()
+        delta = {}
+        for orig, new in now.items():
+            before = self._class_names.get(orig, orig)
+            if before != new:
+                delta[before] = new
+        for orig, before in self._class_names.items():
+            if orig not in now and before != orig:      # renamed back
+                delta[before] = orig
+        self._class_names = now
+        self.tags.rename_classes(delta)
+        self.tags.refresh_usual()
+
+    def value_renames(self) -> dict[str, dict[str, str]]:
+        """Values renamed in the closed fields' lists: field name -> {old: new}."""
+        return {f.name: ed.renames() for f, ed in self.field_lists if ed.renames()}
 
     def show_page(self, key: str):
         row = self.keys.get(key, self.keys.get(RESEARCHERS))

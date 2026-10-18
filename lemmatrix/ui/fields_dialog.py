@@ -56,9 +56,11 @@ class ListEditor(QWidget):
         lay.addWidget(self.tree)
         self.changed = lambda: None
 
-    def _item(self, name):
+    def _item(self, name, original: str = ""):
         it = QTreeWidgetItem([name])
         it.setFlags(it.flags() | Qt.ItemIsEditable)
+        if original:
+            it.setData(0, Qt.UserRole, original)      # the value when the list was opened
         return it
 
     def set_items(self, items: list[ListItem]):
@@ -66,7 +68,7 @@ class ListEditor(QWidget):
         self.tree.clear()
 
         def add(parent, node):
-            it = self._item(node.name)
+            it = self._item(node.name, node.name)
             if parent is None:
                 self.tree.addTopLevelItem(it)
             else:
@@ -83,6 +85,20 @@ class ListEditor(QWidget):
             return ListItem(nfc(it.text(0).strip()), [read(it.child(i)) for i in range(it.childCount())])
         return [read(self.tree.topLevelItem(i)) for i in range(self.tree.topLevelItemCount())
                 if self.tree.topLevelItem(i).text(0).strip()]
+
+    def renames(self) -> dict[str, str]:
+        """Values renamed since the list was opened: old -> new."""
+        out = {}
+
+        def walk(it):
+            old, new = it.data(0, Qt.UserRole), nfc(it.text(0).strip())
+            if old and new and old != new:
+                out[old] = new
+            for i in range(it.childCount()):
+                walk(it.child(i))
+        for i in range(self.tree.topLevelItemCount()):
+            walk(self.tree.topLevelItem(i))
+        return out
 
     def _add(self):
         name, ok = QInputDialog.getText(self, "Add item", "Value:")

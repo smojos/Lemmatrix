@@ -6,15 +6,15 @@ works out exactly what would change, the "plan", without touching anything:
     Replace      find and replace in one field (plain text or a regular expression)
     Shortcut     a predefined change with a direction (y → j, add tie bars, raise pitch)
     Set value    one value for every row (a field, a tag added or removed, the speaker,
-                 the date, or the word class, with its tag conversion)
+                 the date, the word class)
     Copy         one field into another (overwrite, append, or only where empty)
     Clear        empty a field
 
 A plan lists the changed cells (for the preview), the recordings to rename and
 any problems. One problem cancels the whole operation, so nothing is changed
-halfway: a pitch already at the top of the display range, a tag the word class
-doesn't have, two tokens that would end up with the same tags, a recording whose
-new name is taken.
+halfway: a pitch already at the top of the display range, two tags of one group,
+two tokens that would end up with the same tags, a recording whose new name is
+taken. A tag that isn't usual for a lemma's word class is only a warning.
 
 Diacritics: text is compared in decomposed form (NFD), so with "Keep diacritics"
 on, y → j turns ỹ into j̃ and ý into j́. With it off, a letter carrying a mark
@@ -24,7 +24,6 @@ letters of their own and are never touched by a change to the letter before them
 
 from __future__ import annotations
 
-import copy
 import datetime as _dt
 import re
 import unicodedata
@@ -32,12 +31,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import pitch as pitchmod
-from .model import (Database, Entry, Group, Tag, TagAction, TagStructure, Token, forbidden_in, nfc, today)
+from .model import Database, Entry, Token, forbidden_in, nfc, today
 
 LEMMAS, TOKENS = "lemmas", "tokens"
 OVERWRITE, APPEND, ONLY_EMPTY = "overwrite", "append", "empty"
 ADD_TAG, REMOVE_TAG = "add", "remove"
-CONVERT, NEW, DELETE = "convert", "new", "delete"
 
 
 class BulkError(Exception):
@@ -150,8 +148,6 @@ def _check_value(db: Database, t: Target, value: str):
             raise RowError(f"“{value}” isn't a date (YYYY-MM-DD)") from None
         if d.isoformat() > today():
             raise RowError("The date can't be in the future")
-    if t.role == "word-class" and value and value not in db.settings.tags.word_class_names():
-        raise RowError(f"“{value}” isn't a word class")
 
 
 # --------------------------------------------------------------------------
@@ -338,7 +334,6 @@ class SetValue:
     target: str
     value: str
     tag_action: str = ADD_TAG                  # tags: add or remove the tag named in value
-    conversion: dict[str, TagAction] | None = None   # word class: what happens to the tags
 
 
 @dataclass
@@ -399,13 +394,6 @@ class Problem:
 
 
 @dataclass
-class NewTag:
-    word_class: str
-    group: str
-    tag: Tag
-
-
-@dataclass
 class Plan:
     label: str = "Bulk edit"
     level: str = TOKENS
@@ -417,9 +405,8 @@ class Plan:
     stale: int = 0                                       # names left out of date (renaming off)
     comments: int = 0                                    # comment fields changed
     comment_dates: bool = False                          # those comments will be dated
-    new_tags: list[NewTag] = field(default_factory=list)
     new_values: list[tuple[str, str]] = field(default_factory=list)   # (closed field name, value) to list
-    tags_converted: int = 0
+    unusual: int = 0                                     # tokens that get a tag not usual for their lemma
     speaker_changed: bool = False
 
     @property
@@ -436,149 +423,6 @@ class Plan:
     def problems_by_row(self) -> dict:
         return {(row_key(p.row), p.key): p for p in self.problems if p.row is not None}
 
-
-def structure_with(ts: TagStructure, new_tags: list[NewTag]) -> TagStructure:
-    """A copy of the tag structure with the conversion's new tags added."""
-    if not new_tags:
-        return ts
-    ts = copy.deepcopy(ts)
-    for nt in new_tags:
-        wc = ts.word_class(nt.word_class)
-        if wc is None:
-            continue
-        group = next((g for _, g in (x for top in wc.groups for x in top.leaf_groups())
-                      if g.name == nt.group), None)
-        if group is None:
-            group = next((g for g in wc.groups if g.name == nt.group), None)
-        if group is None:
-            group = Group(nt.group or "New tags")
-            wc.groups.append(group)
-        if not any(t.name == nt.tag.name for t in group.tags):
-            group.tags.append(copy.copy(nt.tag))
-    return ts
-
-
-def install_new_tags(db: Database, new_tags: list[NewTag]):
-    """Add a conversion's new tags to the database's tag structure (done when applying)."""
-    db.settings.tags = structure_with(db.settings.tags, new_tags)
-
-
-def _db_with(db: Database, ts: TagStructure) -> Database:
-    """The database seen through another tag structure (for file names), without copying entries."""
-    if ts is db.settings.tags:
-        return db
-    view = copy.copy(db)
-    view.settings = copy.copy(db.settings)
-    view.settings.tags = ts
-    return view
-
-
-# ---- word class changes ---------------------------------------------------
-
-def all_classes_tag(ts: TagStructure, name: str) -> bool:
-    return any(t.name == name for _, g in ts.leaf_groups_for(None) for t in g.tags)
-
-
-@dataclass
-class Stranded:
-    """A tag in use that the new word class doesn't keep automatically."""
-    name: str
-    from_class: str
-    group: str
-    tokens: int
-    suggested: TagAction
-
-
-def stranded_tags(db: Database, entries, new_wc: str) -> tuple[list[Stranded], dict[str, int]]:
-    """Tags of the entries' tokens that need a decision, and the all-classes tags that are kept.
-
-    Lemmas already of the new class are left out. A tag the new class also has (by name) is
-    suggested as Convert to that tag; the rest are left for the user to choose.
-    """
-    ts = db.settings.tags
-    need: dict[str, Stranded] = {}
-    kept: dict[str, int] = {}
-    for e in entries:
-        old = db.word_class(e)
-        if old == new_wc:
-            continue
-        for t in e.tokens:
-            for name in t.tags:
-                if all_classes_tag(ts, name):
-                    kept[name] = kept.get(name, 0) + 1
-                    continue
-                if name not in need:
-                    hit = ts.find(old or None, name)
-                    group = hit[1].name if hit else ""
-                    same = ts.find(new_wc or None, name)
-                    need[name] = Stranded(name, old, group, 0,
-                                          TagAction(CONVERT, name) if same else TagAction())
-                need[name].tokens += 1
-    order = {n: i for i, n in enumerate(ts.sort(None, list(need)))}
-    return sorted(need.values(), key=lambda s: order.get(s.name, 0)), kept
-
-
-def check_conversion(db: Database, new_wc: str, actions: dict[str, TagAction],
-                     stranded: list[Stranded]) -> list[str]:
-    """Problems with the choices in the conversion dialogue (before anything is planned)."""
-    ts = db.settings.tags
-    msgs = []
-    new_codes: dict[str, str] = {}
-    for s in stranded:
-        a = actions.get(s.name)
-        if a is None or not a.kind:
-            msgs.append(f"Choose what happens to {s.name}.")
-            continue
-        if a.kind == CONVERT:
-            if not a.tag or ts.find(new_wc or None, a.tag) is None:
-                msgs.append(f"{s.name}: choose a tag of {new_wc or '(none)'} to convert it to.")
-        elif a.kind == NEW:
-            name = nfc(a.tag).strip()
-            if not name:
-                msgs.append(f"{s.name}: give the new tag a name.")
-            elif "," in name:
-                msgs.append(f"{s.name}: tag names can't contain commas.")
-            elif ts.find(new_wc or None, name) is not None:
-                msgs.append(f"{s.name}: {new_wc} already has a tag called {name}; choose Convert to.")
-            if forbidden_in(a.code):
-                msgs.append(f"{s.name}: {forbidden_in(a.code)} can't be used in a code (file names).")
-            if name in new_codes and new_codes[name] != a.code:
-                msgs.append(f"The new tag {name} is given two different codes.")
-            new_codes.setdefault(name, a.code)
-            if not new_wc:
-                msgs.append("New tags can only be made in a word class, not for (none).")
-    return list(dict.fromkeys(msgs))
-
-
-def new_tags_for(new_wc: str, actions: dict[str, TagAction]) -> list[NewTag]:
-    out, seen = [], set()
-    for a in actions.values():
-        if a.kind == NEW and a.tag and a.tag not in seen:
-            seen.add(a.tag)
-            out.append(NewTag(new_wc, a.group or "New tags", Tag(nfc(a.tag).strip(), nfc(a.code).strip())))
-    return out
-
-
-def convert_tags(ts: TagStructure, old_wc: str, new_wc: str, tags: list[str],
-                 actions: dict[str, TagAction]) -> list[str]:
-    """One token's tags after its lemma changes from old_wc to new_wc."""
-    out = []
-    for name in tags:
-        if all_classes_tag(ts, name):
-            out.append(name)
-            continue
-        a = actions.get(name)
-        if a is None or not a.kind:
-            if ts.find(new_wc or None, name):
-                out.append(name)              # the new class has it too
-                continue
-            raise RowError(f"No choice made for the tag {name}")
-        if a.kind in (CONVERT, NEW):
-            out.append(nfc(a.tag).strip())
-    return ts.sort(new_wc or None, out)
-
-
-# ---- building a plan ------------------------------------------------------
 
 def new_duplicates(orig: Entry, after: Entry) -> list[tuple[int, int]]:
     """Pairs of token indexes (in after) with the same tags, that didn't have the same tags before.
@@ -629,12 +473,8 @@ def plan(db: Database, level: str, rows: list[Row], op, opts: Options | None = N
     if isinstance(op, ClearField) and (tgt.kind == "tags" or tgt.role == "word-class"):
         raise BulkError(f"{tgt.title} can't be cleared here: use Set value.")
     word_class_change = isinstance(op, SetValue) and tgt.role == "word-class"
-    if word_class_change:
-        new_wc = op.value
-        p.new_tags = new_tags_for(new_wc, op.conversion or {})
-        ts = structure_with(ts, p.new_tags)
     if isinstance(op, SetValue) and tgt.kind == "tags":
-        if not op.value or ts.find_anywhere(op.value) is None:
+        if not op.value or ts.find(op.value) is None:
             raise BulkError("Choose a tag.")
     if isinstance(op, SetValue) and tgt.kind != "tags":
         try:
@@ -676,17 +516,15 @@ def plan(db: Database, level: str, rows: list[Row], op, opts: Options | None = N
             elif isinstance(op, ClearField):
                 new = ""
             elif isinstance(op, SetValue) and tgt.kind == "tags":
-                wc = db.word_class(e)
                 names = list(tok.tags)
                 if op.tag_action == REMOVE_TAG:
                     names = [n for n in names if n != op.value]
                 elif op.value not in names:
-                    hit = ts.find(wc or None, op.value)
-                    if hit is None:
-                        raise RowError(f"{wc or 'A lemma without a word class'} has no tag {op.value}")
-                    group = hit[1]
+                    group = ts.find(op.value)[1]
                     names = [n for n in names if not any(t.name == n for t in group.tags)] + [op.value]
-                tok.tags = ts.sort(wc or None, names)
+                    if db.unusual_tags(e, [op.value]):
+                        p.unusual += 1
+                tok.tags = ts.sort(names)
                 new = ", ".join(tok.tags)
             else:                               # SetValue on a field
                 new = op.value
@@ -702,20 +540,11 @@ def plan(db: Database, level: str, rows: list[Row], op, opts: Options | None = N
             continue
         if tgt.kind != "tags":
             _put(tgt, ae, tok, new)
-        if word_class_change:
-            old_wc = db.word_class(e)
-            for k, t in enumerate(ae.tokens):
-                try:
-                    converted = convert_tags(ts, old_wc, new_wc, t.tags, op.conversion or {})
-                except RowError as exc:
-                    p.problems.append(Problem(row, tgt.key, f"{e.ref}: {exc}"))
-                    continue
-                if converted != t.tags:
-                    p.tags_converted += 1
-                t.tags = converted
-                for msg in ts.conflicts(new_wc or None, t.tags):
-                    p.problems.append(Problem(row, tgt.key, f"{e.ref}: {msg}"))
-        if tgt.closed and tgt.role != "word-class" and tgt.kind == "entry" and new:
+        if word_class_change:                   # the tags stay; some may now be unusual
+            for t in ae.tokens:
+                if len(db.unusual_tags(ae, t.tags)) > len(db.unusual_tags(e, t.tags)):
+                    p.unusual += 1
+        if tgt.closed and tgt.kind == "entry" and new:
             fdef = db.settings.entry_field(tgt.name)
             if fdef and new not in fdef.all_values() and (tgt.name, new) not in p.new_values:
                 p.new_values.append((tgt.name, new))
@@ -730,39 +559,16 @@ def plan(db: Database, level: str, rows: list[Row], op, opts: Options | None = N
         p.changes.append(Change(row, tgt.key, old, new))
 
     # Tokens of one lemma that would end up with the same tags
-    wcf = db.settings.entry_field("word-class")
     for eid in order:
         e, ae = originals[eid], afters[eid]
-        wc = ae.get(wcf.name) if wcf else ""
         for a, b in new_duplicates(e, ae):
-            label = ts.display(wc or None, ae.tokens[a].tags)
+            label = ts.display(ae.tokens[a].tags)
             row = (e, b) if level == TOKENS else (e, None)
             p.problems.append(Problem(row, tgt.key, f"{e.ref}: two tokens would both be {label}"))
 
     p.pairs = [(originals[i], afters[i]) for i in order if originals[i] != afters[i]]
     p.comment_dates = bool(p.comments) and opts.update_comment_dates
-    _plan_renames(_db_with(db, ts), p, opts, folder, on_disk)
-    return p
-
-
-def plan_edit(db: Database, entry: Entry, after: Entry, opts: Options,
-              folder: Path | None = None, on_disk: set[str] | None = None,
-              new_tags: list[NewTag] | None = None) -> Plan:
-    """A plan for one entry changed some other way (e.g. in the entry dialogue): its renames
-    and problems, like a bulk edit's."""
-    p = Plan(label=f"Edit {entry.ref}", level=LEMMAS)
-    p.new_tags = list(new_tags or [])
-    ts = structure_with(db.settings.tags, p.new_tags)
-    wcf = db.settings.entry_field("word-class")
-    wc = after.get(wcf.name) if wcf else ""
-    for t in after.tokens:
-        for msg in ts.conflicts(wc or None, t.tags):
-            p.problems.append(Problem((entry, None), "", f"{entry.ref}: {msg}"))
-    for a, b in new_duplicates(entry, after):
-        p.problems.append(Problem((entry, None), "", f"{entry.ref}: two tokens would both be "
-                                                     f"{ts.display(wc or None, after.tokens[a].tags)}"))
-    p.pairs = [(entry, after)]
-    _plan_renames(_db_with(db, ts), p, opts, folder, on_disk)
+    _plan_renames(db, p, opts, folder, on_disk)
     return p
 
 
@@ -816,7 +622,7 @@ def _plan_renames(db: Database, p: Plan, opts: Options, folder: Path | None, on_
         p.renames.append((folder / old, folder / new))
 
 
-def summary(p: Plan, level: str) -> list[str]:
+def summary(p: Plan, level: str, warn_unusual: bool = True) -> list[str]:
     """The preview's lines, besides the count."""
     lines = []
     if p.renames:
@@ -834,10 +640,9 @@ def summary(p: Plan, level: str) -> list[str]:
         else:
             lines.append(f"{p.comments} comment{'s' if p.comments != 1 else ''} will change; "
                          "their dates stay as they are")
-    if p.tags_converted:
-        lines.append(f"{p.tags_converted} token{'s' if p.tags_converted != 1 else ''} get converted tags")
-    for nt in p.new_tags:
-        lines.append(f"New tag {nt.tag.name} ({nt.tag.code or 'no code'}) in {nt.word_class} › {nt.group}")
+    if p.unusual and warn_unusual:
+        lines.append(f"{p.unusual} token{'s' if p.unusual != 1 else ''} will have a tag that isn't usual "
+                     "for their lemma's word class (allowed; marked on the chips)")
     for name, value in p.new_values:
         lines.append(f"“{value}” is added to the {name} list")
     if p.speaker_changed:

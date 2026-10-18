@@ -26,16 +26,31 @@ class TagPanel(QWidget):
         self.box.setContentsMargins(6, 6, 6, 6)
         self.box.setSpacing(4)
 
-    def build(self, db, word_class, selected, include_defaults: bool = True):
+    def build(self, db, selected, classes=None, show_all: bool = True, include_defaults: bool = True):
+        """Chips for the tag groups, under their parent groups' names.
+
+        classes: the lemma's word class and those above it (token dialogue). Then, unless
+        show_all, only the groups usual for it are shown, plus any group the token already
+        has a tag in; tags of the other groups are marked as unusual when picked.
+        Returns how many groups are hidden.
+        """
         while self.box.count():
             item = self.box.takeAt(0)
             if item.widget():
+                item.widget().hide()              # gone now, not only when Qt gets round to deleting it
                 item.widget().deleteLater()
         self.buttons.clear()
         self.groups.clear()
+        ts = db.settings.tags
+        usual = ts.usual_map()
+        hidden = 0
         last_parent = None
-        for path, g in db.settings.tags.leaf_groups_for(word_class):
-            parents = path[1:-1]
+        for path, g in ts.leaf_groups():
+            is_usual = classes is None or ts.is_usual(g, classes, usual)
+            if not (show_all or is_usual or any(t.name in selected for t in g.tags)):
+                hidden += 1
+                continue
+            parents = path[:-1]
             if parents and parents != last_parent:
                 head = QLabel(" → ".join(parents))
                 head.setStyleSheet("font-weight: 600; margin-top: 4px;")
@@ -57,9 +72,12 @@ class TagPanel(QWidget):
                     continue
                 b = ChipButton(t.display())
                 b.setChecked(t.name in selected)
+                b.unusual = not is_usual
                 tip = t.name + (" (default, not in file names)" if t.default else f"  [{t.code}]")
                 if t.description:
                     tip += "\n" + t.description
+                if not is_usual:
+                    tip += f"\nNot usual for this lemma's word class (usual for {', '.join(usual[id(g)])})"
                 b.setToolTip(tip)
                 b.toggled.connect(lambda on, name=t.name: self._toggled(name, on))
                 flow.addWidget(b)
@@ -68,6 +86,7 @@ class TagPanel(QWidget):
             self.groups.append(names)
             self.box.addWidget(holder)
         self.box.addStretch(1)
+        return hidden
 
     def _toggled(self, name, on):
         ctrl = bool(QApplication.keyboardModifiers() & Qt.ControlModifier)

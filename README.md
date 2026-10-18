@@ -46,7 +46,7 @@ If something goes wrong, a message box shows the details, and they're also writt
 - **The Matrix**, three tabs, each with its own options bar (the bar's height can be dragged):
   - *All data* (the default): one row per token, the same column filters (Tags is a closed
     list with Any / Exactly / No selected), Configure columns, in-place editing, right-click menu.
-  - *Lemma/Tag:* lemmas of one Matrix class down the side, tag columns (Citation / Exact /
+  - *Lemma/Tag:* the lemma list's lemmas down the side, tag columns (Citation / Exact /
     Loose) across the top; Configure cell, Configure matrix (duplicate a line, Remove all,
     Restore all present), Save / Rename / Delete / Clear matrix.
   - *Tag/Tag:* the selected lemma's paradigm from a configured matrix; contradictory cells
@@ -83,9 +83,10 @@ If something goes wrong, a message box shows the details, and they're also writt
   raise or lower pitch), Set value (a field, a tag added or removed, the speaker, the date,
   the word class), Copy and Clear. Preview shows every change in the grid first; any problem
   cancels the whole operation; Apply is one undo step, recordings renamed included.
-- **Changing a word class** (in bulk edit, the lemma list or the entry dialogue) opens the tag
-  conversion: convert each tag the new class lacks, make a new tag for it, or delete it.
-  Conversions can be saved by name.
+- **Tags:** one free hierarchy of groups and tags; any tag can go on any token, one per group.
+  Groups can be marked "usual for" word classes: the token dialogue shows those first (Show all
+  tags for the rest), defaults come from them, and tags outside them get a dashed amber chip
+  (Settings → General → Warnings). Databases from before 18 October are upgraded when opened.
 - **Export** (File → Export) as CSV: the filtered database (what the current tab shows: All
   data's rows and columns, or the matrix grid) or the entire database (one row per token with
   every lemma and token field). UTF-8, so Excel shows IPA correctly.

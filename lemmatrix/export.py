@@ -44,8 +44,7 @@ def _token_columns(db: Database) -> list[tuple[str, callable]]:
 
 
 def _code(db: Database, e: Entry, tag: str) -> str:
-    hit = db.settings.tags.find(db.word_class(e) or None, tag)
-    t = hit[0] if hit else db.settings.tags.find_anywhere(tag)
+    t = db.settings.tags.tag(tag)
     return t.file_code() if t else tag
 
 

@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QHeaderView, QStyle, QStyledIt
 from .. import matrix as mx
 from ..model import Database
 from .icons import icon
-from . import theme
+from . import theme, widgets
 from .widgets import (chip_metrics, chips_width, draw_pitch, ipa_font, paint_chips,
                       pitch_width, underscore_unit)
 
@@ -98,7 +98,6 @@ class MatrixModel(QAbstractTableModel):
             if entry is None:
                 return None
             hits = self.layout_.tokens(r, c)
-            wc = mx.class_of(self.db, entry)
             lines = [f"{entry.ref}  {self.db.lemma(entry)}  “{self.db.gloss(entry)}”"]
             for _, t in hits:
                 v = self.parent()
@@ -106,7 +105,9 @@ class MatrixModel(QAbstractTableModel):
                 rec = (("recorded, online only: needs internet to play" if t.file in cloud else "recorded")
                        if t.file in self.view_sound_files() else "recording missing") if t.file \
                     else "not recorded"
-                lines.append((" + ".join(mx.chips(self.db, t.tags, wc or None)) or "Citation") + f"  ({rec})")
+                lines.append((" + ".join(mx.chips(self.db, t.tags)) or "Citation") + f"  ({rec})")
+                if widgets.SHOW_UNUSUAL:
+                    lines += ["  ⚠ " + n for n in mx.unusual_notes(self.db, entry, t.tags)]
             if not hits:
                 lines.append("Double-click to add a token here")
             return "\n".join(lines)
@@ -210,8 +211,13 @@ class TokenCellDelegate(QStyledItemDelegate):
         db = self.view.db
         spec = lay.spec_at(r, c)
         entry, _ = lay.target(r, c)
-        wc = mx.class_of(db, entry) if entry else None
-        return mx.extra_chips(db, t, spec, wc or None, self.view.defaults)
+        out = mx.extra_chips(db, t, spec, entry, self.view.defaults)
+        if widgets.SHOW_UNUSUAL and entry is not None and lay.entry is None and spec is not None:
+            # Lemma/Tag: the column's own tags aren't marked in its header (the column spans
+            # many lemmas), so an unusual one shows on the token itself.
+            out = [c for c in mx.chips(db, set(spec.tags) & set(t.tags), entry)
+                   if isinstance(c, mx.Unusual)] + out
+        return out
 
     def block_widths(self, r, c, hits) -> list[int]:
         out = []
