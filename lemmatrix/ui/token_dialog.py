@@ -62,6 +62,9 @@ class TokenDialog(QDialog):
         self.setWindowTitle("Edit Token")
         self.resize(920, 780)
         self._build()
+        g = self.main.prefs.get_bytes("window/token_dialog")
+        if g:                                     # the size and place it had when last closed
+            self.restoreGeometry(g)
         self._load()
 
     # ------------------------------------------------------------------ UI
@@ -502,6 +505,11 @@ class TokenDialog(QDialog):
         if self._commit(keep_empty=self.slot.explicit):
             self.main.player.stop()
             self.accept()
+
+    def done(self, result):
+        """However the dialogue closes (OK, Cancel, Esc, the window's X), its size is remembered."""
+        self.main.prefs.set_value("window/token_dialog", self.saveGeometry())
+        super().done(result)
 
     def reject(self):
         if self.recorder:

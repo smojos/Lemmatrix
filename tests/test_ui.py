@@ -1194,3 +1194,15 @@ def test_session_people_carry_over_to_the_next_day(win, tmp_path):
     win.sess_rows[chips.PARTICIPANTS]._add("ABC")         # picked in the panel
     win._fill_session()
     assert win.sess_rows[chips.PARTICIPANTS].keys == ["SP1", "ABC"]
+
+
+def test_token_dialogue_remembers_its_size(win):
+    from lemmatrix.ui.token_dialog import Slot, TokenDialog
+    e = win.doc.db.entry_by_ref("E001")
+    dlg = TokenDialog(win, [Slot(e, 0)], 0)
+    dlg.show()
+    dlg.resize(760, 700)         # (the offscreen test screen is small)
+    dlg.reject()
+    again = TokenDialog(win, [Slot(e, 0)], 0)
+    assert (again.width(), again.height()) == (760, 700)
+    again.reject()
