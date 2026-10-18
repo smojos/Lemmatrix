@@ -12,9 +12,10 @@ from typing import Callable
 
 from PySide6.QtCore import (QAbstractTableModel, QEvent, QModelIndex, QRectF, QSize, QSortFilterProxyModel,
                             Qt, Signal)
-from PySide6.QtGui import QAction, QColor, QFont, QPalette
+from PySide6.QtGui import QAction, QColor, QCursor, QFont, QFontMetrics, QPalette
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QLineEdit, QMenu, QStyle, QStyledItemDelegate,
-                               QTableView)
+                               QTableView, QToolTip)
 
 from .. import filters as fl
 from ..model import ListItem
@@ -93,9 +94,9 @@ class RowModel(QAbstractTableModel):
         if role == Qt.UserRole + 1:
             return row
         if role == Qt.ToolTipRole:
-            if col.tooltip:
-                return col.tooltip(row)
-            return _text(col.get(row)) or None
+            # Only what the cell doesn't already show (full tag names, file names, suggestions);
+            # a cell's own text appears only when it's cut off (FilterTable).
+            return col.tooltip(row) if col.tooltip else None
         if role == Qt.FontRole and col.ipa:
             return self.ipa
         if role == Qt.ForegroundRole and col.color:
@@ -343,6 +344,62 @@ class FilterTable(QTableView):
         self.proxy.modelReset.connect(self.filtersChanged.emit)
         self.proxy.layoutChanged.connect(self.filtersChanged.emit)
         self._delegates = []
+        self._tip_index = None                    # the cell a tooltip is waiting for
+        self._tip_timer = QTimer(self)
+        self._tip_timer.setSingleShot(True)
+        self._tip_timer.timeout.connect(self._show_tip)
+
+    # ---- tooltips ----------------------------------------------------------
+    # Twice Qt's usual wait before a cell's tooltip appears (Josh, 18 October: it came too
+    # quickly), and only for what the cell doesn't show: its column's tooltip, or its own
+    # text when the column is too narrow for it.
+    TIP_FACTOR = 2
+
+    def tip_delay(self) -> int:
+        """The extra wait (ms) after Qt's own, which makes the whole wait TIP_FACTOR times Qt's."""
+        base = self.style().styleHint(QStyle.SH_ToolTip_WakeUpDelay, None, self) or 700
+        return base * (self.TIP_FACTOR - 1)
+
+    def tip_text(self, idx) -> str:
+        if not idx.isValid():
+            return ""
+        tip = idx.data(Qt.ToolTipRole)
+        if tip:
+            return str(tip)
+        text = idx.data(Qt.DisplayRole) or ""
+        if not text:
+            return ""
+        font = idx.data(Qt.FontRole) or self.font()
+        room = self.visualRect(idx).width() - 10
+        return text if QFontMetrics(font).horizontalAdvance(text) > room else ""
+
+    def viewportEvent(self, event):
+        if event.type() == QEvent.ToolTip:
+            idx = self.indexAt(event.pos())
+            if not self.tip_text(idx):
+                QToolTip.hideText()
+                self._tip_timer.stop()
+                event.ignore()
+                return True
+            if QToolTip.isVisible() and self._tip_index == idx:
+                return True
+            self._tip_index = idx
+            self._tip_timer.start(self.tip_delay())
+            return True
+        if event.type() == QEvent.Leave:
+            self._tip_timer.stop()
+        return super().viewportEvent(event)
+
+    def _show_tip(self):
+        idx = self._tip_index
+        if idx is None or not idx.isValid():
+            return
+        here = self.indexAt(self.viewport().mapFromGlobal(QCursor.pos()))
+        if here != idx:                           # the mouse moved on meanwhile
+            return
+        text = self.tip_text(idx)
+        if text:
+            QToolTip.showText(QCursor.pos(), text, self.viewport(), self.visualRect(idx))
 
     # ---- setup -----------------------------------------------------------
     def set_columns(self, all_columns: list[Column], visible: list[str]):

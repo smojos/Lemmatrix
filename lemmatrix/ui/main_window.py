@@ -578,13 +578,14 @@ class MainWindow(QMainWindow):
                    tooltip=lambda r: (", ".join(r.token.tags) or "Citation (no tags)")
                    + "".join("\n⚠ " + n for n in (mx.unusual_notes(db, r.entry, r.token.tags)
                                                     if self.prefs.warn_unusual_tags else []))),
-            Column("drawing", "Pitch drawing", lambda r: r.token.get("Pitch"), kind="drawing"),
+            Column("drawing", "Pitch drawing", lambda r: r.token.get("Pitch"), kind="drawing",
+                   tooltip=lambda r: f"Pitch: {p}" if (p := r.token.get("Pitch")) else None),
         ]
         for f in s.token_fields:
             get = (lambda r, n=f.name, ml=f.multilingual: r.token.get(n, s.primary_gloss if ml else None))
             tip = None
             if self._predicts(f):                 # the English translation: suggestions in its tooltip
-                tip = (lambda r, get=get: get(r) or (
+                tip = (lambda r, get=get: None if get(r) else (
                     f"Suggestion: {sug.text}\n{sug.describe()}\nDouble-click and press → to accept "
                     "it, or right-click → Accept suggested translation."
                     if (sug := self.suggestion_for(r)) else None))

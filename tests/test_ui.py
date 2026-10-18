@@ -1394,3 +1394,23 @@ def test_spelling_in_the_lemma_dialogue(win):
     lemma = dlg.fields[("Lemma", "")]
     assert lemma.findChild(spellui.SpellOverlay) is None        # transcriptions aren't checked
     dlg.reject()
+
+
+def test_all_data_tooltips_only_add_something(win):
+    from PySide6.QtCore import Qt
+    from PySide6.QtWidgets import QStyle
+    table = win.all_table
+    goat = win.doc.db.entry_by_ref("D001")
+    row = next(r for r in table.visible_rows() if r.entry is goat and r.index == 2)
+    table.select_row(row)
+    keys = table.visible_keys()
+    cell = lambda key: table.currentIndex().siblingAtColumn(keys.index(key))
+    table.resizeColumnsToContents()
+    assert table.tip_text(cell("lemma")) == ""                      # just the cell's own text
+    assert table.tip_text(cell("f:Translation")) == ""              # a translation, not a suggestion
+    assert table.tip_text(cell("tags")) == ", ".join(row.token.tags)   # the full tag names
+    assert "Recorded as" in table.tip_text(cell("file")) or "Not recorded" in table.tip_text(cell("file"))
+    table.setColumnWidth(keys.index("f:Phonetic"), 12)               # cut off: then its text shows
+    assert table.tip_text(cell("f:Phonetic")) == goat.tokens[2].get("Phonetic")
+    base = table.style().styleHint(QStyle.SH_ToolTip_WakeUpDelay, None, table) or 700
+    assert table.tip_delay() == base                                # waits twice as long in all
