@@ -1678,7 +1678,7 @@ class MainWindow(QMainWindow):
             self.prefs.praat_path = path
         return path
 
-    def open_in_praat(self, path, parent=None, textgrid=None):
+    def open_in_praat(self, path, parent=None, textgrid=None, select=None):
         from .. import praat
         parent = parent or self
         if path is None:
@@ -1693,7 +1693,7 @@ class MainWindow(QMainWindow):
             if not exe:
                 return
         try:
-            praat.open_sound(exe, path, textgrid)
+            praat.open_sound(exe, path, textgrid, select)
         except praat.PraatError as exc:
             QMessageBox.warning(parent, "Open in Praat", str(exc))
 

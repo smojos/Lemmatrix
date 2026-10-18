@@ -357,9 +357,18 @@ def test_praat_gets_the_textgrid_too(win, tmp_path, monkeypatch):
     from lemmatrix import praat
     assert "selectObject: sound, grid" in praat.script_for(Path("a.wav"), Path("a.TextGrid"))
     got = []
-    monkeypatch.setattr(win, "open_in_praat", lambda path, parent=None, textgrid=None: got.append((path, textgrid)))
+    monkeypatch.setattr(win, "open_in_praat",
+                        lambda path, parent=None, textgrid=None, select=None: got.append((path, textgrid, select)))
+    uw.texts.lines.clearSelection()
+    uw.texts.lines.setCurrentIndex(uw.texts.lines.model().index(-1, -1))
     uw.texts.open_in_praat()
     assert got[0][0].name == t.file and got[0][1].name == t.textgrid
+    uw.texts.lines.select_row(uw.texts.lines.model_.rows[1])          # at the selected line
+    uw.texts.open_in_praat()
+    assert got[1][2] == (2.0, 3.0)
+    script = praat.script_for(Path("a.wav"), Path("a.TextGrid"), (2.0, 3.0))
+    assert "editor: grid\n    Zoom: 1.0000, 4.0000\n    Select: 2.0000, 3.0000\nendeditor" in script
+    assert "Zoom: 0.0000" in praat.script_for(Path("a.wav"), Path("a.TextGrid"), (0.5, 1.5))
 
 
 def test_import_a_wav_with_a_textgrid_beside_it(win, tmp_path, monkeypatch):

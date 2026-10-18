@@ -52,18 +52,30 @@ def executable(path: str) -> Path:
     return p
 
 
-def script_for(sound: Path, textgrid: Path | None = None) -> str:
+ZOOM_MARGIN = 1.0                           # seconds shown either side of a selected line
+
+
+def script_for(sound: Path, textgrid: Path | None = None, select: tuple[float, float] | None = None) -> str:
+    """The script Praat runs. select: (start, end) of a line to zoom to and select."""
     quoted = str(sound).replace('"', '""')
     if textgrid is None:
         return f'Read from file: "{quoted}"\nView & Edit\n'
     tg = str(textgrid).replace('"', '""')     # the sound and its TextGrid, in one editor
-    return (f'sound = Read from file: "{quoted}"\ngrid = Read from file: "{tg}"\n'
-            "selectObject: sound, grid\nView & Edit\n")
+    script = (f'sound = Read from file: "{quoted}"\ngrid = Read from file: "{tg}"\n'
+              "selectObject: sound, grid\nView & Edit\n")
+    if select is not None:
+        start, end = select
+        script += (f"editor: grid\n"
+                   f"    Zoom: {max(0.0, start - ZOOM_MARGIN):.4f}, {end + ZOOM_MARGIN:.4f}\n"
+                   f"    Select: {start:.4f}, {end:.4f}\n"
+                   "endeditor\n")
+    return script
 
 
-def open_sound(praat_path: str, sound: str | Path, textgrid: str | Path | None = None) -> None:
-    """Open a sound file in Praat's sound editor (with its TextGrid, if given). Raises PraatError
-    with a readable reason."""
+def open_sound(praat_path: str, sound: str | Path, textgrid: str | Path | None = None,
+               select: tuple[float, float] | None = None) -> None:
+    """Open a sound file in Praat's sound editor (with its TextGrid, if given, zoomed to the
+    stretch select if given). Raises PraatError with a readable reason."""
     sound = Path(sound)
     if not sound.exists():
         raise PraatError(f"{sound.name} isn't in the sound folder.")
@@ -75,8 +87,8 @@ def open_sound(praat_path: str, sound: str | Path, textgrid: str | Path | None =
     if not exe.exists():
         raise PraatError(f"Praat isn't at {praat_path}.")
     script = Path(tempfile.gettempdir()) / "lemmatrix-open-in-praat.praat"
-    script.write_text(script_for(sound.resolve(), Path(textgrid).resolve() if textgrid else None),
-                      encoding="utf-8")
+    script.write_text(script_for(sound.resolve(), Path(textgrid).resolve() if textgrid else None,
+                                 select if textgrid else None), encoding="utf-8")
     kwargs = {}
     if sys.platform.startswith("win"):
         kwargs["creationflags"] = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP

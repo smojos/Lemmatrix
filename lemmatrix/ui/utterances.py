@@ -778,7 +778,7 @@ class TextsUtterancesWindow(QDialog):
         self.tabs.setStyleSheet("QTabBar::tab { padding: 6px 14px; font-weight: normal; } "
                                 f"QTabBar::tab:selected {{ background: {a.name()}; "
                                 f"color: {theme.text_on(a).name()}; }}")
-        for lbl in (self.count, self.hint, self.texts.count):
+        for lbl in (self.count, self.hint, self.texts.count, self.texts.text_count):
             lbl.setStyleSheet(f"color: {theme.muted()};")
         for t in (self.table, self.texts.table, self.texts.lines):
             theme.as_data(t)

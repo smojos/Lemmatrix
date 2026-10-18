@@ -64,7 +64,8 @@ class TextDialog(QDialog):
         self.text = text
         s = self.db.settings
         self.setWindowTitle("Edit text" if text else "Add text")
-        self.resize(760, 760)
+        self.setSizeGripEnabled(True)
+        self.resize(600, 720)                     # resizable; the size is remembered (done())
         self.new_wav: Path | None = None
         self.new_grid: Path | None = None
         lay = QVBoxLayout(self)
@@ -143,9 +144,11 @@ class TextDialog(QDialog):
         fl.addRow("TextGrid", row)
         lay.addWidget(files)
 
-        lay.addWidget(QLabel("<b>Tiers</b>: what each tier of the TextGrid fills in. The main tier's "
-                             "intervals are the lines; the other tiers are matched to them by time. "
-                             "A tier with no rule yet is learned for the next texts."))
+        note = QLabel("<b>Tiers</b>: what each tier of the TextGrid fills in. The main tier's "
+                      "intervals are the lines; the other tiers are matched to them by time. "
+                      "A tier with no rule yet is learned for the next texts.")
+        note.setWordWrap(True)
+        lay.addWidget(note)
         self.tiers = QTableWidget(0, 4)
         self.tiers.setHorizontalHeaderLabels(["Tier", "Intervals", "Fills in", "Main"])
         self.tiers.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
@@ -162,6 +165,13 @@ class TextDialog(QDialog):
         if not text:
             self._suggest()
         self._show_files()
+        g = self.main.prefs.get_bytes("window/text")
+        if g:
+            self.restoreGeometry(g)
+
+    def done(self, result):
+        self.main.prefs.set_value("window/text", self.saveGeometry())
+        super().done(result)
 
     # ---- the record ----------------------------------------------------
     def _suggest(self):
@@ -231,8 +241,9 @@ class TextDialog(QDialog):
         def show(label, path, new):
             if path is None:
                 label.setText("<span style='color:%s'>none yet</span>" % theme.muted())
-            else:
-                label.setText(QDir.toNativeSeparators(str(path)) + ("  <i>(copied in on OK)</i>" if new else ""))
+            else:                                 # the name only: the full path is in the tooltip
+                label.setText(path.name.replace("<", "&lt;") + ("  <i>(copied in on OK)</i>" if new else ""))
+                label.setToolTip(QDir.toNativeSeparators(str(path)))
         show(self.wav_label, self._current_wav(), bool(self.new_wav))
         show(self.grid_label, self._current_grid(), bool(self.new_grid))
         self._fill_tiers()
@@ -412,7 +423,13 @@ class TextsPanel(QObject):
         self.table.contextRequested.connect(self._text_menu)
         self.table.filtersChanged.connect(self._update_count)
         self.table.selectionModel().currentRowChanged.connect(lambda *a: self._show_lines())
-        page.addWidget(self.table)
+        top = QWidget()                           # the texts, with their own buttons right under them
+        tl = QVBoxLayout(top)
+        tl.setContentsMargins(0, 0, 0, 0)
+        tl.setSpacing(4)
+        tl.addWidget(self.table, 1)
+        tl.addWidget(self._texts_bar())
+        page.addWidget(top)
         box = QWidget()
         bl = QVBoxLayout(box)
         bl.setContentsMargins(0, 4, 0, 0)
@@ -429,11 +446,12 @@ class TextsPanel(QObject):
         self.lines.rowActivated.connect(lambda row: self.play_line())
         self.lines.lemmaActivated.connect(self._open_clip)
         self.lines.contextRequested.connect(self._line_menu)
+        self.lines.filtersChanged.connect(self._update_count)
         self.lines.clicked.connect(lambda *_: self.win.autoplay.isChecked() and self.play_line())
         bl.addWidget(self.lines, 1)
         page.addWidget(box)
-        page.setSizes([280, 420])
-        self.bar = self._bar()
+        page.setSizes([300, 400])
+        self.bar = self._bar()                    # the lines' buttons: the window's options panel
         self._setup_columns()
 
     @property
@@ -441,19 +459,28 @@ class TextsPanel(QObject):
         return self.doc.db
 
     # ---- building ----------------------------------------------------
-    def _bar(self) -> QWidget:
+    def _texts_bar(self) -> QWidget:
+        """Under the texts list: Add, Delete, Edit, Configure columns, Clear filters, search, count."""
         from .main_window import tool
         bar, bl = self.main._bar()
         self.main._row(bl, tool("Add", "add", self.add, "Add a text or song, with its recording and TextGrid"),
-                       tool("Delete", "delete", self.delete, "Delete the selected text (Delete)"),
-                       tool("Edit", "edit", self.edit, "Edit the selected text (Enter)"),
-                       tool("Configure columns", "gear", self.configure_columns),
-                       tool("Clear all filters", "reset-filters", self.clear_filters))
+                             tool("Delete", "delete", self.delete, "Delete the selected text (Delete)"),
+                             tool("Edit", "edit", self.edit, "Edit the selected text (Enter)"),
+                             tool("Configure columns", "gear", self.configure_columns),
+                             tool("Clear all filters", "reset-filters", self.clear_filters))
         self.search = QLineEdit()
         self.search.setPlaceholderText("quick search of the texts' visible columns")
         self.search.setClearButtonEnabled(True)
-        self.search.textChanged.connect(lambda text: self.table.proxy.set_search(text))
+        self.search.textChanged.connect(lambda text: (self.table.proxy.set_search(text), self._update_count()))
         bl.addWidget(self.search)
+        self.text_count = QLabel()
+        bl.addWidget(self.text_count)
+        return bar
+
+    def _bar(self) -> QWidget:
+        """The lines' buttons, search and count (the window's options panel, under the lines)."""
+        from .main_window import tool
+        bar, bl = self.main._bar()
         self.main._row(bl, tool("Play line", "play", self.play_line, "Play the selected line (Ctrl+Space)"),
                        tool("Play in context", None, lambda: self.play_line(context=True),
                             f"Play the selected line with {CONTEXT:g} seconds either side"),
@@ -461,11 +488,11 @@ class TextsPanel(QObject):
                             "Cut the selected lines out of the recording as utterances, with their text "
                             "(select several with Shift or Ctrl)"),
                        tool("Open in Praat", "praat", self.open_in_praat,
-                            "Open the text's recording with its TextGrid in Praat"))
+                            "Open the text's recording with its TextGrid in Praat, at the selected line"))
         self.line_search = QLineEdit()
         self.line_search.setPlaceholderText("quick search of the lines")
         self.line_search.setClearButtonEnabled(True)
-        self.line_search.textChanged.connect(lambda text: self.lines.proxy.set_search(text))
+        self.line_search.textChanged.connect(lambda text: (self.lines.proxy.set_search(text), self._update_count()))
         bl.addWidget(self.line_search)
         self.count = QLabel()
         bl.addWidget(self.count)
@@ -547,11 +574,9 @@ class TextsPanel(QObject):
 
     def _update_count(self):
         n, shown = len(self.db.texts), self.table.proxy.rowCount()
-        line = f"{shown} of {n} text{'s' if n != 1 else ''} shown"
-        if self.current() is not None and not self.lines_error:
-            k = len(self._lines)
-            line += f"  ·  {self.lines.proxy.rowCount()} of {k} line{'s' if k != 1 else ''} shown"
-        self.count.setText(line)
+        self.text_count.setText(f"{shown} of {n} text{'s' if n != 1 else ''} shown")
+        k = len(self._lines) if self.current() is not None and not self.lines_error else 0
+        self.count.setText(f"{self.lines.proxy.rowCount()} of {k} line{'s' if k != 1 else ''} shown")
 
     def grid_path(self, t: Text) -> Path | None:
         return storage.text_folder(self.db) / t.textgrid if t.textgrid else None
@@ -792,7 +817,9 @@ class TextsPanel(QObject):
             QMessageBox.information(self.win, "Open in Praat", "This text has no recording in Soundfiles\\Texts.")
             return
         grid = self.grid_path(t)
-        self.main.open_in_praat(wav, self.win, grid if grid is not None and grid.exists() else None)
+        lines = self.selected_lines()                 # opened at the selected line(s)
+        select = (min(l.start for l in lines), max(l.end for l in lines)) if lines else None
+        self.main.open_in_praat(wav, self.win, grid if grid is not None and grid.exists() else None, select)
 
     # ---- lines ---------------------------------------------------------
     def selected_lines(self) -> list:
