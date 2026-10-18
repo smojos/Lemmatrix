@@ -476,6 +476,8 @@ class MainWindow(QMainWindow):
         ex = f.addMenu("&Export")
         self._act(ex, "&Filtered database (current tab) as CSV…", lambda: self.export_csv(filtered=True))
         self._act(ex, "&Entire database as CSV…", lambda: self.export_csv(filtered=False))
+        ex.addSeparator()
+        self._act(ex, "&Anonymous backup…", self.export_anonymous)
         f.addSeparator()
         self._act(f, "E&xit", self.close, QKeySequence.Quit)
         e = mb.addMenu("&Edit")
@@ -2110,6 +2112,11 @@ class MainWindow(QMainWindow):
                 out.append("\n\n".join(blocks))
             rows.append(out)
         return header, rows
+
+    def export_anonymous(self):
+        """File → Export → Anonymous backup: a copy without the participants' personal details."""
+        from .export_dialog import AnonymousExportDialog
+        AnonymousExportDialog(self).exec()
 
     def export_csv(self, filtered: bool):
         from .. import export
