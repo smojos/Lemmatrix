@@ -414,6 +414,7 @@ class Metadata:
     language_name: str = ""
     variety_code: str = ""
     variety_name: str = ""
+    name: str = ""                # the database's own name, e.g. "Complete Lexicon" (not its file name)
     author: str = ""              # who owns the database
     researchers: list[Person] = field(default_factory=list)
     participants: list[Person] = field(default_factory=list)

@@ -190,6 +190,7 @@ def _load_metadata(m) -> Metadata:
         md.language_code, md.language_name = nfc(x.get("code", "")), _text(x)
     if (x := m.find("variety")) is not None:
         md.variety_code, md.variety_name = nfc(x.get("code", "")), _text(x)
+    md.name = _text(m.find("name"))
     md.author = _text(m.find("author"))
     for r in m.findall("researcher"):
         if r.get("code") is None:                # older files: one researcher, who owns the database
@@ -405,6 +406,8 @@ def to_element(db: Database) -> ET.Element:
         ET.SubElement(m, "language", code=md.language_code).text = md.language_name or None
     if md.variety_code or md.variety_name:
         ET.SubElement(m, "variety", code=md.variety_code).text = md.variety_name or None
+    if md.name:
+        ET.SubElement(m, "name").text = md.name
     if md.author:
         ET.SubElement(m, "author").text = md.author
     for tag, people in (("researcher", md.researchers), ("participant", md.participants)):

@@ -102,13 +102,13 @@ def test_matrix_tabs_render(win):
     win.lemmas.select_row(win.doc.db.entry_by_ref("D001"))
     win.tabs.setCurrentIndex(LEMMA_TAG)
     lay = win.layouts[LEMMA_TAG]
-    assert not lay.cols and "Blank matrix" in win.count_line.text()      # blank until configured
+    assert not lay.cols and "Blank matrix" in win.count_label(win.tabs.currentIndex()).text()      # blank until configured
     cfg = win.config_for(LEMMA_TAG)
     cfg.x = [mx.Spec.citation(), mx.Spec(frozenset({"Plural"}), mx.LOOSE)]
     win.refresh()
     lay = win.layouts[LEMMA_TAG]
     assert len(lay.rows) == len(win.doc.db.entries)                      # every word class
-    assert "lemmas shown" in win.count_line.text()
+    assert "lemmas shown" in win.count_label(win.tabs.currentIndex()).text()
     win.tabs.setCurrentIndex(TAG_TAG)
     assert win.layouts[TAG_TAG].message == "Please configure a matrix."
     cfg = win.config_for(TAG_TAG)
@@ -713,7 +713,7 @@ def test_only_lemmas_with_data_and_backup_folder(win, tmp_path):
     win.only_data.setChecked(True)
     rows = win.layouts[mw.LEMMA_TAG].rows
     assert len(rows) == all_rows - 1 and all(r.entry.ref != "D099" for r in rows)
-    assert "hidden" in win.count_line.text()
+    assert "hidden" in win.count_label(win.tabs.currentIndex()).text()
     # the same tick works in All data and Tag/Tag
     db.entries[-1].tokens.append(db.new_token(db.entries[-1]))      # an empty token: no data
     win.tabs.setCurrentIndex(mw.ALL_DATA)
@@ -722,7 +722,7 @@ def test_only_lemmas_with_data_and_backup_folder(win, tmp_path):
     win.lemmas.select_row(db.entry_by_ref("D099"))
     win.tabs.setCurrentIndex(mw.TAG_TAG)
     win.refresh()
-    assert "no token data" in win.count_line.text()
+    assert "no token data" in win.count_label(win.tabs.currentIndex()).text()
     win.only_data.setChecked(False)
     win.tabs.setCurrentIndex(mw.ALL_DATA)
     assert any(r.entry.ref == "D099" for r in win.all_table.model_.rows)

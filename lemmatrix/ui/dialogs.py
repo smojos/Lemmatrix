@@ -227,7 +227,7 @@ class EntryDialog(QDialog):
 # ==========================================================================
 
 class MetadataDialog(QDialog):
-    """Language, variety, the database's author, description and gloss languages.
+    """Language, variety, the database's name, author, description and gloss languages.
 
     Researchers, participants and locations are lists: Edit → Lists."""
 
@@ -243,6 +243,10 @@ class MetadataDialog(QDialog):
         self.lang_name = QLineEdit(md.language_name)
         self.var_code = NoForbidden(md.variety_code)
         self.var_name = QLineEdit(md.variety_name)
+        self.db_name = QLineEdit(md.name)
+        self.db_name.setPlaceholderText("e.g. Complete Lexicon")
+        self.db_name.setToolTip("The database's own name, shown at the top of the window with the language "
+                                "and variety. It isn't the file name.")
         self.author = QLineEdit(md.author)
         self.author.setToolTip("Who owns this database. The researchers of each session are in "
                                "Edit → Lists → Researchers.")
@@ -251,6 +255,7 @@ class MetadataDialog(QDialog):
         form.addRow("Language name", self.lang_name)
         form.addRow("Variety code", self.var_code)
         form.addRow("Variety name", self.var_name)
+        form.addRow("Database name", self.db_name)
         form.addRow("Author / owner", self.author)
         form.addRow("Description", self.description)
         self.glosses = QLineEdit(" ".join(db.settings.gloss_languages))
@@ -276,6 +281,7 @@ class MetadataDialog(QDialog):
         md.language_name = nfc(self.lang_name.text().strip())
         md.variety_code = nfc(self.var_code.text().strip())
         md.variety_name = nfc(self.var_name.text().strip())
+        md.name = nfc(self.db_name.text().strip())
         md.author = nfc(self.author.text().strip())
         md.description = nfc(self.description.text().strip())
         langs = self.glosses.text().split()

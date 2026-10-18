@@ -25,7 +25,7 @@ from .. import bulk, matrix as mx, storage
 from ..model import ListItem, today
 from . import theme
 from .filter_dialogs import ConfigureColumnsDialog
-from .icons import icon
+from .icons import icon, ink_icon
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, RowModel
 from .widgets import ipa_font
 
@@ -270,7 +270,7 @@ class BulkEditWindow(QDialog):
         pl.setSpacing(4)
         bar = QHBoxLayout()
         broom = QToolButton()
-        broom.setIcon(icon("broom", 20))
+        broom.setIcon(ink_icon("reset-filters", 20))
         broom.setIconSize(QSize(20, 20))
         broom.setToolTip("Clear all filters")
         broom.setAutoRaise(True)

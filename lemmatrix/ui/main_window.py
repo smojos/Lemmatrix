@@ -22,7 +22,7 @@ from .dialogs import EntryDialog, MetadataDialog, PreferencesDialog, TagStructur
 from .document import Document
 from .fields_dialog import FieldsDialog
 from .filter_dialogs import ConfigureColumnsDialog
-from .icons import icon
+from .icons import icon, ink_icon
 from .matrix_dialogs import ConfigureCellDialog, ConfigureMatrixDialog, ask_matrix_name
 from .matrix_view import MatrixView
 from .prefs import Prefs
@@ -59,20 +59,38 @@ class TokenRow:
         return hash((id(self.entry), self.index))
 
 
-ICON_ONLY = {"add", "delete", "edit", "play", "broom"}   # obvious, shared actions: the name is in the tooltip
+INK_ICONS = {"reset-filters"}      # drawn in the text colour, so they follow the theme
+ICON_ONLY = {"add", "delete", "edit", "play", "broom", "reset-filters"}   # obvious, shared actions: the name is in the tooltip
 
 
 def tool(text: str, icon_name: str | None, fn, tip: str = "") -> QToolButton:
     b = QToolButton()
     b.setText(text)
     if icon_name:
-        b.setIcon(icon(icon_name, 20))
+        b.setProperty("icon_name", icon_name)
+        b.setIcon(ink_icon(icon_name, 20) if icon_name in INK_ICONS else icon(icon_name, 20))
         b.setIconSize(QSize(20, 20))
         b.setToolButtonStyle(Qt.ToolButtonIconOnly if icon_name in ICON_ONLY else Qt.ToolButtonTextBesideIcon)
     b.setToolTip(tip or text)
     b.setAutoRaise(True)
     b.clicked.connect(lambda *_, fn=fn: fn())   # ignore the 'checked' flag
     return b
+
+
+class DbTitle(QLabel):
+    """The big title at the top left: language - variety - database name. Double-click: the metadata."""
+
+    def __init__(self, on_double_click):
+        super().__init__()
+        self.on_double_click = on_double_click
+        f = QFont(self.font())
+        f.setBold(True)
+        f.setPointSizeF(f.pointSizeF() * 1.3)
+        self.setFont(f)
+        self.setToolTip("Language - variety - database name. Double-click to edit the metadata.")
+
+    def mouseDoubleClickEvent(self, event):
+        self.on_double_click()
 
 
 class MainWindow(QMainWindow):
@@ -150,7 +168,12 @@ class MainWindow(QMainWindow):
         lb.setContentsMargins(0, 0, 0, 0)
         lb.setSpacing(2)
         self.lemma_title = self._heading("Lemma")
-        lb.addWidget(self.lemma_title)
+        self.lemma_head = QWidget()                # same height as the matrix's title row, so the
+        lh = QHBoxLayout(self.lemma_head)          # two tables start level (set in _restyle)
+        lh.setContentsMargins(0, 0, 0, 0)
+        lh.addWidget(self.lemma_title)
+        lh.addStretch(1)
+        lb.addWidget(self.lemma_head)
         lb.addWidget(self.lemmas, 1)
         left.addWidget(lemma_box)
         bar, bl = self._bar()
@@ -159,7 +182,7 @@ class MainWindow(QMainWindow):
                   tool("Delete", "delete", self.delete_entry, "Delete the selected lemma (Delete)"),
                   tool("Edit", "edit", self.edit_entry, "Edit the selected lemma (Enter)"),
                   tool("Configure columns", "gear", self.configure_lemma_columns),
-                  tool("Clear all filters", "broom", self._clear_lemma_filters, "Clear all filters"))
+                  tool("Clear all filters", "reset-filters", self._clear_lemma_filters, "Clear all filters"))
         self.lemma_search = QLineEdit()
         self.lemma_search.setPlaceholderText("quick search of the visible columns")
         self.lemma_search.setClearButtonEnabled(True)
@@ -182,17 +205,17 @@ class MainWindow(QMainWindow):
         bxl.setContentsMargins(0, 0, 0, 0)
         bxl.setSpacing(2)
         self.matrix_title = self._heading("Matrix")
-        bxl.addWidget(self.matrix_title)
-        top = QHBoxLayout()
-        self.count_line = QLabel()
-        top.addWidget(self.count_line)
+        self.matrix_head = QWidget()               # the title, with the tabs on the same row
+        top = QHBoxLayout(self.matrix_head)
+        top.setContentsMargins(0, 0, 0, 0)
+        top.addWidget(self.matrix_title)
         top.addStretch(1)
         self.tabs = QTabBar()
         for name in ("All data", "Lemma/Tag", "Tag/Tag"):
             self.tabs.addTab(name)
         self.tabs.setExpanding(False)
-        top.addWidget(self.tabs)
-        bxl.addLayout(top)
+        top.addWidget(self.tabs, 0, Qt.AlignBottom)
+        bxl.addWidget(self.matrix_head)
         self.views = QStackedWidget()
         self.all_table = FilterTable()
         self.lt_view = MatrixView(self.doc.db)
@@ -226,7 +249,7 @@ class MainWindow(QMainWindow):
         bxl.addLayout(opts)
         normal = QFont(box.font())
         normal.setBold(False)              # set explicitly, or it would be inherited bold
-        for w in (self.count_line, self.tabs, self.views, self.autoplay, self.only_data):
+        for w in (self.tabs, self.views, self.autoplay, self.only_data):
             w.setFont(normal)
         right.addWidget(box)
 
@@ -296,7 +319,7 @@ class MainWindow(QMainWindow):
                   tool("Edit", "edit", self.edit_token, "Edit the selected token (Enter)"),
                   tool("Play", "play", self.play_selected, "Play the selected token (Ctrl+Space)"),
                   tool("Configure columns", "gear", self.configure_all_columns),
-                  tool("Clear all filters", "broom", self._clear_all_filters))
+                  tool("Clear all filters", "reset-filters", self._clear_all_filters))
         self.all_search = QLineEdit()
         self.all_search.setPlaceholderText("quick search of the visible columns")
         self.all_search.setClearButtonEnabled(True)
@@ -335,8 +358,15 @@ class MainWindow(QMainWindow):
                        "Rename the chosen saved matrix"),
                   tool("Delete matrix", None, lambda tab=tab: self.delete_saved_matrix(tab),
                        "Delete the chosen saved matrix"))
+        d["count"] = QLabel()                     # lemmas shown, the lemma, the matrix's messages
+        d["count"].setWordWrap(True)
+        bl.addWidget(d["count"])
         bl.addStretch(1)
         return d
+
+    def count_label(self, tab) -> QLabel:
+        """The line under a tab's options that says what it shows."""
+        return {ALL_DATA: self.all_count, LEMMA_TAG: self.lt_bar["count"], TAG_TAG: self.tt_bar["count"]}[tab]
 
     def _session_panel(self) -> QWidget:
         panel, sl = self._bar()
@@ -367,11 +397,6 @@ class MainWindow(QMainWindow):
         head.addWidget(self.write_btn)            # its arrow points at the notebook beside it
         head.addWidget(self.notebook_btn)
         sl.addLayout(head)
-        self.sess_language = styled(bold=True)    # theme colour, set in _restyle
-        self.sess_language.setToolTip("Language and dialect, set in Edit → Metadata")
-        self.sess_file = styled(italic=True)
-        sl.addWidget(self.sess_language)
-        sl.addWidget(self.sess_file)
 
         grid = QGridLayout()
         grid.setHorizontalSpacing(6)
@@ -421,6 +446,9 @@ class MainWindow(QMainWindow):
         cl = QHBoxLayout(corner)
         cl.setContentsMargins(4, 2, 2, 2)
         cl.addWidget(self.save_btn)
+        self.db_title = DbTitle(self.edit_metadata)   # language - variety - database name
+        cl.addWidget(self.db_title)
+        cl.addSpacing(6)
         mb.setCornerWidget(corner, Qt.TopLeftCorner)        # away from the window's close button
         f = mb.addMenu("&File")
         self._act(f, "&New database…", self.new_file, QKeySequence.New)
@@ -673,11 +701,7 @@ class MainWindow(QMainWindow):
         otherwise the ones last used with this database."""
         db = self.doc.db
         md = db.metadata
-        self.sess_file.setText(Path(db.path).name if db.path else "(not saved yet)")
-        lang = md.language_name or md.language_code
-        dialect = md.variety_name or md.variety_code
-        self.sess_language.setText(" - ".join(x for x in (lang, dialect) if x)
-                                   or "No language set (Edit → Metadata)")
+        self._fill_db_title()
         s = self.doc.notebook.session(self.session_date()) if self.session_date() else None
         if s is not None:
             keys = {chips.RESEARCHERS: s.researchers, chips.PARTICIPANTS: s.participants,
@@ -710,6 +734,11 @@ class MainWindow(QMainWindow):
         (picked, or loaded from a day in the notebook)."""
         if self.doc.db.path and any(self.session_keys().values()):
             self.prefs.set_session_for(self.doc.db.path, self.session_keys())
+
+    def _fill_db_title(self):
+        md = self.doc.db.metadata
+        parts = [md.language_name or md.language_code, md.variety_name or md.variety_code, md.name]
+        self.db_title.setText(" - ".join(p for p in parts if p) or "Unnamed database")
 
     def speaker_choices(self) -> list[str]:
         """Who can be the speaker: the session's participants (all participants if none are picked)."""
@@ -768,6 +797,9 @@ class MainWindow(QMainWindow):
             f"QToolButton:hover {{ background: {theme.mix(theme.accent(), QColor('white'), 0.15).name()}; }} "
             f"QToolButton:pressed {{ background: {theme.mix(theme.accent(), QColor('black'), 0.15).name()}; }}")
         self._panels_icon()
+        for b in self.findChildren(QToolButton):         # icons in the text colour follow the theme
+            if b.property("icon_name") in INK_ICONS:
+                b.setIcon(ink_icon(b.property("icon_name"), 20))
         for v in (self.lt_view, self.tt_view):           # the accent, lighter on dark
             v.switch.setIcon(icon("switch-plain" if theme.dark() else "switch", 22,   # no white edge on dark
                                   theme.colour("pitch").name()))
@@ -917,7 +949,13 @@ class MainWindow(QMainWindow):
         """Colours that follow the theme and accent (the data views stay black on white)."""
         self._notebook_icons()
         a = theme.accent()
-        self.sess_language.setStyleSheet(f"color: {theme.colour('pitch').name()};")
+        a_ = theme.accent()
+        self.db_title.setStyleSheet(
+            f"QLabel {{ background: {a_.name()}; color: {theme.text_on(a_).name()}; border-radius: 4px; "
+            "padding: 3px 10px; font-weight: bold; }")
+        h = max(self.tabs.sizeHint().height(), self.matrix_title.sizeHint().height())
+        for head in (self.lemma_head, self.matrix_head):   # both title rows the same height
+            head.setFixedHeight(h)
         # Qt doesn't always pass a new theme down to the matrix pane (its option checkboxes stayed
         # black on white after switching to dark), so it is given the palette directly.
         self.matrix_box.setPalette(theme.interface_palette())
@@ -926,7 +964,8 @@ class MainWindow(QMainWindow):
         muted = theme.muted()
         for lbl in (self.lemma_count, self.all_count):
             lbl.setStyleSheet(f"color: {muted};")
-        self.count_line.setStyleSheet(f"color: {muted}; font-weight: normal;")
+        for tab in (LEMMA_TAG, TAG_TAG):
+            self.count_label(tab).setStyleSheet(f"color: {muted};")
         self.tabs.setStyleSheet(
             "QTabBar::tab { padding: 6px 14px; font-weight: normal; } "
             f"QTabBar::tab:selected {{ background: {a.name()}; color: {theme.text_on(a).name()}; }}")
@@ -1098,8 +1137,8 @@ class MainWindow(QMainWindow):
                     lay = mx.lemma_tag_layout(db, ents, cfg) if ents else \
                         mx.Layout(message="No lemma has token data in these columns.")
             view = self.lt_view
-            self.count_line.setText(f"{len(ents)} lemmas shown of {len(db.entries)}{hidden}"
-                                    if cfg.x else "")
+            count = self.count_label(tab)
+            count.setText(f"{len(ents)} lemmas shown of {len(db.entries)}{hidden}" if cfg.x else "")
         else:
             e = self.lemmas.current_row()
             if e is not None and e not in visible:
@@ -1110,11 +1149,11 @@ class MainWindow(QMainWindow):
             else:
                 lay = mx.tag_tag_layout(db, e, cfg)
             view = self.tt_view
-            self.count_line.setText(f"{e.ref}  {db.lemma(e)}  “{db.gloss(e)}”"
+            count = self.count_label(tab)
+            count.setText(f"{e.ref}  {db.lemma(e)}  “{db.gloss(e)}”"
                                     + (f"  ·  {db.word_class(e)}" if db.word_class(e) else "") if e else "")
         if lay.message:
-            self.count_line.setText((self.count_line.text() + "  ·  " if self.count_line.text() else "")
-                                    + lay.message)
+            count.setText((count.text() + "  ·  " if count.text() else "") + lay.message)
         if self.switched[tab]:
             lay = lay.transposed()
         self.layouts[tab] = lay
@@ -1126,8 +1165,6 @@ class MainWindow(QMainWindow):
         n = self.all_table.active_filters()
         self.all_count.setText(f"{shown} of {total} tokens shown"
                                + (f"  ·  {n} column filter{'s' if n != 1 else ''} on" if n else ""))
-        if self.tabs.currentIndex() == ALL_DATA:
-            self.count_line.setText(f"{shown} tokens shown")
 
     def switch_axes(self, tab):
         if tab == ALL_DATA:
@@ -1472,7 +1509,8 @@ class MainWindow(QMainWindow):
                 m.addSeparator()
                 continue
             text, icon_name, fn = item[:3]
-            a = m.addAction(icon(icon_name, 16), text) if icon_name else m.addAction(text)
+            ic = ink_icon(icon_name, 16) if icon_name in INK_ICONS else icon(icon_name, 16) if icon_name else None
+            a = m.addAction(ic, text) if ic else m.addAction(text)
             a.setEnabled(item[3] if len(item) > 3 else True)
             a.triggered.connect(lambda *_, fn=fn: fn())
         m.exec(pos)
@@ -1483,7 +1521,7 @@ class MainWindow(QMainWindow):
         self._menu([("Add lemma", "add", self.add_entry), ("Delete lemma", "delete", self.delete_entry),
                     ("Edit lemma", "edit", self.edit_entry), None,
                     ("Configure columns", "gear", self.configure_lemma_columns),
-                    ("Clear all filters", "broom", self._clear_lemma_filters)], pos)
+                    ("Clear all filters", "reset-filters", self._clear_lemma_filters)], pos)
 
     def _all_menu(self, row, pos):
         if row is not None:
@@ -1491,7 +1529,7 @@ class MainWindow(QMainWindow):
         self._menu([("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
                     ("Edit token", "edit", self.edit_token), None, *self._token_items(), None,
                     ("Configure columns", "gear", self.configure_all_columns),
-                    ("Clear all filters", "broom", self._clear_all_filters)], pos)
+                    ("Clear all filters", "reset-filters", self._clear_all_filters)], pos)
 
     def _matrix_menu(self, tab, pos):
         self._menu([("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
@@ -1550,6 +1588,7 @@ class MainWindow(QMainWindow):
             dlg.apply()
             self.doc.settings_changed()
             self._fill_session()
+            self._fill_db_title()
             self._setup_columns()
             self._maybe_update_names()
 
