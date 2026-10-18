@@ -438,18 +438,19 @@ class MainWindow(QMainWindow):
 
     def _build_menus(self):
         mb = self.menuBar()
-        self.save_btn = QToolButton()               # top left, before File, in the theme colour (see _notebook_icons)
+        self.save_btn = QToolButton()               # top left, after the title: a floppy in the theme colour
         self.save_btn.setToolTip("Save database (Ctrl+S)")   # icon only: the name is in the tooltip
-        self.save_btn.setIconSize(QSize(18, 18))
+        self.save_btn.setIconSize(QSize(20, 20))
+        self.save_btn.setAutoRaise(True)
         self.save_btn.setCursor(Qt.PointingHandCursor)
         self.save_btn.clicked.connect(lambda *_: self.save())
         corner = self._corner = QWidget()      # kept: PySide does not take ownership of it
         cl = QHBoxLayout(corner)
         cl.setContentsMargins(4, 2, 2, 2)
-        cl.addWidget(self.save_btn)
+        cl.setSpacing(4)
         self.db_title = DbTitle(self.edit_metadata)   # language - variety - database name
         cl.addWidget(self.db_title)
-        cl.addSpacing(6)
+        cl.addWidget(self.save_btn)
         mb.setCornerWidget(corner, Qt.TopLeftCorner)        # away from the window's close button
         f = mb.addMenu("&File")
         self._act(f, "&New database…", self.new_file, QKeySequence.New)
@@ -791,12 +792,8 @@ class MainWindow(QMainWindow):
         a = theme.accent().name()
         self.notebook_btn.setIcon(icon("notebook", 34, a))
         self.write_btn.setIcon(icon("write-notebook", 34))
-        self.save_btn.setIcon(icon("save", 18, a))
-        self.save_btn.setStyleSheet(
-            f"QToolButton {{ background: {a}; color: {theme.text_on(theme.accent()).name()}; "
-            "border: none; border-radius: 4px; padding: 3px 8px; } "
-            f"QToolButton:hover {{ background: {theme.mix(theme.accent(), QColor('white'), 0.15).name()}; }} "
-            f"QToolButton:pressed {{ background: {theme.mix(theme.accent(), QColor('black'), 0.15).name()}; }}")
+        self.save_btn.setIcon(icon("save-solid", 20, theme.colour("pitch").name()))   # lighter on dark
+        self._style_menu_bar()
         self._panels_icon()
         for b in self.findChildren(QToolButton):         # icons in the text colour follow the theme
             if b.property("icon_name") in INK_ICONS:
@@ -823,6 +820,18 @@ class MainWindow(QMainWindow):
                 h = self._panel_sizes[name]
                 sp.setSizes([max(100, top - h), h])
         self._panels_icon()
+
+    def _style_menu_bar(self):
+        """File, Edit… level with the title and Save (centred in the bar's height), flat, no lines."""
+        mb = self.menuBar()
+        fm = mb.fontMetrics()
+        pad = max(2, (self._corner.sizeHint().height() - fm.height()) // 2 - 1)
+        mb.setStyleSheet(
+            f"QMenuBar {{ background: {theme.colour('window').name()}; border: none; }} "
+            f"QMenuBar::item {{ background: transparent; color: {theme.colour('window_text').name()}; "
+            f"padding: {pad}px 8px; margin: 0; border: none; }} "
+            f"QMenuBar::item:selected, QMenuBar::item:pressed {{ background: {theme.wash(0.75).name()}; "
+            "border-radius: 4px; }")
 
     def _panels_icon(self):
         hidden = self.panels_hidden()
