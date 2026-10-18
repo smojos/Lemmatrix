@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog,
                                QPushButton, QSplitter, QTableWidget, QTableWidgetItem, QToolButton,
                                QVBoxLayout, QWidget)
 
-from .. import audio, storage, textgrid as tgmod
+from .. import audio, layout, storage, textgrid as tgmod
 from ..model import TEXTS, ClipSource, ListItem, Text, TierMapping, TierRule, nfc, tier_base
 from . import chiprow as chips, theme
 from .filter_dialogs import ConfigureColumnsDialog
@@ -189,8 +189,18 @@ class TextDialog(QDialog):
             return storage.text_folder(self.db) / self.text.textgrid
         return None
 
+    def _start_folder(self) -> str:
+        """Where the file dialogues open: beside the recording chosen so far, otherwise
+        Soundfiles/Texts."""
+        wav = self._current_wav()
+        if wav is not None and wav.parent.is_dir():
+            return str(wav.parent)
+        if self.db.path:
+            return str(layout.existing_folder(storage.text_folder(self.db)))
+        return str(Path.home())
+
     def _choose_wav(self):
-        start = str(self._current_wav().parent) if self._current_wav() else str(Path.home())
+        start = self._start_folder()
         path, _ = QFileDialog.getOpenFileName(self, "The text's recording", start, "WAV recordings (*.wav *.WAV)")
         if not path:
             return
@@ -207,8 +217,7 @@ class TextDialog(QDialog):
         self._show_files()
 
     def _choose_grid(self):
-        wav = self._current_wav()
-        start = str(wav.parent) if wav else str(Path.home())
+        start = self._start_folder()
         path, _ = QFileDialog.getOpenFileName(self, "The text's TextGrid", start, "Praat TextGrids (*.TextGrid)")
         if path:
             self.new_grid = Path(path)

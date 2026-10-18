@@ -439,3 +439,17 @@ def test_tier_mapping_page_and_text_fields(win):
     f.lists["token"][0].name = "Narrow"                                    # Phonetic renamed…
     f.apply()
     assert db.settings.tier_mapping.rule("tx").field == "Narrow"          # …and the tier follows
+
+
+def test_text_file_dialogues_open_in_soundfiles_texts(win, monkeypatch):
+    from PySide6.QtWidgets import QFileDialog
+    from lemmatrix.ui import texts as tx
+    seen = []
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda parent, title, start, *a, **k: (seen.append(start), ("", ""))[1])
+    uw = win.open_utterances()
+    dlg = tx.TextDialog(uw.texts)
+    dlg._choose_wav()
+    dlg._choose_grid()
+    folder = storage.text_folder(win.doc.db)
+    assert [Path(s) for s in seen] == [folder, folder] and folder.is_dir()
+    dlg.close()
