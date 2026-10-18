@@ -428,6 +428,10 @@ class MainWindow(QMainWindow):
         self.sess_date.setDisplayFormat("yyyy-MM-dd")
         self.sess_date.setCalendarPopup(True)
         self.sess_date.setMaximumDate(QDate.currentDate())
+        self._today = QDate.currentDate()
+        self._day_timer = QTimer(self)            # past midnight, the session moves on to the new day
+        self._day_timer.timeout.connect(self._check_new_day)
+        self._day_timer.start(60_000)
         self.sess_date.setToolTip("The session's date: for new tokens and recordings, for comments, "
                                   "and the notebook's day. Resets to today each time Lemmatrix opens; "
                                   "it can't be a day that hasn't come yet.")
@@ -701,6 +705,7 @@ class MainWindow(QMainWindow):
         for v in (self.lt_view, self.tt_view):
             v.set_database(db)
         self._setup_columns()
+        self.lemmas.proxy.pinned = None           # a Ctrl+click pin belongs to the database closed
         self.lemmas.set_rows(db.entries)
         self.lemma_search.clear()
         self.all_search.clear()
@@ -811,6 +816,17 @@ class MainWindow(QMainWindow):
             self._remember_session()
             self._fill_speakers()
         self.write_btn.setEnabled(bool(self.session_date()))
+
+    def _check_new_day(self):
+        """A new day: today can be picked, and a session dated yesterday (the old today) moves on
+        to today. A date picked for backfilling stays."""
+        now = QDate.currentDate()
+        if now == self._today:
+            return
+        old, self._today = self._today, now
+        self.sess_date.setMaximumDate(now)
+        if self.sess_date.date() == old:
+            self.sess_date.setDate(now)
 
     def work_date(self) -> str:
         """The day comments are dated with: the session's date, or today without one."""
@@ -2188,6 +2204,16 @@ class MainWindow(QMainWindow):
                                               "Lemmatrix database (*.xml)")
         if not path:
             return False
+        old = self.doc.db.path
+        db = self.doc.db
+        moved = old and Path(path).resolve().parent != Path(old).resolve().parent
+        if moved and not Path(db.settings.sound_folder or ".").is_absolute() and \
+                any(t.file for e in db.entries for t in e.tokens):
+            QMessageBox.information(
+                self, "Save as", "Soundfiles will need to be moved and reassociated.\n\n"
+                f"The recordings stay in {QDir.toNativeSeparators(str(storage.sound_folder(db)))}. Move "
+                "that folder next to the new database (or set the sound folder in Edit → Settings), then "
+                "use Tools → Find missing or unlinked recordings for any that don't show up.")
         self.doc.db.path = path
         self._update_title()
         if self.save():

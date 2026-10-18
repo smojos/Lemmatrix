@@ -24,6 +24,21 @@ from pathlib import Path
 SUFFIX = ".lemmatrix-lock"
 
 
+ANOTHER_RUNNING = ("Another instance of Lemmatrix is currently running on this computer. Please save and "
+                   "close it before starting another to avoid bugs.")
+
+
+def single_instance():
+    """A lock held while this Lemmatrix runs, or None if another one on this computer holds it.
+
+    Keep the returned object alive for as long as the program runs."""
+    from PySide6.QtCore import QDir, QLockFile
+    name = os.environ.get("LEMMATRIX_SETTINGS", "Lemmatrix")      # tests use a name of their own
+    lock = QLockFile(QDir(QDir.tempPath()).filePath(f"{name}.running.lock"))
+    lock.setStaleLockTime(0)                  # a lock left by a crash is noticed by its process id
+    return lock if lock.tryLock(0) else None
+
+
 def lock_path(db_path: str | Path) -> Path:
     p = Path(db_path)
     return p.with_name("." + p.name + SUFFIX)

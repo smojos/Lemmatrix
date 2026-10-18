@@ -1564,3 +1564,31 @@ def test_older_databases_get_instances_with_frames_codes_kept(tmp_path):
     db = storage.load(tmp_path / "old.xml")
     names = [g.name for g in db.settings.tags.groups]
     assert names[-1] == "Instances"
+
+
+def test_session_date_moves_on_at_midnight(win, monkeypatch):
+    from PySide6.QtCore import QDate
+    yesterday = QDate.currentDate().addDays(-1)
+    win._today = yesterday                       # as if Lemmatrix had been open since yesterday
+    win.sess_date.setMaximumDate(yesterday)
+    win.sess_date.setDate(yesterday)
+    win._check_new_day()
+    assert win.sess_date.date() == QDate.currentDate()
+    win.sess_date.setDate(QDate.currentDate().addDays(-5))   # a backfill date stays put
+    win._today = yesterday
+    win._check_new_day()
+    assert win.sess_date.date() == QDate.currentDate().addDays(-5)
+
+
+def test_pin_is_cleared_when_another_database_opens(win):
+    win.lemmas.toggle_pin(win.doc.db.entries[0])
+    assert win.lemmas.proxy.rowCount() == 1
+    win.load_database(storage.load(SAMPLES / "Sample.xml"))
+    assert win.lemmas.proxy.rowCount() == len(win.doc.db.entries)
+
+
+def test_a_second_lemmatrix_is_noticed(app):
+    from lemmatrix import lock
+    first = lock.single_instance()
+    assert first is not None and lock.single_instance() is None
+    first.unlock()

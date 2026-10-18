@@ -49,6 +49,11 @@ def main() -> int:
             pass
     app = QApplication(sys.argv)
     _install_error_handler()
+    from . import lock as lockmod
+    from PySide6.QtWidgets import QMessageBox
+    app._running_lock = lockmod.single_instance()       # held until the program ends
+    if app._running_lock is None:
+        QMessageBox.warning(None, "Lemmatrix", lockmod.ANOTHER_RUNNING)
     app.setApplicationName("Lemmatrix")
     app.setOrganizationName("Lemmatrix")
     app.setStyle("Fusion")
