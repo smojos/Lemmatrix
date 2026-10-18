@@ -367,11 +367,11 @@ class MainWindow(QMainWindow):
         head.addWidget(self.write_btn)            # its arrow points at the notebook beside it
         head.addWidget(self.notebook_btn)
         sl.addLayout(head)
+        self.sess_language = styled(bold=True)    # theme colour, set in _restyle
+        self.sess_language.setToolTip("Language and dialect, set in Edit → Metadata")
         self.sess_file = styled(italic=True)
-        self.sess_codes = styled(bold=True)
-        self.sess_codes.setToolTip("Language and variety codes, set in Edit → Metadata")
+        sl.addWidget(self.sess_language)
         sl.addWidget(self.sess_file)
-        sl.addWidget(self.sess_codes)
 
         grid = QGridLayout()
         grid.setHorizontalSpacing(6)
@@ -384,14 +384,8 @@ class MainWindow(QMainWindow):
             row.changed.connect(self._session_people_changed)
             self.sess_rows[kind] = row
             lbl = QLabel(title)
-            grid.addWidget(lbl, r if r < 2 else 3, 0, Qt.AlignTop | Qt.AlignRight)
-            grid.addWidget(row, r if r < 2 else 3, 1)
-        self.sess_speaker = QComboBox()
-        self.sess_speaker.setToolTip("Speaker of new tokens and recordings: the first participant, "
-                                     "until another is chosen here or in the token dialogue")
-        self.sess_speaker.activated.connect(lambda _: self.set_speaker(self.sess_speaker.currentText()))
-        grid.addWidget(QLabel("Speaker"), 2, 0, Qt.AlignRight)
-        grid.addWidget(self.sess_speaker, 2, 1)
+            grid.addWidget(lbl, r, 0, Qt.AlignTop | Qt.AlignRight)
+            grid.addWidget(row, r, 1)
         grid.setColumnStretch(1, 1)
         sl.addLayout(grid)
         self.sess_date = QDateEdit(QDate.currentDate())
@@ -680,8 +674,10 @@ class MainWindow(QMainWindow):
         db = self.doc.db
         md = db.metadata
         self.sess_file.setText(Path(db.path).name if db.path else "(not saved yet)")
-        self.sess_codes.setText("  ".join(x for x in (md.language_code, md.variety_code) if x)
-                                or "no language code")
+        lang = md.language_name or md.language_code
+        dialect = md.variety_name or md.variety_code
+        self.sess_language.setText(" - ".join(x for x in (lang, dialect) if x)
+                                   or "No language set (Edit → Metadata)")
         s = self.doc.notebook.session(self.session_date()) if self.session_date() else None
         if s is not None:
             keys = {chips.RESEARCHERS: s.researchers, chips.PARTICIPANTS: s.participants,
@@ -701,35 +697,19 @@ class MainWindow(QMainWindow):
         return list(codes) or self.doc.db.participant_codes()
 
     def _fill_speakers(self):
-        """The speaker list follows the session's participants; the speaker stays if still there,
-        otherwise it is the first participant."""
-        md = self.doc.db.metadata
+        """The speaker follows the session's participants: it stays if still there, otherwise it
+        is the first participant. (It is chosen in the token dialogue.)"""
         choices = self.speaker_choices()
         current = self.prefs.speaker
         if current and current not in choices:
             current = ""
         if not current and self.sess_rows[chips.PARTICIPANTS].keys:
             current = choices[0]
-        self.sess_speaker.blockSignals(True)
-        self.sess_speaker.clear()
-        self.sess_speaker.addItem("")
-        for code in choices:
-            self.sess_speaker.addItem(code)
-            p = md.participant(code)
-            if p and p.name:
-                self.sess_speaker.setItemData(self.sess_speaker.count() - 1, p.name, Qt.ToolTipRole)
-        self.sess_speaker.setCurrentText(current)
-        self.sess_speaker.blockSignals(False)
         self.prefs.speaker = current
 
     def set_speaker(self, code: str):
-        """The speaker for the next tokens and recordings (from here or the token dialogue)."""
+        """The speaker for the next tokens and recordings (chosen in the token dialogue)."""
         self.prefs.speaker = code
-        self.sess_speaker.blockSignals(True)
-        if code and self.sess_speaker.findText(code) < 0:
-            self.sess_speaker.addItem(code)
-        self.sess_speaker.setCurrentText(code)
-        self.sess_speaker.blockSignals(False)
 
     def session_keys(self) -> dict[str, list[str]]:
         return {k: list(row.keys) for k, row in self.sess_rows.items()}
@@ -753,7 +733,7 @@ class MainWindow(QMainWindow):
         return self.session_date() or today()
 
     def session_speaker(self) -> str:
-        return self.sess_speaker.currentText()
+        return self.prefs.speaker
 
     # ============================================================= notebook
     def _notebook_icons(self):
@@ -768,7 +748,8 @@ class MainWindow(QMainWindow):
             f"QToolButton:pressed {{ background: {theme.mix(theme.accent(), QColor('black'), 0.15).name()}; }}")
         self._panels_icon()
         for v in (self.lt_view, self.tt_view):           # the accent, lighter on dark
-            v.switch.setIcon(icon("switch", 22, theme.colour("pitch").name()))
+            v.switch.setIcon(icon("switch-plain" if theme.dark() else "switch", 22,   # no white edge on dark
+                                  theme.colour("pitch").name()))
             v.switch.setIconSize(QSize(22, 22))
 
     # ---- option panels -------------------------------------------------
@@ -915,6 +896,7 @@ class MainWindow(QMainWindow):
         """Colours that follow the theme and accent (the data views stay black on white)."""
         self._notebook_icons()
         a = theme.accent()
+        self.sess_language.setStyleSheet(f"color: {theme.colour('pitch').name()};")
         for lbl in (self.lemma_title, self.matrix_title):
             lbl.setStyleSheet(f"color: {theme.colour('pitch').name()};")   # the accent, lighter on dark
         muted = theme.muted()
