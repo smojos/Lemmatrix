@@ -976,7 +976,8 @@ def test_ctrl_click_shows_only_that_lemma(win):
     assert t.visible_rows() == [goat]
     assert t.current_row() is goat
     win.refresh()
-    assert "only D002" in win.lemma_count.text()
+    assert win.lemma_count.text() == f"1 / {len(win.doc.db.entries)}"     # plain numbers
+    assert "Only D002" in win.lemma_count.toolTip()
     rect = t.visualRect(t.currentIndex())
     QTest.mouseClick(t.viewport(), Qt.LeftButton, Qt.ControlModifier, rect.center())
     assert t.proxy.rowCount() == total and t.current_row() is goat
@@ -1788,3 +1789,20 @@ def test_rename_database_dialog(win, tmp_path):
     dlg._name_edited("Other")                              # the file name no longer follows
     assert dlg.stem.text() == "Bad:name"
     dlg.close()
+
+
+
+def test_counts_are_plain_numbers_and_the_texts_button_opens_the_window(win):
+    from lemmatrix.ui.utterances import TEXTS
+    win.refresh()
+    n = len(win.doc.db.entries)
+    assert win.lemma_count.text() == f"{n} / {n}" and "lemmas shown" in win.lemma_count.toolTip()
+    win.all_search.setText("zzzz-no-such-token")
+    win.all_table.proxy.set_search("zzzz-no-such-token")
+    win._update_counts()
+    total = win.all_table.model_.rowCount()
+    assert win.all_count.text() == f"0 / {total}" and "tokens shown" in win.all_count.toolTip()
+    assert not win.texts_btn.icon().isNull() and "Ctrl+U" in win.texts_btn.toolTip()
+    win.texts_btn.click()
+    assert win.utterances_window is not None and win.utterances_window.tabs.currentIndex() == TEXTS
+    win.utterances_window.close()

@@ -187,12 +187,13 @@ class MainWindow(QMainWindow):
         lb.addWidget(self.lemmas, 1)
         left.addWidget(lemma_box)
         bar, bl = self._bar()
-        self.lemma_count = QLabel()
-        self._row(bl, tool("Add", "add", self.add_entry, "Add a lemma"),
-                  tool("Delete", "delete", self.delete_entry, "Delete the selected lemma (Delete)"),
-                  tool("Edit", "edit", self.edit_entry, "Edit the selected lemma (Enter)"),
-                  tool("Configure columns", "gear", self.configure_lemma_columns),
-                  tool("Clear all filters", "reset-filters", self._clear_lemma_filters, "Clear all filters"))
+        self.lemma_count = QLabel()               # "2369 / 2369": shown / all, at the right of the buttons
+        row = self._row(bl, tool("Add", "add", self.add_entry, "Add a lemma"),
+                        tool("Delete", "delete", self.delete_entry, "Delete the selected lemma (Delete)"),
+                        tool("Edit", "edit", self.edit_entry, "Edit the selected lemma (Enter)"),
+                        tool("Configure columns", "gear", self.configure_lemma_columns),
+                        tool("Clear all filters", "reset-filters", self._clear_lemma_filters, "Clear all filters"))
+        row.addWidget(self.lemma_count)
         self.lemma_search = QLineEdit()
         self.lemma_search.setPlaceholderText("quick search of the visible columns")
         self.lemma_search.setClearButtonEnabled(True)
@@ -202,7 +203,6 @@ class MainWindow(QMainWindow):
         cv.setEnabled(False)
         cv.setToolTip("Matches the Lemma field. Needs the analysis engine (Stage 2).")
         bl.addWidget(cv)
-        bl.addWidget(self.lemma_count)
         bl.addStretch(1)
         left.addWidget(bar)
         left.setSizes([700, 170])
@@ -273,6 +273,7 @@ class MainWindow(QMainWindow):
         self.options.addWidget(self.lt_bar["widget"])
         self.options.addWidget(self.tt_bar["widget"])
         bot.addWidget(self.options, 1)
+        bot.addWidget(self._texts_panel())
         bot.addWidget(self._session_panel())
         right.addWidget(bottom)
         right.setSizes([720, 150])
@@ -325,13 +326,14 @@ class MainWindow(QMainWindow):
 
     def _all_data_bar(self) -> QWidget:
         bar, bl = self._bar()
-        self.all_count = QLabel()
-        self._row(bl, tool("Add", "add", self.add_token, "Add a token"),
-                  tool("Delete", "delete", self.delete_token, "Delete the selected token (Delete)"),
-                  tool("Edit", "edit", self.edit_token, "Edit the selected token (Enter)"),
-                  tool("Play", "play", self.play_selected, "Play the selected token (Ctrl+Space)"),
-                  tool("Configure columns", "gear", self.configure_all_columns),
-                  tool("Clear all filters", "reset-filters", self._clear_all_filters))
+        self.all_count = QLabel()                 # "366 / 366": tokens shown / all
+        top = self._row(bl, tool("Add", "add", self.add_token, "Add a token"),
+                        tool("Delete", "delete", self.delete_token, "Delete the selected token (Delete)"),
+                        tool("Edit", "edit", self.edit_token, "Edit the selected token (Enter)"),
+                        tool("Play", "play", self.play_selected, "Play the selected token (Ctrl+Space)"),
+                        tool("Configure columns", "gear", self.configure_all_columns),
+                        tool("Clear all filters", "reset-filters", self._clear_all_filters))
+        top.addWidget(self.all_count)
         self.all_search = QLineEdit()
         self.all_search.setPlaceholderText("quick search of the visible columns")
         self.all_search.setClearButtonEnabled(True)
@@ -341,7 +343,6 @@ class MainWindow(QMainWindow):
         row = self._row(bl, self.all_search, cv, stretch=False)
         row.setStretch(0, 2)
         row.setStretch(1, 1)
-        bl.addWidget(self.all_count)
         bl.addStretch(1)
         return bar
 
@@ -379,6 +380,21 @@ class MainWindow(QMainWindow):
     def count_label(self, tab) -> QLabel:
         """The line under a tab's options that says what it shows."""
         return {ALL_DATA: self.all_count, LEMMA_TAG: self.lt_bar["count"], TAG_TAG: self.tt_bar["count"]}[tab]
+
+    def _texts_panel(self) -> QWidget:
+        """Beside Current Session: a big button that opens Texts and utterances (Josh's icon)."""
+        panel, pl = self._bar()
+        self.texts_btn = QToolButton()
+        self.texts_btn.setIconSize(QSize(96, 96))
+        self.texts_btn.setAutoRaise(True)
+        self.texts_btn.setCursor(Qt.PointingHandCursor)
+        self.texts_btn.setToolTip("Texts and utterances (Ctrl+U)")
+        self.texts_btn.clicked.connect(lambda *_: self.open_utterances())
+        pl.addStretch(1)
+        pl.addWidget(self.texts_btn, 0, Qt.AlignHCenter)
+        pl.addStretch(1)
+        panel.setFixedWidth(128)
+        return panel
 
     def _session_panel(self) -> QWidget:
         panel, sl = self._bar()
@@ -1023,6 +1039,7 @@ class MainWindow(QMainWindow):
     def _notebook_icons(self):
         a = theme.accent().name()
         self.notebook_btn.setIcon(icon("notebook", 34, a))
+        self.texts_btn.setIcon(icon("texts-utterances", 96, a))
         self.write_btn.setIcon(icon("write-notebook", 34))
         self.save_btn.setIcon(icon("save-solid", 20, theme.colour("pitch").name()))   # lighter on dark
         self._style_menu_bar()
@@ -1365,9 +1382,10 @@ class MainWindow(QMainWindow):
         self._scan_sound_folder()
         visible = self.lemmas.visible_rows()
         pin = self.lemmas.pinned_row()
-        self.lemma_count.setText(f"{len(visible)} of {len(db.entries)} lemmas shown"
-                                 + (f"  ·  only {pin.ref} {db.lemma(pin)} (Ctrl+click again to show all)"
-                                    if pin is not None else ""))
+        self.lemma_count.setText(f"{len(visible)} / {len(db.entries)}")
+        self.lemma_count.setToolTip(f"{len(visible)} of {len(db.entries)} lemmas shown"
+                                    + (f"\nOnly {pin.ref} {db.lemma(pin)}: Ctrl+click it again to show all"
+                                       if pin is not None else ""))
         only_data = self.only_data.isChecked()
         if tab == ALL_DATA:
             vis = set(map(id, visible))
@@ -1421,8 +1439,9 @@ class MainWindow(QMainWindow):
         shown = self.all_table.proxy.rowCount()
         total = self.all_table.model_.rowCount()
         n = self.all_table.active_filters()
-        self.all_count.setText(f"{shown} of {total} tokens shown"
-                               + (f"  ·  {n} column filter{'s' if n != 1 else ''} on" if n else ""))
+        self.all_count.setText(f"{shown} / {total}")
+        self.all_count.setToolTip(f"{shown} of {total} tokens shown"
+                                  + (f"\n{n} column filter{'s' if n != 1 else ''} on" if n else ""))
 
     def switch_axes(self, tab):
         if tab == ALL_DATA:
