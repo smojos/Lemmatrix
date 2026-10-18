@@ -266,11 +266,7 @@ class NotebookDialog(QDialog):
         self.recordings.header().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.recordings.itemDoubleClicked.connect(lambda it, col: self._follow(it))
         self.recordings.setToolTip("Tokens recorded this day (by their date). Double-click to go to one.")
-        self.tabs.addTab(self.comments, "Comments")
-        self.tabs.addTab(self.recordings, "Recordings")
-        split.addWidget(self.tabs)
-
-        qbox = QWidget()
+        qbox = QWidget()                          # the Questions tab: its buttons, then the list
         ql = QVBoxLayout(qbox)
         ql.setContentsMargins(0, 0, 0, 0)
         qb = QHBoxLayout()
@@ -288,12 +284,6 @@ class NotebookDialog(QDialog):
         self.q_delete = qbutton("delete", "Delete the selected question", self.delete_question)
         self.q_edit = qbutton("edit", "Edit the selected question", self.edit_question)
         self.q_resolve = qbutton("resolve", "Resolve the selected question", self.toggle_resolved)
-        qb.addSpacing(10)
-        qlabel = QLabel("Questions")
-        qf = QFont(qlabel.font())
-        qf.setBold(True)
-        qlabel.setFont(qf)
-        qb.addWidget(qlabel)
         qb.addStretch(1)
         ql.addLayout(qb)
         self.questions = QTreeWidget()
@@ -310,8 +300,11 @@ class NotebookDialog(QDialog):
         self.questions.itemDoubleClicked.connect(self._question_double_clicked)
         self.questions.currentItemChanged.connect(lambda *_: self._question_buttons())
         ql.addWidget(self.questions, 1)
-        split.addWidget(qbox)
-        split.setSizes([380, 200, 200])
+        self.tabs.addTab(qbox, "Questions")       # first (Josh, 18 October), then Comments, Recordings
+        self.tabs.addTab(self.comments, "Comments")
+        self.tabs.addTab(self.recordings, "Recordings")
+        split.addWidget(self.tabs)
+        split.setSizes([380, 400])
         outer.addWidget(split, 1)
 
         self.empty_note = QLabel()
@@ -392,8 +385,9 @@ class NotebookDialog(QDialog):
             self.empty_note.setText("No notes match the search." if self.search.text() and self.book.sessions
                                     else "No notes yet. Add note starts a day's page; so does Write to "
                                     "notebook in the Current Session.")
-            self.tabs.setTabText(0, "Comments")
-            self.tabs.setTabText(1, "Recordings")
+            self.tabs.setTabText(0, "Questions")
+            self.tabs.setTabText(1, "Comments")
+            self.tabs.setTabText(2, "Recordings")
         else:
             self.empty_note.setText("")
             self.date_label.setText(nbmod.long_date(s.date))
@@ -430,7 +424,7 @@ class NotebookDialog(QDialog):
                 it.setFont(1, f)
                 it.setForeground(1, QBrush(theme.accent()))
             self.comments.addTopLevelItem(it)
-        self.tabs.setTabText(0, f"Comments ({len(s.comments)})")
+        self.tabs.setTabText(1, f"Comments ({len(s.comments)})")
         QTimer.singleShot(0, self.comments.doItemsLayout)
 
     def _fill_recordings(self):
@@ -451,7 +445,7 @@ class NotebookDialog(QDialog):
             it.setFont(0, ipa_font(self.main.prefs.ipa_size))
             it.setData(0, Qt.UserRole, (e, i))
             self.recordings.addTopLevelItem(it)
-        self.tabs.setTabText(1, f"Recordings ({len(rows)})")
+        self.tabs.setTabText(2, f"Recordings ({len(rows)})")
 
     def _fill_questions(self, select: nbmod.Question | None = None):
         self.questions.clear()
@@ -467,6 +461,8 @@ class NotebookDialog(QDialog):
             self.questions.addTopLevelItem(it)
             if q is select:
                 self.questions.setCurrentItem(it)
+        open_ = sum(1 for q in self.session.questions if q.is_open)
+        self.tabs.setTabText(0, f"Questions ({open_} open)" if self.session.questions else "Questions")
         QTimer.singleShot(0, self.questions.doItemsLayout)
 
     def _highlight(self):

@@ -1748,3 +1748,27 @@ def test_ctrl_space_in_a_field_plays_and_never_types_a_space(win, monkeypatch):
                                                             Qt.ControlModifier | Qt.ShiftModifier, " "))
     assert played == ["sound"] * len(dlg.edits) + ["pitch"]
     dlg.reject()
+
+
+def test_fill_in_recording_dates_from_the_sound_files(win):
+    import numpy as np
+    from lemmatrix import audio, recdates, storage
+    db = win.doc.db
+    folder = storage.sound_folder(db)
+    e = db.entry_by_ref("D002")
+    t = e.tokens[0]
+    audio.write_wav(folder / t.file, np.zeros(441), 44100, 16, date="2025-12-01")
+    t.collected = ""
+    changes, counts = recdates.plan(db)
+    mine = [c for c in changes if c.entry is e and c.index == 0]
+    assert mine and mine[0].new == "2025-12-01"
+    assert "kept (has a date)" in counts                  # dated tokens are left alone by default
+    win.doc.undo.clear()
+    recdates.apply(win.doc, changes)
+    assert e.tokens[0].collected == "2025-12-01" and win.doc.undo.count() == 1
+    win.doc.undo.undo()
+    assert e.tokens[0].collected == ""
+    from lemmatrix.ui.dates_dialog import RecordingDatesDialog
+    dlg = RecordingDatesDialog(win)
+    assert dlg.tree.topLevelItemCount() == len(changes)
+    dlg.reject()

@@ -12,6 +12,7 @@ own metadata (INFO "IART", shown as "artist") and the collection date in
 
 from __future__ import annotations
 
+import re
 import struct
 import threading
 import wave
@@ -86,6 +87,62 @@ def read_info(path: str | Path) -> dict[str, str]:
                 p += 8 + n + (n % 2)
         pos += 8 + size + (size % 2)
     return out
+
+
+_DATE = re.compile(r"(\d{4})[-:/.](\d{2})[-:/.](\d{2})")
+
+
+def _chunks(path: Path, wanted=(b"LIST", b"bext")):
+    """{chunk id: body} of the wanted chunks, skipping over the sound itself (read by seeking)."""
+    out = {}
+    with open(path, "rb") as fh:
+        head = fh.read(12)
+        if head[:4] != b"RIFF" or head[8:12] != b"WAVE":
+            return out
+        while True:
+            h = fh.read(8)
+            if len(h) < 8:
+                break
+            cid, size = h[:4], struct.unpack("<I", h[4:])[0]
+            if cid in wanted and size < (1 << 20):
+                out.setdefault(cid, fh.read(size))
+                fh.seek(size % 2, 1)
+            else:
+                fh.seek(size + (size % 2), 1)
+    return out
+
+
+def recorded_date(path: str | Path) -> tuple[str, str]:
+    """(YYYY-MM-DD, where it came from) from a WAV file's own metadata, or ("", "").
+
+    Looks at the INFO creation date (ICRD, which Lemmatrix writes) and the Broadcast WAV
+    origination date (bext, which field recorders and many editors write)."""
+    import datetime as _dt
+    found = {}
+    try:
+        chunks = _chunks(Path(path))
+    except OSError:
+        return "", ""
+    body = chunks.get(b"LIST", b"")
+    if body[:4] == b"INFO":
+        p = 4
+        while p + 8 <= len(body):
+            key, n = body[p:p + 4], struct.unpack("<I", body[p + 4:p + 8])[0]
+            if key == b"ICRD":
+                found["ICRD"] = body[p + 8:p + 8 + n].rstrip(b"\x00").decode("utf-8", "replace")
+            p += 8 + n + (n % 2)
+    bext = chunks.get(b"bext", b"")
+    if len(bext) >= 330:
+        found["bext"] = bext[320:330].decode("ascii", "replace")
+    for source, label in (("ICRD", "the file's creation date (ICRD)"), ("bext", "the recorder's date (bext)")):
+        m = _DATE.search(found.get(source, ""))
+        if m:
+            y, mo, d = m.groups()
+            try:
+                return _dt.date(int(y), int(mo), int(d)).isoformat(), label
+            except ValueError:
+                continue
+    return "", ""
 
 
 def read_wav(path: str | Path) -> tuple[np.ndarray, int]:

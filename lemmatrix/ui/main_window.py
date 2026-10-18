@@ -502,6 +502,7 @@ class MainWindow(QMainWindow):
         self._act(t, "Update all sound file names", self.update_all_names)
         self._act(t, "Check for duplicate file names", self.check_duplicates)
         self._act(t, "Find missing or unlinked recordings…", self.find_missing_recordings)
+        self._act(t, "Fill in recording dates from the sound files…", self.fill_recording_dates)
         t.addSeparator()
         self._act(t, "Check &spelling…", self.check_spelling, "F7")
         t.addSeparator()
@@ -2265,6 +2266,11 @@ class MainWindow(QMainWindow):
                 out.append("\n\n".join(blocks))
             rows.append(out)
         return header, rows
+
+    def fill_recording_dates(self):
+        """Tools → Fill in recording dates: tokens' dates from their sound files' metadata."""
+        from .dates_dialog import RecordingDatesDialog
+        RecordingDatesDialog(self).exec()
 
     def export_anonymous(self):
         """File → Export → Anonymous backup: a copy without the participants' personal details."""
