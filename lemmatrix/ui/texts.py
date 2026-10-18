@@ -602,8 +602,27 @@ class TextsPanel(QObject):
                            if clips.get((round(l.start, 2), round(l.end, 2))) else None))
         return cols
 
+    def _grid_stamp(self, t):
+        path = self.grid_path(t) if t is not None else None
+        try:
+            return (str(path), path.stat().st_mtime_ns) if path is not None else None
+        except OSError:
+            return (str(path), None)
+
+    def lines_changed(self):
+        """The window is active again (back from Praat): show the lines again if the TextGrid changed."""
+        t = self.current()
+        if t is not None and self._grid_stamp(t) != getattr(self, "_shown_stamp", None):
+            selected = [ln.id for ln in self.selected_lines()]
+            self._show_lines()
+            for ln in self._lines:
+                if ln.id in selected:
+                    self.lines.select_row(ln)
+                    break
+
     def _show_lines(self):
         t = self.current()
+        self._shown_stamp = self._grid_stamp(t)
         key = (id(t), t.textgrid if t else None, t.tiers if t else None)
         lines = self.lines_of(t) if t is not None else []
         self._lines = lines

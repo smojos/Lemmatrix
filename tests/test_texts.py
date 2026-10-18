@@ -453,3 +453,176 @@ def test_text_file_dialogues_open_in_soundfiles_texts(win, monkeypatch):
     folder = storage.text_folder(win.doc.db)
     assert [Path(s) for s in seen] == [folder, folder] and folder.is_dir()
     dlg.close()
+
+
+# ---- Pull (stage 4) -----------------------------------------------------------------------
+
+def _resave(grid, tiers, end=4.0):
+    import time as _t
+    tgmod.write_example(grid, tiers, end)
+    st = os.stat(grid)
+    _resave.n = getattr(_resave, "n", 0) + 10
+    os.utime(grid, (st.st_atime, _t.time() + _resave.n))   # a later time to the second
+
+
+def test_pull_a_changed_line_from_the_window(win, tmp_path, monkeypatch):
+    from lemmatrix.ui import pull_dialog
+    uw, t = _add_text(win, tmp_path, monkeypatch)
+    uw.texts.lines.selectAll()
+    first, second = uw.texts.clip()
+    first.token.set("Comment", "mine")
+    grid = tmp_path / "Soundfiles" / "Texts" / t.textgrid
+    clip = tmp_path / "Soundfiles" / "Utterances" / first.token.file
+    size = clip.stat().st_size
+    _resave(grid, {"tx": [(0.4, 1.5, "ʔəŋ kɒɒ"), (2.0, 3.0, "ɛ ŋəə")],
+                   "ge": [(0.5, 1.0, "hare"), (1.0, 1.5, "run.PST"), (2.0, 3.0, "where.3SG")],
+                   "ft": [(0.4, 1.5, "the hare ran"), (2.0, 3.0, "where is he?")],
+                   "mb": [(0.5, 1.5, "ʔəŋ k-ɔ")]})
+    uw.tabs.setCurrentIndex(1)
+    uw.refresh()
+    assert uw._flagged(first) and not uw._flagged(second)
+    assert "changed" in uw._source_display(first) and uw.checks[first.id].moved
+    shown = {}
+    monkeypatch.setattr(pull_dialog.PullDialog, "exec",
+                        lambda dlg: shown.setdefault("rows", [dlg.tree.topLevelItem(i).text(1)
+                                                              for i in range(dlg.tree.topLevelItemCount())]) and 1)
+    uw.table.select_row(first)
+    uw.pull_selected()
+    assert shown["rows"] == ["Phonetic", "Times"]
+    assert first.token.get("Phonetic") == "ʔəŋ kɒɒ" and first.token.get("Comment") == "mine"
+    assert first.source.start == 0.4 and not uw._flagged(first)
+    assert clip.stat().st_size > size                     # cut again: 0.1 s longer
+    win.doc.undo.undo()
+    assert first.token.get("Phonetic") == "ʔəŋ kɒ" and first.source.start == 0.5
+    uw.refresh()
+    assert uw._flagged(first)
+
+
+def test_check_dialog_and_unlink(win, tmp_path, monkeypatch):
+    from lemmatrix.ui import pull_dialog
+    uw, t = _add_text(win, tmp_path, monkeypatch)
+    uw.texts.lines.selectAll()
+    first, second = uw.texts.clip()
+    grid = tmp_path / "Soundfiles" / "Texts" / t.textgrid
+    _resave(grid, {"tx": [(2.0, 3.0, "ɛ ŋəə")], "ft": [(2.0, 3.0, "where is he!")]})
+    dlg = pull_dialog.CheckDialog(win)
+    labels = sorted(dlg.tree.topLevelItem(i).text(3) for i in range(dlg.tree.topLevelItemCount()))
+    assert labels == ["changed", "line not found"]
+    monkeypatch.setattr(pull_dialog.PullDialog, "exec", lambda d: 1)
+    dlg.pull()                                            # nothing selected: all that can be
+    assert second.token.get("Translation", "en") == "where is he!"
+    assert [dlg.tree.topLevelItem(i).text(3) for i in range(dlg.tree.topLevelItemCount())] == ["line not found"]
+    dlg.tree.topLevelItem(0).setSelected(True)
+    dlg.unlink()
+    assert first.source is None and dlg.tree.topLevelItemCount() == 0
+    assert "match" in dlg.note.text()
+    dlg.close()
+
+
+def test_utterance_dialog_shows_the_flag_and_pulls(win, tmp_path, monkeypatch):
+    from lemmatrix.ui import pull_dialog
+    from lemmatrix.ui.token_dialog import Slot
+    from lemmatrix.ui.utterances import UtteranceDialog
+    uw, t = _add_text(win, tmp_path, monkeypatch)
+    uw.texts.lines.selectRow(0)
+    (u,) = uw.texts.clip()
+    grid = tmp_path / "Soundfiles" / "Texts" / t.textgrid
+    _resave(grid, {"tx": [(0.5, 1.5, "ʔəŋ kɒ"), (2.0, 3.0, "ɛ ŋəə")],
+                   "ft": [(0.5, 1.5, "the hare ran away"), (2.0, 3.0, "where is he?")]})
+    dlg = UtteranceDialog(win, [Slot(u, 0)], 0, uw)
+    assert not dlg.pull_btn.isHidden() and "Changed in the TextGrid" in dlg.source_label.text()
+    monkeypatch.setattr(pull_dialog.PullDialog, "exec", lambda d: 1)
+    dlg._pull()
+    assert u.token.get("Translation", "en") == "the hare ran away" and dlg.pull_btn.isHidden()
+    dlg.close()
+
+
+# ---- Pull (stage 4) -------------------------------------------------------------------------
+
+def _resave(path, tiers, end=4.0):
+    """Change the TextGrid as Praat would (a later time, to the second)."""
+    import time
+    tgmod.write_example(path, tiers, end)
+    st = os.stat(path)
+    os.utime(path, (st.st_atime, time.time() + 60))
+
+
+def _clipped(win, tmp_path, monkeypatch):
+    uw, t = _add_text(win, tmp_path, monkeypatch)
+    uw.texts.lines.select_row(uw.texts.lines.model_.rows[0])
+    u = uw.texts.clip()[0]
+    return uw, t, u, tmp_path / "Soundfiles" / "Texts" / t.textgrid
+
+
+def test_a_changed_line_is_flagged_and_pulled(win, tmp_path, monkeypatch):
+    from lemmatrix.ui import pull_dialog
+    uw, t, u, grid = _clipped(win, tmp_path, monkeypatch)
+    uw.refresh()
+    assert not uw._flagged(u) and uw._source_display(u).startswith("T001 ")
+    _resave(grid, {"tx": [(0.5, 1.5, "ʔəŋ kɒɒ"), (2.0, 3.0, "ɛ ŋəə")],
+                   "ft": [(0.5, 1.5, "the hare ran"), (2.0, 3.0, "where is he?")]})
+    assert uw.recheck() and uw._flagged(u) and "changed" in uw._source_value(u)
+    uw.refresh()
+    uw.table.select_row(u)
+    shown = {}
+
+    def fake_exec(dlg):
+        shown["rows"] = [[dlg.tree.topLevelItem(i).text(c) for c in range(4)] for i in range(dlg.tree.topLevelItemCount())]
+        return 1
+    monkeypatch.setattr(pull_dialog.PullDialog, "exec", fake_exec)
+    uw.pull_selected()
+    assert shown["rows"] == [["W001", "Phonetic", "ʔəŋ kɒ", "ʔəŋ kɒɒ"]]
+    assert u.token.get("Phonetic") == "ʔəŋ kɒɒ" and not uw._flagged(u)
+    win.doc.undo.undo()
+    assert u.token.get("Phonetic") == "ʔəŋ kɒ" and u.source.copied["tx"] == "ʔəŋ kɒ"
+
+
+def test_moved_times_cut_the_clip_again(win, tmp_path, monkeypatch):
+    from lemmatrix.ui import pull_dialog
+    uw, t, u, grid = _clipped(win, tmp_path, monkeypatch)
+    clip = tmp_path / "Soundfiles" / "Utterances" / u.token.file
+    before = audio.duration(clip)
+    _resave(grid, {"tx": [(0.5, 2.5, "ʔəŋ kɒ")], "ft": [(0.5, 2.5, "the hare ran")]})
+    monkeypatch.setattr(pull_dialog.PullDialog, "exec", lambda dlg: 1)
+    from lemmatrix import pull
+    c = pull.check(win.doc.db, u)
+    assert c.status == pull.MOVED
+    assert pull_dialog.pull_utterances(win, uw, [c])
+    assert (u.source.start, u.source.end) == (0.5, 2.5)
+    assert abs(audio.duration(clip) - (before + 1.0)) < 0.01          # a second longer
+    assert not list(clip.parent.glob("*.lemmatrix-new.wav"))
+
+
+def test_check_clipped_utterances_and_unlink(win, tmp_path, monkeypatch):
+    from lemmatrix.ui import pull_dialog
+    uw, t, u, grid = _clipped(win, tmp_path, monkeypatch)
+    dlg = pull_dialog.CheckDialog(win)
+    assert dlg.tree.topLevelItemCount() == 0 and "All 1 clipped" in dlg.note.text()
+    _resave(grid, {"tx": [(2.0, 3.0, "ɛ ŋəə")], "ft": [(2.0, 3.0, "where is he?")]})   # the line is gone
+    dlg.fill()
+    assert dlg.tree.topLevelItemCount() == 1 and dlg.tree.topLevelItem(0).text(3) == "line not found"
+    assert not dlg.pull_btn.isEnabled()
+    dlg.tree.topLevelItem(0).setSelected(True)
+    assert dlg.unlink_btn.isEnabled()
+    dlg.unlink()
+    assert u.source is None and dlg.tree.topLevelItemCount() == 0
+    win.doc.undo.undo()
+    assert u.source is not None
+    dlg.close()
+
+
+def test_the_utterance_dialogue_offers_pull(win, tmp_path, monkeypatch):
+    from lemmatrix.ui import pull_dialog
+    from lemmatrix.ui.token_dialog import Slot
+    from lemmatrix.ui.utterances import UtteranceDialog
+    uw, t, u, grid = _clipped(win, tmp_path, monkeypatch)
+    dlg = UtteranceDialog(win, [Slot(u, 0)], 0, uw)
+    assert dlg.pull_btn.isHidden()
+    _resave(grid, {"tx": [(0.5, 1.5, "ʔəŋ"), (2.0, 3.0, "ɛ ŋəə")],
+                   "ft": [(0.5, 1.5, "the hare ran"), (2.0, 3.0, "where is he?")]})
+    dlg._show_source()
+    assert not dlg.pull_btn.isHidden() and "Changed in the TextGrid" in dlg.source_label.text()
+    monkeypatch.setattr(pull_dialog.PullDialog, "exec", lambda d: 1)
+    dlg._pull()
+    assert u.token.get("Phonetic") == "ʔəŋ" and dlg.pull_btn.isHidden()
+    dlg.close()

@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (QCheckBox, QCompleter, QDialog, QSplitter, QGroup
                                QMenu, QMessageBox, QPushButton, QStackedWidget, QTabBar, QToolButton,
                                QVBoxLayout, QWidget, QFileDialog)
 
-from .. import audio, layout, matrix as mx, pitch as pitchmod, storage
+from .. import audio, layout, matrix as mx, pitch as pitchmod, pull, storage
 from ..model import FORBIDDEN_CHARS, UTTERANCES, Token, Utterance, nfc
 from . import theme
 from .filter_dialogs import ConfigureColumnsDialog
@@ -102,6 +102,7 @@ class TextsUtterancesWindow(QDialog):
         self.resize(1300, 760)
         self.sound_files: set[str] = set()
         self.cloud_files: set[str] = set()
+        self.checks: dict = {}                    # utterance id -> pull.Check, for clipped ones
 
         # Laid out like the main window's Matrix pane (Josh, 18 October), so nothing has to be
         # looked for anew: the title with the tabs on its right, the grid, the options row under
@@ -241,7 +242,10 @@ class TextsUtterancesWindow(QDialog):
             return ", ".join(f"{e.ref} {db.lemma(e)}".strip() for e in db.linked_lemmas(u))
 
         cols = [
-            Column("ref", "Reference", lambda u: u.ref),
+            Column("ref", "Reference", lambda u: u.ref,
+                   color=lambda u: theme.colour("error") if self._flagged(u) else None,
+                   tooltip=lambda u: pull.describe(self.checks[u.id]) + "\nRight-click → Pull from source"
+                   if self._flagged(u) else None),
             Column("category", "Category", lambda u: category_title(db, u.ref), closed=True, tree=cats),
             Column("label", "File label", lambda u: u.label, edit=edit,
                    tooltip=lambda u: "Part of the recording's file name; changing it renames the recording"),
@@ -274,13 +278,75 @@ class TextsUtterancesWindow(QDialog):
                                       if u.token.file not in self.sound_files else
                                       f"Recorded as {u.token.file}\nExpected: {db.expected_filename(u, u.token)}"
                                       f"\n{QDir.toNativeSeparators(str(folder / u.token.file))}")),
+            Column("source", "Source", self._source_value, display=self._source_display,
+                   flag=self._flagged, flag_label="Changed in the TextGrid",
+                   color=lambda u: theme.colour("error") if self._flagged(u) else None,
+                   tooltip=lambda u: pull.describe(self.checks[u.id]) if u.id in self.checks else None),
         ]
         return cols
+
+    # ---- clipped utterances (Pull) ---------------------------------------
+    def _flagged(self, u) -> bool:
+        c = self.checks.get(u.id)
+        return c is not None and c.flagged
+
+    def _source_value(self, u) -> str:
+        c = self.checks.get(u.id)
+        if c is None:
+            return ""
+        from .pull_dialog import status_label
+        return f"{c.text.ref if c.text else '(deleted text)'} – {status_label(c)}"
+
+    def _source_display(self, u) -> str:
+        c = self.checks.get(u.id)
+        if c is None:
+            return ""
+        from .pull_dialog import status_label, times
+        where = f"{c.text.ref} {times(u.source.start, u.source.end)}" if c.text else "(deleted text)"
+        return where if c.status == pull.OK else f"{where} – {status_label(c)}"
+
+    def recheck(self) -> bool:
+        """Check the clipped utterances against their TextGrids again; True if anything changed."""
+        before = {k: (c.status, c.moved) for k, c in self.checks.items()}
+        self.checks = pull.check_all(self.db)
+        return before != {k: (c.status, c.moved) for k, c in self.checks.items()}
+
+    def selected(self) -> list:
+        """The selected utterances (or the current one)."""
+        rows = sorted({self.table.proxy.mapToSource(i).row() for i in self.table.selectionModel().selectedRows()})
+        out = [self.table.model_.rows[r] for r in rows]
+        if not out and self.table.current_row() is not None:
+            out = [self.table.current_row()]
+        return out
+
+    def pull_selected(self):
+        from .pull_dialog import pull_utterances
+        self.recheck()
+        checks = [self.checks[u.id] for u in self.selected() if u.id in self.checks]
+        if pull_utterances(self.main, self, checks):
+            self.refresh()
+
+    def unlink_selected(self):
+        from .pull_dialog import unlink_utterances
+        self.recheck()
+        checks = [self.checks[u.id] for u in self.selected() if u.id in self.checks]
+        if unlink_utterances(self.main, self, checks):
+            self.refresh()
+
+    def changeEvent(self, event):
+        """Back from Praat: the TextGrids may have changed."""
+        super().changeEvent(event)
+        from PySide6.QtCore import QEvent
+        if event.type() == QEvent.ActivationChange and self.isActiveWindow() and self.db.utterances:
+            if self.recheck():
+                self.table.set_rows(list(self.db.utterances))
+            if self.tabs.currentIndex() == TEXTS and hasattr(self, "texts"):
+                self.texts.lines_changed()
 
     def _default_keys(self) -> list[str]:
         keys = ["ref", "label", "tags", "drawing"]
         keys += ["f:" + f.name for f in self.db.settings.token_fields]
-        return keys + ["lemmas", "speaker", "date", "file"]
+        return keys + ["lemmas", "speaker", "date", "file", "source"]
 
     def _setup_columns(self):
         db = self.db
@@ -315,6 +381,7 @@ class TextsUtterancesWindow(QDialog):
             self.sound_files, self.cloud_files = storage.scan_sound_folder(storage.utterance_folder(self.db))
         except Exception:
             self.sound_files, self.cloud_files = set(), set()
+        self.checks = pull.check_all(self.db)
         self.table.set_rows(list(self.db.utterances))
         self._update_count()
         if hasattr(self, "texts"):
@@ -694,6 +761,10 @@ class TextsUtterancesWindow(QDialog):
                  ("Play pitch", "play-pitch", self.play_pitch, bool(self._pitch(row))),
                  ("Move to another category…", None, self.move_category, row is not None),
                  ("Delete", "delete", self.delete, row is not None)]
+        if row is not None and row.source is not None:
+            c = self.checks.get(row.id)
+            items[-1:-1] = [("Pull from source…", None, self.pull_selected, c is not None and c.pullable),
+                            ("Unlink from the text…", None, self.unlink_selected, True)]
         for text, name, fn, on in items:
             a = m.addAction(icon(name, 16), text) if name else m.addAction(text)
             a.setEnabled(on)
@@ -804,6 +875,10 @@ class UtteranceDialog(TokenDialog):
         self.show_text_btn.setToolTip("Show the text and its lines in the Texts tab")
         self.show_text_btn.clicked.connect(lambda *_: self._show_text())
         sl.addWidget(self.show_text_btn)
+        self.pull_btn = QPushButton("Pull from source…")
+        self.pull_btn.setToolTip("Take the line as it is in the TextGrid now")
+        self.pull_btn.clicked.connect(lambda *_: self._pull())
+        sl.addWidget(self.pull_btn)
         outer.insertWidget(3, self.source_box)
         for ed in (self.label_edit, self.lemma_find):     # Ctrl+Space plays, never types a space
             ed.installEventFilter(self)
@@ -904,6 +979,12 @@ class UtteranceDialog(TokenDialog):
             self.source_label.setText(f"Clipped from a text that no longer exists ({when}).")
         else:
             self.source_label.setText(f"Clipped from {t.ref} {self.db.text_title(t)}, {when}")
+        c = pull.check(self.db, u)
+        if c is not None and c.flagged:
+            self.source_label.setText(self.source_label.text().replace("<", "&lt;") +
+                                      f"<br><span style='color:{theme.colour('error').name()}'>"
+                                      f"{pull.describe(c)}</span>")
+        self.pull_btn.setVisible(c is not None and c.pullable)
         self.context_btn.setEnabled(t is not None and bool(t.file))
         self.show_text_btn.setEnabled(t is not None)
 
@@ -919,6 +1000,17 @@ class UtteranceDialog(TokenDialog):
             self.main.player.play_samples(samples, rate)
         except Exception as exc:
             QMessageBox.warning(self, "Play", f"Couldn't play {wav.name}: {exc}")
+
+    def _pull(self):
+        from .pull_dialog import pull_utterances
+        if not self._commit():                    # what's typed here is kept first
+            return
+        c = pull.check(self.db, self.slot.entry)
+        if c is not None and pull_utterances(self.main, self, [c]):
+            self._load()
+            win = self.parent()
+            if hasattr(win, "refresh"):
+                win.refresh()
 
     def _show_text(self):
         t = self._source_text()

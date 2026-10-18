@@ -504,6 +504,7 @@ class MainWindow(QMainWindow):
         self._act(t, "Check for duplicate file names", self.check_duplicates)
         self._act(t, "Find missing or unlinked recordings…", self.find_missing_recordings)
         self._act(t, "Fill in recording dates from the sound files…", self.fill_recording_dates)
+        self._act(t, "Check clipped utterances…", self.check_clipped)
         t.addSeparator()
         self._act(t, "Check &spelling…", self.check_spelling, "F7")
         t.addSeparator()
@@ -2147,6 +2148,14 @@ class MainWindow(QMainWindow):
             free -= done_files
             lost += [(e, i) for i in needy if i not in done_tokens and e.tokens[i].file]
         return found, lost
+
+    def check_clipped(self):
+        """Tools → Check clipped utterances…: every utterance whose line changed in its TextGrid."""
+        from .pull_dialog import CheckDialog
+        dlg = CheckDialog(self)
+        dlg.exec()
+        if self.utterances_window is not None:
+            self.utterances_window.refresh()
 
     def find_missing_recordings(self):
         found, lost = self.missing_recordings()
