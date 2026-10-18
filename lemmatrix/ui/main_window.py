@@ -344,7 +344,7 @@ class MainWindow(QMainWindow):
                        "Choose what each cell shows"),
                   tool("Configure matrix", "gear", lambda tab=tab: self.configure_matrix(tab),
                        "Choose the rows and columns"),
-                  tool("Clear matrix", "broom", lambda tab=tab: self.clear_matrix(tab),
+                  tool("Clear matrix", "reset-filters", lambda tab=tab: self.clear_matrix(tab),
                        "Clear matrix: empty the view, no rows or columns"))
         d["saved"] = QComboBox()
         d["saved"].setMinimumWidth(170)
