@@ -212,7 +212,9 @@ def test_push_keeps_a_praat_change_on_another_tier_visible(tmp_path):
     u.token.set("Phonetic", "ʔə̀ŋ kɒ̄")                                  # edited here
     c = pull.check(db, u)
     assert c.status == pull.CHANGED and c.edited == ["tx"]
-    u.__dict__.update(pull.push(db, t, [(c, pull.push_plan(db, c))])[u.id].__dict__)
+    plan = pull.push_plan(db, c)
+    assert [(ch.tier, ch.edited) for ch in plan] == [("tx", True), ("ft", False)]   # ft: Praat's change
+    u.__dict__.update(pull.push(db, t, [(c, [ch for ch in plan if ch.edited])])[u.id].__dict__)
     c = pull.check(db, u)
     assert c.status == pull.CHANGED and [ch.tier for ch in c.changes] == ["ft"] and not c.edited
 
@@ -227,3 +229,54 @@ def test_praat_reads_a_pushed_textgrid(tmp_path):
               'appendInfoLine: n\nappendInfoLine: label$\n')
     out = parselmouth.praat.run(script, capture_output=True)[1].splitlines()
     assert out == ["5", "hare run.PST.3SG"]       # blank, merged, blank, where.3SG, blank
+
+
+def test_push_never_reaches_past_the_line_with_rounded_times(tmp_path):
+    """Josh, 19 October: stored times are rounded (2.9261 for 2.926141…), and a push merged the
+    empty segments either side of the line into it."""
+    db, t, u, grid = _setup(tmp_path)
+    a, b = 0.512345678, 1.487654321
+    tgmod.write_example(grid, {"tx": [(a, b, "ʔəŋ kɒ"), (2.0, 3.0, "ɛ ŋəə")],
+                               "ft": [(a, b, "the hare ran"), (2.0, 3.0, "where is he?")],
+                               "ge": [(a, 1.0, "hare"), (1.0, b, "run.PST"), (2.0, 3.0, "where.3SG")]}, 4.0)
+    lines = tgmod.read_lines(grid, db.mapping_for(t))
+    u.token.set("Morphemes", "hare run.PST")
+    u.source = ClipSource(t.id, round(a, 4), round(b, 4), dict(lines[0].copied), tgmod.modified(grid))
+    u.token.set("Morphemes", "hare.run")
+    c = pull.check(db, u)
+    assert c.status == pull.OK and c.line is None                  # not read: only rounded times known
+    plan = pull.push_plan(db, c)
+    assert [(ch.tier, ch.segments) for ch in plan] == [("ge", 2)]
+    pull.push(db, t, [(c, plan)])
+    from praatio import textgrid
+    tg = textgrid.openTextgrid(str(grid), includeEmptyIntervals=True)
+    ge = [tuple(e) for e in tg.getTier("ge").entries]
+    assert ge[:3] == [(0.0, a, ""), (a, b, "hare.run"), (b, 2.0, "")]   # the empty neighbours untouched
+
+
+def test_an_empty_segment_reaching_past_the_line_is_split_not_swallowed(tmp_path):
+    db, t, u, grid = _setup(tmp_path)
+    tgmod.write_example(grid, {"tx": TX, "ft": FT, "ge": [(2.0, 3.0, "where.3SG")]}, 4.0)   # ge empty at 0.5–1.5
+    lines = tgmod.read_lines(grid, db.mapping_for(t))
+    u.source = ClipSource(t.id, 0.5, 1.5, dict(lines[0].copied), tgmod.modified(grid))
+    u.token.set("Morphemes", "hare run.PST")
+    c = pull.check(db, u)
+    plan = pull.push_plan(db, c)
+    assert [(ch.tier, ch.old, ch.segments) for ch in plan] == [("ge", "", 1)]
+    pull.push(db, t, [(c, plan)])
+    from praatio import textgrid
+    tg = textgrid.openTextgrid(str(grid), includeEmptyIntervals=True)
+    assert [tuple(e) for e in tg.getTier("ge").entries][:3] == [(0.0, 0.5, ""), (0.5, 1.5, "hare run.PST"), (1.5, 2.0, "")]
+
+
+def test_after_restoring_a_backup_push_can_write_the_utterance_again(tmp_path):
+    db, t, u, grid = _setup(tmp_path)
+    original = grid.read_bytes()
+    u.token.set("Phonetic", "ʔə̀ŋ kɒ̄")
+    c = pull.check(db, u)
+    u.__dict__.update(pull.push(db, t, [(c, pull.push_plan(db, c))])[u.id].__dict__)
+    grid.write_bytes(original)                                     # the backup put back by hand
+    os.utime(grid, (time.time() + 900, time.time() + 900))
+    c = pull.check(db, u)
+    assert c.status == pull.CHANGED and not c.edited and c.pushable    # either direction can be chosen
+    assert [(ch.tier, ch.old, ch.new) for ch in pull.push_plan(db, c)] == [("tx", "ʔəŋ kɒ", "ʔə̀ŋ kɒ̄")]

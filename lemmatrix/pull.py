@@ -60,7 +60,9 @@ class Check:
 
     @property
     def pushable(self) -> bool:
-        return bool(self.edited) and self.status in (OK, CHANGED, MOVED)
+        """Something to write into the TextGrid: a field edited here, or (when the line changed
+        in Praat) a field that differs from it, for the user to choose the direction."""
+        return self.status in (OK, CHANGED, MOVED) and bool(self.edited or self.changes)
 
     @property
     def flagged(self) -> bool:
@@ -238,6 +240,7 @@ class PushChange:
     old: str                   # the tier's text in the line now
     new: str                   # the utterance's field
     segments: int              # how many segments of the tier the line spans (merged if > 1)
+    edited: bool = True        # edited here; False: changed only in Praat (offered, not ticked)
 
     @property
     def merges(self) -> bool:
@@ -260,8 +263,37 @@ def _span(c: Check) -> tuple[float, float]:
     return c.utterance.source.start, c.utterance.source.end
 
 
+def _exact_span(db: Database, c: Check) -> tuple[float, float]:
+    """The line's exact times, from the TextGrid: the stored ones are rounded (to 0.1 ms), and
+    a rounded start can reach a sliver into the segment before the line (Josh, 19 October: a
+    push merged the empty segments either side into the line)."""
+    if c.line is not None:
+        return c.line.start, c.line.end
+    path = storage.text_folder(db) / c.text.textgrid
+    ln = find_line(_lines(db, c.text, path), c.utterance.source)
+    return (ln.start, ln.end) if ln is not None else _span(c)
+
+
 def _overlapping(entries, start: float, end: float) -> list[int]:
-    return [i for i, e in enumerate(entries) if min(e[1], end) - max(e[0], start) > 1e-6]
+    """The segments that are part of the line: more than a sliver (SAME_TIME) inside it."""
+    return [i for i, e in enumerate(entries) if min(e[1], end) - max(e[0], start) > SAME_TIME]
+
+
+def _replacement(entries, hits, start: float, end: float, label: str):
+    """The segments that replace entries[hits]: one segment with the label, never reaching past
+    the line where the segment at its edge is empty (that one is split at the line's edge)."""
+    from praatio.utilities.constants import Interval
+    first, last = entries[hits[0]], entries[hits[-1]]
+    out = []
+    a, b = first[0], last[1]
+    if a < start - SAME_TIME and not (first[2] or "").strip():
+        out.append(Interval(a, start, ""))
+        a = start
+    tail = []
+    if b > end + SAME_TIME and not (last[2] or "").strip():
+        tail.append(Interval(end, b, ""))
+        b = end
+    return out + [Interval(a, b, label)] + tail
 
 
 def push_plan(db: Database, c: Check) -> list[PushChange]:
@@ -272,17 +304,20 @@ def push_plan(db: Database, c: Check) -> list[PushChange]:
     path = storage.text_folder(db) / c.text.textgrid
     tg = _read_full(path)
     names = {tgmod.nfc(n): n for n in tg.tierNames}
-    start, end = _span(c)
+    start, end = _exact_span(db, c)
+    differing = set(c.edited) | {ch.tier for ch in c.changes}
     out = []
     for tier, key in target_tiers(db, c.text, c.utterance.source, list(names)):
-        if tier not in c.edited:
+        if tier not in differing:
             continue
         entries = tg.getTier(names[tier]).entries
         hits = _overlapping(entries, start, end)
         now = " ".join(tgmod.nfc((entries[i][2] or "").strip()) for i in hits if (entries[i][2] or "").strip())
         new = field_value(db, c.utterance, key)
         if not _same(now, new):
-            out.append(PushChange(c.utterance, tier, key, now, new, len(hits)))
+            words = [i for i in hits if (entries[i][2] or "").strip()] if len(hits) > 1 else hits
+            out.append(PushChange(c.utterance, tier, key, now, new, len(hits) if len(words) > 1 else 1,
+                                  tier in c.edited))
     return out
 
 
@@ -303,12 +338,12 @@ def push(db: Database, text: Text, jobs: list[tuple[Check, list[PushChange]]]) -
     """Write the chosen changes for one text into its TextGrid (one write, after a backup).
     Returns utterance id -> a copy of the utterance with its link updated. Raises
     TextGridError or OSError (nothing is written then)."""
-    from praatio.utilities.constants import Interval
     path = storage.text_folder(db) / text.textgrid
+    spans = {id(c): _exact_span(db, c) for c, _ in jobs}     # before anything is written
     tg = _read_full(path)
     names = {tgmod.nfc(n): n for n in tg.tierNames}
     for c, changes in jobs:
-        start, end = _span(c)
+        start, end = spans[id(c)]
         for ch in changes:
             raw = names.get(ch.tier)
             if raw is None:
@@ -319,8 +354,7 @@ def push(db: Database, text: Text, jobs: list[tuple[Check, list[PushChange]]]) -
             if not hits:
                 raise tgmod.TextGridError(f"{ch.tier} has no segment at {start:.2f}–{end:.2f} s.")
             first, last = hits[0], hits[-1]
-            merged = Interval(entries[first][0], entries[last][1], ch.new)
-            entries[first:last + 1] = [merged]
+            entries[first:last + 1] = _replacement(entries, hits, start, end, ch.new)
             tg.replaceTier(raw, tier.new(entries=entries))
     backup_textgrid(db, path)
     tmp = path.with_name(path.name + ".lemmatrix-writing")

@@ -309,8 +309,8 @@ class TextsUtterancesWindow(QDialog):
         c = self.checks.get(u.id)
         if c is None:
             return None
-        parts = [pull.describe(c)] if c.flagged or not c.pushable else []
-        if c.pushable:
+        parts = [pull.describe(c)] if c.flagged or not c.edited else []
+        if c.edited:
             parts.append(pull.describe_edits(c))
         return "\n".join(parts)
 
@@ -1004,7 +1004,7 @@ class UtteranceDialog(TokenDialog):
             self.source_label.setText(self.source_label.text().replace("<", "&lt;") +
                                       f"<br><span style='color:{theme.colour('error').name()}'>"
                                       f"{pull.describe(c)}</span>")
-        if c is not None and c.pushable:
+        if c is not None and c.edited:
             self.source_label.setText(self.source_label.text() + "<br>" + pull.describe_edits(c))
         self.pull_btn.setVisible(c is not None and c.pullable)
         self.source_push_btn.setVisible(c is not None and c.pushable)

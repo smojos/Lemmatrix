@@ -36,7 +36,7 @@ def status_label(c: pull.Check) -> str:
         base = "changed, times moved"
     else:
         base = STATUS_LABELS.get(c.status, c.status)
-    if c.pushable:
+    if c.edited and c.pushable:
         return "edited here" if c.status == pull.OK else f"{base}; edited here"
     return base
 
@@ -218,20 +218,25 @@ class PushDialog(QDialog):
         last = None
         for ch in plan:
             f = db.settings.token_field(ch.key.partition(":")[0])
+            note = [f"merges {ch.segments} segments"] if ch.merges else []
+            if not ch.edited:
+                note.append("changed in Praat")
             it = QTreeWidgetItem([ch.utterance.ref if ch.utterance is not last else "",
-                                  f"{field_title(db, ch.key)} → {ch.tier}",
-                                  f"merges {ch.segments} segments" if ch.merges else "",
+                                  f"{field_title(db, ch.key)} → {ch.tier}", "; ".join(note),
                                   ch.old or "(empty)", ch.new or "(empty)"])
             last = ch.utterance
             it.setFlags(it.flags() | Qt.ItemIsUserCheckable)
-            it.setCheckState(1, Qt.Checked)
+            it.setCheckState(1, Qt.Checked if ch.edited else Qt.Unchecked)   # Praat's changes: not by default
+            if not ch.edited:
+                it.setToolTip(2, "Changed in Praat since it was copied, not edited here: ticking it writes "
+                                 "Lemmatrix's version back over Praat's. Pull from source takes Praat's instead.")
             for col, value in ((3, ch.old), (4, ch.new)):
                 if f is not None and f.role in ("phonetic", "phonemic"):
                     it.setFont(col, ipa)
                 if not value:
                     it.setForeground(col, dim)
                 it.setToolTip(col, value)
-            if ch.merges:
+            if ch.merges or not ch.edited:
                 it.setForeground(2, err)
             self.tree.addTopLevelItem(it)
             self.items.append(it)
@@ -361,7 +366,7 @@ class CheckDialog(QDialog):
     def fill(self):
         db = self.main.doc.db
         checks = pull.check_all(db)
-        self.flagged = [c for c in checks.values() if c.flagged or c.pushable]
+        self.flagged = [c for c in checks.values() if c.flagged or c.edited]
         self.tree.clear()
         err = theme.colour("error")
         for c in self.flagged:
@@ -370,7 +375,7 @@ class CheckDialog(QDialog):
                                   times(u.source.start, u.source.end), status_label(c)])
             it.setData(0, Qt.UserRole, u.id)
             it.setToolTip(3, "\n".join(x for x in (pull.describe(c) if c.flagged else "",
-                                                    pull.describe_edits(c) if c.pushable else "") if x))
+                                                    pull.describe_edits(c) if c.edited else "") if x))
             if not c.pullable:
                 it.setForeground(3, err)
             self.tree.addTopLevelItem(it)

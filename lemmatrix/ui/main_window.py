@@ -512,7 +512,7 @@ class MainWindow(QMainWindow):
         v = mb.addMenu("&View")
         self._act(v, "&Notebook", self.open_notebook, "Ctrl+B")
         self._act(v, "&Questions", self.open_questions)
-        self._act(v, "&Texts and utterances", self.open_utterances, "Ctrl+U")
+        self._act(v, "&Texts and utterances", lambda *_: self.open_utterances(), "Ctrl+U")
         v.addSeparator()
         self._act(v, "Hide or show the option panels", self.toggle_panels)
         self._act(v, "Swap rows and columns", lambda: self.switch_axes(self.tabs.currentIndex()), "Ctrl+T")
@@ -1950,6 +1950,8 @@ class MainWindow(QMainWindow):
         if self.utterances_window is None:
             self.utterances_window = TextsUtterancesWindow(self)
         w = self.utterances_window
+        if isinstance(select, bool):              # a menu's "checked" flag, not an utterance
+            select = None
         if not w.isVisible() and select is None:  # opened afresh: on the Texts tab
             from .utterances import TEXTS
             w.tabs.setCurrentIndex(TEXTS)

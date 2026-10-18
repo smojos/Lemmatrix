@@ -756,6 +756,19 @@ def test_the_utterance_dialogue_offers_push(win, tmp_path, monkeypatch):
 
 def test_the_window_opens_on_texts(win, tmp_path, monkeypatch):
     from lemmatrix.ui.utterances import TEXTS, UTTERANCES_TAB
+    action = next(a for m in win.menuBar().actions() if m.menu()
+                  for a in m.menu().actions() if a.text() == "&Texts and utterances")
+    action.trigger()                                          # as View → Texts and utterances / Ctrl+U
+    uw = win.utterances_window
+    assert uw.isVisible() and uw.tabs.currentIndex() == TEXTS
+    uw.tabs.setCurrentIndex(UTTERANCES_TAB)
+    uw.hide()                                                 # hidden, not closed: the same window
+    action.trigger()
+    assert win.utterances_window is uw and uw.tabs.currentIndex() == TEXTS
+    uw.close()
+    action.trigger()
+    assert win.utterances_window.tabs.currentIndex() == TEXTS   # closed: a new window, on Texts
+    win.utterances_window.close()
     uw = win.open_utterances()
     assert uw.tabs.currentIndex() == TEXTS
     uw.tabs.setCurrentIndex(UTTERANCES_TAB)
