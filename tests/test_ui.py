@@ -1729,3 +1729,22 @@ def test_metadata_opens_the_documentation_folder(win, tmp_path, monkeypatch):
     dlg.docs_btn.click()
     assert (tmp_path / "Documentation").is_dir()
     assert Path(opened[-1]) == tmp_path / "Documentation"
+
+
+def test_ctrl_space_in_a_field_plays_and_never_types_a_space(win, monkeypatch):
+    from PySide6.QtCore import QEvent, Qt
+    from PySide6.QtGui import QKeyEvent
+    from PySide6.QtWidgets import QApplication
+    from lemmatrix.ui.token_dialog import Slot, TokenDialog
+    dlg = TokenDialog(win, [Slot(win.doc.db.entry_by_ref("D001"), 0)], 0)
+    played = []
+    monkeypatch.setattr(dlg, "_play", lambda: played.append("sound"))
+    monkeypatch.setattr(dlg, "_play_pitch", lambda: played.append("pitch"))
+    for ed in dlg.edits.values():               # the key reaching the field itself, as on some keyboards
+        before = ed.text()
+        QApplication.sendEvent(ed, QKeyEvent(QEvent.KeyPress, Qt.Key_Space, Qt.ControlModifier, " "))
+        assert ed.text() == before
+    QApplication.sendEvent(dlg.edits["Phonetic"], QKeyEvent(QEvent.KeyPress, Qt.Key_Space,
+                                                            Qt.ControlModifier | Qt.ShiftModifier, " "))
+    assert played == ["sound"] * len(dlg.edits) + ["pitch"]
+    dlg.reject()

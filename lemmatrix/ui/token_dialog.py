@@ -118,7 +118,6 @@ class TokenDialog(QDialog):
             ed.textChanged.connect(self._fields_changed)
             if f.role == "translation" and s.primary_gloss == predict.LANG:
                 self.translation = ed
-                ed.installEventFilter(self)
                 spellui.attach(ed, getattr(self.main, "speller", None))   # red lines under unknown words
                 ed.textChanged.connect(lambda *_: self._update_suggestion())
             label = f.title + (f" ({s.primary_gloss})" if f.multilingual and len(s.gloss_languages) > 1 else "")
@@ -141,6 +140,7 @@ class TokenDialog(QDialog):
             else:
                 left.addWidget(ed, row, 1)
             self.edits[f.name] = ed
+            ed.installEventFilter(self)           # Ctrl+Space plays, never types a space
             row += 1
         self.pitch_note = QLabel()
         self.pitch_note.setStyleSheet(f"color: {theme.colour('warning').name()};")
@@ -427,6 +427,16 @@ class TokenDialog(QDialog):
         return True
 
     def eventFilter(self, obj, event):
+        # Ctrl+Space plays (Ctrl+Shift+Space: the pitch) even with the cursor in a field: on some
+        # computers (keyboard layouts and IPA keyboards) the field would take it and type a space.
+        if (event.type() in (QEvent.ShortcutOverride, QEvent.KeyPress) and obj in self.edits.values()
+                and event.key() == Qt.Key_Space
+                and event.modifiers() & Qt.ControlModifier
+                and not event.modifiers() & (Qt.AltModifier | Qt.MetaModifier)):
+            if event.type() == QEvent.KeyPress and not event.isAutoRepeat():
+                (self._play_pitch if event.modifiers() & Qt.ShiftModifier else self._play)()
+            event.accept()
+            return True
         if (obj is self.translation and event.type() == QEvent.KeyPress
                 and event.key() == Qt.Key_Right
                 and not (event.modifiers() & ~Qt.KeypadModifier)
