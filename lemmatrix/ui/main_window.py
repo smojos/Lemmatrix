@@ -753,12 +753,68 @@ class MainWindow(QMainWindow):
                 "recordings (Soundfiles), backups and documentation in it belong to one database.\n\n"
                 "Close Lemmatrix and move one of them, with its notebook, into a folder of its own "
                 "(its recordings too, if it has any).")
+        self._praat_text_names(db)
         relinked = layout.relink_consent(db)
         if relinked:
             self.doc.settings_changed()
             self.statusBar().showMessage(
                 f"Consent forms found in Documentation and relinked: {', '.join(relinked)}.", 10000)
         self._remind_full_backup()
+
+    def _praat_text_names(self, db: Database):
+        """On opening: texts' files named before their names followed Praat's (spaces and
+        punctuation as underscores, 18 October) are renamed. If Praat has already saved an edited
+        TextGrid under its own name beside the old one, and it is newer, that one is kept and the
+        old one held like a deleted recording. Not saving puts everything back."""
+        from ..filenames import praat_name
+        folder = storage.text_folder(db)
+        renamed, adopted, clashes = [], [], []
+        for t in db.texts:
+            for attr, ext in (("file", ".wav"), ("textgrid", ".TextGrid")):
+                cur = getattr(t, attr)
+                if not cur:
+                    continue
+                want = db.expected_text_name(t, Path(cur).suffix or ext)
+                if cur == want or praat_name(Path(cur).stem) != Path(want).stem:
+                    continue                      # up to date, or out of date for another reason
+                src, dst = folder / cur, folder / want
+                try:
+                    if not src.exists():
+                        if not dst.exists():
+                            continue
+                        renamed.append(want)              # only Praat's copy is there
+                    elif dst.exists() and not storage.same_file(src, dst):
+                        if dst.stat().st_mtime < src.stat().st_mtime:
+                            clashes.append(f"{t.ref}: {cur} and {want}")
+                            continue
+                        held = self.doc.hold_recording(src)      # Praat's newer copy is kept
+                        src.rename(held)
+                        self.doc._note_rename(src, held)
+                        adopted.append(f"{t.ref}: {want}")
+                    else:
+                        src.rename(dst)
+                        self.doc._note_rename(src, dst)
+                        renamed.append(want)
+                except OSError as exc:
+                    clashes.append(f"{t.ref}: {exc}")
+                    continue
+                setattr(t, attr, want)
+        if not (renamed or adopted or clashes):
+            return
+        self.doc.settings_changed()
+        msg = ("Texts' recordings and TextGrids are now named the way Praat names them (underscores for "
+               "spaces and punctuation), so saving a TextGrid in Praat with the name it suggests "
+               "overwrites the one Lemmatrix reads.")
+        if renamed:
+            msg += f"\n\nRenamed: {', '.join(renamed[:8])}{' …' if len(renamed) > 8 else ''}."
+        if adopted:
+            msg += ("\n\nPraat had saved these TextGrids under its own name; the newer ones are used now "
+                    f"and the older ones set aside: {', '.join(adopted)}.")
+        if clashes:
+            msg += ("\n\nNot renamed (both names exist and the old one is newer; check which to keep): "
+                    + ", ".join(clashes))
+        msg += "\n\nSave to keep the new names; closing without saving puts the old ones back."
+        QMessageBox.information(self, "Texts' file names", msg)
 
     def _remind_full_backup(self):
         """Once a week: a full backup is due (File → Full backup)."""

@@ -77,9 +77,17 @@ def build_filename(db: Database, e: Entry, t: Token, extension: str = ".wav") ->
     return out + extension
 
 
+def praat_name(stem: str) -> str:
+    """The name Praat gives an object read from a file with this name: spaces and ASCII
+    punctuation other than + - = _ become underscores (checked against Praat 6.1, 18 October).
+    Praat's Save suggests that name, so a TextGrid named this way is saved over itself."""
+    return "".join(c if (c.isalnum() or c in "+-=_" or ord(c) > 127) else "_" for c in stem)
+
+
 def build_text_filename(db: Database, text, extension: str = ".wav") -> str:
     """A text's recording (and TextGrid) name: {language}-{variety}_{reference}_{title} by default,
-    the title being the file label copied when the text was added."""
+    the title being the file label copied when the text was added, written as Praat would name
+    it (LXX-VXX_T001_Hyena_and_Hare), so saving the TextGrid in Praat overwrites this file."""
     md = db.metadata
     values = {"language": md.language_code, "variety": md.variety_code, "reference": text.ref,
               "title": text.file_label, "label": text.file_label, "date": text.date}
@@ -94,4 +102,4 @@ def build_text_filename(db: Database, text, extension: str = ".wav") -> str:
         value = values.get(name, "")
         if value:
             out += (sep if out else "") + value
-    return out.strip(_EDGE_SEPARATORS) + extension
+    return praat_name(out.strip(_EDGE_SEPARATORS)) + extension

@@ -73,7 +73,7 @@ def test_no_main_tier_is_explained(tmp_path):
 def test_texts_are_saved_and_read(tmp_path):
     db = _db(tmp_path)
     t = Text("T001", "Hyena and Hare", "2026-10-18", ["SP1", "SP2"], ["JS"], ["Sample variety village"],
-             "LXX-VXX_T001_Hyena and Hare.wav", "LXX-VXX_T001_Hyena and Hare.TextGrid")
+             "LXX-VXX_T001_Hyena_and_Hare.wav", "LXX-VXX_T001_Hyena_and_Hare.TextGrid")
     t.set("Title", "Hyena and Hare")
     t.set("Genre", "folktale")
     t.tiers = TierMapping("words", [TierRule("words", "Phonemic")])
@@ -91,8 +91,8 @@ def test_texts_are_saved_and_read(tmp_path):
     assert v.tiers.main == "words" and v.id == t.id
     assert again.utterances[0].source == u.source
     assert again.clipped_from(v) == [again.utterances[0]]
-    assert again.expected_text_name(v) == "LXX-VXX_T001_Hyena and Hare.wav"
-    assert again.expected_text_name(v, ".TextGrid") == "LXX-VXX_T001_Hyena and Hare.TextGrid"
+    assert again.expected_text_name(v) == "LXX-VXX_T001_Hyena_and_Hare.wav"
+    assert again.expected_text_name(v, ".TextGrid") == "LXX-VXX_T001_Hyena_and_Hare.TextGrid"
     assert again.suggest_utterance_reference("T") == "T002"
 
 
@@ -138,6 +138,7 @@ def test_clip_and_segment(tmp_path):
 # ---- the Texts tab ------------------------------------------------------------------------
 
 import os
+import time
 import shutil
 
 import pytest
@@ -207,28 +208,28 @@ def test_add_a_text_copies_its_files_and_shows_its_lines(win, tmp_path, monkeypa
     uw, t = _add_text(win, tmp_path, monkeypatch)
     folder = tmp_path / "Soundfiles" / "Texts"
     assert t.ref == "T001" and t.file_label == "Hyena and Hare" and t.get("Genre") == "folktale"
-    assert (folder / "LXX-VXX_T001_Hyena and Hare.wav").exists()
-    assert (folder / "LXX-VXX_T001_Hyena and Hare.TextGrid").exists()
+    assert (folder / "LXX-VXX_T001_Hyena_and_Hare.wav").exists()
+    assert (folder / "LXX-VXX_T001_Hyena_and_Hare.TextGrid").exists()
     assert (tmp_path / "field" / "story.wav").exists()                    # the original stays
     assert uw.texts.lines.model_.rowCount() == 2
     keys = [c.key for c in uw.texts.lines.model_.columns]
     assert "v:Phonetic" in keys and "v:Translation:en" in keys
     win.doc.undo.undo()
-    assert win.doc.db.texts == [] and not (folder / "LXX-VXX_T001_Hyena and Hare.wav").exists()
+    assert win.doc.db.texts == [] and not (folder / "LXX-VXX_T001_Hyena_and_Hare.wav").exists()
     win.doc.undo.redo()
-    assert (folder / "LXX-VXX_T001_Hyena and Hare.wav").exists()
+    assert (folder / "LXX-VXX_T001_Hyena_and_Hare.wav").exists()
 
 
 def test_a_text_already_in_soundfiles_texts_is_renamed_not_copied(win, tmp_path, monkeypatch):
     folder = tmp_path / "Soundfiles" / "Texts"
     uw, t = _add_text(win, tmp_path, monkeypatch, src=folder)
-    assert sorted(f.name for f in folder.iterdir()) == ["LXX-VXX_T001_Hyena and Hare.TextGrid",
-                                                       "LXX-VXX_T001_Hyena and Hare.wav"]
+    assert sorted(f.name for f in folder.iterdir()) == ["LXX-VXX_T001_Hyena_and_Hare.TextGrid",
+                                                       "LXX-VXX_T001_Hyena_and_Hare.wav"]
     assert uw.texts.lines.model_.rowCount() == 2
     win.doc.undo.undo()                                    # the old names come back
     assert sorted(f.name for f in folder.iterdir()) == ["story.TextGrid", "story.wav"]
     win.doc.undo.redo()
-    assert (folder / "LXX-VXX_T001_Hyena and Hare.wav").exists() and not (folder / "story.wav").exists()
+    assert (folder / "LXX-VXX_T001_Hyena_and_Hare.wav").exists() and not (folder / "story.wav").exists()
     assert win.doc.revert_renames() == []                  # discarding the changes too
     assert sorted(f.name for f in folder.iterdir()) == ["story.TextGrid", "story.wav"]
 
@@ -236,8 +237,8 @@ def test_a_text_already_in_soundfiles_texts_is_renamed_not_copied(win, tmp_path,
 def test_a_text_already_named_right_is_taken_as_it_is(win, tmp_path, monkeypatch):
     folder = tmp_path / "Soundfiles" / "Texts"
     folder.mkdir(parents=True, exist_ok=True)
-    wav = _recording(folder / "LXX-VXX_T001_Hyena and Hare.wav")
-    _grid(folder / "LXX-VXX_T001_Hyena and Hare.TextGrid")
+    wav = _recording(folder / "LXX-VXX_T001_Hyena_and_Hare.wav")
+    _grid(folder / "LXX-VXX_T001_Hyena_and_Hare.TextGrid")
     from lemmatrix.ui import texts as tx
 
     def fake_exec(dlg):
@@ -249,7 +250,7 @@ def test_a_text_already_named_right_is_taken_as_it_is(win, tmp_path, monkeypatch
     uw = win.open_utterances()
     uw.texts.add()
     t = win.doc.db.texts[-1]
-    assert t.file == wav.name and t.textgrid == "LXX-VXX_T001_Hyena and Hare.TextGrid"
+    assert t.file == wav.name and t.textgrid == "LXX-VXX_T001_Hyena_and_Hare.TextGrid"
     assert len(list(folder.iterdir())) == 2
     win.doc.undo.undo()
     assert win.doc.db.texts == [] and wav.exists()          # nothing to move: the file stays
@@ -298,10 +299,10 @@ def test_edit_text_title_in_file_names_renames_both_files(win, tmp_path, monkeyp
     monkeypatch.setattr(tx.TextDialog, "exec", fake_exec)
     uw.texts.edit(t)
     folder = tmp_path / "Soundfiles" / "Texts"
-    assert t.file == "LXX-VXX_T001_Hare story.wav" and t.textgrid == "LXX-VXX_T001_Hare story.TextGrid"
+    assert t.file == "LXX-VXX_T001_Hare_story.wav" and t.textgrid == "LXX-VXX_T001_Hare_story.TextGrid"
     assert (folder / t.file).exists() and (folder / t.textgrid).exists()
     win.doc.undo.undo()
-    assert (folder / "LXX-VXX_T001_Hyena and Hare.TextGrid").exists()
+    assert (folder / "LXX-VXX_T001_Hyena_and_Hare.TextGrid").exists()
 
 
 def test_a_new_tier_is_learned_and_a_different_choice_is_the_texts_own(win, tmp_path, monkeypatch):
@@ -429,8 +430,8 @@ def test_update_all_names_renames_texts_files(win, tmp_path, monkeypatch):
     win.doc.db.settings.text_pattern = "{reference} {title}"
     win.update_all_names(ask=False)
     folder = tmp_path / "Soundfiles" / "Texts"
-    assert t.file == "T001 Hyena and Hare.wav" and (folder / t.file).exists()
-    assert (folder / "T001 Hyena and Hare.TextGrid").exists()
+    assert t.file == "T001_Hyena_and_Hare.wav" and (folder / t.file).exists()
+    assert (folder / "T001_Hyena_and_Hare.TextGrid").exists()
 
 
 def test_tier_mapping_page_and_text_fields(win):
@@ -635,3 +636,72 @@ def test_the_utterance_dialogue_offers_pull(win, tmp_path, monkeypatch):
     dlg._pull()
     assert u.token.get("Phonetic") == "ʔəŋ" and dlg.pull_btn.isHidden()
     dlg.close()
+
+
+# ---- Praat's names (18 October) -------------------------------------------------------------
+
+def test_text_files_are_named_as_praat_names_them(tmp_path):
+    from lemmatrix.filenames import praat_name
+    assert praat_name("LXX-VXX_T001_Hyena and Hare (ʔəŋ), v.2") == "LXX-VXX_T001_Hyena_and_Hare__ʔəŋ___v_2"
+    assert praat_name("a+b=c-d_é–ŋ") == "a+b=c-d_é–ŋ"
+    db = _db(tmp_path)
+    t = Text(ref="T001", file_label="Hyena and Hare")
+    assert db.expected_text_name(t, ".TextGrid") == "LXX-VXX_T001_Hyena_and_Hare.TextGrid"
+
+
+def test_praat_names_match_praat_itself(tmp_path):
+    parselmouth = pytest.importorskip("parselmouth")          # Praat, embedded (only where installed)
+    from lemmatrix.filenames import praat_name
+    stem = "LXX-VXX_T001_Hyena and Hare (ʔəŋ), v.2 [x] it's & {y}; 50% ~ @#!^`"
+    path = tmp_path / f"{stem}.TextGrid"
+    tgmod.write_example(path, {"tx": [(0.5, 1.5, "a")]}, 4.0)
+    script = 'Read from file: "' + str(path).replace('"', '""') + '"\nappendInfoLine: selected$()\n'
+    out = parselmouth.praat.run(script, capture_output=True)[1].strip()
+    assert out == "TextGrid " + praat_name(stem)
+
+
+def test_old_text_names_are_renamed_on_opening_and_praats_copy_is_kept(win, tmp_path, monkeypatch):
+    import time
+    from lemmatrix.ui import main_window
+    db = win.doc.db
+    folder = tmp_path / "Soundfiles" / "Texts"
+    folder.mkdir(parents=True, exist_ok=True)
+    _recording(folder / "LXX-VXX_T001_Hyena and Hare.wav")
+    _grid(folder / "LXX-VXX_T001_Hyena and Hare.TextGrid")
+    t = Text(ref="T001", file_label="Hyena and Hare", file="LXX-VXX_T001_Hyena and Hare.wav",
+             textgrid="LXX-VXX_T001_Hyena and Hare.TextGrid")
+    t2 = Text(ref="T002", file_label="Two words", textgrid="LXX-VXX_T002_Two words.TextGrid")
+    _grid(folder / "LXX-VXX_T002_Two words.TextGrid")
+    praats = folder / "LXX-VXX_T002_Two_words.TextGrid"        # saved by Praat, later
+    tgmod.write_example(praats, {"tx": [(0.5, 1.5, "edited")]}, 4.0)
+    os.utime(praats, (time.time() + 60, time.time() + 60))
+    db.texts += [t, t2]
+    shown = []
+    monkeypatch.setattr(main_window.QMessageBox, "information", lambda *a, **k: shown.append(a[2]))
+    win._praat_text_names(db)
+    assert t.file == "LXX-VXX_T001_Hyena_and_Hare.wav" and (folder / t.file).exists()
+    assert t.textgrid == "LXX-VXX_T001_Hyena_and_Hare.TextGrid" and not (folder / "LXX-VXX_T001_Hyena and Hare.wav").exists()
+    assert t2.textgrid == praats.name and tgmod.read_lines(praats, db.mapping_for(t2))[0].values["Phonetic"] == "edited"
+    assert not (folder / "LXX-VXX_T002_Two words.TextGrid").exists()            # held for now
+    assert "Praat had saved" in shown[0] and win.doc.dirty
+    assert win.doc.revert_renames() == []                                        # not saved: all back
+    assert (folder / "LXX-VXX_T001_Hyena and Hare.wav").exists() and (folder / "LXX-VXX_T002_Two words.TextGrid").exists()
+
+
+def test_an_edit_saved_in_praat_is_seen(win, tmp_path, monkeypatch):
+    """The whole round: clip a line, edit the TextGrid in Praat and save it under the name Praat
+    suggests (its object's name), back in Lemmatrix the utterance is flagged and can be pulled."""
+    parselmouth = pytest.importorskip("parselmouth")
+    from lemmatrix.ui import pull_dialog
+    uw, t, u, grid = _clipped(win, tmp_path, monkeypatch)
+    time.sleep(1.1)                                       # Praat saves a second later at least
+    script = (f'grid = Read from file: "{grid}"\n'
+              'Set interval text: 1, 2, "ʔəŋ kɒ ɗæær"\n'
+              f'Save as text file: "{grid.parent}/" + selected$("TextGrid") + ".TextGrid"\n')
+    parselmouth.praat.run(script)
+    assert sorted(f.name for f in grid.parent.iterdir()) == sorted([t.file, t.textgrid])   # no second TextGrid
+    assert uw.recheck() and uw._flagged(u)
+    monkeypatch.setattr(pull_dialog.PullDialog, "exec", lambda d: 1)
+    uw.table.select_row(u)
+    uw.pull_selected()
+    assert u.token.get("Phonetic") == "ʔəŋ kɒ ɗæær"
