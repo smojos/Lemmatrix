@@ -90,6 +90,11 @@ If something goes wrong, a message box shows the details, and they're also writt
   typing replaces it. The tooltip says what it's based on. All data shows the suggestions in
   its empty Translation cells too, in light grey italics (double-click and →, or right-click →
   Accept suggested translation). Works offline (lemminflect).
+- **Spelling:** English glosses and translations get a red wavy line under words that may be
+  misspelled (token and lemma dialogues, lemma list, All data); right-click for corrections or
+  to add the word to the database's own word list. Tools → Check spelling (F7) lists every
+  such word, with Replace everywhere, Ignore and Add to word list. Codes in capitals, words in
+  brackets and transcriptions aren't checked. Settings → General → Warnings turns the lines off.
 - **Tags:** one free hierarchy of groups and tags; any tag can go on any token, one per group.
   Groups can be marked "usual for" word classes: the token dialogue shows those first (Show all
   tags for the rest), defaults come from them, and tags outside them get a dashed amber chip
@@ -114,6 +119,7 @@ lemmatrix/            the program
   model.py            entries, tokens, tag structure, people, places (no user interface)
   bulk.py             bulk edit: what an operation would change (no user interface)
   predict.py          predicted translations: templates learned from the translations
+  spelling.py         English spelling: the word lists, corrections, the database's own words
   storage.py          reading and writing the XML file, backups
   notebook.py         the notebook: sessions, the record of comments, the .notebook file
   filenames.py        building sound file names from the pattern

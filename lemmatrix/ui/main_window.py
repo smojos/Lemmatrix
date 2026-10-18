@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QF
 from .. import __version__, audio, filters as fl, lock as lockmod, matrix as mx, storage
 from . import theme
 from ..defaults import new_database
-from .. import notebook as nbmod, predict
+from .. import notebook as nbmod, predict, spelling
 from ..model import Database, Entry, ListItem, Person, forbidden_in, today
 from . import chiprow as chips
 from .dialogs import EntryDialog, MetadataDialog, PreferencesDialog, TagStructureDialog
@@ -26,6 +26,8 @@ from .icons import icon, ink_icon
 from .matrix_dialogs import ConfigureCellDialog, ConfigureMatrixDialog, ask_matrix_name
 from .matrix_view import MatrixView
 from .prefs import Prefs
+from . import spellui
+from .spellui import SpellDelegate
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, ListEditDelegate, SuggestionDelegate
 from .token_dialog import Slot, TokenDialog
 from . import widgets
@@ -110,6 +112,11 @@ class MainWindow(QMainWindow):
         self.cloud_files: set[str] = set()       # those of them that are online-only (OneDrive)
         self._suggestions: dict = {}             # (entry id, tags) -> predicted translation, for All data
         self._suggestions_stale = True           # the database changed since they were worked out
+        self.spell_checker = spelling.Checker()  # English spelling, with the database's word list
+        self.speller = spellui.Speller(self.spelling_spans, self.spell_checker.suggestions,
+                                       self.add_spelling_word)
+        self.spelling_ignored: set[str] = set()  # Check spelling → Ignore: until Lemmatrix closes
+        self.spelling_window = None
         self.resize(1500, 920)
         theme.from_prefs(self.prefs)
         widgets.SHOW_UNUSUAL = self.prefs.warn_unusual_tags
@@ -487,6 +494,9 @@ class MainWindow(QMainWindow):
         self._act(t, "Update all sound file names", self.update_all_names)
         self._act(t, "Check for duplicate file names", self.check_duplicates)
         self._act(t, "Find missing or unlinked recordings…", self.find_missing_recordings)
+        t.addSeparator()
+        self._act(t, "Check &spelling…", self.check_spelling, "F7")
+        t.addSeparator()
         self._act(t, "Open the sound folder", self.open_sound_folder)
         v = mb.addMenu("&View")
         self._act(v, "&Notebook", self.open_notebook, "Ctrl+B")
@@ -617,6 +627,7 @@ class MainWindow(QMainWindow):
         keys = [k for k in saved if any(c.key == k for c in cols)] or self._default_lemma_keys()
         self.lemmas.set_columns(cols, keys)
         self._closed_editors(self.lemmas)
+        self._spell_delegates()
         self.lemmas.resizeColumnsToContents()
         cols = self._all_columns()
         saved = self.prefs.get_list("columns/alldata")
@@ -631,7 +642,10 @@ class MainWindow(QMainWindow):
         for f in db.settings.token_fields:
             if self._predicts(f):
                 self.all_table.set_delegate("f:" + f.name, SuggestionDelegate(
-                    lambda r: (sug.text if (sug := self.suggestion_for(r)) else ""), self.all_table))
+                    lambda r: (sug.text if (sug := self.suggestion_for(r)) else ""), self.speller,
+                    self.all_table))
+        if db.settings.primary_gloss == spelling.LANG:
+            self.all_table.set_delegate("gloss", SpellDelegate(self.speller, self.all_table))
         self._closed_editors(self.all_table)
         self._all_sized = False
 
@@ -649,6 +663,7 @@ class MainWindow(QMainWindow):
             self.prefs.set_list("columns/lemma", dlg.chosen())
             self.lemmas.set_columns(cols, dlg.chosen())
             self._closed_editors(self.lemmas)
+            self._spell_delegates()
             self.lemmas.set_rows(self.doc.db.entries)
             self.lemmas.resizeColumnsToContents()
 
@@ -674,6 +689,9 @@ class MainWindow(QMainWindow):
         self.doc._settings_dirty = False
         self.doc.renamed.clear()
         self._suggestions_stale = True
+        self.spell_checker.set_words(db.settings.spelling_words)
+        if self.spelling_window is not None:      # it belongs to the database being closed
+            self.spelling_window.close()
         self._load_notebook()
         self.configs.clear()
         for v in (self.lt_view, self.tt_view):
@@ -1547,10 +1565,88 @@ class MainWindow(QMainWindow):
     def _lemma_menu(self, row, pos):
         if row is not None:
             self.lemmas.select_row(row)
-        self._menu([("Add lemma", "add", self.add_entry), ("Delete lemma", "delete", self.delete_entry),
+        self._menu([*self._spelling_items(self.lemmas, pos, row), ("Add lemma", "add", self.add_entry), ("Delete lemma", "delete", self.delete_entry),
                     ("Edit lemma", "edit", self.edit_entry), None,
                     ("Configure columns", "gear", self.configure_lemma_columns),
                     ("Clear all filters", "reset-filters", self._clear_lemma_filters)], pos)
+
+    # ---- spelling (section 5.10) -----------------------------------------
+    def _spell_delegates(self):
+        """Red lines under unknown words in the lemma list's English gloss."""
+        g = self.doc.db.settings.entry_field("gloss")
+        if g is not None:
+            self.lemmas.set_delegate(f"{g.name}:{spelling.LANG}", SpellDelegate(self.speller, self.lemmas))
+
+    def spelling_spans(self, text: str) -> list:
+        """The unknown words in a text, for the underlines (none when they're turned off)."""
+        if not self.prefs.underline_spelling:
+            return []
+        return self.spell_checker.misspelled(text)
+
+    def add_spelling_word(self, word: str):
+        """Count a word as spelled correctly from now on: it goes into the database's word list."""
+        s = self.doc.db.settings
+        word = word.strip()
+        if not word or word.lower() in {w.lower() for w in s.spelling_words}:
+            return
+        s.spelling_words.append(word)
+        self.spell_checker.set_words(s.spelling_words)
+        self.doc.settings_changed()
+        self._repaint_spelling()
+        self.statusBar().showMessage(f"“{word}” added to the database's word list.", 5000)
+
+    def _repaint_spelling(self):
+        for t in (self.lemmas, self.all_table):
+            t.viewport().update()
+        for w in QApplication.topLevelWidgets():
+            if w.isVisible():
+                w.update()
+                for ed in w.findChildren(spellui.SpellOverlay):
+                    ed.update()
+
+    def set_spelling_underlines(self, on: bool):
+        self.prefs.underline_spelling = bool(on)
+        self._repaint_spelling()
+
+    def check_spelling(self):
+        """Tools → Check spelling…: a window of its own, beside the main one."""
+        from .spelling_dialog import SpellingWindow
+        if self.spelling_window is None:
+            self.spelling_window = SpellingWindow(self)
+        self.spelling_window.show()
+        self.spelling_window.raise_()
+        self.spelling_window.activateWindow()
+
+    def _spelling_items(self, table, pos, row) -> list:
+        """Right-click on an underlined gloss or translation: its corrections and Add to the word list."""
+        if row is None or not self.prefs.underline_spelling:
+            return []
+        idx = table.indexAt(table.viewport().mapFromGlobal(pos))
+        if not idx.isValid():
+            return []
+        key = table.model_.columns[idx.column()].key
+        db = self.doc.db
+        g = db.settings.entry_field("gloss")
+        tname = predict.translation_field(db)
+        lang = spelling.LANG
+        if table is self.lemmas and g is not None and key == f"{g.name}:{lang}":
+            entry, index, name = row, None, g.name
+        elif table is self.all_table and key == "gloss" and g is not None and db.settings.primary_gloss == lang:
+            entry, index, name = row.entry, None, g.name
+        elif table is self.all_table and tname and key == "f:" + tname and db.settings.primary_gloss == lang:
+            entry, index, name = row.entry, row.index, tname
+        else:
+            return []
+        text = entry.get(name, lang) if index is None else entry.tokens[index].get(name, lang)
+        items = []
+        for word in list(dict.fromkeys(w for _, _, w in self.spell_checker.misspelled(text)))[:3]:
+            def replace(new, word=word, entry=entry, index=index, name=name):
+                def change(e):
+                    target = e if index is None else e.tokens[index]
+                    target.set(name, spelling.replace_word(target.get(name, lang), word, new), lang, True)
+                self.doc.edit_entry(entry, change, f"Spelling: {word} → {new}")
+            items += spellui.spelling_items(word, self.speller, replace) + [None]
+        return items
 
     # ---- predicted translations in All data (section 5.9) ----------------
     def _predicts(self, f) -> bool:
@@ -1591,7 +1687,7 @@ class MainWindow(QMainWindow):
             self.all_table.select_row(row)
         accept = ([None, ("Accept suggested translation", "", lambda r=row: self.accept_suggestion(r))]
                   if self.suggestion_for(row) else [])
-        self._menu([("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
+        self._menu([*self._spelling_items(self.all_table, pos, row),("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
                     ("Edit token", "edit", self.edit_token), *accept, None, *self._token_items(), None,
                     ("Configure columns", "gear", self.configure_all_columns),
                     ("Clear all filters", "reset-filters", self._clear_all_filters)], pos)
@@ -1734,6 +1830,7 @@ class MainWindow(QMainWindow):
         if dlg.exec():
             names_changed = dlg.apply()
             self.set_unusual_warning(self.prefs.warn_unusual_tags)
+            self.set_spelling_underlines(self.prefs.underline_spelling)
             self._apply_autosave()
             theme.from_prefs(self.prefs)
             self._restyle()

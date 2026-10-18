@@ -331,6 +331,7 @@ class Settings:
     pitch_style: str = "contours"
     play_cell_on_click: bool = False
     matrices: list = field(default_factory=list)      # saved MatrixConfig objects
+    spelling_words: list[str] = field(default_factory=list)   # the spellcheck's own word list (Sample variety...)
     extra: list = field(default_factory=list)   # unknown settings elements, kept as-is
 
     def entry_field(self, role_or_name: str) -> FieldDef | None:

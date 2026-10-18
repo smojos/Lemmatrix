@@ -284,12 +284,16 @@ class Predictor:
         for gone in [k for k in self._entries if k not in seen]:
             del self._entries[gone]
             changed = True
-        if changed or not self._index:
+        order = [e.id for e in db.entries]
+        if changed or not self._index or order != getattr(self, "_order", None):
+            self._order = order
             self._rebuild()
 
     def _rebuild(self):
+        """Ties between templates go to the one from the earliest lemma in the database."""
         index: dict = {}
-        for _, classes, contribs in self._entries.values():
+        for eid in self._order:
+            _, classes, contribs = self._entries[eid]
             for key, tpl, gloss in contribs:
                 for level in tuple(classes) + ("",):
                     slot = index.setdefault((level, key), {}).setdefault(tpl, [0, []])
@@ -318,7 +322,7 @@ class Predictor:
             bucket = self._index.get((level, key))
             if not bucket:
                 continue
-            ranked = sorted(bucket.items(), key=lambda kv: -kv[1][0])   # stable: first seen wins ties
+            ranked = sorted(bucket.items(), key=lambda kv: -kv[1][0])   # stable: earliest lemma wins ties
             for tpl, (count, sources) in ranked:
                 text = tpl.render(gloss)
                 if text:

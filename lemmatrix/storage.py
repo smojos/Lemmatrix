@@ -98,7 +98,7 @@ def _load_tags(el) -> tuple[TagStructure, list[str]]:
 
 
 KNOWN_SETTINGS = {"entry-fields", "token-fields", "glosses", "tag-structure", "references",
-                  "sounds", "pitch", "playback", "display", "tag-conversions"}
+                  "sounds", "pitch", "playback", "display", "tag-conversions", "spelling"}
 
 def _load_specs(el, tag: str) -> list[Spec]:
     out = []
@@ -153,6 +153,8 @@ def _load_settings(el) -> Settings:
     if (x := el.find("playback")) is not None:
         s.play_cell_on_click = _bool(x.get("play-cell-on-click"))
     s.matrices = _load_matrices(el.find("display"))
+    if (x := el.find("spelling")) is not None:
+        s.spelling_words = [w for w in (nfc(_text(w)).strip() for w in x.findall("word")) if w]
     s.extra = [child for child in el if child.tag not in KNOWN_SETTINGS]
     return s
 
@@ -453,6 +455,10 @@ def to_element(db: Database) -> ET.Element:
                                  "auto-update-names": _yes(s.auto_update_names)})
     ET.SubElement(st, "pitch", {"display-range": f"{s.pitch_low}-{s.pitch_high}",
                                 "style": s.pitch_style})
+    if s.spelling_words:                          # the spellcheck's own words, one per line
+        sp = ET.SubElement(st, "spelling")
+        for w in sorted(dict.fromkeys(s.spelling_words), key=str.lower):
+            ET.SubElement(sp, "word").text = w
     if s.matrices:
         disp = ET.SubElement(st, "display")
         for m in s.matrices:

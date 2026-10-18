@@ -136,6 +136,21 @@ def main(out: Path):
     shot(b, "23-bulk-predict.png")
     win.refresh()
     shot(win, "24-all-data-suggestions.png")
+    goat = db.entry_by_ref("D001")              # a few typos, for the spelling views
+    win.doc.edit_entry(goat, lambda en: (en.tokens[2].set("Translation", "of teh goat", "en"),
+                                         en.tokens[4].set("Translation", "of the goatss", "en"),
+                                         en.set("Gloss", "goatt", "en", True)), "typos")
+    win.refresh()
+    shot(win, "25-spelling-underlines.png")
+    win.check_spelling()
+    win.spelling_window.resize(900, 640)
+    shot(win.spelling_window, "26-check-spelling.png")
+    d = TokenDialog(win, [Slot(goat, 2)], 0)
+    d.show()
+    shot(d, "27-token-spelling.png")
+    d.reject()
+    win.spelling_window.close()
+    win.doc.undo.undo()
     win.doc.undo.undo()
     win.doc.undo.undo()
     b.close()

@@ -16,7 +16,7 @@ from .. import audio, matrix as mx, pitch as pitchmod, predict, storage
 from ..model import Entry, Token
 from PySide6.QtCore import QSize
 
-from . import theme
+from . import spellui, theme
 from .icons import icon
 from .table import show_suggestion
 from .tagpanel import TagPanel
@@ -117,6 +117,7 @@ class TokenDialog(QDialog):
             if f.role == "translation" and s.primary_gloss == predict.LANG:
                 self.translation = ed
                 ed.installEventFilter(self)
+                spellui.attach(ed, getattr(self.main, "speller", None))   # red lines under unknown words
                 ed.textChanged.connect(lambda *_: self._update_suggestion())
             label = f.title + (f" ({s.primary_gloss})" if f.multilingual and len(s.gloss_languages) > 1 else "")
             left.addWidget(QLabel(label), row, 0)

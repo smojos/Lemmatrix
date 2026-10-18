@@ -1308,3 +1308,89 @@ def test_predicted_translation_in_all_data(win):
     win.accept_suggestion(row)                                  # the right-click menu's item
     assert lion.tokens[i].get("Translation", "en") == "of the lions"
     assert win.suggestion_for(row) is None                      # has a translation now
+
+
+def test_spelling_underlines_and_menus(win):
+    from lemmatrix.ui import spellui
+    from lemmatrix.ui.token_dialog import Slot, TokenDialog
+    goat = win.doc.db.entry_by_ref("D001")
+    dlg = TokenDialog(win, [Slot(goat, 2)], 0)
+    overlay = dlg.translation.findChild(spellui.SpellOverlay)
+    assert overlay is not None
+    dlg.translation.setText("of the goatt")
+    assert [w for _, _, w in win.spelling_spans(dlg.translation.text())] == ["goatt"]
+    overlay.repaint()                                    # draws without trouble
+    overlay._replace(7, 12, "goat")                      # a correction from its right-click menu
+    assert dlg.translation.text() == "of the goat"
+    dlg.reject()
+
+    win.doc.edit_entry(goat, lambda en: en.tokens[2].set("Translation", "of the goatt", "en"), "typo")
+    win.refresh()
+    table = win.all_table
+    row = next(r for r in table.visible_rows() if r.entry is goat and r.index == 2)
+    table.select_row(row)
+    col = table.visible_keys().index("f:Translation")
+    idx = table.currentIndex().siblingAtColumn(col)
+    pos = table.viewport().mapToGlobal(table.visualRect(idx).center())
+    items = [i for i in win._spelling_items(table, pos, row) if i]
+    assert items[0][0] == "“goatt” may be misspelled"
+    fix = next(i for i in items if i[0].strip() == "goat")
+    fix[2]()
+    assert goat.tokens[2].get("Translation", "en") == "of the goat"
+    win.doc.undo.undo()
+    assert goat.tokens[2].get("Translation", "en") == "of the goatt"
+
+    win.add_spelling_word("goatt")
+    assert "goatt" in win.doc.db.settings.spelling_words and win.doc.dirty
+    assert win.spelling_spans("of the goatt") == []
+    win.prefs.underline_spelling = False
+    try:
+        assert win.spelling_spans("recieve") == []
+    finally:
+        win.prefs.underline_spelling = True
+
+
+def test_check_spelling_window(win):
+    db = win.doc.db
+    goat, lion = db.entry_by_ref("D001"), db.entry_by_ref("D002")
+    win.doc.edit_entry(goat, lambda en: en.tokens[2].set("Translation", "of teh goat", "en"), "typo")
+    win.doc.edit_entry(lion, lambda en: en.tokens[2].set("Translation", "of teh lion", "en"), "typo")
+    win.doc.edit_entry(lion, lambda en: en.tokens[3].set("Translation", "lions in Sample variety", "en"), "x")
+    win.check_spelling()
+    w = win.spelling_window
+    words = [u.word for u in w.unknown]
+    assert words[0] == "teh" and "Sample variety" in words
+    assert w.current().count == 2 and w.places.topLevelItemCount() == 2
+    assert w.new.currentText() == "the"
+    w.replace()
+    assert goat.tokens[2].get("Translation", "en") == "of the goat"
+    assert lion.tokens[2].get("Translation", "en") == "of the lion"
+    assert "teh" not in [u.word for u in w.unknown]
+    win.doc.undo.undo()                                  # one undo step for both
+    assert goat.tokens[2].get("Translation", "en") == "of teh goat"
+    assert lion.tokens[2].get("Translation", "en") == "of teh lion"
+    assert [u.word for u in w.unknown][0] == "teh"       # the list follows the undo
+    w.words.setCurrentItem(w.words.topLevelItem(0))
+    w.ignore()
+    assert "teh" not in [u.word for u in w.unknown]
+    w.words.setCurrentItem(next(w.words.topLevelItem(i) for i in range(w.words.topLevelItemCount())
+                                if w.words.topLevelItem(i).text(0) == "Sample variety"))
+    w.add()
+    assert "Sample variety" in db.settings.spelling_words
+    assert "Sample variety" not in [u.word for u in w.unknown]
+    w._go(w.places.topLevelItem(0)) if w.places.topLevelItemCount() else None
+    w.close()
+    assert win.spelling_window is None
+    win.spelling_ignored.clear()
+
+
+def test_spelling_in_the_lemma_dialogue(win):
+    from lemmatrix.ui import spellui
+    from lemmatrix.ui.dialogs import EntryDialog
+    goat = win.doc.db.entry_by_ref("D001")
+    dlg = EntryDialog(win, win.doc.db, goat)
+    gloss = dlg.fields[("Gloss", "en")]
+    assert gloss.findChild(spellui.SpellOverlay) is not None
+    lemma = dlg.fields[("Lemma", "")]
+    assert lemma.findChild(spellui.SpellOverlay) is None        # transcriptions aren't checked
+    dlg.reject()

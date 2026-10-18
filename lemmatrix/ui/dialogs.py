@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QColorDialog, QComb
                                QTreeWidgetItem, QVBoxLayout, QWidget, QInputDialog)
 
 from ..model import (Database, Entry, Group, Tag, forbidden_in, nfc)
-from . import theme
+from . import spellui, theme
 from .widgets import ipa_font
 
 
@@ -150,6 +150,8 @@ class EntryDialog(QDialog):
                 for lang in s.gloss_languages:
                     ed = NoForbidden() if (lang == s.primary_gloss and not entry) else QLineEdit()
                     ed.setText(entry.get(f.name, lang) if entry else "")
+                    if f.role == "gloss" and lang == "en":           # red lines under unknown words
+                        spellui.attach(ed, getattr(parent, "speller", None))
                     form.addRow(f"{f.title} ({lang})", ed)
                     self.fields[(f.name, lang)] = ed
             elif f.closed:
@@ -352,6 +354,11 @@ class PreferencesDialog(QDialog):
                                 "dialogue and bulk edit. Any tag can still go on any token.\n"
                                 "“Don't show this again” on the note turns this off.")
         self.unusual.setChecked(prefs.warn_unusual_tags)
+        self.spelling = QCheckBox("Underline English words that may be misspelled")
+        self.spelling.setToolTip("Red wavy lines in the English glosses and translations (lemma list, "
+                                 "All data, the token and lemma dialogues). Tools → Check spelling "
+                                 "works either way.")
+        self.spelling.setChecked(prefs.underline_spelling)
         self.autosave = QSpinBox()
         self.autosave.setRange(0, 120)
         self.autosave.setSuffix(" min")
@@ -419,7 +426,7 @@ class PreferencesDialog(QDialog):
 
         page("General", [("This computer", [("Autosave every", self.autosave),
                                             ("Backup folder", self.backups)]),
-                         ("Warnings (this computer)", [(None, self.unusual), (None, self.confirm)])])
+                         ("Warnings (this computer)", [(None, self.unusual), (None, self.spelling), (None, self.confirm)])])
         page("Sound", [
             ("This database", [("File name pattern", self.pattern), ("Tag separator", self.separator),
                                ("Sound folder", self.folder), (None, self.auto_names)]),
@@ -493,6 +500,7 @@ class PreferencesDialog(QDialog):
         p.delete_recordings_with_tokens = self.with_tokens.isChecked()
         p.confirm_delete = self.confirm.isChecked()
         p.warn_unusual_tags = self.unusual.isChecked()
+        p.underline_spelling = self.spelling.isChecked()
         p.autosave_minutes = self.autosave.value()
         p.ipa_size = self.ipa.value()
         p.theme = self.theme.currentData()

@@ -85,6 +85,14 @@ class Prefs:
     def warn_unusual_tags(self, v): self.q.setValue("warnings/unusual_tags", bool(v))
 
     @property
+    def underline_spelling(self) -> bool:
+        """Red wavy lines under English words that may be misspelled (Settings → General → Warnings)."""
+        return self._get("warnings/spelling", True, bool)
+
+    @underline_spelling.setter
+    def underline_spelling(self, v): self.q.setValue("warnings/spelling", bool(v))
+
+    @property
     def confirm_delete(self) -> bool:
         return self._get("safety/confirm_delete", True, bool)
 

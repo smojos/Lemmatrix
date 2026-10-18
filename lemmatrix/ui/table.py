@@ -18,8 +18,9 @@ from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QLineEdit, QMenu, Q
 
 from .. import filters as fl
 from ..model import ListItem
-from . import theme
+from . import spellui, theme
 from .filter_dialogs import ChooseDialog, FilterForDialog
+from .spellui import SpellDelegate
 from .widgets import FilterHeader, chips_width, draw_pitch, ipa_font, paint_chips, underscore_unit
 
 
@@ -203,12 +204,13 @@ def show_suggestion(ed: QLineEdit, suggestion: str):
     ed.setFont(f)
 
 
-class SuggestionDelegate(QStyledItemDelegate):
+class SuggestionDelegate(SpellDelegate):
     """The English translation in All data: an empty cell shows its predicted translation in light
-    grey italics; editing the cell shows it too, and → accepts it (as in the token dialogue)."""
+    grey italics; editing the cell shows it too, and → accepts it (as in the token dialogue).
+    Words that may be misspelled are underlined (spellui)."""
 
-    def __init__(self, suggest: Callable, parent=None):
-        super().__init__(parent)
+    def __init__(self, suggest: Callable, speller=None, parent=None):
+        super().__init__(speller, parent)
         self.suggest = suggest                    # row -> suggested text, or ""
 
     def _suggestion(self, index) -> str:
@@ -237,6 +239,7 @@ class SuggestionDelegate(QStyledItemDelegate):
         ed.setFrame(False)
         ed.setProperty("suggestion", self._suggestion(index))
         ed.textChanged.connect(lambda *_, ed=ed: show_suggestion(ed, ed.property("suggestion")))
+        spellui.attach(ed, self.speller)
         return ed
 
     def setEditorData(self, editor, index):
