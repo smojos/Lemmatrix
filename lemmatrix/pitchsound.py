@@ -27,6 +27,8 @@ STEP = 0.17           # seconds per short step
 GAP = 0.09            # silence between syllables
 PAUSE = 0.32          # silence for a comma
 BASE = {BUZZ: 140.0, HUM: 135.0, WHISTLE: 1150.0}     # Hz at the middle of the range
+END_FADE = 0.15       # seconds: the gentler fade at the very end
+END_SILENCE = 0.36    # seconds of silence after it
 
 
 def _semitones_per_level(low: int, high: int) -> float:
@@ -138,8 +140,15 @@ def synthesise(text: str, low: int = 1, high: int = 5, voice: str = HUM,
             parts.append(np.zeros(piece))
         else:
             parts.append(_syllable(piece, voice, rate, rng))
-    parts.append(np.zeros(int(rate * 0.06)))
     out = np.concatenate(parts)
+    # A gentler end: the last 150 ms of sound fade out (on top of the syllable's own fade), and
+    # 360 ms of silence follow, so the audio device stops in silence (no click at the end).
+    sounding = np.nonzero(np.abs(out) > 1e-6)[0]
+    if len(sounding):
+        end = sounding[-1] + 1
+        n = min(end, int(rate * END_FADE))
+        out[end - n:end] *= np.cos(np.linspace(0, np.pi / 2, n)) ** 2
+    out = np.concatenate([out, np.zeros(int(rate * END_SILENCE))])
     peak = np.abs(out).max()
     if peak > 0:
         out = out / peak * 0.9 * max(0.0, min(1.0, volume))      # volume 0..1
