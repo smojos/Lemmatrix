@@ -78,12 +78,6 @@ class TokenDialog(QDialog):
 
         left = QGridLayout()
         left.setColumnStretch(1, 1)
-        title = QLabel("Edit Token")
-        tf = title.font()
-        tf.setPointSize(tf.pointSize() + 6)
-        tf.setBold(True)
-        title.setFont(tf)
-        left.addWidget(title, 0, 1)
         self.canvas = PitchCanvas(low=s.pitch_low, high=s.pitch_high, font=ipa_font(self.main.prefs.ipa_size + 3))
         self.canvas.setContextMenuPolicy(Qt.CustomContextMenu)
         self.canvas.customContextMenuRequested.connect(self._canvas_menu)
@@ -144,7 +138,18 @@ class TokenDialog(QDialog):
         tl.addWidget(scroll)
         self.show_all = False                     # Show all tags: stays on for Back and Next
         self.show_all_btn = QPushButton()
-        self.show_all_btn.setFont(self.font())
+        plain = QFont(self.font())
+        plain.setBold(False)                      # set explicitly, or it inherits the Tags title's bold
+        plain.setPointSizeF(self.font().pointSizeF())
+        self.show_all_btn.setFont(plain)
+        if theme.dark():                          # light grey on dark grey
+            fg, bg, hover = "#c8c8c8", "#45474b", "#505256"
+        else:                                     # dark grey on grey
+            fg, bg, hover = "#444444", "#d6d6d6", "#cbcbcb"
+        self.show_all_btn.setStyleSheet(
+            f"QPushButton {{ color: {fg}; background: {bg}; border: none; border-radius: 4px; "
+            f"padding: 4px 10px; font-weight: normal; }} "
+            f"QPushButton:hover, QPushButton:checked {{ background: {hover}; }}")
         self.show_all_btn.setCheckable(True)
         self.show_all_btn.setToolTip("Shown first: the tag groups usual for this lemma's word class, "
                                      "and any group the token has a tag in")

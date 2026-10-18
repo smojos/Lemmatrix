@@ -61,7 +61,8 @@ class TagPanel(QWidget):
             line.setStyleSheet("color: #9aa;")
             self.box.addWidget(line)
             title = QLabel(g.name.lower())
-            title.setStyleSheet(f"font-style: italic; color: {theme.muted()};")
+            title.setStyleSheet(f"font-style: italic; font-weight: bold; "   # the group's name
+                                f"color: {theme.colour('pitch').name()};")         # theme colour
             title.setAlignment(Qt.AlignRight)
             self.box.addWidget(title)
             holder = QWidget()
