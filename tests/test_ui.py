@@ -1488,3 +1488,18 @@ def test_rerecord_flag_saves_filters_and_clears_on_recording(win, tmp_path):
     dlg._stop_recording()
     assert not dlg.rerecord_btn.isChecked() and not e.tokens[0].rerecord
     dlg.reject()
+
+
+def test_double_clicking_a_lemma_column_in_all_data_selects_the_lemma(win, monkeypatch):
+    t = win.all_table
+    win.refresh()
+    opened = []
+    monkeypatch.setattr(win, "edit_token", lambda: opened.append(1))
+    keys = t.visible_keys()
+    last = t.proxy.rowCount() - 1
+    target = t.row_at(t.proxy.index(last, 0)).entry
+    win.lemmas.select_row(win.doc.db.entries[0])
+    t.doubleClicked.emit(t.proxy.index(last, keys.index("lemma")))
+    assert win.lemmas.current_row() is target and not opened
+    t.doubleClicked.emit(t.proxy.index(last, keys.index("tags")))          # a token column: the dialogue
+    assert opened

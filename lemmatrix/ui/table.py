@@ -43,6 +43,8 @@ class Column:
     blank_labels: tuple = ("Blanks", "Non-blanks")  # how the filter menu names them for this column
     flag: Callable | None = None                    # row -> bool: an extra filter choice, e.g. Rerecord
     flag_label: str = ""
+    lemma_level: bool = False                       # All data: the lemma's, not the token's (double-click
+                                                    # goes to the lemma in the lemma list)
 
 
 
@@ -317,6 +319,7 @@ class FilterTable(QTableView):
 
     filtersChanged = Signal()
     rowActivated = Signal(object)                 # double-click (outside editable cells) or Enter
+    lemmaActivated = Signal(object)               # double-click in a lemma-level column (All data)
     deleteRequested = Signal()
     contextRequested = Signal(object, object)     # row (or None), global position
     playRequested = Signal()                      # spacebar
@@ -579,6 +582,9 @@ class FilterTable(QTableView):
         col = self.model_.columns[idx.column()]
         if col.edit:
             return                              # editing in place
+        if col.lemma_level:
+            self.lemmaActivated.emit(self.row_at(idx))
+            return
         self.rowActivated.emit(self.row_at(idx))
 
     def keyPressEvent(self, event):

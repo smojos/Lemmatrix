@@ -304,6 +304,7 @@ class MainWindow(QMainWindow):
         self.lemmas.selectionModel().currentRowChanged.connect(lambda *a: self._lemma_selected())
         self.all_table.filtersChanged.connect(self._update_counts)
         self.all_table.rowActivated.connect(lambda r: self.edit_token())
+        self.all_table.lemmaActivated.connect(lambda r: self._jump_to_lemma(r.entry))
         self.all_table.deleteRequested.connect(self.delete_token)
         self.all_table.contextRequested.connect(self._all_menu)
         self.all_table.space_plays = True
@@ -568,11 +569,12 @@ class MainWindow(QMainWindow):
             return out
 
         cols = [
-            Column("ref", "Reference", lambda r: r.entry.ref),
-            Column("lemma", "Lemma", lambda r: db.lemma(r.entry), ipa=True),
-            Column("gloss", "Gloss", lambda r: db.gloss(r.entry)),
+            # the lemma's columns: double-click goes to the lemma in the lemma list
+            Column("ref", "Reference", lambda r: r.entry.ref, lemma_level=True),
+            Column("lemma", "Lemma", lambda r: db.lemma(r.entry), ipa=True, lemma_level=True),
+            Column("gloss", "Gloss", lambda r: db.gloss(r.entry), lemma_level=True),
             Column("wordclass", wcf.title if wcf else "Word Class", lambda r: db.word_class(r.entry),
-                   closed=True, tree=lambda: s.list_items(wcf) if wcf else []),
+                   closed=True, tree=lambda: s.list_items(wcf) if wcf else [], lemma_level=True),
             Column("tags", "Tags", lambda r: list(r.token.tags), closed=True, tree=tag_tree, multi=True,
                    unmarked=defaults, kind="chips",
                    tooltip=lambda r: (", ".join(r.token.tags) or "Citation (no tags)")
