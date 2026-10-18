@@ -19,7 +19,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QDir, QSize, QStringListModel, Qt, Signal
 from PySide6.QtGui import QFont, QKeySequence
-from PySide6.QtWidgets import (QCompleter, QDialog, QGroupBox, QHBoxLayout, QInputDialog, QLabel, QLineEdit,
+from PySide6.QtWidgets import (QCheckBox, QCompleter, QDialog, QSplitter, QGroupBox, QHBoxLayout, QInputDialog, QLabel, QLineEdit,
                                QMenu, QMessageBox, QPushButton, QStackedWidget, QTabBar, QToolButton,
                                QVBoxLayout, QWidget, QFileDialog)
 
@@ -103,25 +103,31 @@ class TextsUtterancesWindow(QDialog):
         self.sound_files: set[str] = set()
         self.cloud_files: set[str] = set()
 
+        # Laid out like the main window's Matrix pane (Josh, 18 October), so nothing has to be
+        # looked for anew: the title with the tabs on its right, the grid, the options row under
+        # it, and the buttons, search and count in the options panel at the bottom.
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(10, 8, 10, 10)
-        top = QHBoxLayout()
-        self.title = QLabel("Texts and utterances")
-        f = QFont(self.title.font())
-        f.setBold(True)
-        f.setPointSizeF(f.pointSizeF() * 1.45)
-        self.title.setFont(f)
+        lay.setContentsMargins(6, 6, 6, 6)
+        split = self.split = QSplitter(Qt.Vertical)
+        lay.addWidget(split)
+
+        box = QWidget()
+        bxl = QVBoxLayout(box)
+        bxl.setContentsMargins(0, 0, 0, 0)
+        bxl.setSpacing(2)
+        head = QWidget()
+        top = QHBoxLayout(head)
+        top.setContentsMargins(0, 0, 0, 0)
+        self.title = main._heading("Texts and utterances")
         top.addWidget(self.title)
-        top.addSpacing(24)
+        top.addStretch(1)
         self.tabs = QTabBar()
         self.tabs.addTab("Texts")
         self.tabs.addTab("Utterances")
         self.tabs.setExpanding(False)
-        top.addWidget(self.tabs)
-        top.addStretch(1)
-        self.count = QLabel()
-        top.addWidget(self.count)
-        lay.addLayout(top)
+        top.addWidget(self.tabs, 0, Qt.AlignBottom)
+        head.setFixedHeight(max(self.tabs.sizeHint().height(), self.title.sizeHint().height()))
+        bxl.addWidget(head)
 
         self.pages = QStackedWidget()
         texts = QLabel("Texts and songs (T and S references, with their recordings and Praat TextGrids) "
@@ -132,8 +138,50 @@ class TextsUtterancesWindow(QDialog):
         texts.setContentsMargins(4, 12, 4, 4)
         self.texts_note = texts
         self.pages.addWidget(texts)
-        self.pages.addWidget(self._utterances_page())
-        lay.addWidget(self.pages, 1)
+        t = self.table = UtteranceTable(self)
+        self.pages.addWidget(t)
+        bxl.addWidget(self.pages, 1)
+
+        self.autoplay = QCheckBox("Auto-play token soundfile")      # the same option as the main window's
+        self.autoplay.setToolTip("Play an utterance's recording when you click it, and when the "
+                                 "utterance dialogue opens on it")
+        self.autoplay.setChecked(main.autoplay.isChecked())
+        self.autoplay.toggled.connect(self._autoplay_toggled)
+        main.autoplay.toggled.connect(self._main_autoplay)
+        opts = QHBoxLayout()
+        opts.setContentsMargins(4, 0, 0, 0)
+        opts.addWidget(self.autoplay)
+        opts.addStretch(1)
+        bxl.addLayout(opts)
+        normal = QFont(box.font())
+        normal.setBold(False)
+        for w in (self.tabs, self.pages, self.autoplay):
+            w.setFont(normal)
+        split.addWidget(box)
+
+        self.options = QStackedWidget()
+        texts_bar, tl = main._bar()
+        self.texts_count = QLabel("No texts yet: they come with the next stage.")
+        tl.addWidget(self.texts_count)
+        tl.addStretch(1)
+        self.options.addWidget(texts_bar)
+        self.options.addWidget(self._utterances_bar())
+        split.addWidget(self.options)
+        split.setSizes([600, 150])
+        split.setCollapsible(0, False)
+
+        t.space_plays = True
+        t.rowActivated.connect(lambda row: self.edit(row))
+        t.deleteRequested.connect(self.delete)
+        t.playRequested.connect(self.play)
+        t.contextRequested.connect(self._menu)
+        t.filesDropped.connect(self.import_files)
+        t.filtersChanged.connect(self._update_count)
+        t.clicked.connect(lambda *_: self.autoplay.isChecked() and self.play())
+        t.model_.edited.connect(self._edited)
+        self.search.textChanged.connect(lambda text: t.proxy.set_search(text))
+        from PySide6.QtGui import QShortcut
+        QShortcut(QKeySequence("Ctrl+Space"), self, self.play)
 
         for a in (self.doc.undo.createUndoAction(self, "Undo"), self.doc.undo.createRedoAction(self, "Redo")):
             self.addAction(a)
@@ -157,61 +205,37 @@ class TextsUtterancesWindow(QDialog):
         return self.doc.db
 
     # ---- building ----------------------------------------------------
-    def _tool(self, text, name, fn, tip=""):
-        b = QToolButton()
-        if name:
-            b.setIcon(icon(name, 22) if name not in ("reset-filters",) else ink_icon(name, 22))
-            b.setIconSize(QSize(22, 22))
-        b.setToolTip(tip or text)
-        if not name or name == "gear":              # names only where the icon doesn't say it
-            b.setText(text)
-            b.setToolButtonStyle(Qt.ToolButtonTextBesideIcon if name else Qt.ToolButtonTextOnly)
-        b.setAutoRaise(True)
-        b.clicked.connect(lambda *_: fn())
-        return b
-
-    def _utterances_page(self) -> QWidget:
-        page = QWidget()
-        pl = QVBoxLayout(page)
-        pl.setContentsMargins(0, 0, 0, 0)
-        pl.setSpacing(4)
-        bar = QHBoxLayout()
-        for text, name, fn, tip in (
-                ("Add", "add", self.add, "Add an utterance (pick its category, then record it)"),
-                ("Import…", None, self.import_dialog, "Import WAV files as utterances (they can also be "
-                 "dragged onto the grid). They are copied into Soundfiles\\Utterances; the originals "
-                 "stay as they are."),
-                ("Delete", "delete", self.delete, "Delete the selected utterance (Delete)"),
-                ("Edit", "edit", self.edit, "Edit the selected utterance (Enter)"),
-                ("Play", "play", self.play, "Play the selected utterance (Ctrl+Space)"),
-                ("Configure columns", "gear", self.configure_columns, ""),
-                ("Clear all filters", "reset-filters", self.clear_filters, "")):
-            bar.addWidget(self._tool(text, name, fn, tip))
+    def _utterances_bar(self) -> QWidget:
+        """The options panel under the grid, like All data's: the buttons, the quick search, the count."""
+        from .main_window import tool             # the same buttons as the main window's
+        bar, bl = self.main._bar()
+        self.main._row(bl, tool("Add", "add", self.add, "Add an utterance (pick its category, then record it)"),
+                       tool("Import…", None, self.import_dialog,
+                            "Import WAV files as utterances (they can also be dragged onto the grid). They "
+                            "are copied into Soundfiles\\Utterances; the originals stay as they are."),
+                       tool("Delete", "delete", self.delete, "Delete the selected utterance (Delete)"),
+                       tool("Edit", "edit", self.edit, "Edit the selected utterance (Enter)"),
+                       tool("Play", "play", self.play, "Play the selected utterance (Ctrl+Space)"),
+                       tool("Configure columns", "gear", self.configure_columns),
+                       tool("Clear all filters", "reset-filters", self.clear_filters))
         self.search = QLineEdit()
         self.search.setPlaceholderText("quick search of the visible columns")
         self.search.setClearButtonEnabled(True)
-        self.search.setMaximumWidth(380)
-        bar.addWidget(self.search, 1)
-        bar.addStretch(1)
-        pl.addLayout(bar)
-        t = self.table = UtteranceTable(self)
-        t.space_plays = True
-        self.search.textChanged.connect(lambda text: t.proxy.set_search(text))
-        t.rowActivated.connect(lambda row: self.edit(row))
-        t.deleteRequested.connect(self.delete)
-        t.playRequested.connect(self.play)
-        t.contextRequested.connect(self._menu)
-        t.filesDropped.connect(self.import_files)
-        t.filtersChanged.connect(self._update_count)
-        t.model_.edited.connect(self._edited)
-        pl.addWidget(t, 1)
-        hint = QLabel("Drop WAV files here to add them as utterances.")
-        hint.setStyleSheet(f"color: {theme.muted()};")
-        self.hint = hint
-        pl.addWidget(hint)
-        from PySide6.QtGui import QShortcut
-        QShortcut(QKeySequence("Ctrl+Space"), self, self.play)
-        return page
+        bl.addWidget(self.search)
+        self.count = QLabel()
+        bl.addWidget(self.count)
+        self.hint = QLabel("Drop WAV files on the grid to add them as utterances.")
+        bl.addWidget(self.hint)
+        bl.addStretch(1)
+        return bar
+
+    def _main_autoplay(self, on: bool):
+        if self.autoplay.isChecked() != bool(on):
+            self.autoplay.setChecked(bool(on))
+
+    def _autoplay_toggled(self, on: bool):
+        if self.main.autoplay.isChecked() != bool(on):     # one option, in both windows
+            self.main.autoplay.setChecked(bool(on))
 
     # ---- columns -----------------------------------------------------
     def _columns(self) -> list[Column]:
@@ -307,11 +331,11 @@ class TextsUtterancesWindow(QDialog):
 
     def _update_count(self):
         n, shown = len(self.db.utterances), self.table.proxy.rowCount()
-        self.count.setText(f"{shown} utterance{'s' if shown != 1 else ''} shown of {n}" if shown != n
-                           else f"{n} utterance{'s' if n != 1 else ''}")
+        self.count.setText(f"{shown} of {n} utterance{'s' if n != 1 else ''} shown")   # as All data's
 
     def _tab_changed(self, i):
         self.pages.setCurrentIndex(i)
+        self.options.setCurrentIndex(i)
 
     def select(self, u: Utterance):
         """Show an utterance (from a notebook link)."""
@@ -564,7 +588,7 @@ class TextsUtterancesWindow(QDialog):
         self.tabs.setStyleSheet("QTabBar::tab { padding: 6px 14px; font-weight: normal; } "
                                 f"QTabBar::tab:selected {{ background: {a.name()}; "
                                 f"color: {theme.text_on(a).name()}; }}")
-        for lbl in (self.count, self.hint, self.texts_note):
+        for lbl in (self.count, self.hint, self.texts_note, self.texts_count):
             lbl.setStyleSheet(f"color: {theme.muted()};")
         theme.as_data(self.table)
 
@@ -577,6 +601,7 @@ class TextsUtterancesWindow(QDialog):
         try:
             self.doc.changed.disconnect(self.refresh)
             self.doc.settingsChanged.disconnect(self._settings_changed)
+            self.main.autoplay.toggled.disconnect(self._main_autoplay)
         except (RuntimeError, TypeError):
             pass
         if getattr(self.main, "utterances_window", None) is self:
