@@ -142,3 +142,88 @@ def test_a_tier_gone_altogether_is_not_a_change(tmp_path):
     _write(grid, TX, [(2.0, 3.0, "where is he?")])               # ft there, but this line's emptied
     c = pull.check(db, u)
     assert [(ch.key, ch.new) for ch in c.changes] == [("Translation:en", "")]
+
+
+# ---- Push (agreed 18 October) ----------------------------------------------------------------
+
+def _word_level(tmp_path):
+    """A text whose Morphemes tier has a segment per word."""
+    db, t, u, grid = _setup(tmp_path)
+    _write(grid, TX, FT, ge=[(0.5, 1.0, "hare"), (1.0, 1.5, "run.PST"), (2.0, 3.0, "where.3SG")])
+    lines = tgmod.read_lines(grid, db.mapping_for(t))
+    u.token.set("Morphemes", lines[0].values["Morphemes"])
+    u.source = ClipSource(t.id, 0.5, 1.5, dict(lines[0].copied), tgmod.modified(grid))
+    return db, t, u, grid
+
+
+def test_edits_in_lemmatrix_are_noticed_but_not_flagged(tmp_path):
+    db, t, u, grid = _setup(tmp_path)
+    assert pull.check(db, u).edited == []
+    u.token.set("Phonetic", "ʔə̀ŋ kɒ̄")
+    c = pull.check(db, u)
+    assert c.status == pull.OK and not c.flagged and c.pushable and c.edited == ["tx"]
+    u.token.set("Phonetic", "ʔəŋ  kɒ")                           # only spacing at the edges/doubled: the same
+    assert pull.check(db, u).edited == []
+
+
+def test_push_writes_the_tier_and_keeps_a_backup(tmp_path):
+    db, t, u, grid = _setup(tmp_path)
+    u.token.set("Phonetic", "ʔə̀ŋ kɒ̄")
+    c = pull.check(db, u)
+    plan = pull.push_plan(db, c)
+    assert [(ch.tier, ch.old, ch.new, ch.segments) for ch in plan] == [("tx", "ʔəŋ kɒ", "ʔə̀ŋ kɒ̄", 1)]
+    after = pull.push(db, t, [(c, plan)])
+    u.__dict__.update(after[u.id].__dict__)
+    assert tgmod.read_lines(grid, db.mapping_for(t))[0].values["Phonetic"] == "ʔə̀ŋ kɒ̄"
+    assert tgmod.read_lines(grid, db.mapping_for(t))[1].values["Phonetic"] == "ɛ ŋəə"   # other lines kept
+    c = pull.check(db, u)
+    assert c.status == pull.OK and not c.edited and u.source.copied["tx"] == "ʔə̀ŋ kɒ̄"
+    backups = list((tmp_path / "Backups").iterdir())
+    assert len(backups) == 1 and backups[0].name.startswith("t_") and "ʔəŋ kɒ" in backups[0].read_text(encoding="utf-8")
+
+
+def test_push_merges_a_word_level_tier(tmp_path):
+    db, t, u, grid = _word_level(tmp_path)
+    u.token.set("Morphemes", "hare run.PST.3SG")
+    c = pull.check(db, u)
+    plan = pull.push_plan(db, c)
+    assert [(ch.tier, ch.segments, ch.merges) for ch in plan] == [("ge", 2, True)]
+    pull.push(db, t, [(c, plan)])
+    from praatio import textgrid
+    tg = textgrid.openTextgrid(str(grid), includeEmptyIntervals=False)
+    assert [tuple(e) for e in tg.getTier("ge").entries] == [(0.5, 1.5, "hare run.PST.3SG"), (2.0, 3.0, "where.3SG")]
+
+
+def test_push_only_the_chosen_tiers(tmp_path):
+    db, t, u, grid = _setup(tmp_path)
+    u.token.set("Phonetic", "ʔə̀ŋ kɒ̄")
+    u.token.set("Translation", "the hare ran away", "en", True)
+    c = pull.check(db, u)
+    assert sorted(c.edited) == ["ft", "tx"]
+    plan = [ch for ch in pull.push_plan(db, c) if ch.tier == "tx"]
+    u.__dict__.update(pull.push(db, t, [(c, plan)])[u.id].__dict__)
+    c = pull.check(db, u)
+    assert c.edited == ["ft"] and c.status == pull.OK                # the translation still waits
+
+
+def test_push_keeps_a_praat_change_on_another_tier_visible(tmp_path):
+    db, t, u, grid = _setup(tmp_path)
+    _write(grid, TX, [(0.5, 1.5, "the hare ran off"), FT[1]])        # changed in Praat, not pulled
+    u.token.set("Phonetic", "ʔə̀ŋ kɒ̄")                                  # edited here
+    c = pull.check(db, u)
+    assert c.status == pull.CHANGED and c.edited == ["tx"]
+    u.__dict__.update(pull.push(db, t, [(c, pull.push_plan(db, c))])[u.id].__dict__)
+    c = pull.check(db, u)
+    assert c.status == pull.CHANGED and [ch.tier for ch in c.changes] == ["ft"] and not c.edited
+
+
+def test_praat_reads_a_pushed_textgrid(tmp_path):
+    parselmouth = __import__("pytest").importorskip("parselmouth")
+    db, t, u, grid = _word_level(tmp_path)
+    u.token.set("Morphemes", "hare run.PST.3SG")
+    c = pull.check(db, u)
+    pull.push(db, t, [(c, pull.push_plan(db, c))])
+    script = (f'Read from file: "{grid}"\nn = Get number of intervals: 3\nlabel$ = Get label of interval: 3, 2\n'
+              'appendInfoLine: n\nappendInfoLine: label$\n')
+    out = parselmouth.praat.run(script, capture_output=True)[1].splitlines()
+    assert out == ["5", "hare run.PST.3SG"]       # blank, merged, blank, where.3SG, blank

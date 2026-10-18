@@ -186,9 +186,8 @@ class TextsUtterancesWindow(QDialog):
         self.doc.settingsChanged.connect(self._settings_changed)
         self._setup_columns()
         self.refresh()
-        tab = TEXTS if main.prefs.get_list("utterances/tab") == ["texts"] else UTTERANCES_TAB
-        self.tabs.setCurrentIndex(tab)
-        self._tab_changed(tab)
+        self.tabs.setCurrentIndex(TEXTS)           # it always opens on Texts (Josh, 18 October)
+        self._tab_changed(TEXTS)
         self._restyle()
         g = self.main.prefs.get_bytes("window/utterances")
         if g:
@@ -281,7 +280,7 @@ class TextsUtterancesWindow(QDialog):
             Column("source", "Source", self._source_value, display=self._source_display,
                    flag=self._flagged, flag_label="Changed in the TextGrid",
                    color=lambda u: theme.colour("error") if self._flagged(u) else None,
-                   tooltip=lambda u: pull.describe(self.checks[u.id]) if u.id in self.checks else None),
+                   tooltip=self._source_tooltip),
         ]
         return cols
 
@@ -303,13 +302,23 @@ class TextsUtterancesWindow(QDialog):
             return ""
         from .pull_dialog import status_label, times
         where = f"{c.text.ref} {times(u.source.start, u.source.end)}" if c.text else "(deleted text)"
-        return where if c.status == pull.OK else f"{where} – {status_label(c)}"
+        label = status_label(c)
+        return where if label == "the same" else f"{where} – {label}"
+
+    def _source_tooltip(self, u):
+        c = self.checks.get(u.id)
+        if c is None:
+            return None
+        parts = [pull.describe(c)] if c.flagged or not c.pushable else []
+        if c.pushable:
+            parts.append(pull.describe_edits(c))
+        return "\n".join(parts)
 
     def recheck(self) -> bool:
         """Check the clipped utterances against their TextGrids again; True if anything changed."""
-        before = {k: (c.status, c.moved) for k, c in self.checks.items()}
+        before = {k: (c.status, c.moved, c.edited) for k, c in self.checks.items()}
         self.checks = pull.check_all(self.db)
-        return before != {k: (c.status, c.moved) for k, c in self.checks.items()}
+        return before != {k: (c.status, c.moved, c.edited) for k, c in self.checks.items()}
 
     def selected(self) -> list:
         """The selected utterances (or the current one)."""
@@ -324,6 +333,13 @@ class TextsUtterancesWindow(QDialog):
         self.recheck()
         checks = [self.checks[u.id] for u in self.selected() if u.id in self.checks]
         if pull_utterances(self.main, self, checks):
+            self.refresh()
+
+    def push_selected(self):
+        from .pull_dialog import push_utterances
+        self.recheck()
+        checks = [self.checks[u.id] for u in self.selected() if u.id in self.checks]
+        if push_utterances(self.main, self, checks):
             self.refresh()
 
     def unlink_selected(self):
@@ -399,7 +415,6 @@ class TextsUtterancesWindow(QDialog):
     def _tab_changed(self, i):
         self.pages.setCurrentIndex(i)
         self.options.setCurrentIndex(i)
-        self.main.prefs.set_list("utterances/tab", ["texts" if i == TEXTS else "utterances"])
 
     def _play_key(self):
         if self.tabs.currentIndex() == TEXTS:
@@ -764,6 +779,7 @@ class TextsUtterancesWindow(QDialog):
         if row is not None and row.source is not None:
             c = self.checks.get(row.id)
             items[-1:-1] = [("Pull from source…", None, self.pull_selected, c is not None and c.pullable),
+                            ("Push to source…", None, self.push_selected, c is not None and c.pushable),
                             ("Unlink from the text…", None, self.unlink_selected, True)]
         for text, name, fn, on in items:
             a = m.addAction(icon(name, 16), text) if name else m.addAction(text)
@@ -879,6 +895,10 @@ class UtteranceDialog(TokenDialog):
         self.pull_btn.setToolTip("Take the line as it is in the TextGrid now")
         self.pull_btn.clicked.connect(lambda *_: self._pull())
         sl.addWidget(self.pull_btn)
+        self.source_push_btn = QPushButton("Push to source…")   # (push_btn is Push to question)
+        self.source_push_btn.setToolTip("Write the fields edited here into the text's TextGrid")
+        self.source_push_btn.clicked.connect(lambda *_: self._push())
+        sl.addWidget(self.source_push_btn)
         outer.insertWidget(3, self.source_box)
         for ed in (self.label_edit, self.lemma_find):     # Ctrl+Space plays, never types a space
             ed.installEventFilter(self)
@@ -984,7 +1004,10 @@ class UtteranceDialog(TokenDialog):
             self.source_label.setText(self.source_label.text().replace("<", "&lt;") +
                                       f"<br><span style='color:{theme.colour('error').name()}'>"
                                       f"{pull.describe(c)}</span>")
+        if c is not None and c.pushable:
+            self.source_label.setText(self.source_label.text() + "<br>" + pull.describe_edits(c))
         self.pull_btn.setVisible(c is not None and c.pullable)
+        self.source_push_btn.setVisible(c is not None and c.pushable)
         self.context_btn.setEnabled(t is not None and bool(t.file))
         self.show_text_btn.setEnabled(t is not None)
 
@@ -1007,6 +1030,17 @@ class UtteranceDialog(TokenDialog):
             return
         c = pull.check(self.db, self.slot.entry)
         if c is not None and pull_utterances(self.main, self, [c]):
+            self._load()
+            win = self.parent()
+            if hasattr(win, "refresh"):
+                win.refresh()
+
+    def _push(self):
+        from .pull_dialog import push_utterances
+        if not self._commit():                    # what's typed here is what gets pushed
+            return
+        c = pull.check(self.db, self.slot.entry)
+        if c is not None and push_utterances(self.main, self, [c]):
             self._load()
             win = self.parent()
             if hasattr(win, "refresh"):

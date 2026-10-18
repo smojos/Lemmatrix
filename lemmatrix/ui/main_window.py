@@ -1950,6 +1950,9 @@ class MainWindow(QMainWindow):
         if self.utterances_window is None:
             self.utterances_window = TextsUtterancesWindow(self)
         w = self.utterances_window
+        if not w.isVisible() and select is None:  # opened afresh: on the Texts tab
+            from .utterances import TEXTS
+            w.tabs.setCurrentIndex(TEXTS)
         w.show()
         w.raise_()
         w.activateWindow()

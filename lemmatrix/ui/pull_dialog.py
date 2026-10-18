@@ -1,4 +1,9 @@
-"""Pull from source (idea 7, stage 4): the dialogues.
+"""Pull from source and Push to source (idea 7, stage 4): the dialogues.
+
+PushDialog lists each field edited in Lemmatrix that differs from its tier, with a tick box
+each, warns when a push merges several segments of a tier, and says to close the TextGrid in
+Praat first; push_utterances() writes it (a copy of the TextGrid goes to Backups first).
+
 
 PullDialog shows each field to be replaced, as it is in the utterance and as it is in the
 TextGrid now, and offers to cut the clip again where the line's times moved. CheckDialog
@@ -26,9 +31,14 @@ STATUS_LABELS = {pull.OK: "the same", pull.CHANGED: "changed", pull.MOVED: "time
 
 
 def status_label(c: pull.Check) -> str:
+    """The state in a few words: what changed in the TextGrid, and/or "edited here"."""
     if c.status == pull.CHANGED and c.moved:
-        return "changed, times moved"
-    return STATUS_LABELS.get(c.status, c.status)
+        base = "changed, times moved"
+    else:
+        base = STATUS_LABELS.get(c.status, c.status)
+    if c.pushable:
+        return "edited here" if c.status == pull.OK else f"{base}; edited here"
+    return base
 
 
 def field_title(db, key: str) -> str:
@@ -185,6 +195,127 @@ def unlink_utterances(main, parent, checks: list[pull.Check]) -> bool:
     return True
 
 
+MERGE_WARNING = "This push will merge several segments in Praat."
+
+
+class PushDialog(QDialog):
+    def __init__(self, parent, db, plan: list[pull.PushChange]):
+        super().__init__(parent)
+        self.db = db
+        self.plan = plan
+        self.setWindowTitle("Push to source")
+        lay = QVBoxLayout(self)
+        intro = QLabel("This writes the ticked fields, as they are in Lemmatrix, into their tiers in the "
+                       "TextGrid. Untick any you don't want written.")
+        intro.setWordWrap(True)
+        lay.addWidget(intro)
+        self.tree = QTreeWidget()
+        self.tree.setHeaderLabels(["Utterance", "Field → tier", "", "In the TextGrid now", "Will become"])
+        self.tree.setRootIsDecorated(False)
+        self.tree.setSelectionMode(QAbstractItemView.NoSelection)
+        ipa, dim, err = ipa_font(), theme.colour("dim"), theme.colour("error")
+        self.items = []
+        last = None
+        for ch in plan:
+            f = db.settings.token_field(ch.key.partition(":")[0])
+            it = QTreeWidgetItem([ch.utterance.ref if ch.utterance is not last else "",
+                                  f"{field_title(db, ch.key)} → {ch.tier}",
+                                  f"merges {ch.segments} segments" if ch.merges else "",
+                                  ch.old or "(empty)", ch.new or "(empty)"])
+            last = ch.utterance
+            it.setFlags(it.flags() | Qt.ItemIsUserCheckable)
+            it.setCheckState(1, Qt.Checked)
+            for col, value in ((3, ch.old), (4, ch.new)):
+                if f is not None and f.role in ("phonetic", "phonemic"):
+                    it.setFont(col, ipa)
+                if not value:
+                    it.setForeground(col, dim)
+                it.setToolTip(col, value)
+            if ch.merges:
+                it.setForeground(2, err)
+            self.tree.addTopLevelItem(it)
+            self.items.append(it)
+        for i in range(5):
+            self.tree.resizeColumnToContents(i)
+        lay.addWidget(self.tree, 1)
+        self.merge_note = QLabel(f"<b>{MERGE_WARNING}</b> The line's segments in the marked tiers become one "
+                                 "segment with the whole field.")
+        self.merge_note.setWordWrap(True)
+        self.merge_note.setStyleSheet(f"color: {err.name()};")
+        lay.addWidget(self.merge_note)
+        praat_note = QLabel("If this TextGrid is open in Praat, close it there first without saving: Praat keeps "
+                            "its own copy, and saving it there afterwards would undo this push. A copy of the "
+                            "TextGrid goes to Backups first, since undo can't reach it.")
+        praat_note.setWordWrap(True)
+        lay.addWidget(praat_note)
+        self.reopen = QCheckBox("Open it in Praat afterwards, at the line")
+        lay.addWidget(self.reopen)
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.buttons.button(QDialogButtonBox.Ok).setText("Push")
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+        lay.addWidget(self.buttons)
+        self.tree.itemChanged.connect(lambda *_: self._update())
+        self.resize(1000, 380)
+        self._update()
+
+    def chosen(self) -> list[pull.PushChange]:
+        return [ch for ch, it in zip(self.plan, self.items) if it.checkState(1) == Qt.Checked]
+
+    def _update(self):
+        chosen = self.chosen()
+        self.merge_note.setVisible(any(ch.merges for ch in chosen))
+        self.buttons.button(QDialogButtonBox.Ok).setEnabled(bool(chosen))
+
+
+def push_utterances(main, parent, checks: list[pull.Check]) -> bool:
+    """Push these utterances' edited fields into their TextGrids (after the dialogue). The
+    links are updated as one undo step; the TextGrids themselves can't be undone (backed up)."""
+    db = main.doc.db
+    checks = [c for c in checks if c.pushable]
+    plan, problems = [], []
+    for c in checks:
+        try:
+            plan += pull.push_plan(db, c)
+        except Exception as exc:
+            problems.append(f"{c.utterance.ref}: {exc}")
+    if not plan:
+        QMessageBox.information(parent, "Push to source", "\n".join(problems) if problems else
+                                "There is nothing to push: the fields are the same as in the TextGrid.")
+        return False
+    dlg = PushDialog(parent, db, plan)
+    if not dlg.exec():
+        return False
+    chosen = dlg.chosen()
+    by_text: dict = {}
+    for c in checks:
+        mine = [ch for ch in chosen if ch.utterance is c.utterance]
+        if mine:
+            by_text.setdefault(c.text.id, (c.text, []))[1].append((c, mine))
+    pairs = []
+    for text, jobs in by_text.values():
+        try:
+            after = pull.push(db, text, jobs)
+        except Exception as exc:                          # TextGrid or file errors: that text unchanged
+            problems.append(f"{text.ref}: {exc}")
+            continue
+        pairs += [(c.utterance, after[c.utterance.id]) for c, _ in jobs]
+    if pairs:
+        n = len(pairs)
+        main.doc.apply_changes(f"Push {pairs[0][0].ref}" if n == 1 else f"Push {n} utterances", pairs, stamp=False)
+        main.statusBar().showMessage(f"Pushed into the TextGrid ({sum(len(j) for _, j in by_text.values())} "
+                                     "line(s)); the TextGrid's previous version is in Backups.", 8000)
+    if problems:
+        QMessageBox.warning(parent, "Push to source", "Not pushed:\n\n" + "\n".join(problems[:30]))
+    if pairs and dlg.reopen.isChecked():
+        c = next(c for c in checks if any(ch.utterance is c.utterance for ch in chosen))
+        folder = storage.text_folder(db)
+        start, end = pull._span(c)
+        main.open_in_praat(folder / c.text.file if c.text.file else None, parent, folder / c.text.textgrid,
+                           (start, end))
+    return bool(pairs)
+
+
 class CheckDialog(QDialog):
     """Tools → Check clipped utterances…: every clipped utterance whose line changed or went."""
 
@@ -207,13 +338,17 @@ class CheckDialog(QDialog):
         self.pull_btn = QPushButton("Pull…")
         self.pull_btn.setToolTip("Pull the selected utterances (all that can be, if none are selected)")
         self.pull_btn.clicked.connect(lambda *_: self.pull())
+        self.push_btn = QPushButton("Push…")
+        self.push_btn.setToolTip("Push the selected utterances' edits into the TextGrid (all that can be, "
+                                 "if none are selected)")
+        self.push_btn.clicked.connect(lambda *_: self.push())
         self.unlink_btn = QPushButton("Unlink…")
         self.unlink_btn.setToolTip("Forget where the selected utterances were clipped from")
         self.unlink_btn.clicked.connect(lambda *_: self.unlink())
         self.show_btn = QPushButton("Show")
         self.show_btn.setToolTip("Show the utterance in Texts and utterances")
         self.show_btn.clicked.connect(lambda *_: self.show_one())
-        for b in (self.pull_btn, self.unlink_btn, self.show_btn):
+        for b in (self.pull_btn, self.push_btn, self.unlink_btn, self.show_btn):
             row.addWidget(b)
         row.addStretch(1)
         close = QPushButton("Close")
@@ -226,7 +361,7 @@ class CheckDialog(QDialog):
     def fill(self):
         db = self.main.doc.db
         checks = pull.check_all(db)
-        self.flagged = [c for c in checks.values() if c.flagged]
+        self.flagged = [c for c in checks.values() if c.flagged or c.pushable]
         self.tree.clear()
         err = theme.colour("error")
         for c in self.flagged:
@@ -234,7 +369,8 @@ class CheckDialog(QDialog):
             it = QTreeWidgetItem([f"{u.ref} {u.label}".strip(), f"{t.ref} {db.text_title(t)}".strip() if t else "",
                                   times(u.source.start, u.source.end), status_label(c)])
             it.setData(0, Qt.UserRole, u.id)
-            it.setToolTip(3, pull.describe(c))
+            it.setToolTip(3, "\n".join(x for x in (pull.describe(c) if c.flagged else "",
+                                                    pull.describe_edits(c) if c.pushable else "") if x))
             if not c.pullable:
                 it.setForeground(3, err)
             self.tree.addTopLevelItem(it)
@@ -247,9 +383,10 @@ class CheckDialog(QDialog):
             self.note.setText(f"All {total} clipped utterance{'s' if total != 1 else ''} match their lines.")
         else:
             n = len(self.flagged)
-            self.note.setText(f"{n} of {total} clipped utterances differ from their lines in the TextGrid, or "
-                              "their line or TextGrid isn't there. Pull takes the line as it is now; Unlink "
-                              "forgets the line (for one that's gone).")
+            self.note.setText(f"{n} of {total} clipped utterances differ from their lines in the TextGrid "
+                              "(changed in Praat, or edited here), or their line or TextGrid isn't there. Pull "
+                              "takes the line as it is in the TextGrid; Push writes the edits made here into "
+                              "the TextGrid; Unlink forgets the line (for one that's gone).")
         self._enable()
 
     def _selected(self) -> list[pull.Check]:
@@ -259,6 +396,7 @@ class CheckDialog(QDialog):
     def _enable(self):
         sel = self._selected()
         self.pull_btn.setEnabled(any(c.pullable for c in (sel or self.flagged)))
+        self.push_btn.setEnabled(any(c.pushable for c in (sel or self.flagged)))
         self.unlink_btn.setEnabled(bool(sel))
         self.show_btn.setEnabled(len(sel) == 1)
 
@@ -268,6 +406,10 @@ class CheckDialog(QDialog):
 
     def unlink(self):
         if unlink_utterances(self.main, self, self._selected()):
+            self.fill()
+
+    def push(self):
+        if push_utterances(self.main, self, self._selected() or self.flagged):
             self.fill()
 
     def show_one(self):

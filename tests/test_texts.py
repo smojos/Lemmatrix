@@ -705,3 +705,59 @@ def test_an_edit_saved_in_praat_is_seen(win, tmp_path, monkeypatch):
     uw.table.select_row(u)
     uw.pull_selected()
     assert u.token.get("Phonetic") == "ʔəŋ kɒ ɗæær"
+
+
+# ---- Push (agreed 18 October) ----------------------------------------------------------------
+
+def test_push_from_the_window(win, tmp_path, monkeypatch):
+    from lemmatrix.ui import pull_dialog
+    uw, t, u, grid = _clipped(win, tmp_path, monkeypatch)
+    u.token.set("Phonetic", "ʔə̀ŋ kɒ̄")
+    u.token.set("Morphemes", "hare.run")                     # the ge tier has two segments here
+    uw.refresh()
+    assert not uw._flagged(u) and uw._source_display(u).endswith("– edited here")
+    seen = {}
+
+    def fake_exec(dlg):
+        seen["rows"] = [[dlg.items[i].text(c) for c in (0, 1, 3, 4, 2)] for i in range(len(dlg.items))]
+        seen["merge shown"] = not dlg.merge_note.isHidden()
+        dlg.items[[ch.tier for ch in dlg.plan].index("ge")].setCheckState(1, Qt.Unchecked)   # not ge
+        seen["merge after unticking"] = not dlg.merge_note.isHidden()
+        return 1
+    from PySide6.QtCore import Qt
+    monkeypatch.setattr(pull_dialog.PushDialog, "exec", fake_exec)
+    uw.table.select_row(u)
+    uw.push_selected()
+    assert ["W001", "Phonetic → tx", "ʔəŋ kɒ", "ʔə̀ŋ kɒ̄", ""] in seen["rows"]
+    assert ["", "Morphemes → ge", "hare run.PST", "hare.run", "merges 2 segments"] in seen["rows"]
+    assert seen["merge shown"] and not seen["merge after unticking"]
+    assert tgmod.read_lines(grid, win.doc.db.mapping_for(t))[0].values["Phonetic"] == "ʔə̀ŋ kɒ̄"
+    assert uw.checks[u.id].edited == ["ge"]                   # Morphemes still waits
+    assert any(f.suffix == ".TextGrid" for f in (tmp_path / "Backups").iterdir())
+
+
+def test_the_utterance_dialogue_offers_push(win, tmp_path, monkeypatch):
+    from lemmatrix.ui import pull_dialog
+    from lemmatrix.ui.token_dialog import Slot
+    from lemmatrix.ui.utterances import UtteranceDialog
+    uw, t, u, grid = _clipped(win, tmp_path, monkeypatch)
+    dlg = UtteranceDialog(win, [Slot(u, 0)], 0, uw)
+    assert dlg.source_push_btn.isHidden()
+    dlg.edits["Phonetic"].setText("ʔə̀ŋ kɒ̄")                  # typed, not yet saved
+    monkeypatch.setattr(pull_dialog.PushDialog, "exec", lambda d: 1)
+    dlg._push()                                               # saves it first, then pushes
+    assert u.token.get("Phonetic") == "ʔə̀ŋ kɒ̄"
+    assert tgmod.read_lines(grid, win.doc.db.mapping_for(t))[0].values["Phonetic"] == "ʔə̀ŋ kɒ̄"
+    assert dlg.source_push_btn.isHidden()
+    dlg.comment.setText("a question")                     # Push to question is its own button again
+    assert dlg.push_btn.isEnabled() and dlg.push_btn is not dlg.source_push_btn
+    dlg.close()
+
+
+def test_the_window_opens_on_texts(win, tmp_path, monkeypatch):
+    from lemmatrix.ui.utterances import TEXTS, UTTERANCES_TAB
+    uw = win.open_utterances()
+    assert uw.tabs.currentIndex() == TEXTS
+    uw.tabs.setCurrentIndex(UTTERANCES_TAB)
+    uw.close()
+    assert win.open_utterances().tabs.currentIndex() == TEXTS

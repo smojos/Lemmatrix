@@ -1,4 +1,4 @@
-"""Pull (idea 7, stage 4): has a clipped utterance's line changed in its TextGrid? No Qt here.
+"""Pull and Push (idea 7, stage 4): a clipped utterance and its line in the TextGrid. No Qt here.
 
 A clipped utterance keeps what it copied from each tier of its line, the line's times and when
 the TextGrid was last changed (model.ClipSource). Checking reads the TextGrid again (only when it
@@ -10,15 +10,24 @@ A tier no longer in the TextGrid at all (renamed, say) isn't a change; an emptie
 Finding the line again: the line with the same times, or else the one that overlaps it most,
 among the lines of the same tiers (the same speaker). Pulling replaces only the fields filled
 from the tiers that changed, and remembers the line as it is now.
+
+Push goes the other way (agreed with Josh, 18 October): a field edited in Lemmatrix (it differs
+from what was copied) is written into its tier at the line. Where the line spans several
+segments of that tier (a word-level tier), they are merged into one, with a warning. Lemmatrix
+copies the TextGrid into Backups first, since undo can't reach it; Praat keeps its own copy of an
+open TextGrid, so the dialogue says to close it there first.
 """
 
 from __future__ import annotations
 
+import datetime as _dt
 import os
+import shutil
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from . import storage, textgrid as tgmod
-from .model import ClipSource, Database, Text, Utterance
+from .model import ClipSource, Database, Text, Utterance, tier_base
 
 OK = "ok"
 CHANGED = "changed"            # the text of a tier is different
@@ -47,6 +56,11 @@ class Check:
     changes: list[Change] = field(default_factory=list)
     moved: bool = False
     message: str = ""
+    edited: list[str] = field(default_factory=list)   # tiers whose field was edited in Lemmatrix
+
+    @property
+    def pushable(self) -> bool:
+        return bool(self.edited) and self.status in (OK, CHANGED, MOVED)
 
     @property
     def flagged(self) -> bool:
@@ -101,8 +115,13 @@ def check(db: Database, u: Utterance) -> Check | None:
     path = storage.text_folder(db) / t.textgrid
     if not path.exists():
         return Check(u, NO_TEXTGRID, t, message=f"{t.textgrid} isn't in Soundfiles\\Texts.")
+    try:
+        tier_names = [ti.name for ti in tgmod.tiers(path) if ti.kind == "intervals"]
+    except (tgmod.TextGridError, OSError) as exc:
+        return Check(u, NO_TEXTGRID, t, message=str(exc))
+    edited = edited_tiers(db, u, t, tier_names)
     if src.modified and tgmod.modified(path) == src.modified:
-        return Check(u, OK, t)                  # not saved since it was clipped
+        return Check(u, OK, t, edited=edited)   # not saved since it was clipped
     try:
         lines = _lines(db, t, path)
     except (tgmod.TextGridError, OSError) as exc:
@@ -122,7 +141,37 @@ def check(db: Database, u: Utterance) -> Check | None:
             changes.append(Change(rule.key if rule is not None and rule.field else "", tier, old, new))
     moved = abs(ln.start - src.start) >= SAME_TIME or abs(ln.end - src.end) >= SAME_TIME
     status = CHANGED if changes else MOVED if moved else OK
-    return Check(u, status, t, ln, changes, moved)
+    return Check(u, status, t, ln, changes, moved, edited=edited)
+
+
+def _same(a: str, b: str) -> bool:
+    return " ".join((a or "").split()) == " ".join((b or "").split())
+
+
+def target_tiers(db: Database, t: Text, src: ClipSource, tier_names) -> list[tuple[str, str]]:
+    """(tier, field key) for each field the line's tiers fill: the TextGrid's interval tiers
+    of the line's speaker that the mapping gives a field (the first such tier for each field)."""
+    mapping = db.mapping_for(t)
+    speakers = {tier_base(x)[1] for x in src.copied} or {""}
+    out, keys = [], set()
+    for name in tier_names:
+        rule = mapping.rule(name)
+        if rule is None or not rule.field or tier_base(name)[1] not in speakers or rule.key in keys:
+            continue
+        keys.add(rule.key)
+        out.append((name, rule.key))
+    return out
+
+
+def edited_tiers(db: Database, u: Utterance, t: Text, tier_names) -> list[str]:
+    """The tiers whose field has been edited in Lemmatrix since it was copied (or pulled)."""
+    src = u.source
+    return [tier for tier, key in target_tiers(db, t, src, tier_names)
+            if not _same(field_value(db, u, key), src.copied.get(tier, ""))]
+
+
+def describe_edits(c: Check) -> str:
+    return f"Edited in Lemmatrix ({', '.join(c.edited)}): Push to source… writes it into the TextGrid."
 
 
 def check_all(db: Database) -> dict[str, Check]:
@@ -177,3 +226,114 @@ def unlinked(c: Check) -> Utterance:
     u = c.utterance.copy()
     u.source = None
     return u
+
+
+# ---- Push --------------------------------------------------------------------------------
+
+@dataclass
+class PushChange:
+    utterance: Utterance
+    tier: str
+    key: str
+    old: str                   # the tier's text in the line now
+    new: str                   # the utterance's field
+    segments: int              # how many segments of the tier the line spans (merged if > 1)
+
+    @property
+    def merges(self) -> bool:
+        return self.segments > 1
+
+
+def _read_full(path):
+    from praatio import textgrid
+    try:
+        return textgrid.openTextgrid(str(path), includeEmptyIntervals=True, reportingMode="silence",
+                                     duplicateNamesMode="rename")
+    except Exception as exc:
+        raise tgmod.TextGridError(f"Couldn't read {Path(path).name}: {exc}") from exc
+
+
+def _span(c: Check) -> tuple[float, float]:
+    """The line's times as it is now (the stored ones if the TextGrid wasn't read)."""
+    if c.line is not None:
+        return c.line.start, c.line.end
+    return c.utterance.source.start, c.utterance.source.end
+
+
+def _overlapping(entries, start: float, end: float) -> list[int]:
+    return [i for i, e in enumerate(entries) if min(e[1], end) - max(e[0], start) > 1e-6]
+
+
+def push_plan(db: Database, c: Check) -> list[PushChange]:
+    """What pushing this utterance would write: each edited tier, its text now and the
+    utterance's, and how many segments of the tier the line spans."""
+    if not c.pushable:
+        return []
+    path = storage.text_folder(db) / c.text.textgrid
+    tg = _read_full(path)
+    names = {tgmod.nfc(n): n for n in tg.tierNames}
+    start, end = _span(c)
+    out = []
+    for tier, key in target_tiers(db, c.text, c.utterance.source, list(names)):
+        if tier not in c.edited:
+            continue
+        entries = tg.getTier(names[tier]).entries
+        hits = _overlapping(entries, start, end)
+        now = " ".join(tgmod.nfc((entries[i][2] or "").strip()) for i in hits if (entries[i][2] or "").strip())
+        new = field_value(db, c.utterance, key)
+        if not _same(now, new):
+            out.append(PushChange(c.utterance, tier, key, now, new, len(hits)))
+    return out
+
+
+def backup_textgrid(db: Database, path: Path) -> Path:
+    """A dated copy of the TextGrid in Backups, before Lemmatrix writes to it."""
+    from . import layout
+    folder = layout.backups_folder(db.path)
+    folder.mkdir(parents=True, exist_ok=True)
+    stamp = _dt.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    target, n = folder / f"{path.stem}_{stamp}{path.suffix}", 2
+    while target.exists():
+        target, n = folder / f"{path.stem}_{stamp}_{n}{path.suffix}", n + 1
+    shutil.copy2(path, target)
+    return target
+
+
+def push(db: Database, text: Text, jobs: list[tuple[Check, list[PushChange]]]) -> dict[str, Utterance]:
+    """Write the chosen changes for one text into its TextGrid (one write, after a backup).
+    Returns utterance id -> a copy of the utterance with its link updated. Raises
+    TextGridError or OSError (nothing is written then)."""
+    from praatio.utilities.constants import Interval
+    path = storage.text_folder(db) / text.textgrid
+    tg = _read_full(path)
+    names = {tgmod.nfc(n): n for n in tg.tierNames}
+    for c, changes in jobs:
+        start, end = _span(c)
+        for ch in changes:
+            raw = names.get(ch.tier)
+            if raw is None:
+                raise tgmod.TextGridError(f"There is no tier “{ch.tier}” in {path.name} any more.")
+            tier = tg.getTier(raw)
+            entries = list(tier.entries)
+            hits = _overlapping(entries, start, end)
+            if not hits:
+                raise tgmod.TextGridError(f"{ch.tier} has no segment at {start:.2f}–{end:.2f} s.")
+            first, last = hits[0], hits[-1]
+            merged = Interval(entries[first][0], entries[last][1], ch.new)
+            entries[first:last + 1] = [merged]
+            tg.replaceTier(raw, tier.new(entries=entries))
+    backup_textgrid(db, path)
+    tmp = path.with_name(path.name + ".lemmatrix-writing")
+    tg.save(str(tmp), format="long_textgrid", includeBlankSpaces=True)
+    os.replace(tmp, path)
+    stamp = tgmod.modified(path)
+    out = {}
+    for c, changes in jobs:
+        u = c.utterance.copy()
+        src = u.source
+        for ch in changes:
+            src.copied[ch.tier] = ch.new
+        if c.status == OK:                      # nothing else changed in Praat: up to date now
+            src.modified = stamp
+        out[u.id] = u
+    return out
