@@ -5,14 +5,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from PySide6.QtCore import QDir, QRegularExpression, Qt, QTimer
+from PySide6.QtCore import QDir, QEvent, QRegularExpression, Qt, QTimer
 from PySide6.QtGui import QFont, QKeySequence, QRegularExpressionValidator, QShortcut, QValidator
 from PySide6.QtWidgets import (QComboBox, QDialog, QFrame, QGridLayout, QGroupBox, QHBoxLayout,
                                QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton,
                                QScrollArea, QSizePolicy, QToolButton, QVBoxLayout, QWidget)
 from PySide6.QtCore import QFile
 
-from .. import audio, matrix as mx, pitch as pitchmod, storage
+from .. import audio, matrix as mx, pitch as pitchmod, predict, storage
 from ..model import Entry, Token
 from PySide6.QtCore import QSize
 
@@ -59,6 +59,7 @@ class TokenDialog(QDialog):
         self.recorder: audio.Recorder | None = None
         self._renames: list = []                  # recordings renamed, to go with the next commit
         self.unknown_tags: list[str] = []
+        self.suggestion: predict.Suggestion | None = None   # the predicted translation shown, if any
         self.setWindowTitle("Edit Token")
         self.resize(920, 780)
         self._build()
@@ -99,6 +100,7 @@ class TokenDialog(QDialog):
         left.addWidget(QLabel("Pitch\nRendering"), 1, 0, Qt.AlignVCenter)
         left.addLayout(drawing, 1, 1)
         self.edits: dict[str, QLineEdit] = {}
+        self.translation: QLineEdit | None = None      # the English translation: gets suggestions
         row = 2
         for f in s.token_fields:
             ed = QLineEdit()
@@ -111,6 +113,10 @@ class TokenDialog(QDialog):
                 ed.setPlaceholderText("e.g. 11 4:42 1:4")
                 ed.textChanged.connect(self._pitch_changed)
             ed.textChanged.connect(self._fields_changed)
+            if f.role == "translation" and s.primary_gloss == predict.LANG:
+                self.translation = ed
+                ed.installEventFilter(self)
+                ed.textChanged.connect(lambda *_: self._update_suggestion())
             label = f.title + (f" ({s.primary_gloss})" if f.multilingual and len(s.gloss_languages) > 1 else "")
             left.addWidget(QLabel(label), row, 0)
             left.addWidget(ed, row, 1)
@@ -303,6 +309,7 @@ class TokenDialog(QDialog):
         self.back_btn.setEnabled(self.pos > 0)
         self.next_btn.setEnabled(self.pos < len(self.slots) - 1)
         self._refresh_name()
+        self._update_suggestion()
         if getattr(self.main, "dialog_autoplay", False) and t.file:
             QTimer.singleShot(150, self._play)
 
@@ -342,6 +349,42 @@ class TokenDialog(QDialog):
     def _tags_changed(self):
         self._fields_changed()
         self._update_unusual()
+        self._update_suggestion()
+
+    # ---- predicted translation ---------------------------------------
+    def _update_suggestion(self):
+        """Grey italic suggestion in the empty English translation; → accepts it (section 5.9)."""
+        ed = self.translation
+        if ed is None:
+            return
+        sug = None
+        if not ed.text().strip():
+            predictor = getattr(self.doc, "predictor", None)
+            if predictor is not None:
+                sug = predictor.suggest(self.db, self.slot.entry, self.token.tags)
+        self.suggestion = sug
+        f = ed.font()
+        f.setItalic(sug is not None)
+        ed.setFont(f)
+        ed.setPlaceholderText(sug.text if sug else "")
+        ed.setToolTip(f"Suggestion: {sug.text}\n{sug.describe()}\nPress → to accept it, or type "
+                      "something else." if sug else "")
+
+    def accept_suggestion(self) -> bool:
+        if self.translation is None or self.suggestion is None or self.translation.text():
+            return False
+        text = self.suggestion.text
+        self.translation.setText(text)              # (this clears the suggestion)
+        self.translation.setCursorPosition(len(text))
+        return True
+
+    def eventFilter(self, obj, event):
+        if (obj is self.translation and event.type() == QEvent.KeyPress
+                and event.key() == Qt.Key_Right
+                and not (event.modifiers() & ~Qt.KeypadModifier)
+                and self.accept_suggestion()):
+            return True
+        return super().eventFilter(obj, event)
 
     def _build_tags(self, selected: set):
         hidden = self.tags.build(self.db, selected, classes=self.db.classes(self.slot.entry),

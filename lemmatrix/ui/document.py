@@ -24,7 +24,7 @@ from pathlib import Path
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QUndoCommand, QUndoStack
 
-from .. import notebook as nbmod, storage
+from .. import notebook as nbmod, predict, storage
 from ..model import Database, Entry, today
 
 
@@ -114,6 +114,7 @@ class Document(QObject):
         self.notebook = nbmod.Notebook()
         self.notebook_unreadable = False        # then it is never written over
         self.work_date = today                  # the session's date (set by the main window)
+        self.predictor = predict.Predictor()    # suggested translations, learned from this database
         self.undo.cleanChanged.connect(self._clean_changed)
 
     def _clean_changed(self, clean: bool):

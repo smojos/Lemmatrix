@@ -125,6 +125,17 @@ def main(out: Path):
     b.levels.setCurrentIndex(0)
     b.ops.setCurrentIndex(bw.SET)
     shot(b, "17-bulk-lemmas.png")
+    db = win.doc.db
+    for ref in ("D002", "E001"):                 # empty some translations, for Predict to fill
+        e = db.entry_by_ref(ref)
+        win.doc.edit_entry(e, lambda en: [t.set("Translation", "", "en") for t in en.tokens[1:]],
+                           "clear translations")
+    b.levels.setCurrentIndex(1)
+    b.ops.setCurrentIndex(bw.PREDICT)
+    b.preview()
+    shot(b, "23-bulk-predict.png")
+    win.doc.undo.undo()
+    win.doc.undo.undo()
     b.close()
     from lemmatrix.ui.dialogs import PreferencesDialog, TagStructureDialog
     goat = win.doc.db.entry_by_ref("D001")
@@ -134,6 +145,12 @@ def main(out: Path):
     d.show_all_btn.setChecked(True)
     d.tags.buttons["Past"].setChecked(True)
     shot(d, "19-token-all-tags-unusual.png")
+    d.reject()
+    duck = win.doc.db.entry_by_ref("E001")
+    d = TokenDialog(win, [Slot(duck, None, ("Singular", "Genitive"), explicit=True, defaults=True)], 0)
+    d.show()
+    d.translation.setFocus()
+    shot(d, "22-token-suggestion.png")
     d.reject()
     d = TagStructureDialog(win, win.doc.db)
     d.show()

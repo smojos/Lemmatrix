@@ -1223,3 +1223,55 @@ def test_double_clicking_a_lemma_in_lemma_tag_selects_it(win):
     win.lemmas.select_row(lay.rows[0].entry)
     win.lt_view.horizontalHeader().sectionDoubleClicked.emit(2)
     assert win.lemmas.current_row() is target
+
+
+def test_predicted_translation_in_the_token_dialogue(win):
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+    from lemmatrix.ui.token_dialog import Slot, TokenDialog
+    duck = win.doc.db.entry_by_ref("E001")          # has no Singular + Genitive token yet
+    dlg = TokenDialog(win, [Slot(duck, None, ("Singular", "Genitive"), explicit=True, defaults=True)], 0)
+    ed = dlg.translation
+    assert ed.text() == "" and ed.placeholderText() == "of the duck"   # from goat, lion, sheep
+    assert ed.font().italic() and "→" in ed.toolTip()
+    QTest.keyClick(ed, Qt.Key_Right)                # → accepts it
+    assert ed.text() == "of the duck" and not ed.font().italic()
+    QTest.keyClick(ed, Qt.Key_Right)                # and is an ordinary key again
+    assert ed.text() == "of the duck"
+    ed.clear()
+    assert ed.placeholderText() == "of the duck"
+    QTest.keyClicks(ed, "duck's")                   # typing replaces the suggestion
+    assert ed.text() == "duck's" and ed.placeholderText() == ""
+    ed.clear()
+    dlg.tags.buttons["Genitive"].click()            # other tags: another suggestion
+    assert ed.placeholderText() == "duck"
+    dlg.tags.buttons["Genitive"].click()
+    dlg.accept_suggestion()
+    dlg._ok()
+    new = duck.tokens[-1]
+    assert new.get("Translation", "en") == "of the duck"
+    win.doc.undo.undo()
+    assert duck.tokens[-1] is not new
+
+
+def test_bulk_edit_fills_predicted_translations(win):
+    from lemmatrix import bulk
+    from lemmatrix.ui import bulk_window as bw
+    lion = win.doc.db.entry_by_ref("D002")
+    i = next(i for i, t in enumerate(lion.tokens) if set(t.tags) >= {"Plural", "Genitive"})
+    win.doc.edit_entry(lion, lambda en: en.tokens[i].set("Translation", "", "en"), "clear")
+    win.open_bulk_edit()
+    b = win.bulk_window
+    b.ops.setCurrentIndex(bw.PREDICT)
+    assert b.p_field.text() == "Translation"
+    b.preview()
+    assert b.plan.ok and b.apply_btn.isEnabled()
+    assert "1 of" in b.summary.text() and "left as they are" in b.summary.text()
+    b.apply()
+    assert lion.tokens[i].get("Translation", "en") == "of the lions"
+    win.doc.undo.undo()
+    assert lion.tokens[i].get("Translation", "en") == ""
+    b.levels.setCurrentIndex(0)
+    b.preview()
+    assert b.plan is None and "Tokens tab" in b.summary.text()
+    b.close()

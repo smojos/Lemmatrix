@@ -197,3 +197,33 @@ def test_a_new_word_class_is_added_to_the_list(db):
     wcf = db.settings.entry_field("word-class").name
     p = bulk.plan(db, bulk.LEMMAS, [(goat, None)], bulk.SetValue(wcf, "NOMINAL"))
     assert p.ok and (wcf, "NOMINAL") in p.new_values
+
+
+# ---- predicted translations ------------------------------------------------------
+
+def test_fill_predicted_translations(db):
+    lion, eat = db.entry_by_ref("D002"), db.entry_by_ref("V001")
+    pl_gen = next(i for i, t in enumerate(lion.tokens) if set(t.tags) >= {"Plural", "Genitive"})
+    lion.tokens[pl_gen].set("Translation", "", "en")
+    odd = next(i for i, t in enumerate(eat.tokens) if "1SG.O" in t.tags)   # tags no one else has
+    eat.tokens[odd].set("Translation", "", "en")
+    key = bulk.predicted_target(db)
+    assert key == "f:Translation"
+    rows = token_rows(db)
+    p = bulk.plan(db, bulk.TOKENS, rows, bulk.FillPredicted(key))
+    assert p.ok
+    assert [(c.row, c.old, c.new) for c in p.changes] == [((lion, pl_gen), "", "of the lions")]
+    assert p.unpredicted == 1
+    assert p.kept == len(rows) - 2 - sum(1 for e, i in rows if not e.tokens[i].get("Translation", "en")
+                                         and (e, i) not in ((lion, pl_gen), (eat, odd)))
+    assert any("no suggestion" in x for x in bulk.summary(p, bulk.TOKENS))
+    assert lion.tokens[pl_gen].get("Translation", "en") == ""      # nothing changed yet
+    after = next(a for e, a in p.pairs if e is lion)
+    assert after.tokens[pl_gen].get("Translation", "en") == "of the lions"
+
+
+def test_fill_predicted_only_for_english_tokens(db):
+    with pytest.raises(bulk.BulkError):
+        bulk.plan(db, bulk.LEMMAS, [(e, None) for e in db.entries], bulk.FillPredicted("f:Translation"))
+    with pytest.raises(bulk.BulkError):
+        bulk.plan(db, bulk.TOKENS, token_rows(db), bulk.FillPredicted("f:Phonetic"))

@@ -9,6 +9,7 @@ works out exactly what would change, the "plan", without touching anything:
                  the date, the word class)
     Copy         one field into another (overwrite, append, or only where empty)
     Clear        empty a field
+    Predict      fill empty English translations with their suggestions (predict.py)
 
 A plan lists the changed cells (for the preview), the recordings to rename and
 any problems. One problem cancels the whole operation, so nothing is changed
@@ -30,7 +31,7 @@ import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import pitch as pitchmod
+from . import pitch as pitchmod, predict
 from .model import Database, Entry, Token, forbidden_in, nfc, today
 
 LEMMAS, TOKENS = "lemmas", "tokens"
@@ -348,6 +349,20 @@ class ClearField:
     target: str
 
 
+@dataclass
+class FillPredicted:
+    """Empty English translations get their suggestions; the others are left alone."""
+    target: str
+
+
+def predicted_target(db: Database) -> str:
+    """The key of the English translation field, which Predict fills; "" if there isn't one."""
+    for t in targets(db, TOKENS):
+        if t.role == "translation" and t.lang == predict.LANG:
+            return t.key
+    return ""
+
+
 def describe(op) -> str:
     if isinstance(op, Replace):
         return f"Replace “{op.find}” with “{op.replace}”"
@@ -363,6 +378,8 @@ def describe(op) -> str:
         return "Copy field"
     if isinstance(op, ClearField):
         return "Clear field"
+    if isinstance(op, FillPredicted):
+        return "Fill predicted translations"
     return "Bulk edit"
 
 
@@ -407,6 +424,8 @@ class Plan:
     comment_dates: bool = False                          # those comments will be dated
     new_values: list[tuple[str, str]] = field(default_factory=list)   # (closed field name, value) to list
     unusual: int = 0                                     # tokens that get a tag not usual for their lemma
+    unpredicted: int = 0                                 # Predict: empty translations with no suggestion
+    kept: int = 0                                        # Predict: translations already there
     speaker_changed: bool = False
 
     @property
@@ -445,11 +464,14 @@ def new_duplicates(orig: Entry, after: Entry) -> list[tuple[int, int]]:
 
 
 def plan(db: Database, level: str, rows: list[Row], op, opts: Options | None = None,
-         folder: Path | None = None, on_disk: set[str] | None = None) -> Plan:
+         folder: Path | None = None, on_disk: set[str] | None = None,
+         predictor: predict.Predictor | None = None) -> Plan:
     """Work out what op would change in rows, without changing anything.
 
     rows: (entry, token index) for tokens, (entry, None) for lemmas, in the grid's order.
     folder, on_disk: the sound folder and the names in it (for renaming recordings).
+    predictor: for Predict (a new one is made if not given). It learns from the database as
+    it is, not from the suggestions this operation fills in.
     """
     opts = opts or Options()
     p = Plan(label=f"Bulk edit: {describe(op)}", level=level)
@@ -470,6 +492,12 @@ def plan(db: Database, level: str, rows: list[Row], op, opts: Options | None = N
             raise BulkError("Choose two different fields.")
         if not (src.text and tgt.text):
             raise BulkError("Only text fields can be copied.")
+    if isinstance(op, FillPredicted):
+        if level != TOKENS:
+            raise BulkError("Predicted translations are filled in on the Tokens tab.")
+        if not (tgt.role == "translation" and tgt.lang == predict.LANG):
+            raise BulkError("Predicted translations are only for the English translation.")
+        predictor = predictor or predict.Predictor()
     if isinstance(op, ClearField) and (tgt.kind == "tags" or tgt.role == "word-class"):
         raise BulkError(f"{tgt.title} can't be cleared here: use Set value.")
     word_class_change = isinstance(op, SetValue) and tgt.role == "word-class"
@@ -515,6 +543,16 @@ def plan(db: Database, level: str, rows: list[Row], op, opts: Options | None = N
                     new = value
             elif isinstance(op, ClearField):
                 new = ""
+            elif isinstance(op, FillPredicted):
+                new = old
+                if old.strip():
+                    p.kept += 1
+                else:
+                    sug = predictor.suggest(db, e, e.tokens[i].tags)
+                    if sug is None:
+                        p.unpredicted += 1
+                    else:
+                        new = sug.text
             elif isinstance(op, SetValue) and tgt.kind == "tags":
                 names = list(tok.tags)
                 if op.tag_action == REMOVE_TAG:
@@ -625,6 +663,13 @@ def _plan_renames(db: Database, p: Plan, opts: Options, folder: Path | None, on_
 def summary(p: Plan, level: str, warn_unusual: bool = True) -> list[str]:
     """The preview's lines, besides the count."""
     lines = []
+    if p.kept:
+        lines.append(f"{p.kept} ticked token{'s' if p.kept != 1 else ''} already "
+                     f"{'have translations' if p.kept != 1 else 'has a translation'}: left as "
+                     f"{'they are' if p.kept != 1 else 'it is'}")
+    if p.unpredicted:
+        lines.append(f"{p.unpredicted} empty translation{'s' if p.unpredicted != 1 else ''} "
+                     f"{'have' if p.unpredicted != 1 else 'has'} no suggestion and stay empty")
     if p.renames:
         lines.append(f"{len(p.renames)} recording{'s' if len(p.renames) != 1 else ''} will be renamed")
     if p.stale:

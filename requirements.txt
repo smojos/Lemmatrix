@@ -2,4 +2,5 @@ PySide6>=6.12,<6.13
 numpy>=2.0
 sounddevice>=0.5
 soundcard>=0.4
+lemminflect>=0.2.3
 pytest>=8

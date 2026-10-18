@@ -33,7 +33,7 @@ TICK = "__tick"
 PREVIEW_ROLE = Qt.UserRole + 2
 ERROR_ROLE = Qt.UserRole + 3
 LEVELS = (bulk.LEMMAS, bulk.TOKENS)
-REPLACE, SHORTCUTS, SET, COPY, CLEAR, CONDITIONS = range(6)
+REPLACE, SHORTCUTS, SET, COPY, CLEAR, PREDICT, CONDITIONS = range(7)
 _noop = lambda row, text: None                # marks a column as changeable here (white, not grey)
 
 
@@ -317,7 +317,7 @@ class BulkEditWindow(QDialog):
         box.setFrameShape(QFrame.StyledPanel)
         bl = QVBoxLayout(box)
         bl.setContentsMargins(8, 6, 8, 8)
-        self.ops = self._tabbar(["Replace", "Shortcuts", "Set value", "Copy", "Clear", "Conditions"])
+        self.ops = self._tabbar(["Replace", "Shortcuts", "Set value", "Copy", "Clear", "Predict", "Conditions"])
         self.ops.setTabEnabled(CONDITIONS, False)
         self.ops.setTabToolTip(CONDITIONS, "Syllable and environment conditions (e.g. y → j only before "
                                            "a vowel) arrive with the analysis engine (Stage 2)")
@@ -330,6 +330,7 @@ class BulkEditWindow(QDialog):
         self.op_pages.addWidget(self._set_page())
         self.op_pages.addWidget(self._copy_page())
         self.op_pages.addWidget(self._clear_page())
+        self.op_pages.addWidget(self._predict_page())
         stage2 = QLabel("Conditions on syllables and environments arrive with the analysis engine (Stage 2).")
         self.op_pages.addWidget(stage2)
         body.addWidget(self.op_pages, 3)
@@ -476,6 +477,30 @@ class BulkEditWindow(QDialog):
         self._watch(self.x_field)
         self.x_field.currentIndexChanged.connect(lambda *_: self._sync_options())
         return w
+
+    def _predict_page(self) -> QWidget:
+        w, form = self._form()
+        self.p_field = QLabel()
+        form.addRow("Field", self.p_field)
+        self.p_note = QLabel()
+        self.p_note.setWordWrap(True)
+        form.addRow(self.p_note)
+        return w
+
+    def _predict_chosen(self):
+        key = bulk.predicted_target(self.db)
+        if key:
+            self.p_field.setText(bulk.target(self.db, bulk.TOKENS, key).title)
+            note = ("Fills each ticked token's empty English translation with its suggestion, the grey "
+                    "text the token dialogue shows. Translations already there are left alone, and so are "
+                    "tokens without a suggestion. Check the preview and untick any wrong ones before Apply.")
+        else:
+            self.p_field.setText("(no English translation field)")
+            note = "Predicted translations are only for an English translation field."
+        if self.level == bulk.LEMMAS:
+            note = "Predicted translations are filled in on the Tokens tab."
+        self.p_note.setText(note)
+        self.p_note.setStyleSheet(f"color: {theme.muted()};")
 
     def _options(self) -> QWidget:
         w = QWidget()
@@ -663,6 +688,7 @@ class BulkEditWindow(QDialog):
         self._fill_combo(self.x_field, text)
         self._shortcut_chosen()
         self._set_field_chosen()
+        self._predict_chosen()
         self.clear_preview()
         self._update_count()
 
@@ -760,12 +786,20 @@ class BulkEditWindow(QDialog):
             return bulk.CopyField(self.c_from.currentData(), self.c_to.currentData(), self.c_mode.currentData())
         if op == CLEAR:
             return bulk.ClearField(self.x_field.currentData())
+        if op == PREDICT:
+            if self.level == bulk.LEMMAS:
+                raise bulk.BulkError("Predicted translations are filled in on the Tokens tab.")
+            key = bulk.predicted_target(self.db)
+            if not key:
+                raise bulk.BulkError("Predicted translations are only for an English translation field.")
+            return bulk.FillPredicted(key)
         raise bulk.BulkError("Conditions arrive with the analysis engine (Stage 2).")
 
     def _make_plan(self, op) -> bulk.Plan:
         folder = storage.sound_folder(self.db)
         on_disk = storage.scan_sound_folder(folder)[0]
-        return bulk.plan(self.db, self.level, self.chosen_rows(), op, self.options(), folder, on_disk)
+        return bulk.plan(self.db, self.level, self.chosen_rows(), op, self.options(), folder, on_disk,
+                         predictor=getattr(self.doc, "predictor", None))
 
     def preview(self):
         self.clear_preview()

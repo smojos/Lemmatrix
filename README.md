@@ -81,8 +81,13 @@ If something goes wrong, a message box shows the details, and they're also writt
   Tokens tab, which start with the main window's filters, and a tick on every row. Operations:
   Replace (plain text or a regular expression), Shortcuts (y / j, tie bars on affricates,
   raise or lower pitch), Set value (a field, a tag added or removed, the speaker, the date,
-  the word class), Copy and Clear. Preview shows every change in the grid first; any problem
+  the word class), Copy, Clear, and Predict (fills empty English translations with their
+  suggestions). Preview shows every change in the grid first; any problem
   cancels the whole operation; Apply is one undo step, recordings renamed included.
+- **Predicted translations:** an empty English translation in the token dialogue shows a
+  suggestion in grey italics, learned from the other tokens with the same tags ("your father"
+  for father gives "your mother" for mother; "goats" gives "men" for man). → accepts it;
+  typing replaces it. The tooltip says what it's based on. Works offline (lemminflect).
 - **Tags:** one free hierarchy of groups and tags; any tag can go on any token, one per group.
   Groups can be marked "usual for" word classes: the token dialogue shows those first (Show all
   tags for the rest), defaults come from them, and tags outside them get a dashed amber chip
@@ -106,6 +111,7 @@ If something goes wrong, a message box shows the details, and they're also writt
 lemmatrix/            the program
   model.py            entries, tokens, tag structure, people, places (no user interface)
   bulk.py             bulk edit: what an operation would change (no user interface)
+  predict.py          predicted translations: templates learned from the translations
   storage.py          reading and writing the XML file, backups
   notebook.py         the notebook: sessions, the record of comments, the .notebook file
   filenames.py        building sound file names from the pattern
