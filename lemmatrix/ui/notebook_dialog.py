@@ -297,17 +297,17 @@ class NotebookDialog(QDialog):
         qb.addStretch(1)
         ql.addLayout(qb)
         self.questions = QTreeWidget()
-        self.questions.setColumnCount(4)
-        self.questions.setHeaderLabels(["Question", "Status", "Created / edited", "Resolved"])
+        self.questions.setColumnCount(5)
+        self.questions.setHeaderLabels(["Question", "Token", "Status", "Created / edited", "Resolved"])
         self.questions.setRootIsDecorated(False)
         wrapping(self.questions)
         self.questions.setFont(ipa_font(self.main.prefs.ipa_size))
         h = self.questions.header()
         h.setSectionResizeMode(0, QHeaderView.Stretch)
-        for c in (1, 2, 3):
+        for c in (1, 2, 3, 4):
             h.setSectionResizeMode(c, QHeaderView.ResizeToContents)
         h.setStretchLastSection(False)
-        self.questions.itemDoubleClicked.connect(lambda *_: self.edit_question())
+        self.questions.itemDoubleClicked.connect(self._question_double_clicked)
         self.questions.currentItemChanged.connect(lambda *_: self._question_buttons())
         ql.addWidget(self.questions, 1)
         split.addWidget(qbox)
@@ -451,11 +451,12 @@ class NotebookDialog(QDialog):
         self.questions.clear()
         muted = QBrush(QColor(theme.muted()))
         for q in self.session.questions:
-            it = QTreeWidgetItem([q.text, q.status, q.dated, q.resolved])
+            it = QTreeWidgetItem([q.text, q.about, q.status, q.dated, q.resolved])
             it.setData(0, Qt.UserRole, q)
             it.setToolTip(0, q.text)
+            link_look(it, 1, q)
             if not q.is_open:
-                for c in range(4):
+                for c in (0, 2, 3, 4):
                     it.setForeground(c, muted)
             self.questions.addTopLevelItem(it)
             if q is select:
@@ -610,6 +611,13 @@ class NotebookDialog(QDialog):
         it = self.questions.currentItem()
         return it.data(0, Qt.UserRole) if it is not None else None
 
+    def _question_double_clicked(self, item, column):
+        q = item.data(0, Qt.UserRole)
+        if column == 1 and q.link is not None:          # the token's link: go to it
+            follow_link(self, self.main, q.link)
+        else:
+            self.edit_question()
+
     def _question_buttons(self):
         q = self._current_question() if self.session else None
         for b in (self.q_delete, self.q_edit, self.q_resolve):
@@ -664,6 +672,25 @@ class NotebookDialog(QDialog):
 ALL, OPEN, RESOLVED = "all", "open", "resolved"
 
 
+def link_look(item, column: int, q):
+    """A question's token link: in the link colour, underlined, with a tooltip."""
+    if q.link is None:
+        return
+    f = QFont(item.font(column))
+    f.setUnderline(True)
+    item.setFont(column, f)
+    item.setForeground(column, QBrush(theme.colour("pitch")))
+    item.setToolTip(column, "Double-click to go to this token")
+
+
+def follow_link(parent, main, link):
+    where = nbmod.find(main.doc.db, link)
+    if where is None:
+        QMessageBox.information(parent, "Notebook", nbmod.missing_text(link) + ".")
+        return
+    main.go_to(*where)
+
+
 class QuestionsDialog(QDialog):
     """Every question in the notebook, newest day first."""
 
@@ -687,8 +714,8 @@ class QuestionsDialog(QDialog):
         top.addWidget(self.search, 1)
         lay.addLayout(top)
         self.tree = QTreeWidget()
-        self.tree.setColumnCount(5)
-        self.tree.setHeaderLabels(["Session", "Question", "Status", "Created / edited", "Resolved"])
+        self.tree.setColumnCount(6)
+        self.tree.setHeaderLabels(["Session", "Question", "Token", "Status", "Created / edited", "Resolved"])
         self.tree.setRootIsDecorated(False)
         wrapping(self.tree)
         self.tree.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -697,7 +724,7 @@ class QuestionsDialog(QDialog):
         h.setSectionResizeMode(QHeaderView.ResizeToContents)
         h.setSectionResizeMode(1, QHeaderView.Stretch)
         h.setStretchLastSection(False)
-        self.tree.itemDoubleClicked.connect(lambda *_: self.edit())
+        self.tree.itemDoubleClicked.connect(self._double_clicked)
         self.tree.currentItemChanged.connect(lambda *_: self._buttons())
         lay.addWidget(self.tree, 1)
         row = QHBoxLayout()
@@ -708,11 +735,14 @@ class QuestionsDialog(QDialog):
         self.edit_btn.clicked.connect(lambda *_: self.edit())
         self.open_btn = QPushButton(icon("notebook", 18, theme.accent().name()), "Open in notebook")
         self.open_btn.clicked.connect(lambda *_: self.open_day())
+        self.token_btn = QPushButton("Go to token")
+        self.token_btn.setToolTip("Show the token the question was pushed from (also: double-click its link)")
+        self.token_btn.clicked.connect(lambda *_: self.go_to_token())
         self.count = QLabel()
         self.count.setStyleSheet(f"color: {theme.muted()};")
         close = QPushButton("Close")
         close.clicked.connect(self.accept)
-        for w in (self.resolve_btn, self.edit_btn, self.open_btn):
+        for w in (self.resolve_btn, self.edit_btn, self.open_btn, self.token_btn):
             row.addWidget(w)
         row.addWidget(self.count)
         row.addStretch(1)
@@ -731,11 +761,12 @@ class QuestionsDialog(QDialog):
                 continue
             if text and text not in q.text.lower() and text not in s.date:
                 continue
-            it = QTreeWidgetItem([s.date, q.text, q.status, q.dated, q.resolved])
+            it = QTreeWidgetItem([s.date, q.text, q.about, q.status, q.dated, q.resolved])
             it.setData(0, Qt.UserRole, (s, q))
             it.setToolTip(1, q.text)
+            link_look(it, 2, q)
             if not q.is_open:
-                for c in range(5):
+                for c in (0, 1, 3, 4, 5):
                     it.setForeground(c, muted)
             self.tree.addTopLevelItem(it)
             shown += 1
@@ -756,6 +787,18 @@ class QuestionsDialog(QDialog):
         for b in (self.resolve_btn, self.edit_btn, self.open_btn):
             b.setEnabled(cur is not None)
         self.resolve_btn.setText("Mark as open" if cur and not cur[1].is_open else "Resolve")
+        self.token_btn.setEnabled(cur is not None and cur[1].link is not None)
+
+    def _double_clicked(self, item, column):
+        if column == 2 and item.data(0, Qt.UserRole)[1].link is not None:
+            self.go_to_token()
+        else:
+            self.edit()
+
+    def go_to_token(self):
+        cur = self._current()
+        if cur is not None and cur[1].link is not None:
+            follow_link(self, self.main, cur[1].link)
 
     def toggle(self):
         cur = self._current()

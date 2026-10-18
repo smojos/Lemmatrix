@@ -1434,3 +1434,57 @@ def test_session_panel_is_remembered_as_it_was_left(win):
     win.sess_rows[chips.RESEARCHERS]._remove("JS")
     win._fill_session()                                       # an empty panel stays empty
     assert not any(win.session_keys().values())
+
+
+def test_push_to_question_links_the_token_and_clears_the_comment(win):
+    from lemmatrix import notebook as nb
+    from lemmatrix.ui.token_dialog import Slot, TokenDialog
+    e = win.doc.db.entry_by_ref("D002")
+    dlg = TokenDialog(win, [Slot(e, 0)], 0)
+    assert not dlg.push_btn.isEnabled()                     # nothing to push yet
+    dlg.comment.setText("Ask SP1 if same as PL?")
+    assert dlg.push_btn.isEnabled()
+    dlg.push_to_question()
+    assert dlg.comment.text() == ""
+    s = win.doc.notebook.session(win.work_date())
+    q = s.questions[-1]
+    assert q.text == "Ask SP1 if same as PL?" and q.is_open
+    assert nb.find(win.doc.db, q.link) == (e, 0)             # the link goes back to the token
+    path = win.doc.db.path + ".test" + nb.SUFFIX
+    nb.save(win.doc.notebook, path)                           # the link survives saving
+    back = nb.load(path).session(win.work_date()).questions[-1]
+    assert back.token_id == e.tokens[0].id and back.about == q.about
+    dlg.reject()
+
+
+def test_rerecord_flag_saves_filters_and_clears_on_recording(win, tmp_path):
+    import numpy as np
+    from lemmatrix import filters as fl
+    from lemmatrix import storage
+    from lemmatrix.ui.token_dialog import Slot, TokenDialog
+    db = win.doc.db
+    e = db.entry_by_ref("D002")
+    dlg = TokenDialog(win, [Slot(e, 0)], 0)
+    dlg.rerecord_btn.click()                                 # flag it
+    dlg._ok()
+    assert e.tokens[0].rerecord
+    storage.save(db, tmp_path / "flag.xml")
+    assert storage.load(tmp_path / "flag.xml").entry_by_ref("D002").tokens[0].rerecord
+    win.tabs.setCurrentIndex(0)
+    win.refresh()
+    t = win.all_table
+    t.proxy.set_filter("file", fl.Flagged("Rerecord"))
+    assert [(r.entry.ref, r.index) for r in t.visible_rows()] == [("D002", 0)]
+    t.clear_filters()
+
+    class FakeRecorder:                                      # recording over it unflags it
+        sample_rate = 44100
+        level = 0.0
+        def stop(self):
+            return np.zeros(4410, dtype=np.float32)
+    dlg = TokenDialog(win, [Slot(e, 0)], 0)
+    assert dlg.rerecord_btn.isChecked()
+    dlg.recorder = FakeRecorder()
+    dlg._stop_recording()
+    assert not dlg.rerecord_btn.isChecked() and not e.tokens[0].rerecord
+    dlg.reject()

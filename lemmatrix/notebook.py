@@ -40,6 +40,17 @@ class Question:
     created: str = ""                 # date asked
     edited: str = ""                  # date last edited
     resolved: str = ""                # date resolved; empty while open
+    entry_id: str = ""                # pushed from a token's comment: a link to it (else no link)
+    token_id: str = ""
+    ref: str = ""                     # the lemma's reference then (the link falls back on it)
+    about: str = ""                   # how the link reads: "D011 sheep · SG"
+
+    @property
+    def link(self) -> "NoteComment | None":
+        """The token (or lemma) the question is about, as a link the notebook can follow."""
+        if not self.entry_id and not self.ref:
+            return None
+        return NoteComment(self.text, self.entry_id, self.token_id, self.ref, self.about)
 
     @property
     def is_open(self) -> bool:
@@ -254,6 +265,21 @@ def write_session(nb: Notebook, db: Database, date: str, researchers, participan
     return s
 
 
+def push_question(nb: Notebook, db: Database, date: str, text: str, e: Entry, t: Token | None,
+                  researchers=(), participants=(), locations=()) -> Question:
+    """Push to question: an open question on a day, linked to a token (or lemma).
+
+    A day without notes yet gets them, with these people and places."""
+    s = nb.session(date)
+    if s is None:
+        s = write_session(nb, db, date, researchers, participants, locations)
+    q = Question(text, today(), entry_id=e.id, token_id=t.id if t is not None else "", ref=e.ref,
+                 about=describe(db, e, t))
+    s.questions.append(q)
+    nb.dirty = True
+    return q
+
+
 def matches(s: Session, db: Database | None, text: str) -> bool:
     """Search: the date, notes, people, places, comments and questions."""
     text = text.strip().lower()
@@ -333,7 +359,8 @@ def load(path: str | os.PathLike) -> Notebook:
                                           c.get("field", "Comment")))
         for q in el.findall("question"):
             s.questions.append(Question(_text(q), q.get("created", ""), q.get("edited", ""),
-                                        q.get("resolved", "")))
+                                        q.get("resolved", ""), q.get("entry", ""), q.get("token", ""),
+                                        nfc(q.get("ref", "")), nfc(q.get("about", ""))))
         nb.sessions.append(s)
     nb.sort()
     return nb
@@ -366,6 +393,9 @@ def to_string(nb: Notebook, database_name: str = "") -> str:
                 qa["edited"] = q.edited
             if q.resolved:
                 qa["resolved"] = q.resolved
+            for key, val in (("entry", q.entry_id), ("token", q.token_id), ("ref", q.ref), ("about", q.about)):
+                if val:
+                    qa[key] = val
             ET.SubElement(el, "question", qa).text = q.text
     ET.indent(root, space="  ")
     return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(root, encoding="unicode") + "\n"

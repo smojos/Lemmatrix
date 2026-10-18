@@ -102,6 +102,7 @@ class TokenDialog(QDialog):
         left.addLayout(drawing, 1, 1)
         self.edits: dict[str, QLineEdit] = {}
         self.translation: QLineEdit | None = None      # the English translation: gets suggestions
+        self.comment: QLineEdit | None = None          # the first comment field: Push to question
         row = 2
         for f in s.token_fields:
             ed = QLineEdit()
@@ -121,7 +122,23 @@ class TokenDialog(QDialog):
                 ed.textChanged.connect(lambda *_: self._update_suggestion())
             label = f.title + (f" ({s.primary_gloss})" if f.multilingual and len(s.gloss_languages) > 1 else "")
             left.addWidget(QLabel(label), row, 0)
-            left.addWidget(ed, row, 1)
+            if self.comment is None and f.is_comment:
+                self.comment = ed
+                self.push_btn = QToolButton()
+                self.push_btn.setIcon(icon("push-question", 22))
+                self.push_btn.setIconSize(QSize(22, 22))
+                self.push_btn.setAutoRaise(True)
+                self.push_btn.setToolTip("Push to question: the comment becomes an open question in the "
+                                         "session's notebook, linked to this token, and the box is cleared")
+                self.push_btn.clicked.connect(lambda *_: self.push_to_question())
+                ed.textChanged.connect(lambda text: self.push_btn.setEnabled(bool(text.strip())))
+                box = QHBoxLayout()               # the box, with the button beside it
+                box.setContentsMargins(0, 0, 0, 0)
+                box.addWidget(ed, 1)
+                box.addWidget(self.push_btn, 0, Qt.AlignVCenter)
+                left.addLayout(box, row, 1)
+            else:
+                left.addWidget(ed, row, 1)
             self.edits[f.name] = ed
             row += 1
         self.pitch_note = QLabel()
@@ -181,7 +198,16 @@ class TokenDialog(QDialog):
         ff.setPointSize(ff.pointSize() + 3)
         self.filename.setFont(ff)
         self.filename.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        rl.addWidget(self.filename, 0, 0, 1, 5)
+        rl.addWidget(self.filename, 0, 0, 1, 4)
+        self.rerecord_btn = QToolButton()        # the rerecord flag: faint grey, red when on
+        self.rerecord_btn.setCheckable(True)
+        self.rerecord_btn.setAutoRaise(True)
+        self.rerecord_btn.setIconSize(QSize(36, 36))
+        self.rerecord_btn.setCursor(Qt.PointingHandCursor)
+        self.rerecord_btn.setStyleSheet("QToolButton, QToolButton:checked, QToolButton:hover "
+                                        "{ border: none; background: transparent; }")
+        self.rerecord_btn.toggled.connect(self._rerecord_toggled)
+        rl.addWidget(self.rerecord_btn, 0, 4, Qt.AlignRight | Qt.AlignTop)
         self.location = QLabel()
         self.location.setStyleSheet(f"color: {theme.muted()};")
         self.location.setTextInteractionFlags(Qt.TextSelectableByMouse)
@@ -306,6 +332,9 @@ class TokenDialog(QDialog):
         self.date.blockSignals(True)
         self.date.setText(t.collected)
         self.date.blockSignals(False)
+        self._show_rerecord(t.rerecord)
+        if self.comment is not None:
+            self.push_btn.setEnabled(bool(self.comment.text().strip()))
         state = "new token" if self.original is None else f"token {sl.index + 1} of {len(e.tokens)}"
         self.position.setText(f"{self.pos + 1} / {len(self.slots)}  ·  {state}")
         self.back_btn.setEnabled(self.pos > 0)
@@ -343,6 +372,7 @@ class TokenDialog(QDialog):
         t.tags = s.tags.sort(self.tags.selected() + self.unknown_tags)
         t.speaker = self.speaker.currentText()
         t.collected = self.date.text().strip()
+        t.rerecord = self.rerecord_btn.isChecked()
 
     def _fields_changed(self, *_):
         self._collect()
@@ -618,8 +648,51 @@ class TokenDialog(QDialog):
         if old and old != exp and self._path(old).exists():
             QFile.moveToTrash(str(self._path(old)))
         t.file = exp
+        t.rerecord = False                        # recorded again: the flag goes
+        self._show_rerecord(False)
         self._commit(keep_empty=True)
         self._refresh_name()
+
+    # ------------------------------------------------------- rerecord flag
+    def _show_rerecord(self, on: bool):
+        b = self.rerecord_btn
+        b.blockSignals(True)
+        b.setChecked(on)
+        b.blockSignals(False)
+        faint = "#55575b" if theme.dark() else "#d6d6d6"        # very subtle until it's on
+        b.setIcon(icon("thumbs-down", 36, "#e02424" if on else faint))
+        b.setToolTip("Marked to be recorded again: click to unmark. Recording over it unmarks it."
+                     if on else "Mark the recording to be recorded again (Rerecord in All data's "
+                     "Sound file filter)")
+
+    def _rerecord_toggled(self, on: bool):
+        self._show_rerecord(on)
+        self._fields_changed()
+
+    # --------------------------------------------------- push to question
+    def push_to_question(self):
+        """The comment becomes an open question in the session's notebook, linked to this token."""
+        if self.comment is None or not self.comment.text().strip():
+            return
+        text = self.comment.text().strip()
+        main = self.main
+        if self.original is None:                 # a new token: it exists now, so the link works
+            self._collect()
+            if not self._commit(keep_empty=True):
+                return
+        date = main.work_date()
+        keys = main.session_keys()
+        from .. import notebook as nbmod
+        from . import chiprow as chips
+        nbmod.push_question(self.doc.notebook, self.db, date, text, self.slot.entry, self.token,
+                            keys[chips.RESEARCHERS], keys[chips.PARTICIPANTS], keys[chips.LOCATIONS])
+        self.doc.notebook_changed()
+        if getattr(main, "notebook_dialog", None) is not None:
+            main.notebook_dialog.reload()
+        self.comment.clear()
+        from PySide6.QtWidgets import QToolTip
+        QToolTip.showText(self.push_btn.mapToGlobal(self.push_btn.rect().bottomLeft()),
+                          f"Added to the questions of {date}", self.push_btn)
 
     def _update_meter(self):
         if self.recorder:

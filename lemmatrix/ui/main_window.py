@@ -600,6 +600,7 @@ class MainWindow(QMainWindow):
             # Value: the recording if it exists on disk, otherwise blank (so Blanks = no recording);
             # shown: the recording, or the name it would get, in grey.
             Column("file", "Sound file", lambda r: r.token.file if r.token.file in self.sound_files else "",
+                   blank_labels=("Missing", "Present"), flag=lambda r: r.token.rerecord, flag_label="Rerecord",
                    display=lambda r: r.token.file or db.expected_filename(r.entry, r.token),
                    color=lambda r: theme.colour("dim") if not r.token.file else
                    (theme.colour("error") if (r.token.file not in self.sound_files or

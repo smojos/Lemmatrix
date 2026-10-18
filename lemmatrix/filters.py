@@ -46,6 +46,15 @@ class NonBlanks:
 
 
 @dataclass
+class Flagged:
+    """Rows a column flags (e.g. Sound file: marked to be recorded again)."""
+    label: str = "Flagged"
+
+    def describe(self) -> str:
+        return self.label
+
+
+@dataclass
 class TextFilter:
     text: str
     mode: str = ANYWHERE

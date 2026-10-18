@@ -244,7 +244,7 @@ def load(path: str | os.PathLike) -> Database:
             tags = [nfc(t.strip()) for t in (tel.get("tags") or "").split(",") if t.strip()]
             t = Token(tags=tags, speaker=nfc(tel.get("speaker", "")),
                       collected=tel.get("collected", ""), file=nfc(tel.get("file", "")),
-                      id=tel.get("id", ""))
+                      rerecord=tel.get("rerecord") == "yes", id=tel.get("id", ""))
             _load_values(tel, t, token_multi, skip=())
             for name in pitch_fields:               # older data: lone digits become 55
                 if t.values.get(name):
@@ -488,6 +488,8 @@ def to_element(db: Database) -> ET.Element:
             for key, val in (("speaker", t.speaker), ("collected", t.collected), ("file", t.file)):
                 if val:
                     tattrs[key] = val
+            if t.rerecord:
+                tattrs["rerecord"] = "yes"
             tattrs["id"] = t.id
             tel = ET.SubElement(el, "token", tattrs)
             _save_values(tel, t, s.token_fields, langs)

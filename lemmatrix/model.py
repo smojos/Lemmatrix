@@ -450,6 +450,7 @@ class Token:
     speaker: str = ""
     collected: str = ""
     file: str = ""                                      # actual recording name on disk
+    rerecord: bool = False                              # flagged: the recording should be made again
     values: dict[str, str] = field(default_factory=dict)            # Phonetic, Pitch, ...
     multi: dict[str, dict[str, str]] = field(default_factory=dict)  # Translation -> {lang: text}
     changed: dict[str, str] = field(default_factory=dict)  # comment field -> date it was last changed

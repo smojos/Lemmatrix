@@ -40,6 +40,9 @@ class Column:
     display: Callable | None = None                 # row -> text shown (if not the value)
     tooltip: Callable | None = None
     color: Callable | None = None
+    blank_labels: tuple = ("Blanks", "Non-blanks")  # how the filter menu names them for this column
+    flag: Callable | None = None                    # row -> bool: an extra filter choice, e.g. Rerecord
+    flag_label: str = ""
 
 
 
@@ -159,7 +162,12 @@ class RowFilter(QSortFilterProxyModel):
         by_key = {c.key: c for c in m.all_columns}
         for key, flt in self.filters.items():
             col = by_key.get(key)
-            if col and not fl.matches(flt, col.get(row), col.unmarked):
+            if col is None:
+                continue
+            if isinstance(flt, fl.Flagged):
+                if not (col.flag and col.flag(row)):
+                    return False
+            elif not fl.matches(flt, col.get(row), col.unmarked):
                 return False
         if self.search:
             for col in m.columns:
@@ -487,12 +495,19 @@ class FilterTable(QTableView):
         current = self.proxy.filters.get(col.key)
         menu = QMenu(self)
         acts = {}
-        for label, kind in (("Show all", None), ("Blanks", "blanks"), ("Non-blanks", "nonblanks")):
+        blanks, nonblanks = col.blank_labels
+        choices = [("Show all", None), (blanks, "blanks"), (nonblanks, "nonblanks")]
+        if col.blank_labels != ("Blanks", "Non-blanks"):    # e.g. Sound file: Present before Missing
+            choices[1], choices[2] = choices[2], choices[1]
+        if col.flag is not None:
+            choices.append((col.flag_label, "flag"))
+        for label, kind in choices:
             a = menu.addAction(label)
             a.setCheckable(True)
             a.setChecked((kind is None and current is None)
                          or (kind == "blanks" and isinstance(current, fl.Blanks))
-                         or (kind == "nonblanks" and isinstance(current, fl.NonBlanks)))
+                         or (kind == "nonblanks" and isinstance(current, fl.NonBlanks))
+                         or (kind == "flag" and isinstance(current, fl.Flagged)))
             acts[a] = kind
         menu.addSeparator()
         if col.closed:
@@ -518,7 +533,8 @@ class FilterTable(QTableView):
             kind = acts.get(chosen, "keep")
             if kind == "keep":
                 return
-            new = {None: None, "blanks": fl.Blanks(), "nonblanks": fl.NonBlanks()}[kind]
+            new = {None: None, "blanks": fl.Blanks(), "nonblanks": fl.NonBlanks(),
+                   "flag": fl.Flagged(col.flag_label)}[kind]
         self.proxy.set_filter(col.key, new)
         self._refresh_header()
         self.filtersChanged.emit()
