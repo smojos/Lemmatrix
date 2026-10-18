@@ -21,7 +21,7 @@ from __future__ import annotations
 import copy
 from pathlib import Path
 
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QFile, QObject, Signal
 from PySide6.QtGui import QUndoCommand, QUndoStack
 
 from .. import notebook as nbmod, predict, storage
@@ -237,6 +237,47 @@ class Document(QObject):
                 problems.append(f"{now.name}: {exc}")
         self.renamed.clear()
         return problems
+
+    # ---- recordings of deleted tokens -----------------------------------
+    def hold_recording(self, path: Path) -> Path:
+        """Where a deleted token's recording goes for now (a name of its own in the held folder)."""
+        folder = storage.held_folder(self.db)
+        folder.mkdir(parents=True, exist_ok=True)
+        target, n = folder / path.name, 2
+        while target.exists():
+            target, n = folder / f"{path.stem} ({n}){path.suffix}", n + 1
+        return target
+
+    def bring_back_held(self):
+        """On opening: a held recording that a token of the database still uses goes back (the
+        deletion wasn't saved, e.g. after a crash)."""
+        if not self.db.path:
+            return
+        folder, held = storage.sound_folder(self.db), storage.held_folder(self.db)
+        if not held.is_dir():
+            return
+        used = {t.file for e in self.db.entries for t in e.tokens if t.file}
+        for f in held.iterdir():
+            if f.is_file() and f.name in used and not (folder / f.name).exists():
+                try:
+                    f.rename(folder / f.name)
+                except OSError:
+                    pass
+
+    def empty_held(self):
+        """On closing the database: the deleted tokens' recordings go to the Recycle Bin."""
+        if not self.db.path:
+            return
+        held = storage.held_folder(self.db)
+        if not held.is_dir():
+            return
+        for f in held.iterdir():
+            if f.is_file():
+                QFile.moveToTrash(str(f))
+        try:
+            held.rmdir()                          # only if it's empty now
+        except OSError:
+            pass
 
     def add_entry(self, entry: Entry, index: int | None = None):
         idx = len(self.db.entries) if index is None else index

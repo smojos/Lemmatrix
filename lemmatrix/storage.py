@@ -679,6 +679,15 @@ def same_file(a: Path, b: Path) -> bool:
         return False
 
 
+HELD = "_Deleted recordings"
+
+
+def held_folder(db: Database) -> Path:
+    """Where a deleted token's recording waits, inside the sound folder, so undo can bring it back.
+    It goes to the Recycle Bin when the database is closed."""
+    return sound_folder(db) / HELD
+
+
 def sound_folder(db: Database) -> Path:
     """Absolute folder for recordings: relative paths are relative to the database file."""
     folder = Path(db.settings.sound_folder or ".")

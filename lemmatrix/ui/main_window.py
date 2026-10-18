@@ -686,6 +686,8 @@ class MainWindow(QMainWindow):
     # ============================================================ database
     def load_database(self, db: Database):
         self.player.stop()
+        if self.doc.db is not db:
+            self.doc.empty_held()                 # the closed database's deleted recordings: Recycle Bin
         if self.bulk_window is not None:          # it belongs to the database being closed
             self.bulk_window.close()
         if self.doc.db is not db:
@@ -701,6 +703,7 @@ class MainWindow(QMainWindow):
         if self.spelling_window is not None:      # it belongs to the database being closed
             self.spelling_window.close()
         self._load_notebook()
+        self.doc.bring_back_held()
         self.configs.clear()
         for v in (self.lt_view, self.tt_view):
             v.set_database(db)
@@ -1456,18 +1459,30 @@ class MainWindow(QMainWindow):
         t = e.tokens[i]
         db = self.doc.db
         tags = " + ".join(mx.chips(db, t.tags)) or "citation"
-        with_file = bool(t.file) and self.prefs.delete_recordings_with_tokens
+        shared = bool(t.file) and any(o is not t and o.file == t.file for en in db.entries for o in en.tokens)
+        with_file = bool(t.file) and self.prefs.delete_recordings_with_tokens and not shared
         msg = f"Delete the {tags} token of {e.ref} {db.lemma(e)}?"
         if with_file:
-            msg += f"\nIts recording ({t.file}) goes to the Recycle Bin."
+            msg += f"\nIts recording ({t.file}) goes to the Recycle Bin when the database is closed; " \
+                   "until then, undo brings it back."
+        elif shared:
+            msg += f"\nIts recording ({t.file}) stays: another token uses it too."
         if QMessageBox.question(self, "Delete token", msg) != QMessageBox.Yes:
             return
+        renames = []
         if with_file:
             path = storage.sound_folder(db) / t.file
             self.player.stop()
-            if path.exists():
-                QFile.moveToTrash(str(path))
-        self.doc.edit_entry(e, lambda en, i=i: en.tokens.pop(i), f"Delete token from {e.ref}")
+            if path.exists():                     # held, so undo can bring it back
+                held = self.doc.hold_recording(path)
+                try:
+                    path.rename(held)
+                    renames.append((path, held))
+                except OSError as exc:
+                    QMessageBox.warning(self, "Delete token", f"Couldn't move {t.file} aside: {exc}. "
+                                        "The token is deleted; its recording stays in the sound folder.")
+        self.doc.edit_entry(e, lambda en, i=i: en.tokens.pop(i), f"Delete token from {e.ref}",
+                            renames=renames)
 
     def play_selected(self):
         tab = self.tabs.currentIndex()
@@ -1886,25 +1901,36 @@ class MainWindow(QMainWindow):
         if ask and QMessageBox.question(self, "Sound file names",
                                         f"Rename {len(stale)} recordings to match their tokens?") != QMessageBox.Yes:
             return
-        problems, done = [], 0
+        # One undo step for the lot. Every recording first moves to a temporary name, then to its
+        # new one, so names can swap or chain (A → B while B → C) without getting in the way.
+        problems, plan = [], []
+        sources = {(folder / e.tokens[i].file).name.lower() for e, i in stale}
+        targets: dict[str, str] = {}
         for e, i in stale:
             t = e.tokens[i]
             new = db.expected_filename(e, t)
             src, dst = folder / t.file, folder / new
             if not src.exists():
                 problems.append(f"{t.file}: not in the sound folder")
-                continue
-            if dst.exists() and not storage.same_file(src, dst):     # a case-only rename is fine
+            elif new.lower() in targets:
+                problems.append(f"{t.file}: {new} would also be the name of {targets[new.lower()]}")
+            elif dst.exists() and new.lower() not in sources and not storage.same_file(src, dst):
                 problems.append(f"{t.file}: {new} already exists")
-                continue
-            try:
-                src.rename(dst)
-            except OSError as exc:
-                problems.append(f"{t.file}: {exc}")
-                continue
-            self.doc.edit_entry(e, lambda en, i=i, new=new: setattr(en.tokens[i], "file", new),
-                                "Rename sound file", renames=[(src, dst)])
-            done += 1
+            else:
+                targets[new.lower()] = t.file
+                plan.append((e, i, src, dst))
+        renames = [(src, src.with_name(src.name + ".lemmatrix-renaming")) for _, _, src, _ in plan]
+        renames += [(src.with_name(src.name + ".lemmatrix-renaming"), dst) for _, _, src, dst in plan]
+        changed: dict[int, Entry] = {}
+        for e, i, _, dst in plan:
+            after = changed.setdefault(id(e), e.copy())
+            after.tokens[i].file = dst.name
+        order = {id(e): e for e, _, _, _ in plan}               # entries in plan order, once each
+        pairs = [(e, changed[k]) for k, e in order.items()]
+        trouble = self.doc.apply_changes("Update all sound file names", pairs, renames, stamp=False) \
+            if plan else []
+        done = 0 if trouble else len(plan)
+        problems = trouble + problems
         msg = f"Renamed {done} recording(s)."
         if problems:
             msg += "\n\nNot renamed:\n" + "\n".join(problems[:30])
@@ -2271,6 +2297,10 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         if self._confirm_discard():
             self.player.stop()
+            try:
+                self.doc.empty_held()
+            except Exception:                     # never stop the window closing
+                pass
             try:
                 self._save_view()
                 self._save_window()

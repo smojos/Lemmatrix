@@ -144,13 +144,15 @@ def test_delete_token_recycles_recording(win, monkeypatch):
     n = len(goat.tokens)
     win.all_table.select_row(next(r for r in win.all_table.model_.rows if r.entry is goat and r.index == i))
     win.delete_token()
-    assert len(goat.tokens) == n - 1 and len(trashed) == 1
-    win.doc.undo.undo()
-    assert len(goat.tokens) == n
+    assert len(goat.tokens) == n - 1 and not trashed            # held until the database closes
+    win.doc.empty_held()
+    assert len(trashed) == 1
     win.prefs.delete_recordings_with_tokens = False
+    win.doc.undo.undo()
     win.refresh()
     win.all_table.select_row(next(r for r in win.all_table.model_.rows if r.entry is goat and r.index == i))
     win.delete_token()
+    win.doc.empty_held()
     assert len(trashed) == 1                                     # kept this time
     win.prefs.delete_recordings_with_tokens = True
 
@@ -1592,3 +1594,46 @@ def test_a_second_lemmatrix_is_noticed(app):
     first = lock.single_instance()
     assert first is not None and lock.single_instance() is None
     first.unlock()
+
+
+def test_update_all_names_is_one_undo_step_and_handles_swaps(win):
+    from lemmatrix import storage
+    db = win.doc.db
+    folder = storage.sound_folder(db)
+    recorded = [(e, i) for e in db.entries for i, t in enumerate(e.tokens)
+                if t.file and (folder / t.file).exists()][:3]
+    assert len(recorded) == 3
+    (a, ia), (b, ib), (c, ic) = recorded
+    fa, fb, fc = a.tokens[ia].file, b.tokens[ib].file, c.tokens[ic].file
+    # swap two names and make a third out of date, as if renamed outside Lemmatrix
+    (folder / fa).rename(folder / "tmp.wav"); (folder / fb).rename(folder / fa); (folder / "tmp.wav").rename(folder / fb)
+    a.tokens[ia].file, b.tokens[ib].file = fb, fa
+    (folder / fc).rename(folder / "old-name.wav")
+    c.tokens[ic].file = "old-name.wav"
+    win.doc.undo.clear()
+    win.update_all_names(ask=False)
+    assert (a.tokens[ia].file, b.tokens[ib].file, c.tokens[ic].file) == (fa, fb, fc)
+    assert all((folder / f).exists() for f in (fa, fb, fc))
+    assert win.doc.undo.count() == 1                     # one step
+    win.doc.undo.undo()
+    assert (a.tokens[ia].file, b.tokens[ib].file, c.tokens[ic].file) == (fb, fa, "old-name.wav")
+    assert (folder / "old-name.wav").exists()
+
+
+def test_undoing_a_token_deletion_brings_its_recording_back(win, monkeypatch):
+    from lemmatrix import storage
+    db = win.doc.db
+    e = next(e for e in db.entries if any(t.file for t in e.tokens))
+    i = next(i for i, t in enumerate(e.tokens) if t.file)
+    name = e.tokens[i].file
+    path = storage.sound_folder(db) / name
+    monkeypatch.setattr(win, "selected_token", lambda: (e, i))
+    win.delete_token()
+    assert not path.exists() and (storage.held_folder(db) / name).exists()
+    win.doc.undo.undo()
+    assert path.exists() and e.tokens[i].file == name
+    win.doc.undo.redo()                                  # deleted again: held until closing
+    trashed = []
+    monkeypatch.setattr("lemmatrix.ui.document.QFile.moveToTrash", lambda p: trashed.append(p) or True)
+    win.doc.empty_held()
+    assert trashed and trashed[0].endswith(name)
