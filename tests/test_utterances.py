@@ -73,17 +73,6 @@ def test_utterances_are_saved_and_read(tmp_path):
     assert not again.load_notes
 
 
-def test_format_4_gets_utterance_categories(tmp_path):
-    db, _ = _db(tmp_path)
-    db.settings.ref_categories = [c for c in db.settings.ref_categories if c.kind != UTTERANCES]
-    storage.save(db, backup=False)
-    p = Path(db.path)
-    p.write_text(p.read_text(encoding="utf-8").replace('format="5"', 'format="4"'), encoding="utf-8")
-    again = storage.load(p)
-    assert [c.letter for c in again.settings.categories(UTTERANCES)] == ["U", "W", "X", "Y", "Z"]
-    assert any("utterances" in n for n in again.load_notes)
-
-
 def test_notebook_counts_utterance_comments_and_recordings(tmp_path):
     db, _ = _db(tmp_path)
     u = db.new_utterance("U001", "greeting", speaker="SP1", date="2026-10-18")

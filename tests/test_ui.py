@@ -1131,16 +1131,6 @@ def test_token_dialog_shows_usual_groups_first(win):
     win.set_unusual_warning(True)
 
 
-def test_upgrading_an_old_database_is_reported(win, tmp_path, monkeypatch):
-    shown = []
-    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: shown.append(a[2]))
-    old = Path(__file__).resolve().parent / "data" / "Sample-format1.xml"
-    shutil.copy2(old, tmp_path / "Old.xml")
-    win.load_database(storage.load(tmp_path / "Old.xml"))
-    assert shown and "upgraded" in shown[0]
-    assert win.doc.dirty                                     # so saving writes the new format
-
-
 def test_bulk_window_screenshot_layout(win):
     w = _bulk(win)
     w.resize(1360, 900)
@@ -1535,7 +1525,7 @@ def test_same_recording_name_offers_an_example_tag_and_never_overwrites(win, mon
     pick = ["cancel"]
     dlg = TokenDialog(win, [Slot(e, None, tuple(first.tags), explicit=True, defaults=False)], 0)
     dlg._record()
-    assert dlg.recorder is None and answers and "X1" in answers[-1]
+    assert dlg.recorder is None and answers and "x1" in answers[-1]
     # Add X1 and record: the new token gets its own name; the other's recording is untouched
     pick = ["add"]
     dlg._record()
@@ -1544,7 +1534,7 @@ def test_same_recording_name_offers_an_example_tag_and_never_overwrites(win, mon
     dlg._stop_recording()
     assert hashlib.md5(path.read_bytes()).hexdigest() == before
     new = e.tokens[-1]
-    assert new.file and new.file != first.file and "X1" in new.file
+    assert new.file and new.file != first.file and "x1" in new.file
     dlg.reject()
     # Saving a token whose tags match another's offers the next free tag (X2), once
     pick = ["keep"]
@@ -1552,18 +1542,8 @@ def test_same_recording_name_offers_an_example_tag_and_never_overwrites(win, mon
     dlg.edits["Phonetic"].setText("rʉʉr")
     n, count = len(answers), len(e.tokens)
     dlg._ok()
-    assert len(answers) == n + 1 and "X2" in answers[-1]
+    assert len(answers) == n + 1 and "x2" in answers[-1]
     assert len(e.tokens) == count + 1 and "Example 2" not in e.tokens[-1].tags   # kept as it is
-
-
-def test_older_databases_get_instances_with_frames_codes_kept(tmp_path):
-    from lemmatrix import storage
-    src = open(SAMPLES / "Sample.xml", encoding="utf-8").read()
-    old = src.replace(f'format="{storage.FORMAT_VERSION}"', 'format="2"')
-    (tmp_path / "old.xml").write_text(old, encoding="utf-8")
-    db = storage.load(tmp_path / "old.xml")
-    names = [g.name for g in db.settings.tags.groups]
-    assert names[-1] == "Instances"
 
 
 def test_session_date_moves_on_at_midnight(win, monkeypatch):
@@ -1684,19 +1664,6 @@ def test_full_backup_reminder_after_a_week(win, monkeypatch):
     assert snoozed == (dt.date.today() + dt.timedelta(days=7)).isoformat()
     win._remind_full_backup()
     assert len(asked) == 1                                # remind me again in 7 days
-
-
-def test_opening_a_database_with_its_recordings_in_lexicon(win, tmp_path, monkeypatch):
-    from lemmatrix import layout
-    main = tmp_path / "Old"
-    (main / "Soundfiles").mkdir(parents=True)
-    shutil.move(str(tmp_path / "Soundfiles" / "Tokens"), str(main / "Soundfiles" / "Lexicon"))
-    shutil.copy2(tmp_path / "Sample.xml", main / "Sample.xml")
-    warned = []
-    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: warned.append(a[2]))
-    win.load_database(storage.load(main / "Sample.xml"))
-    assert warned and "Lexicon" in warned[0] and "Tokens" in warned[0]
-    assert "aren't linked" not in win.statusBar().currentMessage()
 
 
 def test_consent_relinked_on_opening(win, tmp_path):

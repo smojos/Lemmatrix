@@ -16,35 +16,6 @@ DATA = Path(__file__).resolve().parent / "data"
 SAMPLES = Path(__file__).resolve().parent.parent / "samples"
 
 
-def _format3(tmp_path, sound_folder="Soundfiles/Lexicon") -> Path:
-    """A format 3 database whose recordings are in the old, settable sound folder."""
-    text = (DATA / "Sample-format3.xml").read_text(encoding="utf-8")
-    text = text.replace('<sounds folder="Soundfiles"', f'<sounds folder="{sound_folder}"')
-    db_path = tmp_path / "Main" / "Old.xml"
-    db_path.parent.mkdir()
-    db_path.write_text(text, encoding="utf-8")
-    old = db_path.parent / sound_folder
-    old.mkdir(parents=True)
-    for f in (SAMPLES / "Soundfiles" / "Tokens").glob("*.wav"):
-        shutil.copy2(f, old / f.name)
-    return db_path
-
-
-def test_format_3_is_upgraded_with_morphemes_under_phonemic(tmp_path):
-    db = storage.load(_format3(tmp_path))
-    names = [f.name for f in db.settings.token_fields]
-    assert names.index("Morphemes") == names.index("Phonemic") + 1
-    assert db.settings.token_field("morphemes").name == "Morphemes"
-    assert any("Morphemes" in n for n in db.load_notes) and any("Tokens" in n for n in db.load_notes)
-    assert db.settings.old_sound_folder == "Soundfiles/Lexicon"
-    storage.save(db, backup=False)
-    text = Path(db.path).read_text(encoding="utf-8")
-    assert f'<database format="{storage.FORMAT_VERSION}">' in text and ' folder=' not in text
-    again = storage.load(db.path)
-    assert not again.load_notes                              # format 4: nothing to upgrade
-    assert [f.name for f in again.settings.token_fields] == names
-
-
 def test_new_databases_have_morphemes_and_recordings_in_tokens(tmp_path):
     db = new_database()
     db.path = str(tmp_path / "New.xml")
@@ -55,26 +26,6 @@ def test_new_databases_have_morphemes_and_recordings_in_tokens(tmp_path):
     layout.create_layout(db.path)
     for name in ("Soundfiles/Tokens", "Documentation", "Exports"):
         assert (tmp_path / name).is_dir()
-
-
-def test_the_old_lexicon_folder_is_found_and_explained(tmp_path):
-    db = storage.load(_format3(tmp_path))
-    old = layout.old_sound_folder(db)
-    assert old is not None and old.name == "Lexicon"
-    msg = layout.old_folder_message(db, old)
-    assert "rename that folder to Tokens" in msg
-    storage.save(db, backup=False)                         # the old setting isn't written…
-    db = storage.load(db.path)
-    assert layout.old_sound_folder(db).name == "Lexicon"   # …but Soundfiles/Lexicon is still found
-    (old.parent / "Tokens").mkdir()
-    assert layout.old_sound_folder(db) is None             # once Tokens is there, it's used
-
-
-def test_recordings_directly_in_soundfiles_are_explained(tmp_path):
-    db = storage.load(_format3(tmp_path, sound_folder="Soundfiles"))
-    old = layout.old_sound_folder(db)
-    assert old.name == "Soundfiles"
-    assert "make a folder called Tokens inside Soundfiles" in layout.old_folder_message(db, old)
 
 
 def test_another_database_in_the_folder(tmp_path):

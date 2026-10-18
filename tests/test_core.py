@@ -197,14 +197,6 @@ def test_pitch_notation():
     assert not pitch.problems("1:4", 1, 5)
 
 
-def test_old_pitch_is_doubled_on_load(tmp_path, db):
-    path = tmp_path / "p.xml"
-    storage.save(db, path)
-    text = path.read_text(encoding="utf-8").replace("<Pitch>21</Pitch>", "<Pitch>2 1</Pitch>")
-    path.write_text(text, encoding="utf-8")
-    assert storage.load(path).entries[0].tokens[0].get("Pitch") == "22 11"
-
-
 # ---- filters --------------------------------------------------------------
 
 def test_text_filters():
@@ -433,50 +425,8 @@ def test_open_marker_lifecycle(tmp_path, monkeypatch):
     assert lock.held_elsewhere(db) is None
 
 
-# ---- upgrading format 1 files ------------------------------------------------------
 
 DATA = Path(__file__).resolve().parent / "data"
-
-
-def test_format_1_is_upgraded(tmp_path):
-    old = storage.load(DATA / "Sample-format1.xml")
-    assert old.load_notes                                  # the main window reports these
-    ts = old.settings.tags
-    assert [g.name for g in ts.groups] == ["NOUN", "VERB", "Phonological", "Syntactic", "Instances"]
-    assert [g.usual for g in ts.groups[:2]] == [["NOUN"], ["VERB"]]
-    assert old.settings.word_classes() == ["NOUN", "VERB", "PRONOUN", "QUANT", "ADJECTIVE", "ADVERB"]
-    names = {e.ref: [t.file for t in e.tokens] for e in old.entries}
-    storage.save(old, tmp_path / "S.xml", backup=False)
-    again = storage.load(tmp_path / "S.xml")
-    assert not again.load_notes
-    assert {e.ref: [t.file for t in e.tokens] for e in again.entries} == names
-    assert all(again.expected_filename(e, t) == t.file for e in again.entries for t in e.tokens if t.file)
-
-
-def test_format_1_tags_shared_by_word_classes(tmp_path):
-    text = (DATA / "Sample-format1.xml").read_text(encoding="utf-8")
-    # like Josh's database: ADJECTIVE and QUANT had their own Number › Plural (PL);
-    # PRONOUN a different Plural (code PLU), which can't be merged
-    text = text.replace('<word-class name="QUANT" />', '<word-class name="QUANT"><group name="Number">'
-                        '<tag name="Plural" code="PL" /></group></word-class>')
-    text = text.replace('<word-class name="ADJECTIVE" />', '<word-class name="ADJECTIVE"><group name="Number">'
-                        '<tag name="Plural" code="PL" /></group></word-class>')
-    text = text.replace('<word-class name="PRONOUN" />', '<word-class name="PRONOUN"><group name="Number">'
-                        '<tag name="Plural" code="PLU" /></group></word-class>')
-    text = text.replace('<WordClass>VERB</WordClass>', '<WordClass>PRONOUN</WordClass>', 1)
-    path = tmp_path / "Old.xml"
-    path.write_text(text, encoding="utf-8")
-    pron = next(e for e in storage.load(DATA / "Sample-format1.xml").entries
-                if "VERB" in e.get("WordClass"))
-    db = storage.load(path)
-    ts = db.settings.tags
-    noun_number = ts.find("Plural")[1]
-    assert noun_number.usual == ["NOUN", "QUANT", "ADJECTIVE"]
-    assert ts.find("Plural (PRONOUN)") is not None
-    assert [g.name for g in ts.groups].count("ADJECTIVE") == 0     # its only group was merged
-    assert ts.duplicate_names() == []
-    assert any("Plural (PRONOUN)" in n for n in db.load_notes)
-    assert db.entry_by_ref(pron.ref) is not None
 
 
 def test_pasted_control_characters_never_make_a_file_unreadable(tmp_path):

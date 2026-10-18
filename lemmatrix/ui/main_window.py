@@ -727,26 +727,21 @@ class MainWindow(QMainWindow):
             self.lemmas.selectRow(0)
         self._restore_view()
         self._update_title()
-        old_folder = layout.old_sound_folder(db)  # recordings not yet in Soundfiles/Tokens
-        if old_folder is None:
-            self._report_missing()
+        self._report_missing()
         if self.notebook_dialog is not None:
             self.notebook_dialog.reload()
         if db.load_notes:                         # e.g. an older file upgraded to the current format
             notes, db.load_notes = db.load_notes, []
             self.doc.settings_changed()           # unsaved, so saving writes the new format
             QMessageBox.information(self, "Database upgraded", "\n\n".join(notes))
-        self._check_layout(db, old_folder)
+        self._check_layout(db)
 
     # ------------------------------------------------- the fixed folder layout
-    def _check_layout(self, db: Database, old_folder: Path | None):
-        """On opening: recordings still in an older sound folder, another database in the same
-        folder, consent forms moved into Documentation (relinked quietly), and the reminder to
-        make a full backup."""
+    def _check_layout(self, db: Database):
+        """On opening: another database in the same folder, consent forms moved into
+        Documentation (relinked quietly), and the reminder to make a full backup."""
         if not db.path:
             return
-        if old_folder is not None:
-            QMessageBox.warning(self, "Recordings", layout.old_folder_message(db, old_folder))
         others = layout.other_databases(db.path)
         if others:
             QMessageBox.warning(
@@ -2192,12 +2187,7 @@ class MainWindow(QMainWindow):
 
     def open_sound_folder(self):
         folder = storage.sound_folder(self.doc.db)
-        old = layout.old_sound_folder(self.doc.db)
-        if old is not None:                       # not moved into Soundfiles/Tokens yet
-            QMessageBox.information(self, "Sound folder", layout.old_folder_message(self.doc.db, old))
-            folder = old
-        else:
-            folder.mkdir(parents=True, exist_ok=True)
+        folder.mkdir(parents=True, exist_ok=True)
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
 
     def about(self):

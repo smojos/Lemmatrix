@@ -607,9 +607,9 @@ class TokenDialog(QDialog):
                 return tag.name
         names, codes = {x.name for x, _ in ts.tags()}, {x.code for x, _ in ts.tags()}
         n = len(group.tags) + 1
-        while f"Example {n}" in names or f"X{n}" in codes or self._clashes(base + [f"Example {n}"]):
+        while f"Example {n}" in names or f"x{n}" in {c.lower() for c in codes} or self._clashes(base + [f"Example {n}"]):
             n += 1
-        group.tags.append(Tag(f"Example {n}", f"X{n}"))
+        group.tags.append(Tag(f"Example {n}", f"x{n}"))
         self.doc.settings_changed()
         return f"Example {n}"
 

@@ -4,7 +4,7 @@
     ├─ <database>.xml
     ├─ <database>.notebook
     ├─ Soundfiles/
-    │  ├─ Tokens/              lemma tokens' recordings (until format 4: Soundfiles/Lexicon, settable)
+    │  ├─ Tokens/              lemma tokens' recordings
     │  ├─ Utterances/          (idea 7, stage 2)
     │  ├─ Texts/               (idea 7, stage 3)
     │  └─ _Deleted recordings/ deleted tokens' recordings, held for undo
@@ -13,9 +13,8 @@
     └─ Exports/                where File → Export starts
 
 Lemmatrix assumes this layout instead of keeping paths in the settings. One database per
-main folder: two would share Soundfiles. Also here: finding the recordings of a database
-from before the fixed layout, relinking consent forms moved into Documentation, and the
-full backup (the whole main folder as one zip). No Qt in this module.
+main folder: two would share Soundfiles. Also here: relinking consent forms moved into
+Documentation, and the full backup (the whole main folder as one zip). No Qt in this module.
 """
 
 from __future__ import annotations
@@ -34,7 +33,6 @@ HELD = "_Deleted recordings"
 BACKUPS = "Backups"
 DOCUMENTATION = "Documentation"
 EXPORTS = "Exports"
-OLD_TOKENS = "Lexicon"                     # the sound folder's usual name before the fixed layout
 REMIND_DAYS = 7                            # the full-backup reminder
 
 
@@ -120,72 +118,6 @@ def other_databases(db_path) -> list[Path]:
         if is_database(p):
             out.append(p)
     return out
-
-
-# --------------------------------------------------------------------------
-# Recordings of a database from before the fixed layout
-# --------------------------------------------------------------------------
-
-def old_sound_folder(db) -> Path | None:
-    """Where this database's recordings are if Soundfiles/Tokens isn't there yet.
-
-    None when Tokens exists, or when no older folder with recordings is found. Looks in the
-    folder the database's settings named (format 3 and before), Soundfiles/Lexicon, and
-    Soundfiles itself.
-    """
-    if not db.path:
-        return None
-    tokens = tokens_folder(db.path)
-    if tokens.is_dir():
-        return None
-    candidates = []
-    legacy = getattr(db.settings, "old_sound_folder", "")
-    if legacy:
-        p = Path(legacy)
-        candidates.append(p if p.is_absolute() else main_folder(db.path) / p)
-    candidates += [soundfiles(db.path) / OLD_TOKENS, soundfiles(db.path)]
-    files = {t.file for e in db.entries for t in e.tokens if t.file}
-    seen = set()
-    for c in candidates:
-        try:
-            key = c.resolve()
-        except OSError:
-            continue
-        if key in seen or not c.is_dir():
-            continue
-        seen.add(key)
-        try:
-            names = {f.name for f in c.iterdir()}
-        except OSError:
-            continue
-        if names & files or (not files and any(n.lower().endswith(".wav") for n in names)):
-            return c
-    return None
-
-
-def old_folder_message(db, folder: Path) -> str:
-    """What to do with the recordings of a database from before the fixed layout."""
-    main = main_folder(db.path)
-    tokens = tokens_folder(db.path)
-    native = lambda p: str(p).replace("/", os.sep)
-    try:
-        rel = folder.resolve().relative_to(main.resolve())
-    except (ValueError, OSError):
-        rel = None
-    head = (f"Lemmatrix now keeps the recordings in {native(Path(SOUNDFILES) / TOKENS)}, next to the "
-            "database, but there is no such folder yet. ")
-    if rel == Path(SOUNDFILES):
-        how = (f"This database's recordings are in {SOUNDFILES} itself. Close Lemmatrix, make a "
-               f"folder called {TOKENS} inside {SOUNDFILES}, move the recordings into it, and open "
-               "the database again.")
-    elif rel is not None and rel.parent == Path(SOUNDFILES):
-        how = (f"This database's recordings are in {native(rel)}. Close Lemmatrix, rename that "
-               f"folder to {TOKENS}, and open the database again.")
-    else:
-        how = (f"This database's recordings are in {native(folder)}. Close Lemmatrix, move that "
-               f"folder into {SOUNDFILES} next to the database and call it {TOKENS} "
-               f"({native(tokens)}), and open the database again.")
-    return head + how + "\n\nUntil then the recordings can't be played, and none of them is renamed."
 
 
 # --------------------------------------------------------------------------

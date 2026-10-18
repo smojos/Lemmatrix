@@ -50,7 +50,7 @@ def default_tag_structure() -> TagStructure:
         ]),
         Group(INSTANCES, groups=[            # the same form said again: in a frame, or another example
             Group("Frames", _tags(("Frame 1", "F1"), ("Frame 2", "F2"))),
-            Group(EXAMPLES, _tags(("Example 1", "X1"), ("Example 2", "X2"))),
+            Group(EXAMPLES, _tags(("Example 1", "x1"), ("Example 2", "x2"))),   # lowercase: Josh's convention for a non-linguistic gloss
         ]),
     ]
     return TagStructure([noun, verb, *shared])

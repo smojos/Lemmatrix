@@ -14,21 +14,17 @@ import shutil
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from . import pitch as pitchmod
 from .matrix import CITATION, EXACT, MatrixConfig, Spec
 from .model import (LEMMAS, UTTERANCES, Database, Entry, FieldDef, Group, ListItem, Location, Metadata,
                     Person, RefCategory, Settings, Tag, TagStructure, Token, Utterance, is_utterance,
                     new_id, nfc, write_atomically, xml_safe)
 
 FORMAT_VERSION = "5"
-# Format 1 (to 18 October 2026) tied tags to word classes: <word-class> sections of the tag
-# structure plus <all-classes>, and the Word Class list lived there. Format 2 has one free
-# hierarchy of groups with "usual for" hints; format 1 files are upgraded when opened.
-# Format 3 put Frames in an Instances group. Format 4 (18 October 2026) has the fixed folder layout
-# (layout.py: no sound folder setting) and the Morphemes token field.
-# Format 5 (18 October 2026, evening) adds utterances (<utterances>, after the entries), utterance
-# reference categories (U, W–Z) and tag groups for utterances only.
-READABLE = ("1", "2", "3", "4", "5")
+# Until version 1.0 only the current format is read (Josh, 18 October 2026: his database is the
+# only one, so there is no compatibility code for older formats). When the format changes, a
+# provisional upgrade from the format before is written for his database and taken out again
+# once it has been saved in the new one.
+READABLE = (FORMAT_VERSION,)
 BACKUPS_KEPT = 10
 
 
@@ -56,10 +52,8 @@ def _load_item(el) -> ListItem:
 
 def _load_field(el) -> FieldDef:
     f = FieldDef(name=el.get("name", ""), label=el.get("label", ""), role=el.get("role", ""),
-                 closed=_bool(el.get("closed")) or _bool(el.get("list")))
+                 closed=_bool(el.get("closed")))
     f.items = [_load_item(i) for i in el.findall("item")]
-    # Older prototype files kept a flat <value> list.
-    f.items += [ListItem(_text(v)) for v in el.findall("value") if _text(v)]
     if f.role == "word-class":
         f.closed = True
     return f
@@ -82,30 +76,12 @@ def _load_group(el) -> Group:
     return g
 
 
-def _load_tags(el) -> tuple[TagStructure, list[str]]:
-    """The tag structure, and (format 1) the word classes that were its top level."""
-    ts = TagStructure()
-    classes: list[str] = []
-    if el is None:
-        return ts, classes
-    shared = []
-    for child in el:
-        if child.tag == "group":
-            ts.groups.append(_load_group(child))
-        elif child.tag == "word-class":             # format 1: a word class's own groups
-            name = nfc(child.get("name", ""))
-            classes.append(name)
-            groups = [_load_group(g) for g in child.findall("group")]
-            if groups:
-                ts.groups.append(Group(name, groups=groups, usual=[name]))
-        elif child.tag == "all-classes":            # format 1: groups open to every class
-            shared = [_load_group(g) for g in child.findall("group")]
-    ts.groups += shared
-    return ts, classes
+def _load_tags(el) -> TagStructure:
+    return TagStructure([_load_group(g) for g in el.findall("group")] if el is not None else [])
 
 
 KNOWN_SETTINGS = {"entry-fields", "token-fields", "glosses", "tag-structure", "references",
-                  "sounds", "pitch", "playback", "display", "tag-conversions", "spelling"}
+                  "sounds", "pitch", "playback", "display", "spelling"}
 
 def _load_specs(el, tag: str) -> list[Spec]:
     out = []
@@ -122,7 +98,6 @@ def _load_matrices(el) -> list[MatrixConfig]:
         return out
     for m in el.findall("matrix"):
         cfg = MatrixConfig(name=nfc(m.get("name", "")), kind=m.get("kind", "lemma-tag"))
-        cfg.old_class = nfc(m.get("word-class", ""))      # format 1 only, for the upgrade
         cfg.y = _load_specs(m, "y")
         cfg.x = _load_specs(m, "x")
         if m.get("cell") is not None:
@@ -142,7 +117,7 @@ def _load_settings(el) -> Settings:
     if (x := el.find("glosses")) is not None:
         s.gloss_languages = (x.get("languages") or "en").split()
         s.primary_gloss = x.get("primary") or s.gloss_languages[0]
-    s.tags, s.old_classes = _load_tags(el.find("tag-structure"))
+    s.tags = _load_tags(el.find("tag-structure"))
     if (x := el.find("references")) is not None:
         s.ref_scheme = x.get("scheme", "categories")
         s.ref_digits = int(x.get("digits", "3") or 3)
@@ -150,7 +125,6 @@ def _load_settings(el) -> Settings:
                                         UTTERANCES if c.get("for") == UTTERANCES else LEMMAS)
                             for c in x.findall("category")]
     if (x := el.find("sounds")) is not None:
-        s.old_sound_folder = x.get("folder", "")        # format 3 and before; not written
         s.filename_pattern = x.get("pattern", s.filename_pattern)
         s.utterance_pattern = x.get("utterance-pattern", s.utterance_pattern)
         s.tag_separator = x.get("tag-separator", s.tag_separator)
@@ -181,10 +155,8 @@ def _load_values(el, target, multilingual_names: set[str], skip=("token",)):
                 target.changed[child.tag] = child.get("changed")
 
 
-def _load_person(el, older: bool = False) -> Person:
-    """<participant code="SP1" name="...">description</participant>; older files had the name as text."""
-    if el.get("name") is None and older:
-        return Person(nfc(el.get("code", "")), _text(el))
+def _load_person(el) -> Person:
+    """<participant code="SP1" name="...">description</participant>"""
     return Person(nfc(el.get("code", "")), nfc(el.get("name", "")), _text(el), nfc(el.get("consent", "")))
 
 
@@ -203,12 +175,8 @@ def _load_metadata(m) -> Metadata:
         md.variety_code, md.variety_name = nfc(x.get("code", "")), _text(x)
     md.name = _text(m.find("name"))
     md.author = _text(m.find("author"))
-    for r in m.findall("researcher"):
-        if r.get("code") is None:                # older files: one researcher, who owns the database
-            md.author = md.author or _text(r)
-        else:
-            md.researchers.append(_load_person(r))
-    md.participants = [_load_person(p, older=True) for p in m.findall("participant")]
+    md.researchers = [_load_person(r) for r in m.findall("researcher")]
+    md.participants = [_load_person(p) for p in m.findall("participant")]
     md.locations = [_load_location(x) for x in m.findall("location")]
     md.description = _text(m.find("description"))
     return md
@@ -236,15 +204,14 @@ def load(path: str | os.PathLike) -> Database:
         raise FormatError("This isn't a Lemmatrix database (the top element should be <database>).")
     version = root.get("format", FORMAT_VERSION)
     if version not in READABLE:
-        raise FormatError(f"This database uses format {root.get('format')}, "
-                          f"which this version of Lemmatrix can't read.")
+        raise FormatError(f"This database uses format {root.get('format')}; this version of Lemmatrix "
+                          f"reads format {FORMAT_VERSION} only.")
 
     md = _load_metadata(root.find("metadata"))
 
     settings = _load_settings(root.find("settings"))
     entry_multi = {f.name for f in settings.entry_fields if f.multilingual}
     token_multi = {f.name for f in settings.token_fields if f.multilingual}
-    pitch_fields = [f.name for f in settings.token_fields if f.role == "pitch"]
 
     db = Database(metadata=md, settings=settings, path=path)
 
@@ -254,9 +221,6 @@ def load(path: str | os.PathLike) -> Database:
                   collected=tel.get("collected", ""), file=nfc(tel.get("file", "")),
                   rerecord=tel.get("rerecord") == "yes", id=tel.get("id", ""))
         _load_values(tel, t, token_multi, skip=())
-        for name in pitch_fields:               # older data: lone digits become 55
-            if t.values.get(name):
-                t.values[name] = pitchmod.normalise(t.values[name])
         return t
 
     for el in root.findall("entry"):
@@ -274,14 +238,6 @@ def load(path: str | os.PathLike) -> Database:
             u.tokens = [load_token(tels[0])] if tels else [Token()]
             db.utterances.append(u)
     _unique_ids(db)
-    if version == "1":
-        _upgrade_from_1(db)
-    if version in ("1", "2"):
-        _upgrade_to_3(db)
-    if version in ("1", "2", "3"):
-        _upgrade_to_4(db)
-    if version in ("1", "2", "3", "4"):
-        _upgrade_to_5(db)
     if repaired:
         db.load_notes = list(db.load_notes) + [REPAIRED_NOTE]
     return db
@@ -298,158 +254,6 @@ def _parse_repaired(path, exc):
             return ET.fromstring(xml_safe(fh.read()))
     except (ET.ParseError, OSError):
         raise FormatError(f"This file isn't readable XML: {exc}") from exc
-
-
-def _upgrade_to_3(db: Database):
-    """Format 2 → 3: Frames moves into a top-level Instances group, beside a new Examples group
-    (Example 1 = X1, Example 2 = X2) that tells apart tokens which would share a recording name.
-    Codes stay as they were, so no recording is renamed."""
-    from .defaults import EXAMPLES, INSTANCES
-    from .model import Group, Tag
-    ts = db.settings.tags
-    if any(g.name.lower() == INSTANCES.lower() for g in ts.groups):
-        return
-    frames = next((g for g in ts.groups if g.name.lower() == "frames"), None)
-    inner = []
-    if frames is not None:
-        ts.groups.remove(frames)
-        inner.append(frames)
-    taken = {t.name for t, _ in ts.tags()}
-    codes = {t.code for t, _ in ts.tags()}
-    examples = [Tag(f"Example {n}", f"X{n}") for n in (1, 2)
-                if f"Example {n}" not in taken and f"X{n}" not in codes]
-    inner.append(Group(EXAMPLES, examples))
-    ts.groups.append(Group(INSTANCES, groups=inner))
-    moved = "Frames is now inside it, with its codes unchanged, so no recording is renamed. " \
-        if frames is not None else ""
-    db.load_notes = list(db.load_notes) + [
-        f"The tag structure has a new top-level group, {INSTANCES}. {moved}Beside it is a new group, "
-        f"{EXAMPLES} (X1, X2…), for telling apart tokens of a lemma that have the same tags: when two "
-        "recordings would share a name, Lemmatrix offers a free Example tag. The file is saved in the "
-        "new format (a backup of the old one is kept)."]
-
-
-def _upgrade_to_4(db: Database):
-    """Format 3 → 4: the fixed folder layout (recordings always in Soundfiles/Tokens) and the
-    Morphemes token field, under Phonemic. Empty fields aren't written, so no token changes."""
-    from .model import FieldDef
-    s = db.settings
-    notes = []
-    if s.token_field("morphemes") is None and s.token_field("Morphemes") is None:
-        after = next((i for i, f in enumerate(s.token_fields) if f.role == "phonemic"), None)
-        if after is None:
-            after = next((i for i, f in enumerate(s.token_fields) if f.role == "phonetic"), -1)
-        s.token_fields.insert(after + 1, FieldDef("Morphemes", role="morphemes"))
-        notes.append("There is a new token field, Morphemes, under Phonemic, for the morpheme glosses. "
-                     "It is empty until you fill it in (Edit → Fields renames, moves or deletes it).")
-    elif (f := s.token_field("Morphemes")) is not None and not f.role:
-        f.role = "morphemes"
-    notes.append("Lemmatrix now uses a fixed folder layout next to the database: the recordings are "
-                 "always in Soundfiles\\Tokens, the automatic backups in Backups, consent forms and "
-                 "other documentation in Documentation, and exports start in Exports. Settings → Sound "
-                 "no longer has a sound folder.")
-    db.load_notes = list(db.load_notes) + notes
-
-
-def _upgrade_to_5(db: Database):
-    """Format 4 → 5: utterances. The utterance reference categories (U, W, X, Y, Z) join the list,
-    unless a letter is taken already."""
-    from .defaults import utterance_categories
-    s = db.settings
-    taken = {c.letter for c in s.ref_categories}
-    added = [c for c in utterance_categories() if c.letter not in taken]
-    s.ref_categories += added
-    clash = [c.letter for c in utterance_categories() if c.letter in taken
-             and not any(x.letter == c.letter and x.kind == UTTERANCES for x in s.ref_categories)]
-    note = ("This database can now hold utterances: one-off sentences and phrases with no lemma "
-            "(View → Texts and utterances). They get references of their own: "
-            + ", ".join(f"{c.letter} ({c.name})" for c in added) + "." if added else
-            "This database can now hold utterances (View → Texts and utterances).")
-    if clash:
-        note += (f" {', '.join(clash)} {'is' if len(clash) == 1 else 'are'} already used for lemmas, so "
-                 "add an utterance category in Edit → Lists → Reference categories if you need one.")
-    db.load_notes = list(db.load_notes) + [note]
-
-
-def _upgrade_from_1(db: Database):
-    """Format 1 → 2: tags no longer belong to word classes.
-
-    Each word class's groups become a top-level group of the same name, usual for that
-    class; the all-classes groups follow, with no hint. The Word Class list, which was the
-    tag structure's top level, becomes the Word Class field's own list. Tag names must now
-    be unique in the whole structure: a name used under two word classes keeps it under the
-    first, and is "Name (CLASS)" under the others, in the tokens and saved matrices too.
-    Saved matrices are no longer filed by word class; a name used twice gets "(CLASS)".
-    Nothing else changes: codes, so sound file names, stay as they were.
-    """
-    s = db.settings
-    classes = getattr(s, "old_classes", [])
-    notes = ["This database was made with an earlier Lemmatrix, in which tags belonged to word "
-             "classes. Its tag structure has been upgraded: each word class's groups are now a "
-             "group of the same name, usual for that word class, and any tag can go on any token. "
-             "The file is saved in the new format (a backup of the old one is kept)."]
-    wcf = s.entry_field("word-class")
-    if wcf is not None and not wcf.items:
-        wcf.items = [ListItem(c) for c in classes]
-    # A tag name used under two word classes. The same tag (name, code and group name all
-    # alike, e.g. Plural PL in NOUN, ADJECTIVE and QUANT › Number) becomes one: the first
-    # class's group is made usual for the other classes too. Different tags with one name
-    # keep it under the first class and get "Name (CLASS)" under the others.
-    renames: dict[str, dict[str, str]] = {}              # word class -> {old name: new name}
-    taken = {t.name for t, _ in s.tags.tags()}
-    first: dict[str, tuple] = {}                         # tag name -> (tag, group, top group)
-    for top in list(s.tags.groups):
-        owner = top.usual[0] if top.usual else ""
-        for g in list(top.walk()):
-            for t in list(g.tags):
-                if t.name not in first:
-                    first[t.name] = (t, g, top)
-                    continue
-                if not owner:
-                    continue
-                t0, g0, top0 = first[t.name]
-                if (t0.code, t0.default, g0.name) == (t.code, t.default, g.name):
-                    hint = g0.usual or list(top0.usual)
-                    if owner not in hint:
-                        g0.usual = hint + [owner]
-                    g.tags.remove(t)
-                    note = (f"“{t.name}” was a tag of several word classes; it is now one tag, in "
-                            f"{top0.name} › {g0.name}, usual for {', '.join(g0.usual)}.")
-                    if note not in notes:
-                        notes = [n for n in notes if not n.startswith(f"“{t.name}” was a tag of several")]
-                        notes.append(note)
-                    continue
-                new = f"{t.name} ({owner})"
-                k = 2
-                while new in taken:
-                    new, k = f"{t.name} ({owner} {k})", k + 1
-                taken.add(new)
-                renames.setdefault(owner, {})[t.name] = new
-                notes.append(f"The tag “{t.name}” was used under more than one word class with a different "
-                             f"code or group: under {owner} it is now “{new}”. Rename it in Edit → Lists → "
-                             "Tag structure.")
-                t.name = new
-
-    def prune(g):
-        g.groups = [x for x in g.groups if prune(x)]
-        return bool(g.tags or g.groups)
-    s.tags.groups = [g for g in s.tags.groups if prune(g)]
-    if renames:
-        for e in db.entries:
-            r = renames.get(db.word_class(e))
-            if r:
-                for tok in e.tokens:
-                    tok.tags = [r.get(x, x) for x in tok.tags]
-    names: set[tuple[str, str]] = set()
-    for m in s.matrices:
-        old = getattr(m, "old_class", "")
-        if old in renames:
-            m.rename(renames[old], {})
-        if (m.kind, m.name) in names:
-            m.name = f"{m.name} ({old or '(none)'})"
-            notes.append(f"Two saved matrices were called the same; one is now “{m.name}”.")
-        names.add((m.kind, m.name))
-    db.load_notes = notes
 
 
 # --------------------------------------------------------------------------
@@ -772,8 +576,7 @@ def held_folder(db: Database) -> Path:
 
 
 def held_folders(db: Database) -> list[Path]:
-    """The held folder, and where it was before the fixed layout (inside the sound folder)."""
-    return [held_folder(db), sound_folder(db) / HELD]
+    return [held_folder(db)]
 
 
 def sound_folder(db: Database) -> Path:

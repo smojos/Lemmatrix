@@ -375,7 +375,6 @@ class Settings:
     ref_scheme: str = "categories"
     ref_digits: int = 3
     ref_categories: list[RefCategory] = field(default_factory=list)
-    old_sound_folder: str = ""   # format 3 and before: the settable sound folder (read, never written)
     filename_pattern: str = "{language}-{variety}_{reference}_{gloss}_{tags}"
     utterance_pattern: str = "{language}-{variety}_{reference}_{label}"   # utterances: no tags
     tag_separator: str = "-"

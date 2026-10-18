@@ -52,21 +52,9 @@ def test_people_places_ids_and_comment_dates_round_trip(db, tmp_path):
     assert be.tokens[1].changed == {"Comment": "2026-10-17"}
 
 
-def test_older_metadata_still_reads(tmp_path):
-    p = tmp_path / "old.xml"
-    p.write_text('<database format="1"><metadata><researcher>Josh</researcher>'
-                 '<participant code="SP1">Samplespeaker</participant></metadata><settings/>'
-                 '<entry ref="A001"><token/><token/></entry></database>', encoding="utf-8")
-    d = storage.load(p)
-    assert d.metadata.author == "Josh" and d.metadata.researchers == []
-    assert d.metadata.participant("SP1").name == "Samplespeaker"
-    ids = [d.entries[0].id] + [t.id for t in d.entries[0].tokens]
-    assert all(ids) and len(set(ids)) == 3
-
-
 def test_duplicate_ids_are_made_unique(tmp_path):
     p = tmp_path / "dup.xml"
-    p.write_text('<database format="1"><metadata/><settings/>'
+    p.write_text('<database format="5"><metadata/><settings/>'
                  '<entry ref="A001" id="x"><token id="t"/><token id="t"/></entry></database>', encoding="utf-8")
     d = storage.load(p)
     assert len({t.id for t in d.entries[0].tokens}) == 2

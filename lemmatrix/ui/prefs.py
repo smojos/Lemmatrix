@@ -131,8 +131,8 @@ class Prefs:
     @property
     def full_backup_folder(self) -> str:
         """Where File → Full backup offers to save ("" = Documents). Local backups always go in
-        the database's own Backups folder; a backup folder chosen before that is the default."""
-        return self._get("safety/full_backup_folder", self._get("safety/backup_folder", ""))
+        the database's own Backups folder."""
+        return self._get("safety/full_backup_folder", "")
 
     @full_backup_folder.setter
     def full_backup_folder(self, v): self.q.setValue("safety/full_backup_folder", v)
