@@ -1206,3 +1206,20 @@ def test_token_dialogue_remembers_its_size(win):
     again = TokenDialog(win, [Slot(e, 0)], 0)
     assert (again.width(), again.height()) == (760, 700)
     again.reject()
+
+
+def test_double_clicking_a_lemma_in_lemma_tag_selects_it(win):
+    from lemmatrix import matrix as mx
+    from lemmatrix.ui.main_window import LEMMA_TAG
+    win.tabs.setCurrentIndex(LEMMA_TAG)
+    win.config_for(LEMMA_TAG).x = [mx.Spec.citation()]
+    win.refresh()
+    lay = win.layouts[LEMMA_TAG]
+    target = lay.rows[2].entry
+    win.lemmas.select_row(lay.rows[0].entry)
+    win.lt_view.verticalHeader().sectionDoubleClicked.emit(2)
+    assert win.lemmas.current_row() is target
+    win.switch_axes(LEMMA_TAG)                     # lemmas along the top: the same
+    win.lemmas.select_row(lay.rows[0].entry)
+    win.lt_view.horizontalHeader().sectionDoubleClicked.emit(2)
+    assert win.lemmas.current_row() is target

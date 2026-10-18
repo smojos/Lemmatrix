@@ -329,6 +329,7 @@ class MatrixView(QTableView):
     deleteRequested = Signal()
     switchRequested = Signal()
     playRequested = Signal()                  # spacebar
+    entryActivated = Signal(object)           # a lemma's header double-clicked (on either axis)
 
     def __init__(self, db: Database, parent=None):
         super().__init__(parent)
@@ -354,10 +355,17 @@ class MatrixView(QTableView):
         self.verticalHeader().setMinimumWidth(90)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self._context)
+        for hdr, lines in ((self.verticalHeader(), "rows"), (self.horizontalHeader(), "cols")):
+            hdr.sectionDoubleClicked.connect(lambda i, lines=lines: self._header_activated(lines, i))
         self.switch = QToolButton(self)
         self.switch.setIcon(icon("switch", 20))
         self.switch.setToolTip("Swap rows and columns (display only)")
         self.switch.clicked.connect(self.switchRequested.emit)
+
+    def _header_activated(self, lines: str, i: int):
+        items = getattr(self.model_.layout_, lines, [])
+        if 0 <= i < len(items) and items[i].entry is not None:
+            self.entryActivated.emit(items[i].entry)
 
     def set_database(self, db: Database):
         self.db = db

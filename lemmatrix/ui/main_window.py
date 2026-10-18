@@ -310,6 +310,7 @@ class MainWindow(QMainWindow):
             view.deleteRequested.connect(self.delete_token)
             view.switchRequested.connect(lambda tab=tab: self.switch_axes(tab))
             view.playRequested.connect(self.play_selected)
+        self.lt_view.entryActivated.connect(self._jump_to_lemma)
 
     def _all_data_bar(self) -> QWidget:
         bar, bl = self._bar()
@@ -1054,6 +1055,11 @@ class MainWindow(QMainWindow):
         self.views.setCurrentIndex(i)
         self.options.setCurrentIndex(i)
         self.refresh()
+
+    def _jump_to_lemma(self, entry):
+        """Double-clicking a lemma in Lemma/Tag selects it in the lemma list."""
+        self.lemmas.select_row(entry)
+        self.lemmas.setFocus()
 
     def _lemma_selected(self):
         e = self.lemmas.current_row()
