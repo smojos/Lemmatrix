@@ -182,6 +182,7 @@ class TextsUtterancesWindow(QDialog):
         self.search.textChanged.connect(lambda text: t.proxy.set_search(text))
         from PySide6.QtGui import QShortcut
         QShortcut(QKeySequence("Ctrl+Space"), self, self.play)
+        QShortcut(QKeySequence("Ctrl+Shift+Space"), self, self.play_pitch)    # as in All data
 
         for a in (self.doc.undo.createUndoAction(self, "Undo"), self.doc.undo.createRedoAction(self, "Redo")):
             self.addAction(a)
@@ -557,6 +558,17 @@ class TextsUtterancesWindow(QDialog):
                                     "utterance is deleted; its recording stays in Soundfiles\\Utterances.")
         self.doc.delete_entry(u, renames=renames)
 
+    def _pitch(self, u) -> str:
+        f = self.db.settings.token_field("pitch")
+        return u.token.get(f.name) if (u is not None and f is not None) else ""
+
+    def play_pitch(self):
+        """Play the selected utterance's pitch in the voice chosen in Settings → Pitch."""
+        u = self.table.current_row()
+        if u is None:
+            return
+        self.main.play_pitch(self._pitch(u))
+
     def play(self):
         u = self.table.current_row()
         if u is None or not u.token.file:
@@ -573,6 +585,7 @@ class TextsUtterancesWindow(QDialog):
         items = [("Add", "add", self.add, True), ("Import…", None, self.import_dialog, True),
                  ("Edit", "edit", self.edit, row is not None),
                  ("Play", "play", self.play, row is not None and bool(row.token.file)),
+                 ("Play pitch", "play-pitch", self.play_pitch, bool(self._pitch(row))),
                  ("Move to another category…", None, self.move_category, row is not None),
                  ("Delete", "delete", self.delete, row is not None)]
         for text, name, fn, on in items:

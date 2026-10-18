@@ -314,3 +314,17 @@ def test_anonymous_backup_takes_utterance_recordings(win, tmp_path):
     rep = anonymise.export(win.doc.db, win.doc.notebook, tmp_path / "anon", anonymise.Options(recordings=True))
     assert (tmp_path / "anon" / "Soundfiles" / "Utterances" / "LXX-VXX_W001_song.wav").exists()
     assert rep.recordings > 1
+
+
+def test_ctrl_shift_space_plays_an_utterances_pitch(win, tmp_path, monkeypatch):
+    from PySide6.QtGui import QKeySequence, QShortcut
+    uw = win.open_utterances()
+    uw.import_files([str(_wav(tmp_path / "tune.wav"))])
+    u = win.doc.db.utterances[0]
+    win.doc.edit_entry(u, lambda x: x.token.set("Pitch", "11 4:42"))
+    uw.table.select_row(u)
+    played = []
+    monkeypatch.setattr(win, "play_pitch", lambda text: played.append(text))
+    keys = {sc.key().toString(): sc for sc in uw.findChildren(QShortcut)}
+    keys[QKeySequence("Ctrl+Shift+Space").toString()].activated.emit()
+    assert played == ["11 4:42"]
