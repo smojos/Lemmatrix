@@ -269,18 +269,21 @@ class SuggestionDelegate(SpellDelegate):
 class ChipsDelegate(QStyledItemDelegate):
     """Paints a list of tag labels as chips."""
 
-    def __init__(self, labels: Callable, parent=None):
+    def __init__(self, labels: Callable, parent=None, empty: str = "Citation"):
         super().__init__(parent)
         self.labels = labels                      # row -> list of chip labels
+        self.empty = empty                        # shown for no tags (utterances: nothing)
 
     def paint(self, painter, option, index):
         super().paint(painter, option, index)
         row = index.data(Qt.UserRole + 1)
         labels = self.labels(row)
         if not labels:
+            if not self.empty:
+                return
             painter.save()
             painter.setPen(theme.colour("dim"))
-            painter.drawText(option.rect.adjusted(6, 0, 0, 0), Qt.AlignVCenter, "Citation")
+            painter.drawText(option.rect.adjusted(6, 0, 0, 0), Qt.AlignVCenter, self.empty)
             painter.restore()
             return
         f = option.font

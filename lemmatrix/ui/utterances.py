@@ -1,0 +1,796 @@
+"""View → Texts and utterances: a window of its own, like Bulk edit and the notebook.
+
+Utterances (idea 7, stage 2) are one-off sentences and phrases with no lemma: one reference,
+one token (one transcription, one recording). Their reference's letter is their category
+(U Unorganised, and W, X, Y, Z of the user's own). The Utterances tab is a grid like All data;
+the utterance dialogue is the token dialogue with a header of its own (reference, category,
+file label), the tag groups for utterances first, and a Lemmas box for links by hand.
+
+Utterances are made by recording on the spot (Add), or from sound files: Import…, or WAVs
+dragged onto the grid. Imported recordings are copied into Soundfiles/Utterances under the
+utterance's name; the originals are left as they are. The Texts tab comes with stage 3.
+"""
+
+from __future__ import annotations
+
+import re
+import shutil
+from pathlib import Path
+
+from PySide6.QtCore import QDir, QSize, QStringListModel, Qt, Signal
+from PySide6.QtGui import QFont, QKeySequence
+from PySide6.QtWidgets import (QCompleter, QDialog, QGroupBox, QHBoxLayout, QInputDialog, QLabel, QLineEdit,
+                               QMenu, QMessageBox, QPushButton, QStackedWidget, QTabBar, QToolButton,
+                               QVBoxLayout, QWidget, QFileDialog)
+
+from .. import audio, layout, matrix as mx, pitch as pitchmod, storage
+from ..model import FORBIDDEN_CHARS, UTTERANCES, Token, Utterance, nfc
+from . import theme
+from .filter_dialogs import ConfigureColumnsDialog
+from .icons import icon, ink_icon
+from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, ListEditDelegate
+from .token_dialog import Slot, TokenDialog
+from .widgets import FlowLayout, ipa_font
+
+TEXTS, UTTERANCES_TAB = 0, 1
+
+
+def clean_label(text: str, limit: int = 60) -> str:
+    """A file label from a file name: no characters Windows forbids, underscores as spaces."""
+    text = "".join(" " if ch in FORBIDDEN_CHARS or ch == "_" else ch for ch in text or "")
+    text = re.sub(r"\s+", " ", text).strip(" .-")
+    return nfc(text[:limit].strip())
+
+
+def category_title(db, ref: str) -> str:
+    c = db.settings.category(ref)
+    return c.name if c else ""
+
+
+# --------------------------------------------------------------------------
+# The grid: WAVs can be dropped on it
+# --------------------------------------------------------------------------
+
+class UtteranceTable(FilterTable):
+    filesDropped = Signal(list)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptDrops(True)
+        self.viewport().setAcceptDrops(True)
+        self.setDragDropMode(self.DragDropMode.DropOnly)
+
+    @staticmethod
+    def _wavs(event) -> list[str]:
+        md = event.mimeData()
+        if not md.hasUrls():
+            return []
+        return [u.toLocalFile() for u in md.urls()
+                if u.isLocalFile() and u.toLocalFile().lower().endswith(".wav")]
+
+    def dragEnterEvent(self, event):
+        if self._wavs(event):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event):
+        if self._wavs(event):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        paths = self._wavs(event)
+        if paths:
+            event.acceptProposedAction()
+            self.filesDropped.emit(paths)
+        else:
+            event.ignore()
+
+
+# --------------------------------------------------------------------------
+# The window
+# --------------------------------------------------------------------------
+
+class TextsUtterancesWindow(QDialog):
+    def __init__(self, main):
+        super().__init__(main, Qt.Window)
+        self.main = main
+        self.doc = main.doc
+        self.setWindowTitle("Texts and utterances")
+        self.resize(1300, 760)
+        self.sound_files: set[str] = set()
+        self.cloud_files: set[str] = set()
+
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(10, 8, 10, 10)
+        top = QHBoxLayout()
+        self.title = QLabel("Texts and utterances")
+        f = QFont(self.title.font())
+        f.setBold(True)
+        f.setPointSizeF(f.pointSizeF() * 1.45)
+        self.title.setFont(f)
+        top.addWidget(self.title)
+        top.addSpacing(24)
+        self.tabs = QTabBar()
+        self.tabs.addTab("Texts")
+        self.tabs.addTab("Utterances")
+        self.tabs.setExpanding(False)
+        top.addWidget(self.tabs)
+        top.addStretch(1)
+        self.count = QLabel()
+        top.addWidget(self.count)
+        lay.addLayout(top)
+
+        self.pages = QStackedWidget()
+        texts = QLabel("Texts and songs (T and S references, with their recordings and Praat TextGrids) "
+                       "come with the next stage. Utterances clipped from a text's lines will appear in "
+                       "the Utterances tab.")
+        texts.setWordWrap(True)
+        texts.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        texts.setContentsMargins(4, 12, 4, 4)
+        self.texts_note = texts
+        self.pages.addWidget(texts)
+        self.pages.addWidget(self._utterances_page())
+        lay.addWidget(self.pages, 1)
+
+        for a in (self.doc.undo.createUndoAction(self, "Undo"), self.doc.undo.createRedoAction(self, "Redo")):
+            self.addAction(a)
+        self.actions()[0].setShortcut(QKeySequence.Undo)
+        self.actions()[1].setShortcut(QKeySequence.Redo)
+
+        self.tabs.currentChanged.connect(self._tab_changed)
+        self.doc.changed.connect(self.refresh)
+        self.doc.settingsChanged.connect(self._settings_changed)
+        self._setup_columns()
+        self.refresh()
+        self.tabs.setCurrentIndex(UTTERANCES_TAB)
+        self._tab_changed(UTTERANCES_TAB)
+        self._restyle()
+        g = self.main.prefs.get_bytes("window/utterances")
+        if g:
+            self.restoreGeometry(g)
+
+    @property
+    def db(self):
+        return self.doc.db
+
+    # ---- building ----------------------------------------------------
+    def _tool(self, text, name, fn, tip=""):
+        b = QToolButton()
+        if name:
+            b.setIcon(icon(name, 22) if name not in ("reset-filters",) else ink_icon(name, 22))
+            b.setIconSize(QSize(22, 22))
+        b.setToolTip(tip or text)
+        if not name or name == "gear":              # names only where the icon doesn't say it
+            b.setText(text)
+            b.setToolButtonStyle(Qt.ToolButtonTextBesideIcon if name else Qt.ToolButtonTextOnly)
+        b.setAutoRaise(True)
+        b.clicked.connect(lambda *_: fn())
+        return b
+
+    def _utterances_page(self) -> QWidget:
+        page = QWidget()
+        pl = QVBoxLayout(page)
+        pl.setContentsMargins(0, 0, 0, 0)
+        pl.setSpacing(4)
+        bar = QHBoxLayout()
+        for text, name, fn, tip in (
+                ("Add", "add", self.add, "Add an utterance (pick its category, then record it)"),
+                ("Import…", None, self.import_dialog, "Import WAV files as utterances (they can also be "
+                 "dragged onto the grid). They are copied into Soundfiles\\Utterances; the originals "
+                 "stay as they are."),
+                ("Delete", "delete", self.delete, "Delete the selected utterance (Delete)"),
+                ("Edit", "edit", self.edit, "Edit the selected utterance (Enter)"),
+                ("Play", "play", self.play, "Play the selected utterance (Ctrl+Space)"),
+                ("Configure columns", "gear", self.configure_columns, ""),
+                ("Clear all filters", "reset-filters", self.clear_filters, "")):
+            bar.addWidget(self._tool(text, name, fn, tip))
+        self.search = QLineEdit()
+        self.search.setPlaceholderText("quick search of the visible columns")
+        self.search.setClearButtonEnabled(True)
+        self.search.setMaximumWidth(380)
+        bar.addWidget(self.search, 1)
+        bar.addStretch(1)
+        pl.addLayout(bar)
+        t = self.table = UtteranceTable(self)
+        t.space_plays = True
+        self.search.textChanged.connect(lambda text: t.proxy.set_search(text))
+        t.rowActivated.connect(lambda row: self.edit(row))
+        t.deleteRequested.connect(self.delete)
+        t.playRequested.connect(self.play)
+        t.contextRequested.connect(self._menu)
+        t.filesDropped.connect(self.import_files)
+        t.filtersChanged.connect(self._update_count)
+        t.model_.edited.connect(self._edited)
+        pl.addWidget(t, 1)
+        hint = QLabel("Drop WAV files here to add them as utterances.")
+        hint.setStyleSheet(f"color: {theme.muted()};")
+        self.hint = hint
+        pl.addWidget(hint)
+        from PySide6.QtGui import QShortcut
+        QShortcut(QKeySequence("Ctrl+Space"), self, self.play)
+        return page
+
+    # ---- columns -----------------------------------------------------
+    def _columns(self) -> list[Column]:
+        db = self.db
+        s = db.settings
+        edit = lambda row, text: None
+        cats = lambda: [mx_item(c) for c in s.categories(UTTERANCES)]
+
+        def lemmas_text(u):
+            return ", ".join(f"{e.ref} {db.lemma(e)}".strip() for e in db.linked_lemmas(u))
+
+        cols = [
+            Column("ref", "Reference", lambda u: u.ref),
+            Column("category", "Category", lambda u: category_title(db, u.ref), closed=True, tree=cats),
+            Column("label", "File label", lambda u: u.label, edit=edit,
+                   tooltip=lambda u: "Part of the recording's file name; changing it renames the recording"),
+            Column("tags", "Tags", lambda u: list(u.token.tags), closed=True, multi=True, kind="chips",
+                   tree=lambda: [mx_group(g) for g in s.tags.groups],
+                   tooltip=lambda u: ", ".join(u.token.tags) or None),
+            Column("drawing", "Pitch drawing", lambda u: u.token.get("Pitch"), kind="drawing",
+                   tooltip=lambda u: f"Pitch: {p}" if (p := u.token.get("Pitch")) else None),
+        ]
+        for f in s.token_fields:
+            cols.append(Column(
+                "f:" + f.name, f.title,
+                lambda u, n=f.name, ml=f.multilingual: u.token.get(n, s.primary_gloss if ml else None),
+                closed=f.closed, tree=(lambda f=f: s.list_items(f)) if f.closed else None,
+                ipa=f.role in ("phonetic", "phonemic"), edit=edit))
+        folder = storage.utterance_folder(db)
+        cols += [
+            Column("lemmas", "Lemmas", lemmas_text, ipa=True,
+                   tooltip=lambda u: "Linked by hand in the utterance dialogue" if u.lemmas else None),
+            Column("speaker", "Speaker", lambda u: u.token.speaker),
+            Column("date", "Date", lambda u: u.token.collected),
+            Column("file", "Sound file", lambda u: u.token.file if u.token.file in self.sound_files else "",
+                   blank_labels=("Missing", "Present"), flag=lambda u: u.token.rerecord, flag_label="Rerecord",
+                   display=lambda u: u.token.file or db.expected_filename(u, u.token),
+                   color=lambda u: theme.colour("dim") if not u.token.file else
+                   (theme.colour("error") if (u.token.file not in self.sound_files or
+                                              u.token.file != db.expected_filename(u, u.token)) else None),
+                   tooltip=lambda u: ("Not recorded yet" if not u.token.file else
+                                      f"{u.token.file} isn't in Soundfiles\\Utterances"
+                                      if u.token.file not in self.sound_files else
+                                      f"Recorded as {u.token.file}\nExpected: {db.expected_filename(u, u.token)}"
+                                      f"\n{QDir.toNativeSeparators(str(folder / u.token.file))}")),
+        ]
+        return cols
+
+    def _default_keys(self) -> list[str]:
+        keys = ["ref", "label", "tags", "drawing"]
+        keys += ["f:" + f.name for f in self.db.settings.token_fields]
+        return keys + ["lemmas", "speaker", "date", "file"]
+
+    def _setup_columns(self):
+        db = self.db
+        cols = self._columns()
+        saved = self.main.prefs.get_list("columns/utterances")
+        keys = [k for k in saved if any(c.key == k for c in cols)] or self._default_keys()
+        self.table.set_columns(cols, keys)
+        self.table.set_delegate("tags", ChipsDelegate(
+            lambda u: mx.chips(db, u.token.tags) if u is not None else [], self.table, empty=""))
+        self.table.set_delegate("drawing", DrawingDelegate(
+            lambda: (db.settings.pitch_low, db.settings.pitch_high), self.table))
+        for c in self.table.model_.columns:
+            if c.closed and c.edit and c.tree and not c.multi:
+                self.table.set_delegate(c.key, ListEditDelegate(
+                    lambda c=c: [i.name for top in c.tree() for i in top.walk()], self.table))
+
+    def configure_columns(self):
+        cols = self._columns()
+        dlg = ConfigureColumnsDialog(self, [(c.key, c.title) for c in cols], self.table.visible_keys())
+        if dlg.exec():
+            self.main.prefs.set_list("columns/utterances", dlg.chosen())
+            self._setup_columns()
+            self.refresh()
+
+    def clear_filters(self):
+        self.table.clear_filters()
+        self.search.clear()
+
+    # ---- refreshing ---------------------------------------------------
+    def refresh(self):
+        try:
+            self.sound_files, self.cloud_files = storage.scan_sound_folder(storage.utterance_folder(self.db))
+        except Exception:
+            self.sound_files, self.cloud_files = set(), set()
+        self.table.set_rows(list(self.db.utterances))
+        self._update_count()
+
+    def _settings_changed(self):
+        self._setup_columns()
+        self.refresh()
+
+    def _update_count(self):
+        n, shown = len(self.db.utterances), self.table.proxy.rowCount()
+        self.count.setText(f"{shown} utterance{'s' if shown != 1 else ''} shown of {n}" if shown != n
+                           else f"{n} utterance{'s' if n != 1 else ''}")
+
+    def _tab_changed(self, i):
+        self.pages.setCurrentIndex(i)
+
+    def select(self, u: Utterance):
+        """Show an utterance (from a notebook link)."""
+        self.tabs.setCurrentIndex(UTTERANCES_TAB)
+        if u not in self.table.visible_rows():
+            self.clear_filters()
+        self.table.select_row(u)
+
+    # ---- categories ----------------------------------------------------
+    def _ask_category(self, title: str, current: str = "") -> str:
+        """An utterance category's letter, or "" if cancelled."""
+        cats = self.db.settings.categories(UTTERANCES)
+        if not cats:
+            QMessageBox.information(self, title, "There are no utterance categories. Add one in Edit → "
+                                    "Lists → Reference categories.")
+            return ""
+        labels = [f"{c.letter}  {c.name}" for c in cats]
+        start = next((i for i, c in enumerate(cats) if c.letter == current), 0)
+        text, ok = QInputDialog.getItem(self, title, "Category:", labels, start, False)
+        if not ok:
+            return ""
+        return cats[labels.index(text)].letter
+
+    # ---- adding --------------------------------------------------------
+    def add(self):
+        letter = self._ask_category("Add utterance")
+        if not letter:
+            return
+        ref = self.db.suggest_utterance_reference(letter)
+        u = self.db.new_utterance(ref, "", self.main.session_speaker(), self.main.session_date())
+        slots = self._slots()
+        slots.append(Slot(u, None, explicit=True))
+        self._open(slots, len(slots) - 1)
+
+    def import_dialog(self):
+        start = str(Path.home())
+        paths, _ = QFileDialog.getOpenFileNames(self, "Import recordings as utterances", start,
+                                                "WAV recordings (*.wav *.WAV)")
+        if paths:
+            self.import_files(paths)
+
+    def import_files(self, paths) -> list[Utterance]:
+        """WAV files become utterances (one undo step). Each is copied into Soundfiles/Utterances
+        under its utterance's name, with the file's name as its label; the original stays."""
+        wavs = [Path(p) for p in paths if Path(p).suffix.lower() == ".wav" and Path(p).is_file()]
+        if not wavs:
+            QMessageBox.information(self, "Import", "Only WAV recordings can be imported.")
+            return []
+        if not self.db.path:
+            QMessageBox.information(self, "Import", "Save the database first: the recordings go in the "
+                                    "Soundfiles folder next to it.")
+            return []
+        letter = self._ask_category(f"Import {len(wavs)} recording{'s' if len(wavs) != 1 else ''}")
+        if not letter:
+            return []
+        folder = storage.utterance_folder(self.db)
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            QMessageBox.warning(self, "Import", f"Couldn't make {folder}: {exc}")
+            return []
+        digits = self.db.settings.ref_digits
+        number = int(self.db.suggest_utterance_reference(letter)[len(letter):])
+        speaker, date = self.main.session_speaker(), self.main.session_date()
+        items, renames, problems = [], [], []
+        for w in wavs:
+            ref = f"{letter}{number:0{digits}d}"
+            u = self.db.new_utterance(ref, clean_label(w.stem), speaker, date)
+            name = self.db.expected_filename(u, u.token)
+            dst = folder / name
+            if dst.exists():
+                problems.append(f"{w.name}: {name} is already in Soundfiles\\Utterances")
+                continue
+            try:
+                shutil.copy2(w, dst)
+            except OSError as exc:
+                problems.append(f"{w.name}: {exc}")
+                continue
+            number += 1
+            u.token.file = name
+            renames.append((self.doc.hold_recording(dst), dst))   # undo moves the copy aside
+            items.append(u)
+        if items:
+            n = len(items)
+            self.doc.add_many(f"Import {n} recording{'s' if n != 1 else ''}", items, renames)
+            self.table.select_row(items[0])
+        if problems:
+            QMessageBox.warning(self, "Import", "Not imported:\n\n" + "\n".join(problems[:30]))
+        elif items:
+            self.main.statusBar().showMessage(
+                f"Imported {len(items)} recording(s) as {items[0].ref}"
+                + (f"–{items[-1].ref}" if len(items) > 1 else "") + ".", 8000)
+        return items
+
+    # ---- editing -------------------------------------------------------
+    def _slots(self) -> list[Slot]:
+        return [Slot(u, 0) for u in self.table.visible_rows()]
+
+    def _open(self, slots, index):
+        if not slots:
+            return
+        self.main.dialog_autoplay = self.main.autoplay.isChecked()
+        UtteranceDialog(self.main, slots, index, self).exec()
+        self.refresh()
+
+    def edit(self, row=None):
+        u = row if isinstance(row, Utterance) else self.table.current_row()
+        if u is None:
+            return
+        slots = self._slots()
+        idx = next((k for k, s in enumerate(slots) if s.entry is u), None)
+        if idx is None:
+            slots, idx = [Slot(u, 0)], 0
+        self._open(slots, idx)
+
+    def _edited(self, u, key, text):
+        """An in-place edit: a token field, or the file label (which renames the recording)."""
+        s = self.db.settings
+        text = text.strip()
+        if key == "label":
+            text = clean_label(text, 200)
+            self.set_label(u, text)
+            return
+        name = key[2:]
+        f = s.token_field(name)
+        if f is None:
+            return
+        if f.role == "pitch":
+            text = pitchmod.normalise(text)
+        if f.closed and text and text not in f.all_values():
+            f.add_value(text)
+            self.doc.settings_changed()
+
+        def change(x):
+            x.token.set(name, text, s.primary_gloss if f.multilingual else None, f.multilingual)
+        self.doc.edit_entry(u, change, f"Edit {f.title}")
+
+    def _renamed(self, u: Utterance, after: Utterance) -> list:
+        """Rename the recording to after's expected name (if automatic). Returns the renames."""
+        t = u.token
+        if not (t.file and self.db.settings.auto_update_names):
+            return []
+        folder = storage.utterance_folder(self.db)
+        new = self.db.expected_filename(after, after.token)
+        src, dst = folder / t.file, folder / new
+        if new == t.file or not src.exists():
+            return []
+        if dst.exists() and not storage.same_file(src, dst):
+            QMessageBox.warning(self, "File name", f"Can't rename {t.file}: {new} already exists.")
+            return []
+        try:
+            src.rename(dst)
+        except OSError as exc:
+            QMessageBox.warning(self, "File name", f"Couldn't rename {t.file}: {exc}")
+            return []
+        after.token.file = new
+        return [(src, dst)]
+
+    def set_label(self, u: Utterance, label: str):
+        if label == u.label:
+            return
+        after = u.copy()
+        after.file_gloss = label
+        renames = self._renamed(u, after)
+
+        def change(x, label=label, file=after.token.file):
+            x.file_gloss = label
+            x.token.file = file
+        self.doc.edit_entry(u, change, f"Rename {u.ref}", renames=renames)
+
+    def move_category(self, u: Utterance | None = None):
+        """Another category: a new reference, so the recording is renamed (asked first)."""
+        u = u or self.table.current_row()
+        if u is None:
+            return
+        old = self.db.settings.category(u.ref)
+        letter = self._ask_category(f"Move {u.ref} to another category", old.letter if old else "")
+        if not letter or (old and letter == old.letter):
+            return
+        ref = self.db.suggest_utterance_reference(letter)
+        what = f" and its recording renamed to match" if u.token.file else ""
+        if QMessageBox.question(self, "Move utterance", f"Move {u.ref} to {category_title(self.db, ref)}? "
+                                f"Its reference becomes {ref}{what}.") != QMessageBox.Yes:
+            return
+        after = u.copy()
+        after.ref = ref
+        renames = self._renamed(u, after)
+
+        def change(x, ref=ref, file=after.token.file):
+            x.ref = ref
+            x.token.file = file
+        self.doc.edit_entry(u, change, f"Move {u.ref} to {ref}", renames=renames)
+        self.table.select_row(u)
+
+    def delete(self):
+        u = self.table.current_row()
+        if u is None:
+            return
+        t = u.token
+        prefs = self.main.prefs
+        folder = storage.utterance_folder(self.db)
+        with_file = bool(t.file) and prefs.delete_recordings_with_tokens and (folder / t.file).exists()
+        msg = f"Delete the utterance {u.ref}" + (f" “{u.label}”" if u.label else "") + "?"
+        if with_file:
+            msg += (f"\nIts recording ({t.file}) goes to the Recycle Bin when the database is closed; "
+                    "until then, undo brings it back.")
+        if QMessageBox.question(self, "Delete utterance", msg) != QMessageBox.Yes:
+            return
+        renames = []
+        if with_file:
+            self.main.player.stop()
+            path = folder / t.file
+            held = self.doc.hold_recording(path)
+            try:
+                path.rename(held)
+                renames.append((path, held))
+            except OSError as exc:
+                QMessageBox.warning(self, "Delete utterance", f"Couldn't move {t.file} aside: {exc}. The "
+                                    "utterance is deleted; its recording stays in Soundfiles\\Utterances.")
+        self.doc.delete_entry(u, renames=renames)
+
+    def play(self):
+        u = self.table.current_row()
+        if u is None or not u.token.file:
+            return
+        try:
+            self.main.player.play([storage.utterance_folder(self.db) / u.token.file])
+        except audio.AudioError as exc:
+            QMessageBox.warning(self, "Play", str(exc))
+
+    def _menu(self, row, pos):
+        if row is not None:
+            self.table.select_row(row)
+        m = QMenu(self)
+        items = [("Add", "add", self.add, True), ("Import…", None, self.import_dialog, True),
+                 ("Edit", "edit", self.edit, row is not None),
+                 ("Play", "play", self.play, row is not None and bool(row.token.file)),
+                 ("Move to another category…", None, self.move_category, row is not None),
+                 ("Delete", "delete", self.delete, row is not None)]
+        for text, name, fn, on in items:
+            a = m.addAction(icon(name, 16), text) if name else m.addAction(text)
+            a.setEnabled(on)
+            a.triggered.connect(lambda *_, fn=fn: fn())
+        m.exec(pos)
+
+    # ---- style and closing --------------------------------------------
+    def _restyle(self):
+        a = theme.accent()
+        self.title.setStyleSheet(f"color: {theme.colour('pitch').name()};")
+        self.tabs.setStyleSheet("QTabBar::tab { padding: 6px 14px; font-weight: normal; } "
+                                f"QTabBar::tab:selected {{ background: {a.name()}; "
+                                f"color: {theme.text_on(a).name()}; }}")
+        for lbl in (self.count, self.hint, self.texts_note):
+            lbl.setStyleSheet(f"color: {theme.muted()};")
+        theme.as_data(self.table)
+
+    def done(self, result):
+        self.main.prefs.set_value("window/utterances", self.saveGeometry())
+        super().done(result)
+
+    def closeEvent(self, event):
+        self.main.prefs.set_value("window/utterances", self.saveGeometry())
+        try:
+            self.doc.changed.disconnect(self.refresh)
+            self.doc.settingsChanged.disconnect(self._settings_changed)
+        except (RuntimeError, TypeError):
+            pass
+        if getattr(self.main, "utterances_window", None) is self:
+            self.main.utterances_window = None
+        super().closeEvent(event)
+
+
+def mx_item(c):
+    from ..model import ListItem
+    return ListItem(c.name)
+
+
+def mx_group(g):
+    from ..model import ListItem
+    return ListItem(g.name, [ListItem(t.name) for t in g.tags] + [mx_group(x) for x in g.groups])
+
+
+# --------------------------------------------------------------------------
+# The utterance dialogue
+# --------------------------------------------------------------------------
+
+class UtteranceDialog(TokenDialog):
+    """The token dialogue for an utterance: a header with its reference, category and file label;
+    the token fields and recording as for tokens; the utterance-only tag groups and the groups
+    with no "usual for" hint first; a Lemmas box; Back and Next through the Utterances grid."""
+
+    def __init__(self, main, slots: list[Slot], index: int, parent=None):
+        self.lemma_ids: list[str] = []
+        super().__init__(main, slots, index, parent)
+        self.setWindowTitle("Utterance")
+
+    # ---- building --------------------------------------------------------
+    def _build(self):
+        super()._build()
+        outer = self.layout()
+        outer.removeWidget(self.header)
+        head = QHBoxLayout()
+        head.addWidget(self.header)
+        from .dialogs import NoForbidden
+        self.label_edit = NoForbidden()
+        self.label_edit.setFont(ipa_font(14))
+        self.label_edit.setPlaceholderText("file label, e.g. hare ran")
+        self.label_edit.setToolTip("A short label for the recording's file name. Changing it renames the "
+                                   "recording when you leave the utterance.")
+        self.label_edit.textChanged.connect(self._fields_changed)
+        head.addWidget(self.label_edit, 1)
+        outer.insertLayout(0, head)
+
+        box = QGroupBox("Lemmas")
+        bl = QVBoxLayout(box)
+        self.lemma_holder = QWidget()
+        self.lemma_flow = FlowLayout(self.lemma_holder, spacing=6)
+        bl.addWidget(self.lemma_holder)
+        self.lemma_find = QLineEdit()
+        self.lemma_find.setFont(ipa_font(self.main.prefs.ipa_size + 1))
+        self.lemma_find.setPlaceholderText("type a reference, form or gloss to link a lemma")
+        self.lemma_find.setToolTip("Links this utterance to lemmas, by hand. Pick from the list that "
+                                   "appears; click a lemma's chip to remove the link.")
+        self._choices: dict[str, str] = {}
+        self.completer = QCompleter(self)
+        self.completer.setModel(QStringListModel(self.completer))
+        self.completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.completer.setFilterMode(Qt.MatchContains)
+        self.completer.setMaxVisibleItems(12)
+        self.lemma_find.setCompleter(self.completer)
+        self.completer.activated.connect(self._lemma_chosen)
+        self.lemma_find.returnPressed.connect(lambda: self._lemma_chosen(self.lemma_find.text()))
+        bl.addWidget(self.lemma_find)
+        outer.insertWidget(2, box)
+        self.show_all_btn.setToolTip("Shown first: the tag groups for utterances only, the groups with "
+                                     "no “usual for” hint, and any group the utterance has a tag in")
+
+    def _fill_choices(self):
+        db = self.db
+        self._choices = {}
+        for e in db.entries:
+            text = " ".join(x for x in (e.ref, db.lemma(e), f"“{db.gloss(e)}”" if db.gloss(e) else "") if x)
+            self._choices[text] = e.id
+        self.completer.model().setStringList(list(self._choices))
+
+    # ---- what differs from a token ------------------------------------------
+    def _new_token(self, sl: Slot) -> Token:
+        return Token(speaker=self.main.session_speaker(), collected=self.main.session_date())
+
+    def _show_header(self, u):
+        cat = category_title(self.db, u.ref)
+        self.header.setText(f"{u.ref}  ·  {cat}  ·" if cat else f"{u.ref}  ·")
+
+    def _position_text(self) -> str:
+        u = self.slot.entry
+        state = "new utterance" if u not in self.db.utterances else "utterance"
+        return f"{self.pos + 1} / {len(self.slots)}  ·  {state}"
+
+    def _tag_args(self) -> dict:
+        return {"classes": None, "utterance": True}
+
+    def _folder(self) -> Path:
+        return storage.utterance_folder(self.db)
+
+    def _update_unusual(self):
+        self.unusual_note.hide()                  # utterances have no word class
+
+    def _update_suggestion(self):
+        self.suggestion = None                    # suggestions are learned from lemmas' glosses
+        if self.translation is not None:
+            from .table import show_suggestion
+            show_suggestion(self.translation, "")
+            self.translation.setToolTip("")
+
+    def _probe(self) -> Utterance:
+        u = self.slot.entry.copy()
+        u.file_gloss = nfc(self.label_edit.text().strip()) if hasattr(self, "label_edit") else u.file_gloss
+        u.tokens = [self.token if self.token is not None else Token()]
+        return u
+
+    def _expected(self) -> str:
+        p = self._probe()
+        return self.db.expected_filename(p, p.token)
+
+    def _clashes(self, tags=None) -> list:
+        """Other utterances whose recording has, or would have, this one's file name."""
+        name = self._expected().lower()
+        me = self.slot.entry
+        return [(u, u.token) for u in self.db.utterances if u is not me and
+                ((u.token.file and u.token.file.lower() == name) or
+                 self.db.expected_filename(u, u.token).lower() == name)]
+
+    def _offer_example(self, recording: bool) -> bool:
+        other = self._clashes()[0][0]
+        QMessageBox.warning(self, "Same recording name", f"{other.ref} already has the file name "
+                            f"{self._expected()}. Change this utterance's file label first.")
+        return False
+
+    # ---- loading and saving --------------------------------------------
+    def _load(self):
+        u = self.slot.entry
+        self.lemma_ids = list(u.lemmas)
+        if hasattr(self, "label_edit"):
+            self.label_edit.blockSignals(True)
+            self.label_edit.setText(u.label)
+            self.label_edit.blockSignals(False)
+        super()._load()
+        self._fill_choices()
+        self._show_lemmas()
+        self._refresh_name()
+
+    def _show_lemmas(self):
+        while self.lemma_flow.count():
+            item = self.lemma_flow.takeAt(0)
+            if item.widget():
+                item.widget().hide()
+                item.widget().deleteLater()
+        db = self.db
+        for ident in self.lemma_ids:
+            e = db.entry_by_id(ident)
+            text = f"{e.ref} {db.lemma(e)}".strip() if e else "(lemma deleted)"
+            b = QToolButton()
+            b.setText(text + "  ✕")
+            b.setFont(ipa_font(self.main.prefs.ipa_size))
+            b.setToolTip((f"{e.ref} {db.lemma(e)} “{db.gloss(e)}”\n" if e else "") + "Click to remove the link")
+            b.setStyleSheet("QToolButton { border: 1px solid %s; border-radius: 10px; padding: 2px 8px; }"
+                            % theme.colour("pitch").name())
+            b.clicked.connect(lambda *_, i=ident: self._remove_lemma(i))
+            self.lemma_flow.addWidget(b)
+        self.lemma_holder.setVisible(bool(self.lemma_ids))
+
+    def _lemma_chosen(self, text: str):
+        ident = self._choices.get(text)
+        if ident is None:
+            hits = [i for t, i in self._choices.items() if text and text.lower() in t.lower()]
+            ident = hits[0] if len(hits) == 1 else None
+        if ident is None:
+            return
+        if ident not in self.lemma_ids:
+            self.lemma_ids.append(ident)
+            self._show_lemmas()
+        from PySide6.QtCore import QTimer
+        QTimer.singleShot(0, self.lemma_find.clear)
+
+    def _remove_lemma(self, ident: str):
+        if ident in self.lemma_ids:
+            self.lemma_ids.remove(ident)
+            self._show_lemmas()
+
+    def _commit(self, keep_empty: bool = False, check_clash: bool = True) -> bool:
+        """Save the working utterance (token, file label and lemma links) with undo."""
+        self._collect()
+        u = self.slot.entry
+        t = self.token
+        label = nfc(self.label_edit.text().strip())
+        lemmas = list(self.lemma_ids)
+        new = u not in self.db.utterances
+        if new and not (t.has_content() or keep_empty or self.slot.explicit or label or lemmas):
+            return True                           # nothing typed: nothing added
+        problems = self.db.settings.tags.conflicts([x for x in t.tags if x not in self.unknown_tags])
+        if problems:
+            QMessageBox.warning(self, "Tags", "\n".join(problems))
+            return False
+        if self.db.settings.auto_update_names and t.file and t.file != self._expected():
+            self._rename_file()
+        renames, self._renames = self._renames, []
+        token = t.copy()
+
+        def change(x, token=token, label=label, lemmas=lemmas):
+            x.tokens = [token]
+            x.file_gloss = label
+            x.lemmas = list(lemmas)
+        if new:
+            change(u)
+            self.doc.add_entry(u, renames=renames)
+            self.slot.index = 0
+        elif self.original != t or u.file_gloss != label or u.lemmas != lemmas or renames:
+            self.doc.edit_entry(u, change, f"Edit {u.ref}", renames=renames)
+        self.original = u.tokens[0]
+        self.token = self.original.copy()
+        self.position.setText(self._position_text())
+        return True

@@ -162,7 +162,11 @@ def path_for(db_path: str | os.PathLike) -> Path:
 # --------------------------------------------------------------------------
 
 def describe(db: Database, e: Entry, t: Token | None = None) -> str:
-    """How a link reads: "C001a father", or "C001a father · PL + f1" for a token."""
+    """How a link reads: "C001a father", or "C001a father · PL + f1" for a token; an utterance's
+    is its reference and label: "W001 hare ran (utterance)"."""
+    from .model import is_utterance
+    if is_utterance(e):
+        return " ".join(x for x in (e.ref, e.label) if x) + " (utterance)"
     base = " ".join(x for x in (e.ref, db.gloss(e)) if x)
     if t is None:
         return base
@@ -176,7 +180,7 @@ def dated_comments(db: Database, date: str) -> list[NoteComment]:
     """The comments last changed on a day (not empty ones), lemmas in database order."""
     efields, tfields = db.comment_fields()
     out = []
-    for e in db.entries:
+    for e in db.items():                              # lemmas first, then utterances
         for name in efields:
             if e.changed.get(name) == date and e.get(name):
                 out.append(NoteComment(e.get(name), e.id, "", e.ref, describe(db, e), name))
@@ -189,7 +193,7 @@ def dated_comments(db: Database, date: str) -> list[NoteComment]:
 
 def find(db: Database, c: NoteComment) -> tuple[Entry, int | None] | None:
     """Where a recorded comment was written: (entry, token index or None), or None if it's gone."""
-    e = db.entry_by_id(c.entry_id) or (db.entry_by_ref(c.ref) if c.ref else None)
+    e = db.item_by_id(c.entry_id) or (db.entry_by_ref(c.ref) or db.utterance_by_ref(c.ref) if c.ref else None)
     if e is None:
         return None
     if not c.token_id:
@@ -235,14 +239,14 @@ def refresh_comments(db: Database, session: Session) -> bool:
 
 
 def recordings(db: Database, date: str) -> list[tuple[Entry, int]]:
-    """Tokens with a recording collected on a day: (entry, token index)."""
-    return [(e, i) for e in db.entries for i, t in enumerate(e.tokens) if t.collected == date and t.file]
+    """Tokens (and utterances) with a recording collected on a day: (entry or utterance, token index)."""
+    return [(e, i) for e in db.items() for i, t in enumerate(e.tokens) if t.collected == date and t.file]
 
 
 def speakers(db: Database, date: str) -> list[str]:
     """Who spoke the tokens collected on a day, most tokens first."""
     count: dict[str, int] = {}
-    for e in db.entries:
+    for e in db.items():
         for t in e.tokens:
             if t.collected == date and t.speaker:
                 count[t.speaker] = count.get(t.speaker, 0) + 1

@@ -1559,7 +1559,7 @@ def test_same_recording_name_offers_an_example_tag_and_never_overwrites(win, mon
 def test_older_databases_get_instances_with_frames_codes_kept(tmp_path):
     from lemmatrix import storage
     src = open(SAMPLES / "Sample.xml", encoding="utf-8").read()
-    old = src.replace('format="4"', 'format="2"')
+    old = src.replace(f'format="{storage.FORMAT_VERSION}"', 'format="2"')
     (tmp_path / "old.xml").write_text(old, encoding="utf-8")
     db = storage.load(tmp_path / "old.xml")
     names = [g.name for g in db.settings.tags.groups]

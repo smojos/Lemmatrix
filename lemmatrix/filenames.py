@@ -47,6 +47,7 @@ def placeholder_values(db: Database, e: Entry, t: Token) -> dict[str, str]:
         "speaker": t.speaker,
         "reference": e.ref,
         "gloss": e.file_gloss,
+        "label": e.file_gloss,          # an utterance's file label (a lemma's: its gloss in file names)
         "tags": s.tag_separator.join(s.tags.file_codes(t.tags)),
         "date": t.collected,
     }
@@ -59,7 +60,10 @@ def placeholder_values(db: Database, e: Entry, t: Token) -> dict[str, str]:
 
 
 def build_filename(db: Database, e: Entry, t: Token, extension: str = ".wav") -> str:
-    lead, parts = split_pattern(db.settings.filename_pattern)
+    """The name a token's recording should have; utterances have a pattern of their own."""
+    from .model import is_utterance
+    pattern = db.settings.utterance_pattern if is_utterance(e) else db.settings.filename_pattern
+    lead, parts = split_pattern(pattern)
     values = placeholder_values(db, e, t)
     out = lead
     for sep, name in parts:

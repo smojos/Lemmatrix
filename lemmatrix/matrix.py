@@ -208,6 +208,8 @@ def unusual_note(db: Database, entry: Entry, name: str) -> str:
     hit = ts.find(name)
     if hit is None:
         return ""
+    if ts.for_utterances_only(hit[1]):
+        return f"{name} is for utterances only ({' › '.join(ts.path_of(hit[1]))})"
     hint = ts.usual_map().get(id(hit[1]), ())
     wc = db.word_class(entry) or "(no word class)"
     return (f"{name} isn't usual for {wc} lemmas ({' › '.join(ts.path_of(hit[1]))} is usual for "

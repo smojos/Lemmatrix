@@ -48,8 +48,8 @@ class Slot:
 
 
 class TokenDialog(QDialog):
-    def __init__(self, main, slots: list[Slot], index: int):
-        super().__init__(main)
+    def __init__(self, main, slots: list[Slot], index: int, parent=None):
+        super().__init__(parent or main)
         self.main = main
         self.doc = main.doc
         self.db = main.doc.db
@@ -315,10 +315,9 @@ class TokenDialog(QDialog):
             self.token = self.original.copy()
         else:
             self.original = None
-            self.token = self.db.new_token(e, sl.tags, self.main.session_speaker(),
-                                           self.main.session_date(), defaults=sl.defaults)
+            self.token = self._new_token(sl)
         t = self.token
-        self.header.setText(f"{e.ref}   {self.db.lemma(e)}   “{self.db.gloss(e)}”")
+        self._show_header(e)
         for name, ed in self.edits.items():
             f = s.token_field(name)
             ed.blockSignals(True)
@@ -336,14 +335,33 @@ class TokenDialog(QDialog):
         self._show_rerecord(t.rerecord)
         if self.comment is not None:
             self.push_btn.setEnabled(bool(self.comment.text().strip()))
-        state = "new token" if self.original is None else f"token {sl.index + 1} of {len(e.tokens)}"
-        self.position.setText(f"{self.pos + 1} / {len(self.slots)}  ·  {state}")
+        self.position.setText(self._position_text())
         self.back_btn.setEnabled(self.pos > 0)
         self.next_btn.setEnabled(self.pos < len(self.slots) - 1)
         self._refresh_name()
         self._update_suggestion()
         if getattr(self.main, "dialog_autoplay", False) and t.file:
             QTimer.singleShot(150, self._play)
+
+    # ---- what differs for utterances (UtteranceDialog) ----------------
+    def _new_token(self, sl: Slot) -> Token:
+        return self.db.new_token(sl.entry, sl.tags, self.main.session_speaker(),
+                                 self.main.session_date(), defaults=sl.defaults)
+
+    def _show_header(self, e):
+        self.header.setText(f"{e.ref}   {self.db.lemma(e)}   “{self.db.gloss(e)}”")
+
+    def _position_text(self) -> str:
+        sl, e = self.slot, self.slot.entry
+        state = "new token" if self.original is None else f"token {sl.index + 1} of {len(e.tokens)}"
+        return f"{self.pos + 1} / {len(self.slots)}  ·  {state}"
+
+    def _tag_args(self) -> dict:
+        """How the tag panel is built: for this lemma's word class."""
+        return {"classes": self.db.classes(self.slot.entry)}
+
+    def _folder(self) -> Path:
+        return storage.sound_folder(self.db)
 
     def _fill_speakers(self, current: str):
         """The session's participants (and the token's own speaker, if someone else)."""
@@ -417,8 +435,7 @@ class TokenDialog(QDialog):
         return super().eventFilter(obj, event)
 
     def _build_tags(self, selected: set):
-        hidden = self.tags.build(self.db, selected, classes=self.db.classes(self.slot.entry),
-                                 show_all=self.show_all)
+        hidden = self.tags.build(self.db, selected, show_all=self.show_all, **self._tag_args())
         b = self.show_all_btn
         b.blockSignals(True)
         b.setChecked(self.show_all)
@@ -469,7 +486,7 @@ class TokenDialog(QDialog):
         return self.db.expected_filename(self.slot.entry, self.token)
 
     def _path(self, name: str) -> Path:
-        return storage.sound_folder(self.db) / name
+        return self._folder() / name
 
     def _refresh_name(self):
         exp = self._expected()
@@ -485,7 +502,7 @@ class TokenDialog(QDialog):
         self.play_btn.setEnabled(has_file)
         self.delete_btn.setEnabled(has_file)
         self.praat_btn.setEnabled(has_file)
-        folder = storage.sound_folder(self.db)
+        folder = self._folder()
         shown = folder / (t.file if has_file else exp)
         self.location.setText(("" if has_file else "Will be saved as ")
                               + QDir.toNativeSeparators(str(shown))

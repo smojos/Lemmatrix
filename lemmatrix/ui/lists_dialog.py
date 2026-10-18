@@ -13,12 +13,12 @@ from pathlib import Path
 
 from PySide6.QtCore import QDir, Qt, QUrl
 from PySide6.QtGui import QDesktopServices, QFont
-from PySide6.QtWidgets import (QAbstractItemView, QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout,
+from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout,
                                QHeaderView, QLabel, QListWidget, QListWidgetItem, QMessageBox,
                                QPlainTextEdit, QSplitter, QStackedWidget, QTableWidget, QTableWidgetItem,
                                QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
-from ..model import Database, Location, Person, forbidden_in, nfc
+from ..model import LEMMAS, UTTERANCES, Database, Location, Person, RefCategory, forbidden_in, nfc
 from . import theme
 from .chiprow import LOCATIONS, PARTICIPANTS, RESEARCHERS, consent_path
 from .dialogs import TagStructureDialog
@@ -365,6 +365,135 @@ class LocationEditor(QWidget):
         return ""
 
 
+# --------------------------------------------------------------------------
+# Reference categories
+# --------------------------------------------------------------------------
+
+REFS = "references"
+
+
+class CategoryEditor(QWidget):
+    """The reference categories: letter, name, what they're for (lemmas or utterances), numbering.
+
+    A letter that references use can't be changed or removed, and can't move between lemmas
+    and utterances: references are part of file names."""
+
+    def __init__(self, db: Database, parent=None):
+        super().__init__(parent)
+        self.db = db
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        self.table = QTableWidget(0, 4)
+        self.table.setHorizontalHeaderLabels(["Letter", "Name", "For", "Numbering"])
+        self.table.horizontalHeader().setStretchLastSection(False)
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.table.verticalHeader().setVisible(False)
+        for c in db.settings.ref_categories:
+            self._add_row(c)
+        self.table.resizeColumnsToContents()
+        self.table.setColumnWidth(1, 320)
+        lay.addWidget(self.table, 1)
+        row = QHBoxLayout()
+        row.addWidget(_tool("add", "Add a category", lambda: self._add_row(RefCategory("", ""), edit=True)))
+        row.addWidget(_tool("delete", "Remove the selected category", self._remove))
+        row.addWidget(_tool("up", "Move up", lambda: self._shift(-1)))
+        row.addWidget(_tool("down", "Move down", lambda: self._shift(1)))
+        row.addStretch(1)
+        lay.addLayout(row)
+
+    def used(self, letter: str) -> int:
+        """How many lemmas and utterances have references in this category."""
+        if not letter:
+            return 0
+        return sum(1 for item in self.db.items() if item.ref.startswith(letter))   # QQ01 is a Q
+
+    def _add_row(self, c: RefCategory, edit: bool = False):
+        r = self.table.rowCount()
+        self.table.insertRow(r)
+        letter = QTableWidgetItem(c.letter)
+        n = self.used(c.letter)
+        if n:
+            letter.setFlags(letter.flags() & ~Qt.ItemIsEditable)
+            letter.setToolTip(f"Used by {n} reference(s), so the letter can't change: references are part "
+                              "of file names")
+        letter.setData(ORIGINAL, c.letter)
+        self.table.setItem(r, 0, letter)
+        self.table.setItem(r, 1, QTableWidgetItem(c.name))
+        kind = QComboBox()
+        kind.addItem("Lemmas", LEMMAS)
+        kind.addItem("Utterances", UTTERANCES)
+        kind.setCurrentIndex(max(0, kind.findData(c.kind)))
+        kind.setEnabled(not n)
+        if n:
+            kind.setToolTip("In use, so it stays as it is")
+        self.table.setCellWidget(r, 2, kind)
+        numbering = QComboBox()
+        numbering.addItem("automatic", "auto")
+        numbering.addItem("by hand", "manual")
+        numbering.setCurrentIndex(max(0, numbering.findData(c.numbering)))
+        self.table.setCellWidget(r, 3, numbering)
+        if edit:
+            self.table.setCurrentCell(r, 0)
+            self.table.editItem(letter)
+
+    def _text(self, r, c) -> str:
+        it = self.table.item(r, c)
+        return nfc(it.text().strip()) if it else ""
+
+    def _remove(self):
+        r = self.table.currentRow()
+        if r < 0:
+            return
+        original = self.table.item(r, 0).data(ORIGINAL) or ""
+        n = self.used(original)
+        if n:
+            QMessageBox.information(self, "Remove", f"{original} is used by {n} reference(s), so it stays.")
+            return
+        self.table.removeRow(r)
+
+    def _shift(self, step):
+        r = self.table.currentRow()
+        j = r + step
+        if r < 0 or not 0 <= j < self.table.rowCount():
+            return
+        cats = self.categories()
+        originals = [self.table.item(i, 0).data(ORIGINAL) for i in range(self.table.rowCount())]
+        cats[r], cats[j] = cats[j], cats[r]
+        originals[r], originals[j] = originals[j], originals[r]
+        self.table.setRowCount(0)
+        for c, o in zip(cats, originals):
+            self._add_row(c)
+            self.table.item(self.table.rowCount() - 1, 0).setData(ORIGINAL, o)
+        self.table.setCurrentCell(j, 0)
+
+    def categories(self) -> list[RefCategory]:
+        out = []
+        for r in range(self.table.rowCount()):
+            kind, numbering = self.table.cellWidget(r, 2), self.table.cellWidget(r, 3)
+            out.append(RefCategory(self._text(r, 0), self._text(r, 1), numbering.currentData(),
+                                   kind.currentData()))
+        return out
+
+    def problem(self) -> str:
+        seen = set()
+        for c in self.categories():
+            if not c.letter:
+                return "Every category needs a letter."
+            if not c.letter.isalpha() or not c.letter.isascii():
+                return f"“{c.letter}”: a category's letters must be A–Z."
+            if c.letter in seen:
+                return f"Two categories have the letter {c.letter}."
+            seen.add(c.letter)
+        letters = sorted(seen, key=len, reverse=True)
+        for a in letters:                         # QQ would read as Q followed by Q…
+            for b in letters:
+                if a != b and a.startswith(b):
+                    return f"{a} starts with {b}, so their references couldn't be told apart."
+        return ""
+
+
 def _one_line(text: str, n: int = 80) -> str:
     text = " ".join((text or "").split())
     return text if len(text) <= n else text[:n] + "…"
@@ -405,6 +534,12 @@ class ListsDialog(QDialog):
         self._page(LOCATIONS, "Locations", self.locations,
                    "Places, from countries down to villages. Double-click a name or code to edit it; "
                    "sessions keep a place's code (or its name, if it has no code).")
+
+        self.categories = CategoryEditor(db)
+        self._page(REFS, "Reference categories", self.categories,
+                   "The letters references start with, and what each is for: lemmas, or utterances "
+                   "(one-off sentences and phrases, View → Texts and utterances). A letter in use stays "
+                   "as it is, since references are part of file names; its name can be changed.")
 
         self._heading("Field lists")
         self.field_lists = []
@@ -506,7 +641,7 @@ class ListsDialog(QDialog):
         return f"in {n} notebook session(s)" if n else ""
 
     def _participant_use(self, code) -> str:
-        tokens = sum(1 for e in self.db.entries for t in e.tokens if t.speaker == code)
+        tokens = sum(1 for _, t in self.db.all_tokens() if t.speaker == code)
         n = self._sessions_with("participants", code)
         parts = ([f"the speaker of {tokens} token(s)"] if tokens else []) + \
             ([f"in {n} notebook session(s)"] if n else [])
@@ -523,6 +658,10 @@ class ListsDialog(QDialog):
                 self.show_page(key)
                 QMessageBox.warning(self, "Lists", problem)
                 return
+        if (problem := self.categories.problem()):
+            self.show_page(REFS)
+            QMessageBox.warning(self, "Lists", problem)
+            return
         if not self.tags.validate():
             self.show_page(TAGS)
             return
@@ -536,5 +675,6 @@ class ListsDialog(QDialog):
         md.locations = self.locations.locations()
         for f, ed in self.field_lists:
             f.items = ed.items()
+        self.db.settings.ref_categories = self.categories.categories()
         return {RESEARCHERS: self.researchers.renames(), PARTICIPANTS: self.participants.renames(),
                 LOCATIONS: self.locations.renames()}

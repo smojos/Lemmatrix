@@ -128,7 +128,7 @@ class EntryDialog(QDialog):
         form = QFormLayout(self)
         self.category = QComboBox()
         self.category.addItem("(manual)", "")
-        for c in s.ref_categories:
+        for c in s.categories():                    # lemma categories (not the utterances')
             self.category.addItem(f"{c.letter}  {c.name}", c.letter)
         self.ref = NoForbidden(entry.ref if entry else "")
         if entry:
@@ -196,7 +196,7 @@ class EntryDialog(QDialog):
         if not ref:
             QMessageBox.warning(self, "Entry", "Every entry needs a reference.")
             return
-        if self.entry is None and self.db.entry_by_ref(ref):
+        if self.entry is None and self.db.ref_taken(ref):
             QMessageBox.warning(self, "Entry", f"The reference {ref} is already used.")
             return
         super().accept()
@@ -336,6 +336,9 @@ class PreferencesDialog(QDialog):
         self.pattern.setToolTip("Placeholders: {language} {variety} {speaker} {reference} {gloss} "
                                 "{tags} {date}, or any field name. A separator before an empty part "
                                 "is left out.")
+        self.utt_pattern = QLineEdit(s.utterance_pattern)
+        self.utt_pattern.setToolTip("Utterances' recordings (in Soundfiles\\Utterances). {label} is the "
+                                    "utterance's file label; utterances have no tags in their file names.")
         self.separator = QLineEdit(s.tag_separator)
         self.separator.setMaxLength(3)
         self.praat = PathEdit(prefs.praat_path, folder=False, title="Where is Praat?")
@@ -449,6 +452,7 @@ class PreferencesDialog(QDialog):
                          ("Warnings (this computer)", [(None, self.unusual), (None, self.spelling), (None, self.confirm)])])
         page("Sound", [
             ("This database", [("File name pattern", self.pattern), ("Tag separator", self.separator),
+                               ("Utterance file names", self.utt_pattern),
                                (None, self.auto_names)]),
             ("This computer", [("Recording source", self.source), ("Bit depth", self.bits),
                                ("Sample rate", self.rate), (None, self.with_tokens),
@@ -479,8 +483,12 @@ class PreferencesDialog(QDialog):
         if self.low.value() >= self.high.value():
             QMessageBox.warning(self, "Settings", "The lowest pitch digit must be below the highest.")
             return
-        if "{" not in self.pattern.text():
+        if "{" not in self.pattern.text() or "{" not in self.utt_pattern.text():
             QMessageBox.warning(self, "Settings", "The file name pattern needs at least one placeholder.")
+            return
+        if "{reference}" not in self.utt_pattern.text():
+            QMessageBox.warning(self, "Settings", "Utterance file names need {reference}: it is what tells "
+                                "them apart.")
             return
         bad = forbidden_in(self.separator.text())
         if bad:
@@ -491,8 +499,9 @@ class PreferencesDialog(QDialog):
     def apply(self) -> bool:
         """Apply the values. Returns True if file names may have changed."""
         s = self.db.settings
-        old = (s.filename_pattern, s.tag_separator)
+        old = (s.filename_pattern, s.tag_separator, s.utterance_pattern)
         s.filename_pattern = self.pattern.text().strip()
+        s.utterance_pattern = self.utt_pattern.text().strip()
         s.tag_separator = self.separator.text()
         s.auto_update_names = self.auto_names.isChecked()
         s.pitch_low, s.pitch_high = self.low.value(), self.high.value()
@@ -512,7 +521,7 @@ class PreferencesDialog(QDialog):
         p.pitch_voice = self.voice.currentData()
         p.pitch_volume = self.volume.value()
         p.full_backup_folder = self.backups.text().strip()
-        return old != (s.filename_pattern, s.tag_separator)
+        return old != (s.filename_pattern, s.tag_separator, s.utterance_pattern)
 
 
 # ==========================================================================
@@ -522,15 +531,25 @@ class PreferencesDialog(QDialog):
 KIND_GROUP, KIND_TAG = "group", "tag"
 NAME, CODE, DEFAULT, USUAL, DESC = range(5)
 USUAL_ROLE = Qt.UserRole + 2                  # a group's own "usual for" word classes
+ONLY_ROLE = Qt.UserRole + 3                   # a group marked "utterances only" (a rule, inherited)
 
 
 class UsualDialog(QDialog):
     """Which word classes a tag group is usual for (none ticked: its parent's, or every lemma)."""
 
-    def __init__(self, parent, group: str, classes: list, chosen: list[str], inherited: tuple):
+    def __init__(self, parent, group: str, classes: list, chosen: list[str], inherited: tuple,
+                 only: bool = False, inherited_only: bool = False):
         super().__init__(parent)
         self.setWindowTitle("Usual for")
         lay = QVBoxLayout(self)
+        self.only = QCheckBox("Utterances only: its tags go on utterances, never on lemma tokens")
+        self.only.setToolTip("A rule, not a hint: the token dialogue doesn't offer these tags for lemmas. "
+                             "Its sub-groups are for utterances only too.")
+        self.only.setChecked(only or inherited_only)
+        self.only.setEnabled(not inherited_only)
+        if inherited_only:
+            self.only.setText(self.only.text() + " (as its parent group)")
+        lay.addWidget(self.only)
         note = QLabel(f"Which word classes is “{group}” usual for? Its groups are shown first in the "
                       "token dialogue for lemmas of these classes, their defaults go on new tokens, and "
                       "on other lemmas its tags are marked as unusual (they're still allowed). A class "
@@ -565,8 +584,13 @@ class UsualDialog(QDialog):
         self.tree.expandAll()
         if not classes:
             lay.addWidget(QLabel("The Word Class list is empty: add classes in Edit → Lists → Word Class."))
+        self.only.toggled.connect(lambda on: self.tree.setEnabled(not on))
+        self.tree.setEnabled(not self.only.isChecked())
         lay.addWidget(_buttons(self))
-        self.resize(420, 460)
+        self.resize(460, 480)
+
+    def utterances_only(self) -> bool:
+        return self.only.isChecked() and self.only.isEnabled()
 
     def chosen(self) -> list[str]:
         out = []
@@ -597,7 +621,7 @@ class TagStructureDialog(QDialog):
                        "token takes at most one tag from each group. The order here is the tag order in "
                        "file names. Double-click a name, code or description to edit it; a group's "
                        "default has no code. “Usual for” is a hint: which word classes a group is for "
-                       "(double-click it to choose).")
+                       "(double-click it to choose); a group can also be for utterances only.")
         intro.setWordWrap(True)
         lay.addWidget(intro)
         self.tree = QTreeWidget()
@@ -630,7 +654,7 @@ class TagStructureDialog(QDialog):
         self._fill()
 
     # tree <-> structure ------------------------------------------------
-    def _item(self, kind, name, code="", default=False, desc="", usual=()):
+    def _item(self, kind, name, code="", default=False, desc="", usual=(), only=False):
         it = QTreeWidgetItem([name, code if kind == KIND_TAG else "", "", "", desc])
         it.setData(NAME, Qt.UserRole, kind)
         it.setData(NAME, Qt.UserRole + 1, name)          # original name, to follow renames
@@ -639,13 +663,14 @@ class TagStructureDialog(QDialog):
             it.setCheckState(DEFAULT, Qt.Checked if default else Qt.Unchecked)
         else:
             it.setData(NAME, USUAL_ROLE, list(usual))
+            it.setData(NAME, ONLY_ROLE, bool(only))
             f = it.font(NAME)
             f.setBold(True)
             it.setFont(NAME, f)
         return it
 
     def _fill_group(self, parent_item, g: Group):
-        gi = self._item(KIND_GROUP, g.name, usual=g.usual)
+        gi = self._item(KIND_GROUP, g.name, usual=g.usual, only=g.utterances_only)
         if parent_item is None:
             self.tree.addTopLevelItem(gi)
         else:
@@ -672,11 +697,17 @@ class TagStructureDialog(QDialog):
         known = {i.name for top in self.word_classes() for i in top.walk()}
         self.tree.blockSignals(True)
 
-        def walk(it, inherited):
+        def walk(it, inherited, only_above=False):
             if it.data(NAME, Qt.UserRole) != KIND_GROUP:
                 return
             own = it.data(NAME, USUAL_ROLE) or []
-            if own:
+            only = bool(it.data(NAME, ONLY_ROLE))
+            if only or only_above:
+                it.setText(USUAL, "utterances only" if only else "(utterances only)")
+                it.setForeground(USUAL, QBrush() if only else QBrush(theme.colour("dim")))
+                it.setToolTip(USUAL, "Its tags go on utterances only, never on lemma tokens"
+                              + ("" if only else " (as its parent group)") + ". Double-click to change.")
+            elif own:
                 missing = [c for c in own if c not in known]
                 it.setText(USUAL, ", ".join(own))
                 it.setForeground(USUAL, QBrush(theme.colour("error_text")) if missing else QBrush())
@@ -688,7 +719,7 @@ class TagStructureDialog(QDialog):
                 it.setToolTip(USUAL, "As its parent group; double-click to choose" if inherited
                               else "No hint: usual for every lemma. Double-click to choose word classes.")
             for i in range(it.childCount()):
-                walk(it.child(i), tuple(own) or inherited)
+                walk(it.child(i), tuple(own) or inherited, only or only_above)
         for top in self._tops():
             walk(top, ())
         self.tree.blockSignals(False)
@@ -713,10 +744,15 @@ class TagStructureDialog(QDialog):
         if item is None:
             QMessageBox.information(self, "Usual for", "Select a group first.")
             return
+        above, p = False, item.parent()
+        while p is not None:
+            above = above or bool(p.data(NAME, ONLY_ROLE))
+            p = p.parent()
         dlg = UsualDialog(self, item.text(NAME), self.word_classes(), item.data(NAME, USUAL_ROLE) or [],
-                          self._inherited(item))
+                          self._inherited(item), bool(item.data(NAME, ONLY_ROLE)), above)
         if dlg.exec():
             item.setData(NAME, USUAL_ROLE, dlg.chosen())
+            item.setData(NAME, ONLY_ROLE, dlg.utterances_only())
             self._show_usual()
 
     def refresh_usual(self):
@@ -799,7 +835,8 @@ class TagStructureDialog(QDialog):
                                   "be unique in the whole structure. Hover over them to see why.")
 
     def _read_group(self, gi) -> Group:
-        g = Group(nfc(gi.text(NAME).strip()), usual=list(gi.data(NAME, USUAL_ROLE) or []))
+        g = Group(nfc(gi.text(NAME).strip()), usual=list(gi.data(NAME, USUAL_ROLE) or []),
+                  utterances_only=bool(gi.data(NAME, ONLY_ROLE)))
         for i in range(gi.childCount()):
             c = gi.child(i)
             if c.data(NAME, Qt.UserRole) == KIND_TAG:

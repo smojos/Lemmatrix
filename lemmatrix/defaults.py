@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from .model import Database, FieldDef, Group, ListItem, Metadata, RefCategory, Settings, Tag, TagStructure
+from .model import (UTTERANCES, Database, FieldDef, Group, ListItem, Metadata, RefCategory, Settings, Tag,
+                    TagStructure)
 
 WORD_CLASSES = ["NOUN", "VERB", "PRONOUN", "QUANT", "ADJECTIVE", "ADVERB"]
 INSTANCES = "Instances"          # top-level group: Frames and Examples
@@ -65,6 +66,17 @@ DEFAULT_CATEGORIES = [
     ("V", "Verbs"),
 ]
 
+# Utterances (one-off sentences and phrases with no lemma): U for those not sorted yet, and
+# W, X, Y, Z for categories of the user's own (renamed in Edit → Lists → Reference categories).
+UTTERANCE_CATEGORIES = [
+    ("U", "Unorganised"), ("W", "Own category W"), ("X", "Own category X"),
+    ("Y", "Own category Y"), ("Z", "Own category Z"),
+]
+
+
+def utterance_categories() -> list[RefCategory]:
+    return [RefCategory(letter, name, "auto", UTTERANCES) for letter, name in UTTERANCE_CATEGORIES]
+
 
 def default_settings() -> Settings:
     s = Settings()
@@ -89,7 +101,7 @@ def default_settings() -> Settings:
     s.primary_gloss = "en"
     s.tags = default_tag_structure()
     s.ref_categories = [RefCategory(c[0], c[1], c[2] if len(c) > 2 else "auto")
-                        for c in DEFAULT_CATEGORIES]
+                        for c in DEFAULT_CATEGORIES] + utterance_categories()
     return s
 
 

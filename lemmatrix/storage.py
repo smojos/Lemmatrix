@@ -16,17 +16,19 @@ from pathlib import Path
 
 from . import pitch as pitchmod
 from .matrix import CITATION, EXACT, MatrixConfig, Spec
-from .model import (Database, Entry, FieldDef, Group, ListItem, Location, Metadata, Person,
-                    RefCategory, Settings, Tag, TagStructure, Token, new_id, nfc, write_atomically,
-                    xml_safe)
+from .model import (LEMMAS, UTTERANCES, Database, Entry, FieldDef, Group, ListItem, Location, Metadata,
+                    Person, RefCategory, Settings, Tag, TagStructure, Token, Utterance, is_utterance,
+                    new_id, nfc, write_atomically, xml_safe)
 
-FORMAT_VERSION = "4"
+FORMAT_VERSION = "5"
 # Format 1 (to 18 October 2026) tied tags to word classes: <word-class> sections of the tag
 # structure plus <all-classes>, and the Word Class list lived there. Format 2 has one free
 # hierarchy of groups with "usual for" hints; format 1 files are upgraded when opened.
 # Format 3 put Frames in an Instances group. Format 4 (18 October 2026) has the fixed folder layout
 # (layout.py: no sound folder setting) and the Morphemes token field.
-READABLE = ("1", "2", "3", "4")
+# Format 5 (18 October 2026, evening) adds utterances (<utterances>, after the entries), utterance
+# reference categories (U, W–Z) and tag groups for utterances only.
+READABLE = ("1", "2", "3", "4", "5")
 BACKUPS_KEPT = 10
 
 
@@ -68,7 +70,8 @@ def _split(text: str | None) -> list[str]:
 
 
 def _load_group(el) -> Group:
-    g = Group(name=nfc(el.get("name", "")), usual=_split(el.get("usual")))
+    g = Group(name=nfc(el.get("name", "")), usual=_split(el.get("usual")),
+              utterances_only=_bool(el.get("utterances-only")))
     for child in el:
         if child.tag == "tag":
             g.tags.append(Tag(name=nfc(child.get("name", "")), code=nfc(child.get("code", "")),
@@ -143,11 +146,13 @@ def _load_settings(el) -> Settings:
     if (x := el.find("references")) is not None:
         s.ref_scheme = x.get("scheme", "categories")
         s.ref_digits = int(x.get("digits", "3") or 3)
-        s.ref_categories = [RefCategory(c.get("letter", ""), _text(c), c.get("numbering", "auto"))
+        s.ref_categories = [RefCategory(c.get("letter", ""), _text(c), c.get("numbering", "auto"),
+                                        UTTERANCES if c.get("for") == UTTERANCES else LEMMAS)
                             for c in x.findall("category")]
     if (x := el.find("sounds")) is not None:
         s.old_sound_folder = x.get("folder", "")        # format 3 and before; not written
         s.filename_pattern = x.get("pattern", s.filename_pattern)
+        s.utterance_pattern = x.get("utterance-pattern", s.utterance_pattern)
         s.tag_separator = x.get("tag-separator", s.tag_separator)
         s.auto_update_names = _bool(x.get("auto-update-names"), True)
     if (x := el.find("pitch")) is not None:
@@ -212,7 +217,7 @@ def _load_metadata(m) -> Metadata:
 def _unique_ids(db: Database):
     """Every entry and token gets an id, and no two share one (copies made outside Lemmatrix)."""
     seen = set()
-    for e in db.entries:
+    for e in db.items():
         for obj in [e, *e.tokens]:
             if not obj.id or obj.id in seen:
                 obj.id = new_id()
@@ -242,21 +247,32 @@ def load(path: str | os.PathLike) -> Database:
     pitch_fields = [f.name for f in settings.token_fields if f.role == "pitch"]
 
     db = Database(metadata=md, settings=settings, path=path)
+
+    def load_token(tel) -> Token:
+        tags = [nfc(t.strip()) for t in (tel.get("tags") or "").split(",") if t.strip()]
+        t = Token(tags=tags, speaker=nfc(tel.get("speaker", "")),
+                  collected=tel.get("collected", ""), file=nfc(tel.get("file", "")),
+                  rerecord=tel.get("rerecord") == "yes", id=tel.get("id", ""))
+        _load_values(tel, t, token_multi, skip=())
+        for name in pitch_fields:               # older data: lone digits become 55
+            if t.values.get(name):
+                t.values[name] = pitchmod.normalise(t.values[name])
+        return t
+
     for el in root.findall("entry"):
         e = Entry(ref=nfc(el.get("ref", "")), file_gloss=nfc(el.get("file-gloss", "")),
                   id=el.get("id", ""))
         _load_values(el, e, entry_multi)
         for tel in el.findall("token"):
-            tags = [nfc(t.strip()) for t in (tel.get("tags") or "").split(",") if t.strip()]
-            t = Token(tags=tags, speaker=nfc(tel.get("speaker", "")),
-                      collected=tel.get("collected", ""), file=nfc(tel.get("file", "")),
-                      rerecord=tel.get("rerecord") == "yes", id=tel.get("id", ""))
-            _load_values(tel, t, token_multi, skip=())
-            for name in pitch_fields:               # older data: lone digits become 55
-                if t.values.get(name):
-                    t.values[name] = pitchmod.normalise(t.values[name])
-            e.tokens.append(t)
+            e.tokens.append(load_token(tel))
         db.entries.append(e)
+    if (ul := root.find("utterances")) is not None:
+        for el in ul.findall("utterance"):
+            u = Utterance(ref=nfc(el.get("ref", "")), file_gloss=nfc(el.get("file-label", "")),
+                          id=el.get("id", ""), lemmas=(el.get("lemmas") or "").split())
+            tels = el.findall("token")
+            u.tokens = [load_token(tels[0])] if tels else [Token()]
+            db.utterances.append(u)
     _unique_ids(db)
     if version == "1":
         _upgrade_from_1(db)
@@ -264,6 +280,8 @@ def load(path: str | os.PathLike) -> Database:
         _upgrade_to_3(db)
     if version in ("1", "2", "3"):
         _upgrade_to_4(db)
+    if version in ("1", "2", "3", "4"):
+        _upgrade_to_5(db)
     if repaired:
         db.load_notes = list(db.load_notes) + [REPAIRED_NOTE]
     return db
@@ -331,6 +349,26 @@ def _upgrade_to_4(db: Database):
                  "other documentation in Documentation, and exports start in Exports. Settings → Sound "
                  "no longer has a sound folder.")
     db.load_notes = list(db.load_notes) + notes
+
+
+def _upgrade_to_5(db: Database):
+    """Format 4 → 5: utterances. The utterance reference categories (U, W, X, Y, Z) join the list,
+    unless a letter is taken already."""
+    from .defaults import utterance_categories
+    s = db.settings
+    taken = {c.letter for c in s.ref_categories}
+    added = [c for c in utterance_categories() if c.letter not in taken]
+    s.ref_categories += added
+    clash = [c.letter for c in utterance_categories() if c.letter in taken
+             and not any(x.letter == c.letter and x.kind == UTTERANCES for x in s.ref_categories)]
+    note = ("This database can now hold utterances: one-off sentences and phrases with no lemma "
+            "(View → Texts and utterances). They get references of their own: "
+            + ", ".join(f"{c.letter} ({c.name})" for c in added) + "." if added else
+            "This database can now hold utterances (View → Texts and utterances).")
+    if clash:
+        note += (f" {', '.join(clash)} {'is' if len(clash) == 1 else 'are'} already used for lemmas, so "
+                 "add an utterance category in Edit → Lists → Reference categories if you need one.")
+    db.load_notes = list(db.load_notes) + [note]
 
 
 def _upgrade_from_1(db: Database):
@@ -444,6 +482,8 @@ def _save_group(parent, g: Group):
     el = ET.SubElement(parent, "group", name=g.name)
     if g.usual:
         el.set("usual", ", ".join(g.usual))
+    if g.utterances_only:
+        el.set("utterances-only", "yes")
     for t in g.tags:
         tel = ET.SubElement(el, "tag", name=t.name)
         if t.code and not t.default:
@@ -525,8 +565,10 @@ def to_element(db: Database) -> ET.Element:
         cel = ET.SubElement(x, "category", letter=c.letter)
         if c.numbering != "auto":
             cel.set("numbering", c.numbering)
+        if c.kind == UTTERANCES:
+            cel.set("for", UTTERANCES)
         cel.text = c.name
-    ET.SubElement(st, "sounds", {"pattern": s.filename_pattern,
+    ET.SubElement(st, "sounds", {"pattern": s.filename_pattern, "utterance-pattern": s.utterance_pattern,
                                  "tag-separator": s.tag_separator,
                                  "auto-update-names": _yes(s.auto_update_names)})
     ET.SubElement(st, "pitch", {"display-range": f"{s.pitch_low}-{s.pitch_high}",
@@ -550,6 +592,20 @@ def to_element(db: Database) -> ET.Element:
         st.append(extra)
 
     langs = s.gloss_languages
+
+    def save_token(parent, t: Token):
+        tattrs = {}
+        if t.tags:
+            tattrs["tags"] = ", ".join(s.tags.sort(t.tags))
+        for key, val in (("speaker", t.speaker), ("collected", t.collected), ("file", t.file)):
+            if val:
+                tattrs[key] = val
+        if t.rerecord:
+            tattrs["rerecord"] = "yes"
+        tattrs["id"] = t.id
+        tel = ET.SubElement(parent, "token", tattrs)
+        _save_values(tel, t, s.token_fields, langs)
+
     for e in db.entries:
         attrs = {"ref": e.ref}
         if e.file_gloss:
@@ -558,17 +614,18 @@ def to_element(db: Database) -> ET.Element:
         el = ET.SubElement(root, "entry", attrs)
         _save_values(el, e, s.entry_fields, langs)
         for t in e.tokens:
-            tattrs = {}
-            if t.tags:
-                tattrs["tags"] = ", ".join(s.tags.sort(t.tags))
-            for key, val in (("speaker", t.speaker), ("collected", t.collected), ("file", t.file)):
-                if val:
-                    tattrs[key] = val
-            if t.rerecord:
-                tattrs["rerecord"] = "yes"
-            tattrs["id"] = t.id
-            tel = ET.SubElement(el, "token", tattrs)
-            _save_values(tel, t, s.token_fields, langs)
+            save_token(el, t)
+    if db.utterances:                         # one-off sentences and phrases, after the entries
+        ul = ET.SubElement(root, "utterances")
+        for u in db.utterances:
+            attrs = {"ref": u.ref}
+            if u.file_gloss:
+                attrs["file-label"] = u.file_gloss
+            if u.lemmas:
+                attrs["lemmas"] = " ".join(u.lemmas)
+            attrs["id"] = u.id
+            el = ET.SubElement(ul, "utterance", attrs)
+            save_token(el, u.token)
     return root
 
 
@@ -723,3 +780,14 @@ def sound_folder(db: Database) -> Path:
     """The lemma tokens' recordings: always Soundfiles/Tokens next to the database."""
     from . import layout
     return layout.tokens_folder(db.path)
+
+
+def utterance_folder(db: Database) -> Path:
+    """The utterances' recordings: Soundfiles/Utterances."""
+    from . import layout
+    return layout.utterances_folder(db.path)
+
+
+def folder_for(db: Database, item) -> Path:
+    """Where the recordings of an entry's tokens, or of an utterance, are."""
+    return utterance_folder(db) if is_utterance(item) else sound_folder(db)

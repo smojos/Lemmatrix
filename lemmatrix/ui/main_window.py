@@ -108,6 +108,7 @@ class MainWindow(QMainWindow):
         self.dialog_autoplay = False
         self.notebook_dialog = None               # the notebook window, once opened
         self.bulk_window = None                   # the bulk edit window, while it's open
+        self.utterances_window = None             # View → Texts and utterances, while it's open
         self.sound_files: set[str] = set()       # names in the sound folder, refreshed with the views
         self.cloud_files: set[str] = set()       # those of them that are online-only (OneDrive)
         self._suggestions: dict = {}             # (entry id, tags) -> predicted translation, for All data
@@ -508,6 +509,7 @@ class MainWindow(QMainWindow):
         v = mb.addMenu("&View")
         self._act(v, "&Notebook", self.open_notebook, "Ctrl+B")
         self._act(v, "&Questions", self.open_questions)
+        self._act(v, "&Texts and utterances", self.open_utterances, "Ctrl+U")
         v.addSeparator()
         self._act(v, "Hide or show the option panels", self.toggle_panels)
         self._act(v, "Swap rows and columns", lambda: self.switch_axes(self.tabs.currentIndex()), "Ctrl+T")
@@ -691,6 +693,8 @@ class MainWindow(QMainWindow):
             self.doc.empty_held()                 # the closed database's deleted recordings: Recycle Bin
         if self.bulk_window is not None:          # it belongs to the database being closed
             self.bulk_window.close()
+        if self.utterances_window is not None:
+            self.utterances_window.close()
         if self.doc.db is not db:
             self._save_view()
         self._mark_open(db.path)
@@ -1096,7 +1100,14 @@ class MainWindow(QMainWindow):
             self.notebook_dialog.reload()
 
     def go_to(self, entry, index=None):
-        """Show a lemma (and one of its tokens) from a notebook link."""
+        """Show a lemma (and one of its tokens) from a notebook link; an utterance is shown in the
+        Texts and utterances window."""
+        from ..model import is_utterance
+        if is_utterance(entry):
+            if entry not in self.doc.db.utterances:
+                return False
+            self.open_utterances(select=entry)
+            return True
         if entry not in self.doc.db.entries:
             return False
         if entry not in self.lemmas.visible_rows():
@@ -1879,6 +1890,19 @@ class MainWindow(QMainWindow):
         if dlg.exec():
             self.doc.edit_entry(e, dlg.apply, f"Edit {e.ref}")
 
+    def open_utterances(self, select=None):
+        """View → Texts and utterances (Ctrl+U): a window of its own beside the main one."""
+        from .utterances import TextsUtterancesWindow
+        if self.utterances_window is None:
+            self.utterances_window = TextsUtterancesWindow(self)
+        w = self.utterances_window
+        w.show()
+        w.raise_()
+        w.activateWindow()
+        if select is not None:
+            w.select(select)
+        return w
+
     def open_bulk_edit(self):
         """Edit → Bulk edit…: change many lemmas or tokens at once, in a window of its own."""
         from .bulk_window import BulkEditWindow
@@ -1932,10 +1956,9 @@ class MainWindow(QMainWindow):
         renames = dlg.apply()
         speakers = renames[chips.PARTICIPANTS]
         if speakers:                              # the tokens' speakers follow renamed codes
-            for e in db.entries:
-                for t in e.tokens:
-                    if t.speaker in speakers:
-                        t.speaker = speakers[t.speaker]
+            for _, t in db.all_tokens():          # utterances' too
+                if t.speaker in speakers:
+                    t.speaker = speakers[t.speaker]
             self.doc.undo.clear()                 # renames can't be undone safely
             if self.prefs.speaker in speakers:
                 self.prefs.speaker = speakers[self.prefs.speaker]
@@ -1962,7 +1985,7 @@ class MainWindow(QMainWindow):
         if wcf is not None:                         # the hints follow renamed word classes
             s.tags.rename_classes(value_renames.get(wcf.name, {}))
         fields = [(f, True) for f in s.entry_fields] + [(f, False) for f in s.token_fields]
-        for e in db.entries:
+        for e in db.items():                      # lemmas and utterances
             for f, on_entry in fields:
                 r = value_renames.get(f.name)
                 if not r:
@@ -2000,7 +2023,7 @@ class MainWindow(QMainWindow):
 
     def _maybe_update_names(self):
         db = self.doc.db
-        stale = [(e, t) for e in db.entries for t in e.tokens
+        stale = [(e, t) for e, t in db.all_tokens()      # utterances' recordings too
                  if t.file and t.file != db.expected_filename(e, t)]
         if not stale:
             return
@@ -2013,8 +2036,7 @@ class MainWindow(QMainWindow):
     # =============================================================== tools
     def update_all_names(self, ask: bool = True):
         db = self.doc.db
-        folder = storage.sound_folder(db)
-        stale = [(e, i) for e in db.entries for i, t in enumerate(e.tokens)
+        stale = [(e, i) for e in db.items() for i, t in enumerate(e.tokens)
                  if t.file and t.file != db.expected_filename(e, t)]
         if not stale:
             if ask:
@@ -2026,20 +2048,23 @@ class MainWindow(QMainWindow):
         # One undo step for the lot. Every recording first moves to a temporary name, then to its
         # new one, so names can swap or chain (A → B while B → C) without getting in the way.
         problems, plan = [], []
-        sources = {(folder / e.tokens[i].file).name.lower() for e, i in stale}
+        # tokens' and utterances' recordings are in folders of their own
+        sources = {str(storage.folder_for(db, e) / e.tokens[i].file).lower() for e, i in stale}
         targets: dict[str, str] = {}
         for e, i in stale:
             t = e.tokens[i]
+            folder = storage.folder_for(db, e)
             new = db.expected_filename(e, t)
             src, dst = folder / t.file, folder / new
+            key = str(dst).lower()
             if not src.exists():
-                problems.append(f"{t.file}: not in the sound folder")
-            elif new.lower() in targets:
-                problems.append(f"{t.file}: {new} would also be the name of {targets[new.lower()]}")
-            elif dst.exists() and new.lower() not in sources and not storage.same_file(src, dst):
+                problems.append(f"{t.file}: not in its sound folder")
+            elif key in targets:
+                problems.append(f"{t.file}: {new} would also be the name of {targets[key]}")
+            elif dst.exists() and key not in sources and not storage.same_file(src, dst):
                 problems.append(f"{t.file}: {new} already exists")
             else:
-                targets[new.lower()] = t.file
+                targets[key] = t.file
                 plan.append((e, i, src, dst))
         renames = [(src, src.with_name(src.name + ".lemmatrix-renaming")) for _, _, src, _ in plan]
         renames += [(src.with_name(src.name + ".lemmatrix-renaming"), dst) for _, _, src, dst in plan]

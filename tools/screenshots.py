@@ -35,6 +35,10 @@ def main(out: Path):
 
     app = QApplication([])
     app.setStyle("Fusion")
+    from PySide6.QtWidgets import QInputDialog, QMessageBox
+    for name in ("information", "warning"):     # no message box may wait for a click here
+        setattr(QMessageBox, name, staticmethod(lambda *a, **k: None))
+    QInputDialog.getItem = staticmethod(lambda p, t, l, items, *a, **k: (items[0], True))
     win = MainWindow()
     win.resize(1500, 900)
     win.show()
@@ -177,6 +181,26 @@ def main(out: Path):
     d.show()
     shot(d, "21-settings-general.png")
     d.close()
+
+    # utterances: the window and the dialogue (idea 7, stage 2)
+    import numpy as np
+    from lemmatrix import audio
+    from lemmatrix.ui.utterances import UtteranceDialog
+    clips = work / "clips"
+    clips.mkdir()
+    for n in ("hare ran", "where is he"):
+        audio.write_wav(clips / f"{n}.wav", (0.1 * np.sin(np.arange(8000) / 9)).astype(np.float32), 8000, 16)
+    uw = win.open_utterances()
+    items = uw.import_files([str(p) for p in sorted(clips.glob("*.wav"))])
+    for u, ph in zip(items, ("ʔəŋ kɒ ɗæær", "ɛ ŋəə")):
+        win.doc.edit_entry(u, lambda x, ph=ph: x.token.set("Phonetic", ph))
+    uw.resize(1300, 480)
+    shot(uw, "28-utterances.png")
+    d = UtteranceDialog(win, [Slot(u, 0) for u in items], 0, uw)
+    d.show()
+    shot(d, "29-utterance-dialog.png")
+    d.reject()
+    uw.close()
 
     big = HERE / "samples" / "Test-300.xml"
     if big.exists():

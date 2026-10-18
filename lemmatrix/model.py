@@ -105,6 +105,7 @@ class Group:
     tags: list[Tag] = field(default_factory=list)
     groups: list["Group"] = field(default_factory=list)
     usual: list[str] = field(default_factory=list)    # word classes it's usual for ([]: its parent's)
+    utterances_only: bool = False                      # a rule: its tags go on utterances only (subgroups too)
 
     def leaf_groups(self, path: tuple[str, ...] = ()):
         """Yield (path, group) for every group that directly holds tags, in order."""
@@ -172,23 +173,46 @@ class TagStructure:
             walk(g, ())
         return out
 
+    def only_map(self) -> dict[int, bool]:
+        """id(group) -> whether it is for utterances only (marked on it or on a group above it)."""
+        out: dict[int, bool] = {}
+
+        def walk(g: Group, inherited: bool):
+            mine = g.utterances_only or inherited
+            out[id(g)] = mine
+            for sub in g.groups:
+                walk(sub, mine)
+        for g in self.groups:
+            walk(g, False)
+        return out
+
+    def for_utterances_only(self, group: Group, only: dict | None = None) -> bool:
+        return (only or self.only_map()).get(id(group), False)
+
+    def utterance_only_tags(self) -> set[str]:
+        """The names of the tags that go on utterances only."""
+        only = self.only_map()
+        return {t.name for _, g in self.leaf_groups() if only.get(id(g)) for t in g.tags}
+
     def is_usual(self, group: Group, classes, usual: dict | None = None) -> bool:
         """classes: the lemma's word class and the classes above it in the Word Class list."""
         hint = (usual or self.usual_map()).get(id(group), ())
         return not hint or bool(set(hint) & set(classes))
 
     def usual_groups(self, classes) -> list[tuple[tuple[str, ...], Group]]:
-        usual = self.usual_map()
-        return [(p, g) for p, g in self.leaf_groups() if self.is_usual(g, classes, usual)]
+        """The groups usual for a lemma of these classes (never the utterance-only ones)."""
+        usual, only = self.usual_map(), self.only_map()
+        return [(p, g) for p, g in self.leaf_groups()
+                if self.is_usual(g, classes, usual) and not only.get(id(g))]
 
     def unusual(self, classes, names) -> list[str]:
         """The tags among names whose group isn't usual for a lemma of these classes."""
-        usual = self.usual_map()
+        usual, only = self.usual_map(), self.only_map()
         out = []
         for n in names:
             hit = self.find(n)
-            if hit and not self.is_usual(hit[1], classes, usual):
-                out.append(n)
+            if hit and (not self.is_usual(hit[1], classes, usual) or only.get(id(hit[1]))):
+                out.append(n)             # (a tag for utterances only, on a lemma token, too)
         return out
 
     def rename_classes(self, renames: dict[str, str]):
@@ -330,11 +354,15 @@ class FieldDef:
             self.items.append(ListItem(value))
 
 
+LEMMAS, UTTERANCES = "lemmas", "utterances"      # what a reference category is for
+
+
 @dataclass
 class RefCategory:
     letter: str
     name: str
     numbering: str = "auto"      # auto or manual
+    kind: str = LEMMAS           # lemmas or utterances (U, W, X, Y, Z by default)
 
 
 @dataclass
@@ -349,6 +377,7 @@ class Settings:
     ref_categories: list[RefCategory] = field(default_factory=list)
     old_sound_folder: str = ""   # format 3 and before: the settable sound folder (read, never written)
     filename_pattern: str = "{language}-{variety}_{reference}_{gloss}_{tags}"
+    utterance_pattern: str = "{language}-{variety}_{reference}_{label}"   # utterances: no tags
     tag_separator: str = "-"
     auto_update_names: bool = True
     pitch_low: int = 1
@@ -370,6 +399,16 @@ class Settings:
             if f.role == role_or_name or f.name == role_or_name:
                 return f
         return None
+
+    def categories(self, kind: str = LEMMAS) -> list[RefCategory]:
+        return [c for c in self.ref_categories if c.kind == kind]
+
+    def category(self, ref: str) -> RefCategory | None:
+        """The category a reference belongs to, by its letters (W001 -> W)."""
+        m = re.match(r"[A-Za-z]+", ref or "")
+        if not m:
+            return None
+        return next((c for c in self.ref_categories if c.letter == m.group(0)), None)
 
     def list_items(self, f: FieldDef) -> list[ListItem]:
         """The list behind a closed field."""
@@ -553,10 +592,36 @@ class Entry:
 
 
 @dataclass
+class Utterance(Entry):
+    """A one-off sentence or phrase with no lemma: one reference, one token (one transcription,
+    one recording). file_gloss is its file label ("hare ran"), copied into its file name;
+    lemmas are the ids of the lemmas it is linked to by hand."""
+    lemmas: list[str] = field(default_factory=list)
+
+    @property
+    def token(self) -> Token:
+        if not self.tokens:
+            self.tokens.append(Token())
+        return self.tokens[0]
+
+    @property
+    def label(self) -> str:
+        return self.file_gloss
+
+    def copy(self) -> "Utterance":
+        return copy.deepcopy(self)
+
+
+def is_utterance(obj) -> bool:
+    return isinstance(obj, Utterance)
+
+
+@dataclass
 class Database:
     metadata: Metadata = field(default_factory=Metadata)
     settings: Settings = field(default_factory=Settings)
     entries: list[Entry] = field(default_factory=list)
+    utterances: list[Utterance] = field(default_factory=list)
     path: str = ""                                    # where it was loaded from / saved to
     load_notes: list = field(default_factory=list, compare=False)   # e.g. what an upgrade changed
 
@@ -578,7 +643,10 @@ class Database:
         return self.settings.class_and_above(self.word_class(e))
 
     def unusual_tags(self, e: Entry, names) -> list[str]:
-        """Tags among names that aren't usual for the entry's word class (the soft warning)."""
+        """Tags among names that aren't usual for the entry's word class (the soft warning).
+        Utterances have no word class: nothing is unusual on them."""
+        if is_utterance(e):
+            return []
         return self.settings.tags.unusual(self.classes(e), names)
 
     def entry_by_ref(self, ref: str) -> Entry | None:
@@ -589,6 +657,53 @@ class Database:
 
     def entry_by_id(self, ident: str) -> Entry | None:
         return next((e for e in self.entries if e.id == ident), None) if ident else None
+
+    # ---- utterances --------------------------------------------------
+    def list_for(self, item: Entry) -> list:
+        """The list an entry or utterance lives in."""
+        return self.utterances if is_utterance(item) else self.entries
+
+    def utterance_by_ref(self, ref: str) -> Utterance | None:
+        return next((u for u in self.utterances if u.ref == ref), None)
+
+    def utterance_by_id(self, ident: str) -> Utterance | None:
+        return next((u for u in self.utterances if u.id == ident), None) if ident else None
+
+    def item_by_id(self, ident: str) -> Entry | None:
+        """An entry or an utterance, by id (notebook links point at either)."""
+        return self.entry_by_id(ident) or self.utterance_by_id(ident)
+
+    def items(self) -> list[Entry]:
+        """Every entry, then every utterance."""
+        return [*self.entries, *self.utterances]
+
+    def all_tokens(self):
+        """(entry or utterance, token) for every token in the database."""
+        for e in self.items():
+            for t in e.tokens:
+                yield e, t
+
+    def ref_taken(self, ref: str) -> bool:
+        return self.entry_by_ref(ref) is not None or self.utterance_by_ref(ref) is not None
+
+    def suggest_utterance_reference(self, letter: str) -> str:
+        """Next free reference in an utterance category: W001, W002… and on past W999 to W1000."""
+        digits = self.settings.ref_digits
+        highest = 0
+        for u in self.items():
+            r = u.ref
+            if r.startswith(letter) and r[len(letter):].isdigit():
+                highest = max(highest, int(r[len(letter):]))
+        return f"{letter}{highest + 1:0{digits}d}"
+
+    def new_utterance(self, ref: str, label: str = "", speaker: str = "", date: str = "") -> Utterance:
+        """A new utterance with its one token (no tags: utterances have no word class to take
+        defaults from)."""
+        return Utterance(ref=nfc(ref), file_gloss=nfc(label),
+                         tokens=[Token(speaker=speaker, collected=date)])
+
+    def linked_lemmas(self, u: Utterance) -> list[Entry]:
+        return [e for e in (self.entry_by_id(i) for i in u.lemmas) if e is not None]
 
     def comment_fields(self) -> tuple[list[str], list[str]]:
         """Names of the comment fields: (entry fields, token fields)."""

@@ -39,7 +39,7 @@ def test_format_3_is_upgraded_with_morphemes_under_phonemic(tmp_path):
     assert db.settings.old_sound_folder == "Soundfiles/Lexicon"
     storage.save(db, backup=False)
     text = Path(db.path).read_text(encoding="utf-8")
-    assert '<database format="4">' in text and 'folder=' not in text
+    assert f'<database format="{storage.FORMAT_VERSION}">' in text and ' folder=' not in text
     again = storage.load(db.path)
     assert not again.load_notes                              # format 4: nothing to upgrade
     assert [f.name for f in again.settings.token_fields] == names

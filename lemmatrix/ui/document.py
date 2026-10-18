@@ -43,13 +43,13 @@ class EntryCommand(QUndoCommand):
         self._skip = applied          # the change has already been made once
 
     def _apply(self, snap_from: Entry | None, snap_to: Entry | None):
-        db = self.doc.db
+        items = self.doc.db.list_for(self.entry)  # the entries, or the utterances
         if snap_to is None:                     # remove
-            if self.entry in db.entries:
-                db.entries.remove(self.entry)
+            if self.entry in items:
+                items.remove(self.entry)
         elif snap_from is None:                 # insert
             _restore(self.entry, snap_to)
-            db.entries.insert(min(self.index, len(db.entries)), self.entry)
+            items.insert(min(self.index, len(items)), self.entry)
         else:                                   # replace in place
             _restore(self.entry, snap_to)
         self.doc.changed.emit()
@@ -100,6 +100,44 @@ class BulkCommand(QUndoCommand):
         self.doc.changed.emit()
 
 
+class AddManyCommand(QUndoCommand):
+    """Several entries or utterances added at once (an import): one undo step.
+
+    renames: (where a recording goes on undo, where it is now): each imported recording
+    was copied in, so undoing moves it aside (into the held folder) and redoing brings it back.
+    """
+
+    def __init__(self, doc: "Document", label: str, items, renames=()):
+        super().__init__(label)
+        self.doc = doc
+        self.items = list(items)
+        self.snaps = [i.copy() for i in self.items]
+        self.renames = list(renames)
+        self._skip = True
+
+    def redo(self):
+        if self._skip:
+            self._skip = False
+            return
+        for old, new in self.renames:
+            self.doc.move_file(old, new)
+        for item, snap in zip(self.items, self.snaps):
+            _restore(item, snap)
+            items = self.doc.db.list_for(item)
+            if item not in items:
+                items.append(item)
+        self.doc.changed.emit()
+
+    def undo(self):
+        for old, new in reversed(self.renames):
+            self.doc.move_file(new, old)
+        for item in self.items:
+            items = self.doc.db.list_for(item)
+            if item in items:
+                items.remove(item)
+        self.doc.changed.emit()
+
+
 class Document(QObject):
     changed = Signal()            # entries or tokens changed
     settingsChanged = Signal()    # metadata or settings changed
@@ -147,7 +185,8 @@ class Document(QObject):
             self._note_rename(Path(old), Path(new))
         if before == after and not renames:
             return
-        idx = self.db.entries.index(entry) if entry in self.db.entries else len(self.db.entries)
+        items = self.db.list_for(entry)
+        idx = items.index(entry) if entry in items else len(items)
         self.undo.push(EntryCommand(self, label, entry, before, after, idx, renames=renames))
         self.changed.emit()
 
@@ -253,13 +292,13 @@ class Document(QObject):
         deletion wasn't saved, e.g. after a crash)."""
         if not self.db.path:
             return
-        folder = storage.sound_folder(self.db)
-        used = {t.file for e in self.db.entries for t in e.tokens if t.file}
+        home = {t.file: storage.folder_for(self.db, e) for e, t in self.db.all_tokens() if t.file}
         for held in storage.held_folders(self.db):
-            if not held.is_dir() or not folder.is_dir():
+            if not held.is_dir():
                 continue
             for f in held.iterdir():
-                if f.is_file() and f.name in used and not (folder / f.name).exists():
+                folder = home.get(f.name)
+                if f.is_file() and folder is not None and folder.is_dir() and not (folder / f.name).exists():
                     try:
                         f.rename(folder / f.name)
                     except OSError:
@@ -280,18 +319,42 @@ class Document(QObject):
             except OSError:
                 pass
 
-    def add_entry(self, entry: Entry, index: int | None = None):
-        idx = len(self.db.entries) if index is None else index
+    def add_entry(self, entry: Entry, index: int | None = None, renames=()):
+        """Add an entry (or an utterance, to the utterances) as one undo step."""
+        items = self.db.list_for(entry)
+        idx = len(items) if index is None else index
         self.db.stamp_comments(None, entry, self.work_date())
-        self.db.entries.insert(idx, entry)
-        self.undo.push(EntryCommand(self, f"Add {entry.ref}", entry, None, entry.copy(), idx))
+        for old, new in renames:
+            self._note_rename(Path(old), Path(new))
+        items.insert(idx, entry)
+        self.undo.push(EntryCommand(self, f"Add {entry.ref}", entry, None, entry.copy(), idx,
+                                    renames=renames))
         self.changed.emit()
 
-    def delete_entry(self, entry: Entry):
-        idx = self.db.entries.index(entry)
+    def add_many(self, label: str, items, renames=()):
+        """Add several entries or utterances as one undo step (an import). renames: (where each
+        copied-in recording goes on undo, where it is now)."""
+        if not items:
+            return
+        date = self.work_date()
+        for item in items:
+            self.db.stamp_comments(None, item, date)
+            self.db.list_for(item).append(item)
+        for old, new in renames:
+            self._note_rename(Path(old), Path(new))
+        self.undo.push(AddManyCommand(self, label, items, renames))
+        self.changed.emit()
+
+    def delete_entry(self, entry: Entry, renames=()):
+        """Delete an entry (or an utterance); renames: recordings moved aside with it (held)."""
+        items = self.db.list_for(entry)
+        idx = items.index(entry)
         before = entry.copy()
-        self.db.entries.remove(entry)
-        self.undo.push(EntryCommand(self, f"Delete {entry.ref}", entry, before, None, idx))
+        items.remove(entry)
+        for old, new in renames:
+            self._note_rename(Path(old), Path(new))
+        self.undo.push(EntryCommand(self, f"Delete {entry.ref}", entry, before, None, idx,
+                                    renames=renames))
         self.changed.emit()
 
     # ---- settings ------------------------------------------------------

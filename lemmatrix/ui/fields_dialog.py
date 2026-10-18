@@ -431,4 +431,7 @@ class FieldsDialog(QDialog):
             move(e, renames["lemma"])
             for t in e.tokens:
                 move(t, renames["token"])
+        for u in self.db.utterances:                  # utterances have token fields only
+            for t in u.tokens:
+                move(t, renames["token"])
         return bool(renames["lemma"] or renames["token"])

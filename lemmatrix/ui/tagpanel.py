@@ -26,12 +26,17 @@ class TagPanel(QWidget):
         self.box.setContentsMargins(6, 6, 6, 6)
         self.box.setSpacing(4)
 
-    def build(self, db, selected, classes=None, show_all: bool = True, include_defaults: bool = True):
+    def build(self, db, selected, classes=None, show_all: bool = True, include_defaults: bool = True,
+              utterance: bool = False):
         """Chips for the tag groups, under their parent groups' names.
 
         classes: the lemma's word class and those above it (token dialogue). Then, unless
         show_all, only the groups usual for it are shown, plus any group the token already
-        has a tag in; tags of the other groups are marked as unusual when picked.
+        has a tag in; tags of the other groups are marked as unusual when picked. Groups for
+        utterances only aren't offered at all (unless the token has a tag in one).
+        utterance: the utterance dialogue. The utterance-only groups and the groups with no
+        "usual for" hint come first, the rest under Show all; nothing is marked as unusual,
+        since utterances have no word class.
         Returns how many groups are hidden.
         """
         while self.box.count():
@@ -43,11 +48,20 @@ class TagPanel(QWidget):
         self.groups.clear()
         ts = db.settings.tags
         usual = ts.usual_map()
+        only = ts.only_map()
         hidden = 0
         last_parent = None
         for path, g in ts.leaf_groups():
-            is_usual = classes is None or ts.is_usual(g, classes, usual)
-            if not (show_all or is_usual or any(t.name in selected for t in g.tags)):
+            has_tag = any(t.name in selected for t in g.tags)
+            g_only = only.get(id(g), False)
+            if utterance:
+                is_usual = g_only or not usual.get(id(g))
+            elif classes is not None and g_only and not has_tag:
+                continue                          # utterances only: never offered on lemma tokens
+            else:
+                is_usual = (classes is None or ts.is_usual(g, classes, usual)) and not \
+                    (g_only and classes is not None)
+            if not (show_all or is_usual or has_tag):
                 hidden += 1
                 continue
             parents = path[:-1]
@@ -73,11 +87,13 @@ class TagPanel(QWidget):
                     continue
                 b = ChipButton(t.display())
                 b.setChecked(t.name in selected)
-                b.unusual = not is_usual
+                b.unusual = not is_usual and not utterance
                 tip = t.name + (" (default, not in file names)" if t.default else f"  [{t.code}]")
                 if t.description:
                     tip += "\n" + t.description
-                if not is_usual:
+                if g_only:
+                    tip += "\nFor utterances only"
+                elif not is_usual and not utterance:
                     tip += f"\nNot usual for this lemma's word class (usual for {', '.join(usual[id(g)])})"
                 b.setToolTip(tip)
                 b.toggled.connect(lambda on, name=t.name: self._toggled(name, on))

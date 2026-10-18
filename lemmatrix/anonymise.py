@@ -132,7 +132,7 @@ def anonymise(db: Database, nb: nbmod.Notebook | None, opts: Options, report: Re
 
     if patterns:
         efields, tfields = out.comment_fields()
-        for e in out.entries:
+        for e in out.items():                     # lemmas and utterances
             for name in efields:
                 v = e.get(name)
                 if v:
@@ -176,16 +176,21 @@ def export(db: Database, nb: nbmod.Notebook | None, folder: str | Path, opts: Op
     target = folder / f"{stem}{ANON}.xml"
 
     if opts.recordings:
-        src_folder = storage.sound_folder(db)
-        dst_folder = folder / layout.SOUNDFILES / layout.TOKENS     # the fixed layout there too
-        dst_folder.mkdir(parents=True, exist_ok=True)
-        for name in sorted({t.file for e in db.entries for t in e.tokens if t.file}):
-            src = src_folder / name
-            if src.exists():
-                shutil.copy2(src, dst_folder / name)
-                report.recordings += 1
-            else:
-                report.missing_recordings += 1
+        # the fixed layout there too: tokens' recordings in Tokens, utterances' in Utterances
+        for items, src_folder, sub in ((db.entries, storage.sound_folder(db), layout.TOKENS),
+                                       (db.utterances, storage.utterance_folder(db), layout.UTTERANCES)):
+            names = sorted({t.file for e in items for t in e.tokens if t.file})
+            if not names:
+                continue
+            dst_folder = folder / layout.SOUNDFILES / sub
+            dst_folder.mkdir(parents=True, exist_ok=True)
+            for name in names:
+                src = src_folder / name
+                if src.exists():
+                    shutil.copy2(src, dst_folder / name)
+                    report.recordings += 1
+                else:
+                    report.missing_recordings += 1
 
     out.path = str(target)
     storage.save(out, target, backup=False)

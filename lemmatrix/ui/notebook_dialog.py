@@ -441,7 +441,13 @@ class NotebookDialog(QDialog):
         for e, i in rows:
             t = e.tokens[i]
             tags = " + ".join(mx.chips(db, [x for x in t.tags if x not in defaults]))
-            it = QTreeWidgetItem([f"{e.ref} {db.lemma(e)} “{db.gloss(e)}”", tags or "citation", t.speaker, t.file])
+            from ..model import is_utterance
+            if is_utterance(e):                   # marked as an utterance (they have no lemma)
+                what = f"{e.ref} “{e.label}”" if e.label else e.ref
+                it = QTreeWidgetItem([what, f"utterance{' · ' + tags if tags else ''}", t.speaker, t.file])
+            else:
+                it = QTreeWidgetItem([f"{e.ref} {db.lemma(e)} “{db.gloss(e)}”", tags or "citation", t.speaker,
+                                      t.file])
             it.setFont(0, ipa_font(self.main.prefs.ipa_size))
             it.setData(0, Qt.UserRole, (e, i))
             self.recordings.addTopLevelItem(it)
