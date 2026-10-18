@@ -1717,3 +1717,15 @@ def test_a_new_database_in_a_folder_that_has_one_gets_its_own(win, tmp_path, mon
                         lambda *a, **k: (str(tmp_path / "Second.xml"), ""))
     path = win._new_database_path("New database")
     assert Path(path) == tmp_path / "Second" / "Second.xml"
+
+
+def test_metadata_opens_the_documentation_folder(win, tmp_path, monkeypatch):
+    from PySide6.QtGui import QDesktopServices
+    from lemmatrix.ui.dialogs import MetadataDialog
+    opened = []
+    monkeypatch.setattr(QDesktopServices, "openUrl", lambda url: opened.append(url.toLocalFile()))
+    dlg = MetadataDialog(win, win.doc.db)
+    assert dlg.docs_btn.isEnabled() and "Documentation" in dlg.docs_btn.toolTip()
+    dlg.docs_btn.click()
+    assert (tmp_path / "Documentation").is_dir()
+    assert Path(opened[-1]) == tmp_path / "Documentation"

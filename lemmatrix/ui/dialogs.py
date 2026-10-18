@@ -266,8 +266,35 @@ class MetadataDialog(QDialog):
         note = QLabel("Researchers, participants (speakers) and locations: Edit → Lists.")
         note.setStyleSheet(f"color: {theme.muted()};")
         lay.addWidget(note)
+        # Consent forms and other documentation live in the main folder's Documentation folder
+        from .. import layout
+        self.docs_btn = QPushButton("Open documentation folder")
+        if db.path:
+            where = QDir.toNativeSeparators(str(layout.documentation_folder(db.path)))
+            self.docs_btn.setToolTip(f"Consent forms and other documentation:\n{where}")
+        else:
+            self.docs_btn.setEnabled(False)
+            self.docs_btn.setToolTip("Save the database first: the Documentation folder is next to it")
+        self.docs_btn.clicked.connect(lambda *_: self.open_documentation())
+        row = QHBoxLayout()
+        row.addWidget(self.docs_btn)
+        row.addStretch(1)
+        lay.addLayout(row)
         lay.addStretch(1)
         lay.addWidget(_buttons(self))
+
+    def open_documentation(self):
+        """Open the Documentation folder (made if it isn't there yet) in the file manager."""
+        from PySide6.QtCore import QUrl
+        from PySide6.QtGui import QDesktopServices
+        from .. import layout
+        folder = layout.documentation_folder(self.db.path)
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            QMessageBox.warning(self, "Documentation", f"Couldn't make the Documentation folder: {exc}")
+            return
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
 
     def accept(self):
         langs = self.glosses.text().split()
