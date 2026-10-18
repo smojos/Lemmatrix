@@ -685,11 +685,31 @@ class MainWindow(QMainWindow):
         else:
             last = self.prefs.session_for(db.path) if db.path else {}
             keys = {k: [x for x in last.get(k, []) if isinstance(x, str)] for k in self.sess_rows}
+            if not any(keys.values()):            # nothing remembered: the latest day in the notebook
+                prev = self._latest_notebook_session()
+                if prev is not None:
+                    keys = {chips.RESEARCHERS: list(prev.researchers),
+                            chips.PARTICIPANTS: list(prev.participants),
+                            chips.LOCATIONS: list(prev.locations)}
             if not db.path and not keys[chips.PARTICIPANTS] and self.prefs.speaker in db.participant_codes():
                 keys[chips.PARTICIPANTS] = [self.prefs.speaker]
         for kind, row in self.sess_rows.items():
             row.set_keys(keys.get(kind, []))
+        self._remember_session()
         self._fill_speakers()
+
+    def _latest_notebook_session(self):
+        """The most recent day in the notebook (up to the session's date) with people or places."""
+        upto = self.session_date() or today()
+        days = [s for s in self.doc.notebook.sessions
+                if s.date <= upto and (s.researchers or s.participants or s.locations)]
+        return max(days, key=lambda s: s.date, default=None)
+
+    def _remember_session(self):
+        """The panel's people and places are remembered for the next run, whichever way they got there
+        (picked, or loaded from a day in the notebook)."""
+        if self.doc.db.path and any(self.session_keys().values()):
+            self.prefs.set_session_for(self.doc.db.path, self.session_keys())
 
     def speaker_choices(self) -> list[str]:
         """Who can be the speaker: the session's participants (all participants if none are picked)."""
@@ -715,7 +735,7 @@ class MainWindow(QMainWindow):
         return {k: list(row.keys) for k, row in self.sess_rows.items()}
 
     def _session_people_changed(self):
-        if self.doc.db.path:
+        if self.doc.db.path:                      # (also when the last chip is removed)
             self.prefs.set_session_for(self.doc.db.path, self.session_keys())
         self._fill_speakers()
 
@@ -725,6 +745,7 @@ class MainWindow(QMainWindow):
             for kind, keys in ((chips.RESEARCHERS, s.researchers), (chips.PARTICIPANTS, s.participants),
                                (chips.LOCATIONS, s.locations)):
                 self.sess_rows[kind].set_keys(keys)
+            self._remember_session()
             self._fill_speakers()
         self.write_btn.setEnabled(bool(self.session_date()))
 
@@ -897,6 +918,9 @@ class MainWindow(QMainWindow):
         self._notebook_icons()
         a = theme.accent()
         self.sess_language.setStyleSheet(f"color: {theme.colour('pitch').name()};")
+        # Qt doesn't always pass a new theme down to the matrix pane (its option checkboxes stayed
+        # black on white after switching to dark), so it is given the palette directly.
+        self.matrix_box.setPalette(theme.interface_palette())
         for lbl in (self.lemma_title, self.matrix_title):
             lbl.setStyleSheet(f"color: {theme.colour('pitch').name()};")   # the accent, lighter on dark
         muted = theme.muted()

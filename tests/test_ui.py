@@ -1178,3 +1178,19 @@ def test_renaming_a_word_class_follows_into_lemmas_and_hints(win):
     assert db.word_class(db.entry_by_ref("V001")) == "Verbal"
     assert "Verbal" in db.settings.word_classes()
     assert db.unusual_tags(db.entry_by_ref("V001"), ["Past"]) == []     # still usual
+
+
+def test_session_people_carry_over_to_the_next_day(win, tmp_path):
+    """A new day starts with the last people and places: remembered, or the latest notebook day."""
+    from lemmatrix.ui import chiprow as chips
+    path = win.doc.db.path
+    win.prefs.set_session_for(path, {})                      # nothing remembered
+    s = win.doc.notebook.add_session("2026-01-05")         # yesterday, say: a day with notes
+    s.researchers, s.participants = ["JS"], ["SP1"]
+    win._fill_session()                                    # opening on a day without notes
+    assert win.sess_rows[chips.RESEARCHERS].keys == ["JS"]
+    assert win.sess_rows[chips.PARTICIPANTS].keys == ["SP1"]
+    assert win.prefs.session_for(path)[chips.PARTICIPANTS] == ["SP1"]   # and now remembered
+    win.sess_rows[chips.PARTICIPANTS]._add("ABC")         # picked in the panel
+    win._fill_session()
+    assert win.sess_rows[chips.PARTICIPANTS].keys == ["SP1", "ABC"]
