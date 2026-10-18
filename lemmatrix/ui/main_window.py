@@ -877,6 +877,10 @@ class MainWindow(QMainWindow):
         if problem:
             QMessageBox.warning(self, "Notebook", problem + "\n\nThe notebook won't be saved over, "
                                 "so nothing in it is lost. Check the file, then open the database again.")
+        elif self.doc.notebook.repaired:
+            QMessageBox.information(self, "Notebook", "The notebook had invisible characters in it (from a "
+                                    "paste, perhaps) that made it unreadable. They have been taken out; "
+                                    "saving writes the repaired notebook (a backup of the old one is kept).")
         # people found in the notebook join the lists (Q8)
         md = self.doc.db.metadata
         researchers, participants = self.doc.notebook.people()

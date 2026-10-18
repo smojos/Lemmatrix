@@ -24,7 +24,7 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .model import Database, Entry, Token, nfc, today
+from .model import Database, Entry, Token, nfc, today, write_atomically, xml_safe
 
 FORMAT_VERSION = "1"
 SUFFIX = ".notebook"
@@ -100,6 +100,7 @@ class Notebook:
     sessions: list[Session] = field(default_factory=list)
     path: str = ""
     dirty: bool = False
+    repaired: bool = False            # had characters XML can't hold, taken out on reading
 
     def session(self, date: str) -> Session | None:
         return next((s for s in self.sessions if s.date == date), None)
@@ -342,7 +343,11 @@ def load(path: str | os.PathLike) -> Notebook:
     if not path.exists():
         return nb
     try:
-        root = ET.parse(path).getroot()
+        try:
+            root = ET.parse(path).getroot()
+        except ET.ParseError:                 # invisible characters a paste brought in: take them out
+            root = ET.fromstring(xml_safe(path.read_text(encoding="utf-8", errors="replace"), "\n"))
+            nb.repaired = True
     except ET.ParseError as exc:
         raise NotebookError(f"The notebook {path.name} isn't readable XML: {exc}") from exc
     if root.tag != "notebook":
@@ -363,6 +368,7 @@ def load(path: str | os.PathLike) -> Notebook:
                                         nfc(q.get("ref", "")), nfc(q.get("about", ""))))
         nb.sessions.append(s)
     nb.sort()
+    nb.dirty = nb.repaired                # so saving writes the repaired file
     return nb
 
 
@@ -406,10 +412,8 @@ def save(nb: Notebook, path: str | os.PathLike | None = None, database_name: str
     path = str(path or nb.path)
     if not path:
         raise ValueError("No file name given")
-    text = to_string(nb, database_name)
-    tmp = path + ".saving"
-    with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write(text)
+    text = xml_safe(to_string(nb, database_name), line_break="\n")   # a paste from Word, say
+    tmp = write_atomically(path, text)
     os.replace(tmp, path)
     nb.path = path
     nb.dirty = False

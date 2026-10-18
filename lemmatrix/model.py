@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import copy
 import datetime as _dt
+import re
 import unicodedata
 import uuid
 from dataclasses import dataclass, field
@@ -15,6 +16,30 @@ from dataclasses import dataclass, field
 # Characters Windows forbids in file names. Glosses, codes and references
 # that end up in sound file names may not contain them.
 FORBIDDEN_CHARS = '/\\:*?"<>|'
+
+
+# Characters XML can't hold (control characters, e.g. the line break Word puts on the clipboard
+# for Shift+Enter): a file containing one can't be opened again, so they never reach the file.
+_NOT_XML = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\ufffe\uffff\ud800-\udfff]")
+
+
+def xml_safe(text: str, line_break: str = " ") -> str:
+    """text without the characters XML can't hold; Word's line breaks (\\v, \\f) become line_break."""
+    if not _NOT_XML.search(text):
+        return text
+    return _NOT_XML.sub(lambda m: line_break if m.group() in "\x0b\x0c" else "", text)
+
+
+def write_atomically(path: str, text: str):
+    """Write a file via path.saving, flushed to the disk before it replaces the old one, so a power
+    cut or a dead battery leaves either the old file or the new one, never half of one."""
+    import os
+    tmp = path + ".saving"
+    with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
+        fh.flush()
+        os.fsync(fh.fileno())
+    return tmp
 
 
 def nfc(text: str | None) -> str:

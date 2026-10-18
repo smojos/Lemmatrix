@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import os
+import re
 import shutil
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -16,7 +17,8 @@ from pathlib import Path
 from . import pitch as pitchmod
 from .matrix import CITATION, EXACT, LOOSE, MatrixConfig, Spec
 from .model import (Database, Entry, FieldDef, Group, ListItem, Location, Metadata, Person,
-                    RefCategory, Settings, Tag, TagStructure, Token, new_id, nfc)
+                    RefCategory, Settings, Tag, TagStructure, Token, new_id, nfc, write_atomically,
+                    xml_safe)
 
 FORMAT_VERSION = "3"
 # Format 1 (to 18 October 2026) tied tags to word classes: <word-class> sections of the tag
@@ -217,10 +219,12 @@ def _unique_ids(db: Database):
 
 def load(path: str | os.PathLike) -> Database:
     path = str(path)
+    repaired = False
     try:
         root = ET.parse(path).getroot()
     except ET.ParseError as exc:
-        raise FormatError(f"This file isn't readable XML: {exc}") from exc
+        root = _parse_repaired(path, exc)     # invisible characters a paste brought in, say
+        repaired = True
     if root.tag != "database":
         raise FormatError("This isn't a Lemmatrix database (the top element should be <database>).")
     version = root.get("format", FORMAT_VERSION)
@@ -256,7 +260,22 @@ def load(path: str | os.PathLike) -> Database:
         _upgrade_from_1(db)
     if version in ("1", "2"):
         _upgrade_to_3(db)
+    if repaired:
+        db.load_notes = list(db.load_notes) + [REPAIRED_NOTE]
     return db
+
+
+REPAIRED_NOTE = ("This file had invisible characters in it (from a paste, perhaps) that made it unreadable. "
+                 "They have been taken out; saving writes the repaired file (a backup of the old one is kept).")
+
+
+def _parse_repaired(path, exc):
+    """The file without the characters XML can't hold, parsed; FormatError if it still won't read."""
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            return ET.fromstring(xml_safe(fh.read()))
+    except (ET.ParseError, OSError):
+        raise FormatError(f"This file isn't readable XML: {exc}") from exc
 
 
 def _upgrade_to_3(db: Database):
@@ -530,7 +549,8 @@ def to_element(db: Database) -> ET.Element:
 def to_string(db: Database) -> str:
     root = to_element(db)
     ET.indent(root, space="  ")
-    return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(root, encoding="unicode") + "\n"
+    text = '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(root, encoding="unicode") + "\n"
+    return xml_safe(text)                 # a pasted control character would make the file unreadable
 
 
 def backup_folder(path: str | os.PathLike, chosen: str | os.PathLike | None = None) -> Path:
@@ -553,13 +573,48 @@ def make_backup(path: str | os.PathLike, keep: int = BACKUPS_KEPT,
         n += 1
         target = folder / f"{p.stem}_{stamp}_{n}{p.suffix}"
     shutil.copy2(p, target)
-    old = sorted(folder.glob(f"{p.stem}_*{p.suffix}"), key=lambda f: f.stat().st_mtime)
-    for f in old[:-keep] if keep else old:
+    pattern = re.compile(re.escape(p.stem) + r"_\d{4}-\d{2}-\d{2}_\d{6}(_\d+)?" + re.escape(p.suffix) + "$")
+    mine = [f for f in folder.glob(f"{p.stem}_*{p.suffix}") if pattern.match(f.name)]   # not X_old's
+    keepers = backups_to_keep(mine, keep)
+    for f in mine:
+        if f not in keepers:
+            try:
+                f.unlink()
+            except OSError:
+                pass
+    return target
+
+
+def backups_to_keep(files, recent: int = BACKUPS_KEPT, today: _dt.date | None = None) -> set:
+    """Which backups to keep: the most recent ones, and older ones spread out in time.
+
+    By the date each version was saved: the `recent` newest; the newest of each of the last
+    seven days (so yesterday and the day before, and one that will be a week old); the newest
+    of each of the four weeks before that (so one that will be a month old); and the newest
+    one at least a month old.
+    """
+    today = today or _dt.date.today()
+    dated = []
+    for f in files:
         try:
-            f.unlink()
+            dated.append((f.stat().st_mtime, f))
         except OSError:
             pass
-    return target
+    dated.sort(key=lambda x: x[0], reverse=True)              # newest first
+    keep = {f for _, f in dated[:recent]}
+    seen_day, seen_week, month = set(), set(), False
+    for mtime, f in dated:
+        age = (today - _dt.date.fromtimestamp(mtime)).days
+        if 1 <= age <= 7 and age not in seen_day:
+            seen_day.add(age)
+            keep.add(f)
+        elif 7 < age < 35 and age // 7 not in seen_week:
+            seen_week.add(age // 7)
+            keep.add(f)
+        if age >= 30 and not month:
+            month = True
+            keep.add(f)
+    return keep
 
 
 def save(db: Database, path: str | os.PathLike | None = None, backup: bool = True,
@@ -570,9 +625,7 @@ def save(db: Database, path: str | os.PathLike | None = None, backup: bool = Tru
     if not path:
         raise ValueError("No file name given")
     text = to_string(db)
-    tmp = path + ".saving"
-    with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write(text)
+    tmp = write_atomically(path, text)
     if backup:
         make_backup(path, folder=backup_dir)
     os.replace(tmp, path)

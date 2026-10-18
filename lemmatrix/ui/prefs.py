@@ -101,7 +101,7 @@ class Prefs:
 
     @property
     def autosave_minutes(self) -> int:
-        return self._get("safety/autosave_minutes", 0, int)
+        return self._get("safety/autosave_minutes", 5, int)      # on by default (18 October)
 
     @autosave_minutes.setter
     def autosave_minutes(self, v): self.q.setValue("safety/autosave_minutes", int(v))

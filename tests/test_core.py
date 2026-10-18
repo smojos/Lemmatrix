@@ -477,3 +477,43 @@ def test_format_1_tags_shared_by_word_classes(tmp_path):
     assert ts.duplicate_names() == []
     assert any("Plural (PRONOUN)" in n for n in db.load_notes)
     assert db.entry_by_ref(pron.ref) is not None
+
+
+def test_pasted_control_characters_never_make_a_file_unreadable(tmp_path):
+    import shutil
+    from lemmatrix import notebook as nb, storage
+    shutil.copy2(Path(__file__).resolve().parent.parent / "samples" / "Sample.xml", tmp_path / "S.xml")
+    db = storage.load(tmp_path / "S.xml")
+    db.entries[0].tokens[0].set("Comment", "from Word\x0bnext\x01")
+    storage.save(db, tmp_path / "S.xml")
+    again = storage.load(tmp_path / "S.xml")                       # opens again
+    assert again.entries[0].tokens[0].get("Comment") == "from Word next"
+    # a file broken by an older version is repaired on opening, with a note
+    text = (tmp_path / "S.xml").read_text(encoding="utf-8").replace("from Word next", "from\x0bWord")
+    (tmp_path / "S.xml").write_text(text, encoding="utf-8")
+    fixed = storage.load(tmp_path / "S.xml")
+    assert fixed.entries[0].tokens[0].get("Comment") == "from Word" and fixed.load_notes
+    book = nb.Notebook()
+    book.add_session("2026-10-01").notes = "line one\x0bline two"
+    nb.save(book, tmp_path / "S.notebook")
+    assert nb.load(tmp_path / "S.notebook").session("2026-10-01").notes == "line one\nline two"
+
+
+def test_backups_keep_recent_and_spread_out_older_ones(tmp_path):
+    import datetime as dt
+    import os
+    from lemmatrix import storage
+    today = dt.date(2026, 10, 18)
+    files = []
+    for days in range(0, 60):                  # one backup a day for two months, 3 today
+        for k in range(3 if days == 0 else 1):
+            f = tmp_path / f"db_{(today - dt.timedelta(days=days)).isoformat()}_12000{k}.xml"
+            f.write_text("x")
+            t = dt.datetime.combine(today - dt.timedelta(days=days), dt.time(12, 0, k)).timestamp()
+            os.utime(f, (t, t))
+            files.append(f)
+    keep = storage.backups_to_keep(files, recent=10, today=today)
+    ages = sorted((today - dt.date.fromtimestamp(f.stat().st_mtime)).days for f in keep)
+    assert 1 in ages and 2 in ages and 7 in ages               # yesterday, the day before, a week ago
+    assert any(a >= 30 for a in ages)                          # a month ago
+    assert len(keep) <= 22
