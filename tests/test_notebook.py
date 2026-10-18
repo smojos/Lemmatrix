@@ -54,7 +54,7 @@ def test_people_places_ids_and_comment_dates_round_trip(db, tmp_path):
 
 def test_duplicate_ids_are_made_unique(tmp_path):
     p = tmp_path / "dup.xml"
-    p.write_text('<database format="5"><metadata/><settings/>'
+    p.write_text('<database format="6"><metadata/><settings/>'
                  '<entry ref="A001" id="x"><token id="t"/><token id="t"/></entry></database>', encoding="utf-8")
     d = storage.load(p)
     assert len({t.id for t in d.entries[0].tokens}) == 2

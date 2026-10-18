@@ -58,7 +58,12 @@ If something goes wrong, a message box shows the details, and they're also writt
   lemma, each with one reference (U Unorganised; W, X, Y, Z of your own), one transcription and
   one recording. Add (record on the spot), Import… or drag WAV files onto the grid (copied into
   `Soundfiles/Utterances`); a grid like All data; an utterance dialogue with its file label,
-  tags (groups can be marked "utterances only") and links to lemmas. The Texts tab comes next.
+  tags (groups can be marked "utterances only") and links to lemmas.
+- **Texts and songs** (the Texts tab of the same window): a catalogue record (title, genre,
+  transcription status, date, people, places) with its recording and Praat TextGrid, copied into
+  `Soundfiles/Texts`. The lines are read from the TextGrid with a tier mapping (Edit → Lists →
+  Tier mapping; tx, ge, ft by default); a line can be played, played in context, opened in Praat
+  with its TextGrid, or clipped as an utterance (its stretch of the recording and its text).
 - **Lemma list:** a filter menu on every column (Show all, Blanks, Non-blanks, Filter for… on
   open fields, Choose… on closed fields), Configure columns, quick search, add / edit /
   delete lemmas, references suggested from the category.

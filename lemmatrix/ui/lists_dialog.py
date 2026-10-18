@@ -18,7 +18,8 @@ from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QDialogBut
                                QPlainTextEdit, QSplitter, QStackedWidget, QTableWidget, QTableWidgetItem,
                                QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
-from ..model import LEMMAS, UTTERANCES, Database, Location, Person, RefCategory, forbidden_in, nfc
+from ..model import (LEMMAS, TEXTS, UTTERANCES, Database, Location, Person, RefCategory, TierMapping, TierRule,
+                     forbidden_in, nfc)
 from . import theme
 from .chiprow import LOCATIONS, PARTICIPANTS, RESEARCHERS, consent_path
 from .dialogs import TagStructureDialog
@@ -424,6 +425,7 @@ class CategoryEditor(QWidget):
         kind = QComboBox()
         kind.addItem("Lemmas", LEMMAS)
         kind.addItem("Utterances", UTTERANCES)
+        kind.addItem("Texts", TEXTS)
         kind.setCurrentIndex(max(0, kind.findData(c.kind)))
         kind.setEnabled(not n)
         if n:
@@ -494,6 +496,91 @@ class CategoryEditor(QWidget):
         return ""
 
 
+TIERS = "tiers"
+
+
+class TierEditor(QWidget):
+    """The database's tier mapping: tier name, the field it fills in, which tier is the main one."""
+
+    def __init__(self, db: Database, parent=None):
+        super().__init__(parent)
+        self.db = db
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        self.table = QTableWidget(0, 3)
+        self.table.setHorizontalHeaderLabels(["Tier", "Fills in", "Main"])
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.table.verticalHeader().setVisible(False)
+        m = db.settings.tier_mapping
+        for r in m.rules:
+            self._add_row(r, m.is_main(r.tier))
+        lay.addWidget(self.table, 1)
+        row = QHBoxLayout()
+        row.addWidget(_tool("add", "Add a tier", lambda: self._add_row(TierRule(""), False, edit=True)))
+        row.addWidget(_tool("delete", "Remove the selected tier", self._remove))
+        row.addStretch(1)
+        lay.addLayout(row)
+
+    def _add_row(self, rule: TierRule, main: bool, edit: bool = False):
+        from .texts import field_choices
+        from PySide6.QtWidgets import QRadioButton
+        r = self.table.rowCount()
+        self.table.insertRow(r)
+        self.table.setItem(r, 0, QTableWidgetItem(rule.tier))
+        combo = QComboBox()
+        choices = field_choices(self.db)
+        for label, f, lang in choices:
+            combo.addItem(label, (f, lang))
+        i = next((k for k, (_, f, lang) in enumerate(choices) if (f, lang) == (rule.field, rule.lang)), 0)
+        combo.setCurrentIndex(i)
+        self.table.setCellWidget(r, 1, combo)
+        rb = QRadioButton()
+        rb.setChecked(main)
+        rb.setAutoExclusive(False)
+        rb.toggled.connect(lambda on, rb=rb: on and self._only_main(rb))
+        self.table.setCellWidget(r, 2, rb)
+        if edit:
+            self.table.setCurrentCell(r, 0)
+            self.table.editItem(self.table.item(r, 0))
+
+    def _only_main(self, keep):
+        for r in range(self.table.rowCount()):
+            rb = self.table.cellWidget(r, 2)
+            if rb is not keep and rb.isChecked():
+                rb.blockSignals(True)
+                rb.setChecked(False)
+                rb.blockSignals(False)
+
+    def _remove(self):
+        r = self.table.currentRow()
+        if r >= 0:
+            self.table.removeRow(r)
+
+    def mapping(self) -> TierMapping:
+        m = TierMapping(self.db.settings.tier_mapping.main, [])
+        for r in range(self.table.rowCount()):
+            name = nfc((self.table.item(r, 0).text() if self.table.item(r, 0) else "").strip())
+            if not name:
+                continue
+            f, lang = self.table.cellWidget(r, 1).currentData()
+            m.rules.append(TierRule(name, f, lang))
+            if self.table.cellWidget(r, 2).isChecked():
+                m.main = name
+        return m
+
+    def problem(self) -> str:
+        names = [r.tier.lower() for r in self.mapping().rules]
+        if len(names) != len(set(names)):
+            return "Two tier rules have the same name."
+        if names and not any(self.table.cellWidget(r, 2).isChecked() for r in range(self.table.rowCount())):
+            return "Choose the main tier: its intervals are a text's lines."
+        if any("@" in n for n in names):
+            return "Give the tier's name without @speaker: tx stands for tx@SP1, tx@SP2…"
+        return ""
+
+
 def _one_line(text: str, n: int = 80) -> str:
     text = " ".join((text or "").split())
     return text if len(text) <= n else text[:n] + "…"
@@ -545,7 +632,7 @@ class ListsDialog(QDialog):
         self.field_lists = []
         self.class_list = None                  # the Word Class list's editor
         s = db.settings
-        for kind, fields in (("lemma", s.entry_fields), ("token", s.token_fields)):
+        for kind, fields in (("lemma", s.entry_fields), ("token", s.token_fields), ("text", s.text_fields)):
             for f in fields:
                 if not f.closed:
                     continue
@@ -559,6 +646,14 @@ class ListsDialog(QDialog):
                              "includes those nested under it. Renaming a class renames it in the lemmas "
                              "and the tag groups.")
                 self._page(f"field:{f.name}", f.title, ed, note)
+
+        self._heading("Texts")
+        self.tier_editor = TierEditor(db)
+        self._page(TIERS, "Tier mapping", self.tier_editor,
+                   "What each tier of a text's Praat TextGrid fills in, by the tier's name (a name like "
+                   "tx@SP1 counts as tx, said by SP1). The main tier's intervals are the lines; the other "
+                   "tiers are matched to them by time. A text can have its own mapping (chosen in its "
+                   "dialogue); new tier names are learned when a text is added.")
 
         self._heading("Tags")
         self.tags = TagStructureDialog(
@@ -641,7 +736,8 @@ class ListsDialog(QDialog):
         return f"in {n} notebook session(s)" if n else ""
 
     def _participant_use(self, code) -> str:
-        tokens = sum(1 for _, t in self.db.all_tokens() if t.speaker == code)
+        tokens = sum(1 for _, t in self.db.all_tokens() if t.speaker == code) + \
+            sum(1 for t in self.db.texts if code in t.participants)
         n = self._sessions_with("participants", code)
         parts = ([f"the speaker of {tokens} token(s)"] if tokens else []) + \
             ([f"in {n} notebook session(s)"] if n else [])
@@ -662,6 +758,10 @@ class ListsDialog(QDialog):
             self.show_page(REFS)
             QMessageBox.warning(self, "Lists", problem)
             return
+        if (problem := self.tier_editor.problem()):
+            self.show_page(TIERS)
+            QMessageBox.warning(self, "Lists", problem)
+            return
         if not self.tags.validate():
             self.show_page(TAGS)
             return
@@ -676,5 +776,6 @@ class ListsDialog(QDialog):
         for f, ed in self.field_lists:
             f.items = ed.items()
         self.db.settings.ref_categories = self.categories.categories()
+        self.db.settings.tier_mapping = self.tier_editor.mapping()
         return {RESEARCHERS: self.researchers.renames(), PARTICIPANTS: self.participants.renames(),
                 LOCATIONS: self.locations.renames()}

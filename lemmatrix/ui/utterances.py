@@ -32,7 +32,7 @@ from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, ListEdit
 from .token_dialog import Slot, TokenDialog
 from .widgets import FlowLayout, ipa_font
 
-TEXTS, UTTERANCES_TAB = 0, 1
+TEXTS, UTTERANCES_TAB = 0, 1      # the tabs
 
 
 def clean_label(text: str, limit: int = 60) -> str:
@@ -130,14 +130,9 @@ class TextsUtterancesWindow(QDialog):
         bxl.addWidget(head)
 
         self.pages = QStackedWidget()
-        texts = QLabel("Texts and songs (T and S references, with their recordings and Praat TextGrids) "
-                       "come with the next stage. Utterances clipped from a text's lines will appear in "
-                       "the Utterances tab.")
-        texts.setWordWrap(True)
-        texts.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-        texts.setContentsMargins(4, 12, 4, 4)
-        self.texts_note = texts
-        self.pages.addWidget(texts)
+        from .texts import TextsPanel
+        self.texts = TextsPanel(self)             # the texts above, the chosen text's lines below
+        self.pages.addWidget(self.texts.page)
         t = self.table = UtteranceTable(self)
         self.pages.addWidget(t)
         bxl.addWidget(self.pages, 1)
@@ -160,11 +155,7 @@ class TextsUtterancesWindow(QDialog):
         split.addWidget(box)
 
         self.options = QStackedWidget()
-        texts_bar, tl = main._bar()
-        self.texts_count = QLabel("No texts yet: they come with the next stage.")
-        tl.addWidget(self.texts_count)
-        tl.addStretch(1)
-        self.options.addWidget(texts_bar)
+        self.options.addWidget(self.texts.bar)
         self.options.addWidget(self._utterances_bar())
         split.addWidget(self.options)
         split.setSizes([600, 150])
@@ -181,7 +172,7 @@ class TextsUtterancesWindow(QDialog):
         t.model_.edited.connect(self._edited)
         self.search.textChanged.connect(lambda text: t.proxy.set_search(text))
         from PySide6.QtGui import QShortcut
-        QShortcut(QKeySequence("Ctrl+Space"), self, self.play)
+        QShortcut(QKeySequence("Ctrl+Space"), self, self._play_key)       # an utterance, or a text's line
         QShortcut(QKeySequence("Ctrl+Shift+Space"), self, self.play_pitch)    # as in All data
 
         for a in (self.doc.undo.createUndoAction(self, "Undo"), self.doc.undo.createRedoAction(self, "Redo")):
@@ -194,8 +185,9 @@ class TextsUtterancesWindow(QDialog):
         self.doc.settingsChanged.connect(self._settings_changed)
         self._setup_columns()
         self.refresh()
-        self.tabs.setCurrentIndex(UTTERANCES_TAB)
-        self._tab_changed(UTTERANCES_TAB)
+        tab = TEXTS if main.prefs.get_list("utterances/tab") == ["texts"] else UTTERANCES_TAB
+        self.tabs.setCurrentIndex(tab)
+        self._tab_changed(tab)
         self._restyle()
         g = self.main.prefs.get_bytes("window/utterances")
         if g:
@@ -325,9 +317,12 @@ class TextsUtterancesWindow(QDialog):
             self.sound_files, self.cloud_files = set(), set()
         self.table.set_rows(list(self.db.utterances))
         self._update_count()
+        if hasattr(self, "texts"):
+            self.texts.refresh()
 
     def _settings_changed(self):
         self._setup_columns()
+        self.texts.settings_changed()
         self.refresh()
 
     def _update_count(self):
@@ -337,6 +332,18 @@ class TextsUtterancesWindow(QDialog):
     def _tab_changed(self, i):
         self.pages.setCurrentIndex(i)
         self.options.setCurrentIndex(i)
+        self.main.prefs.set_list("utterances/tab", ["texts" if i == TEXTS else "utterances"])
+
+    def _play_key(self):
+        if self.tabs.currentIndex() == TEXTS:
+            self.texts.play_line()
+        else:
+            self.play()
+
+    def select_text(self, text):
+        """Show a text (from the notebook)."""
+        self.tabs.setCurrentIndex(TEXTS)
+        self.texts.select(text)
 
     def select(self, u: Utterance):
         """Show an utterance (from a notebook link)."""
@@ -403,8 +410,21 @@ class TextsUtterancesWindow(QDialog):
         speaker, date = self.main.session_speaker(), self.main.session_date()
         items, renames, problems = [], [], []
         for w in wavs:
+            lines = self._grid_lines(w)           # a TextGrid beside it fills in the fields
+            choice = self._ask_lines(w, lines) if len(lines) > 1 else ("one", 0) if lines else ("none", None)
+            if choice is None:
+                continue
+            if choice[0] == "text":               # several lines: added as a text instead
+                t = self._as_text(w, problems)
+                if t is not None:
+                    items.append(t[0])
+                    renames += t[1]
+                continue
             ref = f"{letter}{number:0{digits}d}"
             u = self.db.new_utterance(ref, clean_label(w.stem), speaker, date)
+            if choice[0] in ("one", "join"):
+                picked = [lines[choice[1]]] if choice[0] == "one" else lines
+                self._fill_from_lines(u, picked)
             name = self.db.expected_filename(u, u.token)
             dst = folder / name
             if dst.exists():
@@ -423,6 +443,9 @@ class TextsUtterancesWindow(QDialog):
             n = len(items)
             self.doc.add_many(f"Import {n} recording{'s' if n != 1 else ''}", items, renames)
             self.table.select_row(items[0])
+            items = [u for u in items if isinstance(u, Utterance)]
+            if not items:
+                return []
         if problems:
             QMessageBox.warning(self, "Import", "Not imported:\n\n" + "\n".join(problems[:30]))
         elif items:
@@ -430,6 +453,82 @@ class TextsUtterancesWindow(QDialog):
                 f"Imported {len(items)} recording(s) as {items[0].ref}"
                 + (f"–{items[-1].ref}" if len(items) > 1 else "") + ".", 8000)
         return items
+
+    # ---- a TextGrid beside an imported recording -------------------------
+    @staticmethod
+    def _grid_beside(wav: Path) -> Path | None:
+        for ext in (".TextGrid", ".textgrid", ".TEXTGRID"):
+            if wav.with_suffix(ext).exists():
+                return wav.with_suffix(ext)
+        return None
+
+    def _grid_lines(self, wav: Path) -> list:
+        from .. import textgrid as tgmod
+        grid = self._grid_beside(wav)
+        if grid is None:
+            return []
+        try:
+            return tgmod.read_lines(grid, self.db.settings.tier_mapping, self.main.session_speaker())
+        except tgmod.TextGridError:
+            return []
+
+    def _ask_lines(self, wav: Path, lines) -> tuple | None:
+        """A TextGrid with several lines beside a recording: join them, pick one, or add the
+        recording as a text instead. None: skip the file."""
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Question)
+        box.setWindowTitle("Import")
+        box.setText(f"{wav.name} has a TextGrid with {len(lines)} lines. An utterance is one line.")
+        box.setInformativeText("Join the lines into one utterance, pick one of them, or add the recording "
+                               "as a text (its lines can then be clipped as utterances one by one)?")
+        join = box.addButton("Join the lines", QMessageBox.AcceptRole)
+        pick = box.addButton("Pick one…", QMessageBox.ActionRole)
+        text = box.addButton("Add as a text", QMessageBox.ActionRole)
+        box.addButton("Skip this file", QMessageBox.RejectRole)
+        box.exec()
+        hit = box.clickedButton()
+        if hit is join:
+            return ("join", None)
+        if hit is text:
+            return ("text", None)
+        if hit is pick:
+            from .texts import clock
+            labels = [f"{clock(l.start)}  {' · '.join(v for v in l.values.values())}"[:120] for l in lines]
+            choice, ok = QInputDialog.getItem(self, "Import", "Which line?", labels, 0, False)
+            return ("one", labels.index(choice)) if ok else None
+        return None
+
+    def _fill_from_lines(self, u: Utterance, lines):
+        s = self.db.settings
+        values: dict[str, str] = {}
+        for ln in lines:
+            for key, text in ln.values.items():
+                values[key] = (values[key] + " " + text) if values.get(key) else text
+        for key, text in values.items():
+            name, _, lang = key.partition(":")
+            f = s.token_field(name)
+            if f is not None:
+                u.token.set(name, text, (lang or s.primary_gloss) if f.multilingual else None, f.multilingual)
+        if lines and lines[0].speaker:
+            u.token.speaker = lines[0].speaker
+
+    def _as_text(self, wav: Path, problems) -> tuple | None:
+        """The recording (and its TextGrid) added as a text: (text, renames) or None."""
+        from ..model import TEXTS, Text
+        cats = self.db.settings.categories(TEXTS)
+        if not cats:
+            problems.append(f"{wav.name}: there is no text category to add it to")
+            return None
+        t = Text(ref=self.db.suggest_utterance_reference(cats[0].letter), file_label=clean_label(wav.stem),
+                 date=self.main.session_date(), participants=list(self.main.session_keys().get("participants", [])))
+        f = self.db.settings.text_field("title")
+        if f is not None:
+            t.set(f.name, wav.stem.replace("_", " "))
+        renames = self.texts._copy_in(t, wav, self._grid_beside(wav))
+        if renames is None:
+            problems.append(f"{wav.name}: not added as a text")
+            return None
+        return t, renames
 
     # ---- editing -------------------------------------------------------
     def _slots(self) -> list[Slot]:
@@ -601,9 +700,10 @@ class TextsUtterancesWindow(QDialog):
         self.tabs.setStyleSheet("QTabBar::tab { padding: 6px 14px; font-weight: normal; } "
                                 f"QTabBar::tab:selected {{ background: {a.name()}; "
                                 f"color: {theme.text_on(a).name()}; }}")
-        for lbl in (self.count, self.hint, self.texts_note, self.texts_count):
+        for lbl in (self.count, self.hint, self.texts.count):
             lbl.setStyleSheet(f"color: {theme.muted()};")
-        theme.as_data(self.table)
+        for t in (self.table, self.texts.table, self.texts.lines):
+            theme.as_data(t)
 
     def done(self, result):
         self.main.prefs.set_value("window/utterances", self.saveGeometry())
@@ -684,6 +784,20 @@ class UtteranceDialog(TokenDialog):
         self.lemma_find.returnPressed.connect(lambda: self._lemma_chosen(self.lemma_find.text()))
         bl.addWidget(self.lemma_find)
         outer.insertWidget(2, box)
+        self.source_box = QGroupBox("Source")     # for an utterance clipped from a text's line
+        sl = QHBoxLayout(self.source_box)
+        self.source_label = QLabel()
+        self.source_label.setWordWrap(True)
+        sl.addWidget(self.source_label, 1)
+        self.context_btn = QPushButton("Play in context")
+        self.context_btn.setToolTip("Play the line in the text's recording, with a few seconds either side")
+        self.context_btn.clicked.connect(lambda *_: self._play_context())
+        sl.addWidget(self.context_btn)
+        self.show_text_btn = QPushButton("Show the text")
+        self.show_text_btn.setToolTip("Show the text and its lines in the Texts tab")
+        self.show_text_btn.clicked.connect(lambda *_: self._show_text())
+        sl.addWidget(self.show_text_btn)
+        outer.insertWidget(3, self.source_box)
         for ed in (self.label_edit, self.lemma_find):     # Ctrl+Space plays, never types a space
             ed.installEventFilter(self)
         self.show_all_btn.setToolTip("Shown first: the tag groups for utterances only, the groups with "
@@ -764,7 +878,52 @@ class UtteranceDialog(TokenDialog):
         super()._load()
         self._fill_choices()
         self._show_lemmas()
+        self._show_source()
         self._refresh_name()
+
+    def _source_text(self):
+        u = self.slot.entry
+        return self.db.text_by_id(u.source.text) if u.source is not None else None
+
+    def _show_source(self):
+        u = self.slot.entry
+        self.source_box.setVisible(u.source is not None)
+        if u.source is None:
+            return
+        from .texts import clock
+        t = self._source_text()
+        when = f"{clock(u.source.start)}–{clock(u.source.end)}"
+        if t is None:
+            self.source_label.setText(f"Clipped from a text that no longer exists ({when}).")
+        else:
+            self.source_label.setText(f"Clipped from {t.ref} {self.db.text_title(t)}, {when}")
+        self.context_btn.setEnabled(t is not None and bool(t.file))
+        self.show_text_btn.setEnabled(t is not None)
+
+    def _play_context(self):
+        from .texts import CONTEXT
+        t = self._source_text()
+        if t is None or not t.file:
+            return
+        wav = storage.text_folder(self.db) / t.file
+        src = self.slot.entry.source
+        try:
+            samples, rate = audio.read_segment(wav, src.start - CONTEXT, src.end + CONTEXT)
+            self.main.player.play_samples(samples, rate)
+        except Exception as exc:
+            QMessageBox.warning(self, "Play", f"Couldn't play {wav.name}: {exc}")
+
+    def _show_text(self):
+        t = self._source_text()
+        win = self.parent()
+        if t is not None and hasattr(win, "select_text"):
+            win.select_text(t)
+            win.texts.lines.clearSelection()
+            src = self.slot.entry.source
+            hit = next((l for l in win.texts.lines.model_.rows
+                        if abs(l.start - src.start) < 0.01 and abs(l.end - src.end) < 0.01), None)
+            if hit is not None:
+                win.texts.lines.select_row(hit)
 
     def _show_lemmas(self):
         while self.lemma_flow.count():

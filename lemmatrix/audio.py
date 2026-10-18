@@ -150,6 +150,49 @@ def read_wav(path: str | Path) -> tuple[np.ndarray, int]:
     with wave.open(str(path), "rb") as w:
         n, rate, width, ch = w.getnframes(), w.getframerate(), w.getsampwidth(), w.getnchannels()
         raw = w.readframes(n)
+    return _decode(raw, width, ch), rate
+
+
+def read_segment(path: str | Path, start: float, end: float) -> tuple[np.ndarray, int]:
+    """Mono float samples of a stretch of a PCM WAV file (seconds; clipped to the file)."""
+    with wave.open(str(path), "rb") as w:
+        n, rate, width, ch = w.getnframes(), w.getframerate(), w.getsampwidth(), w.getnchannels()
+        a, b = max(0, int(start * rate)), min(n, int(end * rate))
+        w.setpos(min(a, n))
+        raw = w.readframes(max(0, b - a))
+    return _decode(raw, width, ch), rate
+
+
+def clip_wav(src: str | Path, dst: str | Path, start: float, end: float, artist: str = "",
+             date: str = "") -> None:
+    """Copy a stretch of a PCM WAV file into a file of its own, as it is (same sample rate, bit
+    depth and channels), with the speaker and date in its INFO metadata."""
+    with wave.open(str(src), "rb") as w:
+        n, rate, width, ch = w.getnframes(), w.getframerate(), w.getsampwidth(), w.getnchannels()
+        a, b = max(0, int(start * rate)), min(n, int(end * rate))
+        if b <= a:
+            raise AudioError("The stretch to cut is empty.")
+        w.setpos(a)
+        raw = w.readframes(b - a)
+    block = ch * width
+    fmt = struct.pack("<HHIIHH", 1, ch, rate, rate * block, block, width * 8)
+    chunks = b"fmt " + struct.pack("<I", len(fmt)) + fmt
+    chunks += b"data" + struct.pack("<I", len(raw)) + raw + (b"\x00" if len(raw) % 2 else b"")
+    chunks += _info_chunk({"IART": artist, "ICRD": date})
+    blob = b"RIFF" + struct.pack("<I", 4 + len(chunks)) + b"WAVE" + chunks
+    dst = Path(dst)
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    tmp = dst.with_suffix(dst.suffix + ".part")
+    tmp.write_bytes(blob)
+    tmp.replace(dst)
+
+
+def duration(path: str | Path) -> float:
+    with wave.open(str(path), "rb") as w:
+        return w.getnframes() / float(w.getframerate() or 1)
+
+
+def _decode(raw: bytes, width: int, ch: int) -> np.ndarray:
     if width == 2:
         a = np.frombuffer(raw, "<i2").astype(np.float32) / 32768
     elif width == 3:
@@ -165,7 +208,7 @@ def read_wav(path: str | Path) -> tuple[np.ndarray, int]:
         raise AudioError(f"Unsupported sample width: {width}")
     if ch > 1:
         a = a.reshape(-1, ch).mean(axis=1)
-    return a, rate
+    return a
 
 
 # --------------------------------------------------------------------------

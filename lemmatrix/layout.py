@@ -49,6 +49,10 @@ def tokens_folder(db_path) -> Path:
     return soundfiles(db_path) / TOKENS
 
 
+def texts_folder(db_path) -> Path:
+    return soundfiles(db_path) / TEXTS
+
+
 def utterances_folder(db_path) -> Path:
     return soundfiles(db_path) / UTTERANCES
 
@@ -71,7 +75,8 @@ def exports_folder(db_path) -> Path:
 
 def create_layout(db_path):
     """The folders a new database starts with (Backups comes with the first save)."""
-    for folder in (tokens_folder(db_path), utterances_folder(db_path), documentation_folder(db_path),
+    for folder in (tokens_folder(db_path), utterances_folder(db_path), texts_folder(db_path),
+                   documentation_folder(db_path),
                    exports_folder(db_path)):
         folder.mkdir(parents=True, exist_ok=True)
 

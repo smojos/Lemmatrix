@@ -5,4 +5,5 @@ soundcard>=0.4
 lemminflect>=0.2.3
 pyspellchecker>=0.8
 pyzipper>=0.3.6
+praatio>=6.2
 pytest>=8

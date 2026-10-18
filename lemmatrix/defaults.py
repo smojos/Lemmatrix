@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from .model import (UTTERANCES, Database, FieldDef, Group, ListItem, Metadata, RefCategory, Settings, Tag,
-                    TagStructure)
+from .model import (TEXTS, UTTERANCES, Database, FieldDef, Group, ListItem, Metadata, RefCategory, Settings,
+                    Tag, TagStructure, TierMapping, TierRule)
 
 WORD_CLASSES = ["NOUN", "VERB", "PRONOUN", "QUANT", "ADJECTIVE", "ADVERB"]
 INSTANCES = "Instances"          # top-level group: Frames and Examples
@@ -78,6 +78,38 @@ def utterance_categories() -> list[RefCategory]:
     return [RefCategory(letter, name, "auto", UTTERANCES) for letter, name in UTTERANCE_CATEGORIES]
 
 
+# Texts and songs (idea 7, stage 3): catalogue records with a recording and a Praat TextGrid.
+TEXT_CATEGORIES = [("T", "Texts"), ("S", "Songs")]
+
+GENRES = [ListItem("narrative", [ListItem("personal narrative"), ListItem("folktale"), ListItem("history")]),
+          ListItem("procedural"), ListItem("hortatory"), ListItem("expository"), ListItem("conversation"),
+          ListItem("song"), ListItem("prayer"), ListItem("other")]
+STATUSES = ["untranscribed", "transcribed", "translated", "checked"]
+
+
+def text_categories() -> list[RefCategory]:
+    return [RefCategory(letter, name, "auto", TEXTS) for letter, name in TEXT_CATEGORIES]
+
+
+def text_fields() -> list[FieldDef]:
+    import copy
+    return [
+        FieldDef("Title", role="title"),
+        FieldDef("Genre", role="genre", closed=True, items=copy.deepcopy(GENRES)),
+        FieldDef("Status", "Transcription status", role="status", closed=True,
+                 items=[ListItem(x) for x in STATUSES]),
+        FieldDef("Description"),
+        FieldDef("Comment"),
+    ]
+
+
+def tier_mapping() -> TierMapping:
+    """Toolbox and FLEx tier names: tx the text (the lines), ge the glosses, ft the free translation;
+    mb (morpheme breaks) is ignored."""
+    return TierMapping("tx", [TierRule("tx", "Phonetic"), TierRule("ge", "Morphemes"),
+                              TierRule("ft", "Translation", "en"), TierRule("mb", "")])
+
+
 def default_settings() -> Settings:
     s = Settings()
     s.entry_fields = [
@@ -101,7 +133,9 @@ def default_settings() -> Settings:
     s.primary_gloss = "en"
     s.tags = default_tag_structure()
     s.ref_categories = [RefCategory(c[0], c[1], c[2] if len(c) > 2 else "auto")
-                        for c in DEFAULT_CATEGORIES] + utterance_categories()
+                        for c in DEFAULT_CATEGORIES] + utterance_categories() + text_categories()
+    s.text_fields = text_fields()
+    s.tier_mapping = tier_mapping()
     return s
 
 

@@ -15,16 +15,16 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from .matrix import CITATION, EXACT, MatrixConfig, Spec
-from .model import (LEMMAS, UTTERANCES, Database, Entry, FieldDef, Group, ListItem, Location, Metadata,
-                    Person, RefCategory, Settings, Tag, TagStructure, Token, Utterance, is_utterance,
-                    new_id, nfc, write_atomically, xml_safe)
+from .model import (LEMMAS, TEXTS, UTTERANCES, ClipSource, Database, Entry, FieldDef, Group, ListItem,
+                    Location, Metadata, Person, RefCategory, Settings, Tag, TagStructure, Text, TierMapping,
+                    TierRule, Token, Utterance, is_utterance, new_id, nfc, write_atomically, xml_safe)
 
-FORMAT_VERSION = "5"
+FORMAT_VERSION = "6"
 # Until version 1.0 only the current format is read (Josh, 18 October 2026: his database is the
 # only one, so there is no compatibility code for older formats). When the format changes, a
 # provisional upgrade from the format before is written for his database and taken out again
 # once it has been saved in the new one.
-READABLE = (FORMAT_VERSION,)
+READABLE = ("5", FORMAT_VERSION)   # 5: Josh's database before texts (provisional upgrade below)
 BACKUPS_KEPT = 10
 
 
@@ -80,8 +80,23 @@ def _load_tags(el) -> TagStructure:
     return TagStructure([_load_group(g) for g in el.findall("group")] if el is not None else [])
 
 
-KNOWN_SETTINGS = {"entry-fields", "token-fields", "glosses", "tag-structure", "references",
-                  "sounds", "pitch", "playback", "display", "spelling"}
+KNOWN_SETTINGS = {"entry-fields", "token-fields", "text-fields", "tier-mapping", "glosses", "tag-structure",
+                  "references", "sounds", "pitch", "playback", "display", "spelling"}
+
+
+def _load_mapping(el) -> TierMapping:
+    return TierMapping(nfc(el.get("main", "tx")),
+                       [TierRule(nfc(t.get("name", "")), nfc(t.get("field", "")), t.get("lang", ""))
+                        for t in el.findall("tier")])
+
+
+def _save_mapping(parent, tag: str, m: TierMapping):
+    el = ET.SubElement(parent, tag, main=m.main)
+    for r in m.rules:
+        a = {"name": r.tier, "field": r.field}
+        if r.lang:
+            a["lang"] = r.lang
+        ET.SubElement(el, "tier", a)
 
 def _load_specs(el, tag: str) -> list[Spec]:
     out = []
@@ -114,6 +129,10 @@ def _load_settings(el) -> Settings:
         s.entry_fields = [_load_field(f) for f in x.findall("field")]
     if (x := el.find("token-fields")) is not None:
         s.token_fields = [_load_field(f) for f in x.findall("field")]
+    if (x := el.find("text-fields")) is not None:
+        s.text_fields = [_load_field(f) for f in x.findall("field")]
+    if (x := el.find("tier-mapping")) is not None:
+        s.tier_mapping = _load_mapping(x)
     if (x := el.find("glosses")) is not None:
         s.gloss_languages = (x.get("languages") or "en").split()
         s.primary_gloss = x.get("primary") or s.gloss_languages[0]
@@ -122,11 +141,13 @@ def _load_settings(el) -> Settings:
         s.ref_scheme = x.get("scheme", "categories")
         s.ref_digits = int(x.get("digits", "3") or 3)
         s.ref_categories = [RefCategory(c.get("letter", ""), _text(c), c.get("numbering", "auto"),
-                                        UTTERANCES if c.get("for") == UTTERANCES else LEMMAS)
+                                        c.get("for") if c.get("for") in (UTTERANCES, TEXTS) else LEMMAS)
                             for c in x.findall("category")]
     if (x := el.find("sounds")) is not None:
         s.filename_pattern = x.get("pattern", s.filename_pattern)
         s.utterance_pattern = x.get("utterance-pattern", s.utterance_pattern)
+        s.text_pattern = x.get("text-pattern", s.text_pattern)
+        s.clip_padding = int(x.get("clip-padding", s.clip_padding) or 0)
         s.tag_separator = x.get("tag-separator", s.tag_separator)
         s.auto_update_names = _bool(x.get("auto-update-names"), True)
     if (x := el.find("pitch")) is not None:
@@ -236,11 +257,58 @@ def load(path: str | os.PathLike) -> Database:
                           id=el.get("id", ""), lemmas=(el.get("lemmas") or "").split())
             tels = el.findall("token")
             u.tokens = [load_token(tels[0])] if tels else [Token()]
+            if (src := el.find("source")) is not None:
+                u.source = ClipSource(src.get("text", ""), float(src.get("start", 0) or 0),
+                                      float(src.get("end", 0) or 0),
+                                      {nfc(c.get("tier", "")): _text(c) for c in src.findall("copied")},
+                                      src.get("modified", ""))
             db.utterances.append(u)
+    if (tl := root.find("texts")) is not None:
+        for el in tl.findall("text"):
+            t = Text(ref=nfc(el.get("ref", "")), file_label=nfc(el.get("file-label", "")),
+                     date=el.get("date", ""), participants=(el.get("participants") or "").split(),
+                     researchers=(el.get("researchers") or "").split(),
+                     locations=_split(el.get("locations")), file=nfc(el.get("file", "")),
+                     textgrid=nfc(el.get("textgrid", "")), id=el.get("id", "") or new_id())
+            for child in el:
+                if child.tag == "tiers":
+                    t.tiers = _load_mapping(child)
+                else:
+                    t.values[child.tag] = _text(child)
+                    if child.get("changed"):
+                        t.changed[child.tag] = child.get("changed")
+            db.texts.append(t)
     _unique_ids(db)
+    if version == "5":
+        _upgrade_5_to_6(db)
     if repaired:
         db.load_notes = list(db.load_notes) + [REPAIRED_NOTE]
     return db
+
+
+def _upgrade_5_to_6(db: Database):
+    """Provisional, for Josh's database (18 October 2026): texts and songs. Taken out again once
+    his database has been saved in format 6."""
+    from .defaults import text_categories, text_fields, tier_mapping
+    s = db.settings
+    taken = {c.letter for c in s.ref_categories}
+    s.ref_categories += [c for c in text_categories() if c.letter not in taken]
+    if not s.text_fields:
+        s.text_fields = text_fields()
+    if not s.tier_mapping.rules:
+        s.tier_mapping = tier_mapping()
+    lowered = []
+    for _, g in s.tags.leaf_groups():                 # Example codes lowercase (x1, x2): Josh's convention
+        if g.name.lower() == "examples":
+            for t in g.tags:
+                if t.code and t.code[:1] == "X" and t.code[1:].isdigit():
+                    lowered.append(t.code)
+                    t.code = "x" + t.code[1:]
+    note = ("This database can now hold texts and songs (T and S references, View → Texts and "
+            "utterances → Texts), each with its recording and Praat TextGrid.")
+    if lowered:
+        note += f" The Example tags' codes are now lowercase ({', '.join(c.lower() for c in lowered)})."
+    db.load_notes = list(db.load_notes) + [note]
 
 
 REPAIRED_NOTE = ("This file had invisible characters in it (from a paste, perhaps) that made it unreadable. "
@@ -360,6 +428,10 @@ def to_element(db: Database) -> ET.Element:
     x = ET.SubElement(st, "token-fields")
     for f in s.token_fields:
         _save_field(x, f)
+    x = ET.SubElement(st, "text-fields")
+    for f in s.text_fields:
+        _save_field(x, f)
+    _save_mapping(st, "tier-mapping", s.tier_mapping)
     ET.SubElement(st, "glosses", languages=" ".join(s.gloss_languages), primary=s.primary_gloss)
     x = ET.SubElement(st, "tag-structure")
     for g in s.tags.groups:
@@ -369,10 +441,11 @@ def to_element(db: Database) -> ET.Element:
         cel = ET.SubElement(x, "category", letter=c.letter)
         if c.numbering != "auto":
             cel.set("numbering", c.numbering)
-        if c.kind == UTTERANCES:
-            cel.set("for", UTTERANCES)
+        if c.kind in (UTTERANCES, TEXTS):
+            cel.set("for", c.kind)
         cel.text = c.name
     ET.SubElement(st, "sounds", {"pattern": s.filename_pattern, "utterance-pattern": s.utterance_pattern,
+                                 "text-pattern": s.text_pattern, "clip-padding": str(s.clip_padding),
                                  "tag-separator": s.tag_separator,
                                  "auto-update-names": _yes(s.auto_update_names)})
     ET.SubElement(st, "pitch", {"display-range": f"{s.pitch_low}-{s.pitch_high}",
@@ -430,6 +503,36 @@ def to_element(db: Database) -> ET.Element:
             attrs["id"] = u.id
             el = ET.SubElement(ul, "utterance", attrs)
             save_token(el, u.token)
+            if u.source is not None:              # clipped from a text's line
+                sp = u.source
+                src = ET.SubElement(el, "source", {"text": sp.text, "start": f"{sp.start:.4f}",
+                                                    "end": f"{sp.end:.4f}"})
+                if sp.modified:
+                    src.set("modified", sp.modified)
+                for tier, text in sp.copied.items():
+                    ET.SubElement(src, "copied", tier=tier).text = text or None
+    if db.texts:                              # texts and songs, last
+        tl = ET.SubElement(root, "texts")
+        for t in db.texts:
+            attrs = {"ref": t.ref}
+            for key, val in (("file-label", t.file_label), ("date", t.date),
+                             ("participants", " ".join(t.participants)),
+                             ("researchers", " ".join(t.researchers)),
+                             ("locations", ", ".join(t.locations)),
+                             ("file", t.file), ("textgrid", t.textgrid)):
+                if val:
+                    attrs[key] = val
+            attrs["id"] = t.id
+            el = ET.SubElement(tl, "text", attrs)
+            names = [f.name for f in s.text_fields]
+            for name in names + sorted(set(t.values) - set(names)):
+                if t.values.get(name):
+                    c = ET.SubElement(el, name)
+                    c.text = t.values[name]
+                    if t.changed.get(name):
+                        c.set("changed", t.changed[name])
+            if t.tiers is not None:
+                _save_mapping(el, "tiers", t.tiers)
     return root
 
 
@@ -583,6 +686,12 @@ def sound_folder(db: Database) -> Path:
     """The lemma tokens' recordings: always Soundfiles/Tokens next to the database."""
     from . import layout
     return layout.tokens_folder(db.path)
+
+
+def text_folder(db: Database) -> Path:
+    """The texts' and songs' recordings and TextGrids: Soundfiles/Texts."""
+    from . import layout
+    return layout.texts_folder(db.path)
 
 
 def utterance_folder(db: Database) -> Path:

@@ -339,6 +339,15 @@ class PreferencesDialog(QDialog):
         self.utt_pattern = QLineEdit(s.utterance_pattern)
         self.utt_pattern.setToolTip("Utterances' recordings (in Soundfiles\\Utterances). {label} is the "
                                     "utterance's file label; utterances have no tags in their file names.")
+        self.text_pattern = QLineEdit(s.text_pattern)
+        self.text_pattern.setToolTip("Texts' and songs' recordings and TextGrids (in Soundfiles\\Texts). "
+                                     "{title} is the title as it was when the text was added.")
+        self.padding = QSpinBox()
+        self.padding.setRange(0, 2000)
+        self.padding.setSuffix(" ms")
+        self.padding.setValue(s.clip_padding)
+        self.padding.setToolTip("How much of the text's recording a clipped utterance keeps either side "
+                                "of its line")
         self.separator = QLineEdit(s.tag_separator)
         self.separator.setMaxLength(3)
         self.praat = PathEdit(prefs.praat_path, folder=False, title="Where is Praat?")
@@ -453,6 +462,8 @@ class PreferencesDialog(QDialog):
         page("Sound", [
             ("This database", [("File name pattern", self.pattern), ("Tag separator", self.separator),
                                ("Utterance file names", self.utt_pattern),
+                               ("Text file names", self.text_pattern),
+                               ("Clips keep either side", self.padding),
                                (None, self.auto_names)]),
             ("This computer", [("Recording source", self.source), ("Bit depth", self.bits),
                                ("Sample rate", self.rate), (None, self.with_tokens),
@@ -486,6 +497,10 @@ class PreferencesDialog(QDialog):
         if "{" not in self.pattern.text() or "{" not in self.utt_pattern.text():
             QMessageBox.warning(self, "Settings", "The file name pattern needs at least one placeholder.")
             return
+        if "{reference}" not in self.text_pattern.text():
+            QMessageBox.warning(self, "Settings", "Text file names need {reference}: it is what tells "
+                                "them apart.")
+            return
         if "{reference}" not in self.utt_pattern.text():
             QMessageBox.warning(self, "Settings", "Utterance file names need {reference}: it is what tells "
                                 "them apart.")
@@ -499,9 +514,11 @@ class PreferencesDialog(QDialog):
     def apply(self) -> bool:
         """Apply the values. Returns True if file names may have changed."""
         s = self.db.settings
-        old = (s.filename_pattern, s.tag_separator, s.utterance_pattern)
+        old = (s.filename_pattern, s.tag_separator, s.utterance_pattern, s.text_pattern)
         s.filename_pattern = self.pattern.text().strip()
         s.utterance_pattern = self.utt_pattern.text().strip()
+        s.text_pattern = self.text_pattern.text().strip()
+        s.clip_padding = self.padding.value()
         s.tag_separator = self.separator.text()
         s.auto_update_names = self.auto_names.isChecked()
         s.pitch_low, s.pitch_high = self.low.value(), self.high.value()
@@ -521,7 +538,7 @@ class PreferencesDialog(QDialog):
         p.pitch_voice = self.voice.currentData()
         p.pitch_volume = self.volume.value()
         p.full_backup_folder = self.backups.text().strip()
-        return old != (s.filename_pattern, s.tag_separator, s.utterance_pattern)
+        return old != (s.filename_pattern, s.tag_separator, s.utterance_pattern, s.text_pattern)
 
 
 # ==========================================================================

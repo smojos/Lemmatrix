@@ -58,7 +58,7 @@ def test_utterances_are_saved_and_read(tmp_path):
                                          utterances_only=True))
     storage.save(db, backup=False)
     text = Path(db.path).read_text(encoding="utf-8")
-    assert '<database format="5">' in text and "<utterances>" in text
+    assert f'<database format="{storage.FORMAT_VERSION}">' in text and "<utterances>" in text
     assert 'file-label="hare ran"' in text and f'lemmas="{goat.id}"' in text
     assert 'for="utterances"' in text and 'utterances-only="yes"' in text
     again = storage.load(db.path)

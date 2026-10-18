@@ -1,4 +1,4 @@
-"""Edit → Fields: lemma and token fields, open or closed, with a live XML preview."""
+"""Edit → Fields: lemma, token and text fields, open or closed, with a live XML preview."""
 
 from __future__ import annotations
 
@@ -153,7 +153,8 @@ class FieldsDialog(QDialog):
         self.setWindowIcon(icon("gear"))
         self.resize(1180, 640)
         s = db.settings
-        self.lists = {"lemma": copy.deepcopy(s.entry_fields), "token": copy.deepcopy(s.token_fields)}
+        self.lists = {"lemma": copy.deepcopy(s.entry_fields), "token": copy.deepcopy(s.token_fields),
+                      "text": copy.deepcopy(s.text_fields)}
         for kind in self.lists:                      # remember original names to follow renames
             for f in self.lists[kind]:
                 f._orig = f.name
@@ -162,7 +163,7 @@ class FieldsDialog(QDialog):
         outer = QHBoxLayout(self)
         left = QVBoxLayout()
         self.widgets = {}
-        for kind, title in (("lemma", "Lemma fields"), ("token", "Token fields")):
+        for kind, title in (("lemma", "Lemma fields"), ("token", "Token fields"), ("text", "Text fields")):
             box = QGroupBox(title)
             bl = QVBoxLayout(box)
             head = QHBoxLayout()
@@ -252,14 +253,16 @@ class FieldsDialog(QDialog):
     def _select(self, kind, row):
         if row < 0:
             return
-        other = "token" if kind == "lemma" else "lemma"
-        self.widgets[other].blockSignals(True)
-        self.widgets[other].clearSelection()
-        self.widgets[other].setCurrentRow(-1)
-        self.widgets[other].blockSignals(False)
+        for other in self.widgets:
+            if other == kind:
+                continue
+            self.widgets[other].blockSignals(True)
+            self.widgets[other].clearSelection()
+            self.widgets[other].setCurrentRow(-1)
+            self.widgets[other].blockSignals(False)
         self.current = (kind, row)
         f = self.lists[kind][row]
-        self.detail.setTitle(f"{'Lemma' if kind == 'lemma' else 'Token'} field: {f.title}")
+        self.detail.setTitle(f"{kind.capitalize()} field: {f.title}")
         for w in (self.label, self.name, self.open_rb, self.closed_rb):
             w.blockSignals(True)
         self.label.setText(f.label)
@@ -288,6 +291,8 @@ class FieldsDialog(QDialog):
         name = getattr(f, "_orig", None) or f.name
         if kind == "lemma":
             vals = {e.get(name) for e in self.db.entries}
+        elif kind == "text":
+            vals = {t.get(name) for t in self.db.texts}
         else:
             vals = {t.get(name) for _, t in self.db.all_tokens()}     # utterances too
         f.items = [ListItem(v) for v in sorted(v for v in vals if v)]
@@ -386,10 +391,20 @@ class FieldsDialog(QDialog):
                 t.values[f.name] = (f.all_values() or [f.name])[0] if f.closed else f.name
         e.tokens.append(t)
         db.entries.append(e)
+        s.text_fields = copy.deepcopy(self.lists["text"])
+        from ..model import Text
+        tx = Text("T001", "Title", "2026-10-16", ["SP1"], ["JS"], [], "LXX-VXX_T001_Title.wav",
+                  "LXX-VXX_T001_Title.TextGrid")
+        for f in s.text_fields:
+            tx.values[f.name] = (f.all_values() or [f.name])[0] if f.closed else f.name
+        db.texts.append(tx)
         root = storage.to_element(db)
-        el = root.find("entry")
-        ET.indent(el, space="  ")
-        self.preview.setPlainText(ET.tostring(el, encoding="unicode"))
+        out = []
+        for path in ("entry", "texts/text"):
+            el = root.find(path)
+            ET.indent(el, space="  ")
+            out.append(ET.tostring(el, encoding="unicode").strip())
+        self.preview.setPlainText("\n\n".join(out))
 
     # ---- accept ----------------------------------------------------------
     def accept(self):
@@ -408,7 +423,7 @@ class FieldsDialog(QDialog):
     def apply(self):
         """Write the fields back, following renames in the data."""
         s = self.db.settings
-        renames = {"lemma": {}, "token": {}}
+        renames = {"lemma": {}, "token": {}, "text": {}}
         for kind in self.lists:
             for f in self.lists[kind]:
                 orig = getattr(f, "_orig", None)
@@ -418,6 +433,7 @@ class FieldsDialog(QDialog):
                     del f._orig
         s.entry_fields = self.lists["lemma"]
         s.token_fields = self.lists["token"]
+        s.text_fields = self.lists["text"]
 
         def move(obj, mapping):
             for old, new in mapping.items():
@@ -434,4 +450,9 @@ class FieldsDialog(QDialog):
         for u in self.db.utterances:                  # utterances have token fields only
             for t in u.tokens:
                 move(t, renames["token"])
-        return bool(renames["lemma"] or renames["token"])
+        for t in self.db.texts:
+            move(t, renames["text"])
+        for m in [s.tier_mapping] + [t.tiers for t in self.db.texts if t.tiers is not None]:
+            for r in m.rules:                         # the tiers follow renamed token fields
+                r.field = renames["token"].get(r.field, r.field)
+        return bool(renames["lemma"] or renames["token"] or renames["text"])

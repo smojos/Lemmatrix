@@ -142,6 +142,11 @@ def anonymise(db: Database, nb: nbmod.Notebook | None, opts: Options, report: Re
                     v = t.get(name)
                     if v:
                         t.set(name, replace_names(v, patterns, f"{e.ref} token {name}", report))
+        for t in out.texts:                       # texts' own free text
+            for f in out.settings.text_fields:
+                v = t.get(f.name)
+                if v and not f.closed:
+                    t.set(f.name, replace_names(v, patterns, f"{t.ref} {f.name}", report))
         md.description = replace_names(md.description, patterns, "Metadata description", report)
     if book is not None:
         for s in book.sessions:
@@ -189,6 +194,17 @@ def export(db: Database, nb: nbmod.Notebook | None, folder: str | Path, opts: Op
                 if src.exists():
                     shutil.copy2(src, dst_folder / name)
                     report.recordings += 1
+                else:
+                    report.missing_recordings += 1
+        names = sorted({n for t in db.texts for n in (t.file, t.textgrid) if n})
+        if names:                                 # texts' recordings and TextGrids, in Soundfiles/Texts
+            dst_folder = folder / layout.SOUNDFILES / layout.TEXTS
+            dst_folder.mkdir(parents=True, exist_ok=True)
+            for name in names:
+                src = storage.text_folder(db) / name
+                if src.exists():
+                    shutil.copy2(src, dst_folder / name)
+                    report.recordings += name.lower().endswith(".wav")
                 else:
                     report.missing_recordings += 1
 

@@ -344,7 +344,7 @@ class FieldDef:
     def builtin(self) -> bool:
         """Built-in fields can be relabelled and moved but not deleted."""
         return self.role in ("lemma", "gloss", "word-class", "phonetic", "phonemic", "pitch",
-                             "translation")
+                             "translation", "title", "genre", "status")
 
     def all_values(self) -> list[str]:
         return [i.name for top in self.items for i in top.walk()]
@@ -354,7 +354,7 @@ class FieldDef:
             self.items.append(ListItem(value))
 
 
-LEMMAS, UTTERANCES = "lemmas", "utterances"      # what a reference category is for
+LEMMAS, UTTERANCES, TEXTS = "lemmas", "utterances", "texts"      # what a reference category is for
 
 
 @dataclass
@@ -362,7 +362,43 @@ class RefCategory:
     letter: str
     name: str
     numbering: str = "auto"      # auto or manual
-    kind: str = LEMMAS           # lemmas or utterances (U, W, X, Y, Z by default)
+    kind: str = LEMMAS           # lemmas, utterances (U, W, X, Y, Z by default) or texts (T, S)
+
+
+@dataclass
+class TierRule:
+    """A TextGrid tier, by name (the part before any @speaker), and the field it fills in
+    ("" = ignored); lang for a multilingual field such as Translation."""
+    tier: str
+    field: str = ""
+    lang: str = ""
+
+    @property
+    def key(self) -> str:
+        return f"{self.field}:{self.lang}" if self.lang else self.field
+
+
+def tier_base(name: str) -> tuple[str, str]:
+    """("tx", "SP1") for "tx@SP1"; ("tx", "") for "tx"."""
+    base, _, speaker = (name or "").partition("@")
+    return base.strip(), speaker.strip()
+
+
+@dataclass
+class TierMapping:
+    """Which TextGrid tiers fill which fields. The main tier's intervals are the lines."""
+    main: str = "tx"
+    rules: list[TierRule] = field(default_factory=list)
+
+    def rule(self, tier: str) -> TierRule | None:
+        base = tier_base(tier)[0].lower()
+        return next((r for r in self.rules if r.tier.lower() == base), None)
+
+    def is_main(self, tier: str) -> bool:
+        return tier_base(tier)[0].lower() == self.main.lower()
+
+    def copy(self) -> "TierMapping":
+        return copy.deepcopy(self)
 
 
 @dataclass
@@ -377,6 +413,10 @@ class Settings:
     ref_categories: list[RefCategory] = field(default_factory=list)
     filename_pattern: str = "{language}-{variety}_{reference}_{gloss}_{tags}"
     utterance_pattern: str = "{language}-{variety}_{reference}_{label}"   # utterances: no tags
+    text_pattern: str = "{language}-{variety}_{reference}_{title}"        # texts and songs
+    clip_padding: int = 100                       # ms of the text's recording kept either side of a clip
+    text_fields: list[FieldDef] = field(default_factory=list)   # Title, Genre, Status, Description...
+    tier_mapping: TierMapping = field(default_factory=TierMapping)
     tag_separator: str = "-"
     auto_update_names: bool = True
     pitch_low: int = 1
@@ -389,6 +429,12 @@ class Settings:
 
     def entry_field(self, role_or_name: str) -> FieldDef | None:
         for f in self.entry_fields:
+            if f.role == role_or_name or f.name == role_or_name:
+                return f
+        return None
+
+    def text_field(self, role_or_name: str) -> FieldDef | None:
+        for f in self.text_fields:
             if f.role == role_or_name or f.name == role_or_name:
                 return f
         return None
@@ -591,11 +637,24 @@ class Entry:
 
 
 @dataclass
+class ClipSource:
+    """Where a clipped utterance came from: a line of a text (its times), what was copied from
+    each tier, and when the TextGrid was last changed (for Pull, stage 4)."""
+    text: str                                    # the text's id
+    start: float
+    end: float
+    copied: dict[str, str] = field(default_factory=dict)   # tier name -> its text, as copied
+    modified: str = ""                           # the TextGrid's last-modified time, ISO
+
+
+@dataclass
 class Utterance(Entry):
     """A one-off sentence or phrase with no lemma: one reference, one token (one transcription,
     one recording). file_gloss is its file label ("hare ran"), copied into its file name;
-    lemmas are the ids of the lemmas it is linked to by hand."""
+    lemmas are the ids of the lemmas it is linked to by hand; source, for one clipped from a
+    text, its line."""
     lemmas: list[str] = field(default_factory=list)
+    source: ClipSource | None = None
 
     @property
     def token(self) -> Token:
@@ -616,11 +675,53 @@ def is_utterance(obj) -> bool:
 
 
 @dataclass
+class Text:
+    """A text or song: a catalogue record with a recording and its Praat TextGrid. The lines
+    stay in the TextGrid (read when needed); file_label is the title as it was when the text
+    was added, used in the files' names. tiers: this text's own tier mapping, if it differs
+    from the database's."""
+    ref: str
+    file_label: str = ""
+    date: str = ""
+    participants: list[str] = field(default_factory=list)
+    researchers: list[str] = field(default_factory=list)
+    locations: list[str] = field(default_factory=list)
+    file: str = ""                               # the recording, in Soundfiles/Texts
+    textgrid: str = ""                           # the TextGrid, beside it
+    values: dict[str, str] = field(default_factory=dict)   # Title, Genre, Status, Description...
+    changed: dict[str, str] = field(default_factory=dict)
+    tiers: TierMapping | None = None
+    id: str = field(default_factory=new_id, compare=False)
+
+    def get(self, name: str, lang: str | None = None) -> str:
+        return self.values.get(name, "")
+
+    def set(self, name: str, text: str, lang: str | None = None, multilingual: bool = False):
+        text = nfc(text)
+        if text:
+            self.values[name] = text
+        else:
+            self.values.pop(name, None)
+
+    @property
+    def multi(self):
+        return {}
+
+    def copy(self) -> "Text":
+        return copy.deepcopy(self)
+
+
+def is_text(obj) -> bool:
+    return isinstance(obj, Text)
+
+
+@dataclass
 class Database:
     metadata: Metadata = field(default_factory=Metadata)
     settings: Settings = field(default_factory=Settings)
     entries: list[Entry] = field(default_factory=list)
     utterances: list[Utterance] = field(default_factory=list)
+    texts: list[Text] = field(default_factory=list)
     path: str = ""                                    # where it was loaded from / saved to
     load_notes: list = field(default_factory=list, compare=False)   # e.g. what an upgrade changed
 
@@ -658,8 +759,10 @@ class Database:
         return next((e for e in self.entries if e.id == ident), None) if ident else None
 
     # ---- utterances --------------------------------------------------
-    def list_for(self, item: Entry) -> list:
-        """The list an entry or utterance lives in."""
+    def list_for(self, item) -> list:
+        """The list an entry, utterance or text lives in."""
+        if is_text(item):
+            return self.texts
         return self.utterances if is_utterance(item) else self.entries
 
     def utterance_by_ref(self, ref: str) -> Utterance | None:
@@ -672,6 +775,26 @@ class Database:
         """An entry or an utterance, by id (notebook links point at either)."""
         return self.entry_by_id(ident) or self.utterance_by_id(ident)
 
+    def text_by_id(self, ident: str) -> Text | None:
+        return next((t for t in self.texts if t.id == ident), None) if ident else None
+
+    def text_by_ref(self, ref: str) -> Text | None:
+        return next((t for t in self.texts if t.ref == ref), None)
+
+    def clipped_from(self, text: Text) -> list[Utterance]:
+        return [u for u in self.utterances if u.source is not None and u.source.text == text.id]
+
+    def mapping_for(self, text: Text) -> TierMapping:
+        return text.tiers if text.tiers is not None else self.settings.tier_mapping
+
+    def text_title(self, text: Text) -> str:
+        f = self.settings.text_field("title")
+        return text.get(f.name) if f else ""
+
+    def expected_text_name(self, text: Text, extension: str = ".wav") -> str:
+        from .filenames import build_text_filename
+        return build_text_filename(self, text, extension)
+
     def items(self) -> list[Entry]:
         """Every entry, then every utterance."""
         return [*self.entries, *self.utterances]
@@ -683,13 +806,14 @@ class Database:
                 yield e, t
 
     def ref_taken(self, ref: str) -> bool:
-        return self.entry_by_ref(ref) is not None or self.utterance_by_ref(ref) is not None
+        return (self.entry_by_ref(ref) is not None or self.utterance_by_ref(ref) is not None
+                or self.text_by_ref(ref) is not None)
 
     def suggest_utterance_reference(self, letter: str) -> str:
-        """Next free reference in an utterance category: W001, W002… and on past W999 to W1000."""
+        """Next free reference in an utterance or text category: W001, W002… and on past W999 to W1000."""
         digits = self.settings.ref_digits
         highest = 0
-        for u in self.items():
+        for u in [*self.items(), *self.texts]:
             r = u.ref
             if r.startswith(letter) and r[len(letter):].isdigit():
                 highest = max(highest, int(r[len(letter):]))
@@ -717,6 +841,11 @@ class Database:
         a new token's comments count as changed.
         """
         if not date:
+            return
+        if is_text(after):                          # a text's comment fields
+            for name in (f.name for f in self.settings.text_fields if f.is_comment):
+                if (before.get(name) if before else "") != after.get(name):
+                    after.changed[name] = date
             return
         efields, tfields = self.comment_fields()
         for name in efields:

@@ -266,6 +266,13 @@ class NotebookDialog(QDialog):
         self.recordings.header().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.recordings.itemDoubleClicked.connect(lambda it, col: self._follow(it))
         self.recordings.setToolTip("Tokens recorded this day (by their date). Double-click to go to one.")
+        self.texts = QTreeWidget()                # texts and songs dated this day (found, not stored)
+        self.texts.setColumnCount(4)
+        self.texts.setHeaderLabels(["Text", "Genre", "Participants", "Recording"])
+        self.texts.setRootIsDecorated(False)
+        self.texts.header().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.texts.itemDoubleClicked.connect(lambda it, col: self._open_text(it))
+        self.texts.setToolTip("Texts and songs dated this day. Double-click to open one.")
         qbox = QWidget()                          # the Questions tab: its buttons, then the list
         ql = QVBoxLayout(qbox)
         ql.setContentsMargins(0, 0, 0, 0)
@@ -303,6 +310,7 @@ class NotebookDialog(QDialog):
         self.tabs.addTab(qbox, "Questions")       # first (Josh, 18 October), then Comments, Recordings
         self.tabs.addTab(self.comments, "Comments")
         self.tabs.addTab(self.recordings, "Recordings")
+        self.tabs.addTab(self.texts, "Texts")
         split.addWidget(self.tabs)
         split.setSizes([380, 400])
         outer.addWidget(split, 1)
@@ -381,6 +389,7 @@ class NotebookDialog(QDialog):
             self.notes.setPlainText("")
             self.comments.clear()
             self.recordings.clear()
+            self.texts.clear()
             self.questions.clear()
             self.empty_note.setText("No notes match the search." if self.search.text() and self.book.sessions
                                     else "No notes yet. Add note starts a day's page; so does Write to "
@@ -388,6 +397,7 @@ class NotebookDialog(QDialog):
             self.tabs.setTabText(0, "Questions")
             self.tabs.setTabText(1, "Comments")
             self.tabs.setTabText(2, "Recordings")
+            self.tabs.setTabText(3, "Texts")
         else:
             self.empty_note.setText("")
             self.date_label.setText(nbmod.long_date(s.date))
@@ -399,6 +409,7 @@ class NotebookDialog(QDialog):
                 self.notes.setPlainText(s.notes)
             self._fill_comments()
             self._fill_recordings()
+            self._fill_texts()
             self._fill_questions()
         self._loading = False
         self._question_buttons()
@@ -596,6 +607,24 @@ class NotebookDialog(QDialog):
         elif QMessageBox.question(self, "Notebook", f"There are no notes for {date}. Add a note for "
                                   "that day?") == QMessageBox.Yes:
             self.add_note(date)
+
+    def _fill_texts(self):
+        self.texts.clear()
+        db = self.db
+        genre = db.settings.text_field("genre")
+        rows = [t for t in db.texts if t.date == self.session.date]
+        for t in rows:
+            it = QTreeWidgetItem([f"{t.ref} {db.text_title(t)}", t.get(genre.name) if genre else "",
+                                  " ".join(t.participants), t.file])
+            it.setData(0, Qt.UserRole, t)
+            self.texts.addTopLevelItem(it)
+        self.tabs.setTabText(3, f"Texts ({len(rows)})")
+
+    def _open_text(self, item):
+        t = item.data(0, Qt.UserRole)
+        if t is not None and t in self.db.texts:
+            w = self.main.open_utterances()
+            w.select_text(t)
 
     def _follow(self, item):
         data = item.data(0, Qt.UserRole)

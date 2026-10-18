@@ -1676,7 +1676,7 @@ class MainWindow(QMainWindow):
             self.prefs.praat_path = path
         return path
 
-    def open_in_praat(self, path, parent=None):
+    def open_in_praat(self, path, parent=None, textgrid=None):
         from .. import praat
         parent = parent or self
         if path is None:
@@ -1691,7 +1691,7 @@ class MainWindow(QMainWindow):
             if not exe:
                 return
         try:
-            praat.open_sound(exe, path)
+            praat.open_sound(exe, path, textgrid)
         except praat.PraatError as exc:
             QMessageBox.warning(parent, "Open in Praat", str(exc))
 
@@ -1959,6 +1959,10 @@ class MainWindow(QMainWindow):
             if self.prefs.speaker in speakers:
                 self.prefs.speaker = speakers[self.prefs.speaker]
         if any(renames.values()):
+            for t in db.texts:                    # texts' people and places follow renamed codes
+                t.participants = [speakers.get(c, c) for c in t.participants]
+                t.researchers = [renames[chips.RESEARCHERS].get(c, c) for c in t.researchers]
+                t.locations = [renames[chips.LOCATIONS].get(c, c) for c in t.locations]
             self.doc.notebook.rename(renames[chips.RESEARCHERS], speakers, renames[chips.LOCATIONS])
             keys = self.session_keys()
             for kind, row in self.sess_rows.items():
@@ -2020,7 +2024,7 @@ class MainWindow(QMainWindow):
     def _maybe_update_names(self):
         db = self.doc.db
         stale = [(e, t) for e, t in db.all_tokens()      # utterances' recordings too
-                 if t.file and t.file != db.expected_filename(e, t)]
+                 if t.file and t.file != db.expected_filename(e, t)] + self._stale_texts()
         if not stale:
             return
         if db.settings.auto_update_names:
@@ -2034,6 +2038,10 @@ class MainWindow(QMainWindow):
         db = self.doc.db
         stale = [(e, i) for e in db.items() for i, t in enumerate(e.tokens)
                  if t.file and t.file != db.expected_filename(e, t)]
+        texts = self._stale_texts()
+        if not stale and texts:                   # only texts' files are out of date
+            self._rename_texts(texts, ask)
+            return
         if not stale:
             if ask:
                 QMessageBox.information(self, "Sound file names", "All sound file names are up to date.")
@@ -2070,9 +2078,15 @@ class MainWindow(QMainWindow):
             after.tokens[i].file = dst.name
         order = {id(e): e for e, _, _, _ in plan}               # entries in plan order, once each
         pairs = [(e, changed[k]) for k, e in order.items()]
+        tplan, tproblems = self._text_plan(self._stale_texts(), set(sources))
+        pairs += [p for p, _ in tplan]
+        for _, rn in tplan:
+            renames = [(src, src.with_name(src.name + ".lemmatrix-renaming")) for src, _ in rn] + renames + \
+                [(src.with_name(src.name + ".lemmatrix-renaming"), dst) for src, dst in rn]
+        problems += tproblems
         trouble = self.doc.apply_changes("Update all sound file names", pairs, renames, stamp=False) \
-            if plan else []
-        done = 0 if trouble else len(plan)
+            if (plan or tplan) else []
+        done = 0 if trouble else len(plan) + sum(len(rn) for _, rn in tplan)
         problems = trouble + problems
         msg = f"Renamed {done} recording(s)."
         if problems:
@@ -2170,6 +2184,50 @@ class MainWindow(QMainWindow):
         if found or lost:
             self.statusBar().showMessage(f"{len(found) + len(lost)} recording(s) aren't linked to their tokens: "
                                          "Tools → Find missing recordings.", 15000)
+
+    # ---- texts' recordings and TextGrids --------------------------------
+    def _stale_texts(self) -> list:
+        """Texts whose recording or TextGrid has another name than the pattern gives now."""
+        db = self.doc.db
+        return [t for t in db.texts if (t.file and t.file != db.expected_text_name(t)) or
+                (t.textgrid and t.textgrid != db.expected_text_name(t, ".TextGrid"))]
+
+    def _text_plan(self, texts, taken: set) -> tuple[list, list]:
+        """([((text, renamed copy), [(src, dst)…])], problems) for renaming texts' files."""
+        db = self.doc.db
+        folder = storage.text_folder(db)
+        plan, problems = [], []
+        for t in texts:
+            after, moves = t.copy(), []
+            for attr, ext in (("file", ".wav"), ("textgrid", ".TextGrid")):
+                old = getattr(t, attr)
+                new = db.expected_text_name(t, ext)
+                if not old or old == new:
+                    continue
+                src, dst = folder / old, folder / new
+                if not src.exists():
+                    problems.append(f"{old}: not in Soundfiles\\Texts")
+                elif dst.exists() and not storage.same_file(src, dst):
+                    problems.append(f"{old}: {new} already exists")
+                else:
+                    moves.append((src, dst))
+                    setattr(after, attr, new)
+            if moves:
+                plan.append(((t, after), moves))
+        return plan, problems
+
+    def _rename_texts(self, texts, ask: bool):
+        if ask and QMessageBox.question(self, "Sound file names", f"Rename the files of {len(texts)} "
+                                        "text(s) to match the pattern?") != QMessageBox.Yes:
+            return
+        plan, problems = self._text_plan(texts, set())
+        renames = [m for _, rn in plan for m in rn]
+        trouble = self.doc.apply_changes("Update all sound file names", [p for p, _ in plan], renames,
+                                         stamp=False) if plan else []
+        msg = f"Renamed {0 if trouble else len(renames)} file(s)."
+        if trouble + problems:
+            msg += "\n\nNot renamed:\n" + "\n".join((trouble + problems)[:30])
+        QMessageBox.information(self, "Sound file names", msg)
 
     def check_duplicates(self):
         dups = self.doc.db.duplicate_filenames()
