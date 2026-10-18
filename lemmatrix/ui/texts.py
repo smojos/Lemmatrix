@@ -631,8 +631,9 @@ class TextsPanel(QObject):
         self.select(t)
 
     def _copy_in(self, t: Text, wav: Path | None, grid: Path | None) -> list | None:
-        """Copy a new recording and TextGrid into Soundfiles/Texts under the text's names. Returns
-        the renames for undo (the copies move aside), or None on a problem."""
+        """Copy a new recording and TextGrid into Soundfiles/Texts under the text's names. A file
+        already in Soundfiles/Texts is renamed there instead of copied. Returns the renames for
+        undo (copies move aside, renamed files get their names back), or None on a problem."""
         folder = storage.text_folder(self.db)
         folder.mkdir(parents=True, exist_ok=True)
         out = []
@@ -642,6 +643,23 @@ class TextsPanel(QObject):
             name = self.db.expected_text_name(t, ext)
             dst = folder / name
             old = getattr(t, attr)
+            if storage.in_folder(src, folder):    # already here: rename it, don't copy it
+                if not storage.same_file(src, dst):
+                    if dst.exists():
+                        QMessageBox.warning(self.win, "Text", f"Can't rename {src.name}: {name} is "
+                                            "already in Soundfiles\\Texts.")
+                        return None
+                    try:
+                        src.rename(dst)
+                    except OSError as exc:
+                        QMessageBox.warning(self.win, "Text", f"Couldn't rename {src.name}: {exc}")
+                        return None
+                    out.append((src, dst))
+                elif src.name != name:            # only the case differs
+                    src.rename(dst)
+                    out.append((src, dst))
+                setattr(t, attr, name)
+                continue
             if dst.exists() and not (old and old == name and storage.same_file(src, dst)):
                 if old == name:                   # replacing this text's own file
                     if QMessageBox.question(self.win, "Text", f"Replace {name}? The one there now goes "

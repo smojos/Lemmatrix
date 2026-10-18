@@ -668,6 +668,14 @@ def same_file(a: Path, b: Path) -> bool:
         return False
 
 
+def in_folder(path: Path, folder: Path) -> bool:
+    """True if the file is directly in the folder (it can be renamed there, not copied in)."""
+    try:
+        return folder.exists() and os.path.samefile(Path(path).parent, folder)
+    except OSError:
+        return False
+
+
 HELD = "_Deleted recordings"
 
 

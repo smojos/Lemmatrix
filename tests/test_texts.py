@@ -179,10 +179,10 @@ def _recording(path, seconds=4.0, rate=8000):
     return path
 
 
-def _add_text(win, tmp_path, monkeypatch, title="Hyena and Hare"):
+def _add_text(win, tmp_path, monkeypatch, title="Hyena and Hare", src=None):
     from lemmatrix.ui import texts as tx
-    src = tmp_path / "field"
-    src.mkdir(exist_ok=True)
+    src = src or tmp_path / "field"
+    src.mkdir(parents=True, exist_ok=True)
     wav = _recording(src / "story.wav")
     _grid(src / "story.TextGrid")
 
@@ -217,6 +217,53 @@ def test_add_a_text_copies_its_files_and_shows_its_lines(win, tmp_path, monkeypa
     assert win.doc.db.texts == [] and not (folder / "LXX-VXX_T001_Hyena and Hare.wav").exists()
     win.doc.undo.redo()
     assert (folder / "LXX-VXX_T001_Hyena and Hare.wav").exists()
+
+
+def test_a_text_already_in_soundfiles_texts_is_renamed_not_copied(win, tmp_path, monkeypatch):
+    folder = tmp_path / "Soundfiles" / "Texts"
+    uw, t = _add_text(win, tmp_path, monkeypatch, src=folder)
+    assert sorted(f.name for f in folder.iterdir()) == ["LXX-VXX_T001_Hyena and Hare.TextGrid",
+                                                       "LXX-VXX_T001_Hyena and Hare.wav"]
+    assert uw.texts.lines.model_.rowCount() == 2
+    win.doc.undo.undo()                                    # the old names come back
+    assert sorted(f.name for f in folder.iterdir()) == ["story.TextGrid", "story.wav"]
+    win.doc.undo.redo()
+    assert (folder / "LXX-VXX_T001_Hyena and Hare.wav").exists() and not (folder / "story.wav").exists()
+    assert win.doc.revert_renames() == []                  # discarding the changes too
+    assert sorted(f.name for f in folder.iterdir()) == ["story.TextGrid", "story.wav"]
+
+
+def test_a_text_already_named_right_is_taken_as_it_is(win, tmp_path, monkeypatch):
+    folder = tmp_path / "Soundfiles" / "Texts"
+    folder.mkdir(parents=True, exist_ok=True)
+    wav = _recording(folder / "LXX-VXX_T001_Hyena and Hare.wav")
+    _grid(folder / "LXX-VXX_T001_Hyena and Hare.TextGrid")
+    from lemmatrix.ui import texts as tx
+
+    def fake_exec(dlg):
+        dlg.new_wav, dlg.new_grid = wav, wav.with_suffix(".TextGrid")
+        dlg._show_files()
+        dlg.fields["Title"].setText("Hyena and Hare")
+        return 1
+    monkeypatch.setattr(tx.TextDialog, "exec", fake_exec)
+    uw = win.open_utterances()
+    uw.texts.add()
+    t = win.doc.db.texts[-1]
+    assert t.file == wav.name and t.textgrid == "LXX-VXX_T001_Hyena and Hare.TextGrid"
+    assert len(list(folder.iterdir())) == 2
+    win.doc.undo.undo()
+    assert win.doc.db.texts == [] and wav.exists()          # nothing to move: the file stays
+
+
+def test_import_a_wav_already_in_soundfiles_utterances(win, tmp_path, monkeypatch):
+    folder = tmp_path / "Soundfiles" / "Utterances"
+    folder.mkdir(parents=True, exist_ok=True)
+    w = _recording(folder / "hare ran.wav")
+    uw = win.open_utterances()
+    u = uw.import_files([str(w)])[0]
+    assert [f.name for f in folder.iterdir()] == [u.token.file] and u.token.file != "hare ran.wav"
+    win.doc.undo.undo()
+    assert [f.name for f in folder.iterdir()] == ["hare ran.wav"]
 
 
 def test_clip_lines_as_utterances(win, tmp_path, monkeypatch):

@@ -427,17 +427,24 @@ class TextsUtterancesWindow(QDialog):
                 self._fill_from_lines(u, picked)
             name = self.db.expected_filename(u, u.token)
             dst = folder / name
-            if dst.exists():
+            here = storage.in_folder(w, folder)   # already in Soundfiles/Utterances: renamed, not copied
+            if dst.exists() and not (here and storage.same_file(w, dst)):
                 problems.append(f"{w.name}: {name} is already in Soundfiles\\Utterances")
                 continue
             try:
-                shutil.copy2(w, dst)
+                if not here:
+                    shutil.copy2(w, dst)
+                elif w.name != name:
+                    w.rename(dst)
             except OSError as exc:
                 problems.append(f"{w.name}: {exc}")
                 continue
             number += 1
             u.token.file = name
-            renames.append((self.doc.hold_recording(dst), dst))   # undo moves the copy aside
+            if not here:
+                renames.append((self.doc.hold_recording(dst), dst))   # undo moves the copy aside
+            elif w.name != name:
+                renames.append((w, dst))          # undo gives it its old name back
             items.append(u)
         if items:
             n = len(items)
