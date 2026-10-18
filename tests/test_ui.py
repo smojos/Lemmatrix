@@ -1275,3 +1275,36 @@ def test_bulk_edit_fills_predicted_translations(win):
     b.preview()
     assert b.plan is None and "Tokens tab" in b.summary.text()
     b.close()
+
+
+def test_predicted_translation_in_all_data(win):
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+    from PySide6.QtWidgets import QWidget
+    lion = win.doc.db.entry_by_ref("D002")
+    i = next(i for i, t in enumerate(lion.tokens) if set(t.tags) >= {"Plural", "Genitive"})
+    win.doc.edit_entry(lion, lambda en: en.tokens[i].set("Translation", "", "en"), "clear")
+    win.refresh()
+    table = win.all_table
+    row = next(r for r in table.visible_rows() if r.entry is lion and r.index == i)
+    assert win.suggestion_for(row).text == "of the lions"
+    col = table.visible_keys().index("f:Translation")
+    table.select_row(row)
+    idx = table.currentIndex().siblingAtColumn(col)
+    assert idx.data(Qt.DisplayRole) == ""                       # still empty: only shown
+    assert "→" in idx.data(Qt.ToolTipRole)
+    delegate = table.itemDelegateForColumn(col)
+    holder = QWidget()
+    ed = delegate.createEditor(holder, None, idx)
+    delegate.setEditorData(ed, idx)
+    assert ed.placeholderText() == "of the lions" and ed.font().italic()
+    ed.installEventFilter(delegate)
+    QTest.keyClick(ed, Qt.Key_Right)
+    assert ed.text() == "of the lions" and not ed.font().italic()
+    delegate.setModelData(ed, table.model(), idx)
+    assert lion.tokens[i].get("Translation", "en") == "of the lions"
+    win.doc.undo.undo()
+    assert lion.tokens[i].get("Translation", "en") == ""
+    win.accept_suggestion(row)                                  # the right-click menu's item
+    assert lion.tokens[i].get("Translation", "en") == "of the lions"
+    assert win.suggestion_for(row) is None                      # has a translation now

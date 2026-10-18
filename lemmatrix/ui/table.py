@@ -10,9 +10,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Callable
 
-from PySide6.QtCore import QAbstractTableModel, QModelIndex, QRectF, QSize, QSortFilterProxyModel, Qt, Signal
-from PySide6.QtGui import QAction, QColor
-from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QMenu, QStyle, QStyledItemDelegate,
+from PySide6.QtCore import (QAbstractTableModel, QEvent, QModelIndex, QRectF, QSize, QSortFilterProxyModel,
+                            Qt, Signal)
+from PySide6.QtGui import QAction, QColor, QFont, QPalette
+from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QLineEdit, QMenu, QStyle, QStyledItemDelegate,
                                QTableView)
 
 from .. import filters as fl
@@ -188,6 +189,67 @@ class ListEditDelegate(QStyledItemDelegate):
 
     def setModelData(self, editor, model, index):
         model.setData(index, editor.currentText(), Qt.EditRole)
+
+
+def show_suggestion(ed: QLineEdit, suggestion: str):
+    """A predicted translation in an empty field: light grey italics (the placeholder)."""
+    pal = ed.palette()
+    pal.setColor(QPalette.PlaceholderText, theme.colour("suggestion"))
+    ed.setPalette(pal)
+    shown = suggestion if (suggestion and not ed.text()) else ""
+    ed.setPlaceholderText(shown)
+    f = ed.font()
+    f.setItalic(bool(shown))
+    ed.setFont(f)
+
+
+class SuggestionDelegate(QStyledItemDelegate):
+    """The English translation in All data: an empty cell shows its predicted translation in light
+    grey italics; editing the cell shows it too, and → accepts it (as in the token dialogue)."""
+
+    def __init__(self, suggest: Callable, parent=None):
+        super().__init__(parent)
+        self.suggest = suggest                    # row -> suggested text, or ""
+
+    def _suggestion(self, index) -> str:
+        if index.data(Qt.DisplayRole):
+            return ""
+        row = index.data(Qt.UserRole + 1)
+        return self.suggest(row) if row is not None else ""
+
+    def paint(self, painter, option, index):
+        super().paint(painter, option, index)
+        text = self._suggestion(index)
+        if not text:
+            return
+        painter.save()
+        f = QFont(option.font)
+        f.setItalic(True)
+        painter.setFont(f)
+        painter.setPen(theme.colour("suggestion"))
+        r = option.rect.adjusted(4, 0, -4, 0)
+        painter.drawText(r, Qt.AlignVCenter | Qt.AlignLeft,
+                         painter.fontMetrics().elidedText(text, Qt.ElideRight, r.width()))
+        painter.restore()
+
+    def createEditor(self, parent, option, index):
+        ed = QLineEdit(parent)
+        ed.setFrame(False)
+        ed.setProperty("suggestion", self._suggestion(index))
+        ed.textChanged.connect(lambda *_, ed=ed: show_suggestion(ed, ed.property("suggestion")))
+        return ed
+
+    def setEditorData(self, editor, index):
+        super().setEditorData(editor, index)
+        show_suggestion(editor, editor.property("suggestion"))
+
+    def eventFilter(self, obj, event):
+        if (isinstance(obj, QLineEdit) and event.type() == QEvent.KeyPress
+                and event.key() == Qt.Key_Right and not (event.modifiers() & ~Qt.KeypadModifier)
+                and not obj.text() and obj.property("suggestion")):
+            obj.setText(obj.property("suggestion"))
+            return True
+        return super().eventFilter(obj, event)
 
 
 class ChipsDelegate(QStyledItemDelegate):

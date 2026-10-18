@@ -299,14 +299,20 @@ class Predictor:
         self._index = index
 
     # ---- suggesting ----------------------------------------------------
-    def suggest(self, db: Database, e: Entry, tags, current: str = "") -> Suggestion | None:
-        """The suggested English translation for a token of e with these tags, if its own is empty."""
+    def suggest(self, db: Database, e: Entry, tags, current: str = "",
+                refresh: bool = True) -> Suggestion | None:
+        """The suggested English translation for a token of e with these tags, if its own is empty.
+
+        refresh=False skips checking the database for changes: for many suggestions in a row
+        (a repaint of All data) after one refresh().
+        """
         if current.strip() or not translation_field(db):
             return None
         gloss = db.gloss(e, LANG)
         if not gloss:
             return None
-        self.refresh(db)
+        if refresh or not self._index:
+            self.refresh(db)
         key = tag_key(db, tags)
         for level in tuple(db.classes(e)) + ("",):
             bucket = self._index.get((level, key))

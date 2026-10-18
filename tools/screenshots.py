@@ -134,6 +134,8 @@ def main(out: Path):
     b.ops.setCurrentIndex(bw.PREDICT)
     b.preview()
     shot(b, "23-bulk-predict.png")
+    win.refresh()
+    shot(win, "24-all-data-suggestions.png")
     win.doc.undo.undo()
     win.doc.undo.undo()
     b.close()

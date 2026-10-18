@@ -26,6 +26,7 @@ _FIXED = {
         "muted": "#555555",                 # counts and notes
         "faint": "#bbbbbb",                 # an empty value ("—")
         "dim": "#888888",                   # "Citation", names not recorded yet
+        "suggestion": "#a8a8a8",            # a predicted translation, in italics
         "read_only": "#ececec",             # cells not editable in place
         "grid": "#c8c8c8",
         "greyed": "#e4e4e4", "hatch": "#cfcfcf",   # contradictory Tag/Tag cells
@@ -44,6 +45,7 @@ _FIXED = {
         "muted": "#a8a8a8",
         "faint": "#5c5e62",
         "dim": "#8c8c8c",
+        "suggestion": "#7d7f84",
         "read_only": "#2a2b2f",
         "grid": "#45474c",
         "greyed": "#303236", "hatch": "#3d3f44",

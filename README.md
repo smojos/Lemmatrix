@@ -87,7 +87,9 @@ If something goes wrong, a message box shows the details, and they're also writt
 - **Predicted translations:** an empty English translation in the token dialogue shows a
   suggestion in grey italics, learned from the other tokens with the same tags ("your father"
   for father gives "your mother" for mother; "goats" gives "men" for man). → accepts it;
-  typing replaces it. The tooltip says what it's based on. Works offline (lemminflect).
+  typing replaces it. The tooltip says what it's based on. All data shows the suggestions in
+  its empty Translation cells too, in light grey italics (double-click and →, or right-click →
+  Accept suggested translation). Works offline (lemminflect).
 - **Tags:** one free hierarchy of groups and tags; any tag can go on any token, one per group.
   Groups can be marked "usual for" word classes: the token dialogue shows those first (Show all
   tags for the rest), defaults come from them, and tags outside them get a dashed amber chip

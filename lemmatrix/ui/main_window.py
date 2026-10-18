@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QF
 from .. import __version__, audio, filters as fl, lock as lockmod, matrix as mx, storage
 from . import theme
 from ..defaults import new_database
-from .. import notebook as nbmod
+from .. import notebook as nbmod, predict
 from ..model import Database, Entry, ListItem, Person, forbidden_in, today
 from . import chiprow as chips
 from .dialogs import EntryDialog, MetadataDialog, PreferencesDialog, TagStructureDialog
@@ -26,7 +26,7 @@ from .icons import icon, ink_icon
 from .matrix_dialogs import ConfigureCellDialog, ConfigureMatrixDialog, ask_matrix_name
 from .matrix_view import MatrixView
 from .prefs import Prefs
-from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, ListEditDelegate
+from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, ListEditDelegate, SuggestionDelegate
 from .token_dialog import Slot, TokenDialog
 from . import widgets
 from .widgets import ipa_font
@@ -108,6 +108,8 @@ class MainWindow(QMainWindow):
         self.bulk_window = None                   # the bulk edit window, while it's open
         self.sound_files: set[str] = set()       # names in the sound folder, refreshed with the views
         self.cloud_files: set[str] = set()       # those of them that are online-only (OneDrive)
+        self._suggestions: dict = {}             # (entry id, tags) -> predicted translation, for All data
+        self._suggestions_stale = True           # the database changed since they were worked out
         self.resize(1500, 920)
         theme.from_prefs(self.prefs)
         widgets.SHOW_UNUSUAL = self.prefs.warn_unusual_tags
@@ -569,12 +571,18 @@ class MainWindow(QMainWindow):
             Column("drawing", "Pitch drawing", lambda r: r.token.get("Pitch"), kind="drawing"),
         ]
         for f in s.token_fields:
+            get = (lambda r, n=f.name, ml=f.multilingual: r.token.get(n, s.primary_gloss if ml else None))
+            tip = None
+            if self._predicts(f):                 # the English translation: suggestions in its tooltip
+                tip = (lambda r, get=get: get(r) or (
+                    f"Suggestion: {sug.text}\n{sug.describe()}\nDouble-click and press → to accept "
+                    "it, or right-click → Accept suggested translation."
+                    if (sug := self.suggestion_for(r)) else None))
             cols.append(Column(
-                "f:" + f.name, f.title,
-                (lambda r, n=f.name, ml=f.multilingual: r.token.get(n, s.primary_gloss if ml else None)),
+                "f:" + f.name, f.title, get,
                 closed=f.closed, tree=(lambda f=f: s.list_items(f)) if f.closed else None,
                 ipa=f.role in ("phonetic", "phonemic"),
-                edit=lambda r, text: None))
+                edit=lambda r, text: None, tooltip=tip))
         cols += [
             Column("speaker", "Speaker", lambda r: r.token.speaker),
             Column("date", "Date", lambda r: r.token.collected),
@@ -620,6 +628,10 @@ class MainWindow(QMainWindow):
             if r is not None else [], self.all_table))
         self.all_table.set_delegate("drawing", DrawingDelegate(
             lambda: (db.settings.pitch_low, db.settings.pitch_high), self.all_table))
+        for f in db.settings.token_fields:
+            if self._predicts(f):
+                self.all_table.set_delegate("f:" + f.name, SuggestionDelegate(
+                    lambda r: (sug.text if (sug := self.suggestion_for(r)) else ""), self.all_table))
         self._closed_editors(self.all_table)
         self._all_sized = False
 
@@ -661,6 +673,7 @@ class MainWindow(QMainWindow):
         self.doc.undo.setClean()
         self.doc._settings_dirty = False
         self.doc.renamed.clear()
+        self._suggestions_stale = True
         self._load_notebook()
         self.configs.clear()
         for v in (self.lt_view, self.tt_view):
@@ -947,6 +960,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"{'*' if self.doc.dirty else ''}{name} — Lemmatrix")
 
     def _doc_changed(self):
+        self._suggestions_stale = True
         self.lemmas.set_rows(self.doc.db.entries)
         self.schedule_refresh()
         self._update_title()
@@ -1538,11 +1552,47 @@ class MainWindow(QMainWindow):
                     ("Configure columns", "gear", self.configure_lemma_columns),
                     ("Clear all filters", "reset-filters", self._clear_lemma_filters)], pos)
 
+    # ---- predicted translations in All data (section 5.9) ----------------
+    def _predicts(self, f) -> bool:
+        """Whether this token field gets suggestions: the translation, shown in English."""
+        return f.role == "translation" and not f.closed and self.doc.db.settings.primary_gloss == predict.LANG
+
+    def suggestion_for(self, row):
+        """The predicted translation for an All data row whose English translation is empty."""
+        if row is None:
+            return None
+        db = self.doc.db
+        name = predict.translation_field(db)
+        if not name or row.token.get(name, predict.LANG):
+            return None
+        if self._suggestions_stale:              # worked out again after any change
+            self.doc.predictor.refresh(db)
+            self._suggestions.clear()
+            self._suggestions_stale = False
+        key = (row.entry.id, tuple(row.token.tags))
+        if key not in self._suggestions:
+            self._suggestions[key] = self.doc.predictor.suggest(db, row.entry, row.token.tags, refresh=False)
+        return self._suggestions[key]
+
+    def accept_suggestion(self, row=None):
+        """Right-click → Accept suggested translation: the row's suggestion becomes its translation."""
+        row = row or self.all_table.current_row()
+        sug = self.suggestion_for(row)
+        if sug is None:
+            return
+        name = predict.translation_field(self.doc.db)
+
+        def change(e, i=row.index, text=sug.text):
+            e.tokens[i].set(name, text, predict.LANG, True)
+        self.doc.edit_entry(row.entry, change, "Accept suggested translation")
+
     def _all_menu(self, row, pos):
         if row is not None:
             self.all_table.select_row(row)
+        accept = ([None, ("Accept suggested translation", "", lambda r=row: self.accept_suggestion(r))]
+                  if self.suggestion_for(row) else [])
         self._menu([("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
-                    ("Edit token", "edit", self.edit_token), None, *self._token_items(), None,
+                    ("Edit token", "edit", self.edit_token), *accept, None, *self._token_items(), None,
                     ("Configure columns", "gear", self.configure_all_columns),
                     ("Clear all filters", "reset-filters", self._clear_all_filters)], pos)
 

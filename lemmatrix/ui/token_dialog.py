@@ -18,6 +18,7 @@ from PySide6.QtCore import QSize
 
 from . import theme
 from .icons import icon
+from .table import show_suggestion
 from .tagpanel import TagPanel
 from .widgets import PitchCanvas, ipa_font
 
@@ -363,10 +364,7 @@ class TokenDialog(QDialog):
             if predictor is not None:
                 sug = predictor.suggest(self.db, self.slot.entry, self.token.tags)
         self.suggestion = sug
-        f = ed.font()
-        f.setItalic(sug is not None)
-        ed.setFont(f)
-        ed.setPlaceholderText(sug.text if sug else "")
+        show_suggestion(ed, sug.text if sug else "")
         ed.setToolTip(f"Suggestion: {sug.text}\n{sug.describe()}\nPress → to accept it, or type "
                       "something else." if sug else "")
 
