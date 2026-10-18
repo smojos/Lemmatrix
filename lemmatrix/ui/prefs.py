@@ -221,6 +221,27 @@ class Prefs:
         self.q.setValue(self._view_key(path).replace("views/", "sessions/"),
                         json.dumps(session, ensure_ascii=False))
 
+    def move_database(self, old: str, new: str):
+        """A renamed database keeps its view, session and full-backup dates (File → Rename database)."""
+        a, b = self._view_key(old), self._view_key(new)
+        if a == b:
+            return
+        for prefix in ("views/", "sessions/"):
+            ka, kb = a.replace("views/", prefix), b.replace("views/", prefix)
+            v = self.q.value(ka)
+            if v is not None:
+                self.q.setValue(kb, v)
+                self.q.remove(ka)
+        for which in ("last", "snoozed", "first_seen"):
+            ka = a.replace("views/", "fullbackup/") + "/" + which
+            v = self.q.value(ka)
+            if v is not None:
+                self.q.setValue(b.replace("views/", "fullbackup/") + "/" + which, v)
+                self.q.remove(ka)
+        last = self.last_file
+        if last and os.path.normcase(os.path.abspath(last)) == os.path.normcase(os.path.abspath(old)):
+            self.last_file = new
+
     def get_bytes(self, key: str):
         return self.q.value(key)
 

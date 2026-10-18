@@ -105,3 +105,43 @@ def test_full_backup_reminder():
     assert layout.reminder_due("2026-10-11", "", "2026-01-01", day)
     assert not layout.reminder_due("2026-10-01", "2026-10-20", "", day)   # put off for 7 days
     assert layout.reminder_due("2026-10-01", "2026-10-18", "", day)
+
+
+# ---- File → Rename database ------------------------------------------------
+
+def test_suggested_file_name_swaps_the_name_part():
+    assert layout.suggested_stem("LXX-VXX_Complete_Lexicon", "Complete Lexicon", "Main Database") == "LXX-VXX_Main_Database"
+    assert layout.suggested_stem("old file", "Complete Lexicon", "Main Database", "LXX", "VXX") == "LXX-VXX_Main_Database"
+    assert layout.stem_problem("a:b") and layout.stem_problem(" ") and layout.stem_problem("x.")
+    assert layout.stem_problem("LXX-VXX_Main_Database") == ""
+
+
+def test_rename_database_takes_its_notebook_and_backups(tmp_path):
+    db = new_database()
+    path = tmp_path / "LXX-VXX_Complete_Lexicon.xml"
+    storage.save(db, path)
+    (tmp_path / "LXX-VXX_Complete_Lexicon.notebook").write_text("<notebook/>", encoding="utf-8")
+    backups = tmp_path / "Backups"
+    backups.mkdir(exist_ok=True)
+    for name in ("LXX-VXX_Complete_Lexicon_2026-10-17_101500.xml", "LXX-VXX_Complete_Lexicon_2026-10-17_101500.notebook",
+                 "LXX-VXX_Complete_Lexicon_old_2026-10-17_101500.xml", "notes.txt"):
+        (backups / name).write_text("x", encoding="utf-8")
+    new = layout.rename_database(path, "LXX-VXX_Main_Database")
+    assert new == tmp_path / "LXX-VXX_Main_Database.xml" and new.exists() and not path.exists()
+    assert (tmp_path / "LXX-VXX_Main_Database.notebook").exists()
+    assert sorted(f.name for f in backups.iterdir()) == [
+        "LXX-VXX_Complete_Lexicon_old_2026-10-17_101500.xml",          # another database's: left alone
+        "LXX-VXX_Main_Database_2026-10-17_101500.notebook", "LXX-VXX_Main_Database_2026-10-17_101500.xml",
+        "notes.txt"]
+
+
+def test_rename_database_refuses_a_name_taken_and_changes_nothing(tmp_path):
+    path = tmp_path / "A.xml"
+    storage.save(new_database(), path)
+    (tmp_path / "A.notebook").write_text("<notebook/>", encoding="utf-8")
+    (tmp_path / "B.notebook").write_text("<notebook/>", encoding="utf-8")
+    with pytest.raises(layout.RenameError):
+        layout.rename_database(path, "B")
+    with pytest.raises(layout.RenameError):
+        layout.rename_database(path, "B?")
+    assert path.exists() and (tmp_path / "A.notebook").exists()

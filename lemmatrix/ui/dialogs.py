@@ -227,6 +227,82 @@ class EntryDialog(QDialog):
 # Metadata
 # ==========================================================================
 
+class RenameDatabaseDialog(QDialog):
+    """File → Rename database: the database's name (in the title) and its file name together."""
+
+    def __init__(self, parent, db: Database):
+        super().__init__(parent)
+        from .. import layout
+        self.layout_ = layout
+        self.db = db
+        self.old = Path(db.path)
+        self.setWindowTitle("Rename database")
+        md = db.metadata
+        self.name = QLineEdit(md.name)
+        self.name.setToolTip("The database's own name, shown in the title (Edit → Metadata)")
+        self.stem = QLineEdit(self.old.stem)
+        self.stem.setToolTip("The database's file name. Its notebook and automatic backups follow it.")
+        self._follow = True                       # the file name follows the name until edited
+        self.name.textEdited.connect(self._name_edited)
+        self.stem.textEdited.connect(self._stem_edited)
+        self.note = QLabel()
+        self.note.setWordWrap(True)
+        form = QFormLayout()
+        form.addRow("Name", self.name)
+        form.addRow("File name", self.stem)
+        lay = QVBoxLayout(self)
+        lay.addLayout(form)
+        lay.addWidget(self.note)
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.buttons.button(QDialogButtonBox.Ok).setText("Rename")
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+        lay.addWidget(self.buttons)
+        self.resize(460, self.sizeHint().height())
+        self._update()
+
+    def _name_edited(self, text):
+        if self._follow:
+            md = self.db.metadata
+            self.stem.setText(self.layout_.suggested_stem(self.old.stem, md.name, text.strip(),
+                                                          md.language_code, md.variety_code))
+        self._update()
+
+    def _stem_edited(self, _):
+        self._follow = False
+        self._update()
+
+    def new_name(self) -> str:
+        return nfc(self.name.text().strip())
+
+    def new_stem(self) -> str:
+        return nfc(self.stem.text())
+
+    def _update(self):
+        ok_btn = self.buttons.button(QDialogButtonBox.Ok)
+        stem = self.new_stem()
+        changed = stem != self.old.stem or self.new_name() != self.db.metadata.name
+        try:
+            plan = self.layout_.rename_plan(self.old, stem) if stem != self.old.stem else []
+        except self.layout_.RenameError as exc:
+            self.note.setText(str(exc))
+            ok_btn.setEnabled(False)
+            return
+        if not plan:
+            self.note.setText("The file name stays the same." if changed else "")
+        else:
+            parts = [f"{self.old.name} → {plan[0][1].name}"]
+            nb = [d for s, d in plan[1:] if s.parent == self.old.parent]
+            if nb:
+                parts.append(f"the notebook → {nb[0].name}")
+            backups = len(plan) - 1 - len(nb)
+            if backups:
+                parts.append(f"{backups} automatic backup{'s' if backups != 1 else ''} in Backups")
+            self.note.setText("Renames " + "; ".join(parts) + ". The window's settings and the "
+                              "full-backup reminder follow.")
+        ok_btn.setEnabled(changed)
+
+
 class MetadataDialog(QDialog):
     """Language, variety, the database's name, author, description and gloss languages.
 

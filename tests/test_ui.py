@@ -1739,3 +1739,52 @@ def test_fill_in_recording_dates_from_the_sound_files(win):
     dlg = RecordingDatesDialog(win)
     assert dlg.tree.topLevelItemCount() == len(changes)
     dlg.reject()
+
+
+def test_rename_database(win, tmp_path, monkeypatch):
+    from lemmatrix import lock as lockmod
+    from lemmatrix.ui import dialogs
+    old = win.doc.db.path
+    win.save()                                             # a backup and a notebook-free database
+    win.prefs.set_view_for(old, {"tab": 2})
+    win.prefs.set_full_backup_date(old, "last", "2026-10-11")
+    win.prefs.last_file = old
+
+    def fake_exec(dlg):
+        dlg.name.setText("Main Database")
+        dlg._name_edited("Main Database")
+        return 1
+    monkeypatch.setattr(dialogs.RenameDatabaseDialog, "exec", fake_exec)
+    win.doc.db.metadata.name = "Sample"
+    assert win.rename_database()
+    new = Path(win.doc.db.path)
+    assert new.name == "Main_Database.xml"
+    assert new.exists() and not Path(old).exists()
+    assert storage.load(new).metadata.name == "Main Database"
+    assert win.prefs.view_for(str(new)) == {"tab": 2} and win.prefs.view_for(old) == {}
+    assert win.prefs.full_backup_dates(str(new))["last"] == "2026-10-11"
+    assert win.prefs.last_file == str(new)
+    assert lockmod.read(new) is not None and not lockmod.lock_path(old).exists()
+    assert not any(f.name.startswith("Sample_") for f in (tmp_path / "Backups").iterdir())
+    assert "Main Database" in win.db_title.text() and new.name in win.windowTitle()
+
+
+def test_rename_database_dialog(win, tmp_path):
+    from PySide6.QtWidgets import QDialogButtonBox
+    from lemmatrix.ui.dialogs import RenameDatabaseDialog
+    win.save()
+    (tmp_path / "Sample.notebook").write_text("<notebook/>", encoding="utf-8")
+    win.doc.db.metadata.name = "Sample"
+    dlg = RenameDatabaseDialog(win, win.doc.db)
+    ok = dlg.buttons.button(QDialogButtonBox.Ok)
+    assert not ok.isEnabled()                              # nothing changed yet
+    dlg.name.setText("Main Database")
+    dlg._name_edited("Main Database")
+    assert dlg.stem.text() == "Main_Database" and ok.isEnabled()
+    assert "the notebook → Main_Database.notebook" in dlg.note.text() and "1 automatic backup" in dlg.note.text()
+    dlg.stem.setText("Bad:name")
+    dlg._stem_edited("Bad:name")
+    assert not ok.isEnabled() and ":" in dlg.note.text()
+    dlg._name_edited("Other")                              # the file name no longer follows
+    assert dlg.stem.text() == "Bad:name"
+    dlg.close()

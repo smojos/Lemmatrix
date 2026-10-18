@@ -263,3 +263,94 @@ def reminder_due(last: str, snoozed: str, first_seen: str, today: _dt.date | Non
         return False
     since = day(last) or day(first_seen)
     return since is not None and (today - since).days >= REMIND_DAYS
+
+
+# --------------------------------------------------------------------------
+# File → Rename database
+# --------------------------------------------------------------------------
+
+class RenameError(Exception):
+    pass
+
+
+BAD_IN_FILE_NAMES = '/\\:*?"<>|'
+
+
+def suggested_stem(old_stem: str, old_name: str, new_name: str, language: str = "", variety: str = "") -> str:
+    """The file name for a renamed database: the old file name with its name part swapped
+    ("LXX-VXX_Complete_Lexicon" → "LXX-VXX_Main_Database"), or language-variety_name."""
+    new_part = "_".join(new_name.split())
+    for old_part in ("_".join(old_name.split()), old_name.strip()):
+        if old_part and old_part in old_stem:
+            return old_stem.replace(old_part, new_part, 1)
+    prefix = "-".join(p for p in (language, variety) if p)
+    return f"{prefix}_{new_part}" if prefix and new_part else new_part or old_stem
+
+
+def stem_problem(stem: str) -> str:
+    """Why the name can't be a file name ("" if it can)."""
+    if not stem.strip():
+        return "The file name is empty."
+    bad = sorted({c for c in stem if c in BAD_IN_FILE_NAMES})
+    if bad:
+        return f"File names can't have {' '.join(bad)} in them."
+    if stem != stem.strip() or stem.endswith("."):
+        return "A file name can't begin or end with a space, or end with a full stop."
+    return ""
+
+
+def _backup_pattern(stem: str):
+    import re
+    return re.compile(re.escape(stem) + r"(_\d{4}-\d{2}-\d{2}_\d{6}(?:_\d+)?)(\.xml|\.notebook)$")
+
+
+def rename_plan(db_path, new_stem: str) -> list[tuple[Path, Path]]:
+    """What renaming the database renames: the database, its notebook and its automatic
+    backups (so they are still cleared out as new ones are made). Raises RenameError."""
+    old = Path(db_path)
+    problem = stem_problem(new_stem)
+    if problem:
+        raise RenameError(problem)
+    new = old.with_name(new_stem + old.suffix)
+    plan = [(old, new)]
+    notebook = old.with_suffix(".notebook")
+    if notebook.exists():
+        plan.append((notebook, new.with_suffix(".notebook")))
+    folder = backups_folder(old)
+    if folder.is_dir():
+        pat = _backup_pattern(old.stem)
+        for f in sorted(folder.iterdir()):
+            m = pat.match(f.name)
+            if m:
+                plan.append((f, f.with_name(new_stem + m.group(1) + m.group(2))))
+    for src, dst in plan:
+        if dst.exists() and not _same(src, dst):
+            raise RenameError(f"There is already a {dst.name} in {dst.parent.name}.")
+    return plan
+
+
+def _same(a: Path, b: Path) -> bool:
+    try:
+        return os.path.samefile(a, b)
+    except OSError:
+        return False
+
+
+def rename_database(db_path, new_stem: str) -> Path:
+    """Rename the database file, its notebook and its backups; all or nothing. Returns the
+    new path. Raises RenameError."""
+    plan = rename_plan(db_path, new_stem)
+    done = []
+    for src, dst in plan:
+        try:
+            if src.name != dst.name:
+                src.rename(dst)
+            done.append((src, dst))
+        except OSError as exc:
+            for s, d in reversed(done):
+                try:
+                    d.rename(s)
+                except OSError:
+                    pass
+            raise RenameError(f"Couldn't rename {src.name}: {exc}") from exc
+    return plan[0][1]

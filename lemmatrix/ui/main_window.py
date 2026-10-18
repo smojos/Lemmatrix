@@ -473,6 +473,7 @@ class MainWindow(QMainWindow):
         self._act(f, "Open a copy of the sample database", self.open_sample)
         f.addSeparator()
         self._act(f, "&Save", self.save, QKeySequence.Save)
+        self._act(f, "&Rename database…", self.rename_database)
         f.addSeparator()
         self._act(f, "&Full backup…", self.full_backup)
         ex = f.addMenu("&Export")
@@ -2469,6 +2470,48 @@ class MainWindow(QMainWindow):
         where = QDir.toNativeSeparators(str(storage.backup_folder(self.doc.db.path)))
         self.statusBar().showMessage(f"Saved. The previous version is in {where}.", 5000)
         return True
+
+    def rename_database(self) -> bool:
+        """File → Rename database: its name in the title and its file name (with the notebook and
+        the automatic backups), keeping the window's settings and the full-backup reminder."""
+        from .dialogs import RenameDatabaseDialog
+        db = self.doc.db
+        if not db.path:
+            QMessageBox.information(self, "Rename database", "Save the database first.")
+            return False
+        info = lockmod.held_elsewhere(db.path)
+        if info is not None:
+            QMessageBox.warning(self, "Rename database", f"{Path(db.path).name} seems to be open on "
+                                f"{info.describe()}. Close it there first.")
+            return False
+        dlg = RenameDatabaseDialog(self, db)
+        if not dlg.exec():
+            return False
+        if self.doc.dirty and QMessageBox.question(
+                self, "Rename database", "Save the changes first? The database is saved under its new "
+                "name.") != QMessageBox.Yes:
+            return False
+        old, stem, name = db.path, dlg.new_stem(), dlg.new_name()
+        new = old
+        if stem != Path(old).stem:
+            self._mark_open("")
+            try:
+                new = str(layout.rename_database(old, stem))
+            except layout.RenameError as exc:
+                self._mark_open(old)
+                QMessageBox.warning(self, "Rename database", str(exc))
+                return False
+            db.path = new
+            self.prefs.move_database(old, new)
+            self._mark_open(new)
+        db.metadata.name = name
+        self.doc.settings_changed()
+        self._fill_db_title()
+        ok = self.save()
+        self._update_title()
+        if ok and new != old:
+            self.statusBar().showMessage(f"Renamed to {Path(new).name}.", 5000)
+        return ok
 
     # ------------------------------------------- open on another computer
     def _open_elsewhere_ok(self, path: str) -> bool:
