@@ -1414,3 +1414,23 @@ def test_all_data_tooltips_only_add_something(win):
     assert table.tip_text(cell("f:Phonetic")) == goat.tokens[2].get("Phonetic")
     base = table.style().styleHint(QStyle.SH_ToolTip_WakeUpDelay, None, table) or 700
     assert table.tip_delay() == base                                # waits twice as long in all
+
+
+def test_session_panel_is_remembered_as_it_was_left(win):
+    """Removing people and places sticks after reopening, even on a day the notebook has."""
+    from lemmatrix.ui import chiprow as chips
+    path = win.doc.db.path
+    s = win.doc.notebook.add_session(win.session_date())     # today's notes, with people and a place
+    s.researchers, s.participants, s.locations = ["JS"], ["SP1", "ABC"], ["Juba"]
+    win.prefs.set_session_for(path, {})
+    win._fill_session()
+    assert win.sess_rows[chips.PARTICIPANTS].keys == ["SP1", "ABC"]
+    win.sess_rows[chips.PARTICIPANTS]._remove("ABC")
+    win.sess_rows[chips.LOCATIONS]._remove("Juba")
+    win._fill_session()                                       # what opening the database does
+    assert win.sess_rows[chips.PARTICIPANTS].keys == ["SP1"]
+    assert win.sess_rows[chips.LOCATIONS].keys == []
+    win.sess_rows[chips.PARTICIPANTS]._remove("SP1")
+    win.sess_rows[chips.RESEARCHERS]._remove("JS")
+    win._fill_session()                                       # an empty panel stays empty
+    assert not any(win.session_keys().values())

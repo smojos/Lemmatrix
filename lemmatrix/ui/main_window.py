@@ -729,26 +729,23 @@ class MainWindow(QMainWindow):
             self.bulk_window.tables_repaint()
 
     def _fill_session(self):
-        """The Current Session panel: the file, the codes, and the session's people and places.
+        """The Current Session panel: the session's people and places.
 
-        If the notebook has a session for the date, the panel shows its people and places;
-        otherwise the ones last used with this database."""
+        They are what the panel had when last used with this database (closing the program included),
+        even an empty panel. Only when nothing has been remembered yet do they come from the notebook:
+        the session's day if it has notes, otherwise the latest day with people or places."""
         db = self.doc.db
-        md = db.metadata
         self._fill_db_title()
-        s = self.doc.notebook.session(self.session_date()) if self.session_date() else None
-        if s is not None:
-            keys = {chips.RESEARCHERS: s.researchers, chips.PARTICIPANTS: s.participants,
-                    chips.LOCATIONS: s.locations}
-        else:
-            last = self.prefs.session_for(db.path) if db.path else {}
+        last = self.prefs.session_for(db.path) if db.path else {}
+        if last:
             keys = {k: [x for x in last.get(k, []) if isinstance(x, str)] for k in self.sess_rows}
-            if not any(keys.values()):            # nothing remembered: the latest day in the notebook
-                prev = self._latest_notebook_session()
-                if prev is not None:
-                    keys = {chips.RESEARCHERS: list(prev.researchers),
-                            chips.PARTICIPANTS: list(prev.participants),
-                            chips.LOCATIONS: list(prev.locations)}
+        else:
+            s = self.doc.notebook.session(self.session_date()) if self.session_date() else None
+            if s is None or not (s.researchers or s.participants or s.locations):
+                s = self._latest_notebook_session()
+            keys = ({chips.RESEARCHERS: list(s.researchers), chips.PARTICIPANTS: list(s.participants),
+                     chips.LOCATIONS: list(s.locations)} if s is not None
+                    else {k: [] for k in self.sess_rows})
             if not db.path and not keys[chips.PARTICIPANTS] and self.prefs.speaker in db.participant_codes():
                 keys[chips.PARTICIPANTS] = [self.prefs.speaker]
         for kind, row in self.sess_rows.items():
@@ -766,7 +763,7 @@ class MainWindow(QMainWindow):
     def _remember_session(self):
         """The panel's people and places are remembered for the next run, whichever way they got there
         (picked, or loaded from a day in the notebook)."""
-        if self.doc.db.path and any(self.session_keys().values()):
+        if self.doc.db.path:                      # an empty panel is remembered too
             self.prefs.set_session_for(self.doc.db.path, self.session_keys())
 
     def _fill_db_title(self):
