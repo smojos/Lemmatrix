@@ -15,9 +15,8 @@ from PySide6.QtCore import QDir, Qt, QUrl
 from PySide6.QtGui import QDesktopServices, QFont
 from PySide6.QtWidgets import (QAbstractItemView, QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout,
                                QHeaderView, QLabel, QListWidget, QListWidgetItem, QMessageBox,
-                               QPlainTextEdit, QPushButton, QSplitter, QStackedWidget, QTableWidget,
-                               QTableWidgetItem, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
-                               QWidget)
+                               QPlainTextEdit, QSplitter, QStackedWidget, QTableWidget, QTableWidgetItem,
+                               QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from ..model import Database, Location, Person, forbidden_in, nfc
 from . import theme

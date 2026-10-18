@@ -5,12 +5,12 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import QDate, QDir, QFile, QSize, Qt, QTimer, QUrl
-from PySide6.QtGui import QAction, QColor, QDesktopServices, QFont, QKeySequence
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QFileDialog, QFrame, QGroupBox,
-                               QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMenu, QMessageBox,
-                               QPushButton, QSplitter, QStackedWidget, QTabBar, QToolButton,
-                               QVBoxLayout, QWidget)
+from PySide6.QtCore import QDate, QDir, QSize, Qt, QTimer, QUrl
+from PySide6.QtGui import QAction, QDesktopServices, QFont, QKeySequence
+from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QFileDialog, QFrame, QGridLayout,
+                               QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMenu, QMessageBox, QPushButton,
+                               QSplitter, QStackedWidget, QTabBar, QToolButton, QVBoxLayout,
+                               QWidget)
 
 from .. import __version__, audio, filters as fl, lock as lockmod, matrix as mx, storage
 from . import theme
@@ -18,7 +18,7 @@ from ..defaults import new_database
 from .. import notebook as nbmod, predict, spelling
 from ..model import Database, Entry, ListItem, Person, forbidden_in, today
 from . import chiprow as chips
-from .dialogs import EntryDialog, MetadataDialog, PreferencesDialog, TagStructureDialog
+from .dialogs import EntryDialog, MetadataDialog, PreferencesDialog
 from .document import Document
 from .fields_dialog import FieldsDialog
 from .filter_dialogs import ConfigureColumnsDialog
@@ -31,7 +31,6 @@ from .spellui import SpellDelegate
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, ListEditDelegate, SuggestionDelegate
 from .token_dialog import Slot, TokenDialog
 from . import widgets
-from .widgets import ipa_font
 
 def pitchmod_parse(text):
     from .. import pitch
@@ -62,7 +61,7 @@ class TokenRow:
 
 
 INK_ICONS = {"reset-filters"}      # drawn in the text colour, so they follow the theme
-ICON_ONLY = {"add", "delete", "edit", "play", "broom", "reset-filters"}   # obvious, shared actions: the name is in the tooltip
+ICON_ONLY = {"add", "delete", "edit", "play", "reset-filters"}   # obvious, shared actions: the name is in the tooltip
 
 
 def tool(text: str, icon_name: str | None, fn, tip: str = "") -> QToolButton:
@@ -565,7 +564,6 @@ class MainWindow(QMainWindow):
         s = db.settings
         defaults = mx.default_names(db)
         wcf = s.entry_field("word-class")
-        gf = s.entry_field("gloss")
 
         def tag_tree():
             out = [ListItem(fl.CITATION_ITEM)]
@@ -1127,7 +1125,6 @@ class MainWindow(QMainWindow):
         self.lemmas.setFocus()
 
     def _lemma_selected(self):
-        e = self.lemmas.current_row()
         tab = self.tabs.currentIndex()
         if tab == TAG_TAG:
             self.refresh()

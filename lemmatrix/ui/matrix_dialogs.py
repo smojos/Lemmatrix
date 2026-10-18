@@ -5,16 +5,16 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, QSize, Qt
 from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import (QAbstractItemView, QButtonGroup, QDialog, QDialogButtonBox,
-                               QFrame, QGroupBox, QHBoxLayout, QInputDialog, QLabel, QListWidget,
-                               QListWidgetItem, QMenu, QMessageBox, QPushButton, QRadioButton, QScrollArea,
-                               QStyledItemDelegate, QToolButton, QVBoxLayout, QWidget)
+                               QGroupBox, QHBoxLayout, QInputDialog, QLabel, QListWidget, QListWidgetItem,
+                               QMenu, QMessageBox, QPushButton, QRadioButton, QScrollArea, QStyledItemDelegate,
+                               QToolButton, QVBoxLayout, QWidget)
 
 from .. import matrix as mx
 from ..model import Database
 from . import theme
 from .icons import icon
 from .tagpanel import TagPanel
-from .widgets import chip_metrics, chips_width, paint_chips
+from .widgets import chip_metrics, paint_chips
 
 
 def _buttons(dlg) -> QDialogButtonBox:

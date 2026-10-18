@@ -15,7 +15,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from . import pitch as pitchmod
-from .matrix import CITATION, EXACT, LOOSE, MatrixConfig, Spec
+from .matrix import CITATION, EXACT, MatrixConfig, Spec
 from .model import (Database, Entry, FieldDef, Group, ListItem, Location, Metadata, Person,
                     RefCategory, Settings, Tag, TagStructure, Token, new_id, nfc, write_atomically,
                     xml_safe)

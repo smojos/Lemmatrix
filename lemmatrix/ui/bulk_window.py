@@ -18,11 +18,11 @@ from PySide6.QtCore import QDate, QRectF, QSize, Qt
 from PySide6.QtGui import QFont, QKeySequence
 from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDateEdit, QDialog, QFormLayout,
                                QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSplitter,
-                               QSizePolicy, QStackedWidget, QStyle, QStyledItemDelegate, QTabBar, QToolButton,
-                               QVBoxLayout, QWidget)
+                               QSizePolicy, QStackedWidget, QStyledItemDelegate, QTabBar, QToolButton, QVBoxLayout,
+                               QWidget)
 
 from .. import bulk, matrix as mx, storage
-from ..model import ListItem, today
+from ..model import ListItem
 from . import theme
 from .filter_dialogs import ConfigureColumnsDialog
 from .icons import icon, ink_icon
@@ -809,7 +809,7 @@ class BulkEditWindow(QDialog):
             return
         try:
             op = self.build_op()
-            t = bulk.target(self.db, self.level, op.target)
+            bulk.target(self.db, self.level, op.target)     # checks the target exists (raises if not)
             keys = self.tables[self.level].visible_keys()
             if op.target not in keys:            # make sure the changed column can be seen
                 self._set_columns(self.level, keys + [op.target])

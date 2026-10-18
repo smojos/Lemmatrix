@@ -8,11 +8,10 @@ from pathlib import Path
 
 from PySide6.QtCore import QDir, Qt
 from PySide6.QtGui import QBrush, QColor
-from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QColorDialog, QComboBox, QDialog, QDialogButtonBox,
-                               QFormLayout, QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
-                               QListWidget, QListWidgetItem, QMessageBox, QPushButton, QSlider, QSpinBox,
-                               QTableWidget, QTableWidgetItem, QTabWidget, QTreeWidget,
-                               QTreeWidgetItem, QVBoxLayout, QWidget, QInputDialog)
+from PySide6.QtWidgets import (QCheckBox, QColorDialog, QComboBox, QDialog, QDialogButtonBox, QFormLayout,
+                               QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMessageBox,
+                               QPushButton, QSlider, QSpinBox, QTabWidget, QTreeWidget, QTreeWidgetItem,
+                               QVBoxLayout, QWidget, QInputDialog)
 
 from ..model import (Database, Entry, Group, Tag, forbidden_in, nfc)
 from . import spellui, theme

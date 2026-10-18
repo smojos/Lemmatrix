@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QPoint, QPointF, QRect, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QFontDatabase, QPainter, QPen, QPolygonF
-from PySide6.QtWidgets import (QHeaderView, QLayout, QSizePolicy, QStyle, QStyleOptionHeader,
-                               QWidget)
+from PySide6.QtWidgets import (QHeaderView, QLayout, QSizePolicy, QWidget)
 
 from .. import pitch as pitchmod
 from . import theme

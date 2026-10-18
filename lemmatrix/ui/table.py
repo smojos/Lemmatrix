@@ -12,7 +12,7 @@ from typing import Callable
 
 from PySide6.QtCore import (QAbstractTableModel, QEvent, QModelIndex, QRectF, QSize, QSortFilterProxyModel,
                             Qt, Signal)
-from PySide6.QtGui import QAction, QColor, QCursor, QFont, QFontMetrics, QPalette
+from PySide6.QtGui import QCursor, QFont, QFontMetrics, QPalette
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QLineEdit, QMenu, QStyle, QStyledItemDelegate,
                                QTableView, QToolTip)

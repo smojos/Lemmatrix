@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (QButtonGroup, QDialog, QDialogButtonBox, QFormLay
                                QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from .. import storage
-from ..model import Database, Entry, FieldDef, ListItem, Settings, Token, nfc
+from ..model import Database, Entry, FieldDef, ListItem, Token, nfc
 from . import theme
 from .icons import icon
 
@@ -393,7 +393,6 @@ class FieldsDialog(QDialog):
 
     # ---- accept ----------------------------------------------------------
     def accept(self):
-        names = [f.name for k in self.lists for f in self.lists[k]]
         for kind in self.lists:
             seen = set()
             for f in self.lists[kind]:

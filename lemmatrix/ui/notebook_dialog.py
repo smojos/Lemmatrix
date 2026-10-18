@@ -12,10 +12,10 @@ from __future__ import annotations
 from PySide6.QtCore import QDate, QRect, QSize, Qt, QTimer
 from PySide6.QtGui import QBrush, QColor, QFont, QFontMetrics, QTextCharFormat
 from PySide6.QtWidgets import (QAbstractItemView, QCalendarWidget, QComboBox, QDialog, QDialogButtonBox,
-                               QGridLayout, QHBoxLayout, QHeaderView, QInputDialog, QLabel, QLineEdit,
-                               QListWidget, QListWidgetItem, QMenu, QMessageBox, QPlainTextEdit,
-                               QPushButton, QSplitter, QStyledItemDelegate, QTabWidget, QTextEdit, QToolButton, QTreeWidget,
-                               QTreeWidgetItem, QVBoxLayout, QWidget, QWidgetAction)
+                               QGridLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget,
+                               QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton, QSplitter,
+                               QStyledItemDelegate, QTabWidget, QTextEdit, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
+                               QWidget)
 
 from .. import matrix as mx, notebook as nbmod
 from ..model import today

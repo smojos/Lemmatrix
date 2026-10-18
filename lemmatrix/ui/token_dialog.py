@@ -9,7 +9,7 @@ from PySide6.QtCore import QDir, QEvent, QRegularExpression, Qt, QTimer
 from PySide6.QtGui import QFont, QKeySequence, QRegularExpressionValidator, QShortcut, QValidator
 from PySide6.QtWidgets import (QComboBox, QDialog, QFrame, QGridLayout, QGroupBox, QHBoxLayout,
                                QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton,
-                               QScrollArea, QSizePolicy, QToolButton, QVBoxLayout, QWidget)
+                               QScrollArea, QToolButton, QVBoxLayout, QWidget)
 from PySide6.QtCore import QFile
 
 from .. import audio, matrix as mx, pitch as pitchmod, predict, storage
