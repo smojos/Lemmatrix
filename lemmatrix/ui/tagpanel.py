@@ -53,7 +53,8 @@ class TagPanel(QWidget):
             parents = path[:-1]
             if parents and parents != last_parent:
                 head = QLabel(" → ".join(parents))
-                head.setStyleSheet("font-weight: 600; margin-top: 4px;")
+                head.setStyleSheet(f"font-weight: bold; margin-top: 4px; "   # top-level grouping
+                                   f"color: {theme.colour('pitch').name()};")   # in the theme colour
                 self.box.addWidget(head)
             last_parent = parents
             line = QFrame()
@@ -61,8 +62,7 @@ class TagPanel(QWidget):
             line.setStyleSheet("color: #9aa;")
             self.box.addWidget(line)
             title = QLabel(g.name.lower())
-            title.setStyleSheet(f"font-style: italic; font-weight: bold; "   # the group's name
-                                f"color: {theme.colour('pitch').name()};")         # theme colour
+            title.setStyleSheet(f"font-style: italic; color: {theme.muted()};")
             title.setAlignment(Qt.AlignRight)
             self.box.addWidget(title)
             holder = QWidget()
