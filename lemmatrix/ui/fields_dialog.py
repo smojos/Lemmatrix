@@ -289,7 +289,7 @@ class FieldsDialog(QDialog):
         if kind == "lemma":
             vals = {e.get(name) for e in self.db.entries}
         else:
-            vals = {t.get(name) for e in self.db.entries for t in e.tokens}
+            vals = {t.get(name) for _, t in self.db.all_tokens()}     # utterances too
         f.items = [ListItem(v) for v in sorted(v for v in vals if v)]
 
     def _edited(self, *_):

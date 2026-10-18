@@ -921,7 +921,7 @@ class TagStructureDialog(QDialog):
             self._mark_problems()
 
     def _used(self, names: set[str]) -> int:
-        return sum(1 for e in self.db.entries for t in e.tokens if names & set(t.tags))
+        return sum(1 for _, t in self.db.all_tokens() if names & set(t.tags))   # utterances too
 
     def _names_under(self, item) -> set[str]:
         out = set()

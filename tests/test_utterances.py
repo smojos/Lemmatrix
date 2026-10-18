@@ -351,3 +351,29 @@ def test_ctrl_space_in_any_utterance_field_plays(win, tmp_path, monkeypatch):
                                                      Qt.ControlModifier | Qt.ShiftModifier, " "))
     assert played == ["sound"] * len(fields) + ["pitch"]
     dlg.reject()
+
+
+def test_recording_dates_are_filled_in_for_utterances(win, tmp_path):
+    from lemmatrix import audio, recdates
+    import numpy as np
+    uw = win.open_utterances()
+    clip = tmp_path / "dated.wav"
+    audio.write_wav(clip, np.zeros(800, dtype=np.float32), 8000, 16, date="2026-09-30")
+    win.sess_nodate.setChecked(True)                 # imported with no date
+    u = uw.import_files([str(clip)])[0]
+    assert u.token.collected == ""
+    changes, _ = recdates.plan(win.doc.db)
+    assert any(c.entry is u and c.new == "2026-09-30" for c in changes)
+    recdates.apply(win.doc, changes)
+    assert u.token.collected == "2026-09-30"
+
+
+def test_tag_editor_counts_utterance_tokens(win, tmp_path):
+    from lemmatrix.ui.dialogs import TagStructureDialog
+    db = win.doc.db
+    u = db.new_utterance("U001", "x")
+    u.token.tags = ["before H"]
+    db.utterances.append(u)
+    dlg = TagStructureDialog(win, db)
+    before = sum(1 for e in db.entries for t in e.tokens if "before H" in t.tags)
+    assert dlg._used({"before H"}) == before + 1

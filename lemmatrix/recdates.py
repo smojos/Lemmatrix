@@ -7,7 +7,7 @@ import os
 from dataclasses import dataclass
 
 from . import audio, storage
-from .model import Database, Entry
+from .model import Database, Entry, is_utterance
 
 FILE_DATE = "the date the file was last changed"
 
@@ -28,10 +28,10 @@ def plan(db: Database, overwrite: bool = False, file_dates: bool = False,
     overwrite: also change a date that differs from the recording's; file_dates: when the
     recording has no date in it, use the date the file was last changed; skip: file names not
     to read (online-only ones, which reading would download)."""
-    folder = storage.sound_folder(db)
     out, counts = [], {"no date in the file": 0, "not in the sound folder": 0, "online only": 0,
                        "already the same": 0, "kept (has a date)": 0}
-    for e in db.entries:
+    for e in db.items():                          # lemmas' tokens and utterances
+        folder = storage.folder_for(db, e)
         for i, t in enumerate(e.tokens):
             if not t.file:
                 continue
@@ -39,7 +39,8 @@ def plan(db: Database, overwrite: bool = False, file_dates: bool = False,
                 counts["kept (has a date)"] += 1
                 continue
             path = folder / t.file
-            if t.file in skip:
+            # skip names the tokens' folder's online-only files; the utterances' are checked here
+            if (t.file in skip and not is_utterance(e)) or (is_utterance(e) and storage.is_cloud_only(path)):
                 counts["online only"] += 1
                 continue
             if not path.exists():
