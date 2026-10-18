@@ -158,7 +158,7 @@ def global_order(db: Database) -> Order:
     for path, g in db.settings.tags.leaf_groups():
         for t in g.tags:
             order.setdefault(t.name, len(order))
-            if any(p.lower() == "frames" for p in (*path, g.name)):
+            if any(p.lower() in ("frames", "examples", "instances") for p in (*path, g.name)):
                 frames.add(t.name)
     order.frames = frozenset(frames)
     return order

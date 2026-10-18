@@ -1503,3 +1503,64 @@ def test_double_clicking_a_lemma_column_in_all_data_selects_the_lemma(win, monke
     assert win.lemmas.current_row() is target and not opened
     t.doubleClicked.emit(t.proxy.index(last, keys.index("tags")))          # a token column: the dialogue
     assert opened
+
+
+def test_same_recording_name_offers_an_example_tag_and_never_overwrites(win, monkeypatch):
+    import hashlib
+    import numpy as np
+    from PySide6.QtWidgets import QMessageBox
+    from lemmatrix import storage
+    from lemmatrix.ui.token_dialog import Slot, TokenDialog
+    db = win.doc.db
+    e = db.entry_by_ref("D002")
+    first = e.tokens[0]
+    path = storage.sound_folder(db) / first.file
+    before = hashlib.md5(path.read_bytes()).hexdigest()
+    answers = []                                   # which button the prompt gets
+    def fake_exec(box):
+        answers.append(box.text())
+        box._clicked = box.buttons()[0] if pick[0] == "add" else box.buttons()[1]
+        return 0
+    monkeypatch.setattr(QMessageBox, "exec", fake_exec)
+    monkeypatch.setattr(QMessageBox, "clickedButton", lambda box: box._clicked)
+
+    class Fake:
+        sample_rate = 44100
+        level = 0.0
+        def stop(self):
+            return np.full(4410, 0.1, dtype=np.float32)
+    monkeypatch.setattr("lemmatrix.audio.Recorder", lambda *a, **k: type("R", (), {"start": lambda s: None})())
+
+    # Recording a second token with the same tags: Cancel records nothing
+    pick = ["cancel"]
+    dlg = TokenDialog(win, [Slot(e, None, tuple(first.tags), explicit=True, defaults=False)], 0)
+    dlg._record()
+    assert dlg.recorder is None and answers and "X1" in answers[-1]
+    # Add X1 and record: the new token gets its own name; the other's recording is untouched
+    pick = ["add"]
+    dlg._record()
+    assert "Example 1" in dlg.token.tags
+    dlg.recorder = Fake()
+    dlg._stop_recording()
+    assert hashlib.md5(path.read_bytes()).hexdigest() == before
+    new = e.tokens[-1]
+    assert new.file and new.file != first.file and "X1" in new.file
+    dlg.reject()
+    # Saving a token whose tags match another's offers the next free tag (X2), once
+    pick = ["keep"]
+    dlg = TokenDialog(win, [Slot(e, None, tuple(first.tags), explicit=True, defaults=False)], 0)
+    dlg.edits["Phonetic"].setText("rʉʉr")
+    n, count = len(answers), len(e.tokens)
+    dlg._ok()
+    assert len(answers) == n + 1 and "X2" in answers[-1]
+    assert len(e.tokens) == count + 1 and "Example 2" not in e.tokens[-1].tags   # kept as it is
+
+
+def test_older_databases_get_instances_with_frames_codes_kept(tmp_path):
+    from lemmatrix import storage
+    src = open(SAMPLES / "Sample.xml", encoding="utf-8").read()
+    old = src.replace('format="3"', 'format="2"')
+    (tmp_path / "old.xml").write_text(old, encoding="utf-8")
+    db = storage.load(tmp_path / "old.xml")
+    names = [g.name for g in db.settings.tags.groups]
+    assert names[-1] == "Instances"

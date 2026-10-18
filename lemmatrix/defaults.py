@@ -5,6 +5,8 @@ from __future__ import annotations
 from .model import Database, FieldDef, Group, ListItem, Metadata, RefCategory, Settings, Tag, TagStructure
 
 WORD_CLASSES = ["NOUN", "VERB", "PRONOUN", "QUANT", "ADJECTIVE", "ADVERB"]
+INSTANCES = "Instances"          # top-level group: Frames and Examples
+EXAMPLES = "Examples"            # Example 1 = X1 …: tells apart tokens that would share a file name
 
 
 def _tags(*pairs, default: str | None = None) -> list[Tag]:
@@ -45,7 +47,10 @@ def default_tag_structure() -> TagStructure:
             Group("Utterance position", _tags("isolation", ("utterance-initial", "INI"),
                                               ("utterance-final", "FIN"), default="isolation")),
         ]),
-        Group("Frames", _tags("f1", "f2", "f3", "f4")),
+        Group(INSTANCES, groups=[            # the same form said again: in a frame, or another example
+            Group("Frames", _tags(("Frame 1", "F1"), ("Frame 2", "F2"))),
+            Group(EXAMPLES, _tags(("Example 1", "X1"), ("Example 2", "X2"))),
+        ]),
     ]
     return TagStructure([noun, verb, *shared])
 

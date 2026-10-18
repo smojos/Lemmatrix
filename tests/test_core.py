@@ -442,7 +442,7 @@ def test_format_1_is_upgraded(tmp_path):
     old = storage.load(DATA / "Sample-format1.xml")
     assert old.load_notes                                  # the main window reports these
     ts = old.settings.tags
-    assert [g.name for g in ts.groups] == ["NOUN", "VERB", "Phonological", "Syntactic", "Frames"]
+    assert [g.name for g in ts.groups] == ["NOUN", "VERB", "Phonological", "Syntactic", "Instances"]
     assert [g.usual for g in ts.groups[:2]] == [["NOUN"], ["VERB"]]
     assert old.settings.word_classes() == ["NOUN", "VERB", "PRONOUN", "QUANT", "ADJECTIVE", "ADVERB"]
     names = {e.ref: [t.file for t in e.tokens] for e in old.entries}

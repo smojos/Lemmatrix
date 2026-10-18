@@ -18,11 +18,11 @@ from .matrix import CITATION, EXACT, LOOSE, MatrixConfig, Spec
 from .model import (Database, Entry, FieldDef, Group, ListItem, Location, Metadata, Person,
                     RefCategory, Settings, Tag, TagStructure, Token, new_id, nfc)
 
-FORMAT_VERSION = "2"
+FORMAT_VERSION = "3"
 # Format 1 (to 18 October 2026) tied tags to word classes: <word-class> sections of the tag
 # structure plus <all-classes>, and the Word Class list lived there. Format 2 has one free
 # hierarchy of groups with "usual for" hints; format 1 files are upgraded when opened.
-READABLE = ("1", "2")
+READABLE = ("1", "2", "3")
 BACKUPS_KEPT = 10
 
 
@@ -254,7 +254,38 @@ def load(path: str | os.PathLike) -> Database:
     _unique_ids(db)
     if version == "1":
         _upgrade_from_1(db)
+    if version in ("1", "2"):
+        _upgrade_to_3(db)
     return db
+
+
+def _upgrade_to_3(db: Database):
+    """Format 2 → 3: Frames moves into a top-level Instances group, beside a new Examples group
+    (Example 1 = X1, Example 2 = X2) that tells apart tokens which would share a recording name.
+    Codes stay as they were, so no recording is renamed."""
+    from .defaults import EXAMPLES, INSTANCES
+    from .model import Group, Tag
+    ts = db.settings.tags
+    if any(g.name.lower() == INSTANCES.lower() for g in ts.groups):
+        return
+    frames = next((g for g in ts.groups if g.name.lower() == "frames"), None)
+    inner = []
+    if frames is not None:
+        ts.groups.remove(frames)
+        inner.append(frames)
+    taken = {t.name for t, _ in ts.tags()}
+    codes = {t.code for t, _ in ts.tags()}
+    examples = [Tag(f"Example {n}", f"X{n}") for n in (1, 2)
+                if f"Example {n}" not in taken and f"X{n}" not in codes]
+    inner.append(Group(EXAMPLES, examples))
+    ts.groups.append(Group(INSTANCES, groups=inner))
+    moved = "Frames is now inside it, with its codes unchanged, so no recording is renamed. " \
+        if frames is not None else ""
+    db.load_notes = list(db.load_notes) + [
+        f"The tag structure has a new top-level group, {INSTANCES}. {moved}Beside it is a new group, "
+        f"{EXAMPLES} (X1, X2…), for telling apart tokens of a lemma that have the same tags: when two "
+        "recordings would share a name, Lemmatrix offers a free Example tag. The file is saved in the "
+        "new format (a backup of the old one is kept)."]
 
 
 def _upgrade_from_1(db: Database):

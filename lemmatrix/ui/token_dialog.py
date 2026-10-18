@@ -59,6 +59,7 @@ class TokenDialog(QDialog):
         self.original: Token | None = None
         self.recorder: audio.Recorder | None = None
         self._renames: list = []                  # recordings renamed, to go with the next commit
+        self._clash_asked: set[str] = set()       # tokens already offered an Example tag on saving
         self.unknown_tags: list[str] = []
         self.suggestion: predict.Suggestion | None = None   # the predicted translation shown, if any
         self.setWindowTitle("Edit Token")
@@ -496,18 +497,25 @@ class TokenDialog(QDialog):
             self.name_note.setText(self.name_note.text() + " It will be renamed when you leave this token.")
 
     # ---------------------------------------------------------- committing
-    def _commit(self, keep_empty: bool = False) -> bool:
+    def _commit(self, keep_empty: bool = False, check_clash: bool = True) -> bool:
         """Save the working token into the entry (with undo). Returns False on a problem."""
         self._collect()
         e = self.slot.entry
         t = self.token
+        saving = (t.has_content() or keep_empty or self.slot.explicit) if self.original is None \
+            else self.original != t
+        if check_clash and saving and t.id not in self._clash_asked and self._clashes():
+            self._clash_asked.add(t.id)           # offered once; "Keep" saves it as it is
+            self._offer_example(recording=False)
+            self._collect()
+            t = self.token
         problems = self.db.settings.tags.conflicts([x for x in t.tags if x not in self.unknown_tags])
         if problems:
             QMessageBox.warning(self, "Tags", "\n".join(problems))
             return False
         # Rename the recording if its name is out of date and renaming is automatic.
         if self.db.settings.auto_update_names and t.file and t.file != self._expected():
-            self._rename_file(quiet=True)
+            self._rename_file()
         if self.original is None:
             if not (t.has_content() or keep_empty or self.slot.explicit):
                 return True                       # passing through an empty cell
@@ -529,7 +537,80 @@ class TokenDialog(QDialog):
         self.token = self.original.copy()
         return True
 
-    def _rename_file(self, quiet: bool = False) -> bool:
+    # ------------------------------------------------ recordings sharing a name
+    def _clashes(self, tags=None) -> list:
+        """Other tokens whose recording has, or would have, this token's file name."""
+        t = self.token
+        probe = t.copy()
+        if tags is not None:
+            probe.tags = list(tags)
+        name = self.db.expected_filename(self.slot.entry, probe).lower()
+        out = []
+        for e in self.db.entries:
+            for o in e.tokens:
+                if o.id == t.id or (self.original is not None and o is self.original):
+                    continue
+                if (o.file and o.file.lower() == name) or \
+                        (e is self.slot.entry and self.db.expected_filename(e, o).lower() == name):
+                    out.append((e, o))
+        return out
+
+    def _free_example(self) -> str:
+        """The first Example tag that gives this token a file name of its own (a new one if needed)."""
+        from ..defaults import EXAMPLES, INSTANCES
+        from ..model import Group, Tag
+        ts = self.db.settings.tags
+        group = next((g for _, g in ts.leaf_groups() if g.name.lower() == EXAMPLES.lower()), None)
+        if group is None:                         # an older structure without it: add it
+            top = next((g for g in ts.groups if g.name.lower() == INSTANCES.lower()), None)
+            if top is None:
+                top = Group(INSTANCES)
+                ts.groups.append(top)
+            group = Group(EXAMPLES)
+            top.groups.append(group)
+        mine = {x.name for x in group.tags}
+        base = [x for x in self.token.tags if x not in mine]
+        for tag in group.tags:
+            if not self._clashes(base + [tag.name]):
+                return tag.name
+        names, codes = {x.name for x, _ in ts.tags()}, {x.code for x, _ in ts.tags()}
+        n = len(group.tags) + 1
+        while f"Example {n}" in names or f"X{n}" in codes or self._clashes(base + [f"Example {n}"]):
+            n += 1
+        group.tags.append(Tag(f"Example {n}", f"X{n}"))
+        self.doc.settings_changed()
+        return f"Example {n}"
+
+    def _offer_example(self, recording: bool) -> bool:
+        """Two recordings would share a name: offer a free Example tag. True if one was added."""
+        others = self._clashes()
+        e, o = others[0]
+        name = self._expected()
+        what = " + ".join(mx.chips(self.db, o.tags)) or "citation"
+        tag = self._free_example()
+        found = self.db.settings.tags.find(tag)
+        code = found[0].display() if found else tag
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Question)
+        box.setWindowTitle("Same recording name")
+        who = "This lemma already has" if e is self.slot.entry else f"{e.ref} already has"
+        box.setText(f"{who} a token with this file name ({what}): {name}\n\n"
+                    f"Add the example tag {code} to this token, so its recording gets a name of its own?")
+        add = box.addButton(f"Add {code}" + (" and record" if recording else ""), QMessageBox.AcceptRole)
+        box.addButton("Cancel" if recording else "Keep as it is", QMessageBox.RejectRole)
+        box.setDefaultButton(add)
+        box.exec()
+        if box.clickedButton() is not add:
+            return False
+        mine = {x.name for _, g in self.db.settings.tags.leaf_groups()
+                if g.name.lower() == "examples" for x in g.tags}
+        tags = [x for x in self.token.tags if x not in mine] + [tag]
+        self.token.tags = self.db.settings.tags.sort(tags)
+        self._build_tags(set(self.token.tags))
+        self._fields_changed()
+        return True
+
+    def _rename_file(self) -> bool:
         t = self.token
         exp = self._expected()
         src, dst = self._path(t.file), self._path(exp)
@@ -597,10 +678,15 @@ class TokenDialog(QDialog):
             self._stop_recording()
             return
         self._collect()
+        if self._clashes() and not self._offer_example(recording=True):
+            return                                # never record over another token's recording
         exp = self._expected()
-        existing = [p for p in {self.token.file, exp} if p and self._path(p).exists()]
-        if existing:
-            if QMessageBox.question(self, "Record", "Replace the existing recording?") != QMessageBox.Yes:
+        own = [p for p in {self.token.file, exp} if p and self._path(p).exists()]
+        if own:
+            ask = ("Replace this token's recording?" if self.token.file in own else
+                   f"A file called {exp} is already in the sound folder, though no token uses it. "
+                   "Replace it? (It goes to the Recycle Bin.)")
+            if QMessageBox.question(self, "Record", ask) != QMessageBox.Yes:
                 return
         prefs = self.main.prefs
         self.recorder = audio.Recorder(prefs.record_source, prefs.sample_rate)
@@ -638,7 +724,13 @@ class TokenDialog(QDialog):
         self.date.setText(t.collected)
         self.date.blockSignals(False)
         exp = self._expected()
+        if self._clashes():                       # the tags changed while recording: still never overwrite
+            QMessageBox.warning(self, "Record", f"{exp} belongs to another token, so this recording "
+                                "wasn't saved. Give this token an Example tag and record again.")
+            return
         old = t.file
+        if self._path(exp).exists():              # the recording being replaced: to the Recycle Bin
+            QFile.moveToTrash(str(self._path(exp)))
         try:
             audio.write_wav(self._path(exp), samples, rec.sample_rate, self.main.prefs.bit_depth,
                             artist=t.speaker, date=t.collected)
