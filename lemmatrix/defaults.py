@@ -80,6 +80,7 @@ def default_settings() -> Settings:
     s.token_fields = [
         FieldDef("Phonetic", role="phonetic"),
         FieldDef("Phonemic", role="phonemic"),
+        FieldDef("Morphemes", role="morphemes"),      # the morpheme gloss line (ideas 2 and 7)
         FieldDef("Pitch", role="pitch"),
         FieldDef("Translation", role="translation"),
         FieldDef("Comment"),

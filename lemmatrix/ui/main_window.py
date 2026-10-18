@@ -8,11 +8,12 @@ from pathlib import Path
 from PySide6.QtCore import QDate, QDir, QSize, Qt, QTimer, QUrl
 from PySide6.QtGui import QAction, QDesktopServices, QFont, QKeySequence
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QFileDialog, QFrame, QGridLayout,
+                               QProgressDialog,
                                QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMenu, QMessageBox, QPushButton,
                                QSplitter, QStackedWidget, QTabBar, QToolButton, QVBoxLayout,
                                QWidget)
 
-from .. import __version__, audio, filters as fl, lock as lockmod, matrix as mx, storage
+from .. import __version__, audio, filters as fl, layout, lock as lockmod, matrix as mx, storage
 from . import theme
 from ..defaults import new_database
 from .. import notebook as nbmod, predict, spelling
@@ -471,8 +472,8 @@ class MainWindow(QMainWindow):
         self._act(f, "Open a copy of the sample database", self.open_sample)
         f.addSeparator()
         self._act(f, "&Save", self.save, QKeySequence.Save)
-        self._act(f, "Save &as…", self.save_as, QKeySequence.SaveAs)
         f.addSeparator()
+        self._act(f, "&Full backup…", self.full_backup)
         ex = f.addMenu("&Export")
         self._act(ex, "&Filtered database (current tab) as CSV…", lambda: self.export_csv(filtered=True))
         self._act(ex, "&Entire database as CSV…", lambda: self.export_csv(filtered=False))
@@ -721,13 +722,135 @@ class MainWindow(QMainWindow):
             self.lemmas.selectRow(0)
         self._restore_view()
         self._update_title()
-        self._report_missing()
+        old_folder = layout.old_sound_folder(db)  # recordings not yet in Soundfiles/Tokens
+        if old_folder is None:
+            self._report_missing()
         if self.notebook_dialog is not None:
             self.notebook_dialog.reload()
         if db.load_notes:                         # e.g. an older file upgraded to the current format
             notes, db.load_notes = db.load_notes, []
             self.doc.settings_changed()           # unsaved, so saving writes the new format
             QMessageBox.information(self, "Database upgraded", "\n\n".join(notes))
+        self._check_layout(db, old_folder)
+
+    # ------------------------------------------------- the fixed folder layout
+    def _check_layout(self, db: Database, old_folder: Path | None):
+        """On opening: recordings still in an older sound folder, another database in the same
+        folder, consent forms moved into Documentation (relinked quietly), and the reminder to
+        make a full backup."""
+        if not db.path:
+            return
+        if old_folder is not None:
+            QMessageBox.warning(self, "Recordings", layout.old_folder_message(db, old_folder))
+        others = layout.other_databases(db.path)
+        if others:
+            QMessageBox.warning(
+                self, "Another database in this folder",
+                f"{', '.join(p.name for p in others[:5])} {'is' if len(others) == 1 else 'are'} in the same "
+                f"folder as {Path(db.path).name}. Each database needs a folder of its own, since the "
+                "recordings (Soundfiles), backups and documentation in it belong to one database.\n\n"
+                "Close Lemmatrix and move one of them, with its notebook, into a folder of its own "
+                "(its recordings too, if it has any).")
+        relinked = layout.relink_consent(db)
+        if relinked:
+            self.doc.settings_changed()
+            self.statusBar().showMessage(
+                f"Consent forms found in Documentation and relinked: {', '.join(relinked)}.", 10000)
+        self._remind_full_backup()
+
+    def _remind_full_backup(self):
+        """Once a week: a full backup is due (File → Full backup)."""
+        path = self.doc.db.path
+        if not path:
+            return
+        dates = self.prefs.full_backup_dates(path)
+        if not dates["first_seen"]:
+            self.prefs.set_full_backup_date(path, "first_seen", today())
+            return
+        if not layout.reminder_due(dates["last"], dates["snoozed"], dates["first_seen"]):
+            return
+        if self._ask_backup_reminder(dates["last"]):
+            self.full_backup()
+        else:
+            import datetime as _dt
+            later = (_dt.date.today() + _dt.timedelta(days=layout.REMIND_DAYS)).isoformat()
+            self.prefs.set_full_backup_date(path, "snoozed", later)
+
+    def _ask_backup_reminder(self, last: str) -> bool:
+        """True for Back up now; False for remind me again in 7 days."""
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Information)
+        box.setWindowTitle("Full backup")
+        box.setText(("The last full backup of this database was on " + last + "." if last else
+                     "This database hasn't had a full backup yet.") +
+                    " It's time to make one.")
+        box.setInformativeText("File → Full backup saves the database's whole folder (the database, "
+                               "notebook, recordings and documentation) as one zip file, to keep on "
+                               "another drive or in a cloud folder.")
+        now = box.addButton("Back up now", QMessageBox.AcceptRole)
+        box.addButton("Thanks, remind me again in 7 days", QMessageBox.RejectRole)
+        box.exec()
+        return box.clickedButton() is now
+
+    def full_backup(self) -> bool:
+        """File → Full backup: the database's whole folder as one dated zip, saved outside it."""
+        db = self.doc.db
+        if not db.path:
+            QMessageBox.information(self, "Full backup", "Save the database first.")
+            return False
+        if self.doc.dirty:
+            r = QMessageBox.question(self, "Full backup", "Save the database first, so the backup has "
+                                     "your latest changes?",
+                                     QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+            if r == QMessageBox.Cancel or (r == QMessageBox.Yes and not self.save()):
+                return False
+        main = layout.main_folder(db.path)
+        start = Path(self.prefs.full_backup_folder) if self.prefs.full_backup_folder else \
+            Path.home() / "Documents"
+        if layout.inside(start, main):
+            start = main.parent
+        path = self._full_backup_path(str(start / layout.full_backup_name(db.path)))
+        if not path:
+            return False
+        if layout.inside(Path(path), main):
+            QMessageBox.warning(self, "Full backup", "A full backup can't go inside the database's own "
+                                "folder (it would back itself up). Choose another drive or a cloud folder.")
+            return False
+        progress = QProgressDialog("Making the full backup…", "Cancel", 0, 100, self)
+        progress.setWindowTitle("Full backup")
+        progress.setMinimumDuration(400)
+        progress.setAutoClose(False)
+
+        def step(done, total, name):
+            progress.setMaximum(max(total, 1))
+            progress.setValue(done)
+            progress.setLabelText(f"Making the full backup…\n{name}" if name else "Finishing…")
+            QApplication.processEvents()
+            if progress.wasCanceled():
+                raise layout.Cancelled()
+        try:
+            n = layout.full_backup(db.path, path, step)
+        except layout.Cancelled:
+            progress.close()
+            self.statusBar().showMessage("Full backup cancelled; nothing was saved.", 6000)
+            return False
+        except (OSError, ValueError) as exc:
+            progress.close()
+            QMessageBox.warning(self, "Full backup", f"Couldn't make the full backup: {exc}")
+            return False
+        progress.close()
+        if not self.prefs.full_backup_folder:     # the first one: next time it starts there
+            self.prefs.full_backup_folder = str(Path(path).parent)
+        self.prefs.set_full_backup_date(db.path, "last", today())
+        self.prefs.set_full_backup_date(db.path, "snoozed", "")
+        self.statusBar().showMessage(f"Full backup made: {n} files in {QDir.toNativeSeparators(path)}.", 10000)
+        return True
+
+    def _full_backup_path(self, suggested: str) -> str:
+        path, _ = QFileDialog.getSaveFileName(self, "Full backup", suggested, "Zip file (*.zip)")
+        if path and not path.lower().endswith(".zip"):
+            path += ".zip"
+        return path
 
     def set_unusual_warning(self, on: bool):
         """The soft warning for tags that aren't usual for their lemma's word class (Settings →
@@ -945,7 +1068,7 @@ class MainWindow(QMainWindow):
         else:
             try:
                 self.doc.notebook.dirty = True
-                self.doc.save_notebook(self.prefs.backup_folder)
+                self.doc.save_notebook()
             except OSError as exc:
                 QMessageBox.warning(self, "Notebook", f"Couldn't save the notebook: {exc}")
                 return
@@ -2043,7 +2166,12 @@ class MainWindow(QMainWindow):
 
     def open_sound_folder(self):
         folder = storage.sound_folder(self.doc.db)
-        folder.mkdir(parents=True, exist_ok=True)
+        old = layout.old_sound_folder(self.doc.db)
+        if old is not None:                       # not moved into Soundfiles/Tokens yet
+            QMessageBox.information(self, "Sound folder", layout.old_folder_message(self.doc.db, old))
+            folder = old
+        else:
+            folder.mkdir(parents=True, exist_ok=True)
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
 
     def about(self):
@@ -2132,7 +2260,7 @@ class MainWindow(QMainWindow):
             header, rows = export.database_table(db)
             what = "entire database"
         stem = Path(db.path).stem if db.path else "Lemmatrix"
-        start = Path(db.path).parent if db.path else Path.home() / "Documents"
+        start = layout.existing_folder(layout.exports_folder(db.path)) if db.path else Path.home() / "Documents"
         path, _ = QFileDialog.getSaveFileName(self, "Export as CSV", str(start / f"{stem} - {what}.csv"),
                                               "CSV (comma-separated) (*.csv)")
         if not path:
@@ -2165,15 +2293,44 @@ class MainWindow(QMainWindow):
     def new_file(self):
         if not self._confirm_discard():
             return
-        path, _ = QFileDialog.getSaveFileName(self, "New database", str(Path.home() / "Documents"),
-                                              "Lemmatrix database (*.xml)")
+        path = self._new_database_path("New database")
         if not path:
             return
         db = new_database()
         db.path = path
+        layout.create_layout(path)
         self.load_database(db)
         self.edit_metadata()
         self.save()
+
+    def _new_database_path(self, title: str) -> str:
+        """Where a new database goes. A folder that already has a database gets a folder of its
+        own for the new one, named after it (each database has its own main folder)."""
+        path, _ = QFileDialog.getSaveFileName(self, title, str(Path.home() / "Documents"),
+                                              "Lemmatrix database (*.xml)")
+        if not path:
+            return ""
+        if not path.lower().endswith(".xml"):
+            path += ".xml"
+        p = Path(path)
+        others = [o for o in layout.other_databases(path)]
+        if p.exists() and layout.is_database(p):
+            others.append(p)
+        if others:
+            target = p.parent / p.stem / p.name
+            r = QMessageBox.question(
+                self, title, f"{p.parent.name} already has a database in it ({others[0].name}). Each "
+                "database needs a folder of its own, since its recordings, backups and documentation "
+                f"go in it.\n\nMake a folder called “{p.stem}” there for the new database?",
+                QMessageBox.Yes | QMessageBox.Cancel)
+            if r != QMessageBox.Yes:
+                return ""
+            if target.exists():
+                QMessageBox.warning(self, title, f"{target} already exists.")
+                return ""
+            target.parent.mkdir(parents=True, exist_ok=True)
+            path = str(target)
+        return path
 
     def open_file(self, path: str | None = None):
         if not self._confirm_discard():
@@ -2214,42 +2371,25 @@ class MainWindow(QMainWindow):
         self.open_file(str(dst))
 
     def save(self) -> bool:
-        if not self.doc.db.path:
-            return self.save_as()
+        if not self.doc.db.path:                  # a database never saved (there is no Save as)
+            path = self._new_database_path("Save database")
+            if not path:
+                return False
+            self.doc.db.path = path
+            layout.create_layout(path)
+            self._mark_open(path)
+            self._update_title()
         self._record_comments()
         try:
-            self.doc.save(backup_dir=self.prefs.backup_folder)
+            self.doc.save()
         except OSError as exc:
             QMessageBox.warning(self, "Save", f"Couldn't save: {exc}")
             return False
         self.prefs.last_file = self.doc.db.path
         self._fill_session()
-        where = QDir.toNativeSeparators(str(storage.backup_folder(self.doc.db.path, self.prefs.backup_folder)))
+        where = QDir.toNativeSeparators(str(storage.backup_folder(self.doc.db.path)))
         self.statusBar().showMessage(f"Saved. The previous version is in {where}.", 5000)
         return True
-
-    def save_as(self) -> bool:
-        path, _ = QFileDialog.getSaveFileName(self, "Save database as",
-                                              self.doc.db.path or str(Path.home() / "Documents"),
-                                              "Lemmatrix database (*.xml)")
-        if not path:
-            return False
-        old = self.doc.db.path
-        db = self.doc.db
-        moved = old and Path(path).resolve().parent != Path(old).resolve().parent
-        if moved and not Path(db.settings.sound_folder or ".").is_absolute() and \
-                any(t.file for e in db.entries for t in e.tokens):
-            QMessageBox.information(
-                self, "Save as", "Soundfiles will need to be moved and reassociated.\n\n"
-                f"The recordings stay in {QDir.toNativeSeparators(str(storage.sound_folder(db)))}. Move "
-                "that folder next to the new database (or set the sound folder in Edit → Settings), then "
-                "use Tools → Find missing or unlinked recordings for any that don't show up.")
-        self.doc.db.path = path
-        self._update_title()
-        if self.save():
-            self._mark_open(path)
-            return True
-        return False
 
     # ------------------------------------------- open on another computer
     def _open_elsewhere_ok(self, path: str) -> bool:

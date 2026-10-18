@@ -20,11 +20,13 @@ from .model import (Database, Entry, FieldDef, Group, ListItem, Location, Metada
                     RefCategory, Settings, Tag, TagStructure, Token, new_id, nfc, write_atomically,
                     xml_safe)
 
-FORMAT_VERSION = "3"
+FORMAT_VERSION = "4"
 # Format 1 (to 18 October 2026) tied tags to word classes: <word-class> sections of the tag
 # structure plus <all-classes>, and the Word Class list lived there. Format 2 has one free
 # hierarchy of groups with "usual for" hints; format 1 files are upgraded when opened.
-READABLE = ("1", "2", "3")
+# Format 3 put Frames in an Instances group. Format 4 (18 October 2026) has the fixed folder layout
+# (layout.py: no sound folder setting) and the Morphemes token field.
+READABLE = ("1", "2", "3", "4")
 BACKUPS_KEPT = 10
 
 
@@ -144,7 +146,7 @@ def _load_settings(el) -> Settings:
         s.ref_categories = [RefCategory(c.get("letter", ""), _text(c), c.get("numbering", "auto"))
                             for c in x.findall("category")]
     if (x := el.find("sounds")) is not None:
-        s.sound_folder = x.get("folder", s.sound_folder)
+        s.old_sound_folder = x.get("folder", "")        # format 3 and before; not written
         s.filename_pattern = x.get("pattern", s.filename_pattern)
         s.tag_separator = x.get("tag-separator", s.tag_separator)
         s.auto_update_names = _bool(x.get("auto-update-names"), True)
@@ -260,6 +262,8 @@ def load(path: str | os.PathLike) -> Database:
         _upgrade_from_1(db)
     if version in ("1", "2"):
         _upgrade_to_3(db)
+    if version in ("1", "2", "3"):
+        _upgrade_to_4(db)
     if repaired:
         db.load_notes = list(db.load_notes) + [REPAIRED_NOTE]
     return db
@@ -305,6 +309,28 @@ def _upgrade_to_3(db: Database):
         f"{EXAMPLES} (X1, X2…), for telling apart tokens of a lemma that have the same tags: when two "
         "recordings would share a name, Lemmatrix offers a free Example tag. The file is saved in the "
         "new format (a backup of the old one is kept)."]
+
+
+def _upgrade_to_4(db: Database):
+    """Format 3 → 4: the fixed folder layout (recordings always in Soundfiles/Tokens) and the
+    Morphemes token field, under Phonemic. Empty fields aren't written, so no token changes."""
+    from .model import FieldDef
+    s = db.settings
+    notes = []
+    if s.token_field("morphemes") is None and s.token_field("Morphemes") is None:
+        after = next((i for i, f in enumerate(s.token_fields) if f.role == "phonemic"), None)
+        if after is None:
+            after = next((i for i, f in enumerate(s.token_fields) if f.role == "phonetic"), -1)
+        s.token_fields.insert(after + 1, FieldDef("Morphemes", role="morphemes"))
+        notes.append("There is a new token field, Morphemes, under Phonemic, for the morpheme glosses. "
+                     "It is empty until you fill it in (Edit → Fields renames, moves or deletes it).")
+    elif (f := s.token_field("Morphemes")) is not None and not f.role:
+        f.role = "morphemes"
+    notes.append("Lemmatrix now uses a fixed folder layout next to the database: the recordings are "
+                 "always in Soundfiles\\Tokens, the automatic backups in Backups, consent forms and "
+                 "other documentation in Documentation, and exports start in Exports. Settings → Sound "
+                 "no longer has a sound folder.")
+    db.load_notes = list(db.load_notes) + notes
 
 
 def _upgrade_from_1(db: Database):
@@ -500,7 +526,7 @@ def to_element(db: Database) -> ET.Element:
         if c.numbering != "auto":
             cel.set("numbering", c.numbering)
         cel.text = c.name
-    ET.SubElement(st, "sounds", {"folder": s.sound_folder, "pattern": s.filename_pattern,
+    ET.SubElement(st, "sounds", {"pattern": s.filename_pattern,
                                  "tag-separator": s.tag_separator,
                                  "auto-update-names": _yes(s.auto_update_names)})
     ET.SubElement(st, "pitch", {"display-range": f"{s.pitch_low}-{s.pitch_high}",
@@ -553,18 +579,18 @@ def to_string(db: Database) -> str:
     return xml_safe(text)                 # a pasted control character would make the file unreadable
 
 
-def backup_folder(path: str | os.PathLike, chosen: str | os.PathLike | None = None) -> Path:
-    """Where backups of a database go: the chosen folder, or "Backups" next to it."""
-    return Path(chosen) if chosen else Path(path).parent / "Backups"
+def backup_folder(path: str | os.PathLike) -> Path:
+    """Where the automatic backups of a database go: always "Backups" in its main folder."""
+    from . import layout
+    return layout.backups_folder(path)
 
 
-def make_backup(path: str | os.PathLike, keep: int = BACKUPS_KEPT,
-                folder: str | os.PathLike | None = None) -> Path | None:
-    """Copy the current file into the backup folder and prune old copies."""
+def make_backup(path: str | os.PathLike, keep: int = BACKUPS_KEPT) -> Path | None:
+    """Copy the current file into the Backups folder and prune old copies."""
     p = Path(path)
     if not p.exists():
         return None
-    folder = backup_folder(p, folder)
+    folder = backup_folder(p)
     folder.mkdir(parents=True, exist_ok=True)
     stamp = _dt.datetime.now().strftime("%Y-%m-%d_%H%M%S")
     target = folder / f"{p.stem}_{stamp}{p.suffix}"
@@ -617,17 +643,16 @@ def backups_to_keep(files, recent: int = BACKUPS_KEPT, today: _dt.date | None = 
     return keep
 
 
-def save(db: Database, path: str | os.PathLike | None = None, backup: bool = True,
-         backup_dir: str | os.PathLike | None = None) -> None:
+def save(db: Database, path: str | os.PathLike | None = None, backup: bool = True) -> None:
     """Write the database (atomically). The previous version goes to the Backups folder
-    next to it, or to backup_dir if given."""
+    next to it."""
     path = str(path or db.path)
     if not path:
         raise ValueError("No file name given")
     text = to_string(db)
     tmp = write_atomically(path, text)
     if backup:
-        make_backup(path, folder=backup_dir)
+        make_backup(path)
     os.replace(tmp, path)
     db.path = path
 
@@ -683,15 +708,18 @@ HELD = "_Deleted recordings"
 
 
 def held_folder(db: Database) -> Path:
-    """Where a deleted token's recording waits, inside the sound folder, so undo can bring it back.
-    It goes to the Recycle Bin when the database is closed."""
-    return sound_folder(db) / HELD
+    """Where a deleted token's recording waits (Soundfiles/_Deleted recordings), so undo can bring
+    it back. It goes to the Recycle Bin when the database is closed."""
+    from . import layout
+    return layout.held_folder(db.path)
+
+
+def held_folders(db: Database) -> list[Path]:
+    """The held folder, and where it was before the fixed layout (inside the sound folder)."""
+    return [held_folder(db), sound_folder(db) / HELD]
 
 
 def sound_folder(db: Database) -> Path:
-    """Absolute folder for recordings: relative paths are relative to the database file."""
-    folder = Path(db.settings.sound_folder or ".")
-    if not folder.is_absolute():
-        base = Path(db.path).parent if db.path else Path.cwd()
-        folder = base / folder
-    return folder
+    """The lemma tokens' recordings: always Soundfiles/Tokens next to the database."""
+    from . import layout
+    return layout.tokens_folder(db.path)

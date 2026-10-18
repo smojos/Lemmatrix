@@ -253,31 +253,32 @@ class Document(QObject):
         deletion wasn't saved, e.g. after a crash)."""
         if not self.db.path:
             return
-        folder, held = storage.sound_folder(self.db), storage.held_folder(self.db)
-        if not held.is_dir():
-            return
+        folder = storage.sound_folder(self.db)
         used = {t.file for e in self.db.entries for t in e.tokens if t.file}
-        for f in held.iterdir():
-            if f.is_file() and f.name in used and not (folder / f.name).exists():
-                try:
-                    f.rename(folder / f.name)
-                except OSError:
-                    pass
+        for held in storage.held_folders(self.db):
+            if not held.is_dir() or not folder.is_dir():
+                continue
+            for f in held.iterdir():
+                if f.is_file() and f.name in used and not (folder / f.name).exists():
+                    try:
+                        f.rename(folder / f.name)
+                    except OSError:
+                        pass
 
     def empty_held(self):
         """On closing the database: the deleted tokens' recordings go to the Recycle Bin."""
         if not self.db.path:
             return
-        held = storage.held_folder(self.db)
-        if not held.is_dir():
-            return
-        for f in held.iterdir():
-            if f.is_file():
-                QFile.moveToTrash(str(f))
-        try:
-            held.rmdir()                          # only if it's empty now
-        except OSError:
-            pass
+        for held in storage.held_folders(self.db):
+            if not held.is_dir():
+                continue
+            for f in held.iterdir():
+                if f.is_file():
+                    QFile.moveToTrash(str(f))
+            try:
+                held.rmdir()                      # only if it's empty now
+            except OSError:
+                pass
 
     def add_entry(self, entry: Entry, index: int | None = None):
         idx = len(self.db.entries) if index is None else index
@@ -301,12 +302,12 @@ class Document(QObject):
         self.changed.emit()
 
     # ---- saving --------------------------------------------------------
-    def save(self, path: str | None = None, backup_dir: str | None = None):
-        storage.save(self.db, path, backup_dir=backup_dir or None)
+    def save(self, path: str | None = None):
+        storage.save(self.db, path)
         self.renamed.clear()                    # the saved database now has the new names
         self._settings_dirty = False
         self.undo.setClean()
-        self.save_notebook(backup_dir)
+        self.save_notebook()
         self.dirtyChanged.emit(False)
 
     # ---- the notebook --------------------------------------------------
@@ -325,7 +326,7 @@ class Document(QObject):
         self.notebook_unreadable = False
         return ""
 
-    def save_notebook(self, backup_dir: str | None = None):
+    def save_notebook(self):
         """Write the notebook next to the database, if it has anything in it."""
         nb = self.notebook
         if not self.db.path or self.notebook_unreadable:
@@ -335,5 +336,5 @@ class Document(QObject):
             nb.dirty = False
             return
         if nb.dirty or Path(nb.path or "") != path or not path.exists():
-            storage.make_backup(path, folder=backup_dir or None)
+            storage.make_backup(path)
             nbmod.save(nb, path, Path(self.db.path).name)

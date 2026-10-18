@@ -129,12 +129,22 @@ class Prefs:
     def accent(self, v): self.q.setValue("display/accent", v)
 
     @property
-    def backup_folder(self) -> str:
-        """"" = a Backups folder next to each database."""
-        return self._get("safety/backup_folder", "")
+    def full_backup_folder(self) -> str:
+        """Where File → Full backup offers to save ("" = Documents). Local backups always go in
+        the database's own Backups folder; a backup folder chosen before that is the default."""
+        return self._get("safety/full_backup_folder", self._get("safety/backup_folder", ""))
 
-    @backup_folder.setter
-    def backup_folder(self, v): self.q.setValue("safety/backup_folder", v)
+    @full_backup_folder.setter
+    def full_backup_folder(self, v): self.q.setValue("safety/full_backup_folder", v)
+
+    def full_backup_dates(self, path: str) -> dict:
+        """For one database: last (the last full backup), snoozed (no reminder before), first_seen."""
+        key = self._view_key(path).replace("views/", "fullbackup/")
+        return {k: self._get(f"{key}/{k}", "") for k in ("last", "snoozed", "first_seen")}
+
+    def set_full_backup_date(self, path: str, which: str, day: str):
+        key = self._view_key(path).replace("views/", "fullbackup/")
+        self.q.setValue(f"{key}/{which}", day)
 
     @property
     def pitch_volume(self) -> int:

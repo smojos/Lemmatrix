@@ -311,14 +311,6 @@ class PreferencesDialog(QDialog):
                                 "is left out.")
         self.separator = QLineEdit(s.tag_separator)
         self.separator.setMaxLength(3)
-        from .. import storage
-        self._folder_shown = (QDir.toNativeSeparators(str(storage.sound_folder(db))) if db.path
-                              else s.sound_folder)
-        self.folder = PathEdit(self._folder_shown, folder=True, title="Sound folder")
-        self.folder.setToolTip("Where the recordings are. A folder inside the database's folder is "
-                               "stored relative to it, so the two can be moved together."
-                               + ("" if db.path else "\nThis database isn't saved yet, so the folder "
-                                  "will be next to wherever you save it."))
         self.praat = PathEdit(prefs.praat_path, folder=False, title="Where is Praat?")
         self.praat.setToolTip("The Praat program, used by Open in Praat (Praat.exe on Windows)")
         self.praat.edit.setPlaceholderText("not found: click Browse to show where Praat is")
@@ -397,10 +389,12 @@ class PreferencesDialog(QDialog):
         vl.addWidget(self.volume)
         vl.addWidget(vol_label)
         vl.addStretch(1)
-        self.backups = PathEdit(prefs.backup_folder, folder=True, title="Folder for backups")
-        self.backups.edit.setPlaceholderText("a Backups folder next to each database")
-        self.backups.setToolTip("Where the previous version goes each time you save (the last 10 "
-                                "are kept). Leave empty for a Backups folder next to the database.")
+        self.backups = PathEdit(prefs.full_backup_folder, folder=True, title="Folder for full backups")
+        self.backups.edit.setPlaceholderText("Documents")
+        self.backups.setToolTip("Where File → Full backup offers to save the zip of the database's "
+                                "whole folder: a cloud folder or another drive, say (never inside the "
+                                "database's own folder).\nThe automatic backups made on each save always "
+                                "go in the Backups folder next to the database.")
         voice_row = QWidget()
         vr = QHBoxLayout(voice_row)
         vr.setContentsMargins(0, 0, 0, 0)
@@ -424,11 +418,11 @@ class PreferencesDialog(QDialog):
             tabs.addTab(w, title)
 
         page("General", [("This computer", [("Autosave every", self.autosave),
-                                            ("Backup folder", self.backups)]),
+                                            ("Full backup folder", self.backups)]),
                          ("Warnings (this computer)", [(None, self.unusual), (None, self.spelling), (None, self.confirm)])])
         page("Sound", [
             ("This database", [("File name pattern", self.pattern), ("Tag separator", self.separator),
-                               ("Sound folder", self.folder), (None, self.auto_names)]),
+                               (None, self.auto_names)]),
             ("This computer", [("Recording source", self.source), ("Bit depth", self.bits),
                                ("Sample rate", self.rate), (None, self.with_tokens),
                                ("Path to Praat", self.praat)])])
@@ -439,22 +433,6 @@ class PreferencesDialog(QDialog):
                        ("This computer", [("Pitch playback", voice_row),
                                           ("Playback volume", volume_row)])])
         lay.addWidget(_buttons(self))
-
-    def _stored_folder(self) -> str:
-        """What goes in the database: unchanged, relative to the database folder, or a full path."""
-        text = self.folder.text().strip()
-        if not text:
-            return "Soundfiles"
-        if text == self._folder_shown:
-            return self.db.settings.sound_folder
-        p = Path(QDir.fromNativeSeparators(text))
-        if self.db.path and p.is_absolute():
-            base = Path(self.db.path).resolve().parent
-            try:
-                return p.resolve().relative_to(base).as_posix() or "."
-            except ValueError:
-                return str(p)
-        return text
 
     def _listen(self):
         from .. import audio, pitchsound
@@ -489,7 +467,6 @@ class PreferencesDialog(QDialog):
         old = (s.filename_pattern, s.tag_separator)
         s.filename_pattern = self.pattern.text().strip()
         s.tag_separator = self.separator.text()
-        s.sound_folder = self._stored_folder()
         s.auto_update_names = self.auto_names.isChecked()
         s.pitch_low, s.pitch_high = self.low.value(), self.high.value()
         p = self.prefs
@@ -507,7 +484,7 @@ class PreferencesDialog(QDialog):
         p.praat_path = self.praat.text().strip()
         p.pitch_voice = self.voice.currentData()
         p.pitch_volume = self.volume.value()
-        p.backup_folder = self.backups.text().strip()
+        p.full_backup_folder = self.backups.text().strip()
         return old != (s.filename_pattern, s.tag_separator)
 
 

@@ -38,8 +38,22 @@ If something goes wrong, a message box shows the details, and they're also writt
 
 ## What works in this version
 
-- **Database files:** open, save, save as, new database; backups of the previous version
-  in a `Backups` folder beside the database (10 kept); optional autosave.
+- **Database files:** open, save, new database; backups of the previous version in a
+  `Backups` folder beside the database (10 recent, and older ones spread out in time); autosave.
+- **Folder layout:** each database has a main folder of its own, laid out like this:
+
+  ```
+  Main folder/
+  ├─ <database>.xml and <database>.notebook
+  ├─ Soundfiles/Tokens/       the tokens' recordings
+  ├─ Backups/                 the automatic backups
+  ├─ Documentation/           consent forms and other documentation
+  └─ Exports/                 where File → Export starts
+  ```
+
+  Consent forms moved into Documentation are found by name and relinked. **File → Full
+  backup** saves the whole main folder as one dated zip (e.g. to a cloud folder or another
+  drive, set in Settings → General); a reminder comes once the last one is a week old.
 - **Lemma list:** a filter menu on every column (Show all, Blanks, Non-blanks, Filter for… on
   open fields, Choose… on closed fields), Configure columns, quick search, add / edit /
   delete lemmas, references suggested from the category.
@@ -73,8 +87,8 @@ If something goes wrong, a message box shows the details, and they're also writt
 - **Edit menu:** metadata (language, variety, author), Fields (lemma and token fields, open or
   closed, with an XML preview), Lists (researchers, participants with their consent files,
   locations, the closed fields' lists, and the tag structure, where duplicate names and codes
-  show in red), and Settings: General (autosave),
-  Sound (file-name pattern, sound folder, recording, deleting recordings with their tokens,
+  show in red), and Settings: General (autosave, the full backup folder, warnings),
+  Sound (file-name pattern, recording, deleting recordings with their tokens,
   path to Praat), Display (light or dark theme, accent colour for highlights, chips and pitch
   traces, IPA font size), Pitch (display range, playback voice).
 - **Bulk edit** (Edit → Bulk edit…, Ctrl+E): a window of its own with a Lemmas tab and a
@@ -121,6 +135,7 @@ lemmatrix/            the program
   predict.py          predicted translations: templates learned from the translations
   spelling.py         English spelling: the word lists, corrections, the database's own words
   storage.py          reading and writing the XML file, backups
+  layout.py           the main folder's fixed layout, consent relinking, full backups
   notebook.py         the notebook: sessions, the record of comments, the .notebook file
   filenames.py        building sound file names from the pattern
   matrix.py           laying out tokens for the paradigm views

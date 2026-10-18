@@ -18,7 +18,7 @@ import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import notebook as nbmod, storage
+from . import layout, notebook as nbmod, storage
 from .model import Database, Location
 
 ANON = " (anonymous)"
@@ -162,10 +162,7 @@ def _consent_files(db: Database) -> list[tuple[str, Path]]:
     for p in db.metadata.participants:
         if not p.consent:
             continue
-        path = Path(p.consent)
-        if not path.is_absolute() and db.path:
-            path = Path(db.path).parent / path
-        out.append((p.code, path))
+        out.append((p.code, layout.consent_full_path(db, p.consent)))
     return out
 
 
@@ -180,10 +177,7 @@ def export(db: Database, nb: nbmod.Notebook | None, folder: str | Path, opts: Op
 
     if opts.recordings:
         src_folder = storage.sound_folder(db)
-        rel = Path(db.settings.sound_folder or ".")
-        dst_folder = folder / (rel if not rel.is_absolute() else Path("Soundfiles"))
-        if rel.is_absolute():
-            out.settings.sound_folder = "Soundfiles"
+        dst_folder = folder / layout.SOUNDFILES / layout.TOKENS     # the fixed layout there too
         dst_folder.mkdir(parents=True, exist_ok=True)
         for name in sorted({t.file for e in db.entries for t in e.tokens if t.file}):
             src = src_folder / name

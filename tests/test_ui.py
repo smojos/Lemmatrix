@@ -478,15 +478,17 @@ def test_token_menus_and_clear_matrix_button(win):
     assert texts[-2:] == ["Configure matrix", "Clear matrix"]
 
 
-def test_sound_folder_setting_shows_full_path_and_stores_relative(win, tmp_path):
+def test_settings_have_no_sound_folder_and_a_full_backup_folder(win, tmp_path):
     from lemmatrix.ui.dialogs import PreferencesDialog
     dlg = PreferencesDialog(win, win.doc.db, win.prefs)
-    assert dlg.folder.text().endswith("Soundfiles") and len(dlg.folder.text()) > len("Soundfiles")
-    assert dlg._stored_folder() == "Soundfiles"            # unchanged stays as it was
-    dlg.folder.edit.setText(str(Path(win.doc.db.path).parent / "Recordings" / "2026"))
-    assert dlg._stored_folder() == "Recordings/2026"
-    dlg.folder.edit.setText(str(tmp_path.parent / "elsewhere"))
-    assert dlg._stored_folder() == str(tmp_path.parent / "elsewhere")
+    assert not hasattr(dlg, "folder")
+    dlg.backups.edit.setText(str(tmp_path / "Cloud"))
+    old = win.prefs.full_backup_folder
+    try:
+        dlg.apply()
+        assert win.prefs.full_backup_folder == str(tmp_path / "Cloud")
+    finally:
+        win.prefs.full_backup_folder = old
 
 
 def test_export_csv(win, tmp_path, monkeypatch):
@@ -728,14 +730,10 @@ def test_only_lemmas_with_data_and_backup_folder(win, tmp_path):
     win.only_data.setChecked(False)
     win.tabs.setCurrentIndex(mw.ALL_DATA)
     assert any(r.entry.ref == "D099" for r in win.all_table.model_.rows)
-    # backups go to the chosen folder
-    win.prefs.backup_folder = str(tmp_path / "MyBackups")
-    try:
-        win.save()
-        win.save()
-        assert list((tmp_path / "MyBackups").glob("Sample_*.xml"))
-    finally:
-        win.prefs.backup_folder = ""
+    # backups always go in Backups next to the database
+    win.save()
+    win.save()
+    assert list((tmp_path / "Backups").glob("Sample_*.xml"))
 
 
 def test_pitch_length_mark_and_compact_drawing(win):
@@ -1561,7 +1559,7 @@ def test_same_recording_name_offers_an_example_tag_and_never_overwrites(win, mon
 def test_older_databases_get_instances_with_frames_codes_kept(tmp_path):
     from lemmatrix import storage
     src = open(SAMPLES / "Sample.xml", encoding="utf-8").read()
-    old = src.replace('format="3"', 'format="2"')
+    old = src.replace('format="4"', 'format="2"')
     (tmp_path / "old.xml").write_text(old, encoding="utf-8")
     db = storage.load(tmp_path / "old.xml")
     names = [g.name for g in db.settings.tags.groups]
@@ -1637,3 +1635,85 @@ def test_undoing_a_token_deletion_brings_its_recording_back(win, monkeypatch):
     monkeypatch.setattr("lemmatrix.ui.document.QFile.moveToTrash", lambda p: trashed.append(p) or True)
     win.doc.empty_held()
     assert trashed and trashed[0].endswith(name)
+
+
+# ---- the fixed folder layout, full backup (idea 7, stage 1) ------------------------------
+
+def test_file_menu_has_full_backup_and_no_save_as(win):
+    f = win.menuBar().actions()[0].menu()
+    texts = [a.text().replace("&", "") for a in f.actions()]
+    assert "Full backup…" in texts and not any(t.startswith("Save as") for t in texts)
+    assert not hasattr(win, "save_as")
+
+
+def test_full_backup_from_the_window(win, tmp_path, monkeypatch):
+    import zipfile
+    from lemmatrix import layout
+    target = tmp_path.parent / f"{tmp_path.name}-cloud" / "backup.zip"
+    target.parent.mkdir(exist_ok=True)
+    monkeypatch.setattr(win, "_full_backup_path", lambda suggested: str(target))
+    old = win.prefs.full_backup_folder
+    try:
+        win.prefs.full_backup_folder = ""
+        assert win.full_backup()
+        with zipfile.ZipFile(target) as zf:
+            assert f"{tmp_path.name}/Sample.xml" in zf.namelist()
+        from lemmatrix.model import today
+        assert win.prefs.full_backup_dates(win.doc.db.path)["last"] == today()
+        # inside the database's own folder: refused
+        monkeypatch.setattr(win, "_full_backup_path", lambda suggested: str(tmp_path / "Exports" / "x.zip"))
+        assert not win.full_backup()
+        assert not (tmp_path / "Exports" / "x.zip").exists()
+    finally:
+        win.prefs.full_backup_folder = old
+        shutil.rmtree(target.parent, ignore_errors=True)
+
+
+def test_full_backup_reminder_after_a_week(win, monkeypatch):
+    import datetime as dt
+    path = win.doc.db.path
+    asked = []
+    monkeypatch.setattr(win, "_ask_backup_reminder", lambda last: asked.append(last) or False)
+    win._remind_full_backup()                             # first seen when the window opened it
+    assert asked == []
+    week_ago = (dt.date.today() - dt.timedelta(days=8)).isoformat()
+    win.prefs.set_full_backup_date(path, "first_seen", week_ago)
+    win._remind_full_backup()
+    assert asked == [""]                                  # never backed up: reminded
+    snoozed = win.prefs.full_backup_dates(path)["snoozed"]
+    assert snoozed == (dt.date.today() + dt.timedelta(days=7)).isoformat()
+    win._remind_full_backup()
+    assert len(asked) == 1                                # remind me again in 7 days
+
+
+def test_opening_a_database_with_its_recordings_in_lexicon(win, tmp_path, monkeypatch):
+    from lemmatrix import layout
+    main = tmp_path / "Old"
+    (main / "Soundfiles").mkdir(parents=True)
+    shutil.move(str(tmp_path / "Soundfiles" / "Tokens"), str(main / "Soundfiles" / "Lexicon"))
+    shutil.copy2(tmp_path / "Sample.xml", main / "Sample.xml")
+    warned = []
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: warned.append(a[2]))
+    win.load_database(storage.load(main / "Sample.xml"))
+    assert warned and "Lexicon" in warned[0] and "Tokens" in warned[0]
+    assert "aren't linked" not in win.statusBar().currentMessage()
+
+
+def test_consent_relinked_on_opening(win, tmp_path):
+    db = storage.load(tmp_path / "Sample.xml")
+    from lemmatrix.model import Person
+    db.metadata.participants.append(Person("ZZZ", consent="ZZZ consent.pdf"))
+    storage.save(db, backup=False)
+    (tmp_path / "Documentation").mkdir()
+    (tmp_path / "Documentation" / "ZZZ consent.pdf").write_text("x")
+    win.load_database(storage.load(tmp_path / "Sample.xml"))
+    assert Path(win.doc.db.metadata.participant("ZZZ").consent) == Path("Documentation") / "ZZZ consent.pdf"
+    assert win.doc.dirty                                  # saving keeps the new link
+
+
+def test_a_new_database_in_a_folder_that_has_one_gets_its_own(win, tmp_path, monkeypatch):
+    from PySide6.QtWidgets import QFileDialog
+    monkeypatch.setattr(QFileDialog, "getSaveFileName",
+                        lambda *a, **k: (str(tmp_path / "Second.xml"), ""))
+    path = win._new_database_path("New database")
+    assert Path(path) == tmp_path / "Second" / "Second.xml"

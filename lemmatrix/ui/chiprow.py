@@ -23,13 +23,9 @@ TITLES = {RESEARCHERS: "Researchers", PARTICIPANTS: "Participants", LOCATIONS: "
 
 
 def consent_path(db: Database, consent: str) -> Path | None:
-    """The consent file as a full path (a relative one is relative to the database)."""
-    if not consent:
-        return None
-    p = Path(consent)
-    if not p.is_absolute() and db.path:
-        p = Path(db.path).parent / p
-    return p
+    """The consent file as a full path (a relative one is relative to the database's folder)."""
+    from .. import layout
+    return layout.consent_full_path(db, consent)
 
 
 def open_consent(parent, db: Database, code: str):

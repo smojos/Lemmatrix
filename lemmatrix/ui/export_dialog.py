@@ -51,7 +51,9 @@ class AnonymousExportDialog(QDialog):
             self.consent.model().item(1).setEnabled(False)
             self.consent.setToolTip("Needs the pyzipper package (installed with the next start of Lemmatrix)")
         stem = Path(db.path).stem if db.path else "Database"
-        start = Path.home() / "Documents" / f"{stem} anonymous {QDate.currentDate().toString('yyyy-MM-dd')}"
+        from .. import layout                  # exports start in the database's Exports folder
+        base = layout.exports_folder(main.doc.db.path) if main.doc.db.path else Path.home() / "Documents"
+        start = base / f"{stem} anonymous {QDate.currentDate().toString('yyyy-MM-dd')}"
         self.folder = PathEdit(QDir.toNativeSeparators(str(start)), True, "Export to folder")
         form.addRow("People", self.researchers)
         form.addRow("Notebook", self.notebook)

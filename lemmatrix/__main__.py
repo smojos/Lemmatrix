@@ -24,8 +24,9 @@ def _install_error_handler():
         try:
             from PySide6.QtWidgets import QMessageBox
             box = QMessageBox(QMessageBox.Critical, "Lemmatrix: something went wrong",
-                              "Something unexpected happened. If Lemmatrix still responds, use "
-                              "File → Save as to keep your recent changes under a new name. Then "
+                              "Something unexpected happened. If Lemmatrix still responds, save "
+                              "(Ctrl+S): the previous version stays in the Backups folder, in case "
+                              "the save isn't right. Then "
                               f"send Claude the details below (also kept in {log.name}).")
             box.setDetailedText(text)
             box.exec()

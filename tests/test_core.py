@@ -549,7 +549,7 @@ def test_anonymous_backup(tmp_path):
     assert [x.code for x in out.metadata.locations[0].children] == ["MBN"] and not out.metadata.locations[0].children[0].children
     back = nb.load(tmp_path / "out" / "S (anonymous).notebook").session("2026-10-01")
     assert back.notes == "Paid SP1 for five sessions." and back.locations == ["MBN"]
-    assert rep.recordings > 0 and (tmp_path / "out" / "Soundfiles").is_dir()
+    assert rep.recordings > 0 and (tmp_path / "out" / "Soundfiles" / "Tokens").is_dir()
     with pyzipper.AESZipFile(tmp_path / "out" / "S consent forms (password).zip") as zf:
         zf.setpassword(b"pw")
         assert zf.read("SP1/SP1.pdf") == b"%PDF consent"

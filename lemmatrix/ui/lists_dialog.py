@@ -154,8 +154,10 @@ class PeopleEditor(QWidget):
             QMessageBox.information(self, "Consent", "Select a participant first.")
             return
         current = consent_path(self.db, self._text(r, 3))
+        from .. import layout                  # consent forms belong in Documentation
         start = str(current) if current and current.exists() else (
-            str(Path(self.db.path).parent) if self.db.path else str(Path.home()))
+            str(layout.existing_folder(layout.documentation_folder(self.db.path))) if self.db.path
+            else str(Path.home()))
         path, _ = QFileDialog.getOpenFileName(self, f"Consent documentation for {self._text(r, 0)}", start)
         if not path:
             return

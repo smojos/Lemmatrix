@@ -347,7 +347,7 @@ class Settings:
     ref_scheme: str = "categories"
     ref_digits: int = 3
     ref_categories: list[RefCategory] = field(default_factory=list)
-    sound_folder: str = "Soundfiles"
+    old_sound_folder: str = ""   # format 3 and before: the settable sound folder (read, never written)
     filename_pattern: str = "{language}-{variety}_{reference}_{gloss}_{tags}"
     tag_separator: str = "-"
     auto_update_names: bool = True
