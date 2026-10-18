@@ -231,6 +231,7 @@ class TokenDialog(QDialog):
         self.date.setValidator(QRegularExpressionValidator(
             QRegularExpression(r"(\d{4}-\d{2}-\d{2})?"), self.date))
         self.date.textChanged.connect(self._fields_changed)
+        self.date.installEventFilter(self)        # Ctrl+Space plays here too
         self.date.setFixedWidth(130)
         rl.addWidget(self.date, 4, 4)
 
@@ -426,10 +427,14 @@ class TokenDialog(QDialog):
         self.translation.setCursorPosition(len(text))
         return True
 
+    def key_fields(self) -> list:
+        """The fields where Ctrl+Space plays (and Ctrl+Shift+Space the pitch) instead of typing."""
+        return [*self.edits.values(), self.date]
+
     def eventFilter(self, obj, event):
         # Ctrl+Space plays (Ctrl+Shift+Space: the pitch) even with the cursor in a field: on some
         # computers (keyboard layouts and IPA keyboards) the field would take it and type a space.
-        if (event.type() in (QEvent.ShortcutOverride, QEvent.KeyPress) and obj in self.edits.values()
+        if (event.type() in (QEvent.ShortcutOverride, QEvent.KeyPress) and obj in self.key_fields()
                 and event.key() == Qt.Key_Space
                 and event.modifiers() & Qt.ControlModifier
                 and not event.modifiers() & (Qt.AltModifier | Qt.MetaModifier)):

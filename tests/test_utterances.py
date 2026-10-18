@@ -328,3 +328,26 @@ def test_ctrl_shift_space_plays_an_utterances_pitch(win, tmp_path, monkeypatch):
     keys = {sc.key().toString(): sc for sc in uw.findChildren(QShortcut)}
     keys[QKeySequence("Ctrl+Shift+Space").toString()].activated.emit()
     assert played == ["11 4:42"]
+
+
+def test_ctrl_space_in_any_utterance_field_plays(win, tmp_path, monkeypatch):
+    from PySide6.QtCore import QEvent, Qt
+    from PySide6.QtGui import QKeyEvent
+    from PySide6.QtWidgets import QApplication
+    from lemmatrix.ui.token_dialog import Slot
+    from lemmatrix.ui.utterances import UtteranceDialog
+    uw = win.open_utterances()
+    uw.import_files([str(_wav(tmp_path / "beat.wav"))])
+    dlg = UtteranceDialog(win, [Slot(win.doc.db.utterances[0], 0)], 0, uw)
+    played = []
+    monkeypatch.setattr(dlg, "_play", lambda: played.append("sound"))
+    monkeypatch.setattr(dlg, "_play_pitch", lambda: played.append("pitch"))
+    fields = [dlg.label_edit, dlg.lemma_find, dlg.date, *dlg.edits.values()]
+    for ed in fields:
+        before = ed.text()
+        QApplication.sendEvent(ed, QKeyEvent(QEvent.KeyPress, Qt.Key_Space, Qt.ControlModifier, " "))
+        assert ed.text() == before, ed
+    QApplication.sendEvent(dlg.label_edit, QKeyEvent(QEvent.KeyPress, Qt.Key_Space,
+                                                     Qt.ControlModifier | Qt.ShiftModifier, " "))
+    assert played == ["sound"] * len(fields) + ["pitch"]
+    dlg.reject()

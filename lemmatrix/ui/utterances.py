@@ -684,6 +684,8 @@ class UtteranceDialog(TokenDialog):
         self.lemma_find.returnPressed.connect(lambda: self._lemma_chosen(self.lemma_find.text()))
         bl.addWidget(self.lemma_find)
         outer.insertWidget(2, box)
+        for ed in (self.label_edit, self.lemma_find):     # Ctrl+Space plays, never types a space
+            ed.installEventFilter(self)
         self.show_all_btn.setToolTip("Shown first: the tag groups for utterances only, the groups with "
                                      "no “usual for” hint, and any group the utterance has a tag in")
 
@@ -694,6 +696,9 @@ class UtteranceDialog(TokenDialog):
             text = " ".join(x for x in (e.ref, db.lemma(e), f"“{db.gloss(e)}”" if db.gloss(e) else "") if x)
             self._choices[text] = e.id
         self.completer.model().setStringList(list(self._choices))
+
+    def key_fields(self) -> list:
+        return [*super().key_fields(), self.label_edit, self.lemma_find]
 
     # ---- what differs from a token ------------------------------------------
     def _new_token(self, sl: Slot) -> Token:
