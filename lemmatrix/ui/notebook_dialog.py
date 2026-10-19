@@ -423,7 +423,8 @@ class NotebookDialog(QDialog):
             it = QTreeWidgetItem([c.text, c.about or c.ref])
             it.setData(0, Qt.UserRole, c)
             it.setToolTip(0, c.text)
-            if nbmod.find(self.db, c) is None:
+            gone = (self.db.text_by_id(c.entry_id) is None) if c.is_line else nbmod.find(self.db, c) is None
+            if gone:
                 it.setForeground(1, QBrush(bad))
                 it.setText(1, f"{c.about or c.ref}  ({nbmod.missing_text(c).lower()})")
                 it.setToolTip(1, nbmod.missing_text(c))
@@ -628,7 +629,15 @@ class NotebookDialog(QDialog):
 
     def _follow(self, item):
         data = item.data(0, Qt.UserRole)
-        if isinstance(data, nbmod.NoteComment):
+        if isinstance(data, nbmod.NoteComment) and data.is_line:     # a text's line: shown in its text
+            text = self.db.text_by_id(data.entry_id)
+            if text is None:
+                QMessageBox.information(self, "Notebook", nbmod.missing_text(data) + ".")
+                return
+            w = self.main.open_utterances()
+            w.select_text(text)
+            w.texts.select_line_at(data.line_start)
+        elif isinstance(data, nbmod.NoteComment):
             where = nbmod.find(self.db, data)
             if where is None:
                 QMessageBox.information(self, "Notebook", nbmod.missing_text(data) + ".")

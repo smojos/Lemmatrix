@@ -317,7 +317,7 @@ class TextsUtterancesWindow(QDialog):
     def recheck(self) -> bool:
         """Check the clipped utterances against their TextGrids again; True if anything changed."""
         before = {k: (c.status, c.moved, c.edited) for k, c in self.checks.items()}
-        self.checks = pull.check_all(self.db)
+        self.checks = pull.check_all(self.db, self.doc.text_buffers)
         return before != {k: (c.status, c.moved, c.edited) for k, c in self.checks.items()}
 
     def selected(self) -> list:
@@ -397,7 +397,7 @@ class TextsUtterancesWindow(QDialog):
             self.sound_files, self.cloud_files = storage.scan_sound_folder(storage.utterance_folder(self.db))
         except Exception:
             self.sound_files, self.cloud_files = set(), set()
-        self.checks = pull.check_all(self.db)
+        self.checks = pull.check_all(self.db, self.doc.text_buffers)
         self.table.set_rows(list(self.db.utterances))
         self._update_count()
         if hasattr(self, "texts"):
@@ -798,6 +798,7 @@ class TextsUtterancesWindow(QDialog):
             lbl.setStyleSheet(f"color: {theme.muted()};")
         for t in (self.table, self.texts.table, self.texts.lines):
             theme.as_data(t)
+        self.texts.restyle_icons()
 
     def done(self, result):
         self.main.prefs.set_value("window/utterances", self.saveGeometry())
@@ -999,7 +1000,7 @@ class UtteranceDialog(TokenDialog):
             self.source_label.setText(f"Clipped from a text that no longer exists ({when}).")
         else:
             self.source_label.setText(f"Clipped from {t.ref} {self.db.text_title(t)}, {when}")
-        c = pull.check(self.db, u)
+        c = pull.check(self.db, u, self.main.doc.text_buffers)
         if c is not None and c.flagged:
             self.source_label.setText(self.source_label.text().replace("<", "&lt;") +
                                       f"<br><span style='color:{theme.colour('error').name()}'>"
@@ -1028,7 +1029,7 @@ class UtteranceDialog(TokenDialog):
         from .pull_dialog import pull_utterances
         if not self._commit():                    # what's typed here is kept first
             return
-        c = pull.check(self.db, self.slot.entry)
+        c = pull.check(self.db, self.slot.entry, self.main.doc.text_buffers)
         if c is not None and pull_utterances(self.main, self, [c]):
             self._load()
             win = self.parent()
@@ -1039,7 +1040,7 @@ class UtteranceDialog(TokenDialog):
         from .pull_dialog import push_utterances
         if not self._commit():                    # what's typed here is what gets pushed
             return
-        c = pull.check(self.db, self.slot.entry)
+        c = pull.check(self.db, self.slot.entry, self.main.doc.text_buffers)
         if c is not None and push_utterances(self.main, self, [c]):
             self._load()
             win = self.parent()
@@ -1053,7 +1054,7 @@ class UtteranceDialog(TokenDialog):
             win.select_text(t)
             win.texts.lines.clearSelection()
             src = self.slot.entry.source
-            hit = next((l for l in win.texts.lines.model_.rows
+            hit = next((l for l in win.texts.lines.rows
                         if abs(l.start - src.start) < 0.01 and abs(l.end - src.end) < 0.01), None)
             if hit is not None:
                 win.texts.lines.select_row(hit)

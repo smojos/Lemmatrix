@@ -14,6 +14,12 @@ records the comments dated that day, with a link to their lemma or token:
   record; deleted on a later day, it stays in the old record, whose link then says
   "Lemma no longer exists" / "Token no longer exists".
 The tokens recorded that day aren't stored: they are found from the tokens' dates.
+
+Comments on a text's lines (19 October) live in the TextGrid, which keeps no dates, so they
+are recorded when they are written: in the day being worked on, linked to the text and line
+(token_id "line:<start>"); written over that day if changed again the same day, and kept as
+they were in earlier days. Adding a text records the comments already in its TextGrid in the
+day the text was recorded.
 """
 
 from __future__ import annotations
@@ -66,6 +72,9 @@ class Question:
         return self.edited or self.created
 
 
+LINE_PREFIX = "line:"
+
+
 @dataclass
 class NoteComment:
     """A comment as it was recorded, with a link to where it was written."""
@@ -78,7 +87,19 @@ class NoteComment:
 
     @property
     def is_token(self) -> bool:
-        return bool(self.token_id)
+        return bool(self.token_id) and not self.is_line
+
+    @property
+    def is_line(self) -> bool:
+        """A comment on a text's line (token_id "line:<start>")."""
+        return self.token_id.startswith(LINE_PREFIX)
+
+    @property
+    def line_start(self) -> float | None:
+        try:
+            return float(self.token_id[len(LINE_PREFIX):]) if self.is_line else None
+        except ValueError:
+            return None
 
     def key(self) -> tuple:
         return (self.entry_id, self.token_id, self.field)
@@ -205,7 +226,33 @@ def find(db: Database, c: NoteComment) -> tuple[Entry, int | None] | None:
 
 
 def missing_text(c: NoteComment) -> str:
+    if c.is_line:
+        return "Text no longer exists"
     return "Token no longer exists" if c.is_token else "Lemma no longer exists"
+
+
+def line_comment(db: Database, text, start: float, field: str, value: str, clock: str = "") -> NoteComment:
+    from .model import nfc as _nfc
+    title = db.text_title(text)
+    about = f"{text.ref} {title}".strip() + (f" · {clock}" if clock else "")
+    return NoteComment(_nfc(value), text.id, f"{LINE_PREFIX}{start:.4f}", text.ref, about, field)
+
+
+def record_line_comment(nb: Notebook, db: Database, date: str, c: NoteComment,
+                        researchers=(), participants=(), locations=()):
+    """Record (or, emptied, remove) a line's comment in a day's session; the day gets a session
+    if it has none (with these people and places). Returns (session, comments before, after)."""
+    s = nb.session(date)
+    if s is None:
+        s = write_session(nb, db, date, researchers, participants, locations)
+    before = list(s.comments)
+    out = [x for x in s.comments if x.key() != c.key()]
+    if c.text:
+        at = next((i for i, x in enumerate(s.comments) if x.key() == c.key()), len(out))
+        out.insert(min(at, len(out)), c)
+    s.comments = out
+    nb.dirty = True
+    return s, before, list(out)
 
 
 def refresh_comments(db: Database, session: Session) -> bool:
@@ -220,6 +267,9 @@ def refresh_comments(db: Database, session: Session) -> bool:
     fresh = {c.key(): c for c in dated_comments(db, session.date)}
     out = []
     for c in session.comments:
+        if c.is_line:                                 # a text line's comment: recorded when written
+            out.append(c)
+            continue
         if c.key() in fresh:
             out.append(fresh.pop(c.key()))
             continue

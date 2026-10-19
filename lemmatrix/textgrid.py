@@ -14,7 +14,10 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .model import TierMapping, nfc, tier_base
+from .interlinear import as_unit
+from .model import SPEAKER_FIELD, TierMapping, nfc, tier_base
+
+SAME_TIME = 0.0005             # seconds: a segment is part of a line only if more than this is inside it
 
 
 class TextGridError(Exception):
@@ -52,7 +55,7 @@ def _open(path):
         raise TextGridError("Reading TextGrids needs the praatio package (installed with the next "
                             "start of Lemmatrix).") from exc
     try:
-        return textgrid.openTextgrid(str(path), includeEmptyIntervals=False, reportingMode="silence",
+        return textgrid.openTextgrid(str(path), includeEmptyIntervals=True, reportingMode="silence",
                                      duplicateNamesMode="rename")
     except Exception as exc:                            # praatio raises several kinds
         raise TextGridError(f"Couldn't read {Path(path).name}: {exc}") from exc
@@ -85,8 +88,16 @@ def _grid(path):
     return tg
 
 
+def read_grid(path):
+    """A fresh copy of the TextGrid (empty segments included), to edit in memory."""
+    return _open(Path(path))
+
+
 def tiers(path) -> list[TierInfo]:
-    tg = _grid(path)
+    return tiers_of(_grid(path))
+
+
+def tiers_of(tg) -> list[TierInfo]:
     out = []
     for name in tg.tierNames:
         tier = tg.getTier(name)
@@ -95,16 +106,47 @@ def tiers(path) -> list[TierInfo]:
     return out
 
 
+def segments_in(entries, start: float, end: float) -> list[int]:
+    """The segments that are part of a line: more than a sliver (SAME_TIME) inside it."""
+    return [i for i, e in enumerate(entries) if min(e[1], end) - max(e[0], start) > SAME_TIME]
+
+
+def joined(entries, idx: list[int], start: float | None = None, end: float | None = None) -> str:
+    """A tier's text in a line. One segment: its text. Several (a word-level tier): one unit
+    each, an empty one as {} and one of several words in braces, so the units line up with the
+    other aligned fields. Empty segments at either end that reach past the line are left out
+    (an empty word inside the line stays, as {})."""
+    idx = list(idx)
+    if start is not None:
+        while idx and not (entries[idx[0]][2] or "").strip() and entries[idx[0]][0] < start - SAME_TIME:
+            idx.pop(0)
+        while idx and not (entries[idx[-1]][2] or "").strip() and entries[idx[-1]][1] > end + SAME_TIME:
+            idx.pop()
+    labels = [nfc((entries[i][2] or "").strip()) for i in idx]
+    if not any(labels):
+        return ""
+    if len(labels) == 1:
+        return labels[0]
+    return " ".join(as_unit(x) for x in labels)
+
+
 def read_lines(path, mapping: TierMapping, default_speaker: str = "") -> list[Line]:
     """The text's lines: one per interval (with text) of the main tier, in time order, with the
     other mapped tiers' text that overlaps it. Raises TextGridError."""
-    tg = _grid(path)
+    try:
+        return lines_from(_grid(path), mapping, default_speaker)
+    except TextGridError as exc:
+        raise TextGridError(str(exc).replace("the TextGrid", Path(path).name, 1)) from None
+
+
+def lines_from(tg, mapping: TierMapping, default_speaker: str = "") -> list[Line]:
+    """The lines of a TextGrid already read (or being edited in memory)."""
     names = [nfc(n) for n in tg.tierNames]
     interval = {n: tg.getTier(raw) for n, raw in zip(names, tg.tierNames)
                 if type(tg.getTier(raw)).__name__ == "IntervalTier"}
     mains = [n for n in interval if mapping.is_main(n)]
     if not mains:
-        raise TextGridError(f"No tier called “{mapping.main}” (the main tier) in {Path(path).name}. "
+        raise TextGridError(f"No tier called “{mapping.main}” (the main tier) in the TextGrid. "
                             f"Its tiers are: {', '.join(names) or 'none'}.")
     lines: list[Line] = []
     for main in mains:
@@ -128,16 +170,19 @@ def read_lines(path, mapping: TierMapping, default_speaker: str = "") -> list[Li
                 continue
             ln = Line(float(start), float(end), speaker or default_speaker)
             ln.copied[main] = text
-            if main_rule is not None and main_rule.field:
+            if main_rule is not None and main_rule.field and main_rule.field != SPEAKER_FIELD:
                 ln.values[main_rule.key] = text
             for n, rule, tier in others:
-                parts = [nfc((lab or "").strip()) for s, e, lab in tier.entries
-                         if (lab or "").strip() and ln.overlaps(float(s), float(e))]
-                if parts:
-                    joined = " ".join(parts)
-                    ln.copied[n] = joined
-                    key = rule.key
-                    ln.values[key] = (ln.values[key] + " " + joined) if ln.values.get(key) else joined
+                entries = tier.entries
+                part = joined(entries, segments_in(entries, ln.start, ln.end), ln.start, ln.end)
+                if not part:
+                    continue
+                if rule.field == SPEAKER_FIELD:      # a tier of speaker codes
+                    ln.speaker = part.split()[0]
+                    continue
+                ln.copied[n] = part
+                key = rule.key
+                ln.values[key] = (ln.values[key] + " " + part) if ln.values.get(key) else part
             lines.append(ln)
     lines.sort(key=lambda x: (x.start, x.speaker))
     for i, ln in enumerate(lines):

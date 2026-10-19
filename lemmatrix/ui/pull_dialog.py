@@ -278,6 +278,11 @@ def push_utterances(main, parent, checks: list[pull.Check]) -> bool:
     links are updated as one undo step; the TextGrids themselves can't be undone (backed up)."""
     db = main.doc.db
     checks = [c for c in checks if c.pushable]
+    waiting = sorted({c.text.ref for c in checks if (b := main.doc.text_buffers.get(c.text.id)) and b.changed})
+    if waiting:                                   # the TextGrid has line edits not yet written
+        QMessageBox.information(parent, "Push to source", f"{', '.join(waiting)} has line edits that aren't "
+                                "saved yet. Save first (Ctrl+S), then push.")
+        return False
     plan, problems = [], []
     for c in checks:
         try:
@@ -365,7 +370,7 @@ class CheckDialog(QDialog):
 
     def fill(self):
         db = self.main.doc.db
-        checks = pull.check_all(db)
+        checks = pull.check_all(db, self.main.doc.text_buffers)
         self.flagged = [c for c in checks.values() if c.flagged or c.edited]
         self.tree.clear()
         err = theme.colour("error")

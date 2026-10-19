@@ -378,6 +378,9 @@ class TierRule:
         return f"{self.field}:{self.lang}" if self.lang else self.field
 
 
+SPEAKER_FIELD = "@speaker"   # a tier mapping target: the tier's text is the line's speaker code
+
+
 def tier_base(name: str) -> tuple[str, str]:
     """("tx", "SP1") for "tx@SP1"; ("tx", "") for "tx"."""
     base, _, speaker = (name or "").partition("@")

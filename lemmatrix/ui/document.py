@@ -14,6 +14,10 @@ The notebook (<database>.notebook) belongs to the document too: it is saved with
 the database, and its unsaved changes count as unsaved changes. Every change to
 a comment field is dated with the session's date (work_date), which is what the
 notebook's record of comments goes by.
+
+Texts' lines are edited in their TextGrids (lines.py): a TextGrid being edited is held in a
+Buffer here, its edits are undo steps like any other, and it is written when the database is
+saved; not saving leaves the file as it was.
 """
 
 from __future__ import annotations
@@ -24,7 +28,7 @@ from pathlib import Path
 from PySide6.QtCore import QFile, QObject, Signal
 from PySide6.QtGui import QUndoCommand, QUndoStack
 
-from .. import notebook as nbmod, predict, storage
+from .. import lines as lmod, notebook as nbmod, predict, storage
 from ..model import Database, Entry, today
 
 
@@ -138,8 +142,44 @@ class AddManyCommand(QUndoCommand):
         self.doc.changed.emit()
 
 
+class LineEditCommand(QUndoCommand):
+    """A change to a text's line: its TextGrid's tiers (in the Buffer), the utterances clipped
+    from the line, and the notebook's record of the line's comment. Applied once already."""
+
+    def __init__(self, doc: "Document", label: str, text_id: str, edits, generation: int,
+                 utterances=(), notebook=None):
+        super().__init__(label)
+        self.doc, self.text_id, self.edits, self.generation = doc, text_id, list(edits), generation
+        self.utterances = list(utterances)     # (utterance, before, after)
+        self.notebook = notebook               # (session, comments before, comments after) or None
+        self._skip = True
+
+    def _apply(self, undo: bool):
+        buf = self.doc.text_buffers.get(self.text_id)
+        if buf is not None and buf.generation == self.generation:   # not since read again from disk
+            buf.apply(self.edits, undo=undo)
+        for u, before, after in self.utterances:
+            _restore(u, before if undo else after)
+        if self.notebook is not None:
+            session, before, after = self.notebook
+            session.comments = list(before if undo else after)
+            self.doc.notebook.dirty = True
+        self.doc.linesChanged.emit(self.text_id)
+        self.doc.changed.emit()
+
+    def redo(self):
+        if self._skip:
+            self._skip = False
+            return
+        self._apply(False)
+
+    def undo(self):
+        self._apply(True)
+
+
 class Document(QObject):
     changed = Signal()            # entries or tokens changed
+    linesChanged = Signal(str)    # a text's lines changed (its id)
     settingsChanged = Signal()    # metadata or settings changed
     dirtyChanged = Signal(bool)
 
@@ -153,7 +193,33 @@ class Document(QObject):
         self.notebook_unreadable = False        # then it is never written over
         self.work_date = today                  # the session's date (set by the main window)
         self.predictor = predict.Predictor()    # suggested translations, learned from this database
+        self.text_buffers: dict[str, lmod.Buffer] = {}   # text id -> its TextGrid being edited
         self.undo.cleanChanged.connect(self._clean_changed)
+
+    # ---- texts' lines (edited in their TextGrids) -------------------------
+    def buffer(self, text, reload_if_saved_elsewhere: bool = True):
+        """The text's TextGrid held for editing (read when first needed; read again if Praat
+        saved it and there are no edits here waiting). None without a TextGrid."""
+        if not text.textgrid or not self.db.path:
+            return None
+        path = storage.text_folder(self.db) / text.textgrid
+        if not path.exists():
+            return None
+        buf = self.text_buffers.get(text.id)
+        if buf is None or buf.path != path:
+            buf = self.text_buffers[text.id] = lmod.Buffer(path)
+        elif reload_if_saved_elsewhere and not buf.changed and buf.disk_changed():
+            buf.reload()
+        return buf
+
+    def edited_buffers(self) -> list:
+        return [(self.db.text_by_id(tid), b) for tid, b in self.text_buffers.items() if b.changed]
+
+    def push_line_edit(self, label: str, text, buf, edits, utterances=(), notebook=None):
+        """Record a line edit already made (buffer, utterances and notebook) for undo."""
+        self.undo.push(LineEditCommand(self, label, text.id, edits, buf.generation, utterances, notebook))
+        self.linesChanged.emit(text.id)
+        self.changed.emit()
 
     def _clean_changed(self, clean: bool):
         try:
@@ -366,6 +432,8 @@ class Document(QObject):
 
     # ---- saving --------------------------------------------------------
     def save(self, path: str | None = None):
+        for text, buf in self.edited_buffers():  # texts' TextGrids first (each backed up)
+            buf.write(self.db)
         storage.save(self.db, path)
         self.renamed.clear()                    # the saved database now has the new names
         self._settings_dirty = False

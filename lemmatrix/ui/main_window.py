@@ -718,6 +718,7 @@ class MainWindow(QMainWindow):
             self._save_view()
         self._mark_open(db.path)
         self.doc.db = db
+        self.doc.text_buffers.clear()             # unsaved line edits of the database closed are dropped
         self.doc.undo.clear()
         self.doc.undo.setClean()
         self.doc._settings_dirty = False
@@ -2549,6 +2550,8 @@ class MainWindow(QMainWindow):
             self._mark_open(path)
             self._update_title()
         self._record_comments()
+        if not self._textgrid_conflicts():
+            return False
         try:
             self.doc.save()
         except OSError as exc:
@@ -2601,6 +2604,30 @@ class MainWindow(QMainWindow):
         if ok and new != old:
             self.statusBar().showMessage(f"Renamed to {Path(new).name}.", 5000)
         return ok
+
+    def _textgrid_conflicts(self) -> bool:
+        """Before saving: a TextGrid with line edits here that Praat has saved meanwhile.
+        Returns False to cancel the save."""
+        for text, buf in self.doc.edited_buffers():
+            if text is None or not buf.disk_changed():
+                continue
+            box = QMessageBox(self)
+            box.setIcon(QMessageBox.Warning)
+            box.setWindowTitle("Save")
+            box.setText(f"{text.ref}'s TextGrid was saved in Praat after you edited its lines here.")
+            box.setInformativeText("Save my edits: Lemmatrix's version replaces Praat's (a copy of Praat's "
+                                   "goes to Backups first).\nKeep Praat's: the unsaved line edits to "
+                                   f"{text.ref} are dropped.")
+            mine = box.addButton("Save my edits", QMessageBox.AcceptRole)
+            praat = box.addButton("Keep Praat's", QMessageBox.DestructiveRole)
+            box.addButton(QMessageBox.Cancel)
+            box.exec()
+            if box.clickedButton() is praat:
+                buf.reload()
+                self.doc.linesChanged.emit(text.id)
+            elif box.clickedButton() is not mine:
+                return False
+        return True
 
     # ------------------------------------------- open on another computer
     def _open_elsewhere_ok(self, path: str) -> bool:

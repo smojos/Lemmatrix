@@ -185,7 +185,8 @@ def _add_text(win, tmp_path, monkeypatch, title="Hyena and Hare", src=None):
     src = src or tmp_path / "field"
     src.mkdir(parents=True, exist_ok=True)
     wav = _recording(src / "story.wav")
-    _grid(src / "story.TextGrid")
+    if not (src / "story.TextGrid").exists():
+        _grid(src / "story.TextGrid")
 
     def fake_exec(dlg):
         dlg.new_wav = wav
@@ -211,9 +212,9 @@ def test_add_a_text_copies_its_files_and_shows_its_lines(win, tmp_path, monkeypa
     assert (folder / "LXX-VXX_T001_Hyena_and_Hare.wav").exists()
     assert (folder / "LXX-VXX_T001_Hyena_and_Hare.TextGrid").exists()
     assert (tmp_path / "field" / "story.wav").exists()                    # the original stays
-    assert uw.texts.lines.model_.rowCount() == 2
-    keys = [c.key for c in uw.texts.lines.model_.columns]
-    assert "v:Phonetic" in keys and "v:Translation:en" in keys
+    assert len(uw.texts.lines.rows) == 2
+    keys = [f.key for f in uw.texts.lines.fields]
+    assert "Phonetic" in keys and "Translation:en" in keys
     win.doc.undo.undo()
     assert win.doc.db.texts == [] and not (folder / "LXX-VXX_T001_Hyena_and_Hare.wav").exists()
     win.doc.undo.redo()
@@ -225,7 +226,7 @@ def test_a_text_already_in_soundfiles_texts_is_renamed_not_copied(win, tmp_path,
     uw, t = _add_text(win, tmp_path, monkeypatch, src=folder)
     assert sorted(f.name for f in folder.iterdir()) == ["LXX-VXX_T001_Hyena_and_Hare.TextGrid",
                                                        "LXX-VXX_T001_Hyena_and_Hare.wav"]
-    assert uw.texts.lines.model_.rowCount() == 2
+    assert len(uw.texts.lines.rows) == 2
     win.doc.undo.undo()                                    # the old names come back
     assert sorted(f.name for f in folder.iterdir()) == ["story.TextGrid", "story.wav"]
     win.doc.undo.redo()
@@ -283,8 +284,7 @@ def test_clip_lines_as_utterances(win, tmp_path, monkeypatch):
     a, rate = audio.read_wav(clip)
     assert abs(len(a) / rate - 1.2) < 0.01                 # the line, with 100 ms either side
     assert db.clipped_from(t) == items
-    clips = next(c for c in p.lines.model_.columns if c.key == "clips")
-    assert clips.get(p.lines.model_.rows[0]) == "W001"
+    assert p.lines.clips.get(p.lines.rows[0].id) == ["W001"]
     win.doc.undo.undo()                                    # one step for both
     assert db.utterances == [] and not clip.exists()
 
@@ -330,7 +330,7 @@ def test_a_new_tier_is_learned_and_a_different_choice_is_the_texts_own(win, tmp_
     assert db.settings.tier_mapping.rule("nt").field == "Comment"          # learned
     assert db.settings.tier_mapping.rule("tx").field == "Phonetic"         # unchanged
     assert t.tiers is not None and t.tiers.rule("tx").field == "Phonemic"  # the text's own
-    assert uw.texts.lines.model_.rows[0].values == {"Phonemic": "la la", "Comment": "a note"}
+    assert uw.texts.lines.rows[0].values == {"Phonemic": "la la", "Comment": "a note"}
 
 
 def test_delete_a_text_holds_its_files(win, tmp_path, monkeypatch):
@@ -347,7 +347,7 @@ def test_play_a_line(win, tmp_path, monkeypatch):
     uw, t = _add_text(win, tmp_path, monkeypatch)
     played = []
     monkeypatch.setattr(win.player, "play_samples", lambda s, r, *a: played.append(len(s) / r))
-    uw.texts.lines.select_row(uw.texts.lines.model_.rows[1])
+    uw.texts.lines.select_row(uw.texts.lines.rows[1])
     uw.texts.play_line()
     uw.texts.play_line(context=True)
     assert abs(played[0] - 1.0) < 0.01 and abs(played[1] - 4.0) < 0.01   # 2 s either side, to the ends
@@ -361,10 +361,9 @@ def test_praat_gets_the_textgrid_too(win, tmp_path, monkeypatch):
     monkeypatch.setattr(win, "open_in_praat",
                         lambda path, parent=None, textgrid=None, select=None: got.append((path, textgrid, select)))
     uw.texts.lines.clearSelection()
-    uw.texts.lines.setCurrentIndex(uw.texts.lines.model().index(-1, -1))
     uw.texts.open_in_praat()
     assert got[0][0].name == t.file and got[0][1].name == t.textgrid
-    uw.texts.lines.select_row(uw.texts.lines.model_.rows[1])          # at the selected line
+    uw.texts.lines.select_row(uw.texts.lines.rows[1])          # at the selected line
     uw.texts.open_in_praat()
     assert got[1][2] == (2.0, 3.0)
     script = praat.script_for(Path("a.wav"), Path("a.TextGrid"), (2.0, 3.0))
@@ -399,7 +398,7 @@ def test_clipped_utterance_shows_its_source(win, tmp_path, monkeypatch):
     from lemmatrix.ui.token_dialog import Slot
     from lemmatrix.ui.utterances import UtteranceDialog
     uw, t = _add_text(win, tmp_path, monkeypatch)
-    uw.texts.lines.select_row(uw.texts.lines.model_.rows[0])
+    uw.texts.lines.select_row(uw.texts.lines.rows[0])
     u = uw.texts.clip()[0]
     dlg = UtteranceDialog(win, [Slot(u, 0)], 0, uw)
     assert not dlg.source_box.isHidden() and "T001" in dlg.source_label.text()
@@ -534,7 +533,7 @@ def test_utterance_dialog_shows_the_flag_and_pulls(win, tmp_path, monkeypatch):
     from lemmatrix.ui.token_dialog import Slot
     from lemmatrix.ui.utterances import UtteranceDialog
     uw, t = _add_text(win, tmp_path, monkeypatch)
-    uw.texts.lines.selectRow(0)
+    uw.texts.lines.select_row(uw.texts.lines.rows[0])
     (u,) = uw.texts.clip()
     grid = tmp_path / "Soundfiles" / "Texts" / t.textgrid
     _resave(grid, {"tx": [(0.5, 1.5, "ʔəŋ kɒ"), (2.0, 3.0, "ɛ ŋəə")],
@@ -559,7 +558,7 @@ def _resave(path, tiers, end=4.0):
 
 def _clipped(win, tmp_path, monkeypatch):
     uw, t = _add_text(win, tmp_path, monkeypatch)
-    uw.texts.lines.select_row(uw.texts.lines.model_.rows[0])
+    uw.texts.lines.select_row(uw.texts.lines.rows[0])
     u = uw.texts.clip()[0]
     return uw, t, u, tmp_path / "Soundfiles" / "Texts" / t.textgrid
 
@@ -774,3 +773,145 @@ def test_the_window_opens_on_texts(win, tmp_path, monkeypatch):
     uw.tabs.setCurrentIndex(UTTERANCES_TAB)
     uw.close()
     assert win.open_utterances().tabs.currentIndex() == TEXTS
+
+
+# ---- editing lines in Lemmatrix (19 October) -----------------------------------------------
+
+from PySide6.QtCore import Qt  # noqa: E402
+from PySide6.QtTest import QTest  # noqa: E402
+
+def test_edit_a_line_in_place_saves_into_the_textgrid(win, tmp_path, monkeypatch):
+    uw, t = _add_text(win, tmp_path, monkeypatch)
+    p = uw.texts
+    grid = tmp_path / "Soundfiles" / "Texts" / t.textgrid
+    p.set_edit_mode(True)
+    assert p.lines.edit_mode and not p.edit_label.isHidden()
+    ln = p.lines.rows[1]
+    p.lines.start_edit(ln, "Translation:en")
+    ed = p.lines._editor[0]
+    ed.setText("where did he go?")
+    QTest.keyClick(ed, Qt.Key_Tab)                           # kept, and on to the next field
+    assert p.lines.rows[1].values["Translation:en"] == "where did he go?"
+    assert p.lines._editor is not None and p.lines._editor[2] != "Translation:en"
+    p.lines._close_editor(commit=False)
+    assert tgmod.read_lines(grid, win.doc.db.mapping_for(t))[1].values["Translation:en"] == "where is he?"   # not yet
+    assert win.doc.dirty and "not yet saved" in p.lines_title.text()
+    win.doc.undo.undo()
+    assert p.lines.rows[1].values["Translation:en"] == "where is he?"
+    win.doc.undo.redo()
+    assert win.save()
+    assert tgmod.read_lines(grid, win.doc.db.mapping_for(t))[1].values["Translation:en"] == "where did he go?"
+    assert any(f.suffix == ".TextGrid" for f in (tmp_path / "Backups").iterdir())
+
+
+def test_a_word_tier_edit_that_merges_asks_first(win, tmp_path, monkeypatch):
+    from PySide6.QtWidgets import QMessageBox
+    uw, t = _add_text(win, tmp_path, monkeypatch)
+    p = uw.texts
+    asked = []
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: (asked.append(a[2]), QMessageBox.No)[1])
+    p.set_line_field(p.lines.rows[0], "Morphemes", "hare run PST")       # 3 units, 2 segments
+    assert "merge several segments in Praat" in asked[0]
+    assert p.lines.rows[0].values["Morphemes"] == "hare run.PST"       # declined: nothing changed
+    p.set_line_field(p.lines.rows[0], "Morphemes", "{} run.PFV")        # 2 units: segments kept
+    assert len(asked) == 1 and p.lines.rows[0].values["Morphemes"] == "{} run.PFV"
+
+
+def test_editing_a_line_updates_its_clipped_utterance(win, tmp_path, monkeypatch):
+    uw, t, u, grid = _clipped(win, tmp_path, monkeypatch)
+    p = uw.texts
+    p.set_line_field(p.lines.rows[0], "Phonetic", "ʔə̀ŋ kɒ̄")
+    assert u.token.get("Phonetic") == "ʔə̀ŋ kɒ̄"
+    uw.refresh()
+    assert not uw._flagged(u) and not uw.checks[u.id].edited       # the same analysis, no flag
+    win.doc.undo.undo()
+    assert u.token.get("Phonetic") == "ʔəŋ kɒ"
+    win.doc.undo.redo()
+    assert win.save()
+    uw.refresh()
+    assert not uw._flagged(u) and not uw.checks[u.id].edited       # and after saving too
+
+
+def test_a_line_comment_goes_into_the_notebook(win, tmp_path, monkeypatch):
+    uw, t = _add_text(win, tmp_path, monkeypatch)
+    p = uw.texts
+    assert p.comment_key() == "Comment"
+    p.set_line_field(p.lines.rows[0], "Comment", "existential clause")
+    s = win.doc.notebook.session(win.work_date())
+    assert [(c.text, c.is_line, c.ref) for c in s.comments] == [("existential clause", True, "T001")]
+    p.set_line_field(p.lines.rows[0], "Comment", "existential clause, discourse opener")   # same day: written over
+    assert [c.text for c in s.comments] == ["existential clause, discourse opener"]
+    win.doc.undo.undo()
+    assert [c.text for c in s.comments] == ["existential clause"]
+    from lemmatrix import notebook as nbmod
+    assert not nbmod.refresh_comments(win.doc.db, s)                # kept by the usual refresh
+
+
+def test_comments_already_in_a_textgrid_go_into_the_notebook_on_adding(win, tmp_path, monkeypatch):
+    from lemmatrix.model import TierRule
+    win.doc.db.settings.tier_mapping.rules.append(TierRule("note", "Comment"))
+    src = tmp_path / "field"
+    src.mkdir()
+    tgmod.write_example(src / "story.TextGrid", {"tx": [(0.5, 1.5, "ʔəŋ kɒ"), (2.0, 3.0, "ɛ ŋəə")],
+                                                 "note": [(0.5, 1.5, "laughs")]}, 4.0)
+    uw, t = _add_text(win, tmp_path, monkeypatch, src=src)
+    s = win.doc.notebook.session(t.date)
+    assert [c.text for c in s.comments] == ["laughs"] and s.comments[0].about.startswith("T001")
+
+
+def test_next_empty_and_search(win, tmp_path, monkeypatch):
+    uw, t = _add_text(win, tmp_path, monkeypatch)
+    p = uw.texts
+    p.lines.select_row(p.lines.rows[0])
+    p.next_field.setCurrentIndex(p.next_field.findData("Comment"))
+    p.next_empty()
+    assert p.lines.current_row() is p.lines.rows[1]
+    p.line_search.setText("hare")
+    assert len(p.lines.visible_rows()) == 1 and p.count.text().startswith("1 of 2")
+
+
+def test_configure_view(win, tmp_path, monkeypatch):
+    from lemmatrix.ui import lines_view
+    uw, t = _add_text(win, tmp_path, monkeypatch)
+    p = uw.texts
+
+    def fake_exec(dlg):
+        for i in range(dlg.tree.topLevelItemCount()):
+            it = dlg.tree.topLevelItem(i)
+            it.setCheckState(0, Qt.Checked if it.data(0, Qt.UserRole) in ("Morphemes", "Phonetic") else Qt.Unchecked)
+            it.setCheckState(1, Qt.Unchecked)
+        return 1
+    monkeypatch.setattr(lines_view.ConfigureViewDialog, "exec", fake_exec)
+    p.configure_view()
+    assert [f.key for f in p.lines.fields] == ["Phonetic", "Morphemes"] and not any(f.aligned for f in p.lines.fields)
+    win.prefs.set_list("lines/fields", [])
+    win.prefs.set_list("lines/aligned", [])
+
+
+def test_hidden_symbols():
+    from lemmatrix.ui.lines_view import shown
+    assert shown("a {big dog} {} ran") == "a big dog ran" and shown("plain") == "plain"
+
+
+def test_keys_in_the_lines_view(win, tmp_path, monkeypatch):
+    uw, t = _add_text(win, tmp_path, monkeypatch)
+    v = uw.texts.lines
+    played = []
+    monkeypatch.setattr(uw.texts, "play_line", lambda *a, **k: played.append(1))
+    v.playRequested.disconnect()
+    v.playRequested.connect(uw.texts.play_line)
+    v.select_row(v.rows[0])
+    QTest.keyClick(v, Qt.Key_Down)
+    assert v.current_row() is v.rows[1]
+    QTest.keyClick(v, Qt.Key_Space)
+    assert played == [1]
+    uw.texts.set_edit_mode(True)
+    steps = win.doc.undo.count()
+    v.start_edit(v.rows[0], "Phonetic")
+    ed = v._editor[0]
+    QTest.keyClick(ed, Qt.Key_Space, Qt.ControlModifier)         # plays, never types a space
+    assert played == [1, 1] and " " not in ed.text()[-1:]
+    QTest.keyClick(ed, Qt.Key_Down)                               # the same field, one line down
+    assert v._editor[1] == v.rows[1].id and v._editor[2] == "Phonetic"
+    QTest.keyClick(v._editor[0], Qt.Key_Escape)
+    assert v._editor is None and win.doc.undo.count() == steps       # nothing typed: nothing recorded

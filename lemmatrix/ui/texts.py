@@ -20,11 +20,12 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog,
                                QPushButton, QSplitter, QTableWidget, QTableWidgetItem, QToolButton,
                                QVBoxLayout, QWidget)
 
-from .. import audio, layout, storage, textgrid as tgmod
-from ..model import TEXTS, ClipSource, ListItem, Text, TierMapping, TierRule, nfc, tier_base
+from .. import audio, layout, lines as lmod, notebook as nbmod, storage, textgrid as tgmod
+from ..model import SPEAKER_FIELD, TEXTS, ClipSource, ListItem, Text, TierMapping, TierRule, nfc, tier_base
 from . import chiprow as chips, theme
 from .filter_dialogs import ConfigureColumnsDialog
 from .icons import icon
+from .lines_view import ConfigureViewDialog, FieldSpec, LinesView
 from .table import Column, FilterTable
 from .widgets import ipa_font
 
@@ -41,7 +42,7 @@ def field_choices(db) -> list[tuple[str, str, str]]:
     """(label, field, lang) for what a tier can fill in: Ignore, then every token field (a
     multilingual one once per gloss language)."""
     s = db.settings
-    out = [("Ignore", "", "")]
+    out = [("Ignore", "", ""), ("Speaker (code)", SPEAKER_FIELD, "")]
     for f in s.token_fields:
         if f.multilingual:
             for lang in s.gloss_languages:
@@ -439,15 +440,15 @@ class TextsPanel(QObject):
         f.setBold(True)
         self.lines_title.setFont(f)
         bl.addWidget(self.lines_title)
-        self.lines = FilterTable()
-        self.lines.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.lines.space_plays = True
+        self.lines = LinesView()                  # the lines as cells (19 October)
         self.lines.playRequested.connect(self.play_line)
-        self.lines.rowActivated.connect(lambda row: self.play_line())
-        self.lines.lemmaActivated.connect(self._open_clip)
+        self.lines.clipActivated.connect(self._open_clip)
         self.lines.contextRequested.connect(self._line_menu)
-        self.lines.filtersChanged.connect(self._update_count)
-        self.lines.clicked.connect(lambda *_: self.win.autoplay.isChecked() and self.play_line())
+        self.lines.countChanged.connect(self._update_count)
+        self.lines.currentChanged.connect(lambda *_: self.win.autoplay.isChecked() and not self.lines.editing()
+                                          and self.play_line())
+        self.lines.editCommitted.connect(self.set_line_field)
+        self.doc.linesChanged.connect(self._lines_edited)
         bl.addWidget(self.lines, 1)
         page.addWidget(box)
         page.setSizes([300, 400])
@@ -481,19 +482,38 @@ class TextsPanel(QObject):
         """The lines' buttons, search and count (the window's options panel, under the lines)."""
         from .main_window import tool
         bar, bl = self.main._bar()
-        self.main._row(bl, tool("Play line", "play", self.play_line, "Play the selected line (Ctrl+Space)"),
-                       tool("Play in context", None, lambda: self.play_line(context=True),
-                            f"Play the selected line with {CONTEXT:g} seconds either side"),
-                       tool("Clip as utterance…", None, self.clip,
-                            "Cut the selected lines out of the recording as utterances, with their text "
-                            "(select several with Shift or Ctrl)"),
-                       tool("Open in Praat", "praat", self.open_in_praat,
-                            "Open the text's recording with its TextGrid in Praat, at the selected line"))
+
+        def icon_tool(name, fn, tip, checkable=False):
+            b = tool(tip, name, fn, tip)
+            b.setToolButtonStyle(Qt.ToolButtonIconOnly)      # Josh's mockup: icons, names in the tooltips
+            b.setCheckable(checkable)
+            return b
+        self.edit_btn = icon_tool("edit", lambda: self.set_edit_mode(self.edit_btn.isChecked()),
+                                  "Edit mode: click a field to edit it in place (Tab, Shift+Tab, Up, Down move; "
+                                  "Enter keeps, Esc drops). Off: the lines are for playing, clipping and Praat",
+                                  checkable=True)
+        self.main._row(bl, icon_tool("play", self.play_line, "Play the selected line (Ctrl+Space)"),
+                       self.edit_btn,
+                       icon_tool("clip", self.clip, "Clip as utterance: cut the selected lines out of the "
+                                 "recording as utterances, with their text (select several with Shift or Ctrl)"),
+                       icon_tool("praat", self.open_in_praat,
+                                 "Open in Praat: the text's recording with its TextGrid, at the selected line"),
+                       icon_tool("gear", self.configure_view, "Configure view: which fields each line shows, "
+                                 "in what order, and which line up word by word"))
+        self.restyle_icons()
+        self.edit_label = QLabel("Edit mode")
+        self.edit_label.hide()
+        bl.itemAt(bl.count() - 1).layout().insertWidget(5, self.edit_label)
         self.line_search = QLineEdit()
         self.line_search.setPlaceholderText("quick search of the lines")
         self.line_search.setClearButtonEnabled(True)
-        self.line_search.textChanged.connect(lambda text: (self.lines.proxy.set_search(text), self._update_count()))
-        bl.addWidget(self.line_search)
+        self.line_search.textChanged.connect(lambda text: (self.lines.set_search(text), self._update_count()))
+        self.next_field = QComboBox()
+        self.next_field.setToolTip("The field Next empty looks for")
+        self.next_empty_btn = QPushButton("Next empty")
+        self.next_empty_btn.setToolTip("The next line (after the selected one) whose chosen field is empty")
+        self.next_empty_btn.clicked.connect(lambda *_: self.next_empty())
+        self.main._row(bl, self.line_search, self.next_field, self.next_empty_btn, stretch=False).setStretch(0, 1)
         self.count = QLabel()
         bl.addWidget(self.count)
         bl.addStretch(1)
@@ -546,7 +566,6 @@ class TextsPanel(QObject):
 
     def clear_filters(self):
         self.table.clear_filters()
-        self.lines.clear_filters()
         self.search.clear()
         self.line_search.clear()
 
@@ -576,7 +595,7 @@ class TextsPanel(QObject):
         n, shown = len(self.db.texts), self.table.proxy.rowCount()
         self.text_count.setText(f"{shown} of {n} text{'s' if n != 1 else ''} shown")
         k = len(self._lines) if self.current() is not None and not self.lines_error else 0
-        self.count.setText(f"{self.lines.proxy.rowCount()} of {k} line{'s' if k != 1 else ''} shown")
+        self.count.setText(f"{len(self.lines.visible_rows())} of {k} line{'s' if k != 1 else ''} shown")
 
     def grid_path(self, t: Text) -> Path | None:
         return storage.text_folder(self.db) / t.textgrid if t.textgrid else None
@@ -594,38 +613,158 @@ class TextsPanel(QObject):
         if not path.exists():
             self.lines_error = f"{path.name} isn't in Soundfiles\\Texts."
             return []
-        speaker = t.participants[0] if len(t.participants) == 1 else ""
         try:
-            return tgmod.read_lines(path, self.db.mapping_for(t), speaker)
+            buf = self.doc.buffer(t)              # the TextGrid as edited here (read once)
+            return buf.lines(self.db, t) if buf is not None else []
         except tgmod.TextGridError as exc:
-            self.lines_error = str(exc)
+            self.lines_error = str(exc).replace("the TextGrid", path.name, 1)
             return []
 
-    def _line_columns(self, t: Text | None) -> list[Column]:
+    # ---- the lines view (19 October) -----------------------------------------
+    def comment_key(self) -> str:
+        """The token field a line's Comment is (the side box): the first comment field."""
+        return next((f.name for f in self.db.settings.token_fields if f.is_comment), "")
+
+    def view_choices(self) -> list[tuple[str, str, bool]]:
+        """(key, title, IPA font) for what a line can show: the token fields (a multilingual one
+        once per language), the comment field and pitch aside."""
+        s = self.db.settings
+        out = []
+        for label, f, lang in field_choices(self.db)[2:]:
+            fd = s.token_field(f)
+            if fd is None or fd.is_comment or fd.role == "pitch":
+                continue
+            out.append((f"{f}:{lang}" if lang else f, label, fd.role in ("phonetic", "phonemic")))
+        return out
+
+    def view_specs(self) -> list[FieldSpec]:
+        """The fields each line shows (Configure view; one setting for all texts)."""
+        choices = {k: (title, ipa) for k, title, ipa in self.view_choices()}
+        prefs = self.main.prefs
+        keys = [k for k in prefs.get_list("lines/fields") if k in choices]
+        if not keys:                              # at first: the fields the tier mapping fills
+            mapped = {r.key for r in self.db.settings.tier_mapping.rules if r.field}
+            keys = [k for k in choices if k in mapped] or list(choices)[:4]
+        saved = prefs.get_list("lines/aligned")
+        aligned = set(saved) if saved != ["-"] else set()
+        if not saved:                             # at first: Phonemic and Morphemes line up
+            aligned = {k for k in keys if k.split(":")[0] in ("Phonemic", "Morphemes")}
+        s = self.db.settings
+        return [FieldSpec(k, choices[k][0], choices[k][1], k in aligned,
+                          bool((fd := s.token_field(k.split(":")[0])) and fd.role == "translation"))
+                for k in keys]
+
+    def configure_view(self):
+        dlg = ConfigureViewDialog(self.win, self.view_choices(), self.view_specs())
+        if dlg.exec():
+            keys, aligned = dlg.chosen()
+            self.main.prefs.set_list("lines/fields", keys)
+            self.main.prefs.set_list("lines/aligned", aligned or ["-"])
+            self._apply_view()
+
+    def _apply_view(self):
+        specs = self.view_specs()
+        self.lines.set_fields(specs, self.comment_key())
+        current = self.next_field.currentData()
+        self.next_field.blockSignals(True)
+        self.next_field.clear()
+        for spec in specs:
+            self.next_field.addItem(spec.title, spec.key)
+        if self.comment_key():
+            self.next_field.addItem(self.db.settings.token_field(self.comment_key()).title, self.comment_key())
+        i = self.next_field.findData(current)
+        self.next_field.setCurrentIndex(max(0, i))
+        self.next_field.blockSignals(False)
+
+    def restyle_icons(self):
+        """The Clip button's bubble in the theme colour."""
+        for b in self.bar.findChildren(QToolButton) if hasattr(self, "bar") else []:
+            if b.property("icon_name") == "clip":
+                b.setIcon(icon("clip", 20, theme.accent().name()))
+
+    def set_edit_mode(self, on: bool):
+        self.edit_btn.setChecked(on)
+        self.lines.set_edit_mode(on)
+        self.edit_label.setVisible(on)
+        self.edit_label.setStyleSheet(f"color: {theme.accent().name()}; font-weight: bold;")
+
+    def next_empty(self):
+        """The next line after the selected one whose chosen field is empty (wrapping round)."""
+        key = self.next_field.currentData()
+        rows = self.lines.visible_rows()
+        if not key or not rows:
+            return
+        cur = self.lines.current_row()
+        start = rows.index(cur) + 1 if cur in rows else 0
+        for ln in rows[start:] + rows[:start]:
+            if not ln.values.get(key, "").strip():
+                self.lines.select_row(ln)
+                if self.lines.edit_mode:
+                    self.lines.start_edit(ln, key)
+                return
+        self.main.statusBar().showMessage(f"No line has an empty {self.next_field.currentText()}.", 5000)
+
+    def select_line_at(self, start: float | None):
+        """Show the line starting at this time (from a notebook link)."""
+        if start is None:
+            return
+        hit = min(self.lines.rows, key=lambda ln: abs(ln.start - start), default=None)
+        if hit is not None and abs(hit.start - start) < 0.01:
+            self.line_search.clear()
+            self.lines.select_row(hit)
+
+    def set_line_field(self, line, key: str, value: str):
+        """An edit made in the lines view: into the TextGrid (held until saving), with the
+        utterances clipped from the line and, for the Comment, the notebook. One undo step."""
+        t = self.current()
+        buf = self.doc.buffer(t, reload_if_saved_elsewhere=False) if t is not None else None
+        if buf is None:
+            return
         db = self.db
-        s = db.settings
-        cols = [Column("start", "Start", lambda l: clock(l.start)),
-                Column("end", "End", lambda l: clock(l.end)),
-                Column("speaker", "Speaker", lambda l: l.speaker)]
-        mapping = db.mapping_for(t) if t is not None else s.tier_mapping
-        keys = []
-        for label, f, lang in field_choices(db)[1:]:
-            key = f"{f}:{lang}" if lang else f
-            if any(r.field == f and r.lang == lang for r in mapping.rules):
-                keys.append(key)
-                fd = s.token_field(f)
-                cols.append(Column("v:" + key, label, lambda l, k=key: l.values.get(k, ""),
-                                   ipa=bool(fd and fd.role in ("phonetic", "phonemic"))))
-        clips = {}
-        if t is not None:
-            for u in db.clipped_from(t):
-                clips.setdefault((round(u.source.start, 2), round(u.source.end, 2)), []).append(u.ref)
-        cols.append(Column("clips", "Utterances",
-                           lambda l: ", ".join(clips.get((round(l.start, 2), round(l.end, 2)), [])),
-                           lemma_level=True,
-                           tooltip=lambda l: "Clipped as these utterances: double-click to show one"
-                           if clips.get((round(l.start, 2), round(l.end, 2))) else None))
-        return cols
+        before = buf.lines(db, t)
+        line = next((ln for ln in before if ln.id == line.id), None)
+        if line is None:
+            return
+        try:
+            edits = lmod.plan_edit(buf, db, t, line, key, value)
+        except lmod.LineEditError as exc:
+            QMessageBox.warning(self.win, "Edit line", str(exc))
+            self._show_lines()
+            return
+        if not edits:
+            return
+        merges = lmod.would_merge(edits)
+        if merges and QMessageBox.question(
+                self.win, "Edit line", "This edit will merge several segments in Praat: "
+                + ", ".join(f"{tier} ({n} segments)" for tier, n in merges)
+                + ". The line's segments in that tier become one.") != QMessageBox.Yes:
+            self._show_lines()
+            return
+        if any(e.created for e in edits):
+            self.doc.settings_changed()               # the new tier's rule in the tier mapping
+        buf.apply(edits)
+        after = buf.lines(db, t)
+        pairs = lmod.follow_clips(db, t, before, after, line, key, edits)
+        utterances = []
+        for u, a in pairs:
+            b = u.copy()
+            u.__dict__.update(a.copy().__dict__)
+            utterances.append((u, b, a))
+        note = None
+        if key == self.comment_key():
+            c = nbmod.line_comment(db, t, line.start, key, value, clock(line.start))
+            k = self.main.session_keys()
+            note = nbmod.record_line_comment(self.doc.notebook, db, self.main.work_date(), c,
+                                             k.get("researchers", []), k.get("participants", []),
+                                             k.get("locations", []))
+        title = self.db.settings.token_field(key.split(":")[0])
+        self.doc.push_line_edit(f"Edit {t.ref} {clock(line.start)} {title.title if title else key}", t, buf,
+                                edits, utterances, note)
+
+    def _lines_edited(self, text_id: str):
+        t = self.current()
+        if t is not None and t.id == text_id:
+            self._show_lines()
 
     def _grid_stamp(self, t):
         path = self.grid_path(t) if t is not None else None
@@ -638,25 +777,24 @@ class TextsPanel(QObject):
         """The window is active again (back from Praat): show the lines again if the TextGrid changed."""
         t = self.current()
         if t is not None and self._grid_stamp(t) != getattr(self, "_shown_stamp", None):
-            selected = [ln.id for ln in self.selected_lines()]
             self._show_lines()
-            for ln in self._lines:
-                if ln.id in selected:
-                    self.lines.select_row(ln)
-                    break
 
     def _show_lines(self):
         t = self.current()
         self._shown_stamp = self._grid_stamp(t)
-        key = (id(t), t.textgrid if t else None, t.tiers if t else None)
         lines = self.lines_of(t) if t is not None else []
         self._lines = lines
-        cols = self._line_columns(t)
-        self.lines.set_columns(cols, [c.key for c in cols])
-        self.lines.set_rows(lines)
-        if self._lines_for != key:
-            self.lines.resizeColumnsToContents()
-            self._lines_for = key
+        if not self.lines.fields:
+            self._apply_view()
+        clips = {}
+        if t is not None:
+            from ..pull import find_line
+            for u in self.db.clipped_from(t):
+                ln = find_line(lines, u.source)
+                if ln is not None and abs(ln.start - u.source.start) < 0.01:
+                    clips.setdefault(ln.id, []).append(u.ref)
+        self.lines.set_lines(lines, clips, show_speaker=len({ln.speaker for ln in lines if ln.speaker}) > 1)
+        buf = self.doc.text_buffers.get(t.id) if t is not None else None
         if t is None:
             self.lines_title.setText("Lines" if self.db.texts else
                                      "No texts yet: Add one, with its recording and Praat TextGrid.")
@@ -664,7 +802,12 @@ class TextsPanel(QObject):
             self.lines_title.setText(f"Lines of {t.ref}: "
                                      f"<span style='color:{theme.colour('error').name()}'>{self.lines_error}</span>")
         else:
-            self.lines_title.setText(f"Lines of {t.ref} {self.db.text_title(t)}")
+            note = ""
+            if buf is not None and buf.changed:
+                note = ("  <span style='color:%s'>· edits not yet saved into the TextGrid%s</span>"
+                        % (theme.colour("error").name() if buf.disk_changed() else theme.muted(),
+                           " (and Praat has saved it since: saving will ask)" if buf.disk_changed() else ""))
+            self.lines_title.setText(f"Lines of {t.ref} {self.db.text_title(t)}{note}")
         self._update_count()
 
     # ---- texts -------------------------------------------------------
@@ -682,6 +825,23 @@ class TextsPanel(QObject):
             return
         self.doc.add_entry(t, renames=renames)
         self.select(t)
+        self._note_comments(t)
+
+    def _note_comments(self, t: Text):
+        """A text just added: the comments already in its TextGrid go into the notebook, in the
+        day the text was recorded (Josh, 19 October)."""
+        key = self.comment_key()
+        if not key or not t.date:
+            return
+        lines = [ln for ln in self.lines_of(t) if ln.values.get(key, "").strip()]
+        for ln in lines:
+            c = nbmod.line_comment(self.db, t, ln.start, key, ln.values[key], clock(ln.start))
+            nbmod.record_line_comment(self.doc.notebook, self.db, t.date, c, t.researchers, t.participants,
+                                      t.locations)
+        if lines:
+            self.doc.notebook_changed()
+            self.main.statusBar().showMessage(f"{len(lines)} comment(s) from {t.ref}'s TextGrid went into the "
+                                              f"notebook for {t.date}.", 8000)
 
     def _copy_in(self, t: Text, wav: Path | None, grid: Path | None) -> list | None:
         """Copy a new recording and TextGrid into Soundfiles/Texts under the text's names. A file
@@ -816,6 +976,13 @@ class TextsPanel(QObject):
         if wav is None or not wav.exists():
             QMessageBox.information(self.win, "Open in Praat", "This text has no recording in Soundfiles\\Texts.")
             return
+        buf = self.doc.text_buffers.get(t.id)
+        if buf is not None and buf.changed:           # Praat would read the file without them
+            r = QMessageBox.question(self.win, "Open in Praat", f"{t.ref} has line edits that aren't saved into "
+                                     "its TextGrid yet, so Praat would show it without them. Save first?",
+                                     QMessageBox.Save | QMessageBox.Ignore | QMessageBox.Cancel, QMessageBox.Save)
+            if r == QMessageBox.Cancel or (r == QMessageBox.Save and not self.main.save()):
+                return
         grid = self.grid_path(t)
         lines = self.selected_lines()                 # opened at the selected line(s)
         select = (min(l.start for l in lines), max(l.end for l in lines)) if lines else None
@@ -823,11 +990,7 @@ class TextsPanel(QObject):
 
     # ---- lines ---------------------------------------------------------
     def selected_lines(self) -> list:
-        rows = sorted({self.lines.proxy.mapToSource(i).row() for i in self.lines.selectionModel().selectedRows()})
-        out = [self.lines.model_.rows[r] for r in rows]
-        if not out and self.lines.current_row() is not None:
-            out = [self.lines.current_row()]
-        return out
+        return self.lines.selected()
 
     def play_line(self, context: bool = False):
         t = self.current()

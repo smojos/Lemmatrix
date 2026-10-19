@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import storage, textgrid as tgmod
-from .model import ClipSource, Database, Text, Utterance, tier_base
+from .model import SPEAKER_FIELD, ClipSource, Database, Text, Utterance, tier_base
 
 OK = "ok"
 CHANGED = "changed"            # the text of a tier is different
@@ -104,8 +104,9 @@ def find_line(lines, src: ClipSource):
     return best
 
 
-def check(db: Database, u: Utterance) -> Check | None:
-    """The state of a clipped utterance's line (None for an utterance not clipped from a text)."""
+def check(db: Database, u: Utterance, buffers: dict | None = None) -> Check | None:
+    """The state of a clipped utterance's line (None for an utterance not clipped from a text).
+    buffers: text id -> lines.Buffer, so unsaved line edits made in Lemmatrix are seen."""
     src = u.source
     if src is None:
         return None
@@ -117,22 +118,26 @@ def check(db: Database, u: Utterance) -> Check | None:
     path = storage.text_folder(db) / t.textgrid
     if not path.exists():
         return Check(u, NO_TEXTGRID, t, message=f"{t.textgrid} isn't in Soundfiles\\Texts.")
+    buf = (buffers or {}).get(t.id)
+    if buf is not None and not buf.changed:
+        buf = None                              # nothing unsaved: the file says the same
     try:
-        tier_names = [ti.name for ti in tgmod.tiers(path) if ti.kind == "intervals"]
+        infos = tgmod.tiers_of(buf.tg) if buf is not None else tgmod.tiers(path)
+        tier_names = [ti.name for ti in infos if ti.kind == "intervals"]
     except (tgmod.TextGridError, OSError) as exc:
         return Check(u, NO_TEXTGRID, t, message=str(exc))
     edited = edited_tiers(db, u, t, tier_names)
-    if src.modified and tgmod.modified(path) == src.modified:
+    if buf is None and src.modified and tgmod.modified(path) == src.modified:
         return Check(u, OK, t, edited=edited)   # not saved since it was clipped
     try:
-        lines = _lines(db, t, path)
+        lines = buf.lines(db, t) if buf is not None else _lines(db, t, path)
     except (tgmod.TextGridError, OSError) as exc:
         return Check(u, NO_TEXTGRID, t, message=str(exc))
     ln = find_line(lines, src)
     if ln is None:
         return Check(u, NOT_FOUND, t, message=f"The line isn't in {t.ref}'s TextGrid any more.")
     mapping = db.mapping_for(t)
-    present = {ti.name for ti in tgmod.tiers(path)}
+    present = set(tier_names)
     changes = []
     for tier in [*src.copied, *(x for x in ln.copied if x not in src.copied)]:
         if tier not in present:
@@ -158,7 +163,8 @@ def target_tiers(db: Database, t: Text, src: ClipSource, tier_names) -> list[tup
     out, keys = [], set()
     for name in tier_names:
         rule = mapping.rule(name)
-        if rule is None or not rule.field or tier_base(name)[1] not in speakers or rule.key in keys:
+        if rule is None or not rule.field or rule.field == SPEAKER_FIELD or tier_base(name)[1] not in speakers \
+                or rule.key in keys:
             continue
         keys.add(rule.key)
         out.append((name, rule.key))
@@ -176,11 +182,11 @@ def describe_edits(c: Check) -> str:
     return f"Edited in Lemmatrix ({', '.join(c.edited)}): Push to source… writes it into the TextGrid."
 
 
-def check_all(db: Database) -> dict[str, Check]:
+def check_all(db: Database, buffers: dict | None = None) -> dict[str, Check]:
     """utterance id -> its check, for every clipped utterance."""
     out = {}
     for u in db.utterances:
-        c = check(db, u)
+        c = check(db, u, buffers)
         if c is not None:
             out[u.id] = c
     return out
