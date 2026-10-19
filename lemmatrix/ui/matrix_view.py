@@ -437,6 +437,9 @@ class MatrixView(QTableView):
             self.viewport().update()
             self.contextRequested.emit(*hit, self.viewport().mapToGlobal(pos))
 
+    def keyboardSearch(self, search: str):
+        """No type-to-jump: IPA takes several keystrokes per symbol, so jumping only confuses (Josh, 19 October)."""
+
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Return, Qt.Key_Enter):
             idx = self.currentIndex()

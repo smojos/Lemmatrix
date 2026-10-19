@@ -609,6 +609,9 @@ class FilterTable(QTableView):
             return
         self.rowActivated.emit(self.row_at(idx))
 
+    def keyboardSearch(self, search: str):
+        """No type-to-jump: IPA takes several keystrokes per symbol, so jumping only confuses (Josh, 19 October)."""
+
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Return, Qt.Key_Enter) and self.state() != QAbstractItemView.EditingState:
             row = self.current_row()

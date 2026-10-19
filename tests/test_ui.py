@@ -1836,3 +1836,13 @@ def test_open_in_praat_shortcut_and_new_icons(win):
     assert QKeySequence("Ctrl+Alt+Space") in keys
     for name in ("gear-cells", "gear-columns", "find-missing", "praat"):
         assert not themed_icon(name, 20).isNull()
+
+
+def test_typing_a_letter_does_not_jump(win):
+    """Removed 19 October: typing a letter in a data table jumped to the next row starting with it."""
+    from PySide6.QtTest import QTest
+    for t in (win.all_table, win.lemmas):
+        t.setCurrentIndex(t.model().index(0, 1))
+        for ch in "kc":
+            QTest.keyClicks(t, ch)
+        assert t.currentIndex().row() == 0
