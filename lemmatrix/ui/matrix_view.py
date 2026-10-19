@@ -131,7 +131,9 @@ class MatrixModel(QAbstractTableModel):
                 return f"{it.entry.ref}  {self.db.lemma(it.entry)}  “{self.db.gloss(it.entry)}”"
             if it.spec:
                 kind = {mx.CITATION: "Citation", mx.EXACT: "Exact", mx.LOOSE: "Loose"}[it.spec.match]
-                return f"{kind}: {', '.join(sorted(it.spec.tags)) or 'no tags'}"
+                tip = f"{kind}: {', '.join(self.db.settings.tags.sort(it.spec.tags)) or 'no tags'}"
+                d = self.db.settings.tags.descriptions(it.spec.tags)
+                return tip + ("\n" + d if d else "")
         return None
 
 

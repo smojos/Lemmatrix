@@ -49,8 +49,11 @@ def _code(db: Database, e: Entry, tag: str) -> str:
 
 
 def database_table(db: Database, entries: list[Entry] | None = None) -> tuple[list[str], list[list[str]]]:
-    """Every lemma field and token field: one row per token, lemmas without tokens on a row of their own."""
-    entries = db.entries if entries is None else entries
+    """Every lemma field and token field: one row per token, lemmas without tokens on a row of their own.
+    The entire database (entries None) has utterances too, after the lemmas: their lemma columns are
+    blank but for the reference and (in Gloss in file names) the file label. Kind says which is which."""
+    whole = entries is None
+    entries = db.entries if whole else entries
     lcols, tcols = _lemma_columns(db), _token_columns(db)
     lnames, tnames = [n for n, _ in lcols], [n for n, _ in tcols]
     shared = set(lnames) & set(tnames)            # e.g. a Comment on both lemmas and tokens
@@ -62,6 +65,36 @@ def database_table(db: Database, entries: list[Entry] | None = None) -> tuple[li
         tokens: list[Token | None] = list(e.tokens) or [None]
         for t in tokens:
             rows.append(lemma + [get(e, t) for _, get in tcols])
+    if whole and db.utterances:
+        header = header[:1] + ["Kind"] + header[1:]
+        rows = [r[:1] + ["Lemma"] + r[1:] for r in rows]
+        for u in db.utterances:
+            lemma = [""] * len(lcols)
+            lemma[0], lemma[-1] = u.ref, u.label
+            for t in u.tokens:
+                row = lemma + [get(u, t) for _, get in tcols]
+                rows.append(row[:1] + ["Utterance"] + row[1:])
+    return header, rows
+
+
+def tag_structure_table(db: Database) -> tuple[list[str], list[list[str]]]:
+    """File → Export → Tag structure: one row per group and tag, in tag order."""
+    ts = db.settings.tags
+    usual, only = ts.usual_map(), ts.only_map()
+    header = ["Group", "Tag", "Code", "Default", "Usual for", "Description"]
+    rows = []
+
+    def walk(g, path):
+        here = path + [g.name]
+        hint = "utterances only" if only.get(id(g)) else (", ".join(usual.get(id(g), ())) or "every lemma")
+        rows.append([" › ".join(here), "", "", "", hint, g.description])
+        for t in g.tags:
+            rows.append([" › ".join(here), t.name, t.file_code(), "yes" if t.default else "", "",
+                         t.description])
+        for sub in g.groups:
+            walk(sub, here)
+    for g in ts.groups:
+        walk(g, [])
     return header, rows
 
 

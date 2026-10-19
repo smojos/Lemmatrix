@@ -763,7 +763,7 @@ class TagStructureDialog(QDialog):
         return it
 
     def _fill_group(self, parent_item, g: Group):
-        gi = self._item(KIND_GROUP, g.name, usual=g.usual, only=g.utterances_only)
+        gi = self._item(KIND_GROUP, g.name, desc=g.description, usual=g.usual, only=g.utterances_only)
         if parent_item is None:
             self.tree.addTopLevelItem(gi)
         else:
@@ -929,7 +929,7 @@ class TagStructureDialog(QDialog):
 
     def _read_group(self, gi) -> Group:
         g = Group(nfc(gi.text(NAME).strip()), usual=list(gi.data(NAME, USUAL_ROLE) or []),
-                  utterances_only=bool(gi.data(NAME, ONLY_ROLE)))
+                  utterances_only=bool(gi.data(NAME, ONLY_ROLE)), description=nfc(gi.text(DESC).strip()))
         for i in range(gi.childCount()):
             c = gi.child(i)
             if c.data(NAME, Qt.UserRole) == KIND_TAG:
@@ -1017,23 +1017,63 @@ class TagStructureDialog(QDialog):
         return sum(1 for _, t in self.db.all_tokens() if names & set(t.tags))   # utterances too
 
     def _names_under(self, item) -> set[str]:
+        """The tags in item (a tag, or a group and everything in it), by the names tokens use."""
         out = set()
         if item.data(NAME, Qt.UserRole) == KIND_TAG:
-            out.add(item.text(NAME))
+            out.add(item.data(NAME, Qt.UserRole + 1) or item.text(NAME))
         for i in range(item.childCount()):
             out |= self._names_under(item.child(i))
+        return out
+
+    def deleted_tags(self) -> set[str]:
+        """Tags deleted in this dialogue that tokens use: they're taken off those tokens."""
+        gone = set(getattr(self, "_deleted", set()))
+        if gone:                                      # (one added again with the same name stays)
+            gone -= {it.data(NAME, Qt.UserRole + 1) for it in self._tag_items()}
+            gone -= {nfc(it.text(NAME).strip()) for it in self._tag_items()}
+        return gone
+
+    def clashes(self, names: set[str]) -> list[str]:
+        """Lemmas where taking these tags off would leave two tokens with the same tags."""
+        gone = self.deleted_tags() | set(names)
+        out = []
+        for e in self.db.entries:                     # utterances have one token each
+            if not any(gone & set(t.tags) for t in e.tokens):
+                continue
+            seen = {}
+            for t in e.tokens:
+                key = frozenset(x for x in t.tags if x not in gone)
+                if key in seen:
+                    what = self.db.settings.tags.display(sorted(key)) if key else "Citation"
+                    out.append(f"{e.ref} {self.db.gloss(e)}: two tokens would both be {what}")
+                    break
+                seen[key] = t
         return out
 
     def _delete(self):
         cur = self._selected()
         if cur is None:
             return
-        n = self._used(self._names_under(cur))
-        msg = f"Delete {cur.data(NAME, Qt.UserRole)} “{cur.text(NAME)}”?"
+        names = self._names_under(cur)
+        n = self._used(names)
+        what = f"{cur.data(NAME, Qt.UserRole)} “{cur.text(NAME)}”"
         if n:
-            msg += f"\n{n} tokens still use it; their tags are kept but no longer recognised."
+            clash = self.clashes(names)
+            if clash:
+                QMessageBox.warning(self, "Delete", f"{what} can't be deleted yet: taking it off the tokens "
+                                    "that use it would leave two tokens of a lemma with the same tags, so "
+                                    "their recordings would get the same name:\n\n" + "\n".join(clash[:20])
+                                    + (f"\n… and {len(clash) - 20} more" if len(clash) > 20 else "")
+                                    + "\n\nGive those tokens other tags first (or delete one of each pair).")
+                return
+            msg = (f"{what} is used by {n} token{'s' if n != 1 else ''}. Delete it and take it off "
+                   f"{'them' if n != 1 else 'it'}?\n\nTheir recordings' names change with their tags.")
+        else:
+            msg = f"Delete {what}?"
         if QMessageBox.question(self, "Delete", msg) != QMessageBox.Yes:
             return
+        if n:
+            self._deleted = self.deleted_tags() | {x for x in names if self._used({x})}
         parent = cur.parent()
         if parent:
             parent.removeChild(cur)

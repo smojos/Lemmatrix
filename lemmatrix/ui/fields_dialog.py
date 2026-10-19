@@ -163,13 +163,16 @@ class FieldsDialog(QDialog):
         outer = QHBoxLayout(self)
         left = QVBoxLayout()
         self.widgets = {}
+        self.delete_buttons = {}
         for kind, title in (("lemma", "Lemma fields"), ("token", "Token fields"), ("text", "Text fields")):
             box = QGroupBox(title)
             bl = QVBoxLayout(box)
             head = QHBoxLayout()
             head.addStretch(1)
             head.addWidget(_tool("add", f"Add a {kind} field", lambda k=kind: self._add(k)))
-            head.addWidget(_tool("delete", "Delete the selected field", lambda k=kind: self._delete(k)))
+            delete = _tool("delete", "Delete the selected field", lambda k=kind: self._delete(k))
+            self.delete_buttons[kind] = delete
+            head.addWidget(delete)
             head.addWidget(_tool("up", "Move up", lambda k=kind: self._shift(k, -1)))
             head.addWidget(_tool("down", "Move down", lambda k=kind: self._shift(k, 1)))
             bl.addLayout(head)
@@ -262,6 +265,10 @@ class FieldsDialog(QDialog):
             self.widgets[other].blockSignals(False)
         self.current = (kind, row)
         f = self.lists[kind][row]
+        b = self.delete_buttons[kind]
+        b.setEnabled(not f.builtin)
+        b.setToolTip(f"{f.title} is needed by Lemmatrix: it can be renamed or moved, but not deleted"
+                     if f.builtin else "Delete the selected field")
         self.detail.setTitle(f"{kind.capitalize()} field: {f.title}")
         for w in (self.label, self.name, self.open_rb, self.closed_rb):
             w.blockSignals(True)
@@ -280,7 +287,8 @@ class FieldsDialog(QDialog):
                               "in Edit → Tag structure.")
             self.list_editor.setVisible(False)
         else:
-            self.note.setText("Built in: it can be relabelled and moved, but not deleted." if f.builtin else "")
+            self.note.setText("Needed by Lemmatrix: it can be renamed (Label) and moved, but not deleted."
+                              if f.builtin else "")
             self.list_editor.setVisible(f.closed)
             if f.closed and not f.items:
                 self._fill_from_data(kind, f)

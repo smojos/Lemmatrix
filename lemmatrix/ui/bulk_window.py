@@ -728,6 +728,8 @@ class BulkEditWindow(QDialog):
             for path, g in s.tags.leaf_groups():
                 for tg in g.tags:
                     self.v_tag.addItem(f"{tg.name}   ({' › '.join(path)})", tg.name)
+                    if tg.description:
+                        self.v_tag.setItemData(self.v_tag.count() - 1, tg.description, Qt.ToolTipRole)
             self.v_stack.setCurrentIndex(2)
             note = ("Adding a tag takes off any other tag of its group. A tag that isn't usual for a "
                     "lemma's word class is allowed, and marked.")

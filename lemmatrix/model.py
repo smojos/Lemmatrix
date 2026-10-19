@@ -106,6 +106,7 @@ class Group:
     groups: list["Group"] = field(default_factory=list)
     usual: list[str] = field(default_factory=list)    # word classes it's usual for ([]: its parent's)
     utterances_only: bool = False                      # a rule: its tags go on utterances only (subgroups too)
+    description: str = ""
 
     def leaf_groups(self, path: tuple[str, ...] = ()):
         """Yield (path, group) for every group that directly holds tags, in order."""
@@ -281,6 +282,23 @@ class TagStructure:
             labels.append(t.display() if t else n)
         return " + ".join(labels)
 
+    def descriptions(self, names) -> str:
+        """The descriptions of these tags, one line each ("Frame 1: I saw ___"), for tooltips;
+        "" if none of them has one."""
+        out = []
+        for n in self.sort(names):
+            t = self.tag(n)
+            if t and t.description:
+                out.append(f"{t.name}: {t.description}")
+        return "\n".join(out)
+
+    def tag_tip(self, names, empty: str = "Citation (no tags)") -> str:
+        """A tooltip for a tag combination: the names, then any descriptions."""
+        names = self.sort(names)
+        tip = ", ".join(names) or empty
+        d = self.descriptions(names)
+        return tip + ("\n" + d if d else "")
+
     def duplicate_names(self) -> list[str]:
         seen: dict[str, int] = {}
         for t, _ in self.tags():
@@ -319,6 +337,11 @@ class ListItem:
             yield from c.walk()
 
 
+# Fields other features depend on: they can be relabelled and moved, but not deleted (idea 9).
+CORE_ROLES = ("lemma", "gloss", "word-class", "phonetic", "phonemic", "morphemes", "pitch", "translation",
+              "comment", "title", "genre", "status")
+
+
 @dataclass
 class FieldDef:
     name: str                    # XML element name, no spaces
@@ -343,8 +366,7 @@ class FieldDef:
     @property
     def builtin(self) -> bool:
         """Built-in fields can be relabelled and moved but not deleted."""
-        return self.role in ("lemma", "gloss", "word-class", "phonetic", "phonemic", "pitch",
-                             "translation", "title", "genre", "status")
+        return self.role in CORE_ROLES
 
     def all_values(self) -> list[str]:
         return [i.name for top in self.items for i in top.walk()]

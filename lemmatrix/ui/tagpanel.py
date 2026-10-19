@@ -78,6 +78,8 @@ class TagPanel(QWidget):
             title = QLabel(g.name.lower())
             title.setStyleSheet(f"font-style: italic; color: {theme.muted()};")
             title.setAlignment(Qt.AlignRight)
+            if g.description:
+                title.setToolTip(g.description)
             self.box.addWidget(title)
             holder = QWidget()
             flow = FlowLayout(holder, spacing=6)

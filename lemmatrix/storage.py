@@ -65,7 +65,7 @@ def _split(text: str | None) -> list[str]:
 
 def _load_group(el) -> Group:
     g = Group(name=nfc(el.get("name", "")), usual=_split(el.get("usual")),
-              utterances_only=_bool(el.get("utterances-only")))
+              utterances_only=_bool(el.get("utterances-only")), description=nfc(el.get("description", "")))
     for child in el:
         if child.tag == "tag":
             g.tags.append(Tag(name=nfc(child.get("name", "")), code=nfc(child.get("code", "")),
@@ -279,6 +279,12 @@ def load(path: str | os.PathLike) -> Database:
                         t.changed[child.tag] = child.get("changed")
             db.texts.append(t)
     _unique_ids(db)
+    from .defaults import ensure_core_fields
+    restored = ensure_core_fields(db.settings)
+    if restored:
+        db.load_notes = list(db.load_notes) + [
+            f"Restored the field{'s' if len(restored) > 1 else ''} {', '.join(restored)}: other features "
+            "need it, so it can be renamed or moved in Edit → Fields but not deleted. It's empty."]
     if version == "5":
         _upgrade_5_to_6(db)
     if repaired:
@@ -356,6 +362,8 @@ def _save_group(parent, g: Group):
         el.set("usual", ", ".join(g.usual))
     if g.utterances_only:
         el.set("utterances-only", "yes")
+    if g.description:
+        el.set("description", g.description)
     for t in g.tags:
         tel = ET.SubElement(el, "tag", name=t.name)
         if t.code and not t.default:

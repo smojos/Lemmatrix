@@ -63,7 +63,7 @@ class TokenRow:
 
 INK_ICONS = THEMED                 # drawn in the theme's colours, so they follow the theme
 ICON_ONLY = {"add", "delete", "edit", "play", "reset-filters",   # obvious, shared actions: the name is in the tooltip
-             "gear-cells", "gear-columns", "gear-matrix", "find-missing"}
+             "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token"}
 
 
 def tool(text: str, icon_name: str | None, fn, tip: str = "") -> QToolButton:
@@ -332,6 +332,8 @@ class MainWindow(QMainWindow):
                         tool("Delete", "delete", self.delete_token, "Delete the selected token (Delete)"),
                         tool("Edit", "edit", self.edit_token, "Edit the selected token (Enter)"),
                         tool("Play", "play", self.play_selected, "Play the selected token (Ctrl+Space)"),
+                        tool("Move token to another lemma", "move-token", self.move_token,
+                             "Move the selected token to another lemma…"),
                         tool("Find missing or unlinked recordings", "find-missing", self.find_missing_recordings,
                              "Find missing or unlinked recordings…"),
                         tool("Configure columns", "gear-columns", self.configure_all_columns),
@@ -498,6 +500,7 @@ class MainWindow(QMainWindow):
         ex = f.addMenu("&Export")
         self._act(ex, "&Filtered database (current tab) as CSV…", lambda: self.export_csv(filtered=True))
         self._act(ex, "&Entire database as CSV…", lambda: self.export_csv(filtered=False))
+        self._act(ex, "&Tag structure as CSV…", lambda: self.export_csv(filtered=False, tags=True))
         ex.addSeparator()
         self._act(ex, "&Anonymous backup…", self.export_anonymous)
         f.addSeparator()
@@ -607,7 +610,7 @@ class MainWindow(QMainWindow):
                    closed=True, tree=lambda: s.list_items(wcf) if wcf else [], lemma_level=True),
             Column("tags", "Tags", lambda r: list(r.token.tags), closed=True, tree=tag_tree, multi=True,
                    unmarked=defaults, kind="chips",
-                   tooltip=lambda r: (", ".join(r.token.tags) or "Citation (no tags)")
+                   tooltip=lambda r: s.tags.tag_tip(r.token.tags)
                    + "".join("\n⚠ " + n for n in (mx.unusual_notes(db, r.entry, r.token.tags)
                                                     if self.prefs.warn_unusual_tags else []))),
             Column("drawing", "Pitch drawing", lambda r: r.token.get("Pitch"), kind="drawing",
@@ -1957,15 +1960,77 @@ class MainWindow(QMainWindow):
         accept = ([None, ("Accept suggested translation", "", lambda r=row: self.accept_suggestion(r))]
                   if self.suggestion_for(row) else [])
         self._menu([*self._spelling_items(self.all_table, pos, row),("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
-                    ("Edit token", "edit", self.edit_token), *accept, None, *self._token_items(),
+                    ("Edit token", "edit", self.edit_token), self._move_item(), *accept, None,
+                    *self._token_items(),
                     *self._pitch_items(self._pitch_column_at(pos)), *self._same_tags_items(row, pos), None,
                     ("Configure columns", "gear-columns", self.configure_all_columns),
                     ("Clear all filters", "reset-filters", self._clear_all_filters)], pos)
 
     def _matrix_menu(self, tab, pos):
         self._menu([("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
-                    ("Edit token", "edit", self.edit_token), None, *self._token_items(),
+                    ("Edit token", "edit", self.edit_token), self._move_item(), None, *self._token_items(),
                     *self._pitch_items()], pos)
+
+    def _move_item(self):
+        return ("Move to another lemma…", "move-token", self.move_token, self.selected_token() is not None)
+
+    def move_token(self):
+        """Move the selected token (with its recording) to another lemma: one undo step."""
+        from .. import move as mv
+        from .move_dialog import MoveTokenDialog
+        sel = self.selected_token()
+        if sel is None:
+            QMessageBox.information(self, "Move token", "Select a token first.")
+            return
+        db = self.doc.db
+        source, index = sel
+        dlg = MoveTokenDialog(self, db, source, index, self.prefs.ipa_size)
+        if not dlg.exec() or dlg.chosen() is None:
+            return
+        target = dlg.chosen()
+        folder = storage.sound_folder(db)
+        plan = mv.plan(db, [sel], target, folder)
+        if not plan.moves:
+            return
+        add_examples = False
+        if plan.clashes:
+            m = plan.clashes[0]
+            found = db.settings.tags.find(m.example)
+            code = found[0].display() if found else "x" + m.example.rsplit(" ", 1)[-1]
+            box = QMessageBox(QMessageBox.Question, "Same tags",
+                              f"{m.clash}.\n\nAdd the example tag {code}, so its recording gets a name of "
+                              "its own?", parent=self)
+            add = box.addButton(f"Add {code}", QMessageBox.AcceptRole)
+            keep = box.addButton("Move it as it is", QMessageBox.DestructiveRole)
+            box.addButton(QMessageBox.Cancel)
+            box.setDefaultButton(add)
+            box.exec()
+            if box.clickedButton() not in (add, keep):
+                return
+            add_examples = box.clickedButton() is add
+        self.player.stop()
+        pairs, renames, grew = mv.changes(db, plan, folder, add_examples)
+        trouble = self.doc.apply_changes(f"Move token to {target.ref}", pairs, renames, stamp=False)
+        if trouble:
+            QMessageBox.warning(self, "Move token", "The token wasn't moved:\n" + "\n".join(trouble))
+            return
+        if grew:
+            self.doc.settings_changed()
+        moved = plan.moves[0].token
+        idx = next((i for i, t in enumerate(target.tokens) if t.id == moved.id), None)
+        notes = mx.unusual_notes(db, target, moved.tags) if self.prefs.warn_unusual_tags else []
+        msg = f"Moved the token to {target.ref} {db.lemma(target)}."
+        if notes:
+            msg += " Its tags aren't all usual for this lemma's word class (marked)."
+        if moved.file and not db.settings.auto_update_names and moved.file != db.expected_filename(target, moved):
+            msg += " Its recording's name is out of date (Update file name)."
+        if plan.problems:
+            QMessageBox.information(self, "Move token", msg + "\n\nNot renamed:\n" + "\n".join(plan.problems))
+        self.statusBar().showMessage(msg, 10000)
+        if idx is not None and self.tabs.currentIndex() == ALL_DATA:   # shown where it went, if it's in view
+            row = TokenRow(target, idx)
+            if row in self.all_table.visible_rows():
+                self.all_table.select_row(row)
 
     def _same_tags_items(self, row, pos) -> list:
         """On the Tags column: Filter for same, the Tags filter set to exactly this token's tags."""
@@ -2145,7 +2210,17 @@ class MainWindow(QMainWindow):
         s = db.settings
         tag_renames = dlg.renames()
         value_renames = value_renames or {}
+        deleted = dlg.deleted_tags() if hasattr(dlg, "deleted_tags") else set()
+        old_codes = {t.name: t.file_code() for t, _ in s.tags.tags()}
+        names_before = {id(t): db.expected_filename(e, t) for e, t in db.all_tokens() if t.file}
         s.tags = dlg.structure()
+        new_codes = {t.name: t.file_code() for t, _ in s.tags.tags()}
+        recoded = {tag_renames.get(n, n) for n, c in old_codes.items()
+                   if tag_renames.get(n, n) in new_codes and new_codes[tag_renames.get(n, n)] != c}
+        if deleted:                                   # deleted tags come off the tokens that used them
+            for _, t in db.all_tokens():
+                if deleted & set(t.tags):
+                    t.tags = [x for x in t.tags if x not in deleted]
         wcf = s.entry_field("word-class")
         if wcf is not None:                         # the hints follow renamed word classes
             s.tags.rename_classes(value_renames.get(wcf.name, {}))
@@ -2161,7 +2236,7 @@ class MainWindow(QMainWindow):
             for t in e.tokens:
                 if any(x in tag_renames for x in t.tags):
                     t.tags = s.tags.sort([tag_renames.get(x, x) for x in t.tags])
-        if tag_renames or any(value_renames.values()):
+        if tag_renames or deleted or any(value_renames.values()):
             self.doc.undo.clear()     # renames can't be undone safely
             for m in s.matrices:                      # saved matrices follow too
                 m.rename(tag_renames)
@@ -2169,6 +2244,22 @@ class MainWindow(QMainWindow):
                 cfg.rename(tag_renames)
         self._setup_columns()
         self.doc.settings_changed()
+        # Recordings whose names a changed code or a deleted tag put out of date: renamed straight
+        # away when names update automatically, otherwise asked about.
+        moved = {id(t) for e, t in db.all_tokens()
+                 if t.file and id(t) in names_before and db.expected_filename(e, t) != names_before[id(t)]
+                 and db.expected_filename(e, t) != t.file and (recoded & set(t.tags) or deleted)}
+        if moved and not s.auto_update_names:
+            why = "codes changed" if recoded else "tags changed"
+            box = QMessageBox(QMessageBox.Question, "Sound file names",
+                              f"The tag {why}, so {len(moved)} recording{'s' if len(moved) != 1 else ''}' "
+                              "names are out of date. Rename them now?", parent=self)
+            rename = box.addButton("Rename", QMessageBox.AcceptRole)
+            box.addButton("Leave names out of date", QMessageBox.RejectRole)
+            box.exec()
+            if box.clickedButton() is rename:
+                self.update_all_names(ask=False, only=moved)
+                return
         self._maybe_update_names()
 
     def edit_settings(self):
@@ -2199,11 +2290,12 @@ class MainWindow(QMainWindow):
                                          "(Tools → Update all sound file names).", 8000)
 
     # =============================================================== tools
-    def update_all_names(self, ask: bool = True):
+    def update_all_names(self, ask: bool = True, only: set | None = None):
+        """only: rename just these tokens' recordings (by id(token)), texts left alone."""
         db = self.doc.db
         stale = [(e, i) for e in db.items() for i, t in enumerate(e.tokens)
-                 if t.file and t.file != db.expected_filename(e, t)]
-        texts = self._stale_texts()
+                 if t.file and t.file != db.expected_filename(e, t) and (only is None or id(t) in only)]
+        texts = self._stale_texts() if only is None else []
         if not stale and texts:                   # only texts' files are out of date
             self._rename_texts(texts, ask)
             return
@@ -2243,7 +2335,7 @@ class MainWindow(QMainWindow):
             after.tokens[i].file = dst.name
         order = {id(e): e for e, _, _, _ in plan}               # entries in plan order, once each
         pairs = [(e, changed[k]) for k, e in order.items()]
-        tplan, tproblems = self._text_plan(self._stale_texts(), set(sources))
+        tplan, tproblems = self._text_plan(texts, set(sources)) if texts else ([], [])
         pairs += [p for p, _ in tplan]
         for _, rn in tplan:
             renames = [(src, src.with_name(src.name + ".lemmatrix-renaming")) for src, _ in rn] + renames + \
@@ -2264,52 +2356,64 @@ class MainWindow(QMainWindow):
         Two kinds of token are looked at: those whose stored recording isn't in the folder
         (renamed outside Lemmatrix, say), and those with no recording at all (a recording
         added to the folder by hand, e.g. one cut out of a longer one). Each is matched with
-        a recording of the same lemma (reference and gloss) that no other token uses: the
+        a recording of the same lemma (reference and gloss) that no other token uses (an utterance:
+        one in Soundfiles/Utterances with its reference in the name): the
         one with the expected name if there is one, otherwise the closest name, best
         matches first. Returns ([(entry, token index, file name, had a name before)],
         [(entry, token index)] for stored recordings that couldn't be found at all).
         """
         import difflib
+        import re as _re
         db = self.doc.db
-        folder = storage.sound_folder(db)
-        try:
-            on_disk = {p.name for p in folder.iterdir() if p.is_file() and p.suffix.lower() == ".wav"}
-        except OSError:
-            on_disk = set()
-        lower = {n.lower(): n for n in on_disk}
-        claimed = {t.file.lower() for e in db.entries for t in e.tokens if t.file and t.file.lower() in lower}
-        free = {n for n in on_disk if n.lower() not in claimed}
         found, lost = [], []
-        for e in db.entries:
-            needy = [i for i, t in enumerate(e.tokens) if not t.file or t.file.lower() not in lower]
-            if not needy:
+        # lemma tokens in Soundfiles/Tokens, by reference and gloss; utterances in
+        # Soundfiles/Utterances, by reference (followed by _ or the end of the name)
+        for folder, items, matches in (
+                (storage.sound_folder(db), db.entries,
+                 lambda e: (lambda n, stem=f"_{e.ref}_{e.file_gloss or db.gloss(e)}".lower(): stem in n)),
+                (storage.utterance_folder(db), db.utterances,
+                 lambda u: (lambda n, rx=_re.compile(r"_" + _re.escape(u.ref.lower()) + r"(_|\.wav$)"):
+                            bool(rx.search(n))))):
+            if not items:
                 continue
-            stem = f"_{e.ref}_{e.file_gloss or db.gloss(e)}".lower()
-            candidates = {n for n in free if stem in n.lower()}
-            if not candidates:
-                lost += [(e, i) for i in needy if e.tokens[i].file]
-                continue
-            pairs = []
-            for i in needy:
-                t = e.tokens[i]
-                exp = db.expected_filename(e, t)
-                for c in candidates:
-                    if c.lower() == exp.lower():
-                        score = 2.0                       # exactly the name it should have
-                    else:
-                        names = [exp] + ([t.file] if t.file else [])
-                        score = max(difflib.SequenceMatcher(None, c.lower(), x.lower()).ratio() for x in names)
-                    if score > 0.8:
-                        pairs.append((score, i, c))
-            done_tokens, done_files = set(), set()
-            for score, i, c in sorted(pairs, key=lambda p: -p[0]):     # best matches first
-                if i in done_tokens or c in done_files:
+            try:
+                on_disk = {p.name for p in folder.iterdir() if p.is_file() and p.suffix.lower() == ".wav"}
+            except OSError:
+                on_disk = set()
+            lower = {n.lower(): n for n in on_disk}
+            claimed = {t.file.lower() for e in items for t in e.tokens if t.file and t.file.lower() in lower}
+            free = {n for n in on_disk if n.lower() not in claimed}
+            for e in items:
+                needy = [i for i, t in enumerate(e.tokens) if not t.file or t.file.lower() not in lower]
+                if not needy:
                     continue
-                done_tokens.add(i)
-                done_files.add(c)
-                found.append((e, i, c, bool(e.tokens[i].file)))
-            free -= done_files
-            lost += [(e, i) for i in needy if i not in done_tokens and e.tokens[i].file]
+                belongs = matches(e)
+                candidates = {n for n in free if belongs(n.lower())}
+                if not candidates:
+                    lost += [(e, i) for i in needy if e.tokens[i].file]
+                    continue
+                pairs = []
+                for i in needy:
+                    t = e.tokens[i]
+                    exp = db.expected_filename(e, t)
+                    for c in candidates:
+                        if c.lower() == exp.lower():
+                            score = 2.0                       # exactly the name it should have
+                        else:
+                            names = [exp] + ([t.file] if t.file else [])
+                            score = max(difflib.SequenceMatcher(None, c.lower(), x.lower()).ratio()
+                                        for x in names)
+                        if score > 0.8:
+                            pairs.append((score, i, c))
+                done_tokens, done_files = set(), set()
+                for score, i, c in sorted(pairs, key=lambda p: -p[0]):     # best matches first
+                    if i in done_tokens or c in done_files:
+                        continue
+                    done_tokens.add(i)
+                    done_files.add(c)
+                    found.append((e, i, c, bool(e.tokens[i].file)))
+                free -= done_files
+                lost += [(e, i) for i in needy if i not in done_tokens and e.tokens[i].file]
         return found, lost
 
     def check_clipped(self):
@@ -2328,6 +2432,9 @@ class MainWindow(QMainWindow):
             return
 
         def label(e, i):
+            from ..model import is_utterance
+            if is_utterance(e):
+                return f"{e.ref} (utterance)"
             t = e.tokens[i]
             tags = " + ".join(mx.chips(self.doc.db, t.tags)) or "citation"
             return f"{e.ref} {tags}"
@@ -2498,11 +2605,14 @@ class MainWindow(QMainWindow):
         from .export_dialog import AnonymousExportDialog
         AnonymousExportDialog(self).exec()
 
-    def export_csv(self, filtered: bool):
+    def export_csv(self, filtered: bool, tags: bool = False):
         from .. import export
         db = self.doc.db
         tab = self.tabs.currentIndex()
-        if filtered:
+        if tags:
+            header, rows = export.tag_structure_table(db)
+            what = "tag structure"
+        elif filtered:
             header, rows = self._visible_table()
             what = {ALL_DATA: "All data", LEMMA_TAG: "Lemma-Tag", TAG_TAG: "Tag-Tag"}[tab]
             if not rows:

@@ -152,7 +152,9 @@ class SpellingWindow(QDialog):
         for o in u.occurrences:
             field = o.place.title if o.index is None else \
                 f"{o.place.title}: {db.settings.tags.display(o.entry.tokens[o.index].tags)}"
-            item = QTreeWidgetItem([o.entry.ref, db.lemma(o.entry), field, o.text])
+            from ..model import is_utterance
+            lemma = f"(utterance) {o.entry.label}" if is_utterance(o.entry) else db.lemma(o.entry)
+            item = QTreeWidgetItem([o.entry.ref, lemma, field, o.text])
             item.setData(0, Qt.UserRole, o)
             self.places.addTopLevelItem(item)
         self.places.resizeColumnToContents(0)

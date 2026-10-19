@@ -192,11 +192,12 @@ class Unknown:
 
 
 def scan(db: Database, checker: Checker | None = None) -> list[Unknown]:
-    """Every unknown word in the English glosses and translations, most frequent first."""
+    """Every unknown word in the English glosses and translations (lemmas' and utterances'),
+    most frequent first."""
     checker = checker or checker_for(db)
     found: dict[str, Unknown] = {}
     pl = places(db)
-    for e in db.entries:
+    for e in db.items():                          # utterances' translations too
         for p in pl:
             items = [(None, e.get(p.name, LANG))] if p.level == "entry" else \
                     [(i, t.get(p.name, LANG)) for i, t in enumerate(e.tokens)]

@@ -23,11 +23,12 @@ from PySide6.QtWidgets import (QCheckBox, QCompleter, QDialog, QSplitter, QGroup
                                QMenu, QMessageBox, QPushButton, QStackedWidget, QTabBar, QToolButton,
                                QVBoxLayout, QWidget, QFileDialog)
 
-from .. import audio, layout, matrix as mx, pitch as pitchmod, pull, storage
+from .. import spelling, audio, layout, matrix as mx, pitch as pitchmod, pull, storage
 from ..model import FORBIDDEN_CHARS, UTTERANCES, Token, Utterance, nfc
 from . import theme
 from .filter_dialogs import ConfigureColumnsDialog
 from .icons import icon, ink_icon
+from .spellui import SpellDelegate
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, ListEditDelegate
 from .token_dialog import Slot, TokenDialog
 from .widgets import FlowLayout, ipa_font
@@ -250,7 +251,7 @@ class TextsUtterancesWindow(QDialog):
                    tooltip=lambda u: "Part of the recording's file name; changing it renames the recording"),
             Column("tags", "Tags", lambda u: list(u.token.tags), closed=True, multi=True, kind="chips",
                    tree=lambda: [mx_group(g) for g in s.tags.groups],
-                   tooltip=lambda u: ", ".join(u.token.tags) or None),
+                   tooltip=lambda u: db.settings.tags.tag_tip(u.token.tags, "") or None),
             Column("drawing", "Pitch drawing", lambda u: u.token.get("Pitch"), kind="drawing",
                    tooltip=lambda u: f"Pitch: {p}" if (p := u.token.get("Pitch")) else None),
         ]
@@ -378,6 +379,9 @@ class TextsUtterancesWindow(QDialog):
             if c.closed and c.edit and c.tree and not c.multi:
                 self.table.set_delegate(c.key, ListEditDelegate(
                     lambda c=c: [i.name for top in c.tree() for i in top.walk()], self.table))
+        tr = db.settings.token_field("translation")
+        if tr is not None and db.settings.primary_gloss == spelling.LANG:   # underlines, as in All data
+            self.table.set_delegate("f:" + tr.name, SpellDelegate(self.main.speller, self.table))
 
     def configure_columns(self):
         cols = self._columns()

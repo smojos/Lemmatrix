@@ -99,7 +99,7 @@ def text_fields() -> list[FieldDef]:
         FieldDef("Status", "Transcription status", role="status", closed=True,
                  items=[ListItem(x) for x in STATUSES]),
         FieldDef("Description"),
-        FieldDef("Comment"),
+        FieldDef("Comment", role="comment"),
     ]
 
 
@@ -119,7 +119,7 @@ def default_settings() -> Settings:
                  items=[ListItem(n) for n in WORD_CLASSES]),
         FieldDef("ToneClass", "Tone Class", closed=True),
         FieldDef("InflectionClass", "Inflection Class", closed=True),
-        FieldDef("Comment"),
+        FieldDef("Comment", role="comment"),
     ]
     s.token_fields = [
         FieldDef("Phonetic", role="phonetic"),
@@ -127,7 +127,7 @@ def default_settings() -> Settings:
         FieldDef("Morphemes", role="morphemes"),      # the morpheme gloss line (ideas 2 and 7)
         FieldDef("Pitch", role="pitch"),
         FieldDef("Translation", role="translation"),
-        FieldDef("Comment"),
+        FieldDef("Comment", role="comment"),
     ]
     s.gloss_languages = ["en"]
     s.primary_gloss = "en"
@@ -137,6 +137,35 @@ def default_settings() -> Settings:
     s.text_fields = text_fields()
     s.tier_mapping = tier_mapping()
     return s
+
+
+def ensure_core_fields(s: Settings) -> list[str]:
+    """Give every list its core fields (CORE_ROLES), which can't be deleted. A Comment field
+    without a role (older files) gets it quietly; a core field that's missing (deleted before it
+    was protected) comes back, empty, where it is in a new database. Returns the restored
+    fields' titles."""
+    defaults = default_settings()
+    restored = []
+    for attr in ("entry_fields", "token_fields", "text_fields"):
+        have, want = getattr(s, attr), getattr(defaults, attr)
+        if attr == "text_fields" and not have:
+            continue                                    # (a database without texts' fields yet)
+        for pos, d in enumerate(want):
+            if any(f.role == d.role for f in have):
+                continue
+            if d.role == "comment":
+                plain = [f for f in have if f.is_comment and not f.role]
+                hit = next((f for f in plain if f.name.lower() == "comment"), plain[0] if plain else None)
+            else:
+                hit = next((f for f in have if f.name == d.name and not f.role), None)
+            if hit is not None:                         # the field is there, without its role
+                hit.role = d.role
+                if d.role == "word-class":
+                    hit.closed = True
+                continue
+            have.insert(min(pos, len(have)), d)
+            restored.append(d.title)
+    return restored
 
 
 def new_database() -> Database:
