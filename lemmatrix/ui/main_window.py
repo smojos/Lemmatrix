@@ -63,7 +63,7 @@ class TokenRow:
 
 INK_ICONS = THEMED                 # drawn in the theme's colours, so they follow the theme
 ICON_ONLY = {"add", "delete", "edit", "play", "reset-filters",   # obvious, shared actions: the name is in the tooltip
-             "gear-cells", "gear-columns", "find-missing"}
+             "gear-cells", "gear-columns", "gear-matrix", "find-missing"}
 
 
 def tool(text: str, icon_name: str | None, fn, tip: str = "") -> QToolButton:
@@ -358,8 +358,8 @@ class MainWindow(QMainWindow):
                   tool("Play", "play", self.play_selected, "Play the selected token (Ctrl+Space)"),
                   tool("Configure cell", "gear-cells", lambda tab=tab: self.configure_cell(tab),
                        "Configure cell: choose what each cell shows"),
-                  tool("Configure matrix", "gear", lambda tab=tab: self.configure_matrix(tab),
-                       "Choose the rows and columns"),
+                  tool("Configure matrix", "gear-matrix", lambda tab=tab: self.configure_matrix(tab),
+                       "Configure matrix: choose the rows and columns"),
                   tool("Clear matrix", "reset-filters", lambda tab=tab: self.clear_matrix(tab),
                        "Clear matrix: empty the view, no rows or columns"))
         d["saved"] = QComboBox()

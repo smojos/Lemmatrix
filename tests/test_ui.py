@@ -1834,7 +1834,7 @@ def test_open_in_praat_shortcut_and_new_icons(win):
     from lemmatrix.ui.icons import themed_icon
     keys = [a.shortcut() for a in win.actions()]
     assert QKeySequence("Ctrl+Alt+Space") in keys
-    for name in ("gear-cells", "gear-columns", "find-missing", "praat"):
+    for name in ("gear-cells", "gear-columns", "gear-matrix", "find-missing", "praat"):
         assert not themed_icon(name, 20).isNull()
 
 
