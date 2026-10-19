@@ -9,6 +9,7 @@ when a part is empty its separator goes too:
 
     LXX-VXX-SP1_D009_goat_PL-GEN-xH.wav
     LXX_D009_goat.wav                      (no variety, no speaker, no tags)
+    LXX-VXX_D010_big_dog.wav               (spaces and punctuation as Praat writes them)
 """
 
 from __future__ import annotations
@@ -73,8 +74,9 @@ def build_filename(db: Database, e: Entry, t: Token, extension: str = ".wav") ->
         value = values.get(name, "")
         if value:
             out += (sep if out else "") + value
-    out = out.strip(_EDGE_SEPARATORS)
-    return out + extension
+    # Written as Praat names it (D009_big_dog, not D009_big dog), so saving an edited recording in
+    # Praat with the name it suggests overwrites this file instead of making a second one (19 October).
+    return praat_name(out.strip(_EDGE_SEPARATORS)) + extension
 
 
 def praat_name(stem: str) -> str:

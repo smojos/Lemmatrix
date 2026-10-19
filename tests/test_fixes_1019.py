@@ -193,3 +193,29 @@ def test_open_texts_window_follows_a_theme_change(win, tmp_path, monkeypatch):
         theme.configure("light", theme.DEFAULT_ACCENT)
         theme.apply()
         win._restyle()
+
+
+def test_praat_copy_of_a_token_recording_is_adopted_on_opening(win, tmp_path):
+    """A recording named with a space, and Praat's newer copy saved under its own name beside it:
+    on opening, the newer one is used and the old one set aside (as for texts)."""
+    import time
+    from lemmatrix import storage
+    db = win.doc.db
+    e = db.entry_by_ref("D001")
+    e.file_gloss = "billy goat"
+    t = e.tokens[0]
+    folder = storage.sound_folder(db)
+    old, new = "LXX-VXX_D001_billy goat.wav", "LXX-VXX_D001_billy_goat.wav"
+    (folder / t.file).rename(folder / old)
+    t.file = old
+    (folder / new).write_bytes((folder / old).read_bytes() + b"edited")
+    later = time.time() + 5
+    os.utime(folder / new, (later, later))
+    win._praat_text_names(db)
+    assert t.file == new and (folder / new).exists() and not (folder / old).exists()
+    # an older name with no copy beside it is simply renamed
+    t2 = e.tokens[1]
+    (folder / t2.file).rename(folder / t2.file.replace("goat", "billy goat"))
+    t2.file = t2.file.replace("goat", "billy goat")
+    win._praat_text_names(db)
+    assert " " not in t2.file and (folder / t2.file).exists()

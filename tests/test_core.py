@@ -56,10 +56,11 @@ def test_tag_order_is_independent_of_input_order(db):
     assert db.expected_filename(e, a) == db.expected_filename(e, b)
 
 
-def test_spaces_in_gloss_are_kept(db):
+def test_spaces_and_punctuation_are_written_as_praat_writes_them(db):
+    """19 October: as Praat names a file's object, so its Save suggests this very name."""
     e = db.new_entry("V012", "rum", "to run", "VERB")
     db.metadata.variety_code = ""
-    assert db.expected_filename(e, e.tokens[0]) == "LXX_V012_to run.wav"
+    assert db.expected_filename(e, e.tokens[0]) == "LXX_V012_to_run.wav"
 
 
 def test_forbidden_characters():
@@ -82,7 +83,7 @@ def test_defaults_add_nothing_to_file_names(db):
     v = db.new_entry("V001", "cəm", "eat", "VERB")
     db.metadata.variety_code = ""
     t = db.new_token(v, ["Past", "1SG.A"])
-    assert db.expected_filename(v, t) == "LXX_V001_eat_1SG.A-PST.wav"
+    assert db.expected_filename(v, t) == "LXX_V001_eat_1SG_A-PST.wav"
 
 
 def test_one_tag_per_group():

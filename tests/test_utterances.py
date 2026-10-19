@@ -40,7 +40,7 @@ def test_utterance_file_names_have_no_tags(tmp_path):
     db, _ = _db(tmp_path)
     u = db.new_utterance("W001", "hare ran", speaker="SP1")
     u.token.tags = ["before H"]
-    assert db.expected_filename(u, u.token) == "LXX-VXX_W001_hare ran.wav"
+    assert db.expected_filename(u, u.token) == "LXX-VXX_W001_hare_ran.wav"
     assert storage.folder_for(db, u) == tmp_path / "Soundfiles" / "Utterances"
     assert not db.new_utterance("U001").token.tags          # no defaults: no word class
 
@@ -149,13 +149,13 @@ def test_import_wavs_as_utterances_and_undo(win, tmp_path):
     assert [u.ref for u in items] == ["W001", "W002"]
     assert [u.label for u in items] == ["hare ran", "greeting"]
     folder = tmp_path / "Soundfiles" / "Utterances"
-    assert (folder / "LXX-VXX_W001_hare ran.wav").exists() and a.exists()      # copied, original kept
-    assert items[0].token.file == "LXX-VXX_W001_hare ran.wav"
+    assert (folder / "LXX-VXX_W001_hare_ran.wav").exists() and a.exists()      # copied, original kept
+    assert items[0].token.file == "LXX-VXX_W001_hare_ran.wav"
     assert uw.table.model_.rowCount() == 2
     win.doc.undo.undo()                                     # one step for the whole import
-    assert db.utterances == [] and not (folder / "LXX-VXX_W001_hare ran.wav").exists()
+    assert db.utterances == [] and not (folder / "LXX-VXX_W001_hare_ran.wav").exists()
     win.doc.undo.redo()
-    assert len(db.utterances) == 2 and (folder / "LXX-VXX_W001_hare ran.wav").exists()
+    assert len(db.utterances) == 2 and (folder / "LXX-VXX_W001_hare_ran.wav").exists()
     win.save()
     again = storage.load(db.path)
     assert [u.ref for u in again.utterances] == ["W001", "W002"]
@@ -196,7 +196,7 @@ def test_utterance_dialogue_label_lemmas_and_tags(win, tmp_path):
     dlg._ok()
     assert u.label == "hare ran" and u.token.get("Phonetic") == "ʔəŋ kɒ"
     assert u.token.tags == ["Relative clause"] and u.lemmas == [goat.id]
-    assert u.token.file == "LXX-VXX_W001_hare ran.wav"          # renamed with the label
+    assert u.token.file == "LXX-VXX_W001_hare_ran.wav"          # renamed with the label
     folder = tmp_path / "Soundfiles" / "Utterances"
     assert (folder / u.token.file).exists() and not (folder / "LXX-VXX_W001_x.wav").exists()
     win.doc.undo.undo()

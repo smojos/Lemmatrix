@@ -1561,10 +1561,13 @@ def test_session_date_moves_on_at_midnight(win, monkeypatch):
     assert win.sess_date.date() == QDate.currentDate().addDays(-5)
 
 
-def test_pin_is_cleared_when_another_database_opens(win):
+def test_pin_is_cleared_when_another_database_opens(win, tmp_path):
     win.lemmas.toggle_pin(win.doc.db.entries[0])
     assert win.lemmas.proxy.rowCount() == 1
-    win.load_database(storage.load(SAMPLES / "Sample.xml"))
+    other = tmp_path / "other"                     # a copy: opening may rename recordings
+    other.mkdir()
+    shutil.copy2(SAMPLES / "Sample.xml", other / "Sample.xml")
+    win.load_database(storage.load(other / "Sample.xml"))
     assert win.lemmas.proxy.rowCount() == len(win.doc.db.entries)
 
 
