@@ -1958,7 +1958,7 @@ class MainWindow(QMainWindow):
                   if self.suggestion_for(row) else [])
         self._menu([*self._spelling_items(self.all_table, pos, row),("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
                     ("Edit token", "edit", self.edit_token), *accept, None, *self._token_items(),
-                    *self._pitch_items(self._pitch_column_at(pos)), None,
+                    *self._pitch_items(self._pitch_column_at(pos)), *self._same_tags_items(row, pos), None,
                     ("Configure columns", "gear-columns", self.configure_all_columns),
                     ("Clear all filters", "reset-filters", self._clear_all_filters)], pos)
 
@@ -1966,6 +1966,13 @@ class MainWindow(QMainWindow):
         self._menu([("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
                     ("Edit token", "edit", self.edit_token), None, *self._token_items(),
                     *self._pitch_items()], pos)
+
+    def _same_tags_items(self, row, pos) -> list:
+        """On the Tags column: Filter for same, the Tags filter set to exactly this token's tags."""
+        idx = self.all_table.indexAt(self.all_table.viewport().mapFromGlobal(pos))
+        if row is None or not idx.isValid() or self.all_table.model_.columns[idx.column()].key != "tags":
+            return []
+        return [None, ("Filter for same", "", lambda r=row: self.all_table.filter_same_tags(r))]
 
     def _pitch_column_at(self, pos) -> bool:
         """Whether the right-click in All data is on the pitch field (its digits or its drawing)."""

@@ -502,6 +502,16 @@ class FilterTable(QTableView):
     def active_filters(self) -> int:
         return len(self.proxy.filters) + (self.proxy.pinned is not None)
 
+    def filter_same_tags(self, row, key: str = "tags"):
+        """Right-click → Filter for same: the Tags filter set to exactly this row's tags (Citation if none)."""
+        col = next((c for c in self.model_.all_columns if c.key == key), None)
+        if col is None or row is None:
+            return
+        tags = set(col.get(row)) or {fl.CITATION_ITEM}
+        self.proxy.set_filter(key, fl.ChoiceFilter(tags, fl.EXACTLY))
+        self._refresh_header()
+        self.filtersChanged.emit()
+
     def toggle_pin(self, row):
         """Ctrl+click: show only this row; again (on any row): show them all again."""
         self.proxy.pinned = None if self.proxy.pinned is not None or row is None else getattr(row, "id", None)

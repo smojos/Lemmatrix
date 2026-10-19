@@ -1846,3 +1846,20 @@ def test_typing_a_letter_does_not_jump(win):
         for ch in "kc":
             QTest.keyClicks(t, ch)
         assert t.currentIndex().row() == 0
+
+
+def test_filter_for_same_tags(win):
+    """All data, right-click on Tags → Filter for same: exactly that token's tags (Josh, 19 October)."""
+    from lemmatrix import filters as fl
+    t = win.all_table
+    row = next(r for r in t.model_.rows if len(r.token.tags) >= 2)
+    t.filter_same_tags(row)
+    flt = t.proxy.filters["tags"]
+    assert isinstance(flt, fl.ChoiceFilter) and flt.mode == fl.EXACTLY and flt.selected == set(row.token.tags)
+    shown = [t.proxy.sourceModel().rows[t.proxy.mapToSource(t.proxy.index(i, 0)).row()]
+             for i in range(t.proxy.rowCount())]
+    assert row in shown and all(set(r.token.tags) - flt.selected == set() for r in shown)
+    citation = next(r for r in t.model_.rows if not r.token.tags)
+    t.filter_same_tags(citation)
+    assert t.proxy.filters["tags"].selected == {fl.CITATION_ITEM}
+    t.clear_filters()
