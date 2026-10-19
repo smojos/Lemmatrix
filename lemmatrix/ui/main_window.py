@@ -1250,6 +1250,11 @@ class MainWindow(QMainWindow):
         for w in (self.lemmas, self.all_table, self.lt_view, self.tt_view):
             theme.as_data(w)
             w.viewport().update()
+        # windows already open (Texts and utterances, Bulk edit…) follow a theme change too
+        from PySide6.QtWidgets import QApplication
+        for w in QApplication.topLevelWidgets():
+            if w is not self and w.isVisible() and callable(getattr(w, "_restyle", None)):
+                w._restyle()
 
     @staticmethod
     def _spec_json(sp: mx.Spec) -> dict:
@@ -1556,6 +1561,7 @@ class MainWindow(QMainWindow):
         self.dialog_autoplay = self.autoplay.isChecked()
         dlg = TokenDialog(self, slots, index)
         dlg.exec()
+        dlg.deleteLater()                         # not kept, hidden, under the main window
         self.refresh()
 
     def _cell_activated(self, tab, r, c, n):

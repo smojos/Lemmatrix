@@ -47,16 +47,23 @@ def held() -> tuple[bool, bool, bool]:
     return bool(m & Qt.ControlModifier), bool(m & Qt.ShiftModifier), bool(m & (Qt.AltModifier | Qt.MetaModifier))
 
 
+def _live(owner, win) -> bool:
+    """A shortcut's or action's owner belongs to this window and is showing. (A closed dialogue
+    is kept, hidden, as a child of the main window: its Ctrl+Space played the token it last
+    showed, whatever was selected. Josh, 19 October.)"""
+    return isinstance(owner, QWidget) and owner.window() is win and owner.isVisible()
+
+
 def run_shortcut(widget: QWidget, pitch: bool) -> bool:
     """Run the Ctrl+Space (pitch: Ctrl+Shift+Space) shortcut of `widget`'s window."""
     win = widget.window()
     seq = PLAY_PITCH if pitch else PLAY
     for sc in win.findChildren(QShortcut):
-        if sc.key() == seq and sc.isEnabled():
+        if sc.key() == seq and sc.isEnabled() and _live(sc.parent(), win):
             sc.activated.emit()
             return True
-    for act in [*win.actions(), *win.findChildren(QAction)]:
-        if seq in act.shortcuts() and act.isEnabled():
+    for act in dict.fromkeys([*win.actions(), *win.findChildren(QAction)]):
+        if seq in act.shortcuts() and act.isEnabled() and _live(act.parent(), win):
             act.trigger()
             return True
     return False

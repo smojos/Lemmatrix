@@ -77,7 +77,7 @@ class BulkModel(RowModel):
         self.error_rows: set = set()      # row keys with a problem (whatever the column)
 
     def data(self, index, role=Qt.DisplayRole):
-        if not index.isValid():
+        if not index.isValid() or index.row() >= len(self.rows) or index.column() >= len(self.columns):
             return None
         row, col = self.rows[index.row()], self.columns[index.column()]
         if col.key == TICK:

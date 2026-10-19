@@ -69,6 +69,7 @@ def test_ctrl_space_plays_even_when_the_keyboard_drops_ctrl(win, app, monkeypatc
                  if ctrlspace.PLAY_PITCH in a.shortcuts())
     pitch.triggered.disconnect()
     pitch.triggered.connect(lambda *a: win.play_selected_pitch())
+    win.show()
     try:
         search = win.all_search
         search.setText("ab")
@@ -106,3 +107,89 @@ def test_marks_drawn_in_a_grid_cell(win, app):
     yellowish = sum(1 for x in range(0, 300, 3) for y in range(0, 30, 3)
                     if (c := img.pixelColor(x, y)).blue() < 150 and c.red() > 200 and c.green() > 180)
     assert yellowish > 5
+
+
+# ---- 19 October, second list ------------------------------------------------------------
+
+def test_a_closed_token_dialogue_doesnt_take_ctrl_space(win, app, monkeypatch):
+    """A hidden dialogue under the main window kept its Ctrl+Space: it played its last token."""
+    from PySide6.QtGui import QKeySequence, QShortcut
+    from PySide6.QtWidgets import QDialog
+    from lemmatrix.ui import ctrlspace
+    old = QDialog(win)
+    stale = []
+    QShortcut(QKeySequence("Ctrl+Space"), old, lambda: stale.append(1))
+    played = []
+    win.play_action.triggered.disconnect()
+    win.play_action.triggered.connect(lambda *a: played.append(1))
+    win.show()
+    assert ctrlspace.run_shortcut(win.all_search, pitch=False)
+    assert played == [1] and stale == []
+
+
+def test_selected_rows_keep_a_cells_own_colour(win):
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QColor, QPalette
+    from PySide6.QtWidgets import QStyleOptionViewItem
+    t = win.all_table
+    keys = t.visible_keys()
+    col = keys.index("file")
+    for r in range(t.proxy.rowCount()):
+        idx = t.proxy.index(r, col)
+        fg = idx.data(Qt.ForegroundRole)
+        if fg is not None:
+            break
+    opt = QStyleOptionViewItem()
+    t.itemDelegate(idx).initStyleOption(opt, idx)
+    assert QColor(opt.palette.color(QPalette.HighlightedText)) == QColor(fg)
+
+
+def test_bulk_filter_after_preview_doesnt_touch_the_model_mid_filter(win, app):
+    from PySide6.QtWidgets import QApplication
+    from lemmatrix import bulk, filters as fl
+    from lemmatrix.ui import bulk_window as bw
+    goat = win.doc.db.entry_by_ref("D001")
+    goat.tokens[0].set("Translation", "goat (sg.)", "en")
+    win.open_bulk_edit()
+    w = win.bulk_window
+    w.ops.setCurrentIndex(bw.REPLACE)
+    w.r_field.setCurrentIndex(w.r_field.findData("f:Translation"))
+    w.r_find.setText("(sg.)")
+    w.r_repl.setText("(sg)")
+    w.preview()
+    t = w.tables[bulk.TOKENS]
+    assert t.model_.preview
+    during = []
+    t.model_.dataChanged.connect(lambda *a: during.append(t.proxy._filtering))
+    t.proxy._filtering = True
+    t.proxy.set_filter("f:Translation", fl.TextFilter("(sg.)"))
+    t.proxy._filtering = False
+    QApplication.processEvents()                      # the preview is cleared after, not during
+    assert during and not any(during) and not t.model_.preview and t.proxy.rowCount() == 1
+    w.close()
+
+
+def test_unticked_cell_lines_sit_in_their_usual_place():
+    from lemmatrix.ui.matrix_dialogs import cell_order
+    natural = ["drawing", "Phonetic", "Phonemic", "Morphemes", "Pitch", "Translation", "Comment"]
+    assert cell_order(["drawing", "Phonetic", "Phonemic", "Translation"], natural) == natural
+    mine = cell_order(["Translation", "Phonetic"], natural)          # a chosen order is kept
+    assert mine.index("Translation") < mine.index("Phonetic") and sorted(mine) == sorted(natural)
+
+
+def test_open_texts_window_follows_a_theme_change(win, tmp_path, monkeypatch):
+    from PySide6.QtGui import QPalette
+    from lemmatrix.ui import theme
+    uw, t = _add_text(win, tmp_path, monkeypatch)
+    uw.show()
+    try:
+        theme.configure("dark", "#7b2fa8")
+        theme.apply()
+        win._restyle()
+        assert uw.texts.lines.palette().color(QPalette.Base) == theme.colour("base")
+        assert uw.table.palette().color(QPalette.Base) == theme.colour("base")
+        assert "#" in uw.title.styleSheet() and theme.colour("pitch").name() in uw.title.styleSheet()
+    finally:
+        theme.configure("light", theme.DEFAULT_ACCENT)
+        theme.apply()
+        win._restyle()

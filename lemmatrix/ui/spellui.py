@@ -158,6 +158,11 @@ class SpellDelegate(QStyledItemDelegate):
         super().__init__(parent)
         self.speller = speller
 
+    def initStyleOption(self, opt, index):
+        super().initStyleOption(opt, index)
+        from .searchmark import keep_colour
+        keep_colour(opt, index)
+
     def paint(self, painter, option, index):
         super().paint(painter, option, index)
         from .searchmark import paint_cell

@@ -8,7 +8,7 @@ marks "dɪɪtʰ" with its ʰ.
 from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRectF, Qt
-from PySide6.QtGui import QColor, QFont, QPainter, QTextLayout, QTextOption
+from PySide6.QtGui import QBrush, QColor, QFont, QPainter, QPalette, QTextLayout, QTextOption
 from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem
 
 from .. import filters as fl
@@ -157,8 +157,20 @@ def paint_cell(delegate: QStyledItemDelegate, painter: QPainter, option, index):
     mark_text(painter, x0, top, h, text, query, fm, limit)
 
 
+def keep_colour(opt, index):
+    """A cell's own text colour (a grey suggested sound file name, a red missing one) stays in a
+    selected row; the style would otherwise draw it in the selection's text colour."""
+    fg = index.data(Qt.ForegroundRole)
+    if fg is not None:
+        opt.palette.setBrush(QPalette.HighlightedText, QBrush(fg))
+
+
 class SearchDelegate(QStyledItemDelegate):
     """The grids' plain cells, with the search's matches marked."""
+
+    def initStyleOption(self, opt, index):
+        super().initStyleOption(opt, index)
+        keep_colour(opt, index)
 
     def paint(self, painter, option, index):
         super().paint(painter, option, index)

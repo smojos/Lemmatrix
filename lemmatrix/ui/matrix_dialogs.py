@@ -28,6 +28,19 @@ def _buttons(dlg) -> QDialogButtonBox:
 # Configure cell
 # ==========================================================================
 
+def cell_order(cell: list[str], natural: list[str]) -> list[str]:
+    """The ticked lines in their order, each unticked one in its usual place among them (the
+    token fields' order), so ticking Morphemes puts it above Translation, not at the end."""
+    rank = {k: i for i, k in enumerate(natural)}
+    order = [k for k in cell if k in rank]
+    for k in natural:
+        if k in order:
+            continue
+        at = next((i for i, x in enumerate(order) if rank[x] > rank[k]), len(order))
+        order.insert(at, k)
+    return order
+
+
 class ConfigureCellDialog(QDialog):
     """Which lines a matrix cell shows, and in what order."""
 
@@ -42,7 +55,7 @@ class ConfigureCellDialog(QDialog):
         self.list.setDragDropMode(QAbstractItemView.InternalMove)
         options = [("drawing", "Pitch drawing")] + [(f.name, f.title) for f in db.settings.token_fields]
         titles = dict(options)
-        order = [k for k in cell if k in titles] + [k for k, _ in options if k not in cell]
+        order = cell_order(cell, [k for k, _ in options])
         for k in order:
             it = QListWidgetItem(titles[k])
             it.setData(Qt.UserRole, k)

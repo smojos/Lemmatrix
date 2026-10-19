@@ -21,7 +21,7 @@ from .. import filters as fl
 from ..model import ListItem
 from . import spellui, theme
 from .filter_dialogs import ChooseDialog, FilterForDialog
-from .searchmark import SearchDelegate, paint_cell
+from .searchmark import SearchDelegate, keep_colour, paint_cell
 from .spellui import SpellDelegate
 from .widgets import FilterHeader, chips_width, draw_pitch, ipa_font, paint_chips, underscore_unit
 
@@ -206,6 +206,10 @@ class ListEditDelegate(QStyledItemDelegate):
     def setModelData(self, editor, model, index):
         model.setData(index, editor.currentText(), Qt.EditRole)
 
+    def initStyleOption(self, opt, index):
+        super().initStyleOption(opt, index)
+        keep_colour(opt, index)
+
     def paint(self, painter, option, index):
         super().paint(painter, option, index)
         paint_cell(self, painter, option, index)
@@ -363,10 +367,15 @@ class FilterTable(QTableView):
             lambda pos: self.contextRequested.emit(self.row_at(self.indexAt(pos)), self.viewport().mapToGlobal(pos)))
         self.header_.filterClicked.connect(self._filter_menu)
         self.doubleClicked.connect(self._double)
-        for sig in (self.proxy.rowsInserted, self.proxy.rowsRemoved):
-            sig.connect(lambda *a: self.filtersChanged.emit())
-        self.proxy.modelReset.connect(self.filtersChanged.emit)
-        self.proxy.layoutChanged.connect(self.filtersChanged.emit)
+        # Told once the proxy has finished filtering, never from inside it: Bulk edit clears its
+        # preview on filtersChanged, and changing the model mid-filter crashed (Josh, 19 October).
+        self._filters_timer = QTimer(self)
+        self._filters_timer.setSingleShot(True)
+        self._filters_timer.setInterval(0)
+        self._filters_timer.timeout.connect(self.filtersChanged.emit)
+        for sig in (self.proxy.rowsInserted, self.proxy.rowsRemoved, self.proxy.modelReset,
+                    self.proxy.layoutChanged):
+            sig.connect(lambda *a: self._filters_timer.start())
         self._delegates = []
         self._tip_index = None                    # the cell a tooltip is waiting for
         self._tip_timer = QTimer(self)
