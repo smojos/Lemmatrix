@@ -209,7 +209,7 @@ class TextsUtterancesWindow(QDialog):
                        tool("Delete", "delete", self.delete, "Delete the selected utterance (Delete)"),
                        tool("Edit", "edit", self.edit, "Edit the selected utterance (Enter)"),
                        tool("Play", "play", self.play, "Play the selected utterance (Ctrl+Space)"),
-                       tool("Configure columns", "gear", self.configure_columns),
+                       tool("Configure columns", "gear-columns", self.configure_columns),
                        tool("Clear all filters", "reset-filters", self.clear_filters))
         self.search = QLineEdit()
         self.search.setPlaceholderText("quick search of the visible columns")

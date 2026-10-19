@@ -1809,3 +1809,30 @@ def test_counts_are_plain_numbers_and_the_texts_button_opens_the_window(win):
     win.texts_btn.click()
     assert win.utterances_window is not None and win.utterances_window.tabs.currentIndex() == TEXTS
     win.utterances_window.close()
+
+
+def test_raise_and_lower_one_tokens_pitch(win):
+    """Right-click → Raise pitch / Lower pitch: Bulk edit's pitch shortcut, for one token (Josh, 19 October)."""
+    f = win._pitch_field()
+    rows = [r for r in win.all_table.model_.rows if r.token.get(f.name).strip()]
+    row = next(r for r in rows if max(int(c) for c in r.token.get(f.name) if c.isdigit())
+               < win.doc.db.settings.pitch_high)
+    win.all_table.select_row(row)
+    before = row.token.get(f.name)
+    labels = [i[0] for i in win._pitch_items() if i]
+    assert labels == ["Raise pitch", "Lower pitch"]
+    win.shift_selected_pitch(1)
+    after = row.entry.tokens[row.index].get(f.name)
+    assert after == "".join(str(int(c) + 1) if c.isdigit() else c for c in before)
+    win.doc.undo.undo()
+    assert row.entry.tokens[row.index].get(f.name) == before
+    assert win._pitch_items(show=False) == []
+
+
+def test_open_in_praat_shortcut_and_new_icons(win):
+    from PySide6.QtGui import QKeySequence
+    from lemmatrix.ui.icons import themed_icon
+    keys = [a.shortcut() for a in win.actions()]
+    assert QKeySequence("Ctrl+Alt+Space") in keys
+    for name in ("gear-cells", "gear-columns", "find-missing", "praat"):
+        assert not themed_icon(name, 20).isNull()

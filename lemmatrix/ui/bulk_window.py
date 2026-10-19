@@ -25,7 +25,7 @@ from .. import bulk, matrix as mx, storage
 from ..model import ListItem
 from . import theme
 from .filter_dialogs import ConfigureColumnsDialog
-from .icons import icon, ink_icon
+from .icons import icon, icon_size, ink_icon, themed_icon
 from .searchmark import paint_cell
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, RowModel
 from .widgets import ipa_font
@@ -272,6 +272,7 @@ class BulkEditWindow(QDialog):
         pl.setSpacing(4)
         bar = QHBoxLayout()
         broom = QToolButton()
+        broom.setProperty("icon_name", "reset-filters")     # follows the theme with the main window's
         broom.setIcon(ink_icon("reset-filters", 20))
         broom.setIconSize(QSize(20, 20))
         broom.setToolTip("Clear all filters")
@@ -279,9 +280,10 @@ class BulkEditWindow(QDialog):
         broom.clicked.connect(lambda *_, lv=level: self._clear_filters(lv))
         bar.addWidget(broom)
         gear = QToolButton()
-        gear.setIcon(icon("gear", 20))
-        gear.setText("Configure columns")
-        gear.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        gear.setProperty("icon_name", "gear-columns")
+        gear.setIcon(themed_icon("gear-columns", 20))
+        gear.setIconSize(icon_size("gear-columns", 20))
+        gear.setToolTip("Configure columns")
         gear.setAutoRaise(True)
         gear.clicked.connect(lambda *_, lv=level: self._configure_columns(lv))
         bar.addWidget(gear)

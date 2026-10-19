@@ -16,14 +16,14 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QF
 from .. import __version__, audio, filters as fl, layout, lock as lockmod, matrix as mx, storage
 from . import theme
 from ..defaults import new_database
-from .. import notebook as nbmod, predict, spelling
+from .. import bulk, notebook as nbmod, predict, spelling
 from ..model import Database, Entry, ListItem, Person, forbidden_in, today
 from . import chiprow as chips
 from .dialogs import EntryDialog, MetadataDialog, PreferencesDialog
 from .document import Document
 from .fields_dialog import FieldsDialog
 from .filter_dialogs import ConfigureColumnsDialog
-from .icons import icon, ink_icon
+from .icons import THEMED, icon, icon_size, ink_icon, themed_icon
 from .matrix_dialogs import ConfigureCellDialog, ConfigureMatrixDialog, ask_matrix_name
 from .matrix_view import MatrixView
 from .prefs import Prefs
@@ -61,8 +61,9 @@ class TokenRow:
         return hash((id(self.entry), self.index))
 
 
-INK_ICONS = {"reset-filters"}      # drawn in the text colour, so they follow the theme
-ICON_ONLY = {"add", "delete", "edit", "play", "reset-filters"}   # obvious, shared actions: the name is in the tooltip
+INK_ICONS = THEMED                 # drawn in the theme's colours, so they follow the theme
+ICON_ONLY = {"add", "delete", "edit", "play", "reset-filters",   # obvious, shared actions: the name is in the tooltip
+             "gear-cells", "gear-columns", "find-missing"}
 
 
 def tool(text: str, icon_name: str | None, fn, tip: str = "") -> QToolButton:
@@ -70,8 +71,8 @@ def tool(text: str, icon_name: str | None, fn, tip: str = "") -> QToolButton:
     b.setText(text)
     if icon_name:
         b.setProperty("icon_name", icon_name)
-        b.setIcon(ink_icon(icon_name, 20) if icon_name in INK_ICONS else icon(icon_name, 20))
-        b.setIconSize(QSize(20, 20))
+        b.setIcon(themed_icon(icon_name, 20))
+        b.setIconSize(icon_size(icon_name, 20))
         b.setToolButtonStyle(Qt.ToolButtonIconOnly if icon_name in ICON_ONLY else Qt.ToolButtonTextBesideIcon)
     b.setToolTip(tip or text)
     b.setAutoRaise(True)
@@ -191,7 +192,7 @@ class MainWindow(QMainWindow):
         row = self._row(bl, tool("Add", "add", self.add_entry, "Add a lemma"),
                         tool("Delete", "delete", self.delete_entry, "Delete the selected lemma (Delete)"),
                         tool("Edit", "edit", self.edit_entry, "Edit the selected lemma (Enter)"),
-                        tool("Configure columns", "gear", self.configure_lemma_columns),
+                        tool("Configure columns", "gear-columns", self.configure_lemma_columns),
                         tool("Clear all filters", "reset-filters", self._clear_lemma_filters, "Clear all filters"))
         row.addWidget(self.lemma_count)
         self.lemma_search = QLineEdit()
@@ -331,7 +332,9 @@ class MainWindow(QMainWindow):
                         tool("Delete", "delete", self.delete_token, "Delete the selected token (Delete)"),
                         tool("Edit", "edit", self.edit_token, "Edit the selected token (Enter)"),
                         tool("Play", "play", self.play_selected, "Play the selected token (Ctrl+Space)"),
-                        tool("Configure columns", "gear", self.configure_all_columns),
+                        tool("Find missing or unlinked recordings", "find-missing", self.find_missing_recordings,
+                             "Find missing or unlinked recordings…"),
+                        tool("Configure columns", "gear-columns", self.configure_all_columns),
                         tool("Clear all filters", "reset-filters", self._clear_all_filters))
         top.addWidget(self.all_count)
         self.all_search = QLineEdit()
@@ -353,8 +356,8 @@ class MainWindow(QMainWindow):
                   tool("Delete", "delete", self.delete_token, "Delete the selected token (Delete)"),
                   tool("Edit", "edit", self.edit_token, "Edit the selected token (Enter)"),
                   tool("Play", "play", self.play_selected, "Play the selected token (Ctrl+Space)"),
-                  tool("Configure cell", "gear", lambda tab=tab: self.configure_cell(tab),
-                       "Choose what each cell shows"),
+                  tool("Configure cell", "gear-cells", lambda tab=tab: self.configure_cell(tab),
+                       "Configure cell: choose what each cell shows"),
                   tool("Configure matrix", "gear", lambda tab=tab: self.configure_matrix(tab),
                        "Choose the rows and columns"),
                   tool("Clear matrix", "reset-filters", lambda tab=tab: self.clear_matrix(tab),
@@ -537,6 +540,7 @@ class MainWindow(QMainWindow):
         self.play_action = self._act(None, "Play the selected token", self.play_selected, "Ctrl+Space")
         self.play_pitch_action = self._act(None, "Play the selected token's pitch", self.play_selected_pitch,
                                            "Ctrl+Shift+Space")
+        self._act(None, "Open the selected token in Praat", self.open_selected_in_praat, "Ctrl+Alt+Space")
         a = mb.addMenu("&Analyze")
         x = a.addAction("Analysis tools arrive with the analysis engine (Stage 2)")
         x.setEnabled(False)
@@ -1054,9 +1058,10 @@ class MainWindow(QMainWindow):
         self._save_icon()
         self._style_menu_bar()
         self._panels_icon()
-        for b in self.findChildren(QToolButton):         # icons in the text colour follow the theme
-            if b.property("icon_name") in INK_ICONS:
-                b.setIcon(ink_icon(b.property("icon_name"), 20))
+        for w in QApplication.topLevelWidgets():         # icons in the theme's colours follow it, every window
+            for b in w.findChildren(QToolButton):
+                if b.property("icon_name") in INK_ICONS:
+                    b.setIcon(themed_icon(b.property("icon_name"), 20))
         for v in (self.lt_view, self.tt_view):           # the accent, lighter on dark
             v.switch.setIcon(icon("switch-plain" if theme.dark() else "switch", 22,   # no white edge on dark
                                   theme.colour("pitch").name()))
@@ -1810,7 +1815,7 @@ class MainWindow(QMainWindow):
         has_pitch = tok is not None and bool(pitchmod_parse(tok.get("Pitch")))
         return [("Play\tCtrl+Space", "play", self.play_selected, has_sound),
                 ("Play pitch\tCtrl+Shift+Space", "play-pitch", self.play_selected_pitch, has_pitch),
-                ("Open in Praat", "praat", self.open_selected_in_praat, has_sound)]
+                ("Open in Praat\tCtrl+Alt+Space", "praat", self.open_selected_in_praat, has_sound)]
 
     # ---- context menus -------------------------------------------------
     def _menu(self, items, pos):
@@ -1820,7 +1825,7 @@ class MainWindow(QMainWindow):
                 m.addSeparator()
                 continue
             text, icon_name, fn = item[:3]
-            ic = ink_icon(icon_name, 16) if icon_name in INK_ICONS else icon(icon_name, 16) if icon_name else None
+            ic = themed_icon(icon_name, 16) if icon_name else None
             a = m.addAction(ic, text) if ic else m.addAction(text)
             a.setEnabled(item[3] if len(item) > 3 else True)
             a.triggered.connect(lambda *_, fn=fn: fn())
@@ -1831,7 +1836,7 @@ class MainWindow(QMainWindow):
             self.lemmas.select_row(row)
         self._menu([*self._spelling_items(self.lemmas, pos, row), ("Add lemma", "add", self.add_entry), ("Delete lemma", "delete", self.delete_entry),
                     ("Edit lemma", "edit", self.edit_entry), None,
-                    ("Configure columns", "gear", self.configure_lemma_columns),
+                    ("Configure columns", "gear-columns", self.configure_lemma_columns),
                     ("Clear all filters", "reset-filters", self._clear_lemma_filters)], pos)
 
     # ---- spelling (section 5.10) -----------------------------------------
@@ -1952,13 +1957,62 @@ class MainWindow(QMainWindow):
         accept = ([None, ("Accept suggested translation", "", lambda r=row: self.accept_suggestion(r))]
                   if self.suggestion_for(row) else [])
         self._menu([*self._spelling_items(self.all_table, pos, row),("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
-                    ("Edit token", "edit", self.edit_token), *accept, None, *self._token_items(), None,
-                    ("Configure columns", "gear", self.configure_all_columns),
+                    ("Edit token", "edit", self.edit_token), *accept, None, *self._token_items(),
+                    *self._pitch_items(self._pitch_column_at(pos)), None,
+                    ("Configure columns", "gear-columns", self.configure_all_columns),
                     ("Clear all filters", "reset-filters", self._clear_all_filters)], pos)
 
     def _matrix_menu(self, tab, pos):
         self._menu([("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
-                    ("Edit token", "edit", self.edit_token), None, *self._token_items()], pos)
+                    ("Edit token", "edit", self.edit_token), None, *self._token_items(),
+                    *self._pitch_items()], pos)
+
+    def _pitch_column_at(self, pos) -> bool:
+        """Whether the right-click in All data is on the pitch field (its digits or its drawing)."""
+        idx = self.all_table.indexAt(self.all_table.viewport().mapFromGlobal(pos))
+        if not idx.isValid():
+            return False
+        key = self.all_table.model_.columns[idx.column()].key
+        f = self._pitch_field()
+        return key == "drawing" or (f is not None and key == "f:" + f.name)
+
+    def _pitch_field(self):
+        return next((f for f in self.doc.db.settings.token_fields if f.role == "pitch"), None)
+
+    def _pitch_items(self, show: bool = True) -> list:
+        """Raise pitch and Lower pitch for the selected token: Bulk edit's shortcut, for one token."""
+        sel = self.selected_token()
+        f = self._pitch_field()
+        if not show or sel is None or f is None or not sel[0].tokens[sel[1]].get(f.name).strip():
+            return []
+        text = sel[0].tokens[sel[1]].get(f.name)
+        s = self.doc.db.settings
+        items = [None]
+        for label, step in (("Raise pitch", 1), ("Lower pitch", -1)):
+            try:
+                bulk.shift_pitch(text, step, s.pitch_low, s.pitch_high)
+                ok = True
+            except bulk.RowError:
+                ok = False                       # past the display range: greyed, as in Bulk edit
+            items.append((label, "", lambda step=step: self.shift_selected_pitch(step), ok))
+        return items
+
+    def shift_selected_pitch(self, step: int):
+        sel = self.selected_token()
+        f = self._pitch_field()
+        if sel is None or f is None:
+            return
+        entry, index = sel
+        s = self.doc.db.settings
+        try:
+            new = bulk.shift_pitch(entry.tokens[index].get(f.name), step, s.pitch_low, s.pitch_high)
+        except bulk.RowError as exc:
+            self.statusBar().showMessage(str(exc), 5000)
+            return
+
+        def change(e, i=index):
+            e.tokens[i].set(f.name, new)
+        self.doc.edit_entry(entry, change, "Raise pitch" if step > 0 else "Lower pitch")
 
     def _clear_lemma_filters(self):
         self.lemma_search.clear()

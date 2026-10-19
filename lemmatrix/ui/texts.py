@@ -467,7 +467,7 @@ class TextsPanel(QObject):
         self.main._row(bl, tool("Add", "add", self.add, "Add a text or song, with its recording and TextGrid"),
                              tool("Delete", "delete", self.delete, "Delete the selected text (Delete)"),
                              tool("Edit", "edit", self.edit, "Edit the selected text (Enter)"),
-                             tool("Configure columns", "gear", self.configure_columns),
+                             tool("Configure columns", "gear-columns", self.configure_columns),
                              tool("Clear all filters", "reset-filters", self.clear_filters))
         self.search = QLineEdit()
         self.search.setPlaceholderText("quick search of the texts' visible columns")
