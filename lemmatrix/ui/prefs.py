@@ -184,7 +184,7 @@ class Prefs:
 
     @property
     def pitch_voice(self) -> str:
-        return self._get("pitch/voice", "hum")
+        return self._get("pitch/voice", "whistle")
 
     @pitch_voice.setter
     def pitch_voice(self, v): self.q.setValue("pitch/voice", v)
