@@ -1012,6 +1012,14 @@ class TextsPanel(QObject):
     def _line_menu(self, row, pos):
         m = QMenu(self.win)
         on = row is not None
+        key = self.lines.menu_key if on else ""
+        a = m.addAction(icon("edit", 16), f"Edit {self.lines.title(key)}" if key else "Edit field")
+        a.setEnabled(bool(key))
+        a.triggered.connect(lambda *_: self.lines.start_edit(row, key))
+        a = m.addAction("Edit text…")
+        a.setEnabled(self.current() is not None)
+        a.triggered.connect(lambda *_: self.edit())
+        m.addSeparator()
         for text, name, fn in (("Play line", "play", self.play_line),
                                ("Play in context", None, lambda: self.play_line(context=True)),
                                ("Clip as utterance…", None, self.clip),

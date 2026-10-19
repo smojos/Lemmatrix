@@ -160,6 +160,8 @@ class SpellDelegate(QStyledItemDelegate):
 
     def paint(self, painter, option, index):
         super().paint(painter, option, index)
+        from .searchmark import paint_cell
+        paint_cell(self, painter, option, index)  # what the search bar found
         if self.speller is None:
             return
         text = index.data(Qt.DisplayRole) or ""

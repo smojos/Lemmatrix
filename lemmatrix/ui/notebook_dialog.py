@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCalendarWidget, QComboBox, QD
 from .. import matrix as mx, notebook as nbmod
 from ..model import today
 from . import chiprow as chips
-from . import theme
+from . import searchmark, theme
 from .icons import icon
 from .widgets import ipa_font
 
@@ -30,10 +30,17 @@ NEWEST, OLDEST = "newest", "oldest"
 class WrapDelegate(QStyledItemDelegate):
     """Rows tall enough for their wrapped text (tree views don't work that out themselves)."""
 
-    def __init__(self, view):
+    def __init__(self, view, query=None):
         super().__init__(view)
         self.view = view
+        self.query = query                        # () -> the search bar's text: its matches are marked
         view.header().sectionResized.connect(lambda *_: view.doItemsLayout())
+
+    def paint(self, painter, option, index):
+        super().paint(painter, option, index)
+        text = self.query().strip() if self.query else ""
+        if text:
+            searchmark.paint_wrapped_cell(self, painter, option, index, searchmark.fold_query(text))
 
     def sizeHint(self, option, index):
         size = super().sizeHint(option, index)
@@ -46,10 +53,10 @@ class WrapDelegate(QStyledItemDelegate):
         return size
 
 
-def wrapping(view):
+def wrapping(view, query=None):
     view.setWordWrap(True)
     view.setTextElideMode(Qt.ElideNone)
-    view.setItemDelegate(WrapDelegate(view))
+    view.setItemDelegate(WrapDelegate(view, query))
 
 
 def pick_date(parent, title: str, start: str, taken=(), allow_taken: bool = True) -> str:
@@ -252,7 +259,7 @@ class NotebookDialog(QDialog):
         self.comments.setColumnCount(2)
         self.comments.setHeaderLabels(["Comment", "Link"])
         self.comments.setRootIsDecorated(False)
-        wrapping(self.comments)
+        wrapping(self.comments, lambda: self.search.text())
         self.comments.header().setSectionResizeMode(0, QHeaderView.Stretch)
         self.comments.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         self.comments.header().setStretchLastSection(False)
@@ -297,7 +304,7 @@ class NotebookDialog(QDialog):
         self.questions.setColumnCount(5)
         self.questions.setHeaderLabels(["Question", "Token", "Status", "Created / edited", "Resolved"])
         self.questions.setRootIsDecorated(False)
-        wrapping(self.questions)
+        wrapping(self.questions, lambda: self.search.text())
         self.questions.setFont(ipa_font(self.main.prefs.ipa_size))
         h = self.questions.header()
         h.setSectionResizeMode(0, QHeaderView.Stretch)
@@ -371,6 +378,8 @@ class NotebookDialog(QDialog):
     def _search_changed(self):
         self._fill_days(self.session.date if self.session else None)
         self._highlight()
+        for view in (self.comments, self.questions):      # their marks
+            view.viewport().update()
 
     # ============================================================== one day
     def _show(self, s: nbmod.Session | None):
@@ -757,7 +766,7 @@ class QuestionsDialog(QDialog):
         self.tree.setColumnCount(6)
         self.tree.setHeaderLabels(["Session", "Question", "Token", "Status", "Created / edited", "Resolved"])
         self.tree.setRootIsDecorated(False)
-        wrapping(self.tree)
+        wrapping(self.tree, lambda: self.search.text())
         self.tree.setSelectionMode(QAbstractItemView.SingleSelection)
         self.tree.setFont(ipa_font(main.prefs.ipa_size))
         h = self.tree.header()

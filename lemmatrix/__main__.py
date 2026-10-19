@@ -59,6 +59,8 @@ def main() -> int:
     app.setStyle("Fusion")
     from .ui.icons import app_icon
     app.setWindowIcon(app_icon())
+    from .ui import ctrlspace
+    app._ctrl_space = ctrlspace.install(app)            # Ctrl+Space plays from any field, any keyboard
 
     win = MainWindow()
     path = sys.argv[1] if len(sys.argv) > 1 else win.prefs.last_file

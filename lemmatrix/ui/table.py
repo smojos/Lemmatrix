@@ -21,6 +21,7 @@ from .. import filters as fl
 from ..model import ListItem
 from . import spellui, theme
 from .filter_dialogs import ChooseDialog, FilterForDialog
+from .searchmark import SearchDelegate, paint_cell
 from .spellui import SpellDelegate
 from .widgets import FilterHeader, chips_width, draw_pitch, ipa_font, paint_chips, underscore_unit
 
@@ -130,6 +131,8 @@ class RowModel(QAbstractTableModel):
 
 
 class RowFilter(QSortFilterProxyModel):
+    searchChanged = Signal()                       # the views repaint their search marks
+
     def __init__(self):
         super().__init__()
         self.filters: dict[str, object] = {}       # column key -> filter
@@ -148,6 +151,7 @@ class RowFilter(QSortFilterProxyModel):
     def set_search(self, text):
         self.search = fl.fold_diacritics(text).casefold()
         self.refilter()
+        self.searchChanged.emit()
 
     def set_filter(self, key, flt):
         if flt is None:
@@ -201,6 +205,10 @@ class ListEditDelegate(QStyledItemDelegate):
 
     def setModelData(self, editor, model, index):
         model.setData(index, editor.currentText(), Qt.EditRole)
+
+    def paint(self, painter, option, index):
+        super().paint(painter, option, index)
+        paint_cell(self, painter, option, index)
 
 
 def show_suggestion(ed: QLineEdit, suggestion: str):
@@ -335,6 +343,8 @@ class FilterTable(QTableView):
         self.header_ = FilterHeader(self)
         self.setHorizontalHeader(self.header_)
         self.setModel(self.proxy)
+        self.setItemDelegate(SearchDelegate(self))  # marks what the search bar found
+        self.proxy.searchChanged.connect(lambda: self.viewport().update())
         self.setSortingEnabled(True)
         self.sortByColumn(-1, Qt.AscendingOrder)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)

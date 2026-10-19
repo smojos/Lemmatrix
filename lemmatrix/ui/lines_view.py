@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QAbstractScrollArea, QDialog, 
                                QLineEdit, QTreeWidget, QTreeWidgetItem, QVBoxLayout)
 
 from ..interlinear import bare, split_units
-from . import theme
+from . import searchmark, theme
 from .widgets import ipa_font
 
 MARGIN = 24              # the buffer on the left
@@ -84,6 +84,7 @@ class LinesView(QAbstractScrollArea):
         self._selected: set = set()               # line ids
         self._anchor = None
         self._editor = None                       # (QLineEdit, line id, key, original text)
+        self.menu_key = ""                        # the field right-clicked last
         self.ipa = ipa_font(15)
         self.plain = QFont(self.font())
         self.plain.setPointSizeF(self.plain.pointSizeF() * 1.1)
@@ -117,7 +118,7 @@ class LinesView(QAbstractScrollArea):
         self._filter()
 
     def set_search(self, text: str):
-        self._search = (text or "").strip().lower()
+        self._search = searchmark.fold_query((text or "").strip())   # as the grids' searches
         self._filter()
 
     def set_edit_mode(self, on: bool):
@@ -131,7 +132,7 @@ class LinesView(QAbstractScrollArea):
     def _matches(self, line) -> bool:
         if not self._search:
             return True
-        hay = " ".join(list(line.values.values()) + [line.speaker]).lower()
+        hay = searchmark.fold_query(" ".join(list(line.values.values()) + [line.speaker]))
         return self._search in hay or self._search in shown(hay)
 
     def _filter(self):
@@ -326,8 +327,11 @@ class LinesView(QAbstractScrollArea):
                 if s.aligned:
                     x = x0
                     p.setPen(text)
+                    fm = p.fontMetrics()
                     for w, u in zip(c.cols, self._units(ln, s)):
                         p.drawText(QRect(x, y, w, rh), Qt.AlignVCenter | Qt.AlignLeft, u)
+                        if self._search:
+                            searchmark.mark_text(p, x, y + (rh - fm.height()) / 2, fm.height(), u, self._search, fm)
                         x += w
                     if not self.value(ln, s.key) and self.edit_mode:
                         p.setPen(dim)
@@ -338,6 +342,9 @@ class LinesView(QAbstractScrollArea):
                     if t:
                         p.setPen(text)
                         p.drawText(QRect(x0, y, c.width + 40, rh), Qt.AlignVCenter | Qt.AlignLeft, t)
+                        if self._search:
+                            fm = p.fontMetrics()
+                            searchmark.mark_text(p, x0, y + (rh - fm.height()) / 2, fm.height(), t, self._search, fm)
                     elif self.edit_mode:
                         p.setPen(dim)
                         p.setFont(self.small)
@@ -365,8 +372,11 @@ class LinesView(QAbstractScrollArea):
                 p.drawRoundedRect(box, 3, 3)
                 comment = self.value(ln, self.comment_key)
                 p.setPen(text if comment else dim)
-                p.drawText(box.adjusted(6, 4, -6, -4).toRect(), Qt.TextWordWrap | Qt.AlignTop,
+                inner = box.adjusted(6, 4, -6, -4)
+                p.drawText(inner.toRect(), Qt.TextWordWrap | Qt.AlignTop,
                            comment or ("Comment" if self.edit_mode else ""))
+                if comment and self._search:
+                    searchmark.mark_wrapped(p, inner, comment, self._search)
             p.setPen(QPen(line_col, 1))
             p.drawLine(0, top + c.h, self.viewport().width(), top + c.h)
         if not self._visible:
@@ -416,7 +426,10 @@ class LinesView(QAbstractScrollArea):
             self.playRequested.emit()
 
     def contextMenuEvent(self, event):
-        i, _ = self._hit(event.pos())
+        i, what = self._hit(event.pos())
+        # the field under the mouse, for the menu's Edit item ("" outside a field)
+        self.menu_key = (self.comment_key if what == "comment" else
+                         "" if what in ("", "side", "clips") else what) if i is not None else ""
         self.contextRequested.emit(self._visible[i] if i is not None else None, event.globalPos())
 
     def keyPressEvent(self, event):
@@ -453,6 +466,11 @@ class LinesView(QAbstractScrollArea):
         self.currentChanged.emit(self._visible[j])
 
     # ---- editing ----------------------------------------------------------------------------
+    def title(self, key: str) -> str:
+        if key and key == self.comment_key:
+            return "Comment"
+        return next((s.title for s in self.fields if s.key == key), key)
+
     def _keys(self) -> list[str]:
         return [s.key for s in self.fields] + ([self.comment_key] if self.comment_key else [])
 

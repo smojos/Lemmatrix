@@ -26,6 +26,7 @@ from ..model import ListItem
 from . import theme
 from .filter_dialogs import ConfigureColumnsDialog
 from .icons import icon, ink_icon
+from .searchmark import paint_cell
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, RowModel
 from .widgets import ipa_font
 
@@ -138,6 +139,7 @@ class PreviewDelegate(QStyledItemDelegate):
                 self.fallback.paint(painter, option, index)
             else:
                 super().paint(painter, option, index)
+                paint_cell(self, painter, option, index)   # what the search bar found
             return
         painter.save()
         r = option.rect
