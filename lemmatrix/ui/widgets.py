@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (QHeaderView, QLayout, QSizePolicy, QWidget)
 
 from .. import pitch as pitchmod
 from . import theme
+from .icons import funnel
 
 
 
@@ -338,14 +339,10 @@ class FilterHeader(QHeaderView):
         painter.setPen(QPen(theme.accent() if on else theme.colour("filter_off_line"), 1))
         painter.setBrush(theme.accent() if on else theme.colour("filter_off"))
         painter.drawRoundedRect(QRectF(br).adjusted(0.5, 0.5, -0.5, -0.5), 2, 2)
-        funnel = QPolygonF([QPointF(br.left() + 3, br.top() + 4), QPointF(br.right() - 3, br.top() + 4),
-                            QPointF(br.center().x() + 1.5, br.center().y() + 1),
-                            QPointF(br.center().x() + 1.5, br.bottom() - 3),
-                            QPointF(br.center().x() - 1.5, br.bottom() - 4),
-                            QPointF(br.center().x() - 1.5, br.center().y() + 1)])
+        shape = funnel(QRectF(br.left() + 3, br.top() + 4, br.width() - 6, br.height() - 7.5))
         painter.setBrush(theme.text_on(theme.accent()) if on else theme.colour("filter_off_mark"))
         painter.setPen(Qt.NoPen)
-        painter.drawPolygon(funnel)
+        painter.drawPolygon(shape)
         painter.restore()
 
     def sectionSizeFromContents(self, index):

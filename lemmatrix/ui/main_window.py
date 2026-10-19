@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 
 from PySide6.QtCore import QDate, QDir, QSize, Qt, QTimer, QUrl
-from PySide6.QtGui import QAction, QDesktopServices, QFont, QKeySequence
+from PySide6.QtGui import QAction, QColor, QDesktopServices, QFont, QKeySequence
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QFileDialog, QFrame, QGridLayout,
                                QProgressDialog,
                                QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMenu, QMessageBox, QPushButton,
@@ -1042,7 +1042,7 @@ class MainWindow(QMainWindow):
         self.notebook_btn.setIcon(icon("notebook", 34, a))
         self.texts_btn.setIcon(icon("texts-utterances", 96, a))
         self.write_btn.setIcon(icon("write-notebook", 34))
-        self.save_btn.setIcon(icon("save-solid", 20, theme.colour("pitch").name()))   # lighter on dark
+        self._save_icon()
         self._style_menu_bar()
         self._panels_icon()
         for b in self.findChildren(QToolButton):         # icons in the text colour follow the theme
@@ -1201,6 +1201,12 @@ class MainWindow(QMainWindow):
 
     def _dirty_changed(self, dirty: bool):
         self._update_title()
+        self._save_icon()
+
+    def _save_icon(self):
+        """The floppy: the theme colour (lighter on dark) with unsaved changes, grey once saved."""
+        c = theme.colour("pitch") if self.doc.dirty else QColor("#6e6e6e" if theme.dark() else "#a6a6a6")
+        self.save_btn.setIcon(icon("save-solid", 20, c.name()))
 
     def _update_title(self):
         db = self.doc.db
