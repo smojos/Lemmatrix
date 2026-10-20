@@ -12,7 +12,7 @@ from PySide6.QtCore import QDir, Qt
 from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import (QCheckBox, QColorDialog, QComboBox, QDialog, QDialogButtonBox, QFormLayout,
                                QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMessageBox,
-                               QPushButton, QSlider, QSpinBox, QTabWidget, QTreeWidget, QTreeWidgetItem,
+                               QPushButton, QSlider, QSpinBox, QTabWidget, QToolButton, QTreeWidget, QTreeWidgetItem,
                                QVBoxLayout, QWidget, QInputDialog)
 
 from ..model import (Database, Entry, Group, Tag, forbidden_in, nfc)
@@ -146,6 +146,7 @@ class EntryDialog(QDialog):
         form.addRow("Category", self.category)
         form.addRow("Reference", self.ref)
         self.fields: dict[tuple[str, str], QWidget] = {}
+        others = []                                 # second languages: under Other languages (idea 19)
         for f in s.entry_fields:
             if f.multilingual:
                 for lang in s.gloss_languages:
@@ -153,7 +154,10 @@ class EntryDialog(QDialog):
                     ed.setText(entry.get(f.name, lang) if entry else "")
                     if f.role == "gloss" and lang == "en":           # red lines under unknown words
                         spellui.attach(ed, getattr(parent, "speller", None))
-                    form.addRow(f"{f.title} ({lang})", ed)
+                    if lang == s.primary_gloss:
+                        form.addRow(f"{f.title} ({lang})", ed)
+                    else:
+                        others.append((f"{f.title} ({lang})", ed))
                     self.fields[(f.name, lang)] = ed
             elif f.closed:
                 cb = QComboBox()
@@ -179,6 +183,33 @@ class EntryDialog(QDialog):
         if not entry:
             self.file_gloss.setEnabled(False)
             self.file_gloss.setToolTip("Set automatically from the primary gloss.")
+        self.others_btn = None
+        if others:
+            self.others_btn = QToolButton()
+            self.others_btn.setCheckable(True)
+            self.others_btn.setAutoRaise(True)
+            self.others_btn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+            langs = [lang for lang in s.gloss_languages if lang != s.primary_gloss]
+            self.others_btn.setText(f"Other languages ({', '.join(langs)})")
+            self.others_btn.setToolTip("Glosses in the database's other gloss languages: they help "
+                                       "speakers understand (e.g. in EλICIT requests)")
+            form.addRow(self.others_btn)
+            self.other_rows = []
+            for label, ed in others:
+                form.addRow(label, ed)
+                self.other_rows.append(ed)
+            prefs = getattr(parent, "prefs", None)
+
+            def show(on, remember=True):
+                self.others_btn.setArrowType(Qt.DownArrow if on else Qt.RightArrow)
+                for w in self.other_rows:
+                    form.setRowVisible(w, on)
+                if remember and prefs is not None:
+                    prefs.set_value("dialogs/other_languages", bool(on))
+            shown = prefs.get_bool("dialogs/other_languages", False) if prefs is not None else False
+            self.others_btn.setChecked(shown)
+            self.others_btn.toggled.connect(show)
+            show(shown, remember=False)
         form.addRow(_buttons(self))
 
     def _suggest(self):
@@ -338,7 +369,10 @@ class MetadataDialog(QDialog):
         form.addRow("Author / owner", self.author)
         form.addRow("Description", self.description)
         self.glosses = QLineEdit(" ".join(db.settings.gloss_languages))
-        self.glosses.setToolTip("Gloss languages, separated by spaces; the first is the primary one.")
+        self.glosses.setToolTip("Gloss languages, separated by spaces; the first is the primary one (the "
+                                "language of the analysis). The others are second languages, to help "
+                                "speakers understand (e.g. in EλICIT requests): hidden everywhere until a "
+                                "column, a cell line or a dialogue's Other languages is set to show them.")
         form.addRow("Gloss languages", self.glosses)
         lay.addLayout(form)
         note = QLabel("Researchers, participants (speakers) and locations: Edit → Lists.")
@@ -354,8 +388,19 @@ class MetadataDialog(QDialog):
             self.docs_btn.setEnabled(False)
             self.docs_btn.setToolTip("Save the database first: the Documentation folder is next to it")
         self.docs_btn.clicked.connect(lambda *_: self.open_documentation())
+        self.images_btn = QPushButton("Open images folder")
+        if db.path:
+            where = QDir.toNativeSeparators(str(layout.images_folder(db.path)))
+            self.images_btn.setToolTip("Pictures for EλICIT requests, named by the token's reference and tag "
+                                       "codes: D001.jpg for a citation token, D001_PL.jpg for its plural "
+                                       f"(JPG, PNG or GIF). Never shown in Lemmatrix.\n{where}")
+        else:
+            self.images_btn.setEnabled(False)
+            self.images_btn.setToolTip("Save the database first: the Images folder is next to it")
+        self.images_btn.clicked.connect(lambda *_: self.open_folder(layout.images_folder(self.db.path), "Images"))
         row = QHBoxLayout()
         row.addWidget(self.docs_btn)
+        row.addWidget(self.images_btn)
         row.addStretch(1)
         lay.addLayout(row)
         lay.addStretch(1)
@@ -363,14 +408,17 @@ class MetadataDialog(QDialog):
 
     def open_documentation(self):
         """Open the Documentation folder (made if it isn't there yet) in the file manager."""
+        from .. import layout
+        self.open_folder(layout.documentation_folder(self.db.path), "Documentation")
+
+    def open_folder(self, folder, name: str):
+        """Open a folder of the main folder (made if it isn't there yet) in the file manager."""
         from PySide6.QtCore import QUrl
         from PySide6.QtGui import QDesktopServices
-        from .. import layout
-        folder = layout.documentation_folder(self.db.path)
         try:
             folder.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
-            QMessageBox.warning(self, "Documentation", f"Couldn't make the Documentation folder: {exc}")
+            QMessageBox.warning(self, name, f"Couldn't make the {name} folder: {exc}")
             return
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
 

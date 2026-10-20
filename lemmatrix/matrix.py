@@ -34,6 +34,29 @@ LEMMA_TAG, TAG_TAG = "lemma-tag", "tag-tag"
 DEFAULT_CELL = ["drawing", "Phonetic", "Phonemic", "Translation"]
 
 
+def cell_text(db, t, key: str) -> str:
+    """A cell line's text: a token field by name, or Name:lang for a second language's
+    translation (Translation:ar; idea 19), shown only when Configure cell ticks it."""
+    name, _, lang = key.partition(":")
+    f = db.settings.token_field(name)
+    if f is not None and f.multilingual:
+        return t.get(name, lang or db.settings.primary_gloss)
+    return t.get(name)
+
+
+def cell_options(db) -> list[tuple[str, str]]:
+    """(key, title) of every line a cell can show, in their usual order: the pitch drawing, then
+    the token fields, each translation followed by its second languages' (not ticked by default)."""
+    s = db.settings
+    out = [("drawing", "Pitch drawing")]
+    for f in s.token_fields:
+        out.append((f.name, f.title))
+        if f.multilingual:
+            out += [(f"{f.name}:{lang}", f"{f.title} ({lang})")
+                    for lang in s.gloss_languages if lang != s.primary_gloss]
+    return out
+
+
 @dataclass(frozen=True)
 class Spec:
     tags: frozenset = frozenset()

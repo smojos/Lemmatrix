@@ -261,11 +261,7 @@ class TokenCellDelegate(QStyledItemDelegate):
         return [f for f in self.view.cell_fields if f != "drawing"]
 
     def _text(self, t, name):
-        db = self.view.db
-        f = db.settings.token_field(name)
-        if f and f.multilingual:
-            return t.get(name, db.settings.primary_gloss)
-        return t.get(name)
+        return mx.cell_text(self.view.db, t, name)
 
     def _font(self, name):
         return self.ipa if name in IPA_FIELDS else self.plain

@@ -92,6 +92,11 @@ def targets(db: Database, level: str) -> list[Target]:
         for f in s.token_fields:
             out.append(Target("f:" + f.name, f.title, "token", f.name,
                               s.primary_gloss if f.multilingual else None, f.role, f.closed, f.is_comment))
+            if f.multilingual:                 # second languages' translations (idea 19), like All data's
+                for lang in s.gloss_languages:
+                    if lang != s.primary_gloss:
+                        out.append(Target(f"f:{f.name}:{lang}", f"{f.title} ({lang})", "token", f.name,
+                                          lang, "", False, False))
         out += [Target("tags", "Tags", "tags", closed=True), Target("speaker", "Speaker", "speaker"),
                 Target("date", "Date", "date")]
     return out

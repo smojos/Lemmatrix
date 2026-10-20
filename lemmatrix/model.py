@@ -520,6 +520,9 @@ class Person:
     name: str = ""
     description: str = ""
     consent: str = ""             # participants: the file documenting informed consent
+    email: str = ""               # researchers: where EλICIT tells them recordings are in (idea 19)
+    identifiable: bool = False    # participants: agreed in the consent form to be identified
+    audio_sharing: bool = False   # participants: agreed in the consent form that their recordings be shared
 
 
 Participant = Person              # the older name

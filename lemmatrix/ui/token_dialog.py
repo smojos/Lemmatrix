@@ -144,6 +144,7 @@ class TokenDialog(QDialog):
             self.edits[f.name] = ed
             ed.installEventFilter(self)           # Ctrl+Space plays, never types a space
             row += 1
+        row = self._build_other_languages(left, row)
         self.pitch_note = QLabel()
         self.pitch_note.setStyleSheet(f"color: {theme.colour('warning').name()};")
         left.addWidget(self.pitch_note, row, 1)
@@ -326,6 +327,10 @@ class TokenDialog(QDialog):
             ed.blockSignals(True)
             ed.setText(t.get(name, s.primary_gloss) if f.multilingual else t.get(name))
             ed.blockSignals(False)
+        for (name, lang), ed in self.other_edits.items():
+            ed.blockSignals(True)
+            ed.setText(t.get(name, lang))
+            ed.blockSignals(False)
         self.canvas.set_range(s.pitch_low, s.pitch_high)
         self._pitch_changed(t.get("Pitch"))
         known = {tg.name for tg, _ in s.tags.tags()}
@@ -391,6 +396,8 @@ class TokenDialog(QDialog):
                 t.set(name, text, s.primary_gloss)
             else:
                 t.set(name, text)
+        for (name, lang), ed in self.other_edits.items():
+            t.set(name, ed.text().strip(), lang)
         t.tags = s.tags.sort(self.tags.selected() + self.unknown_tags)
         t.speaker = self.speaker.currentText()
         t.collected = self.date.text().strip()
@@ -431,7 +438,55 @@ class TokenDialog(QDialog):
 
     def key_fields(self) -> list:
         """The fields where Ctrl+Space plays (and Ctrl+Shift+Space the pitch) instead of typing."""
-        return [*self.edits.values(), self.date]
+        return [*self.edits.values(), *self.other_edits.values(), self.date]
+
+    # ---- second languages (idea 19) ----------------------------------
+    def _build_other_languages(self, grid, row: int) -> int:
+        """The translations in the database's other gloss languages, under the token's fields:
+        hidden behind "Other languages" until it's opened (remembered on this computer). They
+        are there to help speakers understand (EλICIT), not for the analysis."""
+        s = self.db.settings
+        self.other_edits: dict[tuple[str, str], QLineEdit] = {}
+        self.other_rows: list = []
+        self.others_btn = None
+        others = [lang for lang in s.gloss_languages if lang != s.primary_gloss]
+        fields = [f for f in s.token_fields if f.multilingual]
+        if not others or not fields:
+            return row
+        self.others_btn = QToolButton()
+        self.others_btn.setCheckable(True)
+        self.others_btn.setAutoRaise(True)
+        self.others_btn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.others_btn.setFocusPolicy(Qt.NoFocus)
+        self.others_btn.setText(f"Other languages ({', '.join(others)})")
+        self.others_btn.setToolTip("Translations in the database's other gloss languages: they help "
+                                   "speakers understand (e.g. in EλICIT requests)")
+        self.others_btn.toggled.connect(self._show_other_languages)
+        grid.addWidget(self.others_btn, row, 0, 1, 2, Qt.AlignLeft)
+        row += 1
+        for f in fields:
+            for lang in others:
+                label = QLabel(f"{f.title} ({lang})")
+                ed = QLineEdit()
+                ed.setFont(ipa_font(self.main.prefs.ipa_size + 1))
+                ed.textChanged.connect(self._fields_changed)
+                ed.installEventFilter(self)
+                grid.addWidget(label, row, 0)
+                grid.addWidget(ed, row, 1)
+                self.other_edits[(f.name, lang)] = ed
+                self.other_rows += [label, ed]
+                row += 1
+        shown = self.main.prefs.get_bool("dialogs/other_languages", False)
+        self.others_btn.setChecked(shown)
+        self._show_other_languages(shown, remember=False)
+        return row
+
+    def _show_other_languages(self, shown: bool, remember: bool = True):
+        self.others_btn.setArrowType(Qt.DownArrow if shown else Qt.RightArrow)
+        for w in self.other_rows:
+            w.setVisible(shown)
+        if remember:
+            self.main.prefs.set_value("dialogs/other_languages", bool(shown))
 
     def eventFilter(self, obj, event):
         # Ctrl+Space plays (Ctrl+Shift+Space: the pitch) even with the cursor in a field: on some
@@ -665,7 +720,7 @@ class TokenDialog(QDialog):
 
     def focusNextPrevChild(self, forward: bool) -> bool:
         """Tab and Shift+Tab go round the token's fields only (tags and buttons are for the mouse)."""
-        fields = [e for e in self.edits.values() if e.isVisible() and e.isEnabled()]
+        fields = [e for e in (*self.edits.values(), *self.other_edits.values()) if e.isVisible() and e.isEnabled()]
         current = self.focusWidget()
         if current in fields:
             i = (fields.index(current) + (1 if forward else -1)) % len(fields)

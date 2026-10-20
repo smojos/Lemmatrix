@@ -107,3 +107,32 @@ def build_text_filename(db: Database, text, extension: str = ".wav") -> str:
         if value:
             out += (sep if out else "") + value
     return praat_name(out.strip(_EDGE_SEPARATORS)) + extension
+
+
+# --------------------------------------------------------------------------
+# Images (idea 19, EλICIT): a token's picture is found by name in the main folder's Images
+# folder, never shown in Lemmatrix and never stored in the database.
+# --------------------------------------------------------------------------
+
+def image_stem(db: Database, e: Entry, t: Token) -> str:
+    """The name (without extension) a token's image has: its reference, then its tag codes as in
+    sound file names, written as Praat would name it. D001 for the citation token, D001_PL for
+    the plural, D001_PL-1SG_POSS for "my goats". A token without an image of its own has none:
+    there is no falling back on the lemma's (a picture of one goat is not one of three)."""
+    s = db.settings
+    tags = s.tag_separator.join(s.tags.file_codes(t.tags))
+    return praat_name(e.ref + ("_" + tags if tags else ""))
+
+
+def find_image(db: Database, e: Entry, t: Token):
+    """The token's image in Images (JPG, PNG or GIF, any case), or None."""
+    from pathlib import Path
+    from . import layout
+    folder = layout.images_folder(db.path)
+    if not db.path or not folder.is_dir():
+        return None
+    stem = image_stem(db, e, t).lower()
+    for p in sorted(Path(folder).iterdir()):
+        if p.is_file() and p.stem.lower() == stem and p.suffix.lower() in layout.IMAGE_EXTENSIONS:
+            return p
+    return None

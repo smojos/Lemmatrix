@@ -263,6 +263,10 @@ class TextsUtterancesWindow(QDialog):
                 lambda u, n=f.name, ml=f.multilingual: u.token.get(n, s.primary_gloss if ml else None),
                 closed=f.closed, tree=(lambda f=f: s.list_items(f)) if f.closed else None,
                 ipa=f.role in ("phonetic", "phonemic"), edit=edit))
+            if f.multilingual:                 # second languages: in Configure columns, not shown by default
+                for lang in [x for x in s.gloss_languages if x != s.primary_gloss]:
+                    cols.append(Column(f"f:{f.name}:{lang}", f"{f.title} ({lang})",
+                                       lambda u, n=f.name, l=lang: u.token.get(n, l), edit=edit))
         folder = storage.utterance_folder(db)
         cols += [
             Column("lemmas", "Lemmas", lemmas_text, ipa=True,
@@ -654,7 +658,7 @@ class TextsUtterancesWindow(QDialog):
             text = clean_label(text, 200)
             self.set_label(u, text)
             return
-        name = key[2:]
+        name, _, lang = key[2:].partition(":")      # f:Translation, or f:Translation:ar
         f = s.token_field(name)
         if f is None:
             return
@@ -665,8 +669,8 @@ class TextsUtterancesWindow(QDialog):
             self.doc.settings_changed()
 
         def change(x):
-            x.token.set(name, text, s.primary_gloss if f.multilingual else None, f.multilingual)
-        self.doc.edit_entry(u, change, f"Edit {f.title}")
+            x.token.set(name, text, (lang or s.primary_gloss) if f.multilingual else None, f.multilingual)
+        self.doc.edit_entry(u, change, f"Edit {f.title}" + (f" ({lang})" if lang else ""))
 
     def _renamed(self, u: Utterance, after: Utterance) -> list:
         """Rename the recording to after's expected name (if automatic). Returns the renames."""

@@ -120,6 +120,11 @@ class ChipRow(QWidget):
             tip += "\n" + _short(p.description)
         if self.kind == PARTICIPANTS and p.consent:
             tip += "\nConsent: " + p.consent
+        if self.kind == PARTICIPANTS:
+            agreed = [w for w, ok in (("identifiable", p.identifiable), ("audio sharing", p.audio_sharing)) if ok]
+            tip += "\nAgreed to: " + (", ".join(agreed) if agreed else "neither identification nor audio sharing")
+        elif p.email:
+            tip += "\n" + p.email
         return key, tip
 
     def _rebuild(self):

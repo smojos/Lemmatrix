@@ -55,7 +55,7 @@ class ConfigureCellDialog(QDialog):
         lay.addWidget(QLabel("Tick what each cell shows; drag to reorder."))
         self.list = QListWidget()
         self.list.setDragDropMode(QAbstractItemView.InternalMove)
-        options = [("drawing", "Pitch drawing")] + [(f.name, f.title) for f in db.settings.token_fields]
+        options = mx.cell_options(db)
         titles = dict(options)
         order = cell_order(cell, [k for k, _ in options])
         for k in order:

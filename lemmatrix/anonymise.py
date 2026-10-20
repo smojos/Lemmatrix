@@ -3,7 +3,8 @@
 """Export an anonymous backup: a copy of the database (and notebook) safe to share or deposit.
 
 What always goes: the participants' names, descriptions and consent links (their codes
-stay, since tokens, sessions and file names use them). What can also go, or be changed:
+stay, since tokens, sessions and file names use them), and everyone's email address. The
+participants' Identifiable? and Audio sharing? ticks stay: they record what was agreed. What can also go, or be changed:
 the researchers' names (and the owner's), the notebook, the participants' names written
 in free text (replaced by their codes), the recordings (copied, or not), places below a
 chosen level, and the consent forms (left out, or put in a password-protected zip).
@@ -126,6 +127,8 @@ def anonymise(db: Database, nb: nbmod.Notebook | None, opts: Options, report: Re
     patterns = name_patterns(people) if opts.replace_names else []
     for p in md.participants:
         p.name, p.description, p.consent = "", "", ""
+    for p in md.researchers + md.participants:        # contact details always go (idea 19)
+        p.email = ""
     if opts.researchers:
         for p in md.researchers:
             p.name, p.description = "", ""

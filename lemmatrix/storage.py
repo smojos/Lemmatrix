@@ -179,8 +179,11 @@ def _load_values(el, target, multilingual_names: set[str], skip=("token",)):
 
 
 def _load_person(el) -> Person:
-    """<participant code="SP1" name="...">description</participant>"""
-    return Person(nfc(el.get("code", "")), nfc(el.get("name", "")), _text(el), nfc(el.get("consent", "")))
+    """<participant code="SP1" name="..." identifiable="yes" audio-sharing="yes">description</participant>;
+    researchers can have an email="..."."""
+    return Person(nfc(el.get("code", "")), nfc(el.get("name", "")), _text(el), nfc(el.get("consent", "")),
+                  email=(el.get("email") or "").strip(), identifiable=el.get("identifiable") == "yes",
+                  audio_sharing=el.get("audio-sharing") == "yes")
 
 
 def _load_location(el) -> Location:
@@ -415,6 +418,12 @@ def to_element(db: Database) -> ET.Element:
             a = {"code": p.code, "name": p.name}
             if p.consent:
                 a["consent"] = p.consent
+            if p.email:
+                a["email"] = p.email
+            if p.identifiable:
+                a["identifiable"] = "yes"
+            if p.audio_sharing:
+                a["audio-sharing"] = "yes"
             ET.SubElement(m, tag, a).text = p.description or None
     def location(parent, loc: Location):
         a = {"name": loc.name}

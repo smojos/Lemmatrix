@@ -12,6 +12,7 @@
     │  └─ _Deleted recordings/ deleted tokens' recordings, held for undo
     ├─ Backups/                the automatic local backups
     ├─ Documentation/          consent forms and other documentation
+    ├─ Images/                 pictures for EλICIT requests, named by reference and tags (idea 19)
     └─ Exports/                where File → Export starts
 
 Lemmatrix assumes this layout instead of keeping paths in the settings. One database per
@@ -35,6 +36,8 @@ HELD = "_Deleted recordings"
 BACKUPS = "Backups"
 DOCUMENTATION = "Documentation"
 EXPORTS = "Exports"
+IMAGES = "Images"
+IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".gif")
 REMIND_DAYS = 7                            # the full-backup reminder
 
 
@@ -75,10 +78,14 @@ def exports_folder(db_path) -> Path:
     return main_folder(db_path) / EXPORTS
 
 
+def images_folder(db_path) -> Path:
+    return main_folder(db_path) / IMAGES
+
+
 def create_layout(db_path):
     """The folders a new database starts with (Backups comes with the first save)."""
     for folder in (tokens_folder(db_path), utterances_folder(db_path), texts_folder(db_path),
-                   documentation_folder(db_path),
+                   documentation_folder(db_path), images_folder(db_path),
                    exports_folder(db_path)):
         folder.mkdir(parents=True, exist_ok=True)
 

@@ -11,6 +11,8 @@ lemmas and tokens, and renamed word classes in the tag groups' "usual for" hints
 
 from __future__ import annotations
 
+import re
+
 from pathlib import Path
 
 from PySide6.QtCore import QDir, Qt, QUrl
@@ -58,16 +60,27 @@ def _note(text) -> QLabel:
 # --------------------------------------------------------------------------
 
 class PeopleEditor(QWidget):
-    """Researchers or participants: code, name, description (and a consent file)."""
+    """Researchers (code, name, email, description) or participants (code, name, the
+    Identifiable? and Audio sharing? ticks from their consent form, description, consent file)."""
 
     def __init__(self, db: Database, people: list[Person], consent: bool, used, parent=None):
         super().__init__(parent)
         self.db, self.consent, self.used = db, consent, used
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
-        cols = ["Code", "Name", "Description"] + (["Consent file"] if consent else [])
-        self.table = QTableWidget(0, len(cols))
-        self.table.setHorizontalHeaderLabels(cols)
+        if consent:
+            self.cols = ["code", "name", "identifiable", "audio", "description", "consent"]
+            heads = ["Code", "Name", "Identifiable?", "Audio sharing?", "Description", "Consent file"]
+        else:
+            self.cols = ["code", "name", "email", "description"]
+            heads = ["Code", "Name", "Email", "Description"]
+        self.table = QTableWidget(0, len(self.cols))
+        self.table.setHorizontalHeaderLabels(heads)
+        if consent:
+            for key, tip in (("identifiable", "Agreed in the consent form to be identified by name"),
+                             ("audio", "Agreed in the consent form that their recordings may be shared "
+                                       "(e.g. sent to another speaker in an EλICIT request)")):
+                self.table.horizontalHeaderItem(self.col(key)).setToolTip(tip)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -77,7 +90,10 @@ class PeopleEditor(QWidget):
             self._add_row(p)
         self.table.resizeColumnsToContents()
         self.table.setColumnWidth(1, max(self.table.columnWidth(1), 200))
-        self.table.setColumnWidth(2, min(max(self.table.columnWidth(2), 160), 260))
+        if not consent:
+            self.table.setColumnWidth(self.col("email"), max(self.table.columnWidth(self.col("email")), 180))
+        d = self.col("description")
+        self.table.setColumnWidth(d, min(max(self.table.columnWidth(d), 160), 260))
         lay.addWidget(self.table, 1)
         row = QHBoxLayout()
         row.addWidget(_tool("add", "Add a person", lambda: self._add_row(Person(""), edit=True)))
@@ -94,6 +110,9 @@ class PeopleEditor(QWidget):
         row.addStretch(1)
         lay.addLayout(row)
 
+    def col(self, key: str) -> int:
+        return self.cols.index(key)
+
     def load(self, people: list[Person]):
         """Show these people instead (Reset to defaults)."""
         self.table.setRowCount(0)
@@ -103,11 +122,20 @@ class PeopleEditor(QWidget):
     def _add_row(self, p: Person, edit: bool = False):
         r = self.table.rowCount()
         self.table.insertRow(r)
-        values = [p.code, p.name, p.description] + ([p.consent] if self.consent else [])
-        for c, v in enumerate(values):
-            it = self._consent_item(v) if c == 3 else QTableWidgetItem(v)
-            if c == 2:
-                it.setToolTip(v)
+        values = {"code": p.code, "name": p.name, "email": p.email, "description": p.description,
+                  "consent": p.consent, "identifiable": p.identifiable, "audio": p.audio_sharing}
+        for c, key in enumerate(self.cols):
+            v = values[key]
+            if key == "consent":
+                it = self._consent_item(v)
+            elif key in ("identifiable", "audio"):
+                it = QTableWidgetItem()
+                it.setFlags((it.flags() | Qt.ItemIsUserCheckable) & ~Qt.ItemIsEditable)
+                it.setCheckState(Qt.Checked if v else Qt.Unchecked)
+            else:
+                it = QTableWidgetItem(v)
+                if key == "description":
+                    it.setToolTip(v)
             self.table.setItem(r, c, it)
         self.table.item(r, 0).setData(ORIGINAL, p.code)
         if edit:
@@ -128,12 +156,16 @@ class PeopleEditor(QWidget):
         return it
 
     def _cell_clicked(self, r, c):
-        if c == 3 and self._text(r, 3):
+        if self.consent and c == self.col("consent") and self._text(r, c):
             self._open_consent()
 
     def _text(self, r, c) -> str:
         it = self.table.item(r, c)
         return nfc(it.text().strip()) if it else ""
+
+    def _ticked(self, r, key) -> bool:
+        it = self.table.item(r, self.col(key))
+        return bool(it) and it.checkState() == Qt.Checked
 
     def _remove(self):
         r = self.table.currentRow()
@@ -163,7 +195,8 @@ class PeopleEditor(QWidget):
         if r < 0:
             QMessageBox.information(self, "Consent", "Select a participant first.")
             return
-        current = consent_path(self.db, self._text(r, 3))
+        c = self.col("consent")
+        current = consent_path(self.db, self._text(r, c))
         from .. import layout                  # consent forms belong in Documentation
         start = str(current) if current and current.exists() else (
             str(layout.existing_folder(layout.documentation_folder(self.db.path))) if self.db.path
@@ -177,13 +210,13 @@ class PeopleEditor(QWidget):
                 p = p.relative_to(Path(self.db.path).parent)
             except ValueError:
                 pass
-        self.table.setItem(r, 3, self._consent_item(QDir.toNativeSeparators(str(p))))
+        self.table.setItem(r, c, self._consent_item(QDir.toNativeSeparators(str(p))))
 
     def _open_consent(self):
         r = self.table.currentRow()
         if r < 0:
             return
-        path = consent_path(self.db, self._text(r, 3))
+        path = consent_path(self.db, self._text(r, self.col("consent")))
         if path is None:
             QMessageBox.information(self, "Consent", "No consent file is set for this participant.")
         elif not path.exists():
@@ -195,9 +228,16 @@ class PeopleEditor(QWidget):
         out = []
         for r in range(self.table.rowCount()):
             code = self._text(r, 0)
-            if code:
-                out.append(Person(code, self._text(r, 1), self._text(r, 2),
-                                  self._text(r, 3) if self.consent else ""))
+            if not code:
+                continue
+            p = Person(code, self._text(r, 1), self._text(r, self.col("description")))
+            if self.consent:
+                p.consent = self._text(r, self.col("consent"))
+                p.identifiable = self._ticked(r, "identifiable")
+                p.audio_sharing = self._ticked(r, "audio")
+            else:
+                p.email = self._text(r, self.col("email"))
+            out.append(p)
         return out
 
     def renames(self) -> dict[str, str]:
@@ -221,6 +261,10 @@ class PeopleEditor(QWidget):
             if code in seen:
                 return f"The code {code} is listed twice."
             seen.add(code)
+            if not self.consent:
+                email = self._text(r, self.col("email"))
+                if email and not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+                    return f"{email} (for {code}) doesn't look like an email address."
         return ""
 
 
@@ -643,14 +687,19 @@ class ListsDialog(QDialog):
         self.researchers = PeopleEditor(db, md.researchers, False, self._researcher_use)
         self._page(RESEARCHERS, "Researchers", self.researchers,
                    "The researchers of the sessions. The code is what the notebook and the Current "
-                   "Session show; renaming a code renames it in the notebook too.",
+                   "Session show; renaming a code renames it in the notebook too. The email is where "
+                   "EλICIT requests tell a researcher their recordings have come in (the anonymous "
+                   "backup always takes it out).",
                    lambda: self._reset_people(self.researchers, defaults.default_researchers(),
                                               self._researcher_use))
         self.participants = PeopleEditor(db, md.participants, True, self._participant_use)
         self._page(PARTICIPANTS, "Participants", self.participants,
                    "The participants (speakers). The code is the tokens' speaker; renaming it renames it "
                    "in the tokens and the notebook too. The consent file documents their informed consent: "
-                   "click it to open it (a file inside the database's folder is kept relative to it).",
+                   "click it to open it (a file inside the database's folder is kept relative to it). "
+                   "Tick Identifiable? and Audio sharing? only when the consent form explicitly agrees "
+                   "to them: EλICIT warns before sending a recording whose speaker hasn't agreed to "
+                   "audio sharing.",
                    lambda: self._reset_people(self.participants, defaults.default_participants(),
                                               self._participant_use))
         self.locations = LocationEditor(md.locations, self._location_use)

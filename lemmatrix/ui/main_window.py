@@ -627,6 +627,9 @@ class MainWindow(QMainWindow):
             Column("ref", "Reference", lambda r: r.entry.ref, lemma_level=True),
             Column("lemma", "Lemma", lambda r: db.lemma(r.entry), ipa=True, lemma_level=True),
             Column("gloss", "Gloss", lambda r: db.gloss(r.entry), lemma_level=True),
+            # the second languages' glosses: offered in Configure columns, not shown by default (idea 19)
+            *[Column("gloss:" + lang, f"Gloss ({lang})", lambda r, l=lang: db.gloss(r.entry, l), lemma_level=True)
+              for lang in self._other_languages()],
             Column("wordclass", wcf.title if wcf else "Word Class", lambda r: db.word_class(r.entry),
                    closed=True, tree=lambda: s.list_items(wcf) if wcf else [], lemma_level=True),
             Column("tags", "Tags", lambda r: list(r.token.tags), closed=True, tree=tag_tree, multi=True,
@@ -650,6 +653,11 @@ class MainWindow(QMainWindow):
                 closed=f.closed, tree=(lambda f=f: s.list_items(f)) if f.closed else None,
                 ipa=f.role in ("phonetic", "phonemic"),
                 edit=lambda r, text: None, tooltip=tip))
+            if f.multilingual:                     # second languages: Translation (ar)...
+                for lang in self._other_languages():
+                    cols.append(Column(f"f:{f.name}:{lang}", f"{f.title} ({lang})",
+                                       lambda r, n=f.name, l=lang: r.token.get(n, l),
+                                       edit=lambda r, text: None))
         cols += [
             Column("speaker", "Speaker", lambda r: r.token.speaker),
             Column("date", "Date", lambda r: r.token.collected),
@@ -672,6 +680,12 @@ class MainWindow(QMainWindow):
 
     def _group_item(self, g):
         return ListItem(g.name, [ListItem(t.name) for t in g.tags] + [self._group_item(x) for x in g.groups])
+
+    def _other_languages(self) -> list[str]:
+        """The database's gloss languages other than the primary one: there to help speakers
+        understand (EλICIT), so hidden until a column or cell line is set to show them."""
+        s = self.doc.db.settings
+        return [lang for lang in s.gloss_languages if lang != s.primary_gloss]
 
     def _default_all_keys(self) -> list[str]:
         keys = ["ref", "lemma", "tags", "drawing"]
@@ -1643,15 +1657,16 @@ class MainWindow(QMainWindow):
 
     def _cell_edited(self, row, key, text):
         s = self.doc.db.settings
-        name = key[2:]
+        name, _, lang = key[2:].partition(":")      # f:Translation, or f:Translation:ar
         f = s.token_field(name)
         if f.role == "pitch":
             from .. import pitch as pitchmod
             text = pitchmod.normalise(text)
 
         def change(e, i=row.index):
-            e.tokens[i].set(name, text.strip(), s.primary_gloss if f.multilingual else None, f.multilingual)
-        self.doc.edit_entry(row.entry, change, f"Edit {f.title}")
+            e.tokens[i].set(name, text.strip(), (lang or s.primary_gloss) if f.multilingual else None,
+                            f.multilingual)
+        self.doc.edit_entry(row.entry, change, f"Edit {f.title}" + (f" ({lang})" if lang else ""))
 
     def _lemma_edited(self, entry, key, text):
         s = self.doc.db.settings
@@ -2605,8 +2620,7 @@ class MainWindow(QMainWindow):
             return f"{item.entry.ref} {item.label}" if item.entry is not None else item.label
 
         def text(t, name):
-            f = db.settings.token_field(name)
-            return t.get(name, db.settings.primary_gloss) if f and f.multilingual else t.get(name)
+            return mx.cell_text(db, t, name)
 
         corner = (f"{lay.entry.ref} {db.lemma(lay.entry)}" if lay.entry is not None else "")
         header = [corner] + [label(c) for c in lay.cols]
