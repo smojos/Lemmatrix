@@ -182,6 +182,31 @@ AUTHORS, CITATION.cff who made Lemmatrix and how to cite it
 THIRD-PARTY.md        the libraries Lemmatrix uses, with their licences
 ```
 
+## Acknowledgements
+
+**Rod Casali**, professor and friend, for his years of dedicated work coding Dekereke and for
+helping me through so many feature updates. I am unworthy to be counted among great men like
+him; Lemmatrix was only possible for me through advances in AI.
+
+**Larry Hayashi**, for teaching me FLEx and field methods so long ago, and for helping me
+navigate them ever since.
+
+**Keith Snider**, my mentor and friend, for teaching me about tone and inspiring a love for it.
+
+The developers of **FLEx**, **ELAN**, **Dekereke**, **Praat** and **Microsoft Excel**, whose tools
+shaped how I work and what I wanted Lemmatrix to be.
+
+The countless friends and colleagues who built into me over the years and helped me become a
+better linguist, and from whom I gleaned ideas, sometimes without knowing it at the time.
+They include, but are not limited to: Michael Ahland, Virginia Beavon-Hamm, Thomas Blecke, Mirella Blum, Klaus Christian-Küspert, Justin Goldberg, Theis Greve, Anne-Christie Hellenthal, Andreas Joswig, Don Killian, Love Lee, Steve Nicole, Manuel Otero, Doris Payne, Jamon Pelkey, Kent Rasmussen, Bert Remijsen, Jim Roberts, Sean Smith, Ahmed Sosal, Tim Stirtz, Bruce Wiebe, Giorgia Zantei.
+
+The **Opo** people, for years of fieldwork in a real language that gave me a linguist's
+intuition.
+
+Finally, my wife **Jennifer**, without whom I would be nothing. The default colour of
+Lemmatrix, its teal (#198583), belongs to her forever, as a symbol that she underlies
+everything I do. And our four children.
+
 ## Licence
 
 Lemmatrix is free software: you can redistribute it and/or modify it under the terms of the
