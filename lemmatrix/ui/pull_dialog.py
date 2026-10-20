@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Pull from source and Push to source (idea 7, stage 4): the dialogues.
 
 PushDialog lists each field edited in Lemmatrix that differs from its tier, with a tick box

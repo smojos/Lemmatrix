@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """The Bulk edit window (Edit → Bulk edit…, Ctrl+E): change many lemmas or tokens at once.
 
 Like FLEx's Bulk Edit: a filtered grid with a tick on every row, and an operation underneath.

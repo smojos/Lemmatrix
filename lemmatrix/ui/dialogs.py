@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Smaller dialogues: entries, metadata, preferences, display setup, filters, tags."""
 
 from __future__ import annotations

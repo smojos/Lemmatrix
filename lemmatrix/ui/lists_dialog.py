@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Edit → Lists: every list in one place.
 
 Researchers, participants (with the file documenting their consent), locations

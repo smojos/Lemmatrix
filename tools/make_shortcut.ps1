@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (c) 2026 Joshua A. G. Smolders
 # Puts a Lemmatrix shortcut, with its icon, on the desktop and in the Start menu.
 # Called by "Make desktop shortcut.bat".
 $root = Split-Path -Parent $PSScriptRoot

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Per-computer preferences (not stored in the database file)."""
 
 from __future__ import annotations

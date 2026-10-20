@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """The fixed folder layout of a database's main folder (format 4, 18 October 2026).
 
     Main folder/

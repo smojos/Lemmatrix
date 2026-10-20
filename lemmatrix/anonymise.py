@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Export an anonymous backup: a copy of the database (and notebook) safe to share or deposit.
 
 What always goes: the participants' names, descriptions and consent links (their codes

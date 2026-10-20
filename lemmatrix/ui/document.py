@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """The open database plus undo/redo.
 
 Every change to an entry (and its tokens) goes through Document, which keeps a

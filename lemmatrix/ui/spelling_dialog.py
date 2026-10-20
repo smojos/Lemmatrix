@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Tools → Check spelling…: every word in the English glosses and translations that may be misspelled.
 
 A window of its own, beside the main one. The words are listed with how often they occur and

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Shared test setup.
 
 Most feature tests (renames, recordings, matrices...) were written against the prototype's tag

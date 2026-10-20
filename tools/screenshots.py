@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Render the main windows and dialogues offscreen to PNG files (for checking layouts).
 
     QT_QPA_PLATFORM=offscreen python tools/screenshots.py OUTPUT_FOLDER

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """The token dialogue: fields, tags and recording, with Back and Next."""
 
 from __future__ import annotations

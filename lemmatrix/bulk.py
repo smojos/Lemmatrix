@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Bulk edit: changing many lemmas or tokens at once (no Qt here).
 
 The window (ui/bulk_window.py) picks the rows and an operation; this module

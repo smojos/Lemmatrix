@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Light and dark themes with one accent colour.
 
 The whole program follows the theme, data views included. Everything drawn

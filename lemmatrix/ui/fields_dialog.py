@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Edit → Fields: lemma, token and text fields, open or closed, with a live XML preview."""
 
 from __future__ import annotations

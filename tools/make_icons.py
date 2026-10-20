@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Make the program icons from lemmatrix/resources/lemmatrix.svg.
 
     python tools/make_icons.py

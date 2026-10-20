@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Offscreen checks of the main window and token dialogue (no audio needed)."""
 
 import os

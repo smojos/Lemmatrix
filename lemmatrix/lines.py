@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Editing a text's lines in Lemmatrix (agreed with Josh, 19 October). No Qt here.
 
 The TextGrid is the only store of a text's lines: Lemmatrix is a layer over it that can't move

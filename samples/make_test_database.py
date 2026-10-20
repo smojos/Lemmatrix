@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Build a large invented test database: 300 lemmas with their tagged forms.
 
     python samples/make_test_database.py            ->  samples/Test-300.xml

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Play pitch notation as sound: an abstract rendering of the tune.
 
 Three voices:

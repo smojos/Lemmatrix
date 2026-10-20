@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use Lemmatrix in your work, please cite it as below."
+type: software
+title: "Lemmatrix"
+abstract: >-
+  A program for phonological and grammatical analysis and linguistic
+  documentation, for any language: lemmas with their tagged tokens
+  (transcriptions, pitch and one recording each), paradigm matrices,
+  utterances and texts, stored as readable XML.
+authors:
+  - family-names: Smolders
+    given-names: Joshua A. G.
+version: 0.1.0
+license: GPL-3.0-or-later
+repository-code: "https://github.com/smojos/Lemmatrix-public"
+keywords:
+  - linguistics
+  - phonology
+  - fieldwork
+  - language documentation
+  - tone

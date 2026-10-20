@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Bulk edit engine: replace, shortcuts, set value, copy, clear, word class conversion, renames."""
 
 import shutil

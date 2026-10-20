@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Column filters for the lemma list and All data (no Qt here).
 
 Every column filter is one of:

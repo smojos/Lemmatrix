@@ -1,4 +1,6 @@
 @echo off
+@REM SPDX-License-Identifier: GPL-3.0-or-later
+@REM Copyright (c) 2026 Joshua A. G. Smolders
 rem Runs Lemmatrix's automated tests. Run "Run Lemmatrix.bat" once first.
 setlocal
 cd /d "%~dp0"

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Matrix configurations and layouts (no Qt here, so it can be tested).
 
 A matrix configuration is a list of *specs* per axis. Each spec is a set of

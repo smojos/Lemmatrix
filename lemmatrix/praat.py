@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Opening recordings in Praat.
 
 Praat is started with "--send" and a small script that reads the sound and

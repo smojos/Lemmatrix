@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Exporting data to other formats (CSV for now; SFM and LIFT later).
 
 CSV files are UTF-8 with a byte-order mark, so Excel on Windows reads IPA

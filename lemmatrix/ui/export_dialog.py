@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """File → Export → Anonymous backup…: choose what goes, then write the copy (see anonymise.py)."""
 
 from __future__ import annotations

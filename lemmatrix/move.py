@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Moving tokens to another lemma (IDEAS.md idea 11, built 19 October 2026).
 
 A moved token keeps everything it has: its id (so notebook links follow it), its tags (any

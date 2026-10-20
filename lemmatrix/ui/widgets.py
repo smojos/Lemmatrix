@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Small reusable widgets: pitch drawing, flow layout, filter header, fonts."""
 
 from __future__ import annotations

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Spelling in the windows: red wavy underlines and their right-click menu (spelling.py checks).
 
 Underlines go in the token dialogue's English translation, the lemma dialogue's English gloss,

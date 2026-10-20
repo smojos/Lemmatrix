@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Tests for the notebook: sessions, the record of comments, people and places, the file."""
 
 import pytest

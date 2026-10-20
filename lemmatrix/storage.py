@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Reading and writing Lemmatrix database files (readable UTF-8 XML).
 
 Saving is careful: the new file is written next to the old one first and only

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """The paradigm grid used by the Lemma/Tag and Tag/Tag matrices.
 
 Tokens that match the same cell are shown side by side, in tag order, each

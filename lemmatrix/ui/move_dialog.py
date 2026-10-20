@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Move token to another lemma: pick the lemma (IDEAS.md idea 11). The moving is in move.py."""
 
 from __future__ import annotations

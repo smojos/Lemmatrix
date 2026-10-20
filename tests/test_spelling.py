@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Spelling: English translations and glosses checked against two word lists and the database's own."""
 
 from pathlib import Path

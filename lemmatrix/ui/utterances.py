@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """View → Texts and utterances: a window of its own, like Bulk edit and the notebook.
 
 Utterances (idea 7, stage 2) are one-off sentences and phrases with no lemma: one reference,

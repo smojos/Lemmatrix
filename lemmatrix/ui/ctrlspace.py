@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Ctrl+Space plays (Ctrl+Shift+Space: the pitch) from inside any text field, whatever the keyboard.
 
 Josh, 19 October: with an IPA keyboard (Keyman's SIL IPA) Ctrl+Space typed a space in the

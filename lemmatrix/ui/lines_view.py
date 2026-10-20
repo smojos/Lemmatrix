@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """A text's lines as cells (agreed with Josh, 19 October).
 
 Each line is a cell with its fields stacked, in the order Configure view sets; the aligned

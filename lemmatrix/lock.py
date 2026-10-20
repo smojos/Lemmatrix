@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Knowing when a database is open somewhere else.
 
 While a database is open, Lemmatrix keeps a small marker file next to it:

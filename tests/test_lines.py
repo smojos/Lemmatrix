@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Editing a text's lines in Lemmatrix (19 October): units, the buffer, writing back."""
 
 import os

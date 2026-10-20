@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """The notebook window (View → Notebook) and the list of all questions (View → Questions).
 
 The notebook is one page a day: the session's date, who was there and where, notes

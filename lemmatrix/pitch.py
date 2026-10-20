@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Pitch notation.
 
     Digits are pitch points; spaces separate syllables; a comma is a pause.

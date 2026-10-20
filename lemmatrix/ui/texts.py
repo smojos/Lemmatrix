@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """The Texts tab of View → Texts and utterances (idea 7, stage 3), and the text dialogue.
 
 A text (T) or song (S) is a catalogue record with a recording and its Praat TextGrid, both copied

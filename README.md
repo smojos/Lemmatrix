@@ -1,19 +1,36 @@
 # Lemmatrix
 
-A custom linguistics database program specialized for creating and storing human readable
-XML paradigm information for phonological and morphological analysis: lemmas with their
-tokens (transcriptions, pitch, tags and one recording each). Modelled on how Dekereke
-behaves; no Dekereke code is used.
+Lemmatrix is a free, open-source program for phonological and grammatical analysis and
+linguistic documentation, for any language. It keeps lemmas with their tokens
+(transcriptions, pitch, tags and one recording each), shows them as paradigm matrices, and
+holds utterances and texts with their Praat TextGrids, all in readable XML. It is inspired by
+tools such as FLEx, Praat, ELAN, Dekereke and Excel; no code from any of them is used.
 
 **Status:** first prototype (Stage 1, version 0.1).
 
+© 2026 Joshua A. G. Smolders. Free software under the
+[GNU General Public License, version 3 or later](LICENSE) (GPL-3.0-or-later).
+
+## About
+
+Lemmatrix is an independent, personal open-source project by Joshua A. G. Smolders,
+developed on personal time and equipment and at personal expense. It is not a deliverable of
+any employer, funder or institution. It grew out of needs from many years of linguistic
+fieldwork, and is free for anyone to use, share and change under its licence.
+
+The author designs and specifies Lemmatrix and tests it; the code is written with an AI
+coding assistant (Claude, by Anthropic) under his direction. See [AUTHORS](AUTHORS), and
+[DESIGN.md](DESIGN.md) for how the program works and why.
+
 ## Running it on Windows
 
-1. Pull the latest version in GitHub Desktop.
+1. Download this repository, or clone it (e.g. with GitHub Desktop) and pull the latest version.
 2. Double-click **`Run Lemmatrix.bat`**.
    The first run creates its own Python 3.13 environment (`py -3.13`) and installs the
    packages, which takes a few minutes. Later runs start straight away.
-3. Choose **Open a copy of the sample** to try it with invented data. The copy goes to
+3. Choose **Open a copy of the sample** to try it with invented data: a made-up language
+   (LXX) with 98 lemmas, saved matrices and synthetic recordings, built by
+   `samples/make_sample.py`. It isn't a real language; any resemblance to one is coincidental. The copy goes to
    `Documents\Lemmatrix Sample`, so the sample in the repository stays untouched.
 
 4. Once it has run, double-click **`Make desktop shortcut.bat`** to put a Lemmatrix shortcut,
@@ -27,14 +44,14 @@ The icon is drawn in `lemmatrix/resources/lemmatrix.svg`; `tools/make_icons.py` 
 PNG sizes and `lemmatrix.ico` from it (needs `cairosvg` and Pillow).
 
 For heavier testing there's also **`samples/Test-300.xml`**: 300 invented lemmas with about
-7,450 tagged forms and no recordings (File → Open). It's rebuilt by
+7,760 tagged forms and no recordings (File → Open). It's rebuilt by
 `samples/make_test_database.py`. If you save changes to it, GitHub Desktop will list the file
 as changed; discard that change to get the original back.
 
 To run the automated tests, double-click **`Run tests.bat`** (after the first run).
 
 If something goes wrong, a message box shows the details, and they're also written to
-`lemmatrix-errors.log` in this folder. Send that to Claude.
+`lemmatrix-errors.log` in this folder. Include it when you report a problem.
 
 ## What works in this version
 
@@ -132,7 +149,7 @@ If something goes wrong, a message box shows the details, and they're also writt
 
 - CV shape filters and everything in the Analyze menu (Stage 2, the analysis engine).
 - Unicode tone letters as an alternative pitch display; "Insert character".
-- Converting Dekereke databases (Claude will do that with a one-off script).
+- Importing from other programs (Dekereke, FLEx) and LIFT or SFM export.
 - Recording has only been tested in the build environment, which has no sound card.
   Microphone and computer-audio recording need checking on a real Windows machine.
 
@@ -151,9 +168,34 @@ lemmatrix/            the program
   matrix.py           laying out tokens for the paradigm views
   pitch.py            pitch notation
   audio.py            recording, playback and WAV metadata
-  defaults.py         default fields, tags and reference categories
+  defaults.py         default fields, tags, lists, people, places and reference categories
+  resets.py           Reset to defaults in Edit → Lists (keeps what is in use)
+  tagdefs.py          descriptions of the default tags, with their sources
   ui/                 windows and dialogues (Qt for Python)
 samples/              invented sample database with synthetic recordings
-tests/                automated tests
+tests/                automated tests (tests/data: the prototype's sample, used by the feature tests)
 tools/screenshots.py  renders the windows to PNG files, for checking layouts
+LICENSE               the GNU General Public License, version 3
+AUTHORS, CITATION.cff who made Lemmatrix and how to cite it
+THIRD-PARTY.md        the libraries Lemmatrix uses, with their licences
 ```
+
+## Licence
+
+Lemmatrix is free software: you can redistribute it and/or modify it under the terms of the
+GNU General Public License as published by the Free Software Foundation, either version 3 of
+the License, or (at your option) any later version. It is distributed in the hope that it
+will be useful, but **without any warranty**; without even the implied warranty of
+merchantability or fitness for a particular purpose. See [LICENSE](LICENSE) for the details.
+
+The libraries Lemmatrix uses keep their own licences: see [THIRD-PARTY.md](THIRD-PARTY.md).
+
+## Citing Lemmatrix
+
+See [CITATION.cff](CITATION.cff) (GitHub's "Cite this repository" button uses it).
+
+## References
+
+- Dixon, R. M. W. 2010. *Basic Linguistic Theory*, Vol. 1: *Methodology*. Oxford: Oxford
+  University Press. The default reference categories (A Human body … V Verbs) are inspired by
+  p. 296.

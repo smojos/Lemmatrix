@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Reset to defaults (Edit → Lists): each list goes back to the defaults of a new database, but
 anything still in use is kept, so no token, reference or session loses what it points at.
 

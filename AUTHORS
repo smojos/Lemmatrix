@@ -1,0 +1,11 @@
+Lemmatrix
+Copyright © 2026 Joshua A. G. Smolders
+
+Author
+  Joshua A. G. Smolders: concept, design and specification, testing.
+
+The code is written with an AI coding assistant (Claude, by Anthropic) under the
+author's direction, from his design and specification.
+
+Lemmatrix is free software under the GNU General Public License, version 3 or later
+(GPL-3.0-or-later); see LICENSE. The libraries it uses are listed in THIRD-PARTY.md.

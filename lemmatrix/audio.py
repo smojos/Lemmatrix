@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Recording and playback.
 
 Microphone input uses `sounddevice`. Recording what the computer is playing

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Pull (idea 7, stage 4): checking clipped utterances against their TextGrid lines."""
 
 import os

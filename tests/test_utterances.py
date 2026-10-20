@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Utterances (idea 7, stage 2): the data model, the file, file names and the notebook."""
 
 from pathlib import Path

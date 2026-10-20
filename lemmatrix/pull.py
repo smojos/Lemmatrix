@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Pull and Push (idea 7, stage 4): a clipped utterance and its line in the TextGrid. No Qt here.
 
 A clipped utterance keeps what it copied from each tier of its line, the line's times and when

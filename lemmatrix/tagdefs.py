@@ -1,7 +1,9 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """Descriptions of the default tags and tag groups, with their sources.
 
 Each description is one or two sentences, with the page it is based on. Both sites cite their
-own sources for their definitions; those are given in the README's References.
+own sources for their definitions; those will be listed in the README's References.
 
   SIL Glossary of Linguistic Terms: https://glossary.sil.org/
   Grammaticon: https://grammaticon.clld.org/

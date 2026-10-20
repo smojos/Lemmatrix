@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """19 October, evening: protected core fields, tag safety, tag descriptions, utterances in the tools,
 moving tokens to another lemma."""
 

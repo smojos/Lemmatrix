@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
 """The main window: lemma list on the left, the Matrix on the right."""
 
 from __future__ import annotations
@@ -15,6 +17,23 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QF
 
 from .. import __version__, audio, filters as fl, layout, lock as lockmod, matrix as mx, storage
 from . import theme
+
+
+def about_text() -> str:
+    """Help → About Lemmatrix: version, copyright, licence, source and libraries."""
+    from .. import COPYRIGHT, SOURCE_URL
+    return (f"<b>Lemmatrix</b> {__version__}<br>"
+            "Phonological and grammatical analysis and linguistic documentation, for any language. "
+            "Prototype (Stage 1).<br><br>"
+            f"{COPYRIGHT}<br><br>"
+            "Lemmatrix is free software: you can redistribute it and/or modify it under the terms of "
+            "the GNU General Public License as published by the Free Software Foundation, either "
+            "version 3 of the License, or (at your option) any later version. It comes with "
+            "<b>no warranty</b>, to the extent permitted by law.<br><br>"
+            f'Source code: <a href="{SOURCE_URL}">{SOURCE_URL.removeprefix("https://")}</a><br><br>'
+            "<small>Built with Qt for Python (PySide6, LGPL-3.0), NumPy, sounddevice, SoundCard, "
+            "lemminflect, pyspellchecker, pyzipper and praatio, each under its own licence "
+            "(THIRD-PARTY.md).</small>")
 from ..defaults import new_database
 from .. import bulk, notebook as nbmod, predict, spelling
 from ..model import Database, Entry, ListItem, Person, forbidden_in, today
@@ -2529,9 +2548,7 @@ class MainWindow(QMainWindow):
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
 
     def about(self):
-        QMessageBox.about(self, "About Lemmatrix",
-                          f"<b>Lemmatrix</b> {__version__}<br>A phonology fieldwork database of lemmas "
-                          "and their tokens.<br><br>Prototype (Stage 1).")
+        QMessageBox.about(self, "About Lemmatrix", about_text())
 
     # ============================================================== export
     def _visible_table(self):
