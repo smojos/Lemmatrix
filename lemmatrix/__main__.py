@@ -63,6 +63,8 @@ def main() -> int:
     app.setWindowIcon(app_icon())
     from .ui import ctrlspace
     app._ctrl_space = ctrlspace.install(app)            # Ctrl+Space plays from any field, any keyboard
+    from .ui import shiftwheel
+    app._shift_wheel = shiftwheel.install(app)          # Shift + wheel scrolls sideways
 
     from .ui import splash as splashmod
     splash = splashmod.show(app)                        # until the database is open (a dialogue closes it)
