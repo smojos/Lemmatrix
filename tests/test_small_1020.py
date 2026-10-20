@@ -126,3 +126,21 @@ def test_tags_down_the_side_wrap_to_the_header_width(win):
         or vh.sectionSize(2) >= vh.sectionSizeFromContents(2).height()
     assert len(vh._chip_lines(vh.model().headerData(2, Qt.Vertical, Qt.UserRole), vh.WRAP_WIDTH - 24)) > 1
     win.lt_view.grab()
+
+
+def test_tags_across_the_top_wrap_onto_two_lines(win):
+    from lemmatrix import matrix as mx
+    from lemmatrix.ui.main_window import LEMMA_TAG
+    win.tabs.setCurrentIndex(LEMMA_TAG)
+    many = frozenset({"Plural", "Genitive", "before H", "after L", "postverbal", "utterance-final"})
+    win.config_for(LEMMA_TAG).x = [mx.Spec(frozenset({"Plural"}), mx.EXACT), mx.Spec(many, mx.EXACT)]
+    win.refresh()
+    v = win.lt_view
+    hh = v.horizontalHeader()
+    from lemmatrix.ui.widgets import chips_width
+    labels = hh._chips(1)
+    assert hh.sectionSize(1) < chips_width(labels, hh.chip_font) + 24     # not stretched to one line
+    assert len(hh._chip_lines(labels, hh.sectionSize(1) - 24)) == 2
+    assert hh.height() >= 2 * 20                                          # two lines tall
+    assert v.switch.height() >= hh.height() - 2                           # the switch button grows too
+    v.grab()

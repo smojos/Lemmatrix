@@ -631,6 +631,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 - **Several tokens matching one cell** (Loose, or duplicates) are shown **side by side**, in tag order, each with a small chip saying what it adds (e.g. "+GEN").
 - **Cells don't show a play marker.** Double-clicking a token opens it; double-clicking an empty cell creates a token with that cell's tags and the session's speaker and date.
 - **Tags down the side wrap** (20 October): with the axes swapped (and in Tag/Tag's rows), a header's chips wrap onto more lines once it is 170 px wide, and the row grows to fit, instead of being cut off.
+- **Tags across the top wrap too** (20 October): onto two lines at most. A column is as wide as its data, and only widens past that when its tags wouldn't fit in two lines; the header row (and the switch button) is two lines tall when any column needs it. A column narrowed by hand cuts the second line off with …
 - **The switch button** (top-left corner, two solid arrows ⇄ in the theme colour, with a thin white edge on the light theme; lighter and without the edge on the dark theme) swaps rows and columns on screen only; the configuration itself always has its first grouping on the Y axis ("Lemma" here) and its second on the X axis.
 
 ### 5.5 Tag/Tag matrix

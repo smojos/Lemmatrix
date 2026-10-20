@@ -155,9 +155,11 @@ class ChipHeader(QHeaderView):
         m = self.model()
         return m.headerData(section, self.orientation(), Qt.UserRole) if m else None
 
-    def _wraps(self) -> bool:
-        """Tags down the side (Lemma/Tag swapped, or Tag/Tag's rows) wrap to the header's width."""
-        return self.orientation() == Qt.Vertical
+    MAX_TOP_LINES = 2      # tags across the top wrap onto at most two lines
+
+    def _max_lines(self) -> int | None:
+        """Tags down the side wrap as far as needed; across the top, onto two lines at most."""
+        return None if self.orientation() == Qt.Vertical else self.MAX_TOP_LINES
 
     def _chip_lines(self, chips, width: float) -> list[list[str]]:
         """The chips in rows that fit the width (a chip wider than the width gets a row of its own)."""
@@ -174,6 +176,20 @@ class ChipHeader(QHeaderView):
             lines.append(line)
         return lines
 
+    def min_width(self, labels) -> int:
+        """The narrowest section (margins included) that holds the chips in two lines."""
+        fm, _ = chip_metrics(self.chip_font)
+        full = chips_width(labels, self.chip_font)
+        lo = max(fm.horizontalAdvance(t) + 12 for t in labels)
+        hi = full
+        while lo < hi:                                      # the narrowest width that still fits
+            mid = (lo + hi) // 2
+            if len(self._chip_lines(labels, mid)) <= self.MAX_TOP_LINES:
+                hi = mid
+            else:
+                lo = mid + 1
+        return lo + 24
+
     def paintSection(self, painter, rect, index):
         chips = self._chips(index)
         if chips is None:
@@ -189,38 +205,43 @@ class ChipHeader(QHeaderView):
         _, h = chip_metrics(self.chip_font)
         labels = chips or ["(no tags)"]
         loose = self.model().headerData(index, self.orientation(), Qt.UserRole + 1)
-        if self._wraps():
-            lines = self._chip_lines(labels, rect.width() - 24)
-            y = rect.center().y() - (len(lines) * (h + 4) - 4) / 2
-            x = rect.left() + 6
-            for line in lines:
-                x = paint_chips(painter, rect.left() + 6, y, line, self.chip_font)
-                y += h + 4
-            y -= h + 4
-        else:
-            y = rect.center().y() - h / 2
-            x = paint_chips(painter, rect.left() + 6, y, labels, self.chip_font,
-                            max_right=rect.right() - 4)
-        if loose:
+        lines = self._chip_lines(labels, rect.width() - 24)
+        cap = self._max_lines()
+        cut = cap is not None and len(lines) > cap
+        if cut:                                             # narrowed by hand: the rest is cut off
+            lines = lines[:cap - 1] + [[t for ln in lines[cap - 1:] for t in ln]]
+        y = rect.center().y() - (len(lines) * (h + 4) - 4) / 2
+        x = rect.left() + 6
+        for n, line in enumerate(lines):
+            last = n == len(lines) - 1
+            x = paint_chips(painter, rect.left() + 6, y, line, self.chip_font,
+                            max_right=rect.right() - 14 if last and cut else None)
+            y += h + 4
+        y -= h + 4
+        if loose or cut:
             painter.setPen(theme.colour("muted"))
             painter.drawText(QRectF(x, y, 30, h), Qt.AlignVCenter, "…")
         painter.restore()
 
-    WRAP_WIDTH = 170       # the widest a header of wrapped chips grows before it wraps
+    WRAP_WIDTH = 170       # the widest a header of tags down the side grows before it wraps
 
     def sectionSizeFromContents(self, index):
         s = super().sectionSizeFromContents(index)
         chips = self._chips(index)
-        if chips is not None:
-            _, h = chip_metrics(self.chip_font)
-            labels = chips or ["(no tags)"]
-            w = chips_width(labels, self.chip_font) + 24
-            if self._wraps():
-                w = min(w, self.WRAP_WIDTH)
-                n = len(self._chip_lines(labels, w - 24))
-                return QSize(w, max(s.height(), n * (h + 4) - 4 + 10))   # not the label's own width
-            return QSize(max(s.width(), w), max(s.height(), h + 10))
-        return s
+        if chips is None:
+            return s
+        _, h = chip_metrics(self.chip_font)
+        labels = chips or ["(no tags)"]
+        if self.orientation() == Qt.Vertical:
+            w = min(chips_width(labels, self.chip_font) + 24, self.WRAP_WIDTH)
+            n = len(self._chip_lines(labels, w - 24))
+            return QSize(w, max(s.height(), n * (h + 4) - 4 + 10))   # not the label's own width
+        # Across the top: as narrow as two lines allow (the data usually decides the width),
+        # as tall as the lines the column's actual width needs.
+        w = self.min_width(labels)
+        width = max(w, self.sectionSize(index)) if index < self.count() else w
+        n = min(self.MAX_TOP_LINES, len(self._chip_lines(labels, width - 24)))
+        return QSize(w, max(s.height(), n * (h + 4) - 4 + 10))
 
 
 class TokenCellDelegate(QStyledItemDelegate):
@@ -432,6 +453,8 @@ class MatrixView(QTableView):
             hh.resizeSection(c, max(110, w, hh.sectionSizeFromContents(c).width()))
         for r, h in enumerate(heights):
             vh.resizeSection(r, max(h, vh.sectionSizeFromContents(r).height()))
+        if layout.cols:                    # its height follows the widths just set (one line or two)
+            hh.headerDataChanged(Qt.Horizontal, 0, len(layout.cols) - 1)
         self._place_switch()
 
     def _place_switch(self):
