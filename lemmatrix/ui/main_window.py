@@ -241,6 +241,11 @@ class MainWindow(QMainWindow):
         top.setContentsMargins(0, 0, 0, 0)
         top.addWidget(self.matrix_title)
         top.addStretch(1)
+        self.head_icons = QHBoxLayout()            # icons beside the tabs (more can go to the left later)
+        self.head_icons.setContentsMargins(0, 0, 8, 0)
+        self.head_icons.setSpacing(4)
+        self.head_icons.addWidget(self._texts_button())
+        top.addLayout(self.head_icons)
         self.tabs = QTabBar()
         for name in ("All data", "Lemma/Tag", "Tag/Tag"):
             self.tabs.addTab(name)
@@ -294,8 +299,7 @@ class MainWindow(QMainWindow):
         self.options.addWidget(self.lt_bar["widget"])
         self.options.addWidget(self.tt_bar["widget"])
         bot.addWidget(self.options, 1)
-        bot.addWidget(self._texts_panel())
-        bot.addWidget(self._session_panel())
+        bot.addWidget(self._session_panel(), 1)   # takes what the options leave, up to its widest
         right.addWidget(bottom)
         right.setSizes([720, 150])
         main.addWidget(right)
@@ -406,20 +410,17 @@ class MainWindow(QMainWindow):
         """The line under a tab's options that says what it shows."""
         return {ALL_DATA: self.all_count, LEMMA_TAG: self.lt_bar["count"], TAG_TAG: self.tt_bar["count"]}[tab]
 
-    def _texts_panel(self) -> QWidget:
-        """Beside Current Session: a big button that opens Texts and utterances (Josh's icon)."""
-        panel, pl = self._bar()
+    TEXTS_ICON = 48
+
+    def _texts_button(self) -> QToolButton:
+        """Beside the tabs: the button that opens Texts and utterances (Josh's icon)."""
         self.texts_btn = QToolButton()
-        self.texts_btn.setIconSize(QSize(96, 96))
+        self.texts_btn.setIconSize(QSize(self.TEXTS_ICON, self.TEXTS_ICON))
         self.texts_btn.setAutoRaise(True)
         self.texts_btn.setCursor(Qt.PointingHandCursor)
         self.texts_btn.setToolTip("Texts and utterances (Ctrl+U)")
         self.texts_btn.clicked.connect(lambda *_: self.open_utterances())
-        pl.addStretch(1)
-        pl.addWidget(self.texts_btn, 0, Qt.AlignHCenter)
-        pl.addStretch(1)
-        panel.setFixedWidth(128)
-        return panel
+        return self.texts_btn
 
     def _session_panel(self) -> QWidget:
         panel, sl = self._bar()
@@ -462,9 +463,10 @@ class MainWindow(QMainWindow):
             row.changed.connect(self._session_people_changed)
             self.sess_rows[kind] = row
             lbl = QLabel(title)
-            grid.addWidget(lbl, r, 0, Qt.AlignTop | Qt.AlignRight)
+            grid.addWidget(lbl, r, 0, Qt.AlignTop | Qt.AlignLeft)
             grid.addWidget(row, r, 1)
         grid.setColumnStretch(1, 1)
+        grid.setHorizontalSpacing(12)
         sl.addLayout(grid)
         self.sess_date = QDateEdit(QDate.currentDate())
         self.sess_date.setDisplayFormat("yyyy-MM-dd")
@@ -482,13 +484,15 @@ class MainWindow(QMainWindow):
         self.sess_nodate.setCheckable(True)
         self.sess_nodate.toggled.connect(self.sess_date.setDisabled)
         self.sess_nodate.toggled.connect(lambda *_: self._session_date_changed())
-        dr = QHBoxLayout()
-        dr.addWidget(QLabel("Date"))
-        dr.addWidget(self.sess_date, 1)
+        dr = QHBoxLayout()                        # in the chips' column, under them
+        dr.setContentsMargins(0, 0, 0, 0)
+        dr.addWidget(self.sess_date)
         dr.addWidget(self.sess_nodate)
-        sl.addLayout(dr)
+        dr.addStretch(1)
+        grid.addWidget(QLabel("Date"), 3, 0, Qt.AlignVCenter | Qt.AlignLeft)
+        grid.addLayout(dr, 3, 1)
         sl.addStretch(1)
-        panel.setMaximumWidth(330)
+        panel.setMaximumWidth(560)            # wide, so the chips fit on one line (Josh, 20 October)
         panel.setMinimumWidth(250)
         return panel
 
@@ -1091,7 +1095,7 @@ class MainWindow(QMainWindow):
     def _notebook_icons(self):
         a = theme.accent().name()
         self.notebook_btn.setIcon(icon("notebook", 34, a))
-        self.texts_btn.setIcon(icon("texts-utterances", 96, a))
+        self.texts_btn.setIcon(icon("texts-utterances", self.TEXTS_ICON, a))
         self.write_btn.setIcon(icon("write-notebook", 34))
         self._save_icon()
         self._style_menu_bar()
@@ -1292,7 +1296,8 @@ class MainWindow(QMainWindow):
         self.db_title.setStyleSheet(
             f"QLabel {{ background: {a_.name()}; color: {theme.text_on(a_).name()}; border-radius: 4px; "
             "padding: 3px 10px; font-weight: bold; }")
-        h = max(self.tabs.sizeHint().height(), self.matrix_title.sizeHint().height())
+        h = max(self.tabs.sizeHint().height(), self.matrix_title.sizeHint().height(),
+                self.texts_btn.sizeHint().height())
         for head in (self.lemma_head, self.matrix_head):   # both title rows the same height
             head.setFixedHeight(h)
         # Qt doesn't always pass a new theme down to the matrix pane (its option checkboxes stayed

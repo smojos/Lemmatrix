@@ -572,7 +572,8 @@ New databases start with this structure (revised 20 October). Everything in it c
 - **One options row for every tab**, just under the matrix, remembered between runs:
   - **Auto-play token soundfile:** clicking a token plays it (in All data and the matrices), and the token dialogue plays each token it opens on, with Back and Next too.
   - **Show only lemmas with token data:** All data leaves out lemmas whose tokens are all empty; Lemma/Tag leaves out lemmas with nothing in the matrix's columns; Tag/Tag shows nothing for a lemma without token data.
-- **Bottom right: current-session panel** (section 3.6): database file name, the language and variety codes (display only), researcher, participant and location chips, the speaker and date choosers, and the two notebook buttons.
+- **Bottom right: current-session panel** (section 3.6): the title and the two notebook buttons, then Researchers, Participants, Locations and Date, the labels on the left and the chips (and the date) lined up in one column after them. Up to 560 px wide (Josh, 20 October), so the chips fit on one line and it needs less height.
+- **Icons beside the tabs** (20 October, Josh's mockup): on the Matrix title's row, just left of All data, the **Texts and utterances** button (48 px; Ctrl+U), with room to its left for more such buttons later. It used to be a big button in a panel of its own beside Current Session.
 - **Tags appear as small light-blue rounded "chips"** that size to their text: in the All data Tags column, in matrix headers, and in the token dialogue.
 - **Icons** (drawn by the program, no image files):
   - Add: green circle with a white plus. Delete: red circle with a white X. Edit: black-on-white pencil.
