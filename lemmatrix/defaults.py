@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from .model import (TEXTS, UTTERANCES, Database, FieldDef, Group, ListItem, Metadata, RefCategory, Settings,
-                    Tag, TagStructure, TierMapping, TierRule)
+from .model import (TEXTS, UTTERANCES, Database, FieldDef, Group, ListItem, Location, Metadata, Person,
+                    RefCategory, Settings, Tag, TagStructure, TierMapping, TierRule)
+from .tagdefs import tag_description
 
 WORD_CLASSES = ["NOUN", "VERB", "PRONOUN", "QUANT", "ADJECTIVE", "ADVERB"]
 INSTANCES = "Instances"          # top-level group: Frames and Examples
@@ -11,31 +12,43 @@ EXAMPLES = "Examples"            # Example 1 = X1 …: tells apart tokens that w
 
 
 def _tags(*pairs, default: str | None = None) -> list[Tag]:
+    """Tags from names or (name, code) pairs. A group's default has no code: file names leave it out."""
     out = []
     for p in pairs:
         name, code = (p, p) if isinstance(p, str) else p
-        out.append(Tag(name=name, code="" if name == default else code, default=(name == default)))
+        out.append(Tag(name=name, code="" if name == default else code, default=(name == default),
+                       description=tag_description(name)))
     return out
 
 
+def _group(name: str, tags=(), groups=(), usual=()) -> Group:
+    return Group(name, list(tags), list(groups), list(usual), description=tag_description(name))
+
+
+PERSONS = ["1SG", "2SG", "3SG", "1PL", "2PL", "3PL"]
+
+
 def default_tag_structure() -> TagStructure:
-    persons = ["1SG", "2SG", "3SG", "1PL", "2PL", "3PL"]
-    subjects = [f"{p}.{r}" for p in persons for r in ("A", "S")]
-    objects = [f"{p}.O" for p in persons]
-    noun = Group("NOUN", groups=[
-        Group("Number", _tags(("Singular", "SG"), ("Plural", "PL"))),
-        Group("Case", _tags(("Nominative", "NOM"), ("Accusative", "ACC"), ("Ergative", "ERG"),
-                            ("Absolutive", "ABS"), ("Genitive", "GEN"), ("Oblique", "OBL"))),
+    subjects = [f"{p}.{r}" for p in PERSONS + ["NP"] for r in ("A", "S")]
+    objects = [f"{p}.O" for p in PERSONS + ["NP"]]
+    possessors = [f"{p}.POSS" for p in PERSONS]
+    nominal = _group("Nominal", groups=[
+        _group("Number", _tags(("Singular", "SG"), ("Plural", "PL"), default="Singular")),
+        _group("Case", _tags(("Nominative", "NOM"), ("Accusative", "ACC"), ("Ergative", "ERG"),
+                             ("Absolutive", "ABS"), ("Genitive", "GEN"), ("Pertensive", "PER"),
+                             ("Locative", "LOC"), default="Nominative")),
+        _group("Possession", _tags(*possessors)),
     ], usual=["NOUN"])
-    verb = Group("VERB", groups=[
-        Group("Subject", _tags(*subjects)),
-        Group("Object", _tags(*objects)),
-        Group("Stem", _tags("Simple", ("Passive", "PASS"), ("Antipassive", "AP"),
-                            ("Causative", "CAUS"), default="Simple")),
-        Group("Tense", _tags(("Past", "PST"), ("Present", "PRS"), ("Future", "FUT"))),
-        Group("Aspect", _tags(("Perfective", "PFV"), ("Imperfective", "IPFV"))),
-        Group("Mood", _tags("Indicative", ("Imperative", "IMP"), default="Indicative")),
-        Group("Polarity", _tags("Affirmative", ("Negative", "NEG"), default="Affirmative")),
+    verbal = _group("Verbal", groups=[
+        _group("Subject", _tags(*subjects)),
+        _group("Object", _tags(*objects)),
+        _group("Stem", _tags("Simple", ("Infinitive", "INF"), ("Passive", "PASS"), ("Antipassive", "AP"),
+                             ("Causative", "CAUS"), default="Simple")),
+        _group("Tense", _tags(("Present", "PRS"), ("Past", "PST"), ("Future", "FUT"), default="Present")),
+        _group("Aspect", _tags(("Perfective", "PFV"), ("Imperfective", "IPFV"), default="Perfective")),
+        _group("Mood", _tags("Indicative", ("Imperative", "IMP"), ("Interrogative", "INT"),
+                             default="Indicative")),
+        _group("Polarity", _tags("Affirmative", ("Negative", "NEG"), default="Affirmative")),
     ], usual=["VERB"])
     shared = [                                  # no hint: usual for every lemma
         Group("Phonological", groups=[
@@ -53,7 +66,7 @@ def default_tag_structure() -> TagStructure:
             Group(EXAMPLES, _tags(("Example 1", "x1"), ("Example 2", "x2"))),   # lowercase: Josh's convention for a non-linguistic gloss
         ]),
     ]
-    return TagStructure([noun, verb, *shared])
+    return TagStructure([nominal, verbal, *shared])
 
 
 DEFAULT_CATEGORIES = [
@@ -83,8 +96,42 @@ TEXT_CATEGORIES = [("T", "Texts"), ("S", "Songs")]
 
 GENRES = [ListItem("narrative", [ListItem("personal narrative"), ListItem("folktale"), ListItem("history")]),
           ListItem("procedural"), ListItem("hortatory"), ListItem("expository"), ListItem("conversation"),
-          ListItem("song"), ListItem("prayer"), ListItem("other")]
-STATUSES = ["untranscribed", "transcribed", "translated", "checked"]
+          ListItem("song"), ListItem("prayer"), ListItem("elicited"), ListItem("other")]
+STATUSES = ["untranscribed", "transcribed", "translated", "analyzed", "finished"]
+TONE_CLASSES = ["H", "L", "LH", "HL"]
+INFLECTION_CLASSES = [("Nominal", ["I", "II"]), ("Verbal", ["I", "II"])]
+
+# Reference categories (lemmas): inspired by Dixon (2010: 296).
+DIXON_NOTE = ("The default categories are inspired by Dixon, R. M. W. 2010. Basic Linguistic Theory, "
+              "Vol. 1: Methodology, p. 296. Oxford: Oxford University Press.")
+
+# People and places in a new database: placeholders, to be edited.
+RESEARCHERS = [("RS1", "Researcher 1"), ("RS2", "Researcher 2")]
+PARTICIPANTS = [("SP1", "Speaker 1"), ("SP2", "Speaker 2")]
+PADE_NOTE = "Not a known location; any resemblance is coincidental."
+
+
+def default_researchers() -> list[Person]:
+    return [Person(c, n) for c, n in RESEARCHERS]
+
+
+def default_participants() -> list[Person]:
+    return [Person(c, n) for c, n in PARTICIPANTS]
+
+
+def default_locations() -> list[Location]:
+    return [Location("Canada", "CA", children=[
+                Location("British Columbia", "BC", children=[Location("Ucluelet", "UCL-V")])]),
+            Location("Ethiopia", "ET", children=[
+                Location("Gambella Regional State", "GBRS", children=[Location("Pade", "PADE", PADE_NOTE)])])]
+
+
+def tone_classes() -> list[ListItem]:
+    return [ListItem(x) for x in TONE_CLASSES]
+
+
+def inflection_classes() -> list[ListItem]:
+    return [ListItem(top, [ListItem(x) for x in subs]) for top, subs in INFLECTION_CLASSES]
 
 
 def text_categories() -> list[RefCategory]:
@@ -117,8 +164,8 @@ def default_settings() -> Settings:
         FieldDef("Gloss", role="gloss"),
         FieldDef("WordClass", "Word Class", role="word-class", closed=True,
                  items=[ListItem(n) for n in WORD_CLASSES]),
-        FieldDef("ToneClass", "Tone Class", closed=True),
-        FieldDef("InflectionClass", "Inflection Class", closed=True),
+        FieldDef("ToneClass", "Tone Class", closed=True, items=tone_classes()),
+        FieldDef("InflectionClass", "Inflection Class", closed=True, items=inflection_classes()),
         FieldDef("Comment", role="comment"),
     ]
     s.token_fields = [
@@ -168,5 +215,10 @@ def ensure_core_fields(s: Settings) -> list[str]:
     return restored
 
 
+def default_metadata() -> Metadata:
+    return Metadata(researchers=default_researchers(), participants=default_participants(),
+                    locations=default_locations())
+
+
 def new_database() -> Database:
-    return Database(metadata=Metadata(), settings=default_settings())
+    return Database(metadata=default_metadata(), settings=default_settings())

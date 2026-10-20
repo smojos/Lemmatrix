@@ -7,7 +7,7 @@ from lemmatrix.defaults import new_database
 from lemmatrix.model import UTTERANCES, Group, Tag, is_utterance
 
 DATA = Path(__file__).resolve().parent / "data"
-SAMPLES = Path(__file__).resolve().parent.parent / "samples"
+SAMPLES = Path(__file__).resolve().parent / "data" / "sample"    # the prototype's sample (conftest.py)
 
 
 def _db(tmp_path):

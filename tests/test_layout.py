@@ -13,7 +13,7 @@ from lemmatrix.defaults import new_database
 from lemmatrix.model import Person
 
 DATA = Path(__file__).resolve().parent / "data"
-SAMPLES = Path(__file__).resolve().parent.parent / "samples"
+SAMPLES = Path(__file__).resolve().parent / "data" / "sample"    # the prototype's sample (conftest.py)
 
 
 def test_new_databases_have_morphemes_and_recordings_in_tokens(tmp_path):

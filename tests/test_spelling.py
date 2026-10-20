@@ -6,7 +6,7 @@ import pytest
 
 from lemmatrix import spelling, storage
 
-SAMPLES = Path(__file__).resolve().parent.parent / "samples"
+SAMPLES = Path(__file__).resolve().parent / "data" / "sample"    # the prototype's sample (conftest.py)
 pytestmark = pytest.mark.skipif(not spelling.available(), reason="no spelling dictionaries installed")
 
 

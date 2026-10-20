@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QApplication, QMessageBox  # noqa: E402
 
 from lemmatrix import storage  # noqa: E402
 
-SAMPLES = Path(__file__).resolve().parent.parent / "samples"
+SAMPLES = Path(__file__).resolve().parent / "data" / "sample"    # the prototype's sample (conftest.py)
 
 
 @pytest.fixture(scope="module")

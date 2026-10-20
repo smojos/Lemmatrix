@@ -7,7 +7,7 @@ import pytest
 from lemmatrix import predict, storage
 from lemmatrix.model import Token
 
-SAMPLES = Path(__file__).resolve().parent.parent / "samples"
+SAMPLES = Path(__file__).resolve().parent / "data" / "sample"    # the prototype's sample (conftest.py)
 needs_inflection = pytest.mark.skipif(not predict.available(), reason="lemminflect isn't installed")
 
 

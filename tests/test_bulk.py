@@ -7,7 +7,7 @@ import pytest
 
 from lemmatrix import bulk, storage
 
-SAMPLES = Path(__file__).resolve().parent.parent / "samples"
+SAMPLES = Path(__file__).resolve().parent / "data" / "sample"    # the prototype's sample (conftest.py)
 
 
 @pytest.fixture

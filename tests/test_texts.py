@@ -8,7 +8,7 @@ from lemmatrix import audio, storage, textgrid as tgmod
 from lemmatrix.defaults import new_database
 from lemmatrix.model import TEXTS, ClipSource, Text, TierMapping, TierRule
 
-SAMPLES = Path(__file__).resolve().parent.parent / "samples"
+SAMPLES = Path(__file__).resolve().parent / "data" / "sample"    # the prototype's sample (conftest.py)
 
 
 def _db(tmp_path):
@@ -34,7 +34,8 @@ def test_new_databases_have_text_settings():
     assert [c.letter for c in s.categories(TEXTS)] == ["T", "S"]
     assert [f.name for f in s.text_fields] == ["Title", "Genre", "Status", "Description", "Comment"]
     assert "folktale" in s.text_field("genre").all_values()
-    assert s.text_field("status").all_values() == ["untranscribed", "transcribed", "translated", "checked"]
+    assert s.text_field("status").all_values() == ["untranscribed", "transcribed", "translated",
+                                                     "analyzed", "finished"]
     m = s.tier_mapping
     assert m.main == "tx" and m.rule("ft@SP1").key == "Translation:en" and m.rule("mb").field == ""
 

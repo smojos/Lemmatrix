@@ -773,14 +773,20 @@ class TagStructureDialog(QDialog):
         for sub in g.groups:
             self._fill_group(gi, sub)
 
-    def _fill(self):
+    def _fill(self, structure=None):
         self.tree.blockSignals(True)
-        for g in self.db.settings.tags.groups:
+        for g in (structure or self.db.settings.tags).groups:
             self._fill_group(None, g)
         self.tree.expandAll()
         self.tree.blockSignals(False)
         self._show_usual()
         self._mark_problems()
+
+    def load(self, structure):
+        """Show this structure instead (Reset to defaults in Edit → Lists)."""
+        self.tree.clear()
+        self._deleted = set()
+        self._fill(structure)
 
     def _tops(self):
         return [self.tree.topLevelItem(i) for i in range(self.tree.topLevelItemCount())]

@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QDialogBut
 
 from ..model import (LEMMAS, TEXTS, UTTERANCES, Database, Location, Person, RefCategory, TierMapping, TierRule,
                      forbidden_in, nfc)
+from .. import defaults, resets
 from . import theme
 from .chiprow import LOCATIONS, PARTICIPANTS, RESEARCHERS, consent_path
 from .dialogs import TagStructureDialog
@@ -90,6 +91,12 @@ class PeopleEditor(QWidget):
             self.table.cellClicked.connect(self._cell_clicked)
         row.addStretch(1)
         lay.addLayout(row)
+
+    def load(self, people: list[Person]):
+        """Show these people instead (Reset to defaults)."""
+        self.table.setRowCount(0)
+        for p in people:
+            self._add_row(p)
 
     def _add_row(self, p: Person, edit: bool = False):
         r = self.table.rowCount()
@@ -254,6 +261,17 @@ class LocationEditor(QWidget):
         lay.addLayout(row)
         self._current = None
 
+    def load(self, locations: list[Location]):
+        """Show these places instead (Reset to defaults)."""
+        self.tree.blockSignals(True)
+        self.tree.clear()
+        for loc in locations:
+            self.tree.addTopLevelItem(self._item(loc))
+        self.tree.expandAll()
+        self.tree.blockSignals(False)
+        self.description.setPlainText("")
+        self.description.setEnabled(False)
+
     def _item(self, loc: Location) -> QTreeWidgetItem:
         it = QTreeWidgetItem([loc.name, loc.code, _one_line(loc.description)])
         it.setFlags(it.flags() | Qt.ItemIsEditable)
@@ -410,6 +428,12 @@ class CategoryEditor(QWidget):
             return 0
         return sum(1 for item in self.db.items() if item.ref.startswith(letter))   # QQ01 is a Q
 
+    def load(self, categories: list[RefCategory]):
+        """Show these categories instead (Reset to defaults)."""
+        self.table.setRowCount(0)
+        for c in categories:
+            self._add_row(c)
+
     def _add_row(self, c: RefCategory, edit: bool = False):
         r = self.table.rowCount()
         self.table.insertRow(r)
@@ -523,6 +547,12 @@ class TierEditor(QWidget):
         row.addStretch(1)
         lay.addLayout(row)
 
+    def load(self, mapping: TierMapping):
+        """Show this mapping instead (Reset to defaults)."""
+        self.table.setRowCount(0)
+        for r in mapping.rules:
+            self._add_row(r, mapping.is_main(r.tier))
+
     def _add_row(self, rule: TierRule, main: bool, edit: bool = False):
         from .texts import field_choices
         from PySide6.QtWidgets import QRadioButton
@@ -611,22 +641,27 @@ class ListsDialog(QDialog):
         self.researchers = PeopleEditor(db, md.researchers, False, self._researcher_use)
         self._page(RESEARCHERS, "Researchers", self.researchers,
                    "The researchers of the sessions. The code is what the notebook and the Current "
-                   "Session show; renaming a code renames it in the notebook too.")
+                   "Session show; renaming a code renames it in the notebook too.",
+                   lambda: self._reset_people(self.researchers, defaults.default_researchers(),
+                                              self._researcher_use))
         self.participants = PeopleEditor(db, md.participants, True, self._participant_use)
         self._page(PARTICIPANTS, "Participants", self.participants,
                    "The participants (speakers). The code is the tokens' speaker; renaming it renames it "
                    "in the tokens and the notebook too. The consent file documents their informed consent: "
-                   "click it to open it (a file inside the database's folder is kept relative to it).")
+                   "click it to open it (a file inside the database's folder is kept relative to it).",
+                   lambda: self._reset_people(self.participants, defaults.default_participants(),
+                                              self._participant_use))
         self.locations = LocationEditor(md.locations, self._location_use)
         self._page(LOCATIONS, "Locations", self.locations,
                    "Places, from countries down to villages. Double-click a name or code to edit it; "
-                   "sessions keep a place's code (or its name, if it has no code).")
+                   "sessions keep a place's code (or its name, if it has no code).", self._reset_locations)
 
         self.categories = CategoryEditor(db)
         self._page(REFS, "Reference categories", self.categories,
                    "The letters references start with, and what each is for: lemmas, or utterances "
                    "(one-off sentences and phrases, View → Texts and utterances). A letter in use stays "
-                   "as it is, since references are part of file names; its name can be changed.")
+                   "as it is, since references are part of file names; its name can be changed.\n\n"
+                   + defaults.DIXON_NOTE, self._reset_categories)
 
         self._heading("Field lists")
         self.field_lists = []
@@ -645,7 +680,8 @@ class ListsDialog(QDialog):
                     note += (" Tag groups can be marked as usual for word classes (under Tags); a class "
                              "includes those nested under it. Renaming a class renames it in the lemmas "
                              "and the tag groups.")
-                self._page(f"field:{f.name}", f.title, ed, note)
+                self._page(f"field:{f.name}", f.title, ed, note,
+                           lambda f=f, ed=ed: self._reset_field(f, ed))
 
         self._heading("Texts")
         self.tier_editor = TierEditor(db)
@@ -653,7 +689,7 @@ class ListsDialog(QDialog):
                    "What each tier of a text's Praat TextGrid fills in, by the tier's name (a name like "
                    "tx@SP1 counts as tx, said by SP1). The main tier's intervals are the lines; the other "
                    "tiers are matched to them by time. A text can have its own mapping (chosen in its "
-                   "dialogue); new tier names are learned when a text is added.")
+                   "dialogue); new tier names are learned when a text is added.", self._reset_tiers)
 
         self._heading("Tags")
         self.tags = TagStructureDialog(
@@ -663,7 +699,7 @@ class ListsDialog(QDialog):
             self.class_list.changed = self._classes_changed
         self.tags.setWindowFlags(Qt.Widget)
         self.tags.button_box.hide()
-        self._page(TAGS, "Tag structure", self.tags, "")
+        self._page(TAGS, "Tag structure", self.tags, "", self._reset_tags)
 
         self.index.currentRowChanged.connect(self._row_changed)
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -681,7 +717,7 @@ class ListsDialog(QDialog):
         it.setFlags(Qt.NoItemFlags)
         self.index.addItem(it)
 
-    def _page(self, key, title, widget, note):
+    def _page(self, key, title, widget, note, reset=None):
         page = QWidget()
         pl = QVBoxLayout(page)
         head = QLabel(title)
@@ -689,7 +725,14 @@ class ListsDialog(QDialog):
         f.setBold(True)
         f.setPointSizeF(f.pointSizeF() * 1.3)
         head.setFont(f)
-        pl.addWidget(head)
+        top = QHBoxLayout()
+        top.addWidget(head)
+        top.addStretch(1)
+        if reset is not None:
+            top.addWidget(_tool("reset-filters", f"Put the default {title.lower()} back. Anything still in "
+                                "use is kept; nothing changes until you click OK.",
+                                lambda: self._reset(title, reset), "Reset to defaults"))
+        pl.addLayout(top)
         if note:
             pl.addWidget(_note(note))
         pl.addWidget(widget, 1)
@@ -698,6 +741,68 @@ class ListsDialog(QDialog):
         it.setData(Qt.UserRole, self.pages.count() - 1)
         self.index.addItem(it)
         self.keys[key] = self.index.count() - 1
+
+    def _reset(self, title, fn):
+        """Reset one list to the defaults of a new database, keeping what's in use."""
+        if QMessageBox.question(self, "Reset to defaults",
+                                f"Replace the {title.lower()} with the defaults?\n\nAnything still in use "
+                                "is kept. Nothing changes until you click OK, and Cancel leaves "
+                                "everything as it was.") != QMessageBox.Yes:
+            return
+        kept = fn() or []
+        if kept:
+            QMessageBox.information(self, "Reset to defaults",
+                                    "Kept because they're in use:\n" + ", ".join(kept))
+
+    # ---- what Reset to defaults does on each page -------------------------------
+    def _reset_people(self, editor, defaults, in_use):
+        people, kept = resets.merge_people(defaults, editor.people(), in_use)
+        editor.load(people)
+        return kept
+
+    def _reset_locations(self):
+        places, kept = resets.merge_locations(defaults.default_locations(), self.locations.locations(),
+                                              self._location_use)
+        self.locations.load(places)
+        return kept
+
+    def _reset_categories(self):
+        cats, kept = resets.merge_categories(defaults.default_settings().ref_categories,
+                                             self.categories.categories(), self.categories.used)
+        self.categories.load(cats)
+        return kept
+
+    def _reset_field(self, f, editor):
+        want = next((d for d in self._default_fields() if d.name == f.name), None)
+        used = self._values_in_use(f)
+        items, kept = resets.merge_items(want.items if want else [], editor.items(), used)
+        editor.set_items(items)
+        editor.changed()
+        return kept
+
+    def _default_fields(self):
+        d = defaults.default_settings()
+        return d.entry_fields + d.token_fields + d.text_fields
+
+    def _values_in_use(self, f) -> set[str]:
+        out = set()
+        for e in self.db.items():
+            out.add(e.get(f.name))
+            for t in e.tokens:
+                out.add(t.get(f.name))
+        for t in self.db.texts:
+            out.add(t.get(f.name))
+        return {v for v in out if v}
+
+    def _reset_tiers(self):
+        self.tier_editor.load(defaults.tier_mapping())
+        return []
+
+    def _reset_tags(self):
+        used = {x for _, t in self.db.all_tokens() for x in t.tags}
+        ts, kept = resets.merge_tags(defaults.default_tag_structure(), self.tags.structure(), used)
+        self.tags.load(ts)
+        return kept
 
     def _row_changed(self, row):
         it = self.index.item(row)
