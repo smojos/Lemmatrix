@@ -10,7 +10,7 @@ abstract: >-
 authors:
   - family-names: Smolders
     given-names: Joshua A. G.
-version: 0.1.0
+version: 0.1.1
 license: GPL-3.0-or-later
 repository-code: "https://github.com/smojos/Lemmatrix"
 keywords:
