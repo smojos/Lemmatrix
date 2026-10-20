@@ -192,7 +192,7 @@ class EntryDialog(QDialog):
             langs = [lang for lang in s.gloss_languages if lang != s.primary_gloss]
             self.others_btn.setText(f"Other languages ({', '.join(langs)})")
             self.others_btn.setToolTip("Glosses in the database's other gloss languages: they help "
-                                       "speakers understand (e.g. in EλICIT requests)")
+                                       "speakers understand (e.g. in ɛλicit requests)")
             form.addRow(self.others_btn)
             self.other_rows = []
             for label, ed in others:
@@ -371,7 +371,7 @@ class MetadataDialog(QDialog):
         self.glosses = QLineEdit(" ".join(db.settings.gloss_languages))
         self.glosses.setToolTip("Gloss languages, separated by spaces; the first is the primary one (the "
                                 "language of the analysis). The others are second languages, to help "
-                                "speakers understand (e.g. in EλICIT requests): hidden everywhere until a "
+                                "speakers understand (e.g. in ɛλicit requests): hidden everywhere until a "
                                 "column, a cell line or a dialogue's Other languages is set to show them.")
         form.addRow("Gloss languages", self.glosses)
         lay.addLayout(form)
@@ -391,7 +391,7 @@ class MetadataDialog(QDialog):
         self.images_btn = QPushButton("Open images folder")
         if db.path:
             where = QDir.toNativeSeparators(str(layout.images_folder(db.path)))
-            self.images_btn.setToolTip("Pictures for EλICIT requests, named by the token's reference and tag "
+            self.images_btn.setToolTip("Pictures for ɛλicit requests, named by the token's reference and tag "
                                        "codes: D001.jpg for a citation token, D001_PL.jpg for its plural "
                                        f"(JPG, PNG or GIF). Never shown in Lemmatrix.\n{where}")
         else:

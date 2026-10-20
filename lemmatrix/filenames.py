@@ -110,7 +110,7 @@ def build_text_filename(db: Database, text, extension: str = ".wav") -> str:
 
 
 # --------------------------------------------------------------------------
-# Images (idea 19, EλICIT): a token's picture is found by name in the main folder's Images
+# Images (idea 19, ɛλicit): a token's picture is found by name in the main folder's Images
 # folder, never shown in Lemmatrix and never stored in the database.
 # --------------------------------------------------------------------------
 

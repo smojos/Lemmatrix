@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="utf-8"?>
+<database format="6">
+  <metadata>
+    <language code="ITA">Italian</language>
+    <variety code="STD">Standard Italian</variety>
+    <name>Elicit Test</name>
+    <researcher code="RS1" name="Researcher 1" email="researcher@example.org" />
+    <participant code="SP1" name="Speaker 1" identifiable="yes" audio-sharing="yes" />
+    <participant code="SP2" name="Speaker 2" />
+    <location name="Canada" code="CA">
+      <location name="British Columbia" code="BC">
+        <location name="Ucluelet" code="UCL-V" />
+      </location>
+    </location>
+    <location name="Ethiopia" code="ET">
+      <location name="Gambella Regional State" code="GBRS">
+        <location name="Pade" code="PADE">
+          <description>Not a known location; any resemblance is coincidental.</description>
+        </location>
+      </location>
+    </location>
+    <description>A small invented Italian database (Danish as the second gloss language) for trying out ɛλicit. Built by samples/make_elicit_test.py; the recordings are Josh Smolders'.</description>
+  </metadata>
+  <settings>
+    <entry-fields>
+      <field name="Lemma" role="lemma" />
+      <field name="Gloss" role="gloss" />
+      <field name="WordClass" label="Word Class" role="word-class" closed="yes">
+        <item name="NOUN" />
+        <item name="VERB" />
+        <item name="PRONOUN" />
+        <item name="QUANT" />
+        <item name="ADJECTIVE" />
+        <item name="ADVERB" />
+      </field>
+      <field name="ToneClass" label="Tone Class" closed="yes">
+        <item name="H" />
+        <item name="L" />
+        <item name="LH" />
+        <item name="HL" />
+      </field>
+      <field name="InflectionClass" label="Inflection Class" closed="yes">
+        <item name="Nominal">
+          <item name="I" />
+          <item name="II" />
+        </item>
+        <item name="Verbal">
+          <item name="I" />
+          <item name="II" />
+        </item>
+      </field>
+      <field name="Comment" role="comment" />
+    </entry-fields>
+    <token-fields>
+      <field name="Phonetic" role="phonetic" />
+      <field name="Phonemic" role="phonemic" />
+      <field name="Morphemes" role="morphemes" />
+      <field name="Pitch" role="pitch" />
+      <field name="Translation" role="translation" />
+      <field name="Comment" role="comment" />
+    </token-fields>
+    <text-fields>
+      <field name="Title" role="title" />
+      <field name="Genre" role="genre" closed="yes">
+        <item name="narrative">
+          <item name="personal narrative" />
+          <item name="folktale" />
+          <item name="history" />
+        </item>
+        <item name="procedural" />
+        <item name="hortatory" />
+        <item name="expository" />
+        <item name="conversation" />
+        <item name="song" />
+        <item name="prayer" />
+        <item name="elicited" />
+        <item name="other" />
+      </field>
+      <field name="Status" label="Transcription status" role="status" closed="yes">
+        <item name="untranscribed" />
+        <item name="transcribed" />
+        <item name="translated" />
+        <item name="analyzed" />
+        <item name="finished" />
+      </field>
+      <field name="Description" />
+      <field name="Comment" role="comment" />
+    </text-fields>
+    <tier-mapping main="tx">
+      <tier name="tx" field="Phonetic" />
+      <tier name="ge" field="Morphemes" />
+      <tier name="ft" field="Translation" lang="en" />
+      <tier name="mb" field="" />
+    </tier-mapping>
+    <glosses languages="en da" primary="en" />
+    <tag-structure>
+      <group name="Nominal" usual="NOUN">
+        <group name="Number">
+          <tag name="Singular" default="yes" />
+          <tag name="Plural" code="PL" />
+        </group>
+        <group name="Case">
+          <tag name="Nominative" default="yes" />
+          <tag name="Accusative" code="ACC" />
+          <tag name="Ergative" code="ERG" />
+          <tag name="Absolutive" code="ABS" />
+          <tag name="Genitive" code="GEN" />
+          <tag name="Pertensive" code="PER" />
+          <tag name="Locative" code="LOC" />
+        </group>
+        <group name="Possession">
+          <tag name="1SG.POSS" code="1SG.POSS" />
+          <tag name="2SG.POSS" code="2SG.POSS" />
+          <tag name="3SG.POSS" code="3SG.POSS" />
+          <tag name="1PL.POSS" code="1PL.POSS" />
+          <tag name="2PL.POSS" code="2PL.POSS" />
+          <tag name="3PL.POSS" code="3PL.POSS" />
+        </group>
+      </group>
+      <group name="Verbal" usual="VERB">
+        <group name="Subject">
+          <tag name="1SG.A" code="1SG.A" />
+          <tag name="1SG.S" code="1SG.S" />
+          <tag name="2SG.A" code="2SG.A" />
+          <tag name="2SG.S" code="2SG.S" />
+          <tag name="3SG.A" code="3SG.A" />
+          <tag name="3SG.S" code="3SG.S" />
+          <tag name="1PL.A" code="1PL.A" />
+          <tag name="1PL.S" code="1PL.S" />
+          <tag name="2PL.A" code="2PL.A" />
+          <tag name="2PL.S" code="2PL.S" />
+          <tag name="3PL.A" code="3PL.A" />
+          <tag name="3PL.S" code="3PL.S" />
+          <tag name="NP.A" code="NP.A" />
+          <tag name="NP.S" code="NP.S" />
+        </group>
+        <group name="Object">
+          <tag name="1SG.O" code="1SG.O" />
+          <tag name="2SG.O" code="2SG.O" />
+          <tag name="3SG.O" code="3SG.O" />
+          <tag name="1PL.O" code="1PL.O" />
+          <tag name="2PL.O" code="2PL.O" />
+          <tag name="3PL.O" code="3PL.O" />
+          <tag name="NP.O" code="NP.O" />
+        </group>
+        <group name="Stem">
+          <tag name="Simple" default="yes" />
+          <tag name="Infinitive" code="INF" />
+          <tag name="Passive" code="PASS" />
+          <tag name="Antipassive" code="AP" />
+          <tag name="Causative" code="CAUS" />
+        </group>
+        <group name="Tense">
+          <tag name="Present" default="yes" />
+          <tag name="Past" code="PST" />
+          <tag name="Future" code="FUT" />
+        </group>
+        <group name="Aspect">
+          <tag name="Perfective" default="yes" />
+          <tag name="Imperfective" code="IPFV" />
+        </group>
+        <group name="Mood">
+          <tag name="Indicative" default="yes" />
+          <tag name="Imperative" code="IMP" />
+          <tag name="Interrogative" code="INT" />
+        </group>
+        <group name="Polarity">
+          <tag name="Affirmative" default="yes" />
+          <tag name="Negative" code="NEG" />
+        </group>
+      </group>
+      <group name="Phonological">
+        <group name="Following tone">
+          <tag name="before H" code="xH" />
+          <tag name="before L" code="xL" />
+        </group>
+        <group name="Preceding tone">
+          <tag name="after H" code="Hx" />
+          <tag name="after L" code="Lx" />
+        </group>
+      </group>
+      <group name="Syntactic">
+        <group name="Position vis predicate">
+          <tag name="preverbal" code="PREV" />
+          <tag name="postverbal" code="POSTV" />
+          <tag name="non-verbal predicate" code="PRED" />
+        </group>
+        <group name="Utterance position">
+          <tag name="isolation" default="yes" />
+          <tag name="utterance-initial" code="INI" />
+          <tag name="utterance-final" code="FIN" />
+        </group>
+      </group>
+      <group name="Instances">
+        <group name="Frames">
+          <tag name="Frame 1" code="F1" />
+          <tag name="Frame 2" code="F2" />
+        </group>
+        <group name="Examples">
+          <tag name="Example 1" code="x1" />
+          <tag name="Example 2" code="x2" />
+        </group>
+      </group>
+    </tag-structure>
+    <references scheme="categories" digits="3">
+      <category letter="A">Human body</category>
+      <category letter="B">Human designations</category>
+      <category letter="C">Kinship terms &amp; ethnonyms</category>
+      <category letter="D">Mammals</category>
+      <category letter="E">Birds</category>
+      <category letter="F">Fish</category>
+      <category letter="G">Reptiles &amp; amphibians</category>
+      <category letter="H">Insects &amp; other small things</category>
+      <category letter="I">Spiritual, disease, ceremony</category>
+      <category letter="J">Flora, food, drink</category>
+      <category letter="K">Cultural artifacts</category>
+      <category letter="L">Inanimate nature</category>
+      <category letter="M">Speech, thought</category>
+      <category letter="N">Space, direction, time</category>
+      <category letter="O">Other</category>
+      <category letter="P">Property concepts</category>
+      <category letter="Q" numbering="manual">Quantifiers</category>
+      <category letter="R" numbering="manual">Pronouns</category>
+      <category letter="V">Verbs</category>
+      <category letter="U" for="utterances">Unorganised</category>
+      <category letter="W" for="utterances">Own category W</category>
+      <category letter="X" for="utterances">Own category X</category>
+      <category letter="Y" for="utterances">Own category Y</category>
+      <category letter="Z" for="utterances">Own category Z</category>
+      <category letter="T" for="texts">Texts</category>
+      <category letter="S" for="texts">Songs</category>
+    </references>
+    <sounds pattern="{language}-{variety}_{reference}_{gloss}_{tags}" utterance-pattern="{language}-{variety}_{reference}_{label}" text-pattern="{language}-{variety}_{reference}_{title}" clip-padding="100" tag-separator="-" auto-update-names="yes" />
+    <pitch display-range="1-5" style="contours" />
+  </settings>
+  <entry ref="D001" file-gloss="cat" id="0893ecdff4">
+    <Lemma>gatto</Lemma>
+    <Gloss lang="en">cat</Gloss>
+    <Gloss lang="da">kat</Gloss>
+    <WordClass>NOUN</WordClass>
+    <Comment>ɛλicit test: ask for this (new recording; it has a picture)</Comment>
+    <token id="31e32f2bf3">
+      <Phonemic>ˈɡatto</Phonemic>
+      <Translation lang="en">cat</Translation>
+      <Translation lang="da">kat</Translation>
+    </token>
+    <token tags="Plural, Nominative, isolation" id="69241d8dd7">
+      <Phonemic>ˈɡatti</Phonemic>
+      <Translation lang="en">cats</Translation>
+      <Translation lang="da">katte</Translation>
+      <Comment>ɛλicit test: ask for this (new recording; it has a picture)</Comment>
+    </token>
+  </entry>
+  <entry ref="D002" file-gloss="dog" id="eff16d8a2c">
+    <Lemma>cane</Lemma>
+    <Gloss lang="en">dog</Gloss>
+    <Gloss lang="da">hund</Gloss>
+    <WordClass>NOUN</WordClass>
+    <Comment>ɛλicit test: not to ask for</Comment>
+    <token id="39e84f8f27">
+      <Phonemic>ˈkane</Phonemic>
+      <Translation lang="en">dog</Translation>
+      <Translation lang="da">hund</Translation>
+    </token>
+  </entry>
+  <entry ref="J001" file-gloss="water" id="e6720ad8ed">
+    <Lemma>acqua</Lemma>
+    <Gloss lang="en">water</Gloss>
+    <Gloss lang="da">vand</Gloss>
+    <WordClass>NOUN</WordClass>
+    <Comment>ɛλicit test: ask for this (rerecord)</Comment>
+    <token speaker="SP1" collected="2026-10-20" file="ITA-STD_J001_water.wav" id="7a49cc0ff7">
+      <Phonemic>ˈakkwa</Phonemic>
+      <Translation lang="en">water</Translation>
+      <Translation lang="da">vand</Translation>
+    </token>
+  </entry>
+  <entry ref="J002" file-gloss="bread" id="8385560cf8">
+    <Lemma>pane</Lemma>
+    <Gloss lang="en">bread</Gloss>
+    <Gloss lang="da">brød</Gloss>
+    <WordClass>NOUN</WordClass>
+    <Comment>ɛλicit test: ask for this (new recording)</Comment>
+    <token id="c3bfb38204">
+      <Phonemic>ˈpane</Phonemic>
+      <Translation lang="en">bread</Translation>
+      <Translation lang="da">brød</Translation>
+    </token>
+  </entry>
+  <entry ref="J003" file-gloss="cake" id="14be7f8b76">
+    <Lemma>torta</Lemma>
+    <Gloss lang="en">cake</Gloss>
+    <Gloss lang="da">kage</Gloss>
+    <WordClass>NOUN</WordClass>
+    <Comment>ɛλicit test: not to ask for</Comment>
+    <token speaker="SP1" collected="2026-10-20" file="ITA-STD_J003_cake.wav" id="c560900e60">
+      <Phonemic>ˈtorta</Phonemic>
+      <Translation lang="en">cake</Translation>
+      <Translation lang="da">kage</Translation>
+    </token>
+    <token tags="Plural, Nominative, isolation" id="43bf4e74e7">
+      <Phonemic>ˈtorte</Phonemic>
+      <Translation lang="en">cakes</Translation>
+      <Translation lang="da">kager</Translation>
+      <Comment>ɛλicit test: ask for this (new recording)</Comment>
+    </token>
+  </entry>
+  <entry ref="K001" file-gloss="house" id="f92c2cea9a">
+    <Lemma>casa</Lemma>
+    <Gloss lang="en">house</Gloss>
+    <Gloss lang="da">hus</Gloss>
+    <WordClass>NOUN</WordClass>
+    <Comment>ɛλicit test: not to ask for</Comment>
+    <token speaker="SP1" collected="2026-10-20" file="ITA-STD_K001_house.wav" id="491b6a3144">
+      <Phonemic>ˈkaza</Phonemic>
+      <Translation lang="en">house</Translation>
+      <Translation lang="da">hus</Translation>
+    </token>
+    <token tags="Plural, Nominative, isolation" id="3e8a9759e8">
+      <Phonemic>ˈkaze</Phonemic>
+      <Translation lang="en">houses</Translation>
+      <Translation lang="da">huse</Translation>
+      <Comment>ɛλicit test: not to ask for</Comment>
+    </token>
+  </entry>
+  <entry ref="K002" file-gloss="book" id="dbb5457805">
+    <Lemma>libro</Lemma>
+    <Gloss lang="en">book</Gloss>
+    <Gloss lang="da">bog</Gloss>
+    <WordClass>NOUN</WordClass>
+    <Comment>ɛλicit test: not to ask for</Comment>
+    <token speaker="SP1" collected="2026-10-20" file="ITA-STD_K002_book.wav" id="dbda7c45c6">
+      <Phonemic>ˈlibro</Phonemic>
+      <Translation lang="en">book</Translation>
+      <Translation lang="da">bog</Translation>
+    </token>
+    <token tags="Plural, Nominative, isolation" id="5b5d613d02">
+      <Phonemic>ˈlibri</Phonemic>
+      <Comment>ɛλicit test: ask for this (new recording; no Translation, so Lemmatrix warns)</Comment>
+    </token>
+  </entry>
+  <entry ref="L001" file-gloss="sun" id="0fe3478b02">
+    <Lemma>sole</Lemma>
+    <Gloss lang="en">sun</Gloss>
+    <Gloss lang="da">sol</Gloss>
+    <WordClass>NOUN</WordClass>
+    <Comment>ɛλicit test: ask for this (rerecord; SP2 hasn't agreed to audio sharing, so Lemmatrix warns)</Comment>
+    <token speaker="SP2" collected="2026-10-20" file="ITA-STD_L001_sun.wav" id="634c47ea63">
+      <Phonemic>ˈsole</Phonemic>
+      <Translation lang="en">sun</Translation>
+      <Translation lang="da">sol</Translation>
+    </token>
+  </entry>
+  <entry ref="V001" file-gloss="to sleep" id="3b96eaebea">
+    <Lemma>dormire</Lemma>
+    <Gloss lang="en">to sleep</Gloss>
+    <Gloss lang="da">at sove</Gloss>
+    <WordClass>VERB</WordClass>
+    <Comment>ɛλicit test: ask for this (new recording; it has a picture) (an animated GIF)</Comment>
+    <token id="cb0519d3ec">
+      <Phonemic>dorˈmire</Phonemic>
+      <Translation lang="en">to sleep</Translation>
+      <Translation lang="da">at sove</Translation>
+    </token>
+  </entry>
+  <entry ref="V002" file-gloss="to eat" id="95b9a2fae9">
+    <Lemma>mangiare</Lemma>
+    <Gloss lang="en">to eat</Gloss>
+    <Gloss lang="da">at spise</Gloss>
+    <WordClass>VERB</WordClass>
+    <Comment>ɛλicit test: not to ask for</Comment>
+    <token id="7cf6029466">
+      <Phonemic>manˈdʒare</Phonemic>
+      <Translation lang="en">to eat</Translation>
+      <Translation lang="da">at spise</Translation>
+    </token>
+  </entry>
+  <entry ref="P001" file-gloss="big" id="d843230a51">
+    <Lemma>grande</Lemma>
+    <Gloss lang="en">big</Gloss>
+    <Gloss lang="da">stor</Gloss>
+    <WordClass>ADJECTIVE</WordClass>
+    <Comment>ɛλicit test: not to ask for</Comment>
+    <token id="0197c305f1">
+      <Phonemic>ˈɡrande</Phonemic>
+      <Translation lang="en">big</Translation>
+      <Translation lang="da">stor</Translation>
+    </token>
+  </entry>
+  <entry ref="Q001" file-gloss="two" id="40344704d3">
+    <Lemma>due</Lemma>
+    <Gloss lang="en">two</Gloss>
+    <Gloss lang="da">to</Gloss>
+    <WordClass>QUANT</WordClass>
+    <Comment>ɛλicit test: not to ask for</Comment>
+    <token id="dc350fb7ea">
+      <Phonemic>ˈdue</Phonemic>
+      <Translation lang="en">two</Translation>
+      <Translation lang="da">to</Translation>
+    </token>
+  </entry>
+  <utterances>
+    <utterance ref="U001" file-label="the cat is sleeping" id="df08e6ff7d">
+      <token speaker="SP1" collected="2026-10-20" file="ITA-STD_U001_the_cat_is_sleeping.wav" id="089c06f205">
+        <Phonemic>il ˈɡatto ˈdɔrme</Phonemic>
+        <Translation lang="en">the cat is sleeping</Translation>
+        <Translation lang="da">katten sover</Translation>
+        <Comment>ɛλicit test: ask for this (rerecord)</Comment>
+      </token>
+    </utterance>
+    <utterance ref="U002" file-label="my two big cakes" id="9b958456b9">
+      <token speaker="SP1" collected="2026-10-20" file="ITA-STD_U002_my_two_big_cakes.wav" id="c59b83b233">
+        <Phonemic>le ˈmie ˈdue ˈtorte ˈɡrandi</Phonemic>
+        <Translation lang="en">my two big cakes</Translation>
+        <Translation lang="da">mine to store kager</Translation>
+        <Comment>ɛλicit test: not to ask for</Comment>
+      </token>
+    </utterance>
+    <utterance ref="U003" file-label="the dog is eating" id="1c05a21777">
+      <token id="7e3e74c201">
+        <Phonemic>il ˈkane ˈmandʒa</Phonemic>
+        <Translation lang="en">the dog is eating</Translation>
+        <Translation lang="da">hunden spiser</Translation>
+        <Comment>ɛλicit test: ask for this (new recording)</Comment>
+      </token>
+    </utterance>
+  </utterances>
+</database>

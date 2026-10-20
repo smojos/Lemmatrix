@@ -50,6 +50,16 @@ On Mac or Linux, run `./run_lemmatrix.sh` instead.
 The icon is drawn in `lemmatrix/resources/lemmatrix.svg`; `tools/make_icons.py` makes the
 PNG sizes and `lemmatrix.ico` from it (needs `cairosvg` and Pillow).
 
+**ɛλicit** (remote elicitation, stage 1) has its own test database: **File → Open a copy of the
+ɛλicit test database** opens a little Italian, with Danish as the second gloss language
+(`samples/Elicit test`, built by `samples/make_elicit_test.py`; each lemma's Comment says how to
+ask for it). The ɛλicit button, left of Texts and utterances, makes a request: a zip to send to a
+speaker with a link to the web page in `docs/elicit/`, served by GitHub Pages at
+<https://smojos.github.io/Lemmatrix/elicit/> (Settings → Pages → Deploy from a branch → `main`,
+`/docs`). The speaker records on their phone or computer and sends the recordings back as a zip;
+**Receive ɛλicitation** reviews them. No soundfile goes through GitHub: the page is only the page,
+and the recordings stay on the speaker's device until they send them.
+
 For heavier testing there's also **`samples/Test-300.xml`**: 300 invented lemmas with about
 7,760 tagged forms and no recordings (File → Open). It's rebuilt by
 `samples/make_test_database.py`. If you save changes to it, GitHub Desktop will list the file
@@ -172,6 +182,8 @@ lemmatrix/            the program
   layout.py           the main folder's fixed layout, consent relinking, full backups
   notebook.py         the notebook: sessions, the record of comments, the .notebook file
   filenames.py        building soundfile names from the pattern
+  elicit.py           ɛλicit: requests, the recordings coming back, the review (elicit_prompts.py: the
+                      web page's prompts in each language; elicit_art.py: Josh's ɛλicit drawings)
   matrix.py           laying out tokens for the paradigm views
   pitch.py            pitch notation
   audio.py            recording, playback and WAV metadata
@@ -179,9 +191,11 @@ lemmatrix/            the program
   resets.py           Reset to defaults in Edit → Lists (keeps what is in use)
   tagdefs.py          descriptions of the default tags, with their sources
   ui/                 windows and dialogues (Qt for Python)
-samples/              invented sample database with synthetic recordings
+samples/              invented sample database with synthetic recordings; the ɛλicit test database
+docs/elicit/          ɛλicit's web page (GitHub Pages), where speakers record
 tests/                automated tests (tests/data: the prototype's sample, used by the feature tests)
 tools/screenshots.py  renders the windows to PNG files, for checking layouts
+tools/make_elicit_web.py  the web page's favicon, logo and home-screen icons
 LICENSE               the GNU General Public License, version 3
 AUTHORS, CITATION.cff who made Lemmatrix and how to cite it
 THIRD-PARTY.md        the libraries Lemmatrix uses, with their licences

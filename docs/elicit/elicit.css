@@ -1,0 +1,119 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later
+   Copyright © 2026 Joshua A. G. Smolders
+   ɛλicit's page. The accent is the researcher's theme colour, sent with the request. */
+
+:root {
+  --accent: #198583;
+  --accent-soft: #d6ecea;
+  --bg: #f6f7f7;
+  --card: #ffffff;
+  --text: #1b1b1b;
+  --muted: #5d6666;
+  --line: #d9dede;
+  --danger: #b3261e;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --accent-soft: #1f3a39;
+    --bg: #181a1a;
+    --card: #232626;
+    --text: #f1f3f3;
+    --muted: #a7b0b0;
+    --line: #3a3f3f;
+    --danger: #ff8a80;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 18px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Ethiopic", "Noto Sans Arabic", sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+header { padding: 14px 16px 0; text-align: center; }
+#logo { height: 56px; display: inline-block; }
+#logo svg { height: 100%; width: auto; }
+#app { transition: opacity .32s ease-in-out; }
+#app.out { opacity: 0; pointer-events: none; transition-duration: .22s; }
+@media (prefers-reduced-motion: reduce) { #app, #app.out { transition: none; } }
+main { flex: 1; width: 100%; max-width: 560px; margin: 0 auto; padding: 12px 16px 24px; }
+footer { text-align: center; color: var(--muted); font-size: 13px; padding: 12px 16px 18px; }
+footer a { color: inherit; }
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px 18px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.say { margin: 0 0 14px; }
+.say .en { font-size: 22px; font-weight: 600; }
+.say .l2 { font-size: 21px; color: var(--muted); margin-top: 4px; }
+.say.small .en { font-size: 17px; font-weight: 500; }
+.say.small .l2 { font-size: 16px; }
+.say.danger .en, .say.danger .l2 { color: var(--danger); }
+
+.buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.buttons.row { flex-direction: row; }
+.buttons.row > * { flex: 1; }
+button, .button {
+  font: inherit;
+  border-radius: 12px;
+  border: 2px solid var(--accent);
+  background: var(--card);
+  color: var(--text);
+  padding: 12px 14px;
+  min-height: 56px;
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.25;
+  -webkit-tap-highlight-color: transparent;
+}
+button .l2, .button .l2 { display: block; font-size: 15px; color: var(--muted); }
+button.main, .button.main { background: var(--accent); color: #fff; }
+button.main .l2, .button.main .l2 { color: rgba(255,255,255,.85); }
+button:disabled { opacity: .45; cursor: default; }
+button.quiet { border-color: var(--line); }
+input[type=file] { display: none; }
+
+.progress { color: var(--muted); font-size: 15px; text-align: center; margin-bottom: 10px; }
+.bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-bottom: 14px; }
+.bar > div { height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+
+.prompt { text-align: center; }
+.prompt .word { font-size: 30px; font-weight: 700; margin: 10px 0 2px; }
+.prompt .word.l2 { font-size: 26px; font-weight: 600; color: var(--muted); margin-top: 0; }
+.prompt img { max-width: 100%; max-height: 30vh; border-radius: 10px; margin: 8px auto 4px; display: block; }
+.hint { color: var(--muted); font-size: 15px; text-align: center; margin-top: 8px; }
+
+.ear {
+  width: 132px; height: 132px; border-radius: 50%;
+  border: none; background: var(--accent); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  margin: 14px auto 6px; padding: 0;
+}
+.ear svg { width: 70px; height: 70px; }
+
+.rec {
+  width: 108px; height: 108px; border-radius: 50%;
+  margin: 18px auto 4px; display: flex; align-items: center; justify-content: center;
+  background: #d93030; border: 6px solid var(--card); box-shadow: 0 0 0 3px #d93030; color: #fff;
+  padding: 0;
+}
+.rec.on { animation: pulse 1.2s infinite; }
+.rec svg { width: 40px; height: 40px; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 9px rgba(217,48,48,.35); } }
+.reclabel { text-align: center; font-size: 15px; color: var(--muted); }
+.meter { height: 8px; width: 160px; margin: 8px auto 0; background: var(--line); border-radius: 4px; overflow: hidden; }
+.meter > div { height: 100%; width: 0; background: #2e9e44; }
+
+.note { font-size: 14px; color: var(--muted); margin-top: 14px; }
+.error { color: var(--danger); margin-top: 12px; }
+[dir=rtl] { text-align: right; }
+.prompt [dir=rtl], .buttons [dir=rtl] { text-align: center; }

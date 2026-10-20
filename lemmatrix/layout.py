@@ -12,7 +12,7 @@
     │  └─ _Deleted recordings/ deleted tokens' recordings, held for undo
     ├─ Backups/                the automatic local backups
     ├─ Documentation/          consent forms and other documentation
-    ├─ Images/                 pictures for EλICIT requests, named by reference and tags (idea 19)
+    ├─ Images/                 pictures for ɛλicit requests, named by reference and tags (idea 19)
     └─ Exports/                where File → Export starts
 
 Lemmatrix assumes this layout instead of keeping paths in the settings. One database per

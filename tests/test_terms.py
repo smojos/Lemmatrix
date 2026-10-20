@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-TEXT = (".py", ".pyw", ".md", ".svg", ".bat", ".sh", ".ps1", ".txt", ".cff")
+TEXT = (".py", ".pyw", ".md", ".svg", ".bat", ".sh", ".ps1", ".txt", ".cff", ".js", ".html", ".css")
 
 
 def tracked_text_files():

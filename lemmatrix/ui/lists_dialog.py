@@ -79,7 +79,7 @@ class PeopleEditor(QWidget):
         if consent:
             for key, tip in (("identifiable", "Agreed in the consent form to be identified by name"),
                              ("audio", "Agreed in the consent form that their recordings may be shared "
-                                       "(e.g. sent to another speaker in an EλICIT request)")):
+                                       "(e.g. sent to another speaker in an ɛλicit request)")):
                 self.table.horizontalHeaderItem(self.col(key)).setToolTip(tip)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.table.horizontalHeader().setStretchLastSection(True)
@@ -688,7 +688,7 @@ class ListsDialog(QDialog):
         self._page(RESEARCHERS, "Researchers", self.researchers,
                    "The researchers of the sessions. The code is what the notebook and the Current "
                    "Session show; renaming a code renames it in the notebook too. The email is where "
-                   "EλICIT requests tell a researcher their recordings have come in (the anonymous "
+                   "ɛλicit requests tell a researcher their recordings have come in (the anonymous "
                    "backup always takes it out).",
                    lambda: self._reset_people(self.researchers, defaults.default_researchers(),
                                               self._researcher_use))
@@ -698,7 +698,7 @@ class ListsDialog(QDialog):
                    "in the tokens and the notebook too. The consent file documents their informed consent: "
                    "click it to open it (a file inside the database's folder is kept relative to it). "
                    "Tick Identifiable? and Audio sharing? only when the consent form explicitly agrees "
-                   "to them: EλICIT warns before sending a recording whose speaker hasn't agreed to "
+                   "to them: ɛλicit warns before sending a recording whose speaker hasn't agreed to "
                    "audio sharing.",
                    lambda: self._reset_people(self.participants, defaults.default_participants(),
                                               self._participant_use))

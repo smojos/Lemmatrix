@@ -42,7 +42,7 @@ from .dialogs import EntryDialog, MetadataDialog, PreferencesDialog
 from .document import Document
 from .fields_dialog import FieldsDialog
 from .filter_dialogs import ConfigureColumnsDialog
-from .icons import THEMED, icon, icon_size, ink_icon, themed_icon
+from .icons import THEMED, elicit_icon, icon, icon_size, ink_icon, themed_icon
 from .matrix_dialogs import ConfigureCellDialog, ConfigureMatrixDialog, ask_matrix_name
 from .matrix_view import MatrixView
 from .prefs import Prefs
@@ -58,6 +58,7 @@ def pitchmod_parse(text):
 
 
 SAMPLE = Path(__file__).resolve().parent.parent.parent / "samples" / "Sample.xml"
+ELICIT_TEST = SAMPLE.parent / "Elicit test" / "ITA-STD_Elicit_Test.xml"
 ALL_DATA, LEMMA_TAG, TAG_TAG = 0, 1, 2
 KINDS = {LEMMA_TAG: mx.LEMMA_TAG, TAG_TAG: mx.TAG_TAG}
 
@@ -244,6 +245,7 @@ class MainWindow(QMainWindow):
         self.head_icons = QHBoxLayout()            # icons beside the tabs (more can go to the left later)
         self.head_icons.setContentsMargins(0, 0, 8, 0)
         self.head_icons.setSpacing(4)
+        self.head_icons.addWidget(self._elicit_button())   # ɛλicit, left of Texts and utterances
         self.head_icons.addWidget(self._texts_button())
         top.addLayout(self.head_icons)
         self.tabs = QTabBar()
@@ -412,6 +414,72 @@ class MainWindow(QMainWindow):
 
     TEXTS_ICON = 48
 
+    def _elicit_button(self) -> QToolButton:
+        """Beside the tabs, left of Texts and utterances: ɛλicit (Josh's cloud), with its menu.
+        While recordings wait for review it shows the rain cloud."""
+        from PySide6.QtWidgets import QMenu
+        b = self.elicit_btn = QToolButton()
+        b.setIconSize(QSize(self.TEXTS_ICON, self.TEXTS_ICON))
+        b.setAutoRaise(True)
+        b.setCursor(Qt.PointingHandCursor)
+        b.setPopupMode(QToolButton.InstantPopup)
+        b.setStyleSheet("QToolButton::menu-indicator { image: none; width: 0; }")
+        m = self.elicit_menu = QMenu(b)
+        self.elicit_make = m.addAction("Make ɛλicit request…", self.make_elicit_request)
+        self.elicit_receive = m.addAction("Receive ɛλicitation…", self.receive_elicitation)
+        self.elicit_review = m.addAction("Review waiting recordings…", self.review_elicitation)
+        b.setMenu(m)
+        return b
+
+    def refresh_elicit_icon(self):
+        """The ɛλicit button's icon and tooltip: the rain cloud while recordings wait for review."""
+        from .. import elicit
+        try:
+            waiting = elicit.waiting_reviews(self.doc.db) if self.doc.db.path else []
+        except OSError:
+            waiting = []
+        n = sum(k for _, k in waiting)
+        self.elicit_btn.setIcon(elicit_icon(self.TEXTS_ICON, waiting=bool(n)))
+        self.elicit_btn.setToolTip(f"ɛλicit: {n} recording{'s' if n != 1 else ''} waiting for review" if n
+                                   else "ɛλicit: remote elicitation")
+        self.elicit_review.setVisible(bool(n))
+        self.elicit_review.setText(f"Review waiting recordings ({n})…")
+
+    def _elicit_preselect(self) -> list[str]:
+        """The tokens selected now (the main window's, and the utterances selected in Texts and
+        utterances): ticked to begin with in Make ɛλicit request."""
+        out = []
+        hit = self.selected_token()
+        if hit:
+            e, i = hit
+            out.append(e.tokens[i].id)
+        w = self.utterances_window
+        if w is not None and w.isVisible():
+            from .utterances import UTTERANCES_TAB
+            if w.tabs.currentIndex() == UTTERANCES_TAB:
+                out += [u.token.id for u in w.selected()]
+        return out
+
+    def make_elicit_request(self):
+        from .elicit_dialogs import RequestDialog
+        db = self.doc.db
+        if not db.path:
+            QMessageBox.information(self, "Make ɛλicit request", "Save the database first.")
+            return
+        if not db.metadata.participants:
+            QMessageBox.information(self, "Make ɛλicit request", "A request goes to a participant: add the "
+                                    "speaker to the participants first (Edit → Lists → Participants).")
+            return
+        RequestDialog(self, self._elicit_preselect()).exec()
+
+    def receive_elicitation(self):
+        from .elicit_dialogs import choose_and_receive
+        choose_and_receive(self)
+
+    def review_elicitation(self):
+        from .elicit_dialogs import review_waiting
+        review_waiting(self)
+
     def _texts_button(self) -> QToolButton:
         """Beside the tabs: the button that opens Texts and utterances (Josh's icon)."""
         self.texts_btn = QToolButton()
@@ -516,6 +584,7 @@ class MainWindow(QMainWindow):
         self._act(f, "&New database…", self.new_file, QKeySequence.New)
         self._act(f, "&Open…", self.open_file, QKeySequence.Open)
         self._act(f, "Open a copy of the sample database", self.open_sample)
+        self._act(f, "Open a copy of the ɛλicit test database", self.open_elicit_test)
         f.addSeparator()
         self._act(f, "&Save", self.save, QKeySequence.Save)
         self._act(f, "&Rename database…", self.rename_database)
@@ -687,7 +756,7 @@ class MainWindow(QMainWindow):
 
     def _other_languages(self) -> list[str]:
         """The database's gloss languages other than the primary one: there to help speakers
-        understand (EλICIT), so hidden until a column or cell line is set to show them."""
+        understand (ɛλicit), so hidden until a column or cell line is set to show them."""
         s = self.doc.db.settings
         return [lang for lang in s.gloss_languages if lang != s.primary_gloss]
 
@@ -823,6 +892,13 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(
                 f"Consent forms found in Documentation and relinked: {', '.join(relinked)}.", 10000)
         self._remind_full_backup()
+        self._remind_elicit()
+
+    def _remind_elicit(self):
+        """On opening: ɛλicit recordings waiting for review (Review now, Later)."""
+        from .elicit_dialogs import remind
+        self.refresh_elicit_icon()
+        remind(self)
 
     def _praat_text_names(self, db: Database):
         """On opening: recordings (tokens', utterances' and texts', and texts' TextGrids) named
@@ -1096,6 +1172,7 @@ class MainWindow(QMainWindow):
         a = theme.accent().name()
         self.notebook_btn.setIcon(icon("notebook", 34, a))
         self.texts_btn.setIcon(icon("texts-utterances", self.TEXTS_ICON, a))
+        self.refresh_elicit_icon()
         self.write_btn.setIcon(icon("write-notebook", 34))
         self._save_icon()
         self._style_menu_bar()
@@ -2783,6 +2860,27 @@ class MainWindow(QMainWindow):
             if (target / "Soundfiles").exists():
                 shutil.rmtree(target / "Soundfiles", ignore_errors=True)
             shutil.copytree(sounds, target / "Soundfiles")
+        self.open_file(str(dst))
+
+    def open_elicit_test(self):
+        """File → Open a copy of the ɛλicit test database: the Italian one (samples/Elicit test),
+        copied to Documents\\Lemmatrix Elicit Test with its recordings and pictures."""
+        if not ELICIT_TEST.exists():
+            QMessageBox.warning(self, "ɛλicit test database", "The test database isn't in this copy of Lemmatrix.")
+            return
+        target = Path.home() / "Documents" / "Lemmatrix Elicit Test"
+        dst = target / ELICIT_TEST.name
+        if dst.exists():
+            if QMessageBox.question(self, "ɛλicit test database", f"{dst} already exists. Replace it with a fresh "
+                                    "copy? (Its requests and recordings in Elicit go too.)") != QMessageBox.Yes:
+                self.open_file(str(dst))
+                return
+            if not self._confirm_discard():
+                return
+            if self.doc.db.path and Path(self.doc.db.path).parent == target:
+                self.load_database(new_database())        # let go of it before it is replaced
+            shutil.rmtree(target, ignore_errors=True)
+        shutil.copytree(ELICIT_TEST.parent, target, dirs_exist_ok=True)
         self.open_file(str(dst))
 
     def save(self) -> bool:

@@ -444,7 +444,7 @@ class TokenDialog(QDialog):
     def _build_other_languages(self, grid, row: int) -> int:
         """The translations in the database's other gloss languages, under the token's fields:
         hidden behind "Other languages" until it's opened (remembered on this computer). They
-        are there to help speakers understand (EλICIT), not for the analysis."""
+        are there to help speakers understand (ɛλicit), not for the analysis."""
         s = self.db.settings
         self.other_edits: dict[tuple[str, str], QLineEdit] = {}
         self.other_rows: list = []
@@ -460,7 +460,7 @@ class TokenDialog(QDialog):
         self.others_btn.setFocusPolicy(Qt.NoFocus)
         self.others_btn.setText(f"Other languages ({', '.join(others)})")
         self.others_btn.setToolTip("Translations in the database's other gloss languages: they help "
-                                   "speakers understand (e.g. in EλICIT requests)")
+                                   "speakers understand (e.g. in ɛλicit requests)")
         self.others_btn.toggled.connect(self._show_other_languages)
         grid.addWidget(self.others_btn, row, 0, 1, 2, Qt.AlignLeft)
         row += 1
