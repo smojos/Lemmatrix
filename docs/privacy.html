@@ -1,0 +1,66 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Copyright © 2026 Joshua A. G. Smolders -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lemmatrix and ɛλicit: privacy</title>
+<link rel="icon" href="elicit/favicon.svg" type="image/svg+xml">
+<style>
+  body { font: 17px/1.55 system-ui, sans-serif; max-width: 680px; margin: 0 auto; padding: 32px 16px 48px; color: #1b1b1b; background: #fff; }
+  h1 { color: #198583; font-size: 28px; } h2 { font-size: 19px; margin-top: 28px; }
+  a { color: #198583; }
+  @media (prefers-color-scheme: dark) { body { color: #f1f3f3; background: #181a1a; } a, h1 { color: #5cc3c0; } }
+</style>
+</head>
+<body>
+<h1>Privacy: Lemmatrix and ɛλicit</h1>
+<p><em>Last updated 21 October 2026.</em></p>
+
+<p>Lemmatrix is a free, open-source program for linguists (<a href="https://github.com/smojos/Lemmatrix">source code</a>),
+made by Joshua A. G. Smolders. ɛλicit is its web page for remote elicitation: a researcher sends a speaker a link,
+and the speaker records words or sentences on their phone or computer. This page says what happens to data in both.
+In short: <strong>nothing is sent to the developer, and there is no server of Lemmatrix's own.</strong></p>
+
+<h2>Lemmatrix (the program on the researcher's computer)</h2>
+<ul>
+  <li>A researcher's database, recordings and notes stay on their own computer.</li>
+  <li>To send ɛλicit requests through Google Drive, Lemmatrix asks the researcher to sign in to Google and asks for one
+    permission only, <code>drive.file</code>: access to the files and folders Lemmatrix itself creates in their Drive.
+    It can't see, read or change anything else there.</li>
+  <li>With it, Lemmatrix makes a folder for each request in the researcher's Drive, puts the request (the words to ask
+    for, pictures and recordings to repeat) in it, downloads the speaker's recordings when they come back, and then
+    deletes the request's folder.</li>
+  <li>The sign-in is kept only on the researcher's computer. "Sign out of Google Drive" in Lemmatrix removes it and
+    withdraws it at Google. Access can also be removed at any time at
+    <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>
+  <li>Lemmatrix's use and transfer of information received from Google APIs adheres to the
+    <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>,
+    including the Limited Use requirements. Data from Google is used only to send and receive the researcher's own
+    requests; it is never sold, never used for advertising, and never sent to the developer or anyone else.</li>
+</ul>
+
+<h2>The ɛλicit page (on the speaker's phone or computer)</h2>
+<ul>
+  <li>The page is a static page on GitHub Pages. It has no cookies, no analytics and no tracking.</li>
+  <li>It reads the request from the researcher's Google Drive (the files the researcher shared by link) and uses the
+    microphone only while the speaker presses Record.</li>
+  <li>Recordings are kept in the browser on the device until they have reached the researcher, then deleted from it.
+    They go straight to the researcher's own Google Drive (or, for a request sent as a file, in the file the speaker
+    sends back), never to the developer or to GitHub.</li>
+  <li>GitHub, which hosts the page, may keep ordinary web server logs (such as IP addresses) as described in
+    <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>.
+    Google handles the files in Drive under
+    <a href="https://policies.google.com/privacy">Google's privacy policy</a>.</li>
+</ul>
+
+<h2>Research ethics</h2>
+<p>Requests go only to participants a researcher has listed, and the page asks the speaker to confirm who they are and
+that they have signed a participation agreement. Each researcher is responsible for their own participants' consent
+and for how they store and use the recordings.</p>
+
+<h2>Contact</h2>
+<p>Questions or concerns: open an issue at <a href="https://github.com/smojos/Lemmatrix/issues">github.com/smojos/Lemmatrix/issues</a>.</p>
+</body>
+</html>
