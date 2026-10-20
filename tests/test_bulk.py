@@ -46,8 +46,8 @@ def test_replace_match_case_and_regex():
     assert bulk.replace_text("yY", rx, "j") == "jj"
     rx = bulk.compile_find("Y", False, True)
     assert bulk.replace_text("yY", rx, "j") == "yj"
-    rx = bulk.compile_find(r"(a)(a)", True, True)
-    assert bulk.replace_text("kaa", rx, r"\1ː", regex=True) == "kəː"
+    rx = bulk.compile_find(r"(ə)(ə)", True, True)
+    assert bulk.replace_text("kəə", rx, r"\1ː", regex=True) == "kəː"
     with pytest.raises(bulk.BulkError):
         bulk.compile_find("(", True, False)
 
@@ -75,7 +75,7 @@ def test_replace_plan_changes_only_ticked_rows(db):
     goat = db.entry_by_ref("D001")
     rows = token_rows(db, [goat])
     before = [t.get("Phonetic") for t in goat.tokens]
-    p = bulk.plan(db, bulk.TOKENS, rows[:1], bulk.Replace("f:Phonetic", "ee", "ææ"))
+    p = bulk.plan(db, bulk.TOKENS, rows[:1], bulk.Replace("f:Phonetic", "ɪɪ", "ææ"))
     assert p.ok
     assert [t.get("Phonetic") for t in goat.tokens] == before     # nothing changed yet
     assert all(c.row == rows[0] for c in p.changes)

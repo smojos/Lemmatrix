@@ -12,10 +12,10 @@ from test_texts import _add_text, app, win  # noqa: F401  (fixtures)
 
 def test_search_spans_ignore_diacritics_and_capitals():
     from lemmatrix.ui import searchmark as sm
-    q = sm.fold_query("Deet")
-    assert sm.spans("ɗɪɪtʰ deet", q) == [(6, 10)]
+    q = sm.fold_query("Dɪɪt")
+    assert sm.spans("ɗɪɪtʰ dɪɪt", q) == [(6, 10)]
     assert sm.spans("dɪɪtʰ", q) == [(0, 5)]                     # the ʰ goes with the match
-    assert sm.spans("bə́ə bə", sm.fold_query("bə")) == [(0, 2), (4, 6)]
+    assert sm.spans("bə́ə bə", sm.fold_query("bə")) == [(0, 3), (5, 7)]
     assert sm.spans("bə\u0301a", sm.fold_query("bə")) == [(0, 3)]          # a combining mark too
     assert sm.spans("abc", "") == [] and sm.spans("", "a") == []
 

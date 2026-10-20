@@ -1027,13 +1027,13 @@ def test_bulk_replace_preview_apply_and_undo(win):
     assert w.level == bulk.TOKENS
     w.ops.setCurrentIndex(bw.REPLACE)
     w.r_field.setCurrentIndex(w.r_field.findData("f:Phonetic"))
-    w.r_find.setText("ee")
+    w.r_find.setText("ɪɪ")
     w.r_repl.setText("ææ")
     w.preview()
     assert w.plan is not None and w.plan.ok and w.apply_btn.isEnabled()
     goat = win.doc.db.entry_by_ref("D001")
     before = [t.get("Phonetic") for t in goat.tokens]
-    assert "ee" in before[0]                               # nothing changed by the preview
+    assert "ɪɪ" in before[0]                               # nothing changed by the preview
     model = w.tables[bulk.TOKENS].model_
     assert any(c.new == "dæær" for c in model.preview.values())
     w.apply()
@@ -1051,7 +1051,7 @@ def test_bulk_unticked_rows_are_left_alone(win):
     w.set_ticked(rows, False)
     w.ops.setCurrentIndex(bw.REPLACE)
     w.r_field.setCurrentIndex(w.r_field.findData("f:Phonetic"))
-    w.r_find.setText("ee")
+    w.r_find.setText("ɪɪ")
     w.r_repl.setText("ææ")
     w.preview()
     w.apply()

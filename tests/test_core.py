@@ -202,15 +202,15 @@ def test_pitch_notation():
 
 def test_text_filters():
     from lemmatrix.filters import TextFilter, ANYWHERE, WHOLE, START, END, REGEX
-    assert TextFilter("deet").matches("dɪɪʈʰ") is False         # ʈ is a different letter
-    assert TextFilter("deet").matches("dɪɪtʰ")                  # ʰ ignored
-    assert TextFilter("deet", WHOLE).matches("dɪɪtʰ")
-    assert not TextFilter("deet", WHOLE, match_diacritics=True).matches("dɪɪtʰ")
+    assert TextFilter("dɪɪt").matches("dɪɪʈʰ") is False         # ʈ is a different letter
+    assert TextFilter("dɪɪt").matches("dɪɪtʰ")                  # ʰ ignored
+    assert TextFilter("dɪɪt", WHOLE).matches("dɪɪtʰ")
+    assert not TextFilter("dɪɪt", WHOLE, match_diacritics=True).matches("dɪɪtʰ")
     assert TextFilter("a").matches("á")
     assert TextFilter("Goat", WHOLE).matches("goat")
     assert not TextFilter("Goat", WHOLE, match_case=True).matches("goat")
     assert TextFilter("go", START).matches("goat") and TextFilter("at", END).matches("goat")
-    assert TextFilter(r"^d.*l$", REGEX).matches("dɪɪr")
+    assert TextFilter(r"^d.*r$", REGEX).matches("dɪɪr")
     assert not TextFilter("[", REGEX).matches("x")              # bad pattern matches nothing
 
 
