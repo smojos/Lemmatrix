@@ -62,11 +62,16 @@ def main() -> int:
     from .ui import ctrlspace
     app._ctrl_space = ctrlspace.install(app)            # Ctrl+Space plays from any field, any keyboard
 
+    from .ui import splash as splashmod
+    splash = splashmod.show(app)                        # until the database is open (a dialogue closes it)
     win = MainWindow()
     path = sys.argv[1] if len(sys.argv) > 1 else win.prefs.last_file
     win.show()
+    if splash is not None:
+        splash.raise_()
     if path and Path(path).exists():
         win.open_file(path)                 # warns if it's open on another computer
+    splashmod.finish(app, splash, win)
     if not win.doc.db.path:
         box = QMessageBox(win)
         box.setWindowTitle("Welcome to Lemmatrix")

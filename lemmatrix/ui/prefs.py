@@ -123,7 +123,7 @@ class Prefs:
         from .theme import DEFAULT_ACCENT
         v = self._get("display/accent", DEFAULT_ACCENT)
         # earlier defaults were never anyone's choice, so they follow the current default
-        return DEFAULT_ACCENT if v.lower() in ("#3a78d4", "#385867") else v
+        return DEFAULT_ACCENT if v.lower() in ("#3a78d4", "#385867", "#198768") else v
 
     @accent.setter
     def accent(self, v): self.q.setValue("display/accent", v)

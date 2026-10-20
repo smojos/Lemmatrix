@@ -11,7 +11,7 @@ from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QApplication
 
 LIGHT, DARK = "light", "dark"
-DEFAULT_ACCENT = "#198768"          # the green of the Lemmatrix icon
+DEFAULT_ACCENT = "#198583"          # the teal of the Lemmatrix icon (Josh, 20 October; #198768 before)
 
 _state = {"mode": LIGHT, "accent": QColor(DEFAULT_ACCENT)}
 
