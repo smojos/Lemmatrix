@@ -84,8 +84,8 @@ class ItemModel(QAbstractTableModel):
                 return "Rerecord" if r.kind == el.RERECORD else "New"
             return r.cells[c] if c else ""
         if role == Qt.ToolTipRole and c == 7:
-            return ("Double-click: New (the card shows the gloss or translation) or Rerecord (the card plays "
-                    "this recording, to be repeated)" if r.recorded else "No recording yet: a new one")
+            return ("It has a soundfile: the card plays it, to be repeated" if r.recorded else
+                    "No soundfile yet: the card shows its gloss or translation")
         if role == Qt.ForegroundRole and c == 4 and r.kind == el.NEW and not r.cells[4]:
             return theme.colour("muted")
         return None
@@ -96,14 +96,6 @@ class ItemModel(QAbstractTableModel):
             self.dataChanged.emit(index, index)
             return True
         return False
-
-    def toggle_kind(self, row: int):
-        r = self.rows[row]
-        if not r.recorded:
-            return
-        r.kind = el.NEW if r.kind == el.RERECORD else el.RERECORD
-        r.ticked = True
-        self.dataChanged.emit(self.index(row, 0), self.index(row, len(COLUMNS) - 1))
 
 
 class ItemFilter(QSortFilterProxyModel):
@@ -156,7 +148,7 @@ class RequestDialog(QDialog):
             r.entry, r.token, r.utterance = e, t, is_utterance(e)
             r.recorded = el.recording_path(db, e, t) is not None
             r.image = (not r.utterance) and filenames.image_stem(db, e, t).lower() in self._images
-            r.kind = el.NEW
+            r.kind = el.RERECORD if r.recorded else el.NEW   # Josh, 20 October: a soundfile means rerecord
             r.ticked = t.id in preselect
             show, texts = el.card_texts(db, el.Item(el.NEW, e, t), [db.settings.primary_gloss])
             form = el._form(db, t) or (db.lemma(e) if not r.utterance else e.label)
@@ -251,9 +243,9 @@ class RequestDialog(QDialog):
         self.table.doubleClicked.connect(self._double_clicked)
         self.model.dataChanged.connect(lambda *_: self._update_counts())
         tl.addWidget(self.table, 1)
-        tl.addWidget(QLabel("Tick what to ask for. Double-click Card on a recorded token or utterance to "
-                            "choose Rerecord (the speaker hears it and repeats it) or New (the card shows "
-                            "its gloss or translation)."))
+        tl.addWidget(QLabel("Tick what to ask for (or double-click a row). One with a soundfile is a Rerecord: "
+                            "the speaker hears it and repeats it. One without is New: the card shows its gloss "
+                            "or translation."))
         split.addWidget(top)
 
         bottom = QWidget()
@@ -340,9 +332,7 @@ class RequestDialog(QDialog):
 
     def _double_clicked(self, idx):
         src = self.proxy.mapToSource(idx)
-        if src.column() == 7:
-            self.model.toggle_kind(src.row())
-        elif src.column() != 0:
+        if src.column() != 0:
             r = self.model.rows[src.row()]
             r.ticked = not r.ticked
             self.model.dataChanged.emit(self.model.index(src.row(), 0), self.model.index(src.row(), 0))
@@ -793,14 +783,8 @@ class ReviewDialog(QDialog):
         speaker = self.st.request.speaker["code"]
         self.accept()
         new_utts = [i.translations for i in items if i.kind == el.NEW_UTTERANCE]
-        pre = {i.token.id: i.kind for i in items if i.kind != el.NEW_UTTERANCE}
-        dlg = RequestDialog(self.main, pre.keys(), new_utts, speaker)
-        for r in dlg.model.rows:                   # rerecords stay rerecords
-            if pre.get(r.token.id) == el.RERECORD and r.recorded:
-                r.kind = el.RERECORD
-        dlg.model.layoutChanged.emit()
-        dlg._update_counts()
-        dlg.exec()
+        pre = [i.token.id for i in items if i.kind != el.NEW_UTTERANCE]
+        RequestDialog(self.main, pre, new_utts, speaker).exec()
 
 
 def remind(main):

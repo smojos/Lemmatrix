@@ -203,8 +203,10 @@ def test_the_request_dialog(win, monkeypatch):
     dlg = ed.RequestDialog(win, [gatto.tokens[0].id])
     assert dlg.l2.currentData() == "da" and dlg.speaker.currentData() == "SP1"
     assert [i.token.id for i in dlg.items()] == [gatto.tokens[0].id]
-    acqua = next(i for i, r in enumerate(dlg.model.rows) if r.entry.ref == "J001")
-    dlg.model.toggle_kind(acqua)                                     # double-click on Card: Rerecord
+    for r in dlg.model.rows:                                          # a soundfile means rerecord
+        assert r.kind == (el.RERECORD if r.recorded else el.NEW)
+    acqua = next(r for r in dlg.model.rows if r.entry.ref == "J001")
+    acqua.ticked = True
     dlg._add_new_row({"en": "I read a book.", "da": "Jeg læser en bog."})
     dlg.l2_name.setText("italiensk")
     kinds = [(i.kind, i.entry.ref if i.entry else "") for i in dlg.items()]

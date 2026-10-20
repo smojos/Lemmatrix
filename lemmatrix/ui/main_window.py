@@ -464,7 +464,10 @@ class MainWindow(QMainWindow):
             msg = "Taken out of the ɛλicit request"
         else:
             self.elicit_basket.append(token.id)
-            msg = "Added to the ɛλicit request"
+            item = next((e for e, t in self.doc.db.all_tokens() if t is token), None)
+            from .. import elicit
+            kind = "a rerecord" if item is not None and elicit.recording_path(self.doc.db, item, token) else "new"
+            msg = f"Added to the ɛλicit request as {kind}"
         n = len(self.elicit_basket)
         self.statusBar().showMessage(f"{msg} ({n} ticked for Make ɛλicit request).", 5000)
 
