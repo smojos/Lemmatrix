@@ -39,19 +39,19 @@ def test_suggestions_keep_a_capital():
 
 
 def test_the_word_list():
-    c = spelling.Checker(["Sample variety", "tilapia"])
-    assert words(c, "in Sample variety, the tilapia; Tilapia") == []
+    c = spelling.Checker(["Pade", "tilapia"])
+    assert words(c, "in Pade, the tilapia; Tilapia") == []
     c.set_words([])
-    assert words(c, "in Sample variety") == ["Sample variety"]
+    assert words(c, "in Pade") == ["Pade"]
 
 
 def test_word_list_is_saved_in_the_database(db, tmp_path):
-    db.settings.spelling_words = ["tilapia", "Sample variety"]
+    db.settings.spelling_words = ["tilapia", "Pade"]
     storage.save(db, tmp_path / "x.xml", backup=False)
     text = (tmp_path / "x.xml").read_text(encoding="utf-8")
-    assert "<spelling>" in text and "<word>Sample variety</word>" in text
+    assert "<spelling>" in text and "<word>Pade</word>" in text
     again = storage.load(tmp_path / "x.xml")
-    assert sorted(again.settings.spelling_words) == ["Sample variety", "tilapia"]
+    assert sorted(again.settings.spelling_words) == ["Pade", "tilapia"]
 
 
 def test_no_word_list_writes_nothing(db, tmp_path):

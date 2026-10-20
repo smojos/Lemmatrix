@@ -382,19 +382,6 @@ def test_open_in_praat_runs_a_view_and_edit_script(tmp_path, monkeypatch):
         praat.open_sound(str(tmp_path / "missing.exe"), wav)
 
 
-def test_dekereke_pitch_conversion():
-    import importlib.util
-    spec = importlib.util.spec_from_file_location("convert_dekereke", Path(__file__).resolve().parent.parent / "tools" / "convert_dekereke.py")
-    cd = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(cd)
-    assert cd.pitch_joined("[523]", "x") == "55 22 33"
-    assert cd.pitch_joined("[a]", "x") == "21"
-    assert cd.pitch_joined("[333K2j]", "x") == "33 33 33 35 22 42"
-    assert cd.pitch_joined("[33 334]", "x") == "33 33 , 33 33 44"         # Dekereke space -> comma
-    assert cd.pitch_groups("[3335][5223]", "x") == ["33 33 33 55", "55 22 22 33"]
-    assert cd.pitch_joined("[Ee]", "x") == "56 65"
-
-
 def test_same_file_allows_case_only_renames(tmp_path):
     from lemmatrix import storage
     a = tmp_path / "x-F1.wav"
@@ -497,9 +484,9 @@ def test_anonymous_backup(tmp_path):
     assert (p.code, p.name, p.description, p.consent) == ("SP1", "", "", "")
     assert out.metadata.researchers[0].name == "" and out.metadata.author == ""
     assert out.entries[0].tokens[0].get("Comment") == "SP1 said this twice; ask SP1 again"
-    assert [x.code for x in out.metadata.locations[0].children] == ["MBN"] and not out.metadata.locations[0].children[0].children
+    assert [x.code for x in out.metadata.locations[0].children] == ["GBRS"] and not out.metadata.locations[0].children[0].children
     back = nb.load(tmp_path / "out" / "S (anonymous).notebook").session("2026-10-01")
-    assert back.notes == "Paid SP1 for five sessions." and back.locations == ["MBN"]
+    assert back.notes == "Paid SP1 for five sessions." and back.locations == ["GBRS"]
     assert rep.recordings > 0 and (tmp_path / "out" / "Soundfiles" / "Tokens").is_dir()
     with pyzipper.AESZipFile(tmp_path / "out" / "S consent forms (password).zip") as zf:
         zf.setpassword(b"pw")

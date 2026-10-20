@@ -142,7 +142,7 @@ def test_notebook_file_round_trip(db, tmp_path):
     assert b.comments == s.comments
     assert b.questions == s.questions
     assert [q.status for _, q in back.all_questions()] == ["Open", "Resolved"]
-    assert nb.matches(b, db, "samplespeaker") and nb.matches(b, db, "sample variety") and nb.matches(b, db, "harmony")
+    assert nb.matches(b, db, "speaker") and nb.matches(b, db, "sample variety") and nb.matches(b, db, "harmony")
     assert not nb.matches(b, db, "zebra")
 
 

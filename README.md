@@ -3,7 +3,7 @@
 A custom linguistics database program specialized for creating and storing human readable
 XML paradigm information for phonological and morphological analysis: lemmas with their
 tokens (transcriptions, pitch, tags and one recording each). Modelled on how Dekereke
-behaves; no Dekereke code is used. The full working spec is in [DESIGN.md](DESIGN.md).
+behaves; no Dekereke code is used.
 
 **Status:** first prototype (Stage 1, version 0.1).
 
@@ -156,5 +156,4 @@ lemmatrix/            the program
 samples/              invented sample database with synthetic recordings
 tests/                automated tests
 tools/screenshots.py  renders the windows to PNG files, for checking layouts
-tools/*.py            one-off conversions of Josh's Dekereke and FLEx data
 ```

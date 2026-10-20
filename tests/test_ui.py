@@ -1346,11 +1346,11 @@ def test_check_spelling_window(win):
     goat, lion = db.entry_by_ref("D001"), db.entry_by_ref("D002")
     win.doc.edit_entry(goat, lambda en: en.tokens[2].set("Translation", "of teh goat", "en"), "typo")
     win.doc.edit_entry(lion, lambda en: en.tokens[2].set("Translation", "of teh lion", "en"), "typo")
-    win.doc.edit_entry(lion, lambda en: en.tokens[3].set("Translation", "lions in Sample variety", "en"), "x")
+    win.doc.edit_entry(lion, lambda en: en.tokens[3].set("Translation", "lions in Pade", "en"), "x")
     win.check_spelling()
     w = win.spelling_window
     words = [u.word for u in w.unknown]
-    assert words[0] == "teh" and "Sample variety" in words
+    assert words[0] == "teh" and "Pade" in words
     assert w.current().count == 2 and w.places.topLevelItemCount() == 2
     assert w.new.currentText() == "the"
     w.replace()
@@ -1365,10 +1365,10 @@ def test_check_spelling_window(win):
     w.ignore()
     assert "teh" not in [u.word for u in w.unknown]
     w.words.setCurrentItem(next(w.words.topLevelItem(i) for i in range(w.words.topLevelItemCount())
-                                if w.words.topLevelItem(i).text(0) == "Sample variety"))
+                                if w.words.topLevelItem(i).text(0) == "Pade"))
     w.add()
-    assert "Sample variety" in db.settings.spelling_words
-    assert "Sample variety" not in [u.word for u in w.unknown]
+    assert "Pade" in db.settings.spelling_words
+    assert "Pade" not in [u.word for u in w.unknown]
     w._go(w.places.topLevelItem(0)) if w.places.topLevelItemCount() else None
     w.close()
     assert win.spelling_window is None
