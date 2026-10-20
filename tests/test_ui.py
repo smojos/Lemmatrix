@@ -748,9 +748,11 @@ def test_pitch_length_mark_and_compact_drawing(win):
     assert v.validate("4a", 1)[0] == PitchValidator.Invalid
     e = win.doc.db.entry_by_ref("D001")
     dlg = TokenDialog(win, [Slot(e, 0)], 0)
-    assert dlg.canvas.height() < 60                     # 1-5: a compact drawing
-    dlg.canvas.set_range(0, 9)
-    assert dlg.canvas.height() > 60                     # a wider range draws taller
+    c = dlg.canvas                                      # measured in the font's own underscores,
+    step = 3 * c.unit + 2 * c.PAD                       # since fonts and screens differ (Windows)
+    assert c.height() < step                            # 1-5: a compact drawing
+    c.set_range(0, 9)
+    assert c.height() > step                            # a wider range draws taller
 
 
 def test_pitch_volume_scales_the_sound():
@@ -1194,10 +1196,12 @@ def test_token_dialogue_remembers_its_size(win):
     e = win.doc.db.entry_by_ref("E001")
     dlg = TokenDialog(win, [Slot(e, 0)], 0)
     dlg.show()
-    dlg.resize(760, 700)         # (the offscreen test screen is small)
+    # (the offscreen test screen is small; on Windows the dialogue can't be narrower than ~800)
+    size = (max(760, dlg.minimumSizeHint().width() + 20), max(700, dlg.minimumSizeHint().height() + 20))
+    dlg.resize(*size)
     dlg.reject()
     again = TokenDialog(win, [Slot(e, 0)], 0)
-    assert (again.width(), again.height()) == (760, 700)
+    assert (again.width(), again.height()) == size
     again.reject()
 
 

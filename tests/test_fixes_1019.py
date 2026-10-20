@@ -104,7 +104,7 @@ def test_marks_drawn_in_a_grid_cell(win, app):
     opt = QStyleOptionViewItem()
     opt.rect = img.rect()
     opt.widget = t
-    t.itemDelegate(idx).paint(p, opt, idx)
+    t.itemDelegateForIndex(idx).paint(p, opt, idx)
     p.end()
     yellowish = sum(1 for x in range(0, 300, 3) for y in range(0, 30, 3)
                     if (c := img.pixelColor(x, y)).blue() < 150 and c.red() > 200 and c.green() > 180)
@@ -142,7 +142,7 @@ def test_selected_rows_keep_a_cells_own_colour(win):
         if fg is not None:
             break
     opt = QStyleOptionViewItem()
-    t.itemDelegate(idx).initStyleOption(opt, idx)
+    t.itemDelegateForIndex(idx).initStyleOption(opt, idx)
     assert QColor(opt.palette.color(QPalette.HighlightedText)) == QColor(fg)
 
 

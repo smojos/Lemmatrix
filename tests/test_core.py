@@ -368,7 +368,9 @@ def test_pitch_sound_voices_follow_the_tune():
 
 def test_open_in_praat_runs_a_view_and_edit_script(tmp_path, monkeypatch):
     from lemmatrix import praat
-    wav = tmp_path / 'a "quoted" name.wav'
+    import sys
+    # Windows doesn't allow " in file names; the script's quoting is checked wherever it can be
+    wav = tmp_path / ("a 'quoted' name.wav" if sys.platform == "win32" else 'a "quoted" name.wav')
     wav.write_bytes(b"RIFF")
     exe = tmp_path / "Praat.exe"
     exe.write_bytes(b"")
@@ -378,7 +380,8 @@ def test_open_in_praat_runs_a_view_and_edit_script(tmp_path, monkeypatch):
     args = calls[0]
     assert args[0] == str(exe) and "--send" in args
     script = open(args[-1], encoding="utf-8").read()
-    assert 'a ""quoted"" name.wav' in script and "View & Edit" in script
+    quoted = "a 'quoted' name.wav" if sys.platform == "win32" else 'a ""quoted"" name.wav'
+    assert quoted in script and "View & Edit" in script
     import pytest
     with pytest.raises(praat.PraatError):
         praat.open_sound(str(tmp_path / "missing.exe"), wav)
