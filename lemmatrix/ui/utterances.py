@@ -791,8 +791,13 @@ class TextsUtterancesWindow(QDialog):
             items[-1:-1] = [("Pull from source…", None, self.pull_selected, c is not None and c.pullable),
                             ("Push to source…", None, self.push_selected, c is not None and c.pushable),
                             ("Unlink from the text…", None, self.unlink_selected, True)]
+        if row is not None and hasattr(self.main, "elicit_menu_item"):   # ɛλicit, before Delete
+            items[-1:-1] = [self.main.elicit_menu_item(row.token)]
         for text, name, fn, on in items:
-            a = m.addAction(icon(name, 16), text) if name else m.addAction(text)
+            if name is not None and not isinstance(name, str):              # an icon already drawn
+                a = m.addAction(name, text)
+            else:
+                a = m.addAction(icon(name, 16), text) if name else m.addAction(text)
             a.setEnabled(on)
             a.triggered.connect(lambda *_, fn=fn: fn())
         m.exec(pos)

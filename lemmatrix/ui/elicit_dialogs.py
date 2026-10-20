@@ -290,8 +290,17 @@ class RequestDialog(QDialog):
         buttons.rejected.connect(self.reject)
         lay.addWidget(buttons)
         self._l2_changed()
-        if preselect:
-            self.ticked_only.setChecked(True)
+        first = next((i for i, r in enumerate(self.model.rows) if r.ticked), None)
+        if first is not None:                     # everything shows; the first ticked one in view
+            self.table.scrollTo(self.proxy.mapFromSource(self.model.index(first, 0)))
+
+    def done(self, result):
+        """The ticks are kept for next time (the right-click Add to ɛλicit request adds to
+        them); once a request is made they are cleared."""
+        if hasattr(self.main, "elicit_basket"):
+            self.main.elicit_basket = ([] if self.made is not None else
+                                       [r.token.id for r in self.model.rows if r.ticked])
+        super().done(result)
 
     def _l2_changed(self, *_):
         lang = self.l2.currentData() or ""

@@ -218,6 +218,36 @@ def test_the_request_dialog(win, monkeypatch):
     assert dlg.request.language_names["da"] == "italiensk"
 
 
+def test_everything_shows_and_right_click_ticks(win, monkeypatch):
+    """Josh, 20 October: the request opens on everything, searchable; Add to ɛλicit request (All
+    data, the matrices, Utterances) ticks a token for it, and the ticks are kept until a request is made."""
+    from lemmatrix.ui import elicit_dialogs as ed
+    db = win.doc.db
+    gatto, pane = db.entry_by_ref("D001"), db.entry_by_ref("J002")
+    text, _, fn, on = win.elicit_menu_item(gatto.tokens[0])
+    assert text == "Add to ɛλicit request" and on
+    fn()
+    win.toggle_elicit(db.utterance_by_ref("U001").token)
+    assert win.elicit_menu_item(gatto.tokens[0])[0] == "Remove from ɛλicit request"
+    dlg = ed.RequestDialog(win, win._elicit_preselect())
+    assert not dlg.ticked_only.isChecked()
+    assert dlg.proxy.rowCount() == len(dlg.model.rows) == sum(1 for _ in db.all_tokens())
+    dlg.search.setText("pane")
+    assert dlg.proxy.rowCount() == 1
+    assert {i.entry.ref for i in dlg.items()} == {"D001", "U001"}
+    row = next(r for r in dlg.model.rows if r.entry is pane)
+    row.ticked = True
+    dlg.reject()                                                    # closed: the ticks are kept
+    assert set(win.elicit_basket) == {gatto.tokens[0].id, pane.tokens[0].id, db.utterance_by_ref("U001").token.id}
+    dlg = ed.RequestDialog(win, win._elicit_preselect())
+    dlg.made = Path("made.zip")                                     # as if a request was made
+    dlg.accept()
+    assert win.elicit_basket == []
+    win.toggle_elicit(gatto.tokens[0])
+    win.load_database(storage.load(db.path))                        # another database: none ticked
+    assert win.elicit_basket == []
+
+
 def test_review_puts_recordings_in_and_undo_takes_them_out(win, tmp_path):
     from lemmatrix.ui import elicit_dialogs as ed
     db = win.doc.db

@@ -8,7 +8,7 @@ import shutil
 from pathlib import Path
 
 from PySide6.QtCore import QDate, QDir, QSize, Qt, QTimer, QUrl
-from PySide6.QtGui import QAction, QColor, QDesktopServices, QFont, QKeySequence
+from PySide6.QtGui import QAction, QColor, QDesktopServices, QFont, QIcon, QKeySequence
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QFileDialog, QFrame, QGridLayout,
                                QProgressDialog,
                                QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMenu, QMessageBox, QPushButton,
@@ -130,6 +130,7 @@ class MainWindow(QMainWindow):
         self.notebook_dialog = None               # the notebook window, once opened
         self.bulk_window = None                   # the bulk edit window, while it's open
         self.utterances_window = None             # View → Texts and utterances, while it's open
+        self.elicit_basket: list[str] = []        # token ids ticked for the next ɛλicit request
         self.sound_files: set[str] = set()       # names in the sound folder, refreshed with the views
         self.cloud_files: set[str] = set()       # those of them that are online-only (OneDrive)
         self._suggestions: dict = {}             # (entry id, tags) -> predicted translation, for All data
@@ -446,19 +447,36 @@ class MainWindow(QMainWindow):
         self.elicit_review.setText(f"Review waiting recordings ({n})…")
 
     def _elicit_preselect(self) -> list[str]:
-        """The tokens selected now (the main window's, and the utterances selected in Texts and
-        utterances): ticked to begin with in Make ɛλicit request."""
-        out = []
-        hit = self.selected_token()
-        if hit:
-            e, i = hit
-            out.append(e.tokens[i].id)
-        w = self.utterances_window
-        if w is not None and w.isVisible():
-            from .utterances import UTTERANCES_TAB
-            if w.tabs.currentIndex() == UTTERANCES_TAB:
-                out += [u.token.id for u in w.selected()]
-        return out
+        """The tokens added with the right-click Add to ɛλicit request (and those left ticked when
+        the request dialogue was last closed): ticked to begin with in Make ɛλicit request."""
+        return list(self.elicit_basket)
+
+    def in_elicit_request(self, token) -> bool:
+        return token is not None and token.id in self.elicit_basket
+
+    def toggle_elicit(self, token):
+        """Right-click → Add to ɛλicit request (or Remove from it): ticked when Make ɛλicit
+        request opens next."""
+        if token is None:
+            return
+        if token.id in self.elicit_basket:
+            self.elicit_basket.remove(token.id)
+            msg = "Taken out of the ɛλicit request"
+        else:
+            self.elicit_basket.append(token.id)
+            msg = "Added to the ɛλicit request"
+        n = len(self.elicit_basket)
+        self.statusBar().showMessage(f"{msg} ({n} ticked for Make ɛλicit request).", 5000)
+
+    def elicit_menu_item(self, token):
+        """The right-click item for a token or an utterance (All data, the matrices, Utterances)."""
+        on = self.in_elicit_request(token)
+        return ("Remove from ɛλicit request" if on else "Add to ɛλicit request",
+                elicit_icon(16), lambda t=token: self.toggle_elicit(t), token is not None)
+
+    def _selected_token_obj(self):
+        sel = self.selected_token()
+        return sel[0].tokens[sel[1]] if sel else None
 
     def make_elicit_request(self):
         from .elicit_dialogs import RequestDialog
@@ -834,6 +852,7 @@ class MainWindow(QMainWindow):
         self._mark_open(db.path)
         self.doc.db = db
         self.doc.text_buffers.clear()             # unsaved line edits of the database closed are dropped
+        self.elicit_basket = []                   # the ticks belong to the database closed
         self.doc.undo.clear()
         self.doc.undo.setClean()
         self.doc._settings_dirty = False
@@ -1961,7 +1980,10 @@ class MainWindow(QMainWindow):
                 m.addSeparator()
                 continue
             text, icon_name, fn = item[:3]
-            ic = themed_icon(icon_name, 16) if icon_name else None
+            if isinstance(icon_name, QIcon):          # an icon already drawn (ɛλicit's)
+                ic = icon_name
+            else:
+                ic = themed_icon(icon_name, 16) if icon_name else None
             a = m.addAction(ic, text) if ic else m.addAction(text)
             a.setEnabled(item[3] if len(item) > 3 else True)
             a.triggered.connect(lambda *_, fn=fn: fn())
@@ -2094,7 +2116,7 @@ class MainWindow(QMainWindow):
                   if self.suggestion_for(row) else [])
         self._menu([*self._spelling_items(self.all_table, pos, row),("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
                     ("Edit token", "edit", self.edit_token), self._move_item(), *accept, None,
-                    *self._token_items(),
+                    *self._token_items(), self.elicit_menu_item(self._selected_token_obj()),
                     *self._pitch_items(self._pitch_column_at(pos)), *self._same_tags_items(row, pos), None,
                     ("Configure columns", "gear-columns", self.configure_all_columns),
                     ("Clear all filters", "reset-filters", self._clear_all_filters)], pos)
@@ -2102,7 +2124,7 @@ class MainWindow(QMainWindow):
     def _matrix_menu(self, tab, pos):
         self._menu([("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
                     ("Edit token", "edit", self.edit_token), self._move_item(), None, *self._token_items(),
-                    *self._pitch_items()], pos)
+                    self.elicit_menu_item(self._selected_token_obj()), *self._pitch_items()], pos)
 
     def _move_item(self):
         return ("Move to another lemma…", "move-token", self.move_token, self.selected_token() is not None)
