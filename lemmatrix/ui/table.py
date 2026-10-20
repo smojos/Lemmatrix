@@ -324,7 +324,7 @@ class DrawingDelegate(QStyledItemDelegate):
         super().paint(painter, option, index)
         low, high = self.settings()
         draw_pitch(painter, QRectF(option.rect).adjusted(6, 3, -2, -3), index.data(Qt.UserRole) or "",
-                   low, high, width=1.8, unit=self.unit)
+                   low, high, width=1.8, unit=self.unit, elide=True)
 
     def sizeHint(self, option, index):
         from .widgets import pitch_width

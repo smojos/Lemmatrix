@@ -208,7 +208,8 @@ class BulkEditWindow(QDialog):
         self.plan: bulk.Plan | None = None
         self._op = None                     # the operation the preview was made for
         self._applying = False
-        self.resize(1360, 900)
+        from .winstate import fit_to_screen
+        fit_to_screen(self, 1360, 900)           # the default: as big as fits (a saved size wins)
 
         lay = QVBoxLayout(self)
         lay.setContentsMargins(10, 8, 10, 10)

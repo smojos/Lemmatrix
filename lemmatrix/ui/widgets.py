@@ -78,13 +78,15 @@ def pitch_width(text: str, unit: float = 8.0) -> float:
 
 
 def draw_pitch(p: QPainter, rect: QRectF, text: str, low: int = 1, high: int = 5,
-               color: QColor | None = None, width: float = 2.0, unit: float = 8.0) -> None:
+               color: QColor | None = None, width: float = 2.0, unit: float = 8.0,
+               elide: bool = False) -> None:
     """Draw pitch notation as contours inside rect, from the left edge.
 
     One short step is `unit` wide (about an underscore), a long step twice
     that. Syllables are one unit apart, two across a comma. Points outside the
     display range are drawn past the edge in red, so the scale stays the same
-    for every token.
+    for every token. With `elide`, a drawing wider than rect is cut off at its
+    right edge with an ellipsis, as text is in a narrow column (Josh, 20 October).
     """
     items = pitchmod.parse(text)
     if not items:
@@ -98,6 +100,15 @@ def draw_pitch(p: QPainter, rect: QRectF, text: str, low: int = 1, high: int = 5
 
     p.save()
     p.setRenderHint(QPainter.Antialiasing)
+    if elide and pitch_width(text, unit) + width > rect.width():
+        dots = "\u2026"
+        dw = p.fontMetrics().horizontalAdvance(dots) + 2
+        p.setPen(color)
+        p.drawText(QRectF(rect.right() - dw, rect.top(), dw, rect.height()),
+                   Qt.AlignRight | Qt.AlignVCenter, dots)
+        p.setClipRect(QRectF(rect.left() - width, rect.top() - width,
+                             max(0.0, rect.width() - dw), rect.height() + 2 * width),
+                      Qt.IntersectClip)
     x = rect.left()
     for gap, item in _gaps(items):
         x += unit * gap

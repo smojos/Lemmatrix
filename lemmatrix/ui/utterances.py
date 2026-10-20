@@ -102,7 +102,8 @@ class TextsUtterancesWindow(QDialog):
         self.main = main
         self.doc = main.doc
         self.setWindowTitle("Texts and utterances")
-        self.resize(1300, 760)
+        from .winstate import fit_to_screen
+        fit_to_screen(self, 1300, 760)           # the default: as big as fits (a saved size wins)
         self.sound_files: set[str] = set()
         self.cloud_files: set[str] = set()
         self.checks: dict = {}                    # utterance id -> pull.Check, for clipped ones

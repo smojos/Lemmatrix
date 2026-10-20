@@ -143,6 +143,7 @@ class MainWindow(QMainWindow):
         widgets.SHOW_UNUSUAL = self.prefs.warn_unusual_tags
         self._build()
         self._build_menus()
+        self._fix_status_bar()
         self._restyle()
         self._restore_window()
         self.doc.work_date = self.work_date
@@ -1239,6 +1240,15 @@ class MainWindow(QMainWindow):
     def _dirty_changed(self, dirty: bool):
         self._update_title()
         self._save_icon()
+
+    def _fix_status_bar(self):
+        """The status bar is there from the start, at the height a message needs, so a message
+        (e.g. "Saved.") never makes it grow and nudge the panes above it (Josh, 20 October)."""
+        sb = self.statusBar()
+        sb.showMessage(" ")
+        h = max(sb.sizeHint().height(), sb.fontMetrics().height() + 8)
+        sb.clearMessage()
+        sb.setFixedHeight(h)
 
     def _save_icon(self):
         """The floppy: the theme colour (lighter on dark) with unsaved changes, grey once saved."""
@@ -2774,7 +2784,8 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Save", f"Couldn't save: {exc}")
             return False
         self.prefs.last_file = self.doc.db.path
-        self._fill_session()
+        self._fill_db_title()
+        self._remember_session()                  # the panel as it is (not rebuilt: no flicker)
         where = QDir.toNativeSeparators(str(storage.backup_folder(self.doc.db.path)))
         self.statusBar().showMessage(f"Saved. The previous version is in {where}.", 5000)
         return True
