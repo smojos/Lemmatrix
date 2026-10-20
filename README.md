@@ -24,6 +24,9 @@ own: the program icon and the splash screen are his drawings, and the icons in t
 are drawn in code from his designs and drafts. See [AUTHORS](AUTHORS), and
 [DESIGN.md](DESIGN.md) for how the program works and why.
 
+(A note on spelling: these documents write *soundfile* and *soundfiles* as one word. That's
+deliberate, part of the author's personal campaign to make it a compound, like *filename*.)
+
 ## Running it on Windows
 
 1. Download this repository, or clone it (e.g. with GitHub Desktop) and pull the latest version.
@@ -166,7 +169,7 @@ lemmatrix/            the program
   storage.py          reading and writing the XML file, backups
   layout.py           the main folder's fixed layout, consent relinking, full backups
   notebook.py         the notebook: sessions, the record of comments, the .notebook file
-  filenames.py        building sound file names from the pattern
+  filenames.py        building soundfile names from the pattern
   matrix.py           laying out tokens for the paradigm views
   pitch.py            pitch notation
   audio.py            recording, playback and WAV metadata
