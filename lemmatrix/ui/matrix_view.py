@@ -18,6 +18,7 @@ from .. import matrix as mx
 from ..model import Database
 from .icons import icon
 from . import theme, widgets
+from .widgets import meaning
 from .widgets import (chip_metrics, chips_width, draw_pitch, ipa_font, paint_chips,
                       pitch_width, underscore_unit)
 
@@ -100,7 +101,7 @@ class MatrixModel(QAbstractTableModel):
             if entry is None:
                 return None
             hits = self.layout_.tokens(r, c)
-            lines = [f"{entry.ref}  {self.db.lemma(entry)}  “{self.db.gloss(entry)}”"]
+            lines = [f"{entry.ref}  {self.db.lemma(entry)}  {meaning(self.db.gloss(entry))}"]
             for _, t in hits:
                 v = self.parent()
                 cloud = getattr(v, "cloud_files", set())
@@ -130,7 +131,7 @@ class MatrixModel(QAbstractTableModel):
             return ipa_font(13)
         if role == Qt.ToolTipRole:
             if it.entry is not None:
-                return f"{it.entry.ref}  {self.db.lemma(it.entry)}  “{self.db.gloss(it.entry)}”"
+                return f"{it.entry.ref}  {self.db.lemma(it.entry)}  {meaning(self.db.gloss(it.entry))}"
             if it.spec:
                 kind = {mx.CITATION: "Citation", mx.EXACT: "Exact", mx.LOOSE: "Loose"}[it.spec.match]
                 tip = f"{kind}: {', '.join(self.db.settings.tags.sort(it.spec.tags)) or 'no tags'}"

@@ -337,6 +337,20 @@ def push_question(nb: Notebook, db: Database, date: str, text: str, e: Entry, t:
     return q
 
 
+def push_line_question(nb: Notebook, db: Database, date: str, question: str, text, start: float,
+                       clock: str = "", researchers=(), participants=(), locations=()) -> Question:
+    """Push to question from a text's line (its Comment): an open question linked to the line."""
+    s = nb.session(date)
+    if s is None:
+        s = write_session(nb, db, date, researchers, participants, locations)
+    link = line_comment(db, text, start, "", question, clock)
+    q = Question(link.text, today(), entry_id=link.entry_id, token_id=link.token_id, ref=link.ref,
+                 about=link.about)
+    s.questions.append(q)
+    nb.dirty = True
+    return q
+
+
 def matches(s: Session, db: Database | None, text: str) -> bool:
     """Search: the date, notes, people, places, comments and questions."""
     text = text.strip().lower()

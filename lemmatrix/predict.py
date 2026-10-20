@@ -217,7 +217,7 @@ class Suggestion:
 
     def describe(self) -> str:
         """For a tooltip: what the suggestion is based on."""
-        names = [f"“{s}”" for s in self.sources[:3]]
+        names = [f"‘{s}’" for s in self.sources[:3]]
         if self.count > len(names):
             names.append(f"{self.count - len(names)} more")
         if len(names) > 1:

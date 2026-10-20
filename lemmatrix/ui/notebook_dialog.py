@@ -24,7 +24,7 @@ from ..model import today
 from . import chiprow as chips
 from . import searchmark, theme
 from .icons import icon
-from .widgets import ipa_font
+from .widgets import ipa_font, meaning
 
 NEWEST, OLDEST = "newest", "oldest"
 
@@ -463,7 +463,7 @@ class NotebookDialog(QDialog):
                 what = f"{e.ref} “{e.label}”" if e.label else e.ref
                 it = QTreeWidgetItem([what, f"utterance{' · ' + tags if tags else ''}", t.speaker, t.file])
             else:
-                it = QTreeWidgetItem([f"{e.ref} {db.lemma(e)} “{db.gloss(e)}”", tags or "citation", t.speaker,
+                it = QTreeWidgetItem([f"{e.ref} {db.lemma(e)} {meaning(db.gloss(e))}", tags or "citation", t.speaker,
                                       t.file])
             it.setFont(0, ipa_font(self.main.prefs.ipa_size))
             it.setData(0, Qt.UserRole, (e, i))
@@ -735,6 +735,15 @@ def link_look(item, column: int, q):
 
 
 def follow_link(parent, main, link):
+    if link.is_line:                              # a text's line (pushed from its Comment): shown in its text
+        text = main.doc.db.text_by_id(link.entry_id)
+        if text is None:
+            QMessageBox.information(parent, "Notebook", nbmod.missing_text(link) + ".")
+            return
+        w = main.open_utterances()
+        w.select_text(text)
+        w.texts.select_line_at(link.line_start)
+        return
     where = nbmod.find(main.doc.db, link)
     if where is None:
         QMessageBox.information(parent, "Notebook", nbmod.missing_text(link) + ".")

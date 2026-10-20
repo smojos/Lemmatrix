@@ -9,6 +9,18 @@ from PySide6.QtGui import QColor, QFont, QFontDatabase, QPainter, QPen, QPolygon
 from PySide6.QtWidgets import (QHeaderView, QLayout, QSizePolicy, QWidget)
 
 from .. import pitch as pitchmod
+
+
+_QUOTES = "\"'“”‘’"
+
+
+def meaning(text: str) -> str:
+    """A gloss or translation as shown: in single quotes, ‘goat’ (the Leipzig convention), the
+    same everywhere (Josh, 20 October). Quotes already round it aren't doubled."""
+    t = (text or "").strip()
+    while len(t) >= 2 and t[0] in _QUOTES and t[-1] in _QUOTES:
+        t = t[1:-1].strip()
+    return f"‘{t}’" if t else ""
 from . import theme
 from .icons import funnel
 

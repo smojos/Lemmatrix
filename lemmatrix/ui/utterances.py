@@ -33,7 +33,7 @@ from .icons import icon, ink_icon
 from .spellui import SpellDelegate
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, ListEditDelegate
 from .token_dialog import Slot, TokenDialog
-from .widgets import FlowLayout, ipa_font
+from .widgets import FlowLayout, ipa_font, meaning
 
 TEXTS, UTTERANCES_TAB = 0, 1      # the tabs
 
@@ -192,9 +192,8 @@ class TextsUtterancesWindow(QDialog):
         self.tabs.setCurrentIndex(TEXTS)           # it always opens on Texts (Josh, 18 October)
         self._tab_changed(TEXTS)
         self._restyle()
-        g = self.main.prefs.get_bytes("window/utterances")
-        if g:
-            self.restoreGeometry(g)
+        from . import winstate
+        winstate.keep(self, self.main.prefs, "window/utterances")   # size, place and splitters, as adjusted
 
     @property
     def db(self):
@@ -807,11 +806,9 @@ class TextsUtterancesWindow(QDialog):
         self.texts.restyle_icons()
 
     def done(self, result):
-        self.main.prefs.set_value("window/utterances", self.saveGeometry())
         super().done(result)
 
     def closeEvent(self, event):
-        self.main.prefs.set_value("window/utterances", self.saveGeometry())
         try:
             self.doc.changed.disconnect(self.refresh)
             self.doc.settingsChanged.disconnect(self._settings_changed)
@@ -916,7 +913,7 @@ class UtteranceDialog(TokenDialog):
         db = self.db
         self._choices = {}
         for e in db.entries:
-            text = " ".join(x for x in (e.ref, db.lemma(e), f"“{db.gloss(e)}”" if db.gloss(e) else "") if x)
+            text = " ".join(x for x in (e.ref, db.lemma(e), meaning(db.gloss(e))) if x)
             self._choices[text] = e.id
         self.completer.model().setStringList(list(self._choices))
 
@@ -1078,7 +1075,7 @@ class UtteranceDialog(TokenDialog):
             b = QToolButton()
             b.setText(text + "  ✕")
             b.setFont(ipa_font(self.main.prefs.ipa_size))
-            b.setToolTip((f"{e.ref} {db.lemma(e)} “{db.gloss(e)}”\n" if e else "") + "Click to remove the link")
+            b.setToolTip((f"{e.ref} {db.lemma(e)} {meaning(db.gloss(e))}\n" if e else "") + "Click to remove the link")
             b.setStyleSheet("QToolButton { border: 1px solid %s; border-radius: 10px; padding: 2px 8px; }"
                             % theme.colour("pitch").name())
             b.clicked.connect(lambda *_, i=ident: self._remove_lemma(i))

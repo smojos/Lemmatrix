@@ -16,7 +16,7 @@ import shutil
 from pathlib import Path
 
 from PySide6.QtCore import QDir, QObject, QRegularExpression, QSize, Qt
-from PySide6.QtGui import QRegularExpressionValidator
+from PySide6.QtGui import QKeySequence, QRegularExpressionValidator, QShortcut
 from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog,
                                QFormLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QMessageBox,
                                QPushButton, QSplitter, QTableWidget, QTableWidgetItem, QToolButton,
@@ -450,6 +450,8 @@ class TextsPanel(QObject):
         self.lines.currentChanged.connect(lambda *_: self.win.autoplay.isChecked() and not self.lines.editing()
                                           and self.play_line())
         self.lines.editCommitted.connect(self.set_line_field)
+        self.lines.pushRequested.connect(self.push_to_question)
+        QShortcut(QKeySequence("Ctrl+E"), win, self.toggle_edit_mode)   # Edit mode (Josh, 20 October)
         self.doc.linesChanged.connect(self._lines_edited)
         bl.addWidget(self.lines, 1)
         page.addWidget(box)
@@ -491,7 +493,7 @@ class TextsPanel(QObject):
             b.setCheckable(checkable)
             return b
         self.edit_btn = icon_tool("edit", lambda: self.set_edit_mode(self.edit_btn.isChecked()),
-                                  "Edit mode: click a field to edit it in place (Tab, Shift+Tab, Up, Down move; "
+                                  "Edit mode (Ctrl+E): click a field to edit it in place (Tab, Shift+Tab, Up, Down move; "
                                   "Enter keeps, Esc drops). Off: the lines are for playing, clipping and Praat",
                                   checkable=True)
         self.main._row(bl, icon_tool("play", self.play_line, "Play the selected line (Ctrl+Space)"),
@@ -683,6 +685,11 @@ class TextsPanel(QObject):
         for b in self.bar.findChildren(QToolButton) if hasattr(self, "bar") else []:
             if b.property("icon_name") == "clip":
                 b.setIcon(icon("clip", 20, theme.accent().name()))
+
+    def toggle_edit_mode(self):
+        """Ctrl+E: Edit mode on or off, while the lines are shown (the Texts tab)."""
+        if self.lines.isVisible():
+            self.set_edit_mode(not self.edit_btn.isChecked())
 
     def set_edit_mode(self, on: bool):
         self.edit_btn.setChecked(on)
@@ -1011,6 +1018,27 @@ class TextsPanel(QObject):
         except (audio.AudioError, OSError, EOFError, Exception) as exc:      # wave.Error too
             QMessageBox.warning(self.win, "Play", f"Couldn't play {wav.name}: {exc}")
 
+    def push_to_question(self, line=None):
+        """A line's Comment becomes an open question in the notebook (the session's day), linked to
+        the line, and the Comment is emptied: as the token dialogue's Push to question (Josh, 20 October)."""
+        line = line or self.lines.current_row()
+        t, key = self.current(), self.comment_key()
+        if line is None or t is None or not key:
+            return
+        question = (line.values.get(key) or "").strip()
+        if not question:
+            return
+        main = self.main
+        date = main.work_date()
+        k = main.session_keys()
+        nbmod.push_line_question(self.doc.notebook, self.db, date, question, t, line.start, clock(line.start),
+                                 k.get("researchers", []), k.get("participants", []), k.get("locations", []))
+        self.doc.notebook_changed()
+        if getattr(main, "notebook_dialog", None) is not None:
+            main.notebook_dialog.reload()
+        self.set_line_field(line, key, "")
+        main.statusBar().showMessage(f"Added to the questions of {date}", 5000)
+
     def _line_menu(self, row, pos):
         m = QMenu(self.win)
         on = row is not None
@@ -1021,6 +1049,10 @@ class TextsPanel(QObject):
         a = m.addAction("Edit text…")
         a.setEnabled(self.current() is not None)
         a.triggered.connect(lambda *_: self.edit())
+        key_c = self.comment_key()
+        a = m.addAction(icon("push-question", 16), "Push comment to question")
+        a.setEnabled(on and bool(key_c) and bool((row.values.get(key_c) or "").strip()))
+        a.triggered.connect(lambda *_: self.push_to_question(row))
         m.addSeparator()
         for text, name, fn in (("Play line", "play", self.play_line),
                                ("Play in context", None, lambda: self.play_line(context=True)),

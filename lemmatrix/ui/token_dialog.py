@@ -22,7 +22,7 @@ from . import spellui, theme
 from .icons import icon
 from .table import show_suggestion
 from .tagpanel import TagPanel
-from .widgets import PitchCanvas, ipa_font
+from .widgets import PitchCanvas, ipa_font, meaning
 
 
 def _esc(text: str) -> str:
@@ -352,7 +352,7 @@ class TokenDialog(QDialog):
                                  self.main.session_date(), defaults=sl.defaults)
 
     def _show_header(self, e):
-        self.header.setText(f"{e.ref}   {self.db.lemma(e)}   “{self.db.gloss(e)}”")
+        self.header.setText(f"{e.ref}   {self.db.lemma(e)}   {meaning(self.db.gloss(e))}")
 
     def _position_text(self) -> str:
         sl, e = self.slot, self.slot.entry

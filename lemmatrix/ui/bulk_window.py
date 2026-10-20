@@ -265,6 +265,8 @@ class BulkEditWindow(QDialog):
         self.levels.setCurrentIndex(1)           # tokens first: most changes are to transcriptions
         self._level_changed(1)
         self._restyle()
+        from . import winstate
+        winstate.keep(self, self.main.prefs, "window/bulk")   # size, place and splitter, as adjusted
 
     # ---- building ----------------------------------------------------
     def _grid_page(self, level: str) -> QWidget:

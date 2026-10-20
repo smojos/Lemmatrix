@@ -563,6 +563,7 @@ class MainWindow(QMainWindow):
         self.play_pitch_action = self._act(None, "Play the selected token's pitch", self.play_selected_pitch,
                                            "Ctrl+Shift+Space")
         self._act(None, "Open the selected token in Praat", self.open_selected_in_praat, "Ctrl+Alt+Space")
+        self._act(None, "Record the selected token", self.record_selected, "Ctrl+R")
         a = mb.addMenu("&Analyze")
         x = a.addAction("Analysis tools arrive with the analysis engine (Stage 2)")
         x.setEnabled(False)
@@ -1474,7 +1475,7 @@ class MainWindow(QMainWindow):
                 lay = mx.tag_tag_layout(db, e, cfg)
             view = self.tt_view
             count = self.count_label(tab)
-            count.setText(f"{e.ref}  {db.lemma(e)}  “{db.gloss(e)}”"
+            count.setText(f"{e.ref}  {db.lemma(e)}  {widgets.meaning(db.gloss(e))}"
                                     + (f"  ·  {db.word_class(e)}" if db.word_class(e) else "") if e else "")
         if lay.message:
             count.setText((count.text() + "  ·  " if count.text() else "") + lay.message)
@@ -1591,16 +1592,18 @@ class MainWindow(QMainWindow):
                     slots.append(Slot(entry, None, tuple(tags), defaults=True))
         return slots
 
-    def _open_dialog(self, slots, index, tab):
+    def _open_dialog(self, slots, index, tab, record: bool = False):
         if not slots:
             return
-        self.dialog_autoplay = self.autoplay.isChecked()
+        self.dialog_autoplay = self.autoplay.isChecked() and not record
         dlg = TokenDialog(self, slots, index)
+        if record:                                # Ctrl+R: open it and start recording straight away
+            QTimer.singleShot(0, dlg._record)
         dlg.exec()
         dlg.deleteLater()                         # not kept, hidden, under the main window
         self.refresh()
 
-    def _cell_activated(self, tab, r, c, n):
+    def _cell_activated(self, tab, r, c, n, record: bool = False):
         lay = self.layouts.get(tab)
         if lay is None or (r, c) in lay.greyed:
             return
@@ -1622,7 +1625,7 @@ class MainWindow(QMainWindow):
                 slots.append(Slot(entry, None, tuple(tags), defaults=True))
                 idx = len(slots) - 1
             slots[idx].explicit = True
-        self._open_dialog(slots, idx, tab)
+        self._open_dialog(slots, idx, tab, record)
 
     def _token_clicked(self, tab, r, c, n):
         if n >= 0 and self.autoplay.isChecked():
@@ -1691,12 +1694,12 @@ class MainWindow(QMainWindow):
             return
         self._open_dialog([Slot(entry, None, (), explicit=True, defaults=True)], 0, tab)
 
-    def edit_token(self):
+    def edit_token(self, record: bool = False):
         tab = self.tabs.currentIndex()
         if tab != ALL_DATA:
             view = self._view(tab)
             if view.selected:
-                self._cell_activated(tab, *view.selected)
+                self._cell_activated(tab, *view.selected, record=record)
             return
         sel = self.selected_token()
         if sel is None:
@@ -1704,7 +1707,11 @@ class MainWindow(QMainWindow):
         slots = self._slots(tab)
         e, i = sel
         idx = next((k for k, s in enumerate(slots) if s.entry is e and s.index == i), 0)
-        self._open_dialog(slots, idx, tab)
+        self._open_dialog(slots, idx, tab, record)
+
+    def record_selected(self):
+        """Ctrl+R: open the selected token (an empty matrix cell: a new one) and start recording."""
+        self.edit_token(record=True)
 
     def delete_token(self):
         sel = self.selected_token()

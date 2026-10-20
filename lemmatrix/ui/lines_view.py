@@ -19,14 +19,15 @@ from __future__ import annotations
 import bisect
 from dataclasses import dataclass
 
-from PySide6.QtCore import QEvent, QRect, QRectF, Qt, Signal
+from PySide6.QtCore import QEvent, QPointF, QRect, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import (QAbstractItemView, QAbstractScrollArea, QDialog, QDialogButtonBox, QLabel,
                                QLineEdit, QTreeWidget, QTreeWidgetItem, QVBoxLayout)
 
 from ..interlinear import bare, split_units
 from . import searchmark, theme
-from .widgets import ipa_font
+from .icons import icon
+from .widgets import ipa_font, meaning
 
 MARGIN = 24              # the buffer on the left
 SIDE_W = 260             # time and Comment, pinned at the right
@@ -34,6 +35,7 @@ PAD = 8                  # inside a cell, above and below
 GAP = 16                 # between aligned columns
 ROW_EXTRA = 6            # a field row's height beyond its font's
 TIME_H = 20
+PUSH = 20                # the Push to question button in a Comment box
 
 
 @dataclass
@@ -68,6 +70,7 @@ class LinesView(QAbstractScrollArea):
     editCommitted = Signal(object, str, str)      # line, field key, new text
     currentChanged = Signal(object)               # a line chosen with the mouse or keys
     countChanged = Signal()
+    pushRequested = Signal(object)                # the ? on a line's Comment: Push to question
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -188,7 +191,7 @@ class LinesView(QAbstractScrollArea):
 
     def _display(self, line, spec: FieldSpec) -> str:
         text = shown(self.value(line, spec.key))
-        return f"‘{text}’" if spec.translation and text else text
+        return meaning(text) if spec.translation and text else text
 
     def _units(self, line, spec: FieldSpec) -> list[str]:
         return [bare(u) for u in split_units(self.value(line, spec.key))]
@@ -217,7 +220,8 @@ class LinesView(QAbstractScrollArea):
         comment = self.value(line, self.comment_key)
         fm = QFontMetrics(self.small)
         box_w = SIDE_W - 20
-        text_h = fm.boundingRect(QRect(0, 0, box_w - 12, 2000), Qt.TextWordWrap, comment).height() if comment else 0
+        text_h = fm.boundingRect(QRect(0, 0, box_w - 12 - PUSH, 2000), Qt.TextWordWrap,
+                                 comment).height() if comment else 0
         side_h = PAD + TIME_H + max(38, text_h + 14) + PAD
         return _Cell(y, max(fields_h, side_h, 44), rows, cols, width)
 
@@ -278,8 +282,16 @@ class LinesView(QAbstractScrollArea):
                 return QRect(x, top + oy - 1, max(220, self._side_x() - 8 - x), h + 2)
         return None
 
+    def _comment_box(self, c, top: float) -> QRectF:
+        """A cell's Comment box (top: the cell's top, in the same coordinates as the result)."""
+        return QRectF(self._side_x() + 10, top + PAD + TIME_H, SIDE_W - 20, max(30, c.h - PAD * 2 - TIME_H))
+
+    def _push_rect(self, box: QRectF) -> QRectF:
+        """The Push to question button, at the top right of a Comment box that has a comment."""
+        return QRectF(box.right() - PUSH - 1, box.top() + 3, PUSH - 3, PUSH - 3)
+
     def _hit(self, pos) -> tuple[int | None, str]:
-        """(visible line index, what: a field key, "comment", "clips", "side" or "")."""
+        """(visible line index, what: a field key, "comment", "push", "clips", "side" or "")."""
         y = pos.y() + self.verticalScrollBar().value()
         i = bisect.bisect_right(self._tops, y) - 1
         if i < 0 or i >= len(self._cells) or y > self._cells[i].y + self._cells[i].h:
@@ -288,6 +300,10 @@ class LinesView(QAbstractScrollArea):
         if pos.x() >= self._side_x():
             if pos.y() + self.verticalScrollBar().value() < c.y + PAD + TIME_H:
                 return i, "clips" if self.clips.get(self._visible[i].id) else "side"
+            if self.comment_key and self.value(self._visible[i], self.comment_key):
+                vy = self.verticalScrollBar().value()
+                if self._push_rect(self._comment_box(c, c.y - vy)).contains(QPointF(pos)):
+                    return i, "push"
             return i, "comment" if self.comment_key else "side"
         oy = y - c.y
         for s, top, h in c.rows:
@@ -368,15 +384,17 @@ class LinesView(QAbstractScrollArea):
                 p.drawText(QRect(side_x + 10, top + PAD - 2, SIDE_W - 20, TIME_H), Qt.AlignVCenter | Qt.AlignRight,
                            ", ".join(refs))
             if self.comment_key:
-                box = QRectF(side_x + 10, top + PAD + TIME_H, SIDE_W - 20, max(30, c.h - PAD * 2 - TIME_H))
+                box = self._comment_box(c, top)
                 p.setPen(QPen(theme.mix(base, text, 0.25), 1))
                 p.setBrush(base)
                 p.drawRoundedRect(box, 3, 3)
                 comment = self.value(ln, self.comment_key)
                 p.setPen(text if comment else dim)
-                inner = box.adjusted(6, 4, -6, -4)
+                inner = box.adjusted(6, 4, -6 - (PUSH if comment else 0), -4)
                 p.drawText(inner.toRect(), Qt.TextWordWrap | Qt.AlignTop,
                            comment or ("Comment" if self.edit_mode else ""))
+                if comment:                       # Push to question, as beside the token dialogue's Comment
+                    icon("push-question", PUSH).paint(p, self._push_rect(box).toRect())
                 if comment and self._search:
                     searchmark.mark_wrapped(p, inner, comment, self._search)
             p.setPen(QPen(line_col, 1))
@@ -398,6 +416,12 @@ class LinesView(QAbstractScrollArea):
         if event.button() == Qt.RightButton:
             if ln.id not in self._selected:
                 self.select_row(ln)
+            return
+        if what == "push":
+            self.select_row(ln)
+            self.viewport().update()
+            self.currentChanged.emit(ln)
+            self.pushRequested.emit(ln)
             return
         mods = event.modifiers()
         if mods & Qt.ControlModifier:
@@ -421,6 +445,8 @@ class LinesView(QAbstractScrollArea):
         if i is None:
             return
         ln = self._visible[i]
+        if what == "push":
+            return
         if what == "clips":
             self.clipActivated.emit(ln)
         elif not self.edit_mode:
@@ -430,7 +456,7 @@ class LinesView(QAbstractScrollArea):
     def contextMenuEvent(self, event):
         i, what = self._hit(event.pos())
         # the field under the mouse, for the menu's Edit item ("" outside a field)
-        self.menu_key = (self.comment_key if what == "comment" else
+        self.menu_key = (self.comment_key if what in ("comment", "push") else
                          "" if what in ("", "side", "clips") else what) if i is not None else ""
         self.contextRequested.emit(self._visible[i] if i is not None else None, event.globalPos())
 

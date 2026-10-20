@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QLabel, QLineEdit, QLi
 from .. import matrix as mx
 from ..filters import fold_diacritics
 from ..model import Database, Entry
-from .widgets import ipa_font
+from .widgets import ipa_font, meaning
 
 
 def _fold(text: str) -> str:
@@ -30,7 +30,7 @@ class MoveTokenDialog(QDialog):
         t = source.tokens[index]
         what = " + ".join(mx.chips(db, t.tags)) or "citation"
         lay = QVBoxLayout(self)
-        head = QLabel(f"Move the {what} token of {source.ref} {db.lemma(source)} “{db.gloss(source)}” to:")
+        head = QLabel(f"Move the {what} token of {source.ref} {db.lemma(source)} {meaning(db.gloss(source))} to:")
         head.setWordWrap(True)
         lay.addWidget(head)
         self.find = QLineEdit()
@@ -68,7 +68,7 @@ class MoveTokenDialog(QDialog):
             if q and not any(q in _fold(x) for x in (e.ref, db.lemma(e), db.gloss(e))):
                 continue
             wc = db.word_class(e)
-            it = QListWidgetItem(f"{e.ref}   {db.lemma(e)}   “{db.gloss(e)}”" + (f"   {wc}" if wc else ""))
+            it = QListWidgetItem(f"{e.ref}   {db.lemma(e)}   {meaning(db.gloss(e))}" + (f"   {wc}" if wc else ""))
             it.setData(Qt.UserRole, e)
             self.list.addItem(it)
             if self.list.count() >= 500:          # enough to pick from; typing narrows it
