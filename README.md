@@ -185,7 +185,7 @@ THIRD-PARTY.md        the libraries Lemmatrix uses, with their licences
 ## Acknowledgements
 
 **Rod Casali**, professor and friend, for his years of dedicated work coding Dekereke and for
-helping me through so many feature updates. I am unworthy to be counted among great men like
+helping me through accommodating so many of my requested feature updates. I am unworthy to be counted among great men like
 him; Lemmatrix was only possible for me through advances in AI.
 
 **Larry Hayashi**, for teaching me FLEx and field methods so long ago, and for helping me
@@ -193,12 +193,12 @@ navigate them ever since.
 
 **Keith Snider**, my mentor and friend, for teaching me about tone and inspiring a love for it.
 
-The developers of **FLEx**, **ELAN**, **Dekereke**, **Praat** and **Microsoft Excel**, whose tools
+The developers of **FLEx**, **ELAN**, **Dekereke**, **Praat** and even **Microsoft Excel**, whose tools
 shaped how I work and what I wanted Lemmatrix to be.
 
-The countless friends and colleagues who built into me over the years and helped me become a
-better linguist, and from whom I gleaned ideas, sometimes without knowing it at the time.
-They include, but are not limited to: Adam Werle, Ahmed Sosal, Andreas Joswig, Anne-Christie Hellenthal, Bert Remijsen, Bruce Wiebe, Chuck Murphey, Colleen Ahland, Don Killian, Doris Payne, Giorgia Zantei, Helen Eaton, Jamon Pelkey, Jeroen van Ravenhorst, Jim Roberts, Justin Goldberg, Kent Rasmussen, Klaus-Christian Küspert, Love Lee, Manuel Otero, Michael Ahland, Mirella Blum, Sean Smith, Steve Nicolle, Theis Greve, Thomas Blecke, Tim Stirtz, Virginia Beavon-Ham.
+The countless linguists who built into me over the years and helped me to learn this craft, 
+and from whom I gleaned ideas, sometimes without knowing it at the time.
+They include, but are not limited to (in alphabetical order): Adam Werle, Ahmed Sosal, Andreas Joswig, Anne-Christie Hellenthal, Bert Remijsen, Bruce Wiebe, Chuck Murphey, Colleen Ahland, Don Killian, Doris Payne, Giorgia Zantei, Helen Eaton, Jamon Pelkey, Jeroen van Ravenhorst, Jim Roberts, Justin Goldberg, Kent Rasmussen, Klaus-Christian Küspert, Love Lee, Manuel Otero, Michael Ahland, Mirella Blum, Sean Smith, Steve Nicolle, Theis Greve, Thomas Blecke, Tim Stirtz, Virginia Beavon-Ham.
 
 The **Opo** people, for years of fieldwork in a real language that gave me a linguist's
 intuition.
