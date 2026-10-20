@@ -382,3 +382,16 @@ class FilterHeader(QHeaderView):
                 self.filterClicked.emit(idx, self.mapToGlobal(rect.bottomLeft()))
                 return
         super().mousePressEvent(event)
+
+
+def ask(parent, title: str, text: str, go: str, stop: str = "Cancel", icon=None) -> bool:
+    """A question whose buttons say what they do ("Reset to defaults" / "Cancel"), for when the
+    text doesn't read as a plain yes-or-no question. True if `go` was clicked (Josh, 20 October:
+    a message and its buttons must say the same thing)."""
+    from PySide6.QtWidgets import QMessageBox
+    box = QMessageBox(icon if icon is not None else QMessageBox.Question, title, text, parent=parent)
+    yes = box.addButton(go, QMessageBox.AcceptRole)
+    box.addButton(stop, QMessageBox.RejectRole)
+    box.setDefaultButton(yes)
+    box.exec()
+    return box.clickedButton() is yes

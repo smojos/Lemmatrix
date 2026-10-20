@@ -2820,9 +2820,9 @@ class MainWindow(QMainWindow):
         dlg = RenameDatabaseDialog(self, db)
         if not dlg.exec():
             return False
-        if self.doc.dirty and QMessageBox.question(
-                self, "Rename database", "Save the changes first? The database is saved under its new "
-                "name.") != QMessageBox.Yes:
+        if self.doc.dirty and not widgets.ask(
+                self, "Rename database", "There are unsaved changes. Renaming saves the database, with "
+                "them, under its new name.", "Save and rename"):
             return False
         old, stem, name = db.path, dlg.new_stem(), dlg.new_name()
         new = old

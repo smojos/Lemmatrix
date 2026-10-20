@@ -107,3 +107,40 @@ def test_a_saved_size_bigger_than_the_screen_is_brought_inside(win):
     a = win.bulk_window.screen().availableGeometry()
     assert win.bulk_window.frameGeometry().bottom() <= a.bottom()
     win.bulk_window.close()
+
+
+def test_questions_buttons_say_what_the_message_says(app, monkeypatch):
+    """Josh, 20 October: Reset to defaults talked of OK and Cancel over Yes and No buttons."""
+    from PySide6.QtWidgets import QMessageBox
+
+    from lemmatrix.ui import widgets
+    seen = []
+
+    def exec_(box):
+        seen.append((box.text(), [b.text() for b in box.buttons()]))
+        return 0
+    monkeypatch.setattr(QMessageBox, "exec", exec_)
+    assert not widgets.real_ask(None, "Reset to defaults", "Replace the genre with the defaults?",
+                                "Reset to defaults")
+    text, buttons = seen[0]
+    assert sorted(buttons) == ["Cancel", "Reset to defaults"]
+
+
+def test_no_message_names_a_button_it_doesnt_have():
+    """The Yes/No questions never tell the user to click OK, Cancel, Save…"""
+    import re
+    from pathlib import Path
+    src = Path(__file__).resolve().parent.parent / "lemmatrix"
+    for f in src.rglob("*.py"):
+        code = f.read_text(encoding="utf-8")
+        for m in re.finditer(r"QMessageBox\.question\(", code):
+            i, depth = m.end(), 1
+            while depth:
+                depth += {"(": 1, ")": -1}.get(code[i], 0)
+                i += 1
+            call = code[m.start():i]
+            buttons = set(re.findall(r"QMessageBox\.(\w+)", call)) - {"question"} or {"Yes", "No"}
+            named = set(re.findall(r"\b(?:click|press|choose) (OK|Yes|No|Cancel|Save|Discard|Ignore)\b",
+                                   call))
+            assert named <= buttons, f"{f.name}: {call[:120]}"
+            assert "Ignore" not in buttons, f"{f.name}: an Ignore button never matches a question"

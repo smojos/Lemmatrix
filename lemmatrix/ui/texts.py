@@ -743,10 +743,11 @@ class TextsPanel(QObject):
         if not edits:
             return
         merges = lmod.would_merge(edits)
-        if merges and QMessageBox.question(
+        from .widgets import ask
+        if merges and not ask(
                 self.win, "Edit line", "This edit will merge several segments in Praat: "
                 + ", ".join(f"{tier} ({n} segments)" for tier, n in merges)
-                + ". The line's segments in that tier become one.") != QMessageBox.Yes:
+                + ". The line's segments in that tier become one.", "Merge segments"):
             self._show_lines()
             return
         if any(e.created for e in edits):
@@ -987,10 +988,16 @@ class TextsPanel(QObject):
             return
         buf = self.doc.text_buffers.get(t.id)
         if buf is not None and buf.changed:           # Praat would read the file without them
-            r = QMessageBox.question(self.win, "Open in Praat", f"{t.ref} has line edits that aren't saved into "
-                                     "its TextGrid yet, so Praat would show it without them. Save first?",
-                                     QMessageBox.Save | QMessageBox.Ignore | QMessageBox.Cancel, QMessageBox.Save)
-            if r == QMessageBox.Cancel or (r == QMessageBox.Save and not self.main.save()):
+            box = QMessageBox(QMessageBox.Question, "Open in Praat", f"{t.ref} has line edits that aren't "
+                              "saved into its TextGrid yet, so Praat would show it without them. Save first?",
+                              parent=self.win)
+            save = box.addButton("Save and open", QMessageBox.AcceptRole)
+            plain = box.addButton("Open without saving", QMessageBox.DestructiveRole)
+            box.addButton(QMessageBox.Cancel)
+            box.setDefaultButton(save)
+            box.exec()
+            hit = box.clickedButton()
+            if hit not in (save, plain) or (hit is save and not self.main.save()):
                 return
         grid = self.grid_path(t)
         lines = self.selected_lines()                 # opened at the selected line(s)

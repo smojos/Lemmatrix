@@ -795,10 +795,11 @@ class ListsDialog(QDialog):
 
     def _reset(self, title, fn):
         """Reset one list to the defaults of a new database, keeping what's in use."""
-        if QMessageBox.question(self, "Reset to defaults",
-                                f"Replace the {title.lower()} with the defaults?\n\nAnything still in use "
-                                "is kept. Nothing changes until you click OK, and Cancel leaves "
-                                "everything as it was.") != QMessageBox.Yes:
+        from .widgets import ask
+        if not ask(self, "Reset to defaults",
+                   f"Replace the {title.lower()} with the defaults?\n\nAnything still in use is kept. "
+                   "The reset is only kept if you then click OK in Lists; Cancel there leaves everything "
+                   "as it was.", "Reset to defaults"):
             return
         kept = fn() or []
         if kept:

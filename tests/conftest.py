@@ -68,3 +68,19 @@ def pytest_configure(config):
 def _prototype_tags(request, monkeypatch):
     if request.node.get_closest_marker("real_defaults") is None:
         monkeypatch.setattr(defaults, "default_tag_structure", prototype_tag_structure)
+
+
+@pytest.fixture(autouse=True)
+def _ask_through_question(monkeypatch):
+    """widgets.ask (a question with buttons named for what they do) answers as the test's
+    QMessageBox.question does, so tests set one answer for both kinds of question."""
+    try:
+        from PySide6.QtWidgets import QMessageBox
+
+        from lemmatrix.ui import widgets
+    except ImportError:
+        return
+    monkeypatch.setattr(widgets, "real_ask", widgets.ask, raising=False)   # for testing ask itself
+    monkeypatch.setattr(widgets, "ask", lambda parent, title, text, go, stop="Cancel", icon=None:
+                        QMessageBox.question(parent, title, text) in (QMessageBox.Yes, QMessageBox.Save,
+                                                                     QMessageBox.Ok))
