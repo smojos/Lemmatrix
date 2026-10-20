@@ -19,7 +19,9 @@ any employer, funder or institution. It grew out of needs from many years of lin
 fieldwork, and is free for anyone to use, share and change under its licence.
 
 The author designs and specifies Lemmatrix and tests it; the code is written with an AI
-coding assistant (Claude, by Anthropic) under his direction. See [AUTHORS](AUTHORS), and
+coding assistant (Claude, by Anthropic) under his direction. The graphics and icons are his
+own: the program icon and the splash screen are his drawings, and the icons in the program
+are drawn in code from his designs and drafts. See [AUTHORS](AUTHORS), and
 [DESIGN.md](DESIGN.md) for how the program works and why.
 
 ## Running it on Windows
