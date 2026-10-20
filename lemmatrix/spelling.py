@@ -49,16 +49,24 @@ def available() -> bool:
     return _SpellChecker is not None or _lemmas is not None
 
 
+# Words the dictionaries lack that Lemmatrix itself uses: "soundfile" is written as one word,
+# like "filename" (the author's campaign to make it a compound).
+OWN_WORDS = frozenset({"soundfile", "soundfiles"})
+
+
 def _speller():
     global _checker
     if _checker is None and _SpellChecker is not None:
         _checker = _SpellChecker(language="en", distance=2)
+        _checker.word_frequency.load_words(OWN_WORDS)       # so corrections can offer them too
     return _checker
 
 
 @lru_cache(maxsize=100000)
 def _known_word(w: str) -> bool:
     """w: lower case, one word (no hyphen)."""
+    if w in OWN_WORDS:
+        return True
     sp = _speller()
     if sp is not None and w in sp:
         return True

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders
-"""Tools → Fill in recording dates from the sound files: the token's date from its recording."""
+"""Tools → Fill in recording dates from the soundfiles: the token's date from its recording."""
 
 from __future__ import annotations
 

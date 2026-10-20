@@ -6,7 +6,7 @@
 
 The forms are random but consistent (each lemma has a stem, and its forms are
 built from it with invented affixes), so paradigms look plausible. There are no
-sound files. The same seed always gives the same database.
+soundfiles. The same seed always gives the same database.
 
 What "every logical combination" means here, per word class:
   NOUN       Citation; Number (SG, PL) x Case (none + the seven cases);

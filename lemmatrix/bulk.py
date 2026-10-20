@@ -680,8 +680,8 @@ def summary(p: Plan, level: str, warn_unusual: bool = True) -> list[str]:
     if p.renames:
         lines.append(f"{len(p.renames)} recording{'s' if len(p.renames) != 1 else ''} will be renamed")
     if p.stale:
-        lines.append(f"{p.stale} sound file name{'s' if p.stale != 1 else ''} will be out of date "
-                     "(Rename sound files is off)")
+        lines.append(f"{p.stale} soundfile name{'s' if p.stale != 1 else ''} will be out of date "
+                     "(Rename soundfiles is off)")
     if p.missing:
         lines.append(f"{len(p.missing)} recording{'s' if len(p.missing) != 1 else ''} aren't in the sound "
                      "folder: their names are left as they are")

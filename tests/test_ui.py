@@ -504,7 +504,7 @@ def test_export_csv(win, tmp_path, monkeypatch):
     # entire database: one row per token, plus lemmas without tokens
     win.export_csv(filtered=False)
     rows = list(csv.reader(open(out, encoding="utf-8-sig")))
-    assert rows[0][0] == "Reference" and "Tags" in rows[0] and "Sound file" in rows[0]
+    assert rows[0][0] == "Reference" and "Tags" in rows[0] and "Soundfile" in rows[0]
     assert len(rows) - 1 == sum(max(1, len(e.tokens)) for e in db.entries)
     assert open(out, "rb").read(3) == b"\xef\xbb\xbf"           # BOM, so Excel reads IPA
     # filtered: All data, after a quick search

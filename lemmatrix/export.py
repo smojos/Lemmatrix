@@ -41,7 +41,7 @@ def _token_columns(db: Database) -> list[tuple[str, callable]]:
             cols.append((f.title, lambda e, t, n=f.name: t.get(n) if t else ""))
     cols += [("Speaker", lambda e, t: t.speaker if t else ""),
              ("Date", lambda e, t: t.collected if t else ""),
-             ("Sound file", lambda e, t: t.file if t else "")]
+             ("Soundfile", lambda e, t: t.file if t else "")]
     return cols
 
 

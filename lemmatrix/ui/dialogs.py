@@ -140,7 +140,7 @@ class EntryDialog(QDialog):
             self.category.setCurrentIndex(max(0, i))
             self.category.setEnabled(False)
             self.ref.setReadOnly(True)
-            self.ref.setToolTip("References never change, because they're part of sound file names.")
+            self.ref.setToolTip("References never change, because they're part of soundfile names.")
         else:
             self.category.currentIndexChanged.connect(self._suggest)
         form.addRow("Category", self.category)
@@ -479,7 +479,7 @@ class PreferencesDialog(QDialog):
         self.praat = PathEdit(prefs.praat_path, folder=False, title="Where is Praat?")
         self.praat.setToolTip("The Praat program, used by Open in Praat (Praat.exe on Windows)")
         self.praat.edit.setPlaceholderText("not found: click Browse to show where Praat is")
-        self.auto_names = QCheckBox("Update sound file names automatically")
+        self.auto_names = QCheckBox("Update soundfile names automatically")
         self.auto_names.setChecked(s.auto_update_names)
 
         self.low = QSpinBox()

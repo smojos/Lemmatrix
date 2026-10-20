@@ -270,7 +270,7 @@ class NotebookDialog(QDialog):
         self.comments.setFont(ipa_font(self.main.prefs.ipa_size))
         self.recordings = QTreeWidget()
         self.recordings.setColumnCount(4)
-        self.recordings.setHeaderLabels(["Lemma", "Tags", "Speaker", "Sound file"])
+        self.recordings.setHeaderLabels(["Lemma", "Tags", "Speaker", "Soundfile"])
         self.recordings.setRootIsDecorated(False)
         self.recordings.header().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.recordings.itemDoubleClicked.connect(lambda it, col: self._follow(it))

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders
-"""Tools → Fill in recording dates from the sound files…: a preview, then one undo step."""
+"""Tools → Fill in recording dates from the soundfiles…: a preview, then one undo step."""
 
 from __future__ import annotations
 
@@ -20,22 +20,22 @@ class RecordingDatesDialog(QDialog):
         self.setWindowTitle("Fill in recording dates")
         self.resize(900, 560)
         lay = QVBoxLayout(self)
-        intro = QLabel("A token's date (when it was recorded) is taken from its sound file's own metadata: "
+        intro = QLabel("A token's date (when it was recorded) is taken from its soundfile's own metadata: "
                        "the creation date Lemmatrix writes into its recordings, or the date a field recorder "
                        "or sound editor wrote. Check the list, then Fill in. One undo step undoes it all.")
         intro.setWordWrap(True)
         lay.addWidget(intro)
         self.only_empty = QRadioButton("Only tokens that have no date")
         self.only_empty.setChecked(True)
-        self.overwrite = QRadioButton("Also change dates that differ from the sound file's")
-        self.file_dates = QCheckBox("When a sound file has no date in it, use the date the file was last changed")
+        self.overwrite = QRadioButton("Also change dates that differ from the soundfile's")
+        self.file_dates = QCheckBox("When a soundfile has no date in it, use the date the file was last changed")
         self.file_dates.setToolTip("Less reliable: copying, converting or syncing a file can change this date")
         for w in (self.only_empty, self.overwrite, self.file_dates):
             lay.addWidget(w)
             (w.toggled).connect(lambda *_: self._fill())
         self.tree = QTreeWidget()
         self.tree.setColumnCount(6)
-        self.tree.setHeaderLabels(["Lemma", "Tags", "Sound file", "Date now", "New date", "From"])
+        self.tree.setHeaderLabels(["Lemma", "Tags", "Soundfile", "Date now", "New date", "From"])
         self.tree.setRootIsDecorated(False)
         self.tree.setSelectionMode(QAbstractItemView.NoSelection)
         self.tree.header().setSectionResizeMode(QHeaderView.ResizeToContents)

@@ -160,7 +160,7 @@ def paint_cell(delegate: QStyledItemDelegate, painter: QPainter, option, index):
 
 
 def keep_colour(opt, index):
-    """A cell's own text colour (a grey suggested sound file name, a red missing one) stays in a
+    """A cell's own text colour (a grey suggested soundfile name, a red missing one) stays in a
     selected row; the style would otherwise draw it in the selection's text colour."""
     fg = index.data(Qt.ForegroundRole)
     if fg is not None:

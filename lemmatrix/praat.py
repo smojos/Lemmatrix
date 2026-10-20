@@ -76,7 +76,7 @@ def script_for(sound: Path, textgrid: Path | None = None, select: tuple[float, f
 
 def open_sound(praat_path: str, sound: str | Path, textgrid: str | Path | None = None,
                select: tuple[float, float] | None = None) -> None:
-    """Open a sound file in Praat's sound editor (with its TextGrid, if given, zoomed to the
+    """Open a soundfile in Praat's sound editor (with its TextGrid, if given, zoomed to the
     stretch select if given). Raises PraatError with a readable reason."""
     sound = Path(sound)
     if not sound.exists():

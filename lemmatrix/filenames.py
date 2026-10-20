@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders
-"""Building sound file names from the customisable pattern.
+"""Building soundfile names from the customisable pattern.
 
 The default pattern is
 
@@ -116,7 +116,7 @@ def build_text_filename(db: Database, text, extension: str = ".wav") -> str:
 
 def image_stem(db: Database, e: Entry, t: Token) -> str:
     """The name (without extension) a token's image has: its reference, then its tag codes as in
-    sound file names, written as Praat would name it. D001 for the citation token, D001_PL for
+    soundfile names, written as Praat would name it. D001 for the citation token, D001_PL for
     the plural, D001_PL-1SG_POSS for "my goats". A token without an image of its own has none:
     there is no falling back on the lemma's (a picture of one goat is not one of three)."""
     s = db.settings

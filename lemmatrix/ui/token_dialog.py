@@ -844,7 +844,7 @@ class TokenDialog(QDialog):
         b.setIcon(icon("thumbs-down", 36, "#e02424" if on else faint))
         b.setToolTip("Marked to be recorded again: click to unmark. Recording over it unmarks it."
                      if on else "Mark the recording to be recorded again (Rerecord in All data's "
-                     "Sound file filter)")
+                     "Soundfile filter)")
 
     def _rerecord_toggled(self, on: bool):
         self._show_rerecord(on)

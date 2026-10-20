@@ -529,7 +529,7 @@ class BulkEditWindow(QDialog):
         self.o_keep.setChecked(True)
         self.o_keep.setToolTip("On: tone and other marks stay on the new letter (y → j turns ỹ into j̃).\n"
                                "Off: a letter carrying a mark counts as a different letter and is left alone.")
-        self.o_rename = QCheckBox("Rename sound files")
+        self.o_rename = QCheckBox("Rename soundfiles")
         self.o_rename.setChecked(True)
         self.o_rename.setToolTip("Recordings whose names change (tags, gloss in file names, word class…) "
                                  "are renamed with the change, and back again on undo.")

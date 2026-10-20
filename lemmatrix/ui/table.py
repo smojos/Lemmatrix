@@ -534,7 +534,7 @@ class FilterTable(QTableView):
         acts = {}
         blanks, nonblanks = col.blank_labels
         choices = [("Show all", None), (blanks, "blanks"), (nonblanks, "nonblanks")]
-        if col.blank_labels != ("Blanks", "Non-blanks"):    # e.g. Sound file: Present before Missing
+        if col.blank_labels != ("Blanks", "Non-blanks"):    # e.g. Soundfile: Present before Missing
             choices[1], choices[2] = choices[2], choices[1]
         if col.flag is not None:
             choices.append((col.flag_label, "flag"))

@@ -542,10 +542,10 @@ class MainWindow(QMainWindow):
         e.addSeparator()
         self._act(e, "&Settings…", self.edit_settings, QKeySequence.Preferences)
         t = mb.addMenu("&Tools")
-        self._act(t, "Update all sound file names", self.update_all_names)
+        self._act(t, "Update all soundfile names", self.update_all_names)
         self._act(t, "Check for duplicate file names", self.check_duplicates)
         self._act(t, "Find missing or unlinked recordings…", self.find_missing_recordings)
-        self._act(t, "Fill in recording dates from the sound files…", self.fill_recording_dates)
+        self._act(t, "Fill in recording dates from the soundfiles…", self.fill_recording_dates)
         self._act(t, "Check clipped utterances…", self.check_clipped)
         t.addSeparator()
         self._act(t, "Check &spelling…", self.check_spelling, "F7")
@@ -663,7 +663,7 @@ class MainWindow(QMainWindow):
             Column("date", "Date", lambda r: r.token.collected),
             # Value: the recording if it exists on disk, otherwise blank (so Blanks = no recording);
             # shown: the recording, or the name it would get, in grey.
-            Column("file", "Sound file", lambda r: r.token.file if r.token.file in self.sound_files else "",
+            Column("file", "Soundfile", lambda r: r.token.file if r.token.file in self.sound_files else "",
                    blank_labels=("Missing", "Present"), flag=lambda r: r.token.rerecord, flag_label="Rerecord",
                    display=lambda r: r.token.file or db.expected_filename(r.entry, r.token),
                    color=lambda r: theme.colour("dim") if not r.token.file else
@@ -869,7 +869,7 @@ class MainWindow(QMainWindow):
         if not (renamed or adopted or clashes):
             return
         self.doc.settings_changed()
-        msg = ("Sound files (and texts' TextGrids) are now named the way Praat names them (underscores "
+        msg = ("Soundfiles (and texts' TextGrids) are now named the way Praat names them (underscores "
                "for spaces and punctuation), so saving in Praat with the name it suggests overwrites "
                "the file Lemmatrix reads instead of making a second one.")
         if renamed:
@@ -882,7 +882,7 @@ class MainWindow(QMainWindow):
             msg += ("\n\nNot renamed (both names exist and the old one is newer; check which to keep): "
                     + ", ".join(clashes))
         msg += "\n\nSave to keep the new names; closing without saving puts the old ones back."
-        QMessageBox.information(self, "Sound file names", msg)
+        QMessageBox.information(self, "Soundfile names", msg)
 
     def _remind_full_backup(self):
         """Once a week: a full backup is due (File → Full backup)."""
@@ -2302,7 +2302,7 @@ class MainWindow(QMainWindow):
                  and db.expected_filename(e, t) != t.file and (recoded & set(t.tags) or deleted)}
         if moved and not s.auto_update_names:
             why = "codes changed" if recoded else "tags changed"
-            box = QMessageBox(QMessageBox.Question, "Sound file names",
+            box = QMessageBox(QMessageBox.Question, "Soundfile names",
                               f"The tag {why}, so {len(moved)} recording{'s' if len(moved) != 1 else ''}' "
                               "names are out of date. Rename them now?", parent=self)
             rename = box.addButton("Rename", QMessageBox.AcceptRole)
@@ -2337,8 +2337,8 @@ class MainWindow(QMainWindow):
         if db.settings.auto_update_names:
             self.update_all_names(ask=False)
         else:
-            self.statusBar().showMessage(f"{len(stale)} sound file names are out of date "
-                                         "(Tools → Update all sound file names).", 8000)
+            self.statusBar().showMessage(f"{len(stale)} soundfile names are out of date "
+                                         "(Tools → Update all soundfile names).", 8000)
 
     # =============================================================== tools
     def update_all_names(self, ask: bool = True, only: set | None = None):
@@ -2352,9 +2352,9 @@ class MainWindow(QMainWindow):
             return
         if not stale:
             if ask:
-                QMessageBox.information(self, "Sound file names", "All sound file names are up to date.")
+                QMessageBox.information(self, "Soundfile names", "All soundfile names are up to date.")
             return
-        if ask and QMessageBox.question(self, "Sound file names",
+        if ask and QMessageBox.question(self, "Soundfile names",
                                         f"Rename {len(stale)} recordings to match their tokens?") != QMessageBox.Yes:
             return
         # One undo step for the lot. Every recording first moves to a temporary name, then to its
@@ -2392,14 +2392,14 @@ class MainWindow(QMainWindow):
             renames = [(src, src.with_name(src.name + ".lemmatrix-renaming")) for src, _ in rn] + renames + \
                 [(src.with_name(src.name + ".lemmatrix-renaming"), dst) for src, dst in rn]
         problems += tproblems
-        trouble = self.doc.apply_changes("Update all sound file names", pairs, renames, stamp=False) \
+        trouble = self.doc.apply_changes("Update all soundfile names", pairs, renames, stamp=False) \
             if (plan or tplan) else []
         done = 0 if trouble else len(plan) + sum(len(rn) for _, rn in tplan)
         problems = trouble + problems
         msg = f"Renamed {done} recording(s)."
         if problems:
             msg += "\n\nNot renamed:\n" + "\n".join(problems[:30])
-        QMessageBox.information(self, "Sound file names", msg)
+        QMessageBox.information(self, "Soundfile names", msg)
 
     def missing_recordings(self):
         """Recordings in the sound folder that belong to tokens but aren't linked to them.
@@ -2548,17 +2548,17 @@ class MainWindow(QMainWindow):
         return plan, problems
 
     def _rename_texts(self, texts, ask: bool):
-        if ask and QMessageBox.question(self, "Sound file names", f"Rename the files of {len(texts)} "
+        if ask and QMessageBox.question(self, "Soundfile names", f"Rename the files of {len(texts)} "
                                         "text(s) to match the pattern?") != QMessageBox.Yes:
             return
         plan, problems = self._text_plan(texts, set())
         renames = [m for _, rn in plan for m in rn]
-        trouble = self.doc.apply_changes("Update all sound file names", [p for p, _ in plan], renames,
+        trouble = self.doc.apply_changes("Update all soundfile names", [p for p, _ in plan], renames,
                                          stamp=False) if plan else []
         msg = f"Renamed {0 if trouble else len(renames)} file(s)."
         if trouble + problems:
             msg += "\n\nNot renamed:\n" + "\n".join((trouble + problems)[:30])
-        QMessageBox.information(self, "Sound file names", msg)
+        QMessageBox.information(self, "Soundfile names", msg)
 
     def check_duplicates(self):
         dups = self.doc.db.duplicate_filenames()
@@ -2644,7 +2644,7 @@ class MainWindow(QMainWindow):
         return header, rows
 
     def fill_recording_dates(self):
-        """Tools → Fill in recording dates: tokens' dates from their sound files' metadata."""
+        """Tools → Fill in recording dates: tokens' dates from their soundfiles' metadata."""
         from .dates_dialog import RecordingDatesDialog
         RecordingDatesDialog(self).exec()
 
@@ -2694,7 +2694,7 @@ class MainWindow(QMainWindow):
             # recordings renamed since the last save get the names the saved database expects
             problems = self.doc.revert_renames()
             if problems:
-                QMessageBox.warning(self, "Sound file names",
+                QMessageBox.warning(self, "Soundfile names",
                                     "These recordings couldn't get their old names back, so "
                                     "Tools → Find missing recordings may be needed next time:\n\n"
                                     + "\n".join(problems[:30]))

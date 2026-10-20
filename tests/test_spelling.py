@@ -80,3 +80,8 @@ def test_scan_and_replace(db):
 
 def test_replace_whole_words_only():
     assert spelling.replace_word("teh tehran teh", "teh", "the") == "the tehran the"
+
+
+def test_soundfile_is_a_word():
+    c = spelling.Checker([])
+    assert c.known("soundfile") and c.known("Soundfiles") and c.known("soundfile's")

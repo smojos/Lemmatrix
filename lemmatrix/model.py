@@ -16,7 +16,7 @@ import uuid
 from dataclasses import dataclass, field
 
 # Characters Windows forbids in file names. Glosses, codes and references
-# that end up in sound file names may not contain them.
+# that end up in soundfile names may not contain them.
 FORBIDDEN_CHARS = '/\\:*?"<>|'
 
 
@@ -928,7 +928,7 @@ class Database:
             tags = self.settings.tags.with_defaults(tags, self.classes(e))
         return Token(tags=tags, speaker=speaker, collected=date)
 
-    # ---- sound files -------------------------------------------------
+    # ---- soundfiles -------------------------------------------------
     def expected_filename(self, e: Entry, t: Token) -> str:
         from .filenames import build_filename
         return build_filename(self, e, t)

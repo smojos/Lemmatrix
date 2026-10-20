@@ -8,7 +8,7 @@ one token (one transcription, one recording). Their reference's letter is their 
 the utterance dialogue is the token dialogue with a header of its own (reference, category,
 file label), the tag groups for utterances first, and a Lemmas box for links by hand.
 
-Utterances are made by recording on the spot (Add), or from sound files: Import…, or WAVs
+Utterances are made by recording on the spot (Add), or from soundfiles: Import…, or WAVs
 dragged onto the grid. Imported recordings are copied into Soundfiles/Utterances under the
 utterance's name; the originals are left as they are. The Texts tab comes with stage 3.
 """
@@ -273,7 +273,7 @@ class TextsUtterancesWindow(QDialog):
                    tooltip=lambda u: "Linked by hand in the utterance dialogue" if u.lemmas else None),
             Column("speaker", "Speaker", lambda u: u.token.speaker),
             Column("date", "Date", lambda u: u.token.collected),
-            Column("file", "Sound file", lambda u: u.token.file if u.token.file in self.sound_files else "",
+            Column("file", "Soundfile", lambda u: u.token.file if u.token.file in self.sound_files else "",
                    blank_labels=("Missing", "Present"), flag=lambda u: u.token.rerecord, flag_label="Rerecord",
                    display=lambda u: u.token.file or db.expected_filename(u, u.token),
                    color=lambda u: theme.colour("dim") if not u.token.file else
