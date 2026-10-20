@@ -198,7 +198,7 @@ shaped how I work and what I wanted Lemmatrix to be.
 
 The countless friends and colleagues who built into me over the years and helped me become a
 better linguist, and from whom I gleaned ideas, sometimes without knowing it at the time.
-They include, but are not limited to: Michael Ahland, Virginia Beavon-Hamm, Thomas Blecke, Mirella Blum, Klaus Christian-Küspert, Justin Goldberg, Theis Greve, Anne-Christie Hellenthal, Andreas Joswig, Don Killian, Love Lee, Steve Nicole, Manuel Otero, Doris Payne, Jamon Pelkey, Kent Rasmussen, Bert Remijsen, Jim Roberts, Sean Smith, Ahmed Sosal, Tim Stirtz, Bruce Wiebe, Giorgia Zantei.
+They include, but are not limited to: Michael Ahland, Virginia Beavon-Hamm, Thomas Blecke, Mirella Blum, Klaus Christian-Küspert, Justin Goldberg, Theis Greve, Anne-Christie Hellenthal, Andreas Joswig, Don Killian, Love Lee, Steve Nicolle, Manuel Otero, Doris Payne, Jamon Pelkey, Kent Rasmussen, Bert Remijsen, Jim Roberts, Sean Smith, Ahmed Sosal, Tim Stirtz, Bruce Wiebe, Giorgia Zantei.
 
 The **Opo** people, for years of fieldwork in a real language that gave me a linguist's
 intuition.
