@@ -1196,8 +1196,13 @@ def test_token_dialogue_remembers_its_size(win):
     e = win.doc.db.entry_by_ref("E001")
     dlg = TokenDialog(win, [Slot(e, 0)], 0)
     dlg.show()
-    # (the offscreen test screen is small; on Windows the dialogue can't be narrower than ~800)
-    size = (max(760, dlg.minimumSizeHint().width() + 20), max(700, dlg.minimumSizeHint().height() + 20))
+    # A size above the dialogue's minimum that the test screen can hold (a restored window is
+    # kept on screen). Windows' offscreen test screen is 800 wide, narrower than the dialogue there.
+    hint, avail = dlg.minimumSizeHint(), dlg.screen().availableGeometry()
+    size = (max(760, hint.width() + 20), max(700, hint.height() + 20))
+    if size[0] > avail.width() - 40 or size[1] > avail.height() - 40:
+        dlg.reject()
+        pytest.skip("the test screen is smaller than the token dialogue")
     dlg.resize(*size)
     dlg.reject()
     again = TokenDialog(win, [Slot(e, 0)], 0)
