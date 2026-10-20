@@ -167,6 +167,9 @@ class Card:
     original: str = ""                # in the zip, the recording to repeat
     file: str = ""                    # the recording's name in the response zip
     repeat: bool = False              # "Please say it 2 or 3 times."
+    image_id: str = ""                # through Google Drive: the picture's file id (shared by link)
+    original_id: str = ""             # the recording to repeat
+    upload: str = ""                  # the recording's upload link (Google's, for one week)
 
 
 @dataclass
@@ -185,6 +188,8 @@ class Request:
     format: str = FORMAT
     version: int = VERSION
     page: str = WEB_PAGE
+    transport: str = "file"           # file (a zip sent by hand) or drive (a link; Google Drive)
+    drive: dict = field(default_factory=dict)   # folder, request (file ids), response, status (upload links), link
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), ensure_ascii=False, indent=1)
@@ -330,15 +335,9 @@ def zip_name(req: Request) -> str:
     return f"Elicit_request_{filenames.praat_name(req.speaker['code'])}_{req.created[:10]}.zip"
 
 
-def write_request(db: Database, req: Request, items) -> Path:
-    """Write the request's folder in Elicit and the zip to send. Returns the zip's path.
-
-    The zip is stored, not compressed (the web page reads it without a library; the recordings
-    and pictures hardly compress anyway)."""
-    if not db.path:
-        raise ElicitError("Save the database first.")
-    folder = elicit_folder(db.path) / request_folder_name(req)
-    folder.mkdir(parents=True, exist_ok=True)
+def _media_blobs(db: Database, req: Request, items) -> list[tuple[str, bytes]]:
+    """The pictures (shrunk) and the recordings to repeat, named media/03.jpg, media/07_original.wav,
+    with the cards' image and original set to those names."""
     media = media_for(db, items)
     blobs: list[tuple[str, bytes]] = []
     for c in req.cards:
@@ -350,6 +349,24 @@ def write_request(db: Database, req: Request, items) -> Path:
         if "original" in files:
             c.original = f"media/{c.n:02d}_original{files['original'].suffix.lower()}"
             blobs.append((c.original, files["original"].read_bytes()))
+    return blobs
+
+
+def _local_folder(db: Database, req: Request) -> Path:
+    if not db.path:
+        raise ElicitError("Save the database first.")
+    folder = elicit_folder(db.path) / request_folder_name(req)
+    folder.mkdir(parents=True, exist_ok=True)
+    return folder
+
+
+def write_request(db: Database, req: Request, items) -> Path:
+    """Write the request's folder in Elicit and the zip to send. Returns the zip's path.
+
+    The zip is stored, not compressed (the web page reads it without a library; the recordings
+    and pictures hardly compress anyway)."""
+    folder = _local_folder(db, req)
+    blobs = _media_blobs(db, req, items)
     (folder / "request.json").write_text(req.to_json(), encoding="utf-8")
     target = folder / zip_name(req)
     tmp = target.with_name(target.name + ".part")
@@ -362,14 +379,184 @@ def write_request(db: Database, req: Request, items) -> Path:
 
 
 def message_text(req: Request) -> str:
-    """The message to paste into WhatsApp, Signal or an email with the request's file."""
-    values = {"name": req.speaker["name"], "researcher": req.researcher["name"], "link": req.page}
+    """The message to paste into WhatsApp, Signal or an email: with a Drive request just the link
+    (in the last line, on its own, so phones make it tappable); otherwise with the request's file."""
+    by_link = req.transport == "drive"
+    values = {"name": req.speaker["name"], "researcher": req.researcher["name"],
+              "link": "" if by_link else req.page}
+    key = "message_link" if by_link else "message"
     out = []
     for lang in req.languages:
         p = req.prompts.get(lang)
-        if p and p.get("message") and p["message"] not in out:
-            out.append(p["message"].format(**values))
+        text = p.get(key) if p else ""
+        if text:
+            text = text.format(**values).strip()
+            if text not in out:
+                out.append(text)
+    if by_link:
+        out.append(req.drive.get("link", ""))
     return "\n\n".join(out)
+
+
+# --------------------------------------------------------------------------
+# Through Google Drive (stage 2)
+# --------------------------------------------------------------------------
+
+DRIVE_FOLDER = "ɛλicit"                  # at the top of the researcher's Drive, made by Lemmatrix
+DRIVE_EXPIRY_DAYS = 7                    # Google's upload links last a week
+RESPONSE, STATUS = "response.json", "status.json"
+
+
+def publish_drive(db: Database, req: Request, items, drive, api_key: str, progress=None) -> str:
+    """Put the request in a folder of its own in the researcher's Drive and make its link.
+
+    The pictures, the recordings to repeat and request.json are uploaded and shared by link (so
+    the page can read them with the API key); every card gets an upload link for its recording,
+    and the request one for response.json (finished) and one for status.json (turned down). The
+    folder itself is not shared. Something going wrong deletes the folder again. Returns the link."""
+    req.transport = "drive"
+    req.expires = (_dt.date.fromisoformat(req.created[:10]) + _dt.timedelta(days=DRIVE_EXPIRY_DAYS)).isoformat()
+    folder_local = _local_folder(db, req)
+    blobs = _media_blobs(db, req, items)
+    steps = len(blobs) + len(req.cards) + 4
+    done = [0]
+
+    def step(text):
+        done[0] += 1
+        if progress is not None:
+            progress(done[0], steps, text)
+    top = drive.find_folder(DRIVE_FOLDER) or drive.create_folder(DRIVE_FOLDER)
+    folder = drive.create_folder(request_folder_name(req), top)
+    try:
+        ids = {}
+        for name, data in blobs:
+            step(f"Uploading {name}")
+            mime = {".png": "image/png", ".gif": "image/gif", ".wav": "audio/wav"}.get(
+                Path(name).suffix.lower(), "image/jpeg")
+            fid = drive.upload(Path(name).name, data, mime, folder)
+            drive.share_by_link(fid)
+            ids[name] = fid
+        for c in req.cards:
+            step(f"Making the upload link for card {c.n}")
+            c.image_id = ids.get(c.image, "")
+            c.original_id = ids.get(c.original, "")
+            c.upload = drive.upload_link(c.file, "audio/wav", folder)
+        step("Making the links for the end")
+        req.drive = {"folder": folder, "response": drive.upload_link(RESPONSE, "application/json", folder),
+                     "status": drive.upload_link(STATUS, "application/json", folder)}
+        step("Uploading the request")
+        rid = drive.upload("request.json", req.to_json().encode("utf-8"), "application/json", folder)
+        drive.share_by_link(rid)
+        req.drive["request"] = rid
+        req.drive["link"] = f"{req.page}#d={rid}&k={api_key}"
+        step("Done")
+    except BaseException:
+        try:
+            drive.delete(folder)
+        except Exception:                         # noqa: BLE001 (the first problem is the one to report)
+            pass
+        raise
+    (folder_local / "request.json").write_text(req.to_json(), encoding="utf-8")
+    return req.drive["link"]
+
+
+@dataclass
+class DriveState:
+    """What a Drive request's folder holds now."""
+    finished: bool = False
+    turned_down: str = ""                 # status.json's reason (not around, no agreement, wrong language)
+    uploaded: int = 0                     # recordings uploaded so far
+    files: dict = field(default_factory=dict)   # name -> file id
+    gone: bool = False                    # the folder isn't there any more
+
+    def summary(self, req: Request) -> str:
+        if self.gone:
+            return "its folder in Google Drive is gone"
+        if self.turned_down:
+            return f"turned down on the phone ({self.turned_down})"
+        if self.finished:
+            return f"finished: {self.uploaded} recording{'s' if self.uploaded != 1 else ''}"
+        return f"{self.uploaded} of {len(req.cards)} recorded so far"
+
+
+def drive_state(drive, st: Stored) -> DriveState:
+    folder = st.request.drive.get("folder", "")
+    out = DriveState()
+    try:
+        files = drive.list_folder(folder)
+    except Exception as exc:                      # noqa: BLE001
+        if str(exc) == "not found":
+            out.gone = True
+            return out
+        raise
+    out.files = {f["name"]: f["id"] for f in files}
+    names = {c.file for c in st.request.cards}
+    out.uploaded = sum(1 for n in out.files if n in names)
+    out.finished = RESPONSE in out.files
+    if STATUS in out.files:
+        try:
+            out.turned_down = json.loads(drive.download(out.files[STATUS]).decode("utf-8")).get("reason", "") \
+                or "no reason given"
+        except (ValueError, UnicodeError):
+            out.turned_down = "no reason given"
+    return out
+
+
+def outstanding_drive(db: Database) -> list[Stored]:
+    """Drive requests not yet received (their folder is still in Drive)."""
+    return [st for st in stored_requests(db.path)
+            if st.request.transport == "drive" and st.response is None and not st.request.drive.get("closed")]
+
+
+def close_drive(drive, st: Stored, note: str = ""):
+    """Delete the request's folder in Drive (destroyed means destroyed) and note it locally."""
+    folder = st.request.drive.get("folder", "")
+    if folder:
+        drive.delete(folder)
+    st.request.drive["closed"] = note or _dt.date.today().isoformat()
+    (st.folder / "request.json").write_text(st.request.to_json(), encoding="utf-8")
+
+
+def receive_drive(db: Database, st: Stored, drive, state: DriveState | None = None, progress=None) -> Stored:
+    """Download what came back to Drive into the request's received/ folder, then delete the folder
+    in Drive. Unfinished (the speaker stopped), what is there is taken and the rest marked not
+    reached. Raises ElicitError or the drive's errors; nothing is deleted then."""
+    state = state or drive_state(drive, st)
+    if state.gone:
+        raise ElicitError("This request's folder is no longer in Google Drive.")
+    if state.finished:
+        data = json.loads(drive.download(state.files[RESPONSE]).decode("utf-8"))
+    else:
+        data = {"format": RESPONSE_FORMAT, "version": VERSION, "request": st.request.id,
+                "speaker": st.request.speaker["code"], "finished": "",
+                "cards": [{"n": c.n, "status": "recorded", "file": c.file} for c in st.request.cards
+                          if c.file in state.files]}
+    if data.get("request") != st.request.id:
+        raise ElicitError("The answer in Google Drive belongs to another request.")
+    tmp = st.folder / "received.part"
+    shutil.rmtree(tmp, ignore_errors=True)
+    tmp.mkdir()
+    try:
+        cards = [a for a in data.get("cards", []) if a.get("status") == "recorded" and a.get("file")]
+        for k, a in enumerate(cards, 1):
+            f = a["file"]
+            if not _SAFE.match(f) or f.startswith("."):
+                raise ElicitError(f"A recording has a name that can't be used: {f}")
+            if f not in state.files:
+                a["status"] = "missing"
+                continue
+            if progress is not None:
+                progress(k, len(cards), f)
+            (tmp / f).write_bytes(drive.download(state.files[f]))
+        (tmp / "response.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+    except BaseException:
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise
+    if st.received.exists():
+        shutil.rmtree(st.received, ignore_errors=True)
+    tmp.rename(st.received)
+    close_drive(drive, st, "received " + _dt.date.today().isoformat())
+    return load_stored(st.folder)
 
 
 # --------------------------------------------------------------------------

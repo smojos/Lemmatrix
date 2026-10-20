@@ -18,7 +18,7 @@ KEYS = ("yes", "no", "ok", "are_you", "give_device", "not_around", "not_around_e
         "contact", "speak", "goodbye", "wrong_language_end", "opener", "ready", "mic_allow", "new_card",
         "say_repeat", "rerecord", "listen", "record", "stop", "recording", "its_good", "try_again",
         "cant_say", "progress", "finished", "send_title", "send", "save", "sent", "closing", "expired",
-        "mic_error", "resume", "message")
+        "mic_error", "resume", "message", "message_link", "sending", "waiting_net", "sent_done")
 
 PROMPTS: dict[str, dict[str, str]] = {
     "en": {
@@ -51,6 +51,10 @@ PROMPTS: dict[str, dict[str, str]] = {
         "resume": "Carry on where you stopped",
         "message": "Hello {name}! {researcher} would like you to record some words. Please open {link} on your "
                    "phone or computer, choose “Open the request file”, and pick the file sent with this message.",
+        "message_link": 'Hello {name}! {researcher} would like you to record some words. Please open this link on your phone or computer:',
+        "sending": 'Sending the recordings… {n} of {total}',
+        "waiting_net": 'Waiting for the internet. Your recordings are safe on this device: keep this page open, or open the link again later.',
+        "sent_done": 'Your recordings have reached {researcher}. Thank you very much!',
     },
     "da": {
         "yes": "Ja", "no": "Nej", "ok": "OK",
@@ -82,6 +86,10 @@ PROMPTS: dict[str, dict[str, str]] = {
         "resume": "Fortsæt, hvor du slap",
         "message": "Hej {name}! {researcher} vil gerne have dig til at optage nogle ord. Åbn {link} på din telefon "
                    "eller computer, vælg “Open the request file”, og vælg filen, der er sendt med denne besked.",
+        "message_link": 'Hej {name}! {researcher} vil gerne have dig til at optage nogle ord. Åbn venligst dette link på din telefon eller computer:',
+        "sending": 'Sender optagelserne… {n} af {total}',
+        "waiting_net": 'Venter på internettet. Dine optagelser er gemt sikkert på denne enhed: lad siden være åben, eller åbn linket igen senere.',
+        "sent_done": 'Dine optagelser er nået frem til {researcher}. Mange tak!',
     },
     "it": {
         "yes": "Sì", "no": "No", "ok": "OK",
@@ -113,6 +121,10 @@ PROMPTS: dict[str, dict[str, str]] = {
         "resume": "Continua da dove ti eri fermato/a",
         "message": "Ciao {name}! {researcher} vorrebbe che tu registrassi alcune parole. Apri {link} sul telefono o "
                    "sul computer, scegli “Open the request file” e seleziona il file inviato con questo messaggio.",
+        "message_link": 'Ciao {name}! {researcher} vorrebbe che tu registrassi alcune parole. Apri questo link sul telefono o sul computer:',
+        "sending": 'Invio delle registrazioni… {n} di {total}',
+        "waiting_net": 'In attesa di internet. Le tue registrazioni sono al sicuro su questo dispositivo: tieni aperta questa pagina, oppure riapri il link più tardi.',
+        "sent_done": 'Le tue registrazioni sono arrivate a {researcher}. Grazie mille!',
     },
     "fr": {
         "yes": "Oui", "no": "Non", "ok": "OK",
@@ -145,6 +157,10 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message": "Bonjour {name} ! {researcher} aimerait que vous enregistriez quelques mots. Ouvrez {link} sur "
                    "votre téléphone ou votre ordinateur, choisissez « Open the request file » et sélectionnez le "
                    "fichier envoyé avec ce message.",
+        "message_link": 'Bonjour {name} ! {researcher} aimerait que vous enregistriez quelques mots. Veuillez ouvrir ce lien sur votre téléphone ou votre ordinateur :',
+        "sending": 'Envoi des enregistrements… {n} sur {total}',
+        "waiting_net": "En attente d'Internet. Vos enregistrements sont en sécurité sur cet appareil : gardez cette page ouverte, ou rouvrez le lien plus tard.",
+        "sent_done": 'Vos enregistrements sont bien arrivés chez {researcher}. Merci beaucoup !',
     },
     "es": {
         "yes": "Sí", "no": "No", "ok": "OK",
@@ -177,6 +193,10 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message": "¡Hola, {name}! A {researcher} le gustaría que grabara algunas palabras. Abra {link} en su "
                    "teléfono u ordenador, elija «Open the request file» y seleccione el archivo enviado con este "
                    "mensaje.",
+        "message_link": '¡Hola, {name}! A {researcher} le gustaría que grabara algunas palabras. Por favor, abra este enlace en su teléfono u ordenador:',
+        "sending": 'Enviando las grabaciones… {n} de {total}',
+        "waiting_net": 'Esperando conexión a internet. Sus grabaciones están seguras en este dispositivo: mantenga esta página abierta o vuelva a abrir el enlace más tarde.',
+        "sent_done": 'Sus grabaciones han llegado a {researcher}. ¡Muchas gracias!',
     },
     "pt": {
         "yes": "Sim", "no": "Não", "ok": "OK",
@@ -208,6 +228,10 @@ PROMPTS: dict[str, dict[str, str]] = {
         "resume": "Continuar de onde parou",
         "message": "Olá, {name}! {researcher} gostaria que gravasse algumas palavras. Abra {link} no seu telefone "
                    "ou computador, escolha “Open the request file” e selecione o ficheiro enviado com esta mensagem.",
+        "message_link": 'Olá, {name}! {researcher} gostaria que gravasse algumas palavras. Por favor, abra este link no seu telefone ou computador:',
+        "sending": 'A enviar as gravações… {n} de {total}',
+        "waiting_net": 'À espera da internet. As suas gravações estão seguras neste dispositivo: mantenha esta página aberta ou volte a abrir o link mais tarde.',
+        "sent_done": 'As suas gravações chegaram a {researcher}. Muito obrigado!',
     },
     "de": {
         "yes": "Ja", "no": "Nein", "ok": "OK",
@@ -241,6 +265,10 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message": "Hallo {name}! {researcher} möchte Sie bitten, einige Wörter aufzunehmen. Öffnen Sie {link} auf "
                    "Ihrem Telefon oder Computer, wählen Sie „Open the request file“ und dann die Datei, die mit "
                    "dieser Nachricht geschickt wurde.",
+        "message_link": 'Hallo {name}! {researcher} möchte Sie bitten, einige Wörter aufzunehmen. Bitte öffnen Sie diesen Link auf Ihrem Telefon oder Computer:',
+        "sending": 'Die Aufnahmen werden gesendet … {n} von {total}',
+        "waiting_net": 'Warten auf Internet. Ihre Aufnahmen sind auf diesem Gerät sicher: Lassen Sie diese Seite offen oder öffnen Sie den Link später noch einmal.',
+        "sent_done": 'Ihre Aufnahmen sind bei {researcher} angekommen. Vielen Dank!',
     },
     "nl": {
         "yes": "Ja", "no": "Nee", "ok": "OK",
@@ -273,6 +301,10 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message": "Hallo {name}! {researcher} wil u vragen een paar woorden op te nemen. Open {link} op uw "
                    "telefoon of computer, kies ‘Open the request file’ en kies het bestand dat met dit bericht is "
                    "meegestuurd.",
+        "message_link": 'Hallo {name}! {researcher} wil u vragen een paar woorden op te nemen. Open deze link alstublieft op uw telefoon of computer:',
+        "sending": 'De opnames worden verstuurd… {n} van {total}',
+        "waiting_net": 'Wachten op internet. Uw opnames zijn veilig op dit apparaat: laat deze pagina open, of open de link later opnieuw.',
+        "sent_done": 'Uw opnames zijn bij {researcher} aangekomen. Hartelijk dank!',
     },
     "sw": {
         "yes": "Ndiyo", "no": "Hapana", "ok": "Sawa",
@@ -305,6 +337,10 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message": "Habari {name}! {researcher} angependa urekodi maneno kadhaa. Tafadhali fungua {link} kwenye simu "
                    "au kompyuta yako, chagua “Open the request file”, kisha chagua faili lililotumwa pamoja na "
                    "ujumbe huu.",
+        "message_link": 'Habari {name}! {researcher} angependa urekodi maneno kadhaa. Tafadhali fungua kiungo hiki kwenye simu au kompyuta yako:',
+        "sending": 'Inatuma rekodi… {n} kati ya {total}',
+        "waiting_net": 'Inasubiri intaneti. Rekodi zako ziko salama kwenye kifaa hiki: acha ukurasa huu wazi, au fungua kiungo tena baadaye.',
+        "sent_done": 'Rekodi zako zimemfikia {researcher}. Asante sana!',
     },
     "ar": {
         "yes": "نعم", "no": "لا", "ok": "حسنًا",
@@ -336,6 +372,10 @@ PROMPTS: dict[str, dict[str, str]] = {
         "resume": "تابع من حيث توقفت",
         "message": "مرحبًا {name}! يرغب {researcher} في أن تسجّل بعض الكلمات. من فضلك افتح {link} على هاتفك أو "
                    "حاسوبك، واختر “Open the request file”، ثم اختر الملف المرسل مع هذه الرسالة.",
+        "message_link": 'مرحبًا {name}! يرغب {researcher} في أن تسجّل بعض الكلمات. من فضلك افتح هذا الرابط على هاتفك أو حاسوبك:',
+        "sending": 'جارٍ إرسال التسجيلات… {n} من {total}',
+        "waiting_net": 'في انتظار الاتصال بالإنترنت. تسجيلاتك محفوظة بأمان على هذا الجهاز: أبقِ هذه الصفحة مفتوحة، أو افتح الرابط مرة أخرى لاحقًا.',
+        "sent_done": 'وصلت تسجيلاتك إلى {researcher}. شكرًا جزيلًا!',
     },
     "am": {
         "yes": "አዎ", "no": "አይ", "ok": "እሺ",
@@ -368,6 +408,10 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message": "ሰላም {name}! {researcher} አንዳንድ ቃላትን እንዲቀዱ ይፈልጋሉ። እባክዎ {link}ን በስልክዎ ወይም "
                    "በኮምፒውተርዎ ይክፈቱ፣ “Open the request file” የሚለውን ይምረጡ፣ ከዚያም ከዚህ መልእክት ጋር የተላከውን "
                    "ፋይል ይምረጡ።",
+        "message_link": 'ሰላም {name}! {researcher} አንዳንድ ቃላትን እንዲቀዱ ይፈልጋሉ። እባክዎ ይህንን ሊንክ በስልክዎ ወይም በኮምፒውተርዎ ይክፈቱ፦',
+        "sending": 'ቅጂዎቹ እየተላኩ ነው… {n} ከ{total}',
+        "waiting_net": 'ኢንተርኔት እየተጠበቀ ነው። ቅጂዎችዎ በዚህ መሣሪያ ላይ ደህና ናቸው፤ ይህንን ገጽ ክፍት ይተዉት፣ ወይም ሊንኩን በኋላ እንደገና ይክፈቱ።',
+        "sent_done": 'ቅጂዎችዎ {researcher} ዘንድ ደርሰዋል። በጣም እናመሰግናለን!',
     },
 }
 

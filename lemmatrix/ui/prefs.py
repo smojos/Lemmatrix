@@ -66,6 +66,22 @@ class Prefs:
     def set_value(self, key: str, value):
         self.q.setValue(key, value)
 
+    @property
+    def google_token(self) -> dict:
+        """ɛλicit's Google Drive sign-in on this computer (a refresh token: it reaches only the files
+        Lemmatrix made itself, the drive.file permission); {} when signed out."""
+        import json
+        try:
+            return json.loads(self.q.value("elicit/google_token", "") or "{}")
+        except (ValueError, TypeError):
+            return {}
+
+    @google_token.setter
+    def google_token(self, token: dict):
+        import json
+        self.q.setValue("elicit/google_token", json.dumps(token) if token else "")
+        self.q.sync()
+
     def get_list(self, key: str) -> list[str]:
         v = self.q.value(key, [])
         if isinstance(v, str):

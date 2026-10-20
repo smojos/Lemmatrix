@@ -190,7 +190,7 @@ def win(tmp_path, monkeypatch, db):
 def test_the_button_sits_left_of_texts_and_utterances(win):
     lay = win.head_icons
     assert lay.itemAt(0).widget() is win.elicit_btn and lay.itemAt(1).widget() is win.texts_btn
-    texts = [a.text() for a in win.elicit_menu.actions() if a.isVisible()]
+    texts = [a.text() for a in win.elicit_menu.actions() if a.isVisible() and not a.isSeparator()]
     assert texts == ["Make ɛλicit request…", "Receive ɛλicitation…"]
     assert "remote elicitation" in win.elicit_btn.toolTip()
 
@@ -380,3 +380,253 @@ def test_the_whole_loop_through_the_web_page(db, tmp_path):
     assert [c.n for c in el.waiting(db, st)] == [1, 2, 4] and [c.n for c in el.skipped(st)] == [3]
     samples, rate = audio.read_wav(st.recording(1))
     assert len(samples) > rate * 0.3 and audio.read_info(st.recording(1))["IART"] == "SP1"
+
+
+# ---- stage 2: through Google Drive (a stand-in Drive in memory) ----------------------------
+
+class FakeDrive:
+    """What gdrive.Drive does, in memory: folders, files, shares and upload links."""
+
+    def __init__(self):
+        self.files = {}                    # id -> {name, parent, data, mime, shared}
+        self.sessions = {}                 # upload link -> (name, parent)
+        self.n = 0
+
+    def _id(self):
+        self.n += 1
+        return f"f{self.n}"
+
+    def find_folder(self, name):
+        return next((i for i, f in self.files.items() if f["name"] == name and f["parent"] == ""), "")
+
+    def create_folder(self, name, parent=""):
+        i = self._id()
+        self.files[i] = {"name": name, "parent": parent, "data": b"", "mime": "folder", "shared": False}
+        return i
+
+    def upload(self, name, data, mime, parent):
+        i = self._id()
+        self.files[i] = {"name": name, "parent": parent, "data": data, "mime": mime, "shared": False}
+        return i
+
+    def share_by_link(self, fid):
+        self.files[fid]["shared"] = True
+
+    def upload_link(self, name, mime, parent, origin=""):
+        link = f"https://upload.example/{self._id()}"
+        self.sessions[link] = (name, parent)
+        return link
+
+    def put(self, link, data):             # what the page does with an upload link
+        name, parent = self.sessions.pop(link)
+        return self.upload(name, data, "", parent)
+
+    def list_folder(self, folder):
+        if folder not in self.files:
+            raise el.ElicitError("not found")
+        return [{"id": i, "name": f["name"]} for i, f in self.files.items() if f["parent"] == folder]
+
+    def download(self, fid):
+        return self.files[fid]["data"]
+
+    def delete(self, fid):
+        for i in [i for i, f in self.files.items() if f["parent"] == fid]:
+            self.delete(i)
+        self.files.pop(fid, None)
+
+
+def _wav_bytes(tmp_path, n=1):
+    p = tmp_path / f"w{n}.wav"
+    audio.write_wav(p, 0.1 * np.sin(np.arange(8000) / (3 + n)), 8000, 16)
+    return p.read_bytes()
+
+
+def test_a_request_through_drive(db, tmp_path):
+    drive = FakeDrive()
+    items = _items(db)
+    req = el.new_request(db, items, "SP1", "RS1", "da", "italiensk")
+    link = el.publish_drive(db, req, items, drive, "KEY")
+    assert req.transport == "drive" and link == f"{el.WEB_PAGE}#d={req.drive['request']}&k=KEY"
+    assert req.expires == "%s" % (__import__("datetime").date.fromisoformat(req.created[:10])
+                                  + __import__("datetime").timedelta(days=7)).isoformat()
+    folder = req.drive["folder"]
+    top = drive.files[folder]["parent"]
+    assert drive.files[top]["name"] == "ɛλicit" and not drive.files[folder]["shared"]
+    shared = sorted(f["name"] for f in drive.files.values() if f["shared"])
+    assert shared == ["01.png", "02.png", "06.gif", "07_original.wav", "08_original.wav", "09_original.wav",
+                      "request.json"]
+    sent = json.loads(drive.download(req.drive["request"]))
+    assert all(c["upload"] for c in sent["cards"]) and sent["drive"]["response"] and sent["drive"]["status"]
+    assert sent["cards"][0]["image_id"] and sent["cards"][6]["original_id"]
+    msg = el.message_text(req)
+    assert msg.endswith(link) and "Open the request file" not in msg and "Hej Speaker 1!" in msg
+    st = el.outstanding_drive(db)[0]
+    assert st.request.id == req.id
+    # the speaker records cards 1 and 2, skips 3, and stops
+    for c in st.request.cards[:2]:
+        drive.put(c.upload, _wav_bytes(tmp_path, c.n))
+    state = el.drive_state(drive, st)
+    assert (state.finished, state.uploaded, state.summary(st.request)) == (False, 2, "2 of 11 recorded so far")
+    # ... then comes back and finishes
+    for c in st.request.cards[3:]:
+        drive.put(c.upload, _wav_bytes(tmp_path, c.n))
+    answers = [{"n": c.n, "status": "skipped"} if c.n == 3 else
+               {"n": c.n, "status": "recorded", "file": c.file, "date": "2026-10-22"} for c in st.request.cards]
+    drive.put(st.request.drive["response"], json.dumps({"format": el.RESPONSE_FORMAT, "request": req.id,
+                                                        "speaker": "SP1", "cards": answers}).encode())
+    state = el.drive_state(drive, st)
+    assert state.finished and state.uploaded == 10
+    got = el.receive_drive(db, st, drive, state)
+    assert [c.n for c in el.waiting(db, got)] == [1, 2, 4, 5, 6, 7, 8, 9, 10, 11]
+    assert el.recorded_date(got, 1) == "2026-10-22"
+    assert folder not in drive.files                                  # destroyed in Drive
+    assert el.outstanding_drive(db) == []
+
+
+def test_unfinished_and_turned_down_drive_requests(db, tmp_path):
+    drive = FakeDrive()
+    items = _items(db)[:3]
+    req = el.new_request(db, items, "SP1", "RS1", "da")
+    el.publish_drive(db, req, items, drive, "KEY")
+    st = el.outstanding_drive(db)[0]
+    drive.put(st.request.cards[0].upload, _wav_bytes(tmp_path))
+    got = el.receive_drive(db, st, drive)                            # taken as it is: the rest not reached
+    assert [c.n for c in el.waiting(db, got)] == [1] and got.answer(2) is None
+    req2 = el.new_request(db, items, "SP2", "RS1", "da")
+    el.publish_drive(db, req2, items, drive, "KEY")
+    st2 = el.outstanding_drive(db)[0]
+    drive.put(st2.request.drive["status"], json.dumps({"reason": "not around"}).encode())
+    assert el.drive_state(drive, st2).summary(st2.request) == "turned down on the phone (not around)"
+    el.close_drive(drive, st2, "withdrawn")
+    assert el.outstanding_drive(db) == [] and st2.request.drive["folder"] not in drive.files
+
+
+def test_a_failed_publish_leaves_nothing_in_drive(db):
+    class Broken(FakeDrive):
+        def upload_link(self, *a, **k):
+            raise el.ElicitError("Google Drive answered 500")
+    drive = Broken()
+    items = _items(db)[:2]
+    req = el.new_request(db, items, "SP1", "RS1", "da")
+    with pytest.raises(el.ElicitError):
+        el.publish_drive(db, req, items, drive, "KEY")
+    assert [f["name"] for f in drive.files.values()] == ["ɛλicit"]
+
+
+def test_the_drive_client_speaks_googles_api():
+    """gdrive.Drive's requests, against a stand-in for urllib (no network)."""
+    from lemmatrix import gdrive
+    import time
+    calls = []
+
+    class R:
+        def __init__(self, status=200, body=b"{}", headers=None):
+            self.status, self._b, self.headers = status, body, headers or {}
+
+        def read(self):
+            return self._b
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def opener(req, timeout=0):
+        calls.append((req.get_method(), req.full_url, dict(req.header_items()), req.data))
+        if "uploadType=resumable" in req.full_url:
+            return R(200, b"{}", {"Location": "https://upload.example/s1"})
+        return R(200, json.dumps({"id": "x1", "files": []}).encode())
+    d = gdrive.Drive({"access_token": "A", "refresh_token": "R", "expires_at": time.time() + 999}, opener=opener)
+    assert d.upload_link("01_D001.wav", "audio/wav", "F") == "https://upload.example/s1"
+    method, url, headers, body = calls[-1]
+    assert method == "POST" and headers["Authorization"] == "Bearer A" and headers["Origin"] == gdrive.PAGE_ORIGIN
+    assert headers["X-upload-content-type"] == "audio/wav" and json.loads(body)["parents"] == ["F"]
+    assert d.upload("a.json", b"{}", "application/json", "F") == "x1"
+    assert b"multipart" not in calls[-1][3] and "multipart/related" in calls[-1][2]["Content-type"]
+    d.share_by_link("x1")
+    assert json.loads(calls[-1][3]) == {"type": "anyone", "role": "reader"}
+    assert d.find_folder("ɛλicit") == ""
+    with pytest.raises(gdrive.SignInNeeded):
+        gdrive.Drive({}).access()
+
+
+def test_the_page_through_a_drive_link(db, tmp_path):
+    """The page opens a Drive link, uploads each recording as it is good and response.json at the
+    end, and tells the researcher when turned down; Google's endpoints are stood in for."""
+    pw = pytest.importorskip("playwright.sync_api")
+    import functools
+    import http.server
+    import threading
+    drive = FakeDrive()
+    items = _items(db)[:2] + [_items(db)[6]]                         # gatto, gatti, acqua (rerecord)
+    req = el.new_request(db, items, "SP1", "RS1", "da", "italiensk")
+    link = el.publish_drive(db, req, items, drive, "KEY")
+    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(ROOT / "docs"))
+    handler.log_message = lambda *a: None
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    fake = tmp_path / "voice.wav"
+    audio.write_wav(fake, 0.3 * np.sin(np.arange(48000 * 2) / 7), 48000, 16)
+    cors = {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, PUT, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type"}
+
+    def google(route):
+        r = route.request
+        if r.method == "OPTIONS":
+            return route.fulfill(status=200, headers=cors)
+        if r.url.startswith("https://upload.example/"):
+            drive.put(r.url, r.post_data_buffer or b"")
+            return route.fulfill(status=200, headers=cors, body="{}")
+        fid = r.url.split("/files/")[1].split("?")[0]
+        assert "key=KEY" in r.url and drive.files[fid]["shared"]
+        return route.fulfill(status=200, headers=cors, body=drive.files[fid]["data"])
+    page_link = link.replace(el.WEB_PAGE, f"http://127.0.0.1:{server.server_port}/elicit/")
+    try:
+        with pw.sync_playwright() as p:
+            try:
+                browser = p.chromium.launch(args=["--use-fake-ui-for-media-stream",
+                                                  "--use-fake-device-for-media-stream",
+                                                  f"--use-file-for-fake-audio-capture={fake}"])
+            except Exception as exc:                                  # noqa: BLE001
+                pytest.skip(f"no Chromium for Playwright: {exc}")
+            ctx = browser.new_context()
+            ctx.route("https://www.googleapis.com/**", google)
+            ctx.route("https://upload.example/**", google)
+            page = ctx.new_page()
+            errors = []
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            page.goto(page_link)
+
+            def click(text):
+                page.locator("button", has_text=text).first.click()
+            for _ in range(3):
+                click("Yes")
+            click("I'm ready")
+            page.locator("img").first.wait_for()                          # the picture came from Drive
+            for n in range(3):
+                page.locator("button.rec").click()
+                page.wait_for_timeout(500)
+                page.locator("button.rec").click()
+                click("It's good")
+            click("Goodbye")
+            page.get_by_text("Your recordings have reached Researcher 1").wait_for(timeout=15000)
+            assert not errors, errors
+            # a second request, turned down on the phone
+            req2 = el.new_request(db, items[:1], "SP1", "RS1", "da")
+            link2 = el.publish_drive(db, req2, items[:1], drive, "KEY")
+            page.goto(link2.replace(el.WEB_PAGE, f"http://127.0.0.1:{server.server_port}/elicit/"))
+            page.reload()
+            click("No")
+            click("is not around")
+            page.get_by_text("was not around").wait_for()
+            browser.close()
+    finally:
+        server.shutdown()
+    st = next(s for s in el.outstanding_drive(db) if s.request.id == req.id)
+    state = el.drive_state(drive, st)
+    assert state.finished and state.uploaded == 3
+    got = el.receive_drive(db, st, drive, state)
+    assert [c.n for c in el.waiting(db, got)] == [1, 2, 3]
+    st2 = next(s for s in el.outstanding_drive(db) if s.request.id == req2.id)
+    assert el.drive_state(drive, st2).turned_down == "not around"

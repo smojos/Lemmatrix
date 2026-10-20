@@ -270,8 +270,11 @@ function btn(key, onclick, cls, extra) {
 }
 
 async function save() {
-  await store.put({ id: S.req.id, zip: S.zip, answers: S.answers, saved: new Date().toISOString() });
+  await store.put({ id: S.req.id, zip: S.zip, answers: S.answers, drive: S.driveId || "",
+                    saved: new Date().toISOString() });
 }
+
+function byDrive() { return S && S.req.transport === "drive"; }
 
 async function destroy() {
   stopMic();
@@ -304,7 +307,125 @@ function expired() {
 // Screens
 // ------------------------------------------------------------------------------------------
 
+// ------------------------------------------------------------------------------------------
+// Through Google Drive (stage 2): the link is .../elicit/#d=<request.json's id>&k=<API key>.
+// The request and its pictures and recordings to repeat are read with the key (shared by link);
+// each recording goes to its own upload link as soon as it is good. Nothing to open or send.
+// ------------------------------------------------------------------------------------------
+
+const DRIVE = "https://www.googleapis.com/drive/v3/files/";
+
+function linkParams() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  return { id: p.get("d") || "", key: p.get("k") || "" };
+}
+
+async function driveFile(id, key) {
+  const r = await fetch(DRIVE + encodeURIComponent(id) + "?alt=media&key=" + encodeURIComponent(key));
+  if (!r.ok) throw new Error("Google Drive answered " + r.status);
+  return new Uint8Array(await r.arrayBuffer());
+}
+
+async function openLink(id, key) {
+  let saved = [];
+  try { saved = await store.all(); } catch (e) { saved = []; }
+  const prior = saved.find(rec => rec.drive === id);
+  if (prior) {                                       // opened before on this device: carry on
+    await load(prior.zip, prior.answers);
+    S.driveId = id;
+    return begin();
+  }
+  show(h("div", { class: "panel" }, h("div", { class: "say" }, h("div", { class: "en" }, "Opening the request…"))));
+  try {
+    const reqBytes = await driveFile(id, key);
+    const req = JSON.parse(new TextDecoder().decode(reqBytes));
+    const entries = [{ name: "request.json", data: reqBytes }];
+    for (const c of req.cards || []) {
+      if (c.image && c.image_id) entries.push({ name: c.image, data: await driveFile(c.image_id, key) });
+      if (c.original && c.original_id) entries.push({ name: c.original, data: await driveFile(c.original_id, key) });
+    }
+    await load(writeZip(entries));
+  } catch (e) {
+    show(h("div", { class: "panel" },
+      h("div", { class: "say danger" }, h("div", { class: "en" }, "This link can't be opened just now."),
+        h("div", { class: "l2" }, "Check the internet connection and try again. If it still doesn't open, the " +
+          "request may have expired or been withdrawn: please contact the person who sent it.")),
+      h("div", { class: "note" }, String(e && e.message || e)),
+      h("div", { class: "buttons" }, h("button", { class: "main", onclick: () => openLink(id, key) }, "Try again"))));
+    return;
+  }
+  S.driveId = id;
+  persist();
+  await save();
+  begin();
+}
+
+let uploading = null;
+
+async function uploadPending() {
+  // Every recording that is good but not uploaded yet, in order; false if one couldn't go now.
+  if (!byDrive()) return true;
+  if (uploading) return uploading;
+  uploading = (async () => {
+    let ok = true;
+    for (const c of S.req.cards) {
+      const a = S.answers[c.n];
+      if (!a || a.status !== "recorded" || a.uploaded || !c.upload) continue;
+      try {
+        const r = await fetch(c.upload, { method: "PUT", headers: { "Content-Type": "audio/wav" }, body: a.wav });
+        if (!r.ok) throw new Error("upload " + r.status);
+        a.uploaded = true;
+        await save();
+      } catch (e) {
+        ok = false;
+        break;
+      }
+    }
+    uploading = null;
+    return ok;
+  })();
+  return uploading;
+}
+
+window.addEventListener("online", () => { if (byDrive()) uploadPending(); });
+
+async function putJSON(url, data) {
+  const r = await fetch(url, { method: "PUT", headers: { "Content-Type": "application/json" },
+                               body: JSON.stringify(data, null, 1) });
+  if (!r.ok) throw new Error("upload " + r.status);
+}
+
+async function tellResearcher(reason) {
+  // Turned down on the phone: the researcher sees why (best effort; nothing is kept here).
+  if (!byDrive() || !S.req.drive || !S.req.drive.status) return;
+  try { await putJSON(S.req.drive.status, { request: S.req.id, reason, when: new Date().toISOString() }); }
+  catch (e) { /* offline: the request simply expires */ }
+}
+
+async function sendDrive() {
+  const total = S.req.cards.filter(c => (S.answers[c.n] || {}).status === "recorded").length;
+  const line = h("div", { class: "note" });
+  const panel = h("div", { class: "panel" }, say("goodbye"), line);
+  show(panel);
+  for (;;) {
+    const done = S.req.cards.filter(c => (S.answers[c.n] || {}).uploaded).length;
+    line.replaceChildren(...text("sending", { n: done, total }).filter(Boolean).map(t => h("div", {}, t)));
+    if (await uploadPending()) {
+      try {
+        await putJSON(S.req.drive.response, responseData());
+        break;
+      } catch (e) { /* try again below */ }
+    }
+    line.replaceChildren(...text("waiting_net").filter(Boolean).map(t => h("div", {}, t)));
+    await new Promise(res => setTimeout(res, 8000));
+  }
+  await destroy();
+  show(h("div", { class: "panel" }, say("sent_done"), say("closing", null, "small")));
+}
+
 async function start() {
+  const link = linkParams();
+  if (link.id && link.key) return openLink(link.id, link.key);
   let saved = [];
   try { saved = await store.all(); } catch (e) { saved = []; }
   const input = h("input", { type: "file", accept: ".zip,application/zip", onchange: () => openFile(input) });
@@ -371,6 +492,7 @@ function giveDevice() {
 }
 
 async function notAround() {
+  await tellResearcher("not around");
   await destroy();
   show(h("div", { class: "panel" }, say("not_around_end"), say("goodbye", null, "small")));
 }
@@ -383,6 +505,7 @@ function agreement() {
 function contact() {
   show(h("div", { class: "panel" }, say("contact"),
     h("div", { class: "buttons" }, btn("ok", async () => {
+      await tellResearcher("no participation agreement");
       await destroy();
       show(h("div", { class: "panel" }, say("goodbye")));
     }, "main"))));
@@ -391,6 +514,7 @@ function contact() {
 function speak() {
   show(h("div", { class: "panel" }, say("speak"),
     h("div", { class: "buttons row" }, btn("yes", opener, "main"), btn("no", async () => {
+      await tellResearcher("doesn't speak the language");
       await destroy();
       show(h("div", { class: "panel" }, say("goodbye"), say("wrong_language_end", null, "small")));
     }))));
@@ -519,18 +643,18 @@ function afterRecording(card, area, result) {
 async function answer(card, result) {
   S.answers[card.n] = result;
   await save();
+  uploadPending();                   // through Drive: on its way now (kept here until it has gone)
   nextCard();
 }
 
 function finished() {
   stopMic();
   show(h("div", { class: "panel" }, say("finished"),
-    h("div", { class: "buttons" }, btn("goodbye", sendScreen, "main"))));
+    h("div", { class: "buttons" }, btn("goodbye", () => (byDrive() ? sendDrive() : sendScreen()), "main"))));
 }
 
-function responseZip() {
-  const enc = new TextEncoder();
-  const cards = [], entries = [];
+function responseData() {
+  const cards = [];
   for (const c of S.req.cards) {
     const a = S.answers[c.n];
     if (!a) continue;
@@ -544,9 +668,13 @@ function responseZip() {
     }
     cards.push(item);
   }
-  const response = { format: RESPONSE_FORMAT, version: 1, request: S.req.id, speaker: S.req.speaker.code,
-                     finished: new Date().toISOString(), cards };
-  entries.push({ name: "response.json", data: enc.encode(JSON.stringify(response, null, 1)) });
+  return { format: RESPONSE_FORMAT, version: 1, request: S.req.id, speaker: S.req.speaker.code,
+           finished: new Date().toISOString(), cards };
+}
+
+function responseZip() {
+  const enc = new TextEncoder();
+  const entries = [{ name: "response.json", data: enc.encode(JSON.stringify(responseData(), null, 1)) }];
   return Promise.all(S.req.cards.filter(c => S.answers[c.n] && S.answers[c.n].wav).map(async c => ({
     name: "recordings/" + c.file, data: new Uint8Array(await S.answers[c.n].wav.arrayBuffer()),
   }))).then(recs => writeZip(entries.concat(recs)));

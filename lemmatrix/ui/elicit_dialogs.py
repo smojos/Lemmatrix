@@ -6,6 +6,7 @@ it, and the review of the recordings that come back (Receive ɛλicitation)."""
 from __future__ import annotations
 
 import datetime as _dt
+import shutil
 from pathlib import Path
 
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, QSortFilterProxyModel, Qt, QUrl
@@ -15,6 +16,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog,
                                QMessageBox, QPlainTextEdit, QPushButton, QSplitter, QTableView,
                                QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
+from .. import cloud_keys, gdrive
 from .. import elicit as el
 from .. import elicit_prompts, filenames, layout, storage
 from ..model import is_utterance
@@ -33,6 +35,99 @@ def _title(text: str) -> QLabel:
     lbl.setFont(f)
     lbl.setStyleSheet(f"color: {theme.colour('pitch').name()};")
     return lbl
+
+
+def run_with_progress(parent, title: str, label: str, fn, can_cancel: bool = False):
+    """Run fn(progress, cancelled) off the main thread, with a progress dialogue, and return what
+    it returns (or raise what it raised). progress(n, total, text) updates the dialogue."""
+    import threading
+    import time
+    from PySide6.QtCore import QEventLoop
+    from PySide6.QtWidgets import QApplication, QProgressDialog
+    state = {"done": False, "result": None, "error": None, "text": label, "n": 0, "total": 0, "cancel": False}
+
+    def progress(n, total, text):
+        state.update(n=n, total=total, text=text)
+
+    def work():
+        try:
+            state["result"] = fn(progress, lambda: state["cancel"])
+        except BaseException as exc:              # noqa: BLE001 (passed on below)
+            state["error"] = exc
+        finally:
+            state["done"] = True
+    threading.Thread(target=work, daemon=True).start()
+    dlg = QProgressDialog(label, "Cancel" if can_cancel else "", 0, 0, parent)
+    if not can_cancel:
+        dlg.setCancelButton(None)
+    dlg.setWindowTitle(title)
+    dlg.setWindowModality(Qt.WindowModal)
+    dlg.setMinimumDuration(200)
+    dlg.setMinimumWidth(420)
+    while not state["done"]:
+        QApplication.processEvents(QEventLoop.AllEvents, 50)
+        time.sleep(0.02)
+        if can_cancel and dlg.wasCanceled():
+            state["cancel"] = True
+        dlg.setMaximum(state["total"])
+        dlg.setValue(state["n"])
+        dlg.setLabelText(state["text"])
+    dlg.close()
+    if state["error"] is not None:
+        raise state["error"]
+    return state["result"]
+
+
+def google_drive(main, sign_in: bool = True):
+    """The researcher's Google Drive, signed in on this computer (asking to sign in if not, when
+    sign_in). None if signed out or the keys aren't there."""
+    if not cloud_keys.google_ready():
+        return None
+    prefs = main.prefs
+    token = prefs.google_token
+    if not token.get("refresh_token"):
+        if not sign_in:
+            return None
+        box = QMessageBox(QMessageBox.Information, "Google Drive",
+                          "ɛλicit sends requests through your Google Drive. Your browser opens now for you to "
+                          "sign in to Google and allow Lemmatrix to keep the files it makes there (and only "
+                          "those: it can't see anything else in your Drive).", parent=main)
+        go = box.addButton("Sign in", QMessageBox.AcceptRole)
+        box.addButton(QMessageBox.Cancel)
+        box.exec()
+        if box.clickedButton() is not go:
+            return None
+        import webbrowser
+        try:
+            token = run_with_progress(main, "Google Drive", "Waiting for you to sign in in your browser…",
+                                      lambda progress, cancelled: gdrive.authorize(webbrowser.open, cancelled),
+                                      can_cancel=True)
+        except gdrive.DriveError as exc:
+            QMessageBox.warning(main, "Google Drive", str(exc))
+            return None
+        prefs.google_token = token
+
+    def keep(tok):
+        prefs.google_token = tok
+    return gdrive.Drive(token, on_token=keep)
+
+
+def sign_out_google(main):
+    token = main.prefs.google_token
+    main.prefs.google_token = {}
+    try:
+        run_with_progress(main, "Google Drive", "Signing out…", lambda p, c: gdrive.revoke(token))
+    except Exception:                             # noqa: BLE001 (signed out here whatever Google says)
+        pass
+    main.statusBar().showMessage("Signed out of Google Drive.", 5000)
+
+
+def _drive_problem(main, title, exc):
+    if isinstance(exc, gdrive.SignInNeeded):
+        main.prefs.google_token = {}
+        QMessageBox.warning(main, title, f"{exc}\n\nTry again: Lemmatrix will ask you to sign in.")
+    else:
+        QMessageBox.warning(main, title, str(exc))
 
 
 def _mb(n: int) -> str:
@@ -200,6 +295,14 @@ class RequestDialog(QDialog):
         self.repeat = QCheckBox("Ask for tokens to be said 2 or 3 times (utterances: once)")
         self.repeat.setChecked(True)
         form.addRow("", self.repeat)
+        self.send_by = QComboBox()
+        self.send_by.addItem("A link, through your Google Drive (recordings come straight back)", "drive")
+        self.send_by.addItem("A file (zip) to send by hand", "file")
+        if not cloud_keys.google_ready():
+            self.send_by.model().item(0).setEnabled(False)
+            self.send_by.setItemText(0, "A link, through Google Drive (this copy of Lemmatrix has no Google keys yet)")
+            self.send_by.setCurrentIndex(1)
+        form.addRow("Send as", self.send_by)
         lay.addLayout(form)
 
         split = QSplitter(Qt.Vertical)
@@ -436,6 +539,24 @@ class RequestDialog(QDialog):
         req = el.new_request(db, items, self.speaker.currentData(), self.researcher.currentData(),
                              self.l2.currentData() or "", self.l2_name.text(), self.repeat.isChecked(),
                              theme.accent().name())
+        if self.send_by.currentData() == "drive":
+            drive = google_drive(self.main)
+            if drive is None:
+                return
+            try:
+                run_with_progress(self, f"Make {NAME} request", "Putting the request in your Google Drive…",
+                                  lambda progress, cancelled: el.publish_drive(
+                                      db, req, items, drive, cloud_keys.GOOGLE_API_KEY, progress))
+            except (OSError, el.ElicitError, gdrive.DriveError) as exc:
+                shutil.rmtree(el.elicit_folder(db.path) / el.request_folder_name(req), ignore_errors=True)
+                _drive_problem(self.main, f"Make {NAME} request", exc)
+                return
+            self.made = el.elicit_folder(db.path) / el.request_folder_name(req) / "request.json"
+            self.request = req
+            self.accept()
+            self.main.refresh_elicit_icon()
+            SentDialog(self.main, req, self.made).exec()
+            return
         try:
             self.made = el.write_request(db, req, items)
         except (OSError, el.ElicitError) as exc:
@@ -454,9 +575,15 @@ class SentDialog(QDialog):
         self.setWindowTitle(f"{NAME} request made")
         self.path = path
         lay = QVBoxLayout(self)
+        by_link = req.transport == "drive"
         lay.addWidget(_title(f"Send it to {req.speaker['name']}"))
-        lay.addWidget(QLabel(f"Send <b>{path.name}</b> by WhatsApp, Signal or email, with this message. "
-                             f"The request expires on {req.expires}."))
+        if by_link:
+            lay.addWidget(QLabel("Paste this message (with its link) into WhatsApp, Signal or an email. The "
+                                 f"recordings come back to your Google Drive by themselves. The link works until "
+                                 f"{req.expires}."))
+        else:
+            lay.addWidget(QLabel(f"Send <b>{path.name}</b> by WhatsApp, Signal or email, with this message. "
+                                 f"The request expires on {req.expires}."))
         self.text = QPlainTextEdit(el.message_text(req))
         self.text.setReadOnly(True)
         lay.addWidget(self.text, 1)
@@ -465,8 +592,12 @@ class SentDialog(QDialog):
         row = QHBoxLayout()
         copy = QPushButton("Copy the message")
         copy.clicked.connect(lambda: QGuiApplication.clipboard().setText(self.text.toPlainText()))
-        folder = QPushButton("Show the file")
-        folder.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(path.parent))))
+        if by_link:
+            folder = QPushButton("Copy the link only")
+            folder.clicked.connect(lambda: QGuiApplication.clipboard().setText(req.drive.get("link", "")))
+        else:
+            folder = QPushButton("Show the file")
+            folder.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(path.parent))))
         close = QPushButton("Close")
         close.setDefault(True)
         close.clicked.connect(self.accept)
@@ -483,11 +614,20 @@ class SentDialog(QDialog):
 # --------------------------------------------------------------------------
 
 def choose_and_receive(main):
-    """Receive ɛλicitation: pick the speaker's zip, unpack it, and review it."""
+    """Receive ɛλicitation: the requests out through Google Drive (checked there), or a zip."""
     db = main.doc.db
     if not db.path:
         QMessageBox.information(main, RECEIVE, "Open the database the request was made from first.")
         return
+    if el.outstanding_drive(db):
+        ReceiveDialog(main).exec()
+        return
+    receive_zip(main)
+
+
+def receive_zip(main):
+    """Receive ɛλicitation from a zip the speaker sent: unpack it, and review it."""
+    db = main.doc.db
     start = Path.home() / "Downloads"
     path, _ = QFileDialog.getOpenFileName(main, RECEIVE + ": the recordings' zip",
                                           str(start if start.is_dir() else Path.home()), "Zip files (*.zip)")
@@ -500,6 +640,151 @@ def choose_and_receive(main):
         return
     main.refresh_elicit_icon()
     ReviewDialog(main, st).exec()
+
+
+class ReceiveDialog(QDialog):
+    """The requests out through Google Drive, as they are there now: download a finished one (or
+    take what has come so far), withdraw one; or receive a zip instead."""
+
+    def __init__(self, main):
+        super().__init__(main)
+        self.main, self.db = main, main.doc.db
+        self.setWindowTitle(RECEIVE)
+        self.states: dict[str, el.DriveState] = {}
+        lay = QVBoxLayout(self)
+        lay.addWidget(_title(RECEIVE))
+        lay.addWidget(QLabel("Requests out through your Google Drive:"))
+        self.table = QTableWidget(0, 4)
+        self.table.setHorizontalHeaderLabels(("Speaker", "Made", "Expires", "Now"))
+        self.table.verticalHeader().hide()
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.table.horizontalHeader().setStretchLastSection(True)
+        for c, w in enumerate((150, 100, 100)):
+            self.table.setColumnWidth(c, w)
+        self.table.currentCellChanged.connect(lambda *_: self._buttons())
+        self.table.cellDoubleClicked.connect(lambda *_: self.download())
+        lay.addWidget(self.table, 1)
+        row = QHBoxLayout()
+        self.get_btn = QPushButton("Download and review")
+        self.get_btn.clicked.connect(self.download)
+        self.withdraw_btn = QPushButton("Withdraw…")
+        self.withdraw_btn.setToolTip("Deletes the request's folder in your Google Drive: its link stops working")
+        self.withdraw_btn.clicked.connect(self.withdraw)
+        check = QPushButton("Check again")
+        check.clicked.connect(self.check)
+        row.addWidget(self.get_btn)
+        row.addWidget(self.withdraw_btn)
+        row.addWidget(check)
+        row.addStretch(1)
+        zip_btn = QPushButton("From a zip file…")
+        zip_btn.clicked.connect(self._zip)
+        row.addWidget(zip_btn)
+        close = QPushButton("Close")
+        close.clicked.connect(self.reject)
+        row.addWidget(close)
+        lay.addLayout(row)
+        self.resize(760, 360)
+        self.requests = el.outstanding_drive(self.db)
+        self._fill()
+        from PySide6.QtCore import QTimer
+        QTimer.singleShot(0, self.check)
+
+    def _fill(self):
+        self.table.setRowCount(len(self.requests))
+        for i, st in enumerate(self.requests):
+            r = st.request
+            state = self.states.get(r.id)
+            now = state.summary(r) if state else "not checked yet"
+            if state is None and r.expires < _dt.date.today().isoformat():
+                now = "expired"
+            sp = r.speaker
+            for c, v in enumerate((f"{sp['code']} · {sp['name']}" if sp["name"] != sp["code"] else sp["code"],
+                                   r.created[:10], r.expires, now)):
+                self.table.setItem(i, c, QTableWidgetItem(v))
+        if self.requests and self.table.currentRow() < 0:
+            self.table.setCurrentCell(0, 0)
+        self._buttons()
+
+    def _current(self):
+        i = self.table.currentRow()
+        return self.requests[i] if 0 <= i < len(self.requests) else None
+
+    def _buttons(self):
+        st = self._current()
+        state = self.states.get(st.request.id) if st else None
+        self.get_btn.setEnabled(bool(state and not state.gone and (state.uploaded or state.finished)))
+        self.withdraw_btn.setEnabled(st is not None)
+
+    def _drive(self):
+        return google_drive(self.main)
+
+    def check(self):
+        if not self.requests:
+            return
+        drive = self._drive()
+        if drive is None:
+            return
+        try:
+            found = run_with_progress(self, RECEIVE, "Looking in your Google Drive…",
+                                      lambda p, c: {st.request.id: el.drive_state(drive, st) for st in self.requests})
+        except (OSError, gdrive.DriveError) as exc:
+            _drive_problem(self.main, RECEIVE, exc)
+            return
+        self.states.update(found)
+        self._fill()
+
+    def download(self):
+        st = self._current()
+        state = self.states.get(st.request.id) if st else None
+        if st is None or state is None or not (state.uploaded or state.finished):
+            return
+        if not state.finished:
+            if QMessageBox.question(self, RECEIVE, f"{st.request.speaker['code']} hasn't finished: {state.uploaded} "
+                                    f"of {len(st.request.cards)} cards have come so far. Take those and end the "
+                                    "request? Its link then stops working.") != QMessageBox.Yes:
+                return
+        drive = self._drive()
+        if drive is None:
+            return
+        try:
+            got = run_with_progress(self, RECEIVE, "Downloading the recordings…",
+                                    lambda p, c: el.receive_drive(self.db, st, drive, state, p))
+        except (OSError, el.ElicitError, gdrive.DriveError) as exc:
+            _drive_problem(self.main, RECEIVE, exc)
+            return
+        self.accept()
+        self.main.refresh_elicit_icon()
+        ReviewDialog(self.main, got).exec()
+
+    def withdraw(self):
+        st = self._current()
+        if st is None:
+            return
+        state = self.states.get(st.request.id)
+        what = (f"Withdraw the request for {st.request.speaker['code']}? Its folder in your Google Drive is deleted, "
+                "with anything recorded so far, and the link stops working.")
+        if state is not None and state.turned_down:
+            what = (f"The request was {state.summary(st.request)}. Delete its folder in your Google Drive?")
+        if QMessageBox.question(self, RECEIVE, what) != QMessageBox.Yes:
+            return
+        drive = self._drive()
+        if drive is None:
+            return
+        try:
+            run_with_progress(self, RECEIVE, "Deleting the request's folder…",
+                              lambda p, c: el.close_drive(drive, st, "withdrawn " + _dt.date.today().isoformat()))
+        except (OSError, gdrive.DriveError) as exc:
+            _drive_problem(self.main, RECEIVE, exc)
+            return
+        self.requests.remove(st)
+        self._fill()
+        self.main.refresh_elicit_icon()
+
+    def _zip(self):
+        self.accept()
+        receive_zip(self.main)
 
 
 class ReviewDialog(QDialog):

@@ -429,6 +429,10 @@ class MainWindow(QMainWindow):
         self.elicit_make = m.addAction("Make ɛλicit request…", self.make_elicit_request)
         self.elicit_receive = m.addAction("Receive ɛλicitation…", self.receive_elicitation)
         self.elicit_review = m.addAction("Review waiting recordings…", self.review_elicitation)
+        m.addSeparator()
+        self.elicit_signout = m.addAction("Sign out of Google Drive", self.sign_out_google)
+        self.elicit_signout.setVisible(False)          # shown while signed in (when the menu opens)
+        m.aboutToShow.connect(lambda: self.elicit_signout.setVisible(bool(self.prefs.google_token)))
         b.setMenu(m)
         return b
 
@@ -440,9 +444,17 @@ class MainWindow(QMainWindow):
         except OSError:
             waiting = []
         n = sum(k for _, k in waiting)
+        try:
+            out = len(elicit.outstanding_drive(self.doc.db)) if self.doc.db.path else 0
+        except OSError:
+            out = 0
         self.elicit_btn.setIcon(elicit_icon(self.TEXTS_ICON, waiting=bool(n)))
-        self.elicit_btn.setToolTip(f"ɛλicit: {n} recording{'s' if n != 1 else ''} waiting for review" if n
-                                   else "ɛλicit: remote elicitation")
+        tip = (f"ɛλicit: {n} recording{'s' if n != 1 else ''} waiting for review" if n
+               else "ɛλicit: remote elicitation")
+        if out:
+            tip += (f"\n{out} request{'s' if out != 1 else ''} out through Google Drive "
+                    "(Receive ɛλicitation checks them)")
+        self.elicit_btn.setToolTip(tip)
         self.elicit_review.setVisible(bool(n))
         self.elicit_review.setText(f"Review waiting recordings ({n})…")
 
@@ -496,6 +508,10 @@ class MainWindow(QMainWindow):
     def receive_elicitation(self):
         from .elicit_dialogs import choose_and_receive
         choose_and_receive(self)
+
+    def sign_out_google(self):
+        from .elicit_dialogs import sign_out_google
+        sign_out_google(self)
 
     def review_elicitation(self):
         from .elicit_dialogs import review_waiting
