@@ -1,5 +1,7 @@
 # Lemmatrix
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23512412.svg)](https://doi.org/10.5281/zenodo.23512412)
+
 Lemmatrix is a free, open-source program for phonological and grammatical analysis and
 linguistic documentation, for any language. It keeps lemmas with their tokens
 (transcriptions, pitch, tags and one recording each), shows them as paradigm matrices, and
@@ -222,7 +224,10 @@ The libraries Lemmatrix uses keep their own licences: see [THIRD-PARTY.md](THIRD
 
 ## Citing Lemmatrix
 
-See [CITATION.cff](CITATION.cff) (GitHub's "Cite this repository" button uses it).
+Smolders, Joshua A. G. 2026. *Lemmatrix* (version 0.1.1). Zenodo.
+https://doi.org/10.5281/zenodo.23512412
+
+See also [CITATION.cff](CITATION.cff) (GitHub's "Cite this repository" button uses it).
 
 ## References
 

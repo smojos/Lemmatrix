@@ -11,6 +11,7 @@ authors:
   - family-names: Smolders
     given-names: Joshua A. G.
 version: 0.1.1
+doi: 10.5281/zenodo.23512412
 license: GPL-3.0-or-later
 repository-code: "https://github.com/smojos/Lemmatrix"
 keywords:
