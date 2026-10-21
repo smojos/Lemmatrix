@@ -51,7 +51,12 @@ def _response(st, path, skip=(), rate=8000, date="2026-10-21"):
                 cards.append({"n": c.n, "status": "skipped"})
                 continue
             tmp = path.parent / c.file
-            audio.write_wav(tmp, 0.1 * np.sin(np.arange(rate * (1 + c.n % 3)) / (3 + c.n)), rate, 16)
+            x = (3000 * np.sin(np.arange(rate * (1 + c.n % 3)) / (3 + c.n))).astype("<i2")
+            if c.file.endswith(".flac"):
+                import soundfile
+                soundfile.write(str(tmp), x, rate, subtype="PCM_16", format="FLAC")
+            else:
+                audio.write_pcm16(tmp, x, rate)
             zf.write(tmp, "recordings/" + c.file)
             cards.append({"n": c.n, "status": "recorded", "file": c.file, "recorded": date + "T10:00:00Z",
                           "date": date, "seconds": 1.0, "rate": rate})
@@ -450,9 +455,16 @@ class FakeDrive:
         self.files.pop(fid, None)
 
 
-def _wav_bytes(tmp_path, n=1):
-    p = tmp_path / f"w{n}.wav"
-    audio.write_wav(p, 0.1 * np.sin(np.arange(8000) / (3 + n)), 8000, 16)
+def _wav_bytes(tmp_path, n=1, name=""):
+    """A recording as the page sends it: FLAC when the card's file is .flac (the default)."""
+    x = (3000 * np.sin(np.arange(8000) / (3 + n))).astype("<i2")
+    if name.endswith(".flac"):
+        import soundfile
+        p = tmp_path / f"w{n}.flac"
+        soundfile.write(str(p), x, 8000, subtype="PCM_16", format="FLAC")
+    else:
+        p = tmp_path / f"w{n}.wav"
+        audio.write_pcm16(p, x, 8000)
     return p.read_bytes()
 
 
@@ -479,12 +491,12 @@ def test_a_request_through_drive(db, tmp_path):
     assert st.request.id == req.id
     # the speaker records cards 1 and 2, skips 3, and stops
     for c in st.request.cards[:2]:
-        drive.put(c.upload, _wav_bytes(tmp_path, c.n))
+        drive.put(c.upload, _wav_bytes(tmp_path, c.n, c.file))
     state = el.drive_state(drive, st)
     assert (state.finished, state.uploaded, state.summary(st.request)) == (False, 2, "2 of 11 recorded so far")
     # ... then comes back and finishes
     for c in st.request.cards[3:]:
-        drive.put(c.upload, _wav_bytes(tmp_path, c.n))
+        drive.put(c.upload, _wav_bytes(tmp_path, c.n, c.file))
     answers = [{"n": c.n, "status": "skipped"} if c.n == 3 else
                {"n": c.n, "status": "recorded", "file": c.file, "date": "2026-10-22"} for c in st.request.cards]
     drive.put(st.request.drive["response"], json.dumps({"format": el.RESPONSE_FORMAT, "request": req.id,
@@ -504,7 +516,7 @@ def test_unfinished_and_turned_down_drive_requests(db, tmp_path):
     req = el.new_request(db, items, "SP1", "RS1", "da")
     el.publish_drive(db, req, items, drive, "KEY")
     st = el.outstanding_drive(db)[0]
-    drive.put(st.request.cards[0].upload, _wav_bytes(tmp_path))
+    drive.put(st.request.cards[0].upload, _wav_bytes(tmp_path, 1, st.request.cards[0].file))
     got = el.receive_drive(db, st, drive)                            # taken as it is: the rest not reached
     assert [c.n for c in el.waiting(db, got)] == [1] and got.answer(2) is None
     req2 = el.new_request(db, items, "SP2", "RS1", "da")
@@ -713,3 +725,49 @@ def test_the_request_is_remembered_until_reset(win, monkeypatch):
     dlg.made = Path("made")                                          # a request made: the settings stay
     dlg.accept()
     assert win.elicit_basket == [] and win.elicit_draft["new"] == [] and win.elicit_draft["speaker"] == "SP2"
+
+
+def test_flac_from_the_page_is_lossless_and_becomes_wav(db, tmp_path):
+    """The page's own FLAC encoder (docs/elicit/flac.js, run in Node) against libsndfile, on Josh's
+    speech; and a request asking for FLAC comes in as WAV, sample for sample."""
+    import shutil as _sh
+    import subprocess
+    import soundfile
+    if not _sh.which("node"):
+        pytest.skip("no Node.js")
+    wavs = sorted((TEST_DB.parent / "Soundfiles" / "Utterances").glob("*.wav"))
+    x, rate = soundfile.read(str(wavs[0]), dtype="int16")
+    raw = tmp_path / "x.raw"
+    raw.write_bytes(np.asarray(x, "<i2").tobytes())
+    js = tmp_path / "enc.js"
+    js.write_text("const {encodeFlac}=require(process.argv[2]);const fs=require('fs');"
+                  "const b=fs.readFileSync(process.argv[3]);"
+                  "const s=new Int16Array(b.buffer,b.byteOffset,b.length/2);"
+                  "fs.writeFileSync(process.argv[4],encodeFlac(s,+process.argv[5]));")
+    out = tmp_path / "x.flac"
+    subprocess.run(["node", str(js), str(ROOT / "docs" / "elicit" / "flac.js"), str(raw), str(out), str(rate)],
+                   check=True)
+    y, r = soundfile.read(str(out), dtype="int16")
+    assert r == rate and np.array_equal(y, x)
+    assert out.stat().st_size < 0.75 * raw.stat().st_size
+    # a FLAC request: the cards' files are .flac; received, they are WAVs with the same samples
+    items = _items(db)[:2]
+    req = el.new_request(db, items, "SP1", "RS1", "da", audio="flac")
+    assert all(c.file.endswith(".flac") for c in req.cards)
+    el.write_request(db, req, items)
+    st = el.stored_requests(db.path)[0]
+    zpath = tmp_path / "back.zip"
+    with zipfile.ZipFile(zpath, "w") as zf:
+        zf.write(out, "recordings/" + st.request.cards[0].file)
+        zf.writestr("response.json", json.dumps({"format": el.RESPONSE_FORMAT, "request": req.id, "speaker": "SP1",
+                                                 "cards": [{"n": 1, "status": "recorded", "date": "2026-10-21",
+                                                            "file": st.request.cards[0].file}]}))
+    got = el.receive(db, zpath)
+    wav = got.recording(1)
+    assert wav.suffix == ".wav" and not list(got.received.glob("*.flac"))
+    back, rate2 = soundfile.read(str(wav), dtype="int16")
+    assert rate2 == rate and np.array_equal(back, x)
+    assert audio.read_info(wav) == {"IART": "SP1", "ICRD": "2026-10-21"}
+    wreq = el.new_request(db, items, "SP1", "RS1", "da", audio="wav")
+    assert all(c.file.endswith(".wav") for c in wreq.cards)
+    assert el.estimated_size(db, items, "flac") < el.estimated_size(db, items, "wav")

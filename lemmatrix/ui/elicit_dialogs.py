@@ -271,6 +271,8 @@ class RequestDialog(QDialog):
             self.repeat.setChecked(bool(draft["repeat"]))
         if "send_by" in draft:
             choose(self.send_by, draft["send_by"])
+        if "audio" in draft:
+            choose(self.audio, draft["audio"])
 
     def new_utterance_rows(self) -> list[dict]:
         """The new sentences typed in, as {language: translation}."""
@@ -287,7 +289,8 @@ class RequestDialog(QDialog):
     def draft(self, with_items: bool = True) -> dict:
         d = {"speaker": self.speaker.currentData(), "researcher": self.researcher.currentData(),
              "l2": self.l2.currentData() or "", "l2_name": self.l2_name.text(),
-             "repeat": self.repeat.isChecked(), "send_by": self.send_by.currentData()}
+             "repeat": self.repeat.isChecked(), "send_by": self.send_by.currentData(),
+             "audio": self.audio.currentData()}
         d["new"] = self.new_utterance_rows() if with_items else []
         return d
 
@@ -378,6 +381,13 @@ class RequestDialog(QDialog):
             self.send_by.setItemText(0, "A link, through Google Drive (this copy of Lemmatrix has no Google keys yet)")
             self.send_by.setCurrentIndex(1)
         form.addRow("Send as", self.send_by)
+        self.audio = QComboBox()
+        self.audio.addItem("FLAC: lossless, about 60% of the size (less data for the speaker)", "flac")
+        self.audio.addItem("WAV: lossless, larger", "wav")
+        self.audio.setToolTip("How the page sends the recordings. Both are lossless: the same sound, sample for "
+                              "sample. FLAC becomes WAV when the recordings come in.")
+        self.audio.currentIndexChanged.connect(self._update_counts)
+        form.addRow("Recordings as", self.audio)
         left.addLayout(form)
         head.addLayout(left, 1)
         from .icons import elicit_logo
@@ -592,7 +602,7 @@ class RequestDialog(QDialog):
         if not hasattr(self, "count"):
             return
         items = self.items()
-        size = el.estimated_size(self.db, items)
+        size = el.estimated_size(self.db, items, self.audio.currentData())
         n_re = sum(1 for i in items if i.kind == el.RERECORD)
         text = f"{len(items)} card{'s' if len(items) != 1 else ''}"
         if n_re:
@@ -615,7 +625,7 @@ class RequestDialog(QDialog):
         if ethics:
             problems.append("This could potentially constitute an ethics violation. These rerecords send a "
                             "recording to another speaker, but:\n  • " + "\n  • ".join(ethics))
-        size = el.estimated_size(db, items)
+        size = el.estimated_size(db, items, self.audio.currentData())
         if size > el.SIZE_WARNING:
             problems.append(f"The request comes to about {_mb(size)} with the recordings coming back: a lot for "
                             "a phone's storage and the speaker's data. A smaller request may be better.")
@@ -654,7 +664,7 @@ class RequestDialog(QDialog):
             return
         req = el.new_request(db, items, self.speaker.currentData(), self.researcher.currentData(),
                              self.l2.currentData() or "", self.l2_name.text(), self.repeat.isChecked(),
-                             theme.accent().name())
+                             theme.accent().name(), audio=self.audio.currentData())
         if self.send_by.currentData() == "drive":
             drive = google_drive(self.main)
             if drive is None:

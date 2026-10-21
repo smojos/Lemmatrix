@@ -73,6 +73,36 @@ def write_wav(path: str | Path, samples: np.ndarray, sample_rate: int, bits: int
     tmp.replace(path)
 
 
+def write_pcm16(path: str | Path, pcm: np.ndarray, sample_rate: int, artist: str = "", date: str = "") -> None:
+    """Write 16-bit samples (int16, mono) as they are, as a PCM WAV with INFO metadata: no
+    conversion through floats, so nothing changes (FLAC from ɛλicit becomes this WAV)."""
+    raw = np.asarray(pcm, dtype="<i2").reshape(-1).tobytes()
+    fmt = struct.pack("<HHIIHH", 1, 1, sample_rate, sample_rate * 2, 2, 16)
+    chunks = b"fmt " + struct.pack("<I", len(fmt)) + fmt
+    chunks += b"data" + struct.pack("<I", len(raw)) + raw + (b"\x00" if len(raw) % 2 else b"")
+    chunks += _info_chunk({"IART": artist, "ICRD": date})
+    blob = b"RIFF" + struct.pack("<I", 4 + len(chunks)) + b"WAVE" + chunks
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".part")
+    tmp.write_bytes(blob)
+    tmp.replace(path)
+
+
+def flac_to_wav(src: str | Path, dst: str | Path, artist: str = "", date: str = "") -> None:
+    """A FLAC (from the ɛλicit page) as a 16-bit WAV, sample for sample. Needs soundfile."""
+    try:
+        import soundfile
+    except ImportError as exc:
+        raise AudioError("Reading FLAC needs the soundfile package (in requirements.txt): start Lemmatrix "
+                         "with Run Lemmatrix.bat once to install it.") from exc
+    try:
+        data, rate = soundfile.read(str(src), dtype="int16", always_2d=True)
+    except Exception as exc:                      # noqa: BLE001 (libsndfile's errors)
+        raise AudioError(f"Couldn't read {Path(src).name}: {exc}") from exc
+    write_pcm16(dst, data[:, 0], rate, artist, date)
+
+
 def read_info(path: str | Path) -> dict[str, str]:
     """Read the INFO metadata (e.g. IART) from a WAV file."""
     raw = Path(path).read_bytes()

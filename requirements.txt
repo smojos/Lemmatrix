@@ -7,4 +7,5 @@ pyspellchecker>=0.8
 pyzipper>=0.3.6
 praatio>=6.2
 Pillow>=10
+soundfile>=0.12
 pytest>=8

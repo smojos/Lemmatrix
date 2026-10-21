@@ -152,7 +152,7 @@ function writeZip(entries) {          // [{name, data: Uint8Array}] -> Blob
 // WAV files
 // ------------------------------------------------------------------------------------------
 
-function wav(chunks, rate, info) {
+function toPcm(chunks) {
   const n = chunks.reduce((s, c) => s + c.length, 0);
   const pcm = new Int16Array(n);
   let i = 0;
@@ -160,6 +160,11 @@ function wav(chunks, rate, info) {
     const v = Math.max(-1, Math.min(1, c[k]));
     pcm[i++] = v < 0 ? v * 32768 : v * 32767;
   }
+  return pcm;
+}
+
+function wav(pcm, rate, info) {
+  const n = pcm.length;
   const enc = new TextEncoder();
   const fields = [];
   for (const [key, value] of Object.entries(info)) {
@@ -373,7 +378,8 @@ async function uploadPending() {
       const a = S.answers[c.n];
       if (!a || a.status !== "recorded" || a.uploaded || !c.upload) continue;
       try {
-        const r = await fetch(c.upload, { method: "PUT", headers: { "Content-Type": "audio/wav" }, body: a.wav });
+        const r = await fetch(c.upload, { method: "PUT", headers: { "Content-Type": a.wav.type || "audio/wav" },
+                                          body: a.wav });
         if (!r.ok) throw new Error("upload " + r.status);
         a.uploaded = true;
         await save();
@@ -637,11 +643,20 @@ function afterRecording(card, area, result) {
       btn("listen", () => { audio.currentTime = 0; audio.play(); }, "quiet"),
       btn("its_good", () => {
         audio.pause();
-        answer(card, { status: "recorded", wav: result.blob, recorded: result.recorded, date: result.date,
+        answer(card, { status: "recorded", wav: keep(result), recorded: result.recorded, date: result.date,
                        seconds: result.seconds, rate: result.rate });
       }, "main"),
       btn("try_again", () => { audio.pause(); recordArea(card, area); }),
       btn("cant_say", () => { audio.pause(); answer(card, { status: "skipped" }); }, "quiet")));
+}
+
+function keep(result) {
+  // What is kept and sent: the WAV as recorded (it plays back), or the same sound as FLAC when the
+  // request asks for it (lossless, about 60% of the size: flac.js).
+  if (S.req.audio === "flac" && typeof encodeFlac === "function") {
+    return new Blob([encodeFlac(result.pcm, result.rate)], { type: "audio/flac" });
+  }
+  return result.blob;
 }
 
 async function answer(card, result) {
@@ -740,8 +755,8 @@ const mic = {
     const rate = this.ctx.sampleRate;
     const now = new Date();
     const day = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-    const n = chunks.reduce((s, c) => s + c.length, 0);
-    return { blob: wav(chunks, rate, { IART: speaker, ICRD: day }), rate, seconds: +(n / rate).toFixed(2),
+    const pcm = toPcm(chunks);
+    return { blob: wav(pcm, rate, { IART: speaker, ICRD: day }), pcm, rate, seconds: +(pcm.length / rate).toFixed(2),
              recorded: now.toISOString(), date: day };
   },
 };

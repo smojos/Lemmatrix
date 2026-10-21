@@ -189,6 +189,7 @@ class Request:
     version: int = VERSION
     page: str = WEB_PAGE
     transport: str = "file"           # file (a zip sent by hand) or drive (a link; Google Drive)
+    audio: str = "wav"                # how the page sends the recordings: wav, or flac (lossless, smaller)
     drive: dict = field(default_factory=dict)   # folder, request (file ids), response, status (upload links), link
 
     def to_json(self) -> str:
@@ -212,7 +213,8 @@ def person_dict(p, code: str) -> dict:
 
 
 def new_request(db: Database, items, speaker: str, researcher: str, l2: str = "", l2_language_name: str = "",
-                repeat: bool = True, accent: str = "#198583", today: _dt.date | None = None) -> Request:
+                repeat: bool = True, accent: str = "#198583", today: _dt.date | None = None,
+                audio: str = "flac") -> Request:
     """A request for these items (in order). l2: the second language (a gloss language) or ""."""
     today = today or _dt.date.today()
     md, s = db.metadata, db.settings
@@ -235,7 +237,7 @@ def new_request(db: Database, items, speaker: str, researcher: str, l2: str = ""
         if it.kind == NEW_UTTERANCE:
             c = Card(n, NEW_UTTERANCE, label=item_label(db, it), show=show, texts=texts,
                      translations={k: nfc(v) for k, v in it.translations.items() if v})
-            c.file = f"{n:02d}_new_utterance.wav"
+            c.file = f"{n:02d}_new_utterance.{audio}"
         else:
             e, t = it.entry, it.token
             c = Card(n, it.kind, "utterance" if is_utterance(e) else "token", e.id, t.id, e.ref,
@@ -248,7 +250,7 @@ def new_request(db: Database, items, speaker: str, researcher: str, l2: str = ""
                            for l in languages if g and e.get(g.name, l)}
                 c.show = "gloss"
             c.repeat = repeat and not is_utterance(e) and it.kind == NEW
-            c.file = f"{n:02d}_{filenames.praat_name(e.ref)}.wav"
+            c.file = f"{n:02d}_{filenames.praat_name(e.ref)}.{audio}"
         cards.append(c)
     rid = uuid.uuid4().hex[:12]
     return Request(
@@ -258,7 +260,7 @@ def new_request(db: Database, items, speaker: str, researcher: str, l2: str = ""
         researcher=person_dict(md.researcher(researcher), researcher),
         database={"name": md.name, "language_code": md.language_code, "language_name": md.language_name,
                   "variety_code": md.variety_code, "variety_name": md.variety_name},
-        languages=languages, language_names=names, prompts=prompts, accent=accent, cards=cards)
+        languages=languages, language_names=names, prompts=prompts, accent=accent, cards=cards, audio=audio)
 
 
 def media_for(db: Database, items) -> dict[int, dict[str, Path]]:
@@ -281,8 +283,9 @@ def media_for(db: Database, items) -> dict[int, dict[str, Path]]:
     return out
 
 
-def estimated_size(db: Database, items) -> int:
-    """Bytes: the files sent with the request, and a guess at the recordings coming back."""
+def estimated_size(db: Database, items, audio: str = "flac") -> int:
+    """Bytes: the files sent with the request, and a guess at the recordings coming back (FLAC
+    about 60% of WAV for speech)."""
     total = 0
     for files in media_for(db, items).values():
         for p in files.values():
@@ -293,8 +296,8 @@ def estimated_size(db: Database, items) -> int:
                 pass
     for it in items:
         kind = "utterance" if (it.kind == NEW_UTTERANCE or is_utterance(it.entry)) else "token"
-        total += SECONDS[kind] * BYTES_PER_SECOND
-    return total
+        total += SECONDS[kind] * BYTES_PER_SECOND * (0.6 if audio == "flac" else 1)
+    return int(total)
 
 
 def shrink_image(src: Path, longest: int = IMAGE_MAX) -> tuple[bytes, str]:
@@ -440,7 +443,7 @@ def publish_drive(db: Database, req: Request, items, drive, api_key: str, progre
             step(f"Making the upload link for card {c.n}")
             c.image_id = ids.get(c.image, "")
             c.original_id = ids.get(c.original, "")
-            c.upload = drive.upload_link(c.file, "audio/wav", folder)
+            c.upload = drive.upload_link(c.file, "audio/flac" if c.file.endswith(".flac") else "audio/wav", folder)
         step("Making the links for the end")
         req.drive = {"folder": folder, "response": drive.upload_link(RESPONSE, "application/json", folder),
                      "status": drive.upload_link(STATUS, "application/json", folder)}
@@ -548,6 +551,7 @@ def receive_drive(db: Database, st: Stored, drive, state: DriveState | None = No
             if progress is not None:
                 progress(k, len(cards), f)
             (tmp / f).write_bytes(drive.download(state.files[f]))
+        _wav_from_flac(tmp, data)
         (tmp / "response.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
     except BaseException:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -684,6 +688,22 @@ def read_response_zip(path) -> tuple[dict, zipfile.ZipFile]:
 _SAFE = re.compile(r"^[\w.\-]+$")
 
 
+def _wav_from_flac(tmp: Path, data: dict):
+    """The FLAC recordings in a received folder become WAVs (Lemmatrix keeps WAVs), with the
+    speaker and the day in their metadata; response.json is changed to match."""
+    from . import audio
+    for a in data.get("cards", []):
+        f = a.get("file", "")
+        if a.get("status") == "recorded" and f.lower().endswith(".flac") and (tmp / f).exists():
+            wav = Path(f).with_suffix(".wav").name
+            try:
+                audio.flac_to_wav(tmp / f, tmp / wav, data.get("speaker", ""), (a.get("date") or "")[:10])
+            except audio.AudioError as exc:
+                raise ElicitError(str(exc)) from exc
+            (tmp / f).unlink()
+            a["file"] = wav
+
+
 def receive(db: Database, path) -> Stored:
     """Unpack the speaker's zip into its request's folder (received/). Raises ElicitError."""
     data, zf = read_response_zip(path)
@@ -703,6 +723,7 @@ def receive(db: Database, path) -> Stored:
                     if not _SAFE.match(f) or "/" in f or f.startswith("."):
                         raise ElicitError(f"A recording has a name that can't be used: {f}")
                     (tmp / f).write_bytes(zf.read("recordings/" + f))
+            _wav_from_flac(tmp, data)
             (tmp / "response.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
     except KeyError as exc:
         shutil.rmtree(tmp, ignore_errors=True)

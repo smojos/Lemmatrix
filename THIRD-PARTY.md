@@ -15,14 +15,15 @@ first runs (`requirements.txt`), each under its own licence.
 | [pyzipper](https://pypi.org/project/pyzipper/) | password-protected zips (anonymous backup) | MIT |
 | [praatio](https://pypi.org/project/praatio/) | reading and writing Praat TextGrids | MIT |
 | [Pillow](https://pypi.org/project/pillow/) | shrinking pictures for ɛλicit requests (GIFs keep their animation) | MIT-CMU (HPND) |
+| [soundfile](https://pypi.org/project/soundfile/) (with libsndfile) | reading ɛλicit's FLAC recordings | BSD-3-Clause (libsndfile: LGPL-2.1-or-later) |
 | [pytest](https://pypi.org/project/pytest/) | the automated tests (development only) | MIT |
 
 **Fonts.** Lemmatrix uses Charis SIL for IPA when it is installed; no font is included. The
 splash screen's title (λemmatriχ) is stored as outlines drawn from Doulos SIL, which is
 licensed under the SIL Open Font License 1.1 (https://openfontlicense.org).
 
-**ɛλicit's web page** (`docs/elicit/`) uses no libraries: its zip files and WAV recordings are
-written by its own code. The ɛλ in the ɛλicit icons (Josh's drawings, 20 October 2026) is drawn
+**ɛλicit's web page** (`docs/elicit/`) uses no libraries: its zip files, WAV recordings and FLAC encoder
+(`flac.js`, written from the FLAC specification) are its own code. The ɛλ in the ɛλicit icons (Josh's drawings, 20 October 2026) is drawn
 from Arial letterforms, stored as outlines in a picture; no font is included.
 
 **The ɛλicit test database** (`samples/Elicit test`): the recordings are Joshua A. G. Smolders'
