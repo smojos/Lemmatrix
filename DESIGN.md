@@ -6,6 +6,7 @@
 
 ## 1. What we're building
 
+- **The goal** (Josh, 21 October; the slogan for the documentation and descriptions): ***Human readable, machine processable, ethically collected and shared linguistic data.*** The database holds what describes the data or is needed to read it; working state goes elsewhere (the workspace file, IDEAS.md idea 36).
 - **Lemmatrix** is a program for phonological and grammatical analysis and linguistic documentation (any language), built from scratch and inspired by tools such as FLEx, Praat, ELAN, Dekereke and Excel. **No code from any of them is reused.**
 - **Licence:** free and open source under the GNU General Public License, version 3 or later (GPL-3.0-or-later), © 2026 Joshua A. G. Smolders. See `LICENSE`, `AUTHORS` and `THIRD-PARTY.md`.
 - **Terminology:**

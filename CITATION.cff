@@ -6,7 +6,8 @@ abstract: >-
   A program for phonological and grammatical analysis and linguistic
   documentation, for any language: lemmas with their tagged tokens
   (transcriptions, pitch and one recording each), paradigm matrices,
-  utterances and texts, stored as readable XML.
+  utterances and texts, stored as readable XML. Human readable, machine
+  processable, ethically collected and shared linguistic data.
 authors:
   - family-names: Smolders
     given-names: Joshua A. G.

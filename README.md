@@ -2,6 +2,8 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23512411.svg)](https://doi.org/10.5281/zenodo.23512411)
 
+*Human readable, machine processable, ethically collected and shared linguistic data.*
+
 Lemmatrix is a free, open-source program for phonological and grammatical analysis and
 linguistic documentation, for any language. It keeps lemmas with their tokens
 (transcriptions, pitch, tags and one recording each), shows them as paradigm matrices, and
