@@ -396,7 +396,7 @@ class RequestDialog(QDialog):
         self.logo.setAlignment(Qt.AlignRight | Qt.AlignTop)
         gap = round(LOGO_HEIGHT * 0.15)           # a little more room from the window's top and side
         self.logo.setContentsMargins(0, gap, gap, 0)
-        self.logo.setToolTip(f"{NAME}: the page your speaker records on ({el.WEB_PAGE})")
+        self.logo.setToolTip("this is a placeholder")       # Josh, 21 October: his own line goes here
         head.addWidget(self.logo, 1)
         lay.addLayout(head)
 
