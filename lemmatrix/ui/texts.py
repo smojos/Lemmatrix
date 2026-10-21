@@ -502,6 +502,9 @@ class TextsPanel(QObject):
                                  "recording as utterances, with their text (select several with Shift or Ctrl)"),
                        icon_tool("praat", self.open_in_praat,
                                  "Open in Praat: the text's recording with its TextGrid, at the selected line"),
+                       icon_tool("refresh-text", self.refresh_text,
+                                 "Refresh text: read the text's TextGrid again from its file and find all its "
+                                 "lines again (asks first if there are line edits not yet saved)"),
                        icon_tool("gear", self.configure_view, "Configure view: which fields each line shows, "
                                  "in what order, and which line up word by word"))
         self.restyle_icons()
@@ -681,10 +684,63 @@ class TextsPanel(QObject):
         self.next_field.blockSignals(False)
 
     def restyle_icons(self):
-        """The Clip button's bubble in the theme colour."""
+        """The Clip button's bubble and Refresh text's arrows in the theme colour."""
         for b in self.bar.findChildren(QToolButton) if hasattr(self, "bar") else []:
             if b.property("icon_name") == "clip":
                 b.setIcon(icon("clip", 20, theme.accent().name()))
+            elif b.property("icon_name") == "refresh-text":
+                b.setIcon(icon("refresh-text", 20, theme.colour("pitch").name()))
+
+    def refresh_text(self):
+        """Refresh text (Josh, 21 October): read the TextGrid again from its file, whatever its
+        date says, and find every line again. Line edits not yet saved are saved first or dropped,
+        after asking."""
+        t = self.current()
+        if t is None:
+            return
+        path = self.grid_path(t)
+        if path is None or not path.exists():
+            QMessageBox.information(self.win, "Refresh text", self.lines_error or
+                                    f"{t.ref} has no TextGrid in Soundfiles\\Texts.")
+            return
+        buf = self.doc.text_buffers.get(t.id)
+        if buf is not None and buf.changed:
+            box = QMessageBox(QMessageBox.Warning, "Refresh text",
+                              f"{t.ref} has line edits that aren't saved into its TextGrid yet.", parent=self.win)
+            box.setInformativeText("Save and refresh: the database is saved (with the edits written into "
+                                   "the TextGrid), then the TextGrid is read again.\nRefresh without saving: "
+                                   "the edits to this text's lines are dropped, and the TextGrid is read as it "
+                                   "is in the file.")
+            save = box.addButton("Save and refresh", QMessageBox.AcceptRole)
+            drop = box.addButton("Refresh without saving", QMessageBox.DestructiveRole)
+            box.addButton(QMessageBox.Cancel)
+            box.setDefaultButton(save)
+            box.exec()
+            hit = box.clickedButton()
+            if hit is save:
+                if not self.main.save():
+                    return
+            elif hit is not drop:
+                return
+        try:
+            if buf is not None and buf.path == path:
+                buf.reload()
+            else:
+                old = self.doc.text_buffers.pop(t.id, None)
+                new = self.doc.buffer(t)
+                if old is not None and new is not None:   # undo of earlier line edits leaves it alone
+                    new.generation = old.generation + 1
+        except tgmod.TextGridError as exc:
+            self.doc.text_buffers.pop(t.id, None)
+            QMessageBox.warning(self.win, "Refresh text", str(exc).replace("the TextGrid", path.name, 1))
+        self._shown_stamp = None
+        if hasattr(self.win, "recheck") and self.db.utterances:   # clipped utterances: changed lines
+            self.win.recheck()
+        self.doc.linesChanged.emit(t.id)
+        self._show_lines()
+        n = len(self._lines)
+        self.main.statusBar().showMessage(f"{t.ref} read again from {path.name}: {n} line{'s' if n != 1 else ''}.",
+                                          6000)
 
     def toggle_edit_mode(self):
         """Ctrl+E: Edit mode on or off, while the lines are shown (the Texts tab)."""
@@ -972,6 +1028,7 @@ class TextsPanel(QObject):
         m = QMenu(self.win)
         for text, name, fn, on in (("Add", "add", self.add, True), ("Edit", "edit", self.edit, row is not None),
                                    ("Open in Praat", "praat", self.open_in_praat, row is not None),
+                                   ("Refresh text", "refresh-text", self.refresh_text, row is not None),
                                    ("Delete", "delete", self.delete, row is not None)):
             a = m.addAction(icon(name, 16), text)
             a.setEnabled(on)

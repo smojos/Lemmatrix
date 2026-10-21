@@ -946,3 +946,54 @@ def test_a_segment_filled_in_praat_shows_up_with_no_utterances_in_the_database(w
     assert len(p.lines.rows) == 2
     assert p.lines.rows[0].values["Translation:en"] == "the hare ran"
     assert p.lines.rows[1].values["Phonetic"] == "ɛ ŋəə"
+
+
+def test_refresh_text_reads_the_textgrid_again_and_asks_about_unsaved_edits(win, tmp_path, monkeypatch):
+    """Josh, 21 October: Refresh text reads the TextGrid again whatever its date, finding every
+    line again; line edits not yet saved are saved first or dropped, after asking."""
+    import os
+    from PySide6.QtWidgets import QMessageBox
+    src = tmp_path / "field"
+    src.mkdir()
+
+    def grid(path, second):
+        tgmod.write_example(path, {"tx": [(0.5, 1.5, "ʔəŋ kɒ"), (2.0, 3.0, second)],
+                                   "ft": [(0.5, 1.5, "the hare ran"), (2.0, 3.0, "")]}, 4.0)
+    grid(src / "story.TextGrid", "")
+    uw, t = _add_text(win, tmp_path, monkeypatch, src=src)
+    p = uw.texts
+    assert len(p.lines.rows) == 1
+    path = p.grid_path(t)
+    st = os.stat(path)
+    grid(path, "ɛ ŋəə")                                  # saved in Praat, but the date looks unchanged
+    os.utime(path, ns=(st.st_atime_ns, st.st_mtime_ns))
+    p.lines_changed()
+    assert len(p.lines.rows) == 1                        # the date check alone doesn't see it
+    p.refresh_text()
+    assert len(p.lines.rows) == 2 and p.lines.rows[1].values["Phonetic"] == "ɛ ŋəə"
+
+    # an edit made here and not saved: Refresh asks first
+    p.set_line_field(p.lines.rows[0], "Translation:en", "the hare ran away")
+    asked = []
+
+    def fake_exec(box):
+        asked.append([b.text() for b in box.buttons()])
+        box._hit = next(b for b in box.buttons() if b.text() == pick)
+        return 0
+    monkeypatch.setattr(QMessageBox, "exec", fake_exec)
+    monkeypatch.setattr(QMessageBox, "clickedButton", lambda box: box._hit)
+    pick = "Cancel"
+    p.refresh_text()
+    assert asked and "Save and refresh" in asked[-1] and "Refresh without saving" in asked[-1]
+    assert p.lines.rows[0].values["Translation:en"] == "the hare ran away"     # Cancel: nothing changes
+    pick = "Refresh without saving"
+    p.refresh_text()
+    assert p.lines.rows[0].values["Translation:en"] == "the hare ran"          # dropped, as in the file
+    assert not win.doc.text_buffers[t.id].changed
+    win.doc.undo.undo()                                  # undoing the dropped edit leaves the file's text
+    assert p.lines.rows[0].values["Translation:en"] == "the hare ran"
+    p.set_line_field(p.lines.rows[0], "Translation:en", "the hare fled")
+    pick = "Save and refresh"
+    p.refresh_text()
+    assert tgmod.read_lines(path, win.doc.db.mapping_for(t))[0].values["Translation:en"] == "the hare fled"
+    assert p.lines.rows[0].values["Translation:en"] == "the hare fled"
