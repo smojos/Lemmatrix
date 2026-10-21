@@ -240,6 +240,16 @@ def test_the_request_dialog(win, monkeypatch):
     assert dlg.made is not None and dlg.made.exists()
     assert dlg.request.cards[2].translations == {"en": "I read a book.", "da": "Jeg læser en bog."}
     assert dlg.request.language_names["da"] == "italiensk"
+    from lemmatrix.model import today
+    notes = win.doc.notebook.session(today()).notes             # Josh, 21 October: a line in the notebook
+    rs = dlg.request.researcher["name"]
+    assert notes.splitlines()[-1] == f"{rs} sent ɛλicit request to SP1"
+    monkeypatch.setattr(ed.QFileDialog, "getOpenFileName", lambda *a, **k: (str(zp), ""))
+    monkeypatch.setattr(ed.ReviewDialog, "exec", lambda self: None)
+    zp = _response(el.stored_requests(db.path)[0], dlg.made.parent / "r.zip")
+    ed.receive_zip(win)
+    assert win.doc.notebook.session(today()).notes.splitlines()[-2:] == [
+        f"{rs} sent ɛλicit request to SP1", "Received ɛλicit request from SP1"]
 
 
 def test_everything_shows_and_right_click_ticks(win, monkeypatch):

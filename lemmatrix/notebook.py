@@ -337,6 +337,15 @@ def push_question(nb: Notebook, db: Database, date: str, text: str, e: Entry, t:
     return q
 
 
+def add_note_line(nb: Notebook, date: str, line: str) -> Session:
+    """A line at the end of a day's notes (after whatever is written); the day gets a session if it
+    has none (no people or places: those are the panel's to give)."""
+    s = nb.add_session(date)
+    s.notes = (s.notes.rstrip("\n") + "\n" if s.notes.strip() else "") + line
+    nb.dirty = True
+    return s
+
+
 def push_line_question(nb: Notebook, db: Database, date: str, question: str, text, start: float,
                        clock: str = "", researchers=(), participants=(), locations=()) -> Question:
     """Push to question from a text's line (its Comment): an open question linked to the line."""

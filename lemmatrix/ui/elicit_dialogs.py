@@ -19,7 +19,8 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog,
 from .. import cloud_keys, gdrive
 from .. import elicit as el
 from .. import elicit_prompts, filenames, layout, storage
-from ..model import is_utterance
+from .. import notebook as nbmod
+from ..model import is_utterance, today
 from . import theme
 from .winstate import fit_to_screen
 
@@ -714,6 +715,7 @@ class RequestDialog(QDialog):
                 return
             self.made = el.elicit_folder(db.path) / el.request_folder_name(req) / "request.json"
             self.request = req
+            note_in_notebook(self.main, sent_note(req))
             self.accept()
             self.main.refresh_elicit_icon()
             SentDialog(self.main, req, self.made).exec()
@@ -724,8 +726,32 @@ class RequestDialog(QDialog):
             QMessageBox.warning(self, f"Make {NAME} request", f"The request couldn't be written: {exc}")
             return
         self.request = req
+        note_in_notebook(self.main, sent_note(req))
         self.accept()
         SentDialog(self.main, req, self.made).exec()
+
+
+# ---- the notebook (Josh, 21 October) -------------------------------------
+def sent_note(req) -> str:
+    return f"{req.researcher['name']} sent {NAME} request to {req.speaker['code']}"
+
+
+def received_note(req) -> str:
+    return f"Received {NAME} request from {req.speaker['code']}"
+
+
+def note_in_notebook(main, line: str):
+    """A line at the end of today's notes in the notebook (saved with the database)."""
+    doc = getattr(main, "doc", None)
+    if doc is None or getattr(doc, "notebook", None) is None:
+        return
+    try:
+        nbmod.add_note_line(doc.notebook, today(), line)
+    except nbmod.NotebookError:
+        return
+    doc.notebook_changed()
+    if getattr(main, "notebook_dialog", None) is not None:
+        main.notebook_dialog.reload()
 
 
 class SentDialog(QDialog):
@@ -799,6 +825,7 @@ def receive_zip(main):
     except (OSError, el.ElicitError) as exc:
         QMessageBox.warning(main, RECEIVE, str(exc))
         return
+    note_in_notebook(main, received_note(st.request))
     main.refresh_elicit_icon()
     ReviewDialog(main, st).exec()
 
@@ -920,6 +947,7 @@ class ReceiveDialog(QDialog):
         except (OSError, el.ElicitError, gdrive.DriveError) as exc:
             _drive_problem(self.main, RECEIVE, exc)
             return
+        note_in_notebook(self.main, received_note(got.request))
         self.accept()
         self.main.refresh_elicit_icon()
         ReviewDialog(self.main, got).exec()
