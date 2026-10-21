@@ -184,8 +184,48 @@ class LineEditCommand(QUndoCommand):
         self._apply(True)
 
 
+def _hyp_state(nb) -> tuple:
+    """What a hypothesis change can alter, besides the lines in the notes (the Journal's)."""
+    return (copy.deepcopy(nb.hypotheses), nb.next_number, {s.date: list(s.hypotheses) for s in nb.sessions})
+
+
+class HypothesisCommand(QUndoCommand):
+    """A change in Cogitate (hypotheses.py): the hypotheses before and after, and the lines the
+    change wrote into the days' notes (taken out again on undo, nothing else in the notes touched).
+    Applied once already."""
+
+    def __init__(self, doc: "Document", label: str, before: tuple, after: tuple, journal):
+        super().__init__(label)
+        self.doc, self.before, self.after, self.journal = doc, before, after, journal
+        self._skip = True
+
+    def _set(self, state):
+        nb = self.doc.notebook
+        hyps, number, days = state
+        nb.hypotheses = copy.deepcopy(hyps)
+        nb.next_number = number
+        for s in nb.sessions:
+            s.hypotheses = list(days.get(s.date, []))
+
+    def redo(self):
+        if self._skip:
+            self._skip = False
+            return
+        self.journal.redo_lines()
+        self._set(self.after)
+        self.doc.notebook.dirty = True
+        self.doc.hypothesesChanged.emit()
+
+    def undo(self):
+        self._set(self.before)
+        self.journal.undo_lines()
+        self.doc.notebook.dirty = True
+        self.doc.hypothesesChanged.emit()
+
+
 class Document(QObject):
     changed = Signal()            # entries or tokens changed
+    hypothesesChanged = Signal()  # Cogitate: a hypothesis made, edited, linked… (or undone)
     linesChanged = Signal(str)    # a text's lines changed (its id)
     settingsChanged = Signal()    # metadata or settings changed
     dirtyChanged = Signal(bool)
@@ -245,6 +285,24 @@ class Document(QObject):
     @property
     def dirty(self) -> bool:
         return self._settings_dirty or not self.undo.isClean() or self.notebook.dirty
+
+    def change_hypotheses(self, label: str, change):
+        """Run change(journal) on the notebook's hypotheses (hypotheses.py) as one undo step; the
+        day being worked on is work_date(). Returns what change returns. Nothing changed (it
+        returned None or False and wrote nothing): no undo step."""
+        from .. import hypotheses as hy
+        nb = self.notebook
+        before = _hyp_state(nb)
+        j = hy.Journal(nb)
+        result = change(j)
+        after = _hyp_state(nb)
+        if not j.lines and not j.made_days and before[0] == after[0] and before[2] == after[2]:
+            return result
+        self.undo.push(HypothesisCommand(self, label, before, after, j))
+        nb.dirty = True
+        self.dirtyChanged.emit(True)
+        self.hypothesesChanged.emit()
+        return result
 
     def notebook_changed(self):
         """The notebook was edited: mark it unsaved."""

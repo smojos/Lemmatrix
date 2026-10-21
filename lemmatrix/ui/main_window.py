@@ -84,7 +84,8 @@ class TokenRow:
 
 INK_ICONS = THEMED                 # drawn in the theme's colours, so they follow the theme
 ICON_ONLY = {"add", "delete", "edit", "play", "reset-filters",   # obvious, shared actions: the name is in the tooltip
-             "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token", "lemma-token", "tick"}
+             "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token", "lemma-token", "tick",
+             "camera"}
 
 
 class _ElicitChecked(QObject):
@@ -139,6 +140,7 @@ class MainWindow(QMainWindow):
         self.bulk_window = None                   # the bulk edit window, while it's open
         self.utterances_window = None             # View → Texts and utterances, while it's open
         self.xml_window = None                    # View → XML viewer, while it's open
+        self.cogitate_window = None               # View → Cogitate (hypotheses), once opened
         self.sound_files: set[str] = set()       # names in the sound folder, refreshed with the views
         self.cloud_files: set[str] = set()       # those of them that are online-only (OneDrive)
         self._suggestions: dict = {}             # (entry id, tags) -> predicted translation, for All data
@@ -275,6 +277,7 @@ class MainWindow(QMainWindow):
         self.head_icons.setSpacing(4)
         self.head_icons.addWidget(self._elicit_button())   # ɛλicit, left of Texts and utterances
         self.head_icons.addWidget(self._xml_button())      # the XML viewer, between them (21 October)
+        self.head_icons.addWidget(self._cogitate_button())    # Cogitate, between χμλ and the ? (21 October)
         self.head_icons.addWidget(self._questions_button())   # Questions, then Texts and utterances
         self.head_icons.addWidget(self._texts_button())
         top.addLayout(self.head_icons)
@@ -395,7 +398,8 @@ class MainWindow(QMainWindow):
                         tool("Find missing or unlinked recordings", "find-missing", self.find_missing_recordings,
                              "Find missing or unlinked recordings…"),
                         tool("Configure columns", "gear-columns", self.configure_all_columns),
-                        tool("Clear all filters", "reset-filters", self._clear_all_filters))
+                        tool("Clear all filters", "reset-filters", self._clear_all_filters),
+                        self._camera_button())
         top.addWidget(self.all_count)
         self.all_search = QLineEdit()
         self.all_search.setPlaceholderText("quick search of the visible columns")
@@ -428,7 +432,7 @@ class MainWindow(QMainWindow):
                        "Configure matrix: choose the rows and columns"),
                   tool("Clear matrix", "reset-filters", lambda tab=tab: self.clear_matrix(tab),
                        "Clear matrix: empty the view, no rows or columns"),
-                  self.conventions_button())
+                  self.conventions_button(), self._camera_button())
         d["saved"] = QComboBox()
         d["saved"].setMinimumWidth(170)
         d["saved"].setToolTip("Saved matrices" + (": the lemmas are the ones the lemma list shows"
@@ -449,6 +453,61 @@ class MainWindow(QMainWindow):
         bl.addWidget(d["count"])
         bl.addStretch(1)
         return d
+
+    # ---- snapshots (Cogitate, IDEAS.md ideas 16 and 35) -----------------------------------------
+    def _camera_button(self) -> QToolButton:
+        """The camera, in every tab's options: a snapshot of the complete setup, with a menu."""
+        b = tool("Snapshot", "camera", lambda: None,
+                 "Snapshot: the complete setup (tab, lemma, filters, matrix), to link to a hypothesis")
+        b.clicked.disconnect()
+        b.clicked.connect(lambda *_, b=b: self.snapshot_menu(b.mapToGlobal(b.rect().bottomLeft())))
+        return b
+
+    def snapshot_menu(self, pos):
+        m = QMenu(self)
+        a = m.addAction(icon("cogitate", 16, theme.colour("pitch").name()), "Link snapshot to hypothesis…")
+        a.triggered.connect(lambda *_: self.link_snapshot())
+        a = m.addAction("Export to LaTeX table")
+        a.setEnabled(False)
+        a.setToolTip("A future feature, with the LaTeX system")
+        m.exec(pos)
+
+    def snapshot_about(self) -> str:
+        """How a snapshot reads in a hypothesis: "Lemma/Tag · Basic Imperatives · 155 lemmas"."""
+        tab = self.tabs.currentIndex()
+        parts = [self.tabs.tabText(tab)]
+        if tab in (LEMMA_TAG, TAG_TAG):
+            cfg = self.config_for(tab)
+            parts.append(cfg.name or ("an unsaved matrix" if (cfg.x or cfg.y) else "a blank matrix"))
+        e = self.lemmas.current_row()
+        if tab == TAG_TAG and e is not None:
+            parts.append(" ".join(x for x in (e.ref, self.doc.db.lemma(e)) if x))
+        elif tab == ALL_DATA:
+            parts.append(f"{len(self.all_table.visible_rows())} tokens")
+        else:
+            parts.append(f"{len(self.lemmas.visible_rows())} lemmas")
+        n = self.lemmas.active_filters() + self.all_table.active_filters()
+        if n or self.lemmas.proxy.pinned or self.lemma_search.text() or self.all_search.text():
+            parts.append("filtered")
+        return " · ".join(parts)
+
+    def link_snapshot(self):
+        """The camera's Link snapshot to hypothesis…: the setup as it is now, in a link."""
+        from .. import hypotheses as hy
+        self._save_view()
+        link = hy.snapshot_link(self.view_state(), self.snapshot_about())
+        return self.link_to_hypothesis(link)
+
+    def restore_snapshot(self, view: dict):
+        """A snapshot clicked: that view again in the main window."""
+        self.configs.clear()
+        missing = self.apply_view(view or {})
+        self.refresh()
+        self.raise_()
+        self.activateWindow()
+        self.statusBar().showMessage("Snapshot restored" + (": " + " and ".join(missing) + " no longer exist"
+                                                             if missing else "."), 8000)
+        return missing
 
     # ---- edit mode in the matrices (Ctrl+E, 21 October) --------------------------------------
     def toggle_matrix_edit(self):
@@ -752,6 +811,74 @@ class MainWindow(QMainWindow):
         b.clicked.connect(lambda *_: self.open_xml_viewer())
         return b
 
+    def _cogitate_button(self) -> QToolButton:
+        """Beside the tabs, between the XML viewer and Questions: Cogitate, the hypotheses (Josh's icon)."""
+        b = self.cogitate_btn = QToolButton()
+        b.setIconSize(QSize(self.TEXTS_ICON, self.TEXTS_ICON))
+        b.setAutoRaise(True)
+        b.setCursor(Qt.PointingHandCursor)
+        b.setToolTip("Cogitate: hypotheses, with their evidence and counterevidence")
+        b.clicked.connect(lambda *_: self.open_cogitate())
+        return b
+
+    # ---- Cogitate: hypotheses (IDEAS.md idea 35) -----------------------------------------
+    def open_cogitate(self, hypothesis_id: str | None = None, focus_summary: bool = False):
+        """View → Cogitate: the List, or one hypothesis in the Hypothesis tab."""
+        from .cogitate import CogitateWindow
+        if self.cogitate_window is None:
+            self.cogitate_window = CogitateWindow(self)
+        w = self.cogitate_window
+        w.show()
+        w.refill()
+        if hypothesis_id is not None:
+            w.show_hypothesis(hypothesis_id, focus_summary)
+        w.raise_()
+        w.activateWindow()
+        return w
+
+    def link_to_hypothesis(self, link, parent=None):
+        """Link to hypothesis…: the picker, then the link made (one undo step); Make a new
+        hypothesis… makes one with this link and opens it. Returns the hypothesis, or None."""
+        from .. import hypotheses as hy
+        from .cogitate import LinkPicker
+        dlg = LinkPicker(self, link, parent)
+        if not dlg.exec() or dlg.choice is None:
+            return None
+        book, date = self.doc.notebook, self.work_date()
+        if dlg.choice == LinkPicker.MAKE:
+            h = self.doc.change_hypotheses(        # made with its link: one undo step
+                "Make hypothesis", lambda j: hy.make(book, j, date, links=[link], db=self.doc.db))
+            self.open_cogitate(h.id, focus_summary=True)
+            return hy.by_id(book, h.id)
+        h = hy.by_id(book, dlg.choice)
+        if h is None:
+            return None
+        self.doc.change_hypotheses(f"Link to {h.label}", lambda j: hy.add_link(book, j, date, h, link, self.doc.db))
+        self.statusBar().showMessage(f"Linked to {h.title()} as {link.mark}", 6000)
+        if self.notebook_dialog is not None and self.notebook_dialog.isVisible():
+            self.notebook_dialog.reload()
+        return h
+
+    def link_token_to_hypothesis(self, entry=None, index=None, parent=None):
+        """A token or an utterance (the selected one, if none is given) to a hypothesis."""
+        from .. import hypotheses as hy
+        if entry is None:
+            sel = self.selected_token()
+            if sel is None:
+                return None
+            entry, index = sel
+        if index is None or not (0 <= index < len(entry.tokens)):
+            index = 0 if entry.tokens else None
+        t = entry.tokens[index] if index is not None else None
+        if t is None:
+            return None
+        return self.link_to_hypothesis(hy.token_link(self.doc.db, entry, t), parent)
+
+    def hypothesis_menu_item(self, enabled: bool = True, fn=None):
+        """The right-click item: Link to hypothesis… (Josh's Cogitate icon)."""
+        return ("Link to hypothesis…", icon("cogitate", 16, theme.colour("pitch").name()),
+                fn or (lambda: self.link_token_to_hypothesis()), enabled)
+
     def _questions_button(self) -> QToolButton:
         """Beside the tabs, between the XML viewer and Texts and utterances: View → Questions (Josh's ?)."""
         b = self.questions_btn = QToolButton()
@@ -968,6 +1095,7 @@ class MainWindow(QMainWindow):
         self._act(v, "To &Do", self.open_todos)
         self._act(v, "&Texts and utterances", lambda *_: self.open_utterances(), "Ctrl+U")
         self._act(v, "&XML viewer", lambda *_: self.open_xml_viewer())
+        self._act(v, "&Cogitate (hypotheses)", lambda *_: self.open_cogitate())
         v.addSeparator()
         self._act(v, "Hide or show the option panels", self.toggle_panels)
         self._act(v, "Swap rows and columns", lambda: self.switch_axes(self.tabs.currentIndex()), "Ctrl+T")
@@ -1190,6 +1318,10 @@ class MainWindow(QMainWindow):
             self.xml_window.close()
             self.xml_window.deleteLater()
             self.xml_window = None
+        if self.cogitate_window is not None:      # its hypotheses are the closed database's notebook's
+            self.cogitate_window.close()
+            self.cogitate_window.deleteLater()
+            self.cogitate_window = None
         if self.doc.db is not db:
             self._save_view()
             self.doc.write_workspace()            # the closed database's working state, written now
@@ -1698,6 +1830,9 @@ class MainWindow(QMainWindow):
         self.texts_btn.setIcon(icon("texts-utterances", self.TEXTS_ICON, a))
         self.xml_btn.setIcon(icon("xml-viewer", self.TEXTS_ICON, theme.colour("pitch").name()))
         self.questions_btn.setIcon(icon("questions", self.TEXTS_ICON, theme.colour("pitch").name()))
+        self.cogitate_btn.setIcon(icon("cogitate", self.TEXTS_ICON, theme.colour("pitch").name()))
+        if self.cogitate_window is not None:
+            self.cogitate_window._restyle()
         self.refresh_elicit_icon()
         self.write_btn.setIcon(icon("write-notebook", 34))
         self._save_icon()
@@ -1963,6 +2098,12 @@ class MainWindow(QMainWindow):
         db = self.doc.db
         if not db.path:
             return
+        self.doc.ws_set("view", self.view_state())
+
+    def view_state(self) -> dict:
+        """The complete setup of the main window: the tab, the lemma, the matrices and swapped
+        axes, the lemma list's and All data's filters, searches and pin. The workspace keeps it as
+        the last view; a snapshot (Cogitate) keeps a copy of it in its link."""
         e = self.lemmas.current_row()
         view = {
             "tab": self.tabs.currentIndex(),
@@ -1974,15 +2115,23 @@ class MainWindow(QMainWindow):
         }
         view["filters"] = {"lemma": self.lemmas.filter_state(), "alldata": self.all_table.filter_state()}
         view["search"] = {"lemma": self.lemma_search.text(), "alldata": self.all_search.text()}
-        self.doc.ws_set("view", view)
+        if e is not None:
+            view["lemma_id"] = e.id
+        return view
 
     def _restore_view(self):
         db = self.doc.db
         if not db.path:
             return
         view = self.doc.ws.get_dict("view")
-        if not view:
-            return
+        if view:
+            self.apply_view(view)
+
+    def apply_view(self, view: dict) -> list[str]:
+        """Put back a view_state(): on opening (the workspace's last view) or from a snapshot.
+        Returns what couldn't be put back (a lemma or tags since deleted), for a note."""
+        db = self.doc.db
+        missing = []
         try:
             names = {(m.kind, m.name) for m in db.settings.matrices}
             for c in view.get("configs", []):
@@ -2005,9 +2154,17 @@ class MainWindow(QMainWindow):
             self.lemma_search.setText(str(q.get("lemma", "") or ""))
             self.all_search.setText(str(q.get("alldata", "") or ""))
             ref = view.get("lemma")
-            e = db.entry_by_ref(ref) if ref else None
+            e = db.item_by_id(view.get("lemma_id") or "") if view.get("lemma_id") else None
+            if e is None or e not in db.entries:
+                e = db.entry_by_ref(ref) if ref else None
             if e is not None:
                 self.lemmas.select_row(e)
+            elif ref:
+                missing.append(f"the lemma {ref}")
+            known = {tg.name for tg, _ in db.settings.tags.tags()}
+            gone = sorted({t for c in self.configs.values() for sp in c.x + c.y for t in sp.tags} - known)
+            if gone:
+                missing.append("the tags " + ", ".join(gone))
             tab = int(view.get("tab", ALL_DATA))
             if tab in (ALL_DATA, LEMMA_TAG, TAG_TAG):
                 self.tabs.blockSignals(True)
@@ -2016,6 +2173,7 @@ class MainWindow(QMainWindow):
                 self._tab_changed(tab)
         except (TypeError, ValueError, AttributeError, KeyError):
             pass                                  # an unreadable view is simply forgotten
+        return missing
 
     def _save_window(self):
         self.prefs.set_value("window/geometry", self.saveGeometry())
@@ -2715,6 +2873,7 @@ class MainWindow(QMainWindow):
         self._menu([*self._spelling_items(self.all_table, pos, row),("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
                     ("Edit token", "edit", self.edit_token), self._move_item(), *accept, None,
                     *self._token_items(), self.elicit_menu_item(self._selected_token_obj()),
+                    self.hypothesis_menu_item(self.selected_token() is not None),
                     *self._pitch_items(self._pitch_column_at(pos)), *self._same_tags_items(row, pos), None,
                     ("Configure columns", "gear-columns", self.configure_all_columns),
                     ("Clear all filters", "reset-filters", self._clear_all_filters)], pos)
@@ -2722,7 +2881,8 @@ class MainWindow(QMainWindow):
     def _matrix_menu(self, tab, pos):
         self._menu([("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
                     ("Edit token", "edit", self.edit_token), self._move_item(), None, *self._token_items(),
-                    self.elicit_menu_item(self._selected_token_obj()), *self._pitch_items()], pos)
+                    self.elicit_menu_item(self._selected_token_obj()),
+                    self.hypothesis_menu_item(self.selected_token() is not None), *self._pitch_items()], pos)
 
     def _move_item(self):
         return ("Move to another lemma…", "move-token", self.move_token, self.selected_token() is not None)
@@ -2976,6 +3136,9 @@ class MainWindow(QMainWindow):
                 row.set_keys([renames[kind].get(k, k) for k in keys[kind]])
             self._session_people_changed()
         self._apply_tags(dlg.tags, dlg.value_renames())
+        if getattr(dlg, "confidence_changed", False):   # Cogitate's levels are the notebook's
+            self.doc.notebook_changed()
+            self.doc.hypothesesChanged.emit()
         self._fill_session()
         if self.notebook_dialog is not None:
             self.notebook_dialog.reload()

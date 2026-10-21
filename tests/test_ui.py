@@ -477,7 +477,7 @@ def test_token_menus_and_clear_matrix_button(win):
     first_row = win.lt_bar["widget"].layout().itemAt(0).layout()
     texts = [first_row.itemAt(i).widget().text() for i in range(first_row.count())
              if isinstance(first_row.itemAt(i).widget(), QToolButton)]
-    assert texts[-3:] == ["Configure matrix", "Clear matrix", "/[β]/"]   # then the display conventions
+    assert texts[-4:] == ["Configure matrix", "Clear matrix", "/[β]/", "Snapshot"]   # then /[β]/ and the camera
 
 
 def test_settings_have_no_sound_folder_and_a_full_backup_folder(win, tmp_path):

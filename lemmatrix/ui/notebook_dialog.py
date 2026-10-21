@@ -28,8 +28,13 @@ from .icons import icon
 from .widgets import ipa_font, meaning
 
 NEWEST, OLDEST = "newest", "oldest"
-QUESTIONS_TAB, TODO_TAB, COMMENTS_TAB, RECORDINGS_TAB, TEXTS_TAB = range(5)   # the notebook's tabs
+QUESTIONS_TAB, TODO_TAB, HYPOTHESES_TAB, COMMENTS_TAB, RECORDINGS_TAB, TEXTS_TAB = range(6)   # the notebook's tabs
 KIND_ICON = {nbmod.QUESTION: "push-question", nbmod.TODO: "push-todo"}        # the green ?, the orange flag
+
+
+def _cogitate_icon(size: int = 16):
+    from .cogitate import cogitate_icon
+    return cogitate_icon(size)
 
 
 def kind_icon(kind: str, size: int = 18):
@@ -146,6 +151,7 @@ class NotebookDialog(QDialog):
         self.resize(1040, 900)
         self._build()
         self.main.doc.changed.connect(self._doc_changed)
+        self.main.doc.hypothesesChanged.connect(self._hypotheses_changed)
 
     @property
     def db(self):
@@ -278,6 +284,8 @@ class NotebookDialog(QDialog):
         self.comments.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         self.comments.header().setStretchLastSection(False)
         self.comments.itemDoubleClicked.connect(lambda it, col: self._follow(it))
+        self.comments.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.comments.customContextMenuRequested.connect(self._comment_menu)
         self.comments.setToolTip("The comments written this day. Double-click to go to the lemma or token.")
         self.comments.setFont(ipa_font(self.main.prefs.ipa_size))
         self.recordings = QTreeWidget()
@@ -294,6 +302,17 @@ class NotebookDialog(QDialog):
         self.texts.header().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.texts.itemDoubleClicked.connect(lambda it, col: self._open_text(it))
         self.texts.setToolTip("Texts and songs dated this day. Double-click to open one.")
+        self.hyps = QTreeWidget()                 # the hypotheses worked on that day (Cogitate)
+        self.hyps.setColumnCount(3)
+        self.hyps.setHeaderLabels(["No.", "Summary", "Confidence"])
+        self.hyps.setRootIsDecorated(False)
+        self.hyps.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.hyps.header().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.hyps.header().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.hyps.header().setStretchLastSection(False)
+        self.hyps.itemDoubleClicked.connect(lambda it, col: self.main.open_cogitate(it.data(0, Qt.UserRole)))
+        self.hyps.setToolTip("The hypotheses made or edited this day (links included). Double-click to "
+                             "open one in Cogitate.")
         self.q_panel = ItemsPanel(self, nbmod.QUESTION)    # the Questions tab, then To Do (21 October)
         self.t_panel = ItemsPanel(self, nbmod.TODO)
         self.questions, self.todos = self.q_panel.tree, self.t_panel.tree
@@ -301,6 +320,7 @@ class NotebookDialog(QDialog):
             self.q_panel.resolve_btn
         self.tabs.addTab(self.q_panel, "Questions")       # first (Josh, 18 October), then To Do, Comments…
         self.tabs.addTab(self.t_panel, "To Do")
+        self.tabs.addTab(self.hyps, "Hypotheses")         # after To Do (Josh, 21 October)
         self.tabs.addTab(self.comments, "Comments")
         self.tabs.addTab(self.recordings, "Recordings")
         self.tabs.addTab(self.texts, "Texts")
@@ -332,7 +352,7 @@ class NotebookDialog(QDialog):
         self.days.clear()
         chosen = None
         for s in self._sorted():
-            if not nbmod.matches(s, self.db, text):
+            if not nbmod.matches(s, self.db, text, self.book):
                 continue
             first = nbmod.summary(s)
             people = ", ".join(s.researchers + s.participants)
@@ -387,6 +407,7 @@ class NotebookDialog(QDialog):
             self.comments.clear()
             self.recordings.clear()
             self.texts.clear()
+            self.hyps.clear()
             self.questions.clear()
             self.todos.clear()
             self.empty_note.setText("No notes match the search." if self.search.text() and self.book.sessions
@@ -394,6 +415,7 @@ class NotebookDialog(QDialog):
                                     "notebook in the Current Session.")
             self.tabs.setTabText(QUESTIONS_TAB, "Questions")
             self.tabs.setTabText(TODO_TAB, "To Do")
+            self.tabs.setTabText(HYPOTHESES_TAB, "Hypotheses")
             self.tabs.setTabText(COMMENTS_TAB, "Comments")
             self.tabs.setTabText(RECORDINGS_TAB, "Recordings")
             self.tabs.setTabText(TEXTS_TAB, "Texts")
@@ -409,6 +431,7 @@ class NotebookDialog(QDialog):
             self._fill_comments()
             self._fill_recordings()
             self._fill_texts()
+            self._fill_hypotheses()
             self._fill_questions()
         self._loading = False
         self._question_buttons()
@@ -558,7 +581,7 @@ class NotebookDialog(QDialog):
             s.participants = nbmod.speakers(self.db, date)
         nbmod.refresh_comments(self.db, s)
         self._changed()
-        if self.search.text() and not nbmod.matches(s, self.db, self.search.text()):
+        if self.search.text() and not nbmod.matches(s, self.db, self.search.text(), self.book):
             self.search.clear()
         self._fill_days(date)
         self.notes.setFocus()
@@ -609,6 +632,55 @@ class NotebookDialog(QDialog):
             it.setData(0, Qt.UserRole, t)
             self.texts.addTopLevelItem(it)
         self.tabs.setTabText(TEXTS_TAB, f"Texts ({len(rows)})")
+
+    def _hypotheses_changed(self):
+        """A hypothesis changed (or was undone): its line in the notes, and the Hypotheses tab."""
+        if self.session is None:
+            return
+        if self.session not in self.book.sessions:       # an undo took the day away again
+            self.reload()
+            return
+        if self.notes.toPlainText() != self.session.notes:
+            self._loading = True
+            cur = self.notes.textCursor().position()
+            self.notes.setPlainText(self.session.notes)
+            c = self.notes.textCursor()
+            c.setPosition(min(cur, len(self.session.notes)))
+            self.notes.setTextCursor(c)
+            self._loading = False
+        self._fill_hypotheses()
+
+    def _fill_hypotheses(self):
+        from .. import hypotheses as hy
+        self.hyps.clear()
+        ids = list(self.session.hypotheses)
+        for hid in ids:
+            h = hy.by_id(self.book, hid)
+            if h is None:                         # deleted since
+                continue
+            it = QTreeWidgetItem([h.label, h.summary, h.confidence])
+            it.setData(0, Qt.UserRole, h.id)
+            it.setToolTip(1, h.formulation or h.summary)
+            self.hyps.addTopLevelItem(it)
+        self.tabs.setTabText(HYPOTHESES_TAB, f"Hypotheses ({self.hyps.topLevelItemCount()})")
+
+    def _comment_menu(self, pos):
+        it = self.comments.itemAt(pos)
+        c = it.data(0, Qt.UserRole) if it is not None else None
+        m = QMenu(self.comments)
+        a = m.addAction("Go there")
+        a.setEnabled(c is not None)
+        a.triggered.connect(lambda *_: self._follow(it))
+        a = m.addAction(_cogitate_icon(), "Link to hypothesis…")
+        a.setEnabled(c is not None and self.session is not None)
+        a.triggered.connect(lambda *_: self._link_comment(c))
+        m.exec(self.comments.viewport().mapToGlobal(pos))
+
+    def _link_comment(self, c):
+        from .. import hypotheses as hy
+        if c is not None and self.session is not None:
+            self.main.link_to_hypothesis(hy.comment_link(self.session, c), self)
+            self.reload()
 
     def _open_text(self, item):
         t = item.data(0, Qt.UserRole)
@@ -770,11 +842,25 @@ class ItemsPanel(QWidget):
                 (convert_label(self.kind), kind_icon(nbmod.other(self.kind), 16), self.convert, on),
                 ("Go to token", None, lambda: follow_link(self.dlg, self.dlg.main, q.link),
                  on and q.link is not None),
+                ("Link to hypothesis…", _cogitate_icon(), self.link_to_hypothesis, on),
                 (f"Delete {one}", icon("delete", 16), self.delete, on)):
             a = m.addAction(ic, text) if ic is not None else m.addAction(text)
             a.setEnabled(enabled)
             a.triggered.connect(lambda *_, fn=fn: fn())
         m.exec(self.tree.viewport().mapToGlobal(pos))
+
+    def link_to_hypothesis(self):
+        """Link to hypothesis…: this question or To Do (it gets an id, kept after)."""
+        from .. import hypotheses as hy
+        q = self.current()
+        if q is None or self.session is None:
+            return
+        had = q.id
+        link = hy.question_link(self.session, q)
+        if not had:
+            self.dlg.main.doc.notebook_changed()     # the id is written with the notebook
+        self.dlg.main.link_to_hypothesis(link, self.dlg)
+        self.dlg.reload()
 
     def add(self):
         if self.session is None:

@@ -161,6 +161,16 @@ class TokenDialog(QDialog):
         self.pitch_note = QLabel()
         self.pitch_note.setStyleSheet(f"color: {theme.colour('warning').name()};")
         left.addWidget(self.pitch_note, row, 1)
+        row += 1
+        self.hyp_line = QLabel()                  # Cogitate: "In hypotheses: H3 (evidence)…  Link to hypothesis…"
+        self.hyp_line.setTextFormat(Qt.RichText)
+        self.hyp_line.setWordWrap(True)
+        self.hyp_line.linkActivated.connect(self._hypothesis_link)
+        left.addWidget(self.hyp_line, row, 1)
+        try:
+            self.doc.hypothesesChanged.connect(self._show_hypotheses)
+        except (AttributeError, RuntimeError):
+            pass
         left.setRowStretch(row + 1, 1)
         lw = QWidget()
         lw.setLayout(left)
@@ -377,6 +387,7 @@ class TokenDialog(QDialog):
         self.next_btn.setEnabled(self.pos < len(self.slots) - 1)
         self._refresh_name()
         self._update_suggestion()
+        self._show_hypotheses()
         if getattr(self.main, "dialog_autoplay", False) and t.file:
             QTimer.singleShot(150, self._play)
 
@@ -1029,6 +1040,45 @@ class TokenDialog(QDialog):
         QToolTip.showText(b.mapToGlobal(b.rect().bottomLeft()),
                           f"Added to the {nbmod.name(kind, True, title=False)} of {date}", b)
 
+    # --------------------------------------------------- Cogitate (hypotheses)
+    def _show_hypotheses(self):
+        """The hypotheses this token (or utterance) is in, worked out from the notebook."""
+        from .. import hypotheses as hy
+        from ..model import is_utterance
+        try:
+            lbl = self.hyp_line
+            lbl.isVisible()
+        except (AttributeError, RuntimeError):    # the dialogue has gone
+            return
+        e, t = self.slot.entry, self.token
+        found = []
+        if t is not None and self.original is not None:
+            kind = hy.UTTERANCE if is_utterance(e) else hy.TOKEN
+            found = hy.linked_to_item(self.doc.notebook, kind, e.id, t.id)
+        a = theme.colour("pitch").name()
+        links = ", ".join(f"<a href='h:{h.id}' style='color:{a}'>{h.label}</a> ({ln.mark})" for h, ln in found)
+        more = f"<a href='link' style='color:{a}'>Link to hypothesis…</a>"
+        lbl.setText((f"In hypotheses: {links}  ·  " if links else "") + more)
+        lbl.setToolTip("\n".join(h.title(80) for h, _ in found) or
+                       "Cogitate: link this token to a hypothesis, as evidence, counterevidence or relevant")
+
+    def _hypothesis_link(self, href: str):
+        if href.startswith("h:"):
+            self.main.open_cogitate(href[2:])
+        elif href == "link":
+            self.link_to_hypothesis()
+
+    def link_to_hypothesis(self):
+        """Link to hypothesis… from the dialogue (a new token is saved first, so the link works)."""
+        from .. import hypotheses as hy
+        if self.original is None:
+            self._collect()
+            if not self._commit(keep_empty=True):
+                return None
+        h = self.main.link_to_hypothesis(hy.token_link(self.db, self.slot.entry, self.token), self)
+        self._show_hypotheses()
+        return h
+
     def _update_meter(self):
         if self.recorder:
             self.meter.setValue(int(min(1.0, self.recorder.level) * 100))
@@ -1075,6 +1125,9 @@ class TokenDialog(QDialog):
             a = m.addAction(icon(name, 16), text)
             a.setEnabled(on)
             a.triggered.connect(lambda *_, fn=fn: fn())
+        m.addSeparator()
+        a = m.addAction(icon("cogitate", 16, theme.colour("pitch").name()), "Link to hypothesis…")
+        a.triggered.connect(lambda *_: self.link_to_hypothesis())
         m.exec(global_pos)
 
     def _delete_recording(self):

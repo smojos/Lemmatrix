@@ -360,6 +360,13 @@ class TextsUtterancesWindow(QDialog):
         a.triggered.connect(lambda *_: self.cell.start_edit(line, key))
         a = m.addAction(icon("play", 16), "Play")
         a.triggered.connect(lambda *_: self.play())
+        if hasattr(self.main, "hypothesis_menu_item"):                  # Cogitate
+            text, ic, fn, on = self.main.hypothesis_menu_item(
+                self.table.current_row() is not None,
+                lambda: self.main.link_token_to_hypothesis(self.table.current_row(), 0, self))
+            a = m.addAction(ic, text)
+            a.setEnabled(on)
+            a.triggered.connect(lambda *_: fn())
         m.exec(pos)
 
     def _main_autoplay(self, on: bool):
@@ -937,6 +944,9 @@ class TextsUtterancesWindow(QDialog):
                             ("Unlink from the text…", None, self.unlink_selected, True)]
         if row is not None and hasattr(self.main, "elicit_menu_item"):   # ɛλicit, before Delete
             items[-1:-1] = [self.main.elicit_menu_item(row.token)]
+        if hasattr(self.main, "hypothesis_menu_item"):                  # Cogitate, before Delete
+            items[-1:-1] = [self.main.hypothesis_menu_item(
+                row is not None, lambda r=row: self.main.link_token_to_hypothesis(r, 0, self))]
         for text, name, fn, on in items:
             if name is not None and not isinstance(name, str):              # an icon already drawn
                 a = m.addAction(name, text)

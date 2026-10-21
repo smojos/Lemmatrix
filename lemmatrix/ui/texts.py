@@ -882,12 +882,13 @@ class TextsPanel(QObject):
                 return
         self.main.statusBar().showMessage(f"No line has an empty {self.next_field.currentText()}.", 5000)
 
-    def select_line_at(self, start: float | None):
-        """Show the line starting at this time (from a notebook link)."""
+    def select_line_at(self, start: float | None, nearest: bool = False):
+        """Show the line starting at this time (from a notebook link); nearest: or else the nearest
+        line (a hypothesis's link, after a boundary moved in Praat, as bookmarks do)."""
         if start is None:
             return
         hit = min(self.lines.rows, key=lambda ln: abs(ln.start - start), default=None)
-        if hit is not None and abs(hit.start - start) < 0.01:
+        if hit is not None and (nearest or abs(hit.start - start) < 0.01):
             self.line_search.clear()
             self.lines.select_row(hit)
 
@@ -1330,6 +1331,12 @@ class TextsPanel(QObject):
         a = m.addAction(icon("push-todo", 16), "Push comment to To Do")
         a.setEnabled(has_c)
         a.triggered.connect(lambda *_: self.push_to_todo(row))
+        if hasattr(self.main, "link_to_hypothesis"):                    # Cogitate: the whole line
+            from .icons import icon as _icon
+            from . import theme as _theme
+            a = m.addAction(_icon("cogitate", 16, _theme.colour("pitch").name()), "Link line to hypothesis…")
+            a.setEnabled(on and self.current() is not None)
+            a.triggered.connect(lambda *_: self.link_line(row))
         m.addSeparator()
         for text, name, fn in (("Play line", "play", self.play_line),
                                ("Play in context", None, lambda: self.play_line(context=True)),
@@ -1339,6 +1346,16 @@ class TextsPanel(QObject):
             a.setEnabled(on)
             a.triggered.connect(lambda *_, fn=fn: fn())
         m.exec(pos)
+
+    def link_line(self, line):
+        """Link line to hypothesis…: the whole line, found again by its text and start time."""
+        from .. import hypotheses as hy
+        t = self.current()
+        if t is None or line is None:
+            return None
+        words = next((v for v in (line.values.get(f.key) for f in self.lines.fields) if v), "")
+        return self.main.link_to_hypothesis(hy.line_link(self.db, t, line.start, words, clock(line.start)),
+                                            self.win)
 
     def create_token(self, line, key: str, words: str, view=None):
         """Create token from a text's line (IDEAS.md idea 31, Josh 21 October): the lemma is picked

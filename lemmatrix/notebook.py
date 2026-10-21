@@ -37,8 +37,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .model import Database, Entry, Token, nfc, today, write_atomically, xml_safe
+from . import hypotheses as _hy
 
-FORMAT_VERSION = "2"                  # 2: <todo> beside <question> (21 October)
+FORMAT_VERSION = "3"                  # 2: <todo> beside <question>; 3: <hypotheses>, ids on questions (21 October)
 SUFFIX = ".notebook"
 
 QUESTION, TODO = "question", "todo"   # a notebook item's kind: its list, its element in the file
@@ -72,6 +73,7 @@ class Question:
     ref: str = ""                     # the lemma's reference then (the link falls back on it)
     about: str = ""                   # how the link reads: "D011 sheep · SG"
     kind: str = QUESTION              # QUESTION or TODO (a To Do is a Question in the other list)
+    id: str = ""                      # given when first linked to a hypothesis (format 3), kept after
 
     @property
     def is_todo(self) -> bool:
@@ -142,6 +144,7 @@ class Session:
     questions: list[Question] = field(default_factory=list)
     todos: list[Question] = field(default_factory=list)  # To Dos: Questions of kind TODO
     texts: list[str] = field(default_factory=list)       # ids of the texts worked on that day (their lines)
+    hypotheses: list[str] = field(default_factory=list)  # ids of the hypotheses worked on that day (Cogitate)
 
 
 def items(s: Session, kind: str) -> list[Question]:
@@ -163,6 +166,9 @@ def convert(s: Session, q: Question) -> Question:
 @dataclass
 class Notebook:
     sessions: list[Session] = field(default_factory=list)
+    hypotheses: list = field(default_factory=list)       # Cogitate (hypotheses.py), at the end of the file
+    confidence: list = field(default_factory=lambda: _hy.default_confidence())   # its levels (Edit → Lists)
+    next_number: int = 1                                 # the next hypothesis number (never reused)
     path: str = ""
     dirty: bool = False
     repaired: bool = False            # had characters XML can't hold, taken out on reading
@@ -425,8 +431,9 @@ def push_line_question(nb: Notebook, db: Database, date: str, question: str, tex
     return q
 
 
-def matches(s: Session, db: Database | None, text: str) -> bool:
-    """Search: the date, notes, people, places, comments, questions and to dos."""
+def matches(s: Session, db: Database | None, text: str, nb: "Notebook | None" = None) -> bool:
+    """Search: the date, notes, people, places, comments, questions and to dos, and (given the
+    notebook) the hypotheses worked on that day."""
     text = text.strip().lower()
     if not text:
         return True
@@ -440,7 +447,11 @@ def matches(s: Session, db: Database | None, text: str) -> bool:
         parts.append(md.location_path(key) if md else key)
     parts += [c.text for c in s.comments] + [c.about for c in s.comments]
     parts += [q.text for q in s.questions + s.todos]
-    return any(text in (x or "").lower() for x in parts)
+    if any(text in (x or "").lower() for x in parts):
+        return True
+    if nb is not None and s.hypotheses:          # the hypotheses worked on that day (Cogitate)
+        return any(_hy.matches(h, text) for h in nb.hypotheses if h.id in s.hypotheses)
+    return False
 
 
 def summary(s: Session) -> str:
@@ -510,9 +521,12 @@ def load(path: str | os.PathLike) -> Notebook:
             for q in el.findall(kind):
                 items(s, kind).append(Question(_text(q), q.get("created", ""), q.get("edited", ""),
                                                q.get("resolved", ""), q.get("entry", ""), q.get("token", ""),
-                                               nfc(q.get("ref", "")), nfc(q.get("about", "")), kind))
+                                               nfc(q.get("ref", "")), nfc(q.get("about", "")), kind,
+                                               q.get("id", "")))
         s.texts = [x.get("id", "") for x in el.findall("text") if x.get("id")]
+        s.hypotheses = [x.get("id", "") for x in el.findall("hypothesis") if x.get("id")]
         nb.sessions.append(s)
+    _hy.read_xml(nb, root)
     nb.sort()
     nb.dirty = nb.repaired                # so saving writes the repaired file
     return nb
@@ -540,7 +554,8 @@ def to_string(nb: Notebook, database_name: str = "") -> str:
             ca.update({"ref": c.ref, "about": c.about, "field": c.field})
             ET.SubElement(el, "comment", ca).text = c.text
         for q in s.questions + s.todos:
-            qa = {"created": q.created}
+            qa = {"id": q.id} if q.id else {}
+            qa["created"] = q.created
             if q.edited:
                 qa["edited"] = q.edited
             if q.resolved:
@@ -551,6 +566,9 @@ def to_string(nb: Notebook, database_name: str = "") -> str:
             ET.SubElement(el, q.kind, qa).text = q.text
         for tid in s.texts:                       # the texts worked on that day
             ET.SubElement(el, "text", id=tid)
+        for hid in s.hypotheses:                  # the hypotheses worked on that day (Cogitate)
+            ET.SubElement(el, "hypothesis", id=hid)
+    _hy.write_xml(nb, root)
     ET.indent(root, space="  ")
     return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(root, encoding="unicode") + "\n"
 

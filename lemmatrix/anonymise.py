@@ -164,6 +164,14 @@ def anonymise(db: Database, nb: nbmod.Notebook | None, opts: Options, report: Re
                                            report)
                 for c in s.comments:
                     c.text = replace_names(c.text, patterns, f"Notebook {s.date} comment", report)
+        if patterns:                              # hypotheses (Cogitate) are notes too
+            for h in book.hypotheses:
+                where = f"Hypothesis {h.label}"
+                h.summary = replace_names(h.summary, patterns, f"{where} summary", report)
+                h.formulation = replace_names(h.formulation, patterns, f"{where} formulation", report)
+                for ln in h.links:
+                    ln.note = replace_names(ln.note, patterns, f"{where} link note", report)
+                    ln.text = replace_names(ln.text, patterns, f"{where} link", report)
     return out, book
 
 

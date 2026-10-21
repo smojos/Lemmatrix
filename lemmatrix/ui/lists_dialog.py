@@ -32,6 +32,7 @@ from .fields_dialog import ListEditor
 from .icons import icon
 
 TAGS = "tags"
+CONFIDENCE = "confidence"                     # Cogitate's confidence levels (kept in the notebook)
 ORIGINAL = Qt.UserRole + 7                    # a row's code when the dialogue opened
 
 
@@ -742,6 +743,15 @@ class ListsDialog(QDialog):
                    "tiers are matched to them by time. A text can have its own mapping (chosen in its "
                    "dialogue); new tier names are learned when a text is added.", self._reset_tiers)
 
+        self._heading("Cogitate")
+        import copy as _copy
+        self.confidence = ListEditor()
+        self.confidence.set_items(_copy.deepcopy(notebook.confidence) if notebook is not None else [])
+        self._page(CONFIDENCE, "Confidence", self.confidence,
+                   "The confidence levels a hypothesis can have (View → Cogitate), in order. They are kept "
+                   "with the hypotheses, in the notebook. Renaming a level renames it in the hypotheses.",
+                   self._reset_confidence)
+
         self._heading("Tags")
         self.tags = TagStructureDialog(
             self, db, (lambda: self.class_list.items()) if self.class_list is not None else None)
@@ -846,6 +856,14 @@ class ListsDialog(QDialog):
             out.add(t.get(f.name))
         return {v for v in out if v}
 
+    def _reset_confidence(self):
+        from .. import hypotheses as hy
+        used = {h.confidence for h in (self.notebook.hypotheses if self.notebook is not None else [])}
+        items, kept = resets.merge_items(hy.default_confidence(), self.confidence.items(), used)
+        self.confidence.set_items(items)
+        self.confidence.changed()
+        return kept
+
     def _reset_tiers(self):
         self.tier_editor.load(defaults.tier_mapping())
         return []
@@ -934,5 +952,17 @@ class ListsDialog(QDialog):
             f.items = ed.items()
         self.db.settings.ref_categories = self.categories.categories()
         self.db.settings.tier_mapping = self.tier_editor.mapping()
+        self.confidence_changed = False
+        if self.notebook is not None:             # Cogitate's levels: the notebook's, renames followed
+            from .. import hypotheses as hy
+            items = self.confidence.items()
+            if [(i.name, [c.name for c in i.walk()]) for i in items] != \
+                    [(i.name, [c.name for c in i.walk()]) for i in self.notebook.confidence]:
+                self.notebook.confidence = items
+                self.confidence_changed = True
+            ren = {a: b for a, b in self.confidence.renames().items() if a != b}
+            if ren:
+                hy.rename_confidence(self.notebook, ren)
+                self.confidence_changed = True
         return {RESEARCHERS: self.researchers.renames(), PARTICIPANTS: self.participants.renames(),
                 LOCATIONS: self.locations.renames()}
