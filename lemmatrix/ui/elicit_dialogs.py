@@ -733,6 +733,11 @@ class ReceiveDialog(QDialog):
             _drive_problem(self.main, RECEIVE, exc)
             return
         self.states.update(found)
+        self.main.elicit_drive_ready = {k: (st.request.speaker["code"], v.uploaded,
+                                            v.summary(st.request) if v.turned_down else "")
+                                        for st in self.requests if (k := st.request.id) in self.states
+                                        and ((v := self.states[k]).finished or v.turned_down)}
+        self.main.refresh_elicit_icon()
         self._fill()
 
     def download(self):

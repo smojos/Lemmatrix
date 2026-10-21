@@ -639,3 +639,42 @@ def test_the_page_through_a_drive_link(db, tmp_path):
     assert [c.n for c in el.waiting(db, got)] == [1, 2, 3]
     st2 = next(s for s in el.outstanding_drive(db) if s.request.id == req2.id)
     assert el.drive_state(drive, st2).turned_down == "not around"
+
+
+def test_the_button_rains_when_recordings_are_ready_in_drive(win, monkeypatch):
+    """Josh, 21 October: a finished request in Google Drive makes the button rain (looked at in the
+    background on opening and every 10 minutes, when signed in)."""
+    from lemmatrix import cloud_keys, gdrive
+    from PySide6.QtWidgets import QApplication
+    import time
+    db = win.doc.db
+    drive = FakeDrive()
+    items = _items(db)[:2]
+    req = el.new_request(db, items, "SP1", "RS1", "da")
+    el.publish_drive(db, req, items, drive, "KEY")
+    monkeypatch.setattr(cloud_keys, "google_ready", lambda: True)
+    monkeypatch.setattr(gdrive, "Drive", lambda token, on_token=None: drive)
+    win.prefs.google_token = {"refresh_token": "R"}
+    win.elicit_drive_ready = {}
+    win.check_elicit_drive()
+    for _ in range(100):
+        QApplication.processEvents()
+        if not win._elicit_checking:
+            break
+        time.sleep(0.02)
+    assert win.elicit_drive_ready == {} and "1 request out" in win.elicit_btn.toolTip()
+    st = el.outstanding_drive(db)[0]
+    drive.put(st.request.cards[0].upload, b"RIFF")
+    drive.put(st.request.drive["response"], json.dumps({"request": req.id, "cards": []}).encode())
+    win.check_elicit_drive()
+    for _ in range(100):
+        QApplication.processEvents()
+        if not win._elicit_checking:
+            break
+        time.sleep(0.02)
+    assert req.id in win.elicit_drive_ready
+    assert "SP1 has finished: 1 recording in Google Drive" in win.elicit_btn.toolTip()
+    el.close_drive(drive, st)                                        # received or withdrawn: no more rain
+    win.refresh_elicit_icon()
+    assert "has finished" not in win.elicit_btn.toolTip()
+    win.prefs.google_token = {}

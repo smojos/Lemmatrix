@@ -7,7 +7,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import QDate, QDir, QSize, Qt, QTimer, QUrl
+from PySide6.QtCore import QDate, QDir, QObject, QSize, Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import QAction, QColor, QDesktopServices, QFont, QIcon, QKeySequence
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QFileDialog, QFrame, QGridLayout,
                                QProgressDialog,
@@ -86,6 +86,11 @@ ICON_ONLY = {"add", "delete", "edit", "play", "reset-filters",   # obvious, shar
              "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token"}
 
 
+class _ElicitChecked(QObject):
+    """Carries the background look in Google Drive back to the main thread."""
+    done = Signal(object, object)
+
+
 def tool(text: str, icon_name: str | None, fn, tip: str = "") -> QToolButton:
     b = QToolButton()
     b.setText(text)
@@ -158,6 +163,14 @@ class MainWindow(QMainWindow):
         self.heartbeat.setInterval(5 * 60_000)
         self.heartbeat.timeout.connect(lambda: self._locked_path and lockmod.claim(self._locked_path))
         self._apply_autosave()
+        self.elicit_drive_ready: dict[str, tuple[str, int, str]] = {}   # request id -> (speaker, recordings, why)
+        self._elicit_checking = False
+        self._elicit_signal = _ElicitChecked(self)  # the background look in Drive reports here
+        self._elicit_signal.done.connect(self._elicit_checked)
+        self.elicit_check = QTimer(self)          # ɛλicit requests out through Google Drive: looked at
+        self.elicit_check.setInterval(10 * 60_000)  # every 10 minutes (and on opening a database)
+        self.elicit_check.timeout.connect(self.check_elicit_drive)
+        self.elicit_check.start()
         self.load_database(self.doc.db)
 
     # ================================================================ layout
@@ -445,18 +458,73 @@ class MainWindow(QMainWindow):
             waiting = []
         n = sum(k for _, k in waiting)
         try:
-            out = len(elicit.outstanding_drive(self.doc.db)) if self.doc.db.path else 0
+            outstanding = elicit.outstanding_drive(self.doc.db) if self.doc.db.path else []
         except OSError:
-            out = 0
-        self.elicit_btn.setIcon(elicit_icon(self.TEXTS_ICON, waiting=bool(n)))
+            outstanding = []
+        out = len(outstanding)
+        ids = {st.request.id for st in outstanding}
+        ready = [v for k, v in getattr(self, "elicit_drive_ready", {}).items() if k in ids]
+        self.elicit_btn.setIcon(elicit_icon(self.TEXTS_ICON, waiting=bool(n or ready)))
         tip = (f"ɛλicit: {n} recording{'s' if n != 1 else ''} waiting for review" if n
                else "ɛλicit: remote elicitation")
+        for speaker, k, why in ready:              # in Google Drive, ready to download (Receive ɛλicitation)
+            tip += (f"\n{speaker}'s request: {why}; Receive ɛλicitation" if why else
+                    f"\n{speaker} has finished: {k} recording{'s' if k != 1 else ''} in Google Drive "
+                    "(Receive ɛλicitation)")
         if out:
             tip += (f"\n{out} request{'s' if out != 1 else ''} out through Google Drive "
                     "(Receive ɛλicitation checks them)")
         self.elicit_btn.setToolTip(tip)
         self.elicit_review.setVisible(bool(n))
         self.elicit_review.setText(f"Review waiting recordings ({n})…")
+
+    def check_elicit_drive(self):
+        """Look in Google Drive, in the background, for requests out that have finished (or were
+        turned down), so the button rains without opening Receive ɛλicitation. Only when signed in,
+        and quietly: a problem (offline, signed out) just leaves things as they are."""
+        from .. import cloud_keys, elicit, gdrive
+        db = self.doc.db
+        token = self.prefs.google_token
+        if self._elicit_checking or not db.path or not cloud_keys.google_ready() or not token.get("refresh_token"):
+            return
+        try:
+            outstanding = elicit.outstanding_drive(db)
+        except OSError:
+            return
+        if not outstanding:
+            return
+        import threading
+        self._elicit_checking = True
+        path = db.path
+
+        def keep(tok):
+            self.prefs.google_token = tok
+
+        def work():
+            found = {}
+            try:
+                drive = gdrive.Drive(token, on_token=keep)
+                for st in outstanding:
+                    state = elicit.drive_state(drive, st)
+                    if state.finished or state.turned_down:
+                        found[st.request.id] = (st.request.speaker["code"], state.uploaded,
+                                                state.summary(st.request) if state.turned_down else "")
+            except Exception:                     # noqa: BLE001 (checked again in 10 minutes)
+                found = None
+            self._elicit_signal.done.emit(path, found)   # queued to the main thread
+        threading.Thread(target=work, daemon=True).start()
+
+    def _elicit_checked(self, path, found):
+        self._elicit_checking = False
+        if found is None or path != self.doc.db.path:
+            return
+        new = set(found) - set(self.elicit_drive_ready)
+        self.elicit_drive_ready = found
+        self.refresh_elicit_icon()
+        if new:
+            names = ", ".join(sorted({found[k][0] for k in new}))
+            self.statusBar().showMessage(f"ɛλicit: {names} — recordings ready in Google Drive "
+                                         "(Receive ɛλicitation).", 15000)
 
     def _elicit_preselect(self) -> list[str]:
         """The tokens added with the right-click Add to ɛλicit request (and those left ticked when
@@ -933,10 +1001,13 @@ class MainWindow(QMainWindow):
         self._remind_elicit()
 
     def _remind_elicit(self):
-        """On opening: ɛλicit recordings waiting for review (Review now, Later)."""
+        """On opening: ɛλicit recordings waiting for review (Review now, Later), and a look in
+        Google Drive for requests out."""
         from .elicit_dialogs import remind
+        self.elicit_drive_ready = {}
         self.refresh_elicit_icon()
         remind(self)
+        self.check_elicit_drive()
 
     def _praat_text_names(self, db: Database):
         """On opening: recordings (tokens', utterances' and texts', and texts' TextGrids) named
