@@ -21,9 +21,55 @@ def _fold(ch: str) -> str:
     return fl.fold_diacritics(ch).casefold()
 
 
+def terms(query: str) -> list[str]:
+    """A search's items: commas separate several, any of which may match (`dog, cat, hare`;
+    IDEAS.md idea 29, Josh 21 October); `\\,` is a comma searched for itself (`go\\, walk`).
+    Spaces round each item are dropped. A search that is nothing but commas is taken as typed."""
+    if not query:
+        return []
+    out, cur, k = [], [], 0
+    while k < len(query):
+        ch = query[k]
+        if ch == "\\" and query[k + 1:k + 2] == ",":
+            cur.append(",")
+            k += 2
+            continue
+        if ch == ",":
+            out.append("".join(cur))
+            cur = []
+        else:
+            cur.append(ch)
+        k += 1
+    out.append("".join(cur))
+    out = [t.strip() for t in out if t.strip()]
+    return out or [query]
+
+
+def found(hay: str, query: str) -> bool:
+    """Whether any of the search's items is in `hay` (both already folded and casefolded)."""
+    return any(t in hay for t in terms(query))
+
+
 def spans(text: str, query: str) -> list[tuple[int, int]]:
     """Where the search `query` (already folded and casefolded) is found in `text`: (start, end)
-    in `text`'s own characters, the marks after a match included."""
+    in `text`'s own characters, the marks after a match included. Each of a search's items
+    (separated by commas) is marked."""
+    if not text or not query:
+        return []
+    items = terms(query)
+    if len(items) > 1 or items[0] != query:
+        merged = sorted(sp for t in items for sp in _spans(text, t))
+        out: list[tuple[int, int]] = []
+        for a, b in merged:
+            if out and a <= out[-1][1]:
+                out[-1] = (out[-1][0], max(b, out[-1][1]))
+            else:
+                out.append((a, b))
+        return out
+    return _spans(text, query)
+
+
+def _spans(text: str, query: str) -> list[tuple[int, int]]:
     if not text or not query:
         return []
     folded, owner = [], []

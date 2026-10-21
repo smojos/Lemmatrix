@@ -1331,6 +1331,8 @@ class UtteranceDialog(TokenDialog):
 
     def _commit(self, keep_empty: bool = False, check_clash: bool = True, extras: bool = False) -> bool:
         """Save the working utterance (token, file label and lemma links) with undo."""
+        if extras and not self.check_pitch_like():
+            return False
         self._collect()
         u = self.slot.entry
         t = self.token

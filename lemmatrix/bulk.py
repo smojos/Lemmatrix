@@ -258,6 +258,45 @@ def shift_pitch(text: str, step: int, low: int, high: int) -> str:
     return "".join(out)
 
 
+_FINAL = ".?!…;:"                      # counted as final punctuation
+_CLOSERS = "\"'”’)]»"                    # may follow it ("Go!")
+_QUESTION_TAGS = {"interrogative", "int", "q", "question"}
+_COMMAND_TAGS = {"imperative", "imp"}
+
+
+def sentence_mark(tags, db: Database | None = None) -> str:
+    """The final mark from the token's Mood tags: ? Interrogative, ! Imperative, else a full stop.
+    Tags are matched by name or code, so a renamed Mood group still works."""
+    words = set()
+    ts = db.settings.tags if db is not None else None
+    for name in tags or ():
+        words.add(name.strip().lower())
+        found = ts.find(name) if ts is not None else None
+        if found and getattr(found[0], "code", ""):
+            words.add(found[0].code.strip().lower())
+    if words & _QUESTION_TAGS:
+        return "?"
+    if words & _COMMAND_TAGS:
+        return "!"
+    return "."
+
+
+def sentenceify(text: str, mark: str = ".") -> str:
+    """Capitalise the first letter; add the mark if there is no final punctuation (Josh, 21 October)."""
+    if not text or not text.strip():
+        return text
+    lead = len(text) - len(text.lstrip())
+    body = text.strip()
+    for k, ch in enumerate(body):
+        if ch.isalpha():
+            if ch.islower():
+                body = body[:k] + ch.upper() + body[k + 1:]
+            break
+    if body.rstrip(_CLOSERS)[-1:] not in _FINAL:
+        body += mark
+    return text[:lead] + body
+
+
 @dataclass(frozen=True)
 class Direction:
     key: str
@@ -288,6 +327,11 @@ SHORTCUTS = (
                 (Direction("up", "Raise by one"), Direction("down", "Lower by one")),
                 "Moves every pitch digit up or down one step. If any ticked token would go past the "
                 "display range (Settings → Pitch), nothing is changed."),
+    ShortcutDef("sentence", "Sentence-ify", ("translation",),
+                (Direction("on", "Make sentences"),),
+                "Capitalises the first letter, and adds a final mark if there is none: a question mark "
+                "for an Interrogative token, an exclamation mark for an Imperative one (the Mood tags), "
+                "otherwise a full stop. . ? ! … ; and : count as final marks already there."),
 )
 
 
@@ -298,7 +342,8 @@ def shortcut(key: str) -> ShortcutDef:
     raise BulkError(f"There is no shortcut “{key}”.")
 
 
-def run_shortcut(db: Database, key: str, direction: str, text: str, keep_diacritics: bool = True) -> str:
+def run_shortcut(db: Database, key: str, direction: str, text: str, keep_diacritics: bool = True,
+                 tags=()) -> str:
     if key == "yj":
         find, repl = ("y", "j") if direction == "y>j" else ("j", "y")
         return replace_text(text, re.compile(find), repl, keep_diacritics=keep_diacritics)
@@ -307,6 +352,8 @@ def run_shortcut(db: Database, key: str, direction: str, text: str, keep_diacrit
     if key == "pitch":
         s = db.settings
         return shift_pitch(text, 1 if direction == "up" else -1, s.pitch_low, s.pitch_high)
+    if key == "sentence":
+        return sentenceify(text, sentence_mark(tags, db))
     raise BulkError(f"There is no shortcut “{key}”.")
 
 
@@ -539,7 +586,8 @@ def plan(db: Database, level: str, rows: list[Row], op, opts: Options | None = N
             if isinstance(op, Replace):
                 new = replace_text(old, rx, op.replace, opts.regex, opts.keep_diacritics)
             elif isinstance(op, RunShortcut):
-                new = run_shortcut(db, op.shortcut, op.direction, old, opts.keep_diacritics)
+                new = run_shortcut(db, op.shortcut, op.direction, old, opts.keep_diacritics,
+                                   e.tokens[i].tags if i is not None else ())
             elif isinstance(op, CopyField):
                 value = get_value(src, e, e.tokens[i] if i is not None else None)
                 if op.mode == ONLY_EMPTY:

@@ -382,8 +382,10 @@ class ConfigureMatrixDialog(QDialog):
 
 def ask_matrix_name(parent, existing: list[str], current: str = "", title: str = "Save matrix",
                     replace: bool = True) -> str | None:
-    name, ok = QInputDialog.getText(parent, title, "Name for this matrix:", text=current)
-    name = name.strip()
+    name, ok = QInputDialog.getText(parent, title, "Name for this matrix (> files it under a group, "
+                                    "e.g. Imperative>Negative):", text=current)
+    from ..matrix import tidy_matrix_name
+    name = tidy_matrix_name(name)
     if not ok or not name:
         return None
     if name in existing and name != current:

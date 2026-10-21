@@ -278,7 +278,8 @@ class MainWindow(QMainWindow):
         self.head_icons.addWidget(self._elicit_button())   # ɛλicit, left of Texts and utterances
         self.head_icons.addWidget(self._xml_button())      # the XML viewer, between them (21 October)
         self.head_icons.addWidget(self._cogitate_button())    # Cogitate, between χμλ and the ? (21 October)
-        self.head_icons.addWidget(self._questions_button())   # Questions, then Texts and utterances
+        self.head_icons.addWidget(self._questions_button())   # Questions, then To Do, then Texts and utterances
+        self.head_icons.addWidget(self._todo_button())        # To Do's flag (Josh, 21 October)
         self.head_icons.addWidget(self._texts_button())
         top.addLayout(self.head_icons)
         self.tabs = QTabBar()
@@ -889,6 +890,16 @@ class MainWindow(QMainWindow):
         b.clicked.connect(lambda *_: self.open_questions())
         return b
 
+    def _todo_button(self) -> QToolButton:
+        """Beside the ?: View → To Do (the orange flag, 48 px; Josh, 21 October)."""
+        b = self.todo_btn = QToolButton()
+        b.setIconSize(QSize(self.TEXTS_ICON, self.TEXTS_ICON))
+        b.setAutoRaise(True)
+        b.setCursor(Qt.PointingHandCursor)
+        b.setToolTip("To Do: every to do in the notebook (Ctrl+Shift+T)")
+        b.clicked.connect(lambda *_: self.open_todos())
+        return b
+
     def xml_target(self):
         """Where the XML viewer opens: the selected token (All data or a matrix cell), else the lemma
         list's lemma, as ("token" | "entry", id); None for the beginning."""
@@ -1092,7 +1103,7 @@ class MainWindow(QMainWindow):
         v = mb.addMenu("&View")
         self._act(v, "&Notebook", self.open_notebook, "Ctrl+B")
         self._act(v, "&Questions", self.open_questions)
-        self._act(v, "To &Do", self.open_todos)
+        self._act(v, "To &Do", self.open_todos, "Ctrl+Shift+T")
         self._act(v, "&Texts and utterances", lambda *_: self.open_utterances(), "Ctrl+U")
         self._act(v, "&XML viewer", lambda *_: self.open_xml_viewer())
         self._act(v, "&Cogitate (hypotheses)", lambda *_: self.open_cogitate())
@@ -1830,6 +1841,7 @@ class MainWindow(QMainWindow):
         self.texts_btn.setIcon(icon("texts-utterances", self.TEXTS_ICON, a))
         self.xml_btn.setIcon(icon("xml-viewer", self.TEXTS_ICON, theme.colour("pitch").name()))
         self.questions_btn.setIcon(icon("questions", self.TEXTS_ICON, theme.colour("pitch").name()))
+        self.todo_btn.setIcon(icon("push-todo", self.TEXTS_ICON))
         self.cogitate_btn.setIcon(icon("cogitate", self.TEXTS_ICON, theme.colour("pitch").name()))
         if self.cogitate_window is not None:
             self.cogitate_window._restyle()
@@ -2217,10 +2229,21 @@ class MainWindow(QMainWindow):
         cb.blockSignals(True)
         cb.clear()
         cb.addItem("(current)" if (cfg.x or cfg.y) else "(blank)")
-        for m in self.doc.db.settings.matrices:
-            if m.kind == cfg.kind:
-                cb.addItem(m.name)
-        i = cb.findText(cfg.name) if cfg.name else 0
+        names = [m.name for m in self.doc.db.settings.matrices if m.kind == cfg.kind]
+        model = cb.model()
+        for label, depth, name in mx.matrix_tree(names):   # groups by > (idea 37)
+            cb.addItem("\u2003" * depth + label, name)
+            row = cb.count() - 1
+            if name is None:                    # only a heading: not a matrix of its own
+                item = model.item(row)
+                if item is not None:
+                    item.setEnabled(False)
+                    f = item.font()
+                    f.setItalic(True)
+                    item.setFont(f)
+            else:
+                cb.setItemData(row, mx.shown_matrix_name(name), Qt.ToolTipRole)
+        i = cb.findData(cfg.name) if cfg.name else 0
         cb.setCurrentIndex(max(0, i))
         cb.blockSignals(False)
 
@@ -2229,8 +2252,11 @@ class MainWindow(QMainWindow):
             return
         cb = (self.lt_bar if tab == LEMMA_TAG else self.tt_bar)["saved"]
         cfg = self.config_for(tab)
+        name = cb.itemData(i)
+        if not name:
+            return                              # a group heading
         for m in self.doc.db.settings.matrices:
-            if m.kind == cfg.kind and m.name == cb.itemText(i):
+            if m.kind == cfg.kind and m.name == name:
                 self.configs[cfg.kind] = m.copy()
         self.refresh()
 

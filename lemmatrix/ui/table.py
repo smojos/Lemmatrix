@@ -23,7 +23,7 @@ from .. import filters as fl
 from ..model import ListItem
 from . import spellui, theme
 from .filter_dialogs import ChooseDialog, FilterForDialog
-from .searchmark import SearchDelegate, keep_colour, paint_cell
+from .searchmark import SearchDelegate, found, keep_colour, paint_cell
 from .spellui import SpellDelegate
 from .widgets import FilterHeader, chips_width, draw_pitch, ipa_font, paint_chips, underscore_unit
 
@@ -181,7 +181,7 @@ class RowFilter(QSortFilterProxyModel):
             for col in m.columns:
                 if col.kind == "drawing":
                     continue
-                if self.search in fl.fold_diacritics(_text(col.get(row))).casefold():
+                if found(fl.fold_diacritics(_text(col.get(row))).casefold(), self.search):
                     break
             else:
                 return False

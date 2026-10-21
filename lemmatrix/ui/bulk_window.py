@@ -402,9 +402,22 @@ class BulkEditWindow(QDialog):
         form.addRow("Field", self.r_field)
         form.addRow("Find", self.r_find)
         form.addRow("Replace with", self.r_repl)
+        # Josh, 21 October: a Clear under the fields empties Find and Replace with
+        self.r_clear = QPushButton("Clear fields")
+        self.r_clear.setToolTip("Empty Find and Replace with")
+        self.r_clear.clicked.connect(lambda *_: self.clear_replace_fields())
+        row = QHBoxLayout()
+        row.addWidget(self.r_clear)
+        row.addStretch(1)
+        form.addRow("", row)
         self._watch(self.r_field, self.r_find, self.r_repl)
         self.r_field.currentIndexChanged.connect(lambda *_: self._sync_options())
         return w
+
+    def clear_replace_fields(self):
+        self.r_find.clear()
+        self.r_repl.clear()
+        self.r_find.setFocus()
 
     def _shortcut_page(self) -> QWidget:
         w, form = self._form()

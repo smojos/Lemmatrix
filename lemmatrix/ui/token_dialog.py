@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import re
+
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -288,6 +290,15 @@ class TokenDialog(QDialog):
         self.update_btn = icon_button("update", "Update file name")
         self.praat_btn = icon_button("praat", "Open in Praat")
         buttons.addStretch(1)
+        # the recording source (Josh, 21 October): the same setting as Settings → Sound
+        self.source_box = QComboBox()
+        self.source_box.addItem("Microphone", "microphone")
+        self.source_box.addItem("Computer audio", "computer")
+        self.source_box.setToolTip("Record from: the same choice as Settings → Sound → Recording source "
+                                   "(this computer)")
+        self.source_box.setCurrentIndex(max(0, self.source_box.findData(self.main.prefs.record_source)))
+        self.source_box.currentIndexChanged.connect(self._source_changed)
+        buttons.addWidget(self.source_box, 0, Qt.AlignVCenter)
         self.record_btn.clicked.connect(self._record)
         self.play_btn.clicked.connect(self._play)
         self.delete_btn.clicked.connect(self._delete_recording)
@@ -431,7 +442,7 @@ class TokenDialog(QDialog):
             f = s.token_field(name)
             text = ed.text().strip()
             if f.role == "pitch":
-                text = pitchmod.normalise(text)       # a lone digit becomes 55
+                text = pitchmod.normalise(text)       # tidies spacing
             if f.multilingual:
                 t.set(name, text, s.primary_gloss)
             else:
@@ -704,13 +715,51 @@ class TokenDialog(QDialog):
         if self.db.settings.auto_update_names and t.file and t.file != exp:
             self.name_note.setText(self.name_note.text() + " It will be renamed when you leave this token.")
 
+    def _source_changed(self, *_):
+        src = self.source_box.currentData()
+        if src and src != self.main.prefs.record_source:
+            self.main.prefs.record_source = src
+
     # ---------------------------------------------------------- committing
+    PITCH_LIKE = re.compile(r"^(?=.*\d)[\d\s:,\u02d0]+$")
+
+    def check_pitch_like(self) -> bool:
+        """Phonetic or Phonemic holding only digits and colons asks whether it was meant for
+        Pitch (Josh, 21 October), with Move it to Pitch. False: back to the dialogue."""
+        s = self.db.settings
+        pitch_ed = next((ed for n, ed in self.edits.items() if s.token_field(n).role == "pitch"), None)
+        for name, ed in self.edits.items():
+            f = s.token_field(name)
+            text = ed.text().strip()
+            if f.role not in ("phonetic", "phonemic") or not self.PITCH_LIKE.match(text):
+                continue
+            box = QMessageBox(QMessageBox.Question, "Pitch?",
+                              f"{f.title} holds “{text}”.\n\nDid you mean to put that in the Pitch field?",
+                              parent=self)
+            move = box.addButton("Move it to Pitch", QMessageBox.AcceptRole) if pitch_ed else None
+            box.addButton(f"Keep it in {f.title}", QMessageBox.DestructiveRole)
+            cancel = box.addButton(QMessageBox.Cancel)
+            if pitch_ed and pitch_ed.text().strip():
+                box.setInformativeText(f"Pitch already has “{pitch_ed.text().strip()}”: "
+                                       "moving replaces it.")
+            box.setDefaultButton(move or cancel)
+            box.exec()
+            if box.clickedButton() is cancel:
+                ed.setFocus()
+                return False
+            if move is not None and box.clickedButton() is move:
+                pitch_ed.setText(text)
+                ed.setText("")
+        return True
+
     def _commit(self, keep_empty: bool = False, check_clash: bool = True, extras: bool = False) -> bool:
         """Save the working token into the entry (with undo). Returns False on a problem.
 
         extras: leaving the token (OK, Back, Next), so tags picked with Ctrl+click also make
         a token for each further combination, in the same undo step. Saves on the way
         (recording, Push to question…) keep only the first combination for now."""
+        if extras and not self.check_pitch_like():
+            return False
         self._collect()
         e = self.slot.entry
         t = self.token
@@ -937,6 +986,7 @@ class TokenDialog(QDialog):
             if QMessageBox.question(self, "Record", ask) != QMessageBox.Yes:
                 return
         prefs = self.main.prefs
+        self._source_changed()
         self.recorder = audio.Recorder(prefs.record_source, prefs.sample_rate)
         try:
             self.recorder.start()

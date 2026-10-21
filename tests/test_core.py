@@ -192,8 +192,10 @@ def test_pitch_notation():
     assert [x.steps for x in syl if x != pitch.PAUSE] == [[2, 1], [1, 2], [1]]
     assert syl[2] == pitch.PAUSE
     assert pitch.parse("1::1")[0].steps == [3]
-    assert pitch.parse("5")[0].points == [5, 5]                # a lone digit is a short level
-    assert pitch.normalise("5 2, 13 1:1") == "55 22, 13 1:1"
+    assert pitch.parse("5")[0].points == [5, 5]                # a lone digit is an extra-short level
+    assert pitch.parse("5")[0].steps == [pitch.EXTRA_SHORT]
+    assert pitch.parse("5")[0].length < pitch.parse("55")[0].length
+    assert pitch.normalise("5 2, 13 1:1") == "5 2, 13 1:1"     # lone digits stay (21 October)
     assert pitch.syllable_count("5 2, 2 3") == 4
     assert pitch.out_of_range("11 66 00", 1, 5) == [0, 6]
     assert pitch.problems(":13", 1, 5)                          # stray colon is flagged

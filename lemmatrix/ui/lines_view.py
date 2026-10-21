@@ -224,7 +224,7 @@ class LinesView(QAbstractScrollArea):
         if not self._search:
             return True
         hay = searchmark.fold_query(" ".join(list(line.values.values()) + [line.speaker]))
-        return self._search in hay or self._search in shown(hay)
+        return searchmark.found(hay, self._search) or searchmark.found(shown(hay), self._search)
 
     def _filter(self):
         self._visible = [ln for ln in self.rows if self._matches(ln)]

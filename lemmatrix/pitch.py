@@ -11,8 +11,9 @@
         4:42   long high level, then a quick fall
         42:1   quick fall, then a long fall
 
-    A syllable needs two points; a lone digit is doubled (5 -> 55).
-    Stored as typed (after that doubling); drawing happens in the UI.
+    5      extra short: a lone digit is a level half a short step long
+           (Josh, 21 October; until then it was doubled to 55)
+    Stored as typed; drawing happens in the UI.
 """
 
 from __future__ import annotations
@@ -21,13 +22,14 @@ import re
 from dataclasses import dataclass
 
 PAUSE = ","
+EXTRA_SHORT = 0.5               # a lone digit's length, in short steps
 LENGTH_MARK = "\u02d0"          # ː, typed out of habit: means the same as a colon
 
 
 @dataclass
 class Syllable:
     points: list[int]          # pitch levels
-    steps: list[int]           # length of each step between points: 1 short, 2 long, ...
+    steps: list[float]         # length of each step between points: 0.5 extra short, 1 short, 2 long, ...
     bad_colons: bool = False   # colons at the start or end, which mean nothing
 
     @property
@@ -56,9 +58,9 @@ def _syllable(text: str) -> Syllable | None:
         bad = True
     if not points:
         return None
-    if len(points) == 1:                 # a lone digit counts as a short level
+    if len(points) == 1:                 # a lone digit is an extra-short level
         points = points * 2
-        steps = [1]
+        steps = [EXTRA_SHORT]
     return Syllable(points, steps, bad)
 
 
@@ -76,7 +78,7 @@ def parse(text: str) -> list:
 
 
 def normalise(text: str) -> str:
-    """Double lone digits (5 -> 55) and tidy spacing; everything else as typed.
+    """Tidy spacing; everything else as typed (a lone digit stays one digit).
     The IPA length mark (ː) counts as a colon."""
     if not text:
         return ""
@@ -87,9 +89,6 @@ def normalise(text: str) -> str:
             if out:
                 out[-1] += ","
             continue
-        digits = [c for c in tok if c.isdigit()]
-        if len(digits) == 1 and ":" not in tok:
-            tok = digits[0] * 2
         out.append(tok)
     return " ".join(out)
 

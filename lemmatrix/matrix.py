@@ -375,3 +375,48 @@ def tag_tag_layout(db: Database, entry: Entry | None, config: MatrixConfig | Non
             if hits:
                 lay.cells[(r, c)] = _sorted_hits(hits, order, defaults)
     return lay
+
+
+# --------------------------------------------------------------------------
+# Saved matrices in a hierarchy (IDEAS.md idea 37, Josh 21 October)
+# --------------------------------------------------------------------------
+
+LEVEL_MARK = ">"           # typed in a saved matrix's name: Imperative>Basic
+LEVEL_SHOWN = " › "         # how a full name is shown (tooltips, messages)
+
+
+def tidy_matrix_name(name: str) -> str:
+    """Spaces round > dropped and empty levels taken out: "Imperative > Basic" → "Imperative>Basic"."""
+    parts = [p.strip() for p in (name or "").split(LEVEL_MARK)]
+    return LEVEL_MARK.join(p for p in parts if p)
+
+
+def shown_matrix_name(name: str) -> str:
+    return LEVEL_SHOWN.join(tidy_matrix_name(name).split(LEVEL_MARK))
+
+
+def matrix_tree(names: list[str]) -> list[tuple[str, int, str | None]]:
+    """The drop-down's rows for saved matrix names: (label, depth, name or None).
+
+    Each level is a row of its own, indented by depth; a level that is also a saved matrix
+    carries its name (it can be opened), one that is only a heading carries None. Groups keep
+    the order their first matrix was saved in, as the flat list did."""
+    root: dict = {}
+    real = set()
+    for name in names:
+        parts = tidy_matrix_name(name).split(LEVEL_MARK) if name else []
+        if not parts or parts == [""]:
+            continue
+        real.add(LEVEL_MARK.join(parts))
+        node = root
+        for p in parts:
+            node = node.setdefault(p, {})
+    rows: list[tuple[str, int, str | None]] = []
+
+    def walk(node, path, depth):
+        for label, kids in node.items():
+            full = LEVEL_MARK.join(path + [label])
+            rows.append((label, depth, full if full in real else None))
+            walk(kids, path + [label], depth + 1)
+    walk(root, [], 0)
+    return rows
