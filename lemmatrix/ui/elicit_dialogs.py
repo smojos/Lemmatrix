@@ -267,6 +267,8 @@ class RequestDialog(QDialog):
             choose(self.l2, draft["l2"])
         if "l2_name" in draft:
             self.l2_name.setText(draft["l2_name"])
+        self.l2_people.update(draft.get("l2_people", {}))
+        self._l2_people_changed()
         if "repeat" in draft:
             self.repeat.setChecked(bool(draft["repeat"]))
         if "send_by" in draft:
@@ -289,6 +291,7 @@ class RequestDialog(QDialog):
     def draft(self, with_items: bool = True) -> dict:
         d = {"speaker": self.speaker.currentData(), "researcher": self.researcher.currentData(),
              "l2": self.l2.currentData() or "", "l2_name": self.l2_name.text(),
+             "l2_people": dict(self.l2_people),
              "repeat": self.repeat.isChecked(), "send_by": self.send_by.currentData(),
              "audio": self.audio.currentData()}
         d["new"] = self.new_utterance_rows() if with_items else []
@@ -370,6 +373,14 @@ class RequestDialog(QDialog):
         self.l2_name.setPlaceholderText(md.language_name or md.language_code)
         self.l2_name_label = QLabel()
         form.addRow(self.l2_name_label, self.l2_name)
+        self.l2_people = {}                       # "language|code" -> the name typed, for each person
+        self.speaker_l2, self.speaker_l2_label = QLineEdit(), QLabel()
+        self.researcher_l2, self.researcher_l2_label = QLineEdit(), QLabel()
+        for combo, edit, label in ((self.speaker, self.speaker_l2, self.speaker_l2_label),
+                                   (self.researcher, self.researcher_l2, self.researcher_l2_label)):
+            edit.textEdited.connect(lambda text, c=combo: self._remember_l2_person(c, text))
+            combo.currentIndexChanged.connect(self._l2_people_changed)
+            form.addRow(label, edit)
         self.repeat = QCheckBox("Ask for tokens to be said 2 or 3 times (utterances: once)")
         self.repeat.setChecked(True)
         form.addRow("", self.repeat)
@@ -528,7 +539,34 @@ class RequestDialog(QDialog):
         en = self.db.settings.primary_gloss
         self.new_table.setHorizontalHeaderLabels([f"Translation ({en})", f"Translation ({lang})" if lang else "—"])
         self.new_table.setColumnHidden(1, not lang)
+        self._l2_people_changed()
         self._update_counts()
+
+    # ---- the speaker's and researcher's names in the second language (Josh, 21 October) ----
+    def _l2_key(self, combo) -> str:
+        return f"{self.l2.currentData() or ''}|{combo.currentData() or ''}"
+
+    def _remember_l2_person(self, combo, text: str):
+        self.l2_people[self._l2_key(combo)] = text
+
+    def _l2_people_changed(self, *_):
+        """Show the names typed for this speaker and researcher in this language (remembered per
+        person and language); the list's own name is the placeholder, used when it's left blank."""
+        if not hasattr(self, "speaker_l2"):
+            return
+        lang = self.l2.currentData() or ""
+        name = elicit_prompts.LANGUAGE_NAMES.get(lang.split("-")[0], lang) if lang else ""
+        md = self.db.metadata
+        for role, combo, edit, label, find in (
+                ("Speaker", self.speaker, self.speaker_l2, self.speaker_l2_label, md.participant),
+                ("Researcher", self.researcher, self.researcher_l2, self.researcher_l2_label, md.researcher)):
+            label.setText(f"{role}'s name in {name}" if lang else f"{role}'s name")
+            edit.setEnabled(bool(lang))
+            person = find(combo.currentData()) if combo.currentData() else None
+            edit.setPlaceholderText((person.name if person and person.name else combo.currentData()) or "")
+            edit.setText(self.l2_people.get(self._l2_key(combo), "") if lang else "")
+            edit.setToolTip(f"How the {role.lower()}'s name is written in {name}, for the prompts and the "
+                            f"message in {name} (blank: as in the list)" if lang else "")
 
     def _add_new_row(self, translations: dict, edit: bool = False):
         r = self.new_table.rowCount()
@@ -659,7 +697,9 @@ class RequestDialog(QDialog):
             return
         req = el.new_request(db, items, self.speaker.currentData(), self.researcher.currentData(),
                              self.l2.currentData() or "", self.l2_name.text(), self.repeat.isChecked(),
-                             theme.accent().name(), audio=self.audio.currentData())
+                             theme.accent().name(), audio=self.audio.currentData(),
+                             l2_names={"speaker": self.speaker_l2.text(),
+                                       "researcher": self.researcher_l2.text()})
         if self.send_by.currentData() == "drive":
             drive = google_drive(self.main)
             if drive is None:

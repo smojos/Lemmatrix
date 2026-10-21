@@ -240,9 +240,13 @@ let S = null;   // {req, files, zip (Blob), answers: {n: {status, wav, recorded,
 function l2() { return S && S.req.languages.length > 1 ? S.req.languages[1] : null; }
 function en() { return S.req.languages[0]; }
 
+function nameIn(person, lang) {    // the name as written in that language (Lemmatrix's "names"), else the list's
+  return (person.names || {})[lang] || person.name;
+}
+
 function vars(lang) {
   return {
-    name: S.req.speaker.name, researcher: S.req.researcher.name,
+    name: nameIn(S.req.speaker, lang), researcher: nameIn(S.req.researcher, lang),
     language: (S.req.language_names || {})[lang] || S.req.database.language_name || "",
   };
 }

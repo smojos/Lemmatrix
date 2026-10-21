@@ -212,10 +212,17 @@ def person_dict(p, code: str) -> dict:
     return {"code": code, "name": (p.name if p and p.name else code), "email": (p.email if p else "")}
 
 
+def person_name(person: dict, lang: str) -> str:
+    """The speaker's or researcher's name as the prompts in this language write it."""
+    return (person.get("names") or {}).get(lang) or person.get("name", "")
+
+
 def new_request(db: Database, items, speaker: str, researcher: str, l2: str = "", l2_language_name: str = "",
                 repeat: bool = True, accent: str = "#198583", today: _dt.date | None = None,
-                audio: str = "flac") -> Request:
-    """A request for these items (in order). l2: the second language (a gloss language) or ""."""
+                audio: str = "flac", l2_names: dict | None = None) -> Request:
+    """A request for these items (in order). l2: the second language (a gloss language) or "".
+    l2_names: {"speaker": ..., "researcher": ...}, their names as written in the second language
+    (blank: the name in the participants or researchers list)."""
     today = today or _dt.date.today()
     md, s = db.metadata, db.settings
     en = s.primary_gloss
@@ -253,11 +260,16 @@ def new_request(db: Database, items, speaker: str, researcher: str, l2: str = ""
             c.file = f"{n:02d}_{filenames.praat_name(e.ref)}.{audio}"
         cards.append(c)
     rid = uuid.uuid4().hex[:12]
+    people = {"speaker": person_dict(md.participant(speaker), speaker),
+              "researcher": person_dict(md.researcher(researcher), researcher)}
+    for role, name in (l2_names or {}).items():          # "names": {language: name}, for the prompts
+        name = nfc((name or "").strip())
+        if len(languages) > 1 and role in people and name and name != people[role]["name"]:
+            people[role]["names"] = {languages[1]: name}
     return Request(
         id=rid, created=_dt.datetime.now().isoformat(timespec="seconds"),
         expires=(today + _dt.timedelta(days=EXPIRY_DAYS)).isoformat(),
-        speaker=person_dict(md.participant(speaker), speaker),
-        researcher=person_dict(md.researcher(researcher), researcher),
+        speaker=people["speaker"], researcher=people["researcher"],
         database={"name": md.name, "language_code": md.language_code, "language_name": md.language_name,
                   "variety_code": md.variety_code, "variety_name": md.variety_name},
         languages=languages, language_names=names, prompts=prompts, accent=accent, cards=cards, audio=audio)
@@ -385,11 +397,11 @@ def message_text(req: Request) -> str:
     """The message to paste into WhatsApp, Signal or an email: with a Drive request just the link
     (in the last line, on its own, so phones make it tappable); otherwise with the request's file."""
     by_link = req.transport == "drive"
-    values = {"name": req.speaker["name"], "researcher": req.researcher["name"],
-              "link": "" if by_link else req.page}
     key = "message_link" if by_link else "message"
     out = []
     for lang in req.languages:
+        values = {"name": person_name(req.speaker, lang), "researcher": person_name(req.researcher, lang),
+                  "link": "" if by_link else req.page}
         p = req.prompts.get(lang)
         text = p.get(key) if p else ""
         if text:
