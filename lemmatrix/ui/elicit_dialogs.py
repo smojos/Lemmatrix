@@ -997,8 +997,11 @@ class ReviewDialog(QDialog):
     def _decision_text(self, c) -> str:
         d = self.decisions.get(c.n)
         if d is None and c.n not in self.waiting:
-            saved = self.st.review.get(str(c.n), {}).get("decision")
-            d = {el.APPROVED: "in the database", el.REJECTED: "rejected"}.get(saved)
+            saved = self.st.review.get(str(c.n), {})
+            d = {el.APPROVED: "in the database", el.REJECTED: "rejected"}.get(saved.get("decision"))
+            u = self.db.utterance_by_id((saved.get("applied") or {}).get("utterance", ""))
+            if u is not None and saved.get("decision") == el.APPROVED:
+                d = f"utterance {u.ref}"           # where a new sentence landed
             if d:
                 return f"Done ({d})"
             return ""
@@ -1151,6 +1154,7 @@ class ReviewDialog(QDialog):
                 self.st.review[str(n)] = {"decision": el.APPROVED, "applied": applied, "date": today}
             if plan.notes:
                 QMessageBox.information(self, f"Review {NAME} recordings", "\n".join(plan.notes))
+            self.new_utterances = list(plan.new_utterances)
         for n in rejected:
             self.st.review[str(n)] = {"decision": el.REJECTED, "date": _dt.date.today().isoformat()}
         if approved or rejected:
@@ -1163,10 +1167,27 @@ class ReviewDialog(QDialog):
 
     def done(self, result):
         self.main.player.stop()
+        self.new_utterances = []
         if not self.apply():
             return
         super().done(result)
         self.main.refresh_elicit_icon()
+        if self.new_utterances:                   # new sentences live with the utterances, not in All data
+            us = self.new_utterances
+            listed = ", ".join(f"{u.ref} ('{u.label}')" for u in us[:6]) + (" …" if len(us) > 6 else "")
+            box = QMessageBox(QMessageBox.Information, f"Review {NAME} recordings",
+                              f"The new sentence{'s are' if len(us) != 1 else ' is'} now "
+                              f"utterance{'s' if len(us) != 1 else ''} {listed}, with "
+                              f"{'their recordings' if len(us) != 1 else 'its recording'} and translations.\n\n"
+                              "Utterances are in View → Texts and utterances → Utterances (Ctrl+U), not in "
+                              "All data.", parent=self.main)
+            show = box.addButton("Show them", QMessageBox.AcceptRole)
+            box.addButton("OK", QMessageBox.RejectRole)
+            box.exec()
+            if box.clickedButton() is show:
+                from .utterances import UTTERANCES_TAB
+                w = self.main.open_utterances(us[0])
+                w.tabs.setCurrentIndex(UTTERANCES_TAB)
         left = len(el.waiting(self.db, self.st))
         if left:
             self.main.statusBar().showMessage(f"{NAME}: {left} recording{'s' if left != 1 else ''} saved for "

@@ -178,6 +178,7 @@ def win(tmp_path, monkeypatch, db):
     monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Yes)
     monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: None)
     monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
+    monkeypatch.setattr(QMessageBox, "exec", lambda self: 0)          # message boxes built by hand
     monkeypatch.setattr(elicit_dialogs, "remind", lambda main: None)
     from lemmatrix import gdrive
 
@@ -288,6 +289,11 @@ def test_review_puts_recordings_in_and_undo_takes_them_out(win, tmp_path):
     assert len(db.utterances) == n_utts + 1
     new_u = db.utterances[-1]
     assert new_u.ref == "U004" and new_u.label == "The sun is hot"
+    assert [u.ref for u in dlg.new_utterances] == ["U004"]           # said where it went
+    again_dlg = ed.ReviewDialog(win, el.load_stored(st.folder))
+    assert again_dlg.table.item(10, 4).text() == "Done (utterance U004)"
+    again_dlg.decisions.clear()
+    again_dlg.reject()
     assert new_u.token.get("Translation", "da") == "Solen er varm."
     assert (storage.utterance_folder(db) / new_u.token.file).exists()
     st = el.load_stored(st.folder)
