@@ -141,7 +141,7 @@ class MatrixModel(QAbstractTableModel):
 
 
 class ChipHeader(QHeaderView):
-    """A header that shows its sections' tags as light-blue chips."""
+    """A header that shows its sections' tags as chips in the theme colour."""
 
     def __init__(self, orientation, parent=None):
         super().__init__(orientation, parent)

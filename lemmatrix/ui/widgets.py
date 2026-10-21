@@ -160,7 +160,7 @@ class PitchCanvas(QWidget):
 # Tag chips
 # --------------------------------------------------------------------------
 
-# Chip colours follow the accent colour (blue by default).
+# Chip colours follow the accent colour (the theme colour, #198583 by default).
 def chip_fill() -> QColor:
     return theme.colour("chip_fill")
 
@@ -201,7 +201,7 @@ def chips_width(labels, font: QFont, gap: int = 4) -> int:
 
 def paint_chips(p: QPainter, x: float, y: float, labels, font: QFont, gap: int = 4,
                 filled: bool = True, max_right: float | None = None) -> float:
-    """Draw tags as light-blue rounded chips from (x, y); returns the x after the last one."""
+    """Draw tags as rounded chips in the theme colour from (x, y); returns the x after the last one."""
     fm, h = chip_metrics(font)
     p.save()
     p.setRenderHint(QPainter.Antialiasing)
@@ -226,7 +226,7 @@ from PySide6.QtWidgets import QAbstractButton  # noqa: E402
 
 
 class ChipButton(QAbstractButton):
-    """A checkable tag chip: white with a light-blue outline, filled light blue when picked."""
+    """A checkable tag chip: white with an outline in the theme colour, filled with it when picked."""
 
     def __init__(self, text: str, parent=None):
         super().__init__(parent)
