@@ -7,12 +7,13 @@ can read it out of the program), and Google doesn't treat it as one; what protec
 Drive is their own sign-in. The API key only lets the ɛλicit page (and nothing else: it is
 restricted to https://smojos.github.io/ and the Drive API) read the files a request shares by link.
 
-Empty until Josh registers the project: then requests can only be sent as zip files.
+Registered by Josh on 21 October 2026 (Google Cloud project "lemmatrix"). With these empty, requests can only
+be sent as zip files.
 """
 
-GOOGLE_CLIENT_ID = ""
-GOOGLE_CLIENT_SECRET = ""
-GOOGLE_API_KEY = ""
+GOOGLE_CLIENT_ID = "735873789478-fishtbb78nhqmn7puq99kpeobpe3bvgr.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET = "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"
+GOOGLE_API_KEY = "AIzaSyDeSFwuG1pKnG4D1nuaEe0PA-H8SFsWgz8"
 
 
 def google_ready() -> bool:
