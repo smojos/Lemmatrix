@@ -72,3 +72,32 @@ def test_lightbulb_switches_the_theme(app, tmp_path, monkeypatch):
     w.theme_btn.click()
     assert theme.dark() == before
     w.close()
+
+
+def test_current_session_codes_and_width(app):
+    from PySide6.QtWidgets import QApplication
+    from lemmatrix.model import Location, Person
+    from lemmatrix.ui import chiprow as chips
+    from lemmatrix.ui.main_window import MainWindow
+    w = MainWindow()
+    w.resize(1900, 980)
+    w.show()
+    QApplication.processEvents()
+    md = w.doc.db.metadata
+    md.participants += [Person(f"SP{i}") for i in range(1, 13)]
+    md.locations += [Location("Ethiopia", "ET")]
+    rows = w.sess_rows
+    rows[chips.LOCATIONS].set_keys(["ET"])
+    narrow = w.sess_panel.width()
+    assert rows[chips.LOCATIONS].flow.itemAt(0).widget().text() == "ET"       # the code, not Ethiopia
+    rows[chips.PARTICIPANTS].set_keys(["SP1", "SP2", "SP3", "SP4"])
+    for _ in range(3):
+        QApplication.processEvents()
+    wider = w.sess_panel.width()
+    assert wider > narrow                                                    # grows with its chips
+    rows[chips.PARTICIPANTS].set_keys([f"SP{i}" for i in range(1, 13)])
+    for _ in range(3):
+        QApplication.processEvents()
+    assert w.sess_panel.width() <= int(w.right_split.width() * w.SESSION_MAX) + 1   # a third at most
+    assert rows[chips.PARTICIPANTS].height() > rows[chips.RESEARCHERS].height()   # then wraps
+    w.close()

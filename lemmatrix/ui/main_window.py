@@ -7,7 +7,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import QDate, QDir, QObject, QSize, Qt, QTimer, QUrl, Signal
+from PySide6.QtCore import QDate, QDir, QEvent, QObject, QSize, Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import QAction, QColor, QDesktopServices, QFont, QIcon, QKeySequence
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QFileDialog, QFrame, QGridLayout,
                                QProgressDialog,
@@ -319,9 +319,10 @@ class MainWindow(QMainWindow):
         self.options.addWidget(self.lt_bar["widget"])
         self.options.addWidget(self.tt_bar["widget"])
         bot.addWidget(self.options, 1)
-        bot.addWidget(self._session_panel(), 1)   # takes what the options leave, up to its widest
+        bot.addWidget(self._session_panel())      # as wide as its chips need (_fit_session)
         right.addWidget(bottom)
         right.setSizes([720, 150])
+        right.installEventFilter(self)            # Current Session follows the pane's width
         main.addWidget(right)
         for sp in (left, right):                  # the option panels can be dragged out of sight
             sp.setCollapsible(0, False)
@@ -637,8 +638,10 @@ class MainWindow(QMainWindow):
         for r, (kind, title) in enumerate(((chips.RESEARCHERS, "Researchers"),
                                            (chips.PARTICIPANTS, "Participants"),
                                            (chips.LOCATIONS, "Locations"))):
-            row = chips.ChipRow(kind, lambda: self.doc.db, compact=True, edit_list=self.edit_lists)
+            row = chips.ChipRow(kind, lambda: self.doc.db, compact=True, edit_list=self.edit_lists,
+                                codes=True)       # places by their codes, like the people (21 October)
             row.changed.connect(self._session_people_changed)
+            row.rebuilt.connect(lambda: QTimer.singleShot(0, self._fit_session))
             self.sess_rows[kind] = row
             lbl = QLabel(title)
             grid.addWidget(lbl, r, 0, Qt.AlignTop | Qt.AlignLeft)
@@ -670,9 +673,33 @@ class MainWindow(QMainWindow):
         grid.addWidget(QLabel("Date"), 3, 0, Qt.AlignVCenter | Qt.AlignLeft)
         grid.addLayout(dr, 3, 1)
         sl.addStretch(1)
-        panel.setMaximumWidth(560)            # wide, so the chips fit on one line (Josh, 20 October)
-        panel.setMinimumWidth(250)
+        self.sess_panel, self._sess_head, self._sess_grid, self._sess_date_row = panel, head, grid, dr
         return panel
+
+    SESSION_MAX = 0.33       # Current Session grows leftward up to a third of the matrix pane's width
+
+    def _fit_session(self):
+        """Current Session is as narrow as its contents (Josh, 21 October): it grows leftward as chips
+        are added, up to a third of the matrix pane's width; past that the chips wrap onto more lines."""
+        panel = getattr(self, "sess_panel", None)
+        if panel is None:
+            return
+        g = self._sess_grid
+        labels = max(g.itemAtPosition(r, 0).widget().sizeHint().width() for r in range(4))
+        content = max([row.natural_width() for row in self.sess_rows.values()]
+                      + [self._sess_date_row.sizeHint().width()])
+        m = panel.layout().contentsMargins()
+        frame = 2 * panel.frameWidth() + m.left() + m.right()
+        need = max(self._sess_head.sizeHint().width(), labels + g.horizontalSpacing() + content) + frame
+        cap = max(self._sess_head.sizeHint().width() + frame, int(self.right_split.width() * self.SESSION_MAX))
+        w = min(need, cap)
+        if panel.width() != w or panel.minimumWidth() != w:
+            panel.setFixedWidth(w)
+
+    def eventFilter(self, obj, event):
+        if obj is getattr(self, "right_split", None) and event.type() == QEvent.Resize:
+            self._fit_session()
+        return super().eventFilter(obj, event)
 
     def _build_menus(self):
         mb = self.menuBar()

@@ -81,12 +81,15 @@ class ChipRow(QWidget):
     """The chips of one kind (researchers, participants or locations) for a session."""
 
     changed = Signal()
+    rebuilt = Signal()                          # the chips were redrawn (their widths may have changed)
 
-    def __init__(self, kind: str, db_getter, compact: bool = False, edit_list=None, parent=None):
+    def __init__(self, kind: str, db_getter, compact: bool = False, edit_list=None, parent=None,
+                 codes: bool = False):
         super().__init__(parent)
         self.kind = kind
         self.db_getter = db_getter              # the database can change under the row
         self.compact = compact
+        self.codes = codes                      # locations by their codes too (Current Session)
         self.edit_list = edit_list              # opens Edit → Lists at this list
         self.keys: list[str] = []
         self.flow = FlowLayout(self, spacing=4)
@@ -111,7 +114,8 @@ class ChipRow(QWidget):
                 tip += f"  [{loc.code}]"
             if loc and loc.description:
                 tip += "\n\n" + _short(loc.description)
-            return (loc.name if loc else key), tip + ("" if loc else "\n(not in the list of locations)")
+            text = (loc.code or loc.name) if (loc and self.codes) else (loc.name if loc else key)
+            return text, tip + ("" if loc else "\n(not in the list of locations)")
         p = md.researcher(key) if self.kind == RESEARCHERS else md.participant(key)
         if p is None:
             return key, f"{key} (not in the list of {TITLES[self.kind].lower()})"
@@ -150,6 +154,12 @@ class ChipRow(QWidget):
             self.flow.addWidget(add)
         self._fit()
         QTimer.singleShot(0, self._fit)        # once the new chips have their final sizes
+        self.rebuilt.emit()
+
+    def natural_width(self) -> int:
+        """How wide the chips (and the + button) are side by side, on one line."""
+        ws = [self.flow.itemAt(i).sizeHint().width() for i in range(self.flow.count())]
+        return sum(ws) + 4 * max(0, len(ws) - 1)
 
     def _fit(self):
         """Grow to the height the wrapped chips need (grid layouts don't ask on their own)."""
