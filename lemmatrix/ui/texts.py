@@ -26,7 +26,7 @@ from .. import audio, layout, lines as lmod, notebook as nbmod, storage, textgri
 from ..model import SPEAKER_FIELD, TEXTS, ClipSource, ListItem, Text, TierMapping, TierRule, nfc, tier_base
 from . import chiprow as chips, theme
 from .filter_dialogs import ConfigureColumnsDialog
-from .icons import icon
+from .icons import icon, themed_icon
 from .lines_view import ConfigureViewDialog, FieldSpec, LinesView
 from .table import Column, FilterTable
 from .widgets import ipa_font
@@ -1237,10 +1237,10 @@ class TextsPanel(QObject):
         sel = self.lines.text_selection()
         if sel is not None and on and sel[0].id == row.id:   # words highlighted in a field (idea 31)
             _, skey, words = sel
-            a = m.addAction(icon("lemma-token", 16), f"Create token from “{words}”…")
+            a = m.addAction(themed_icon("text-token", 16), f"Create token from “{words}”…")
             a.triggered.connect(lambda *_: self.create_token(row, skey, words))
         else:
-            a = m.addAction(icon("lemma-token", 16), "Create token (highlight words first)")
+            a = m.addAction(themed_icon("text-token", 16), "Create token (highlight words first)")
             a.setEnabled(False)
         m.addSeparator()
         a = m.addAction(icon("edit", 16), f"Edit {self.lines.title(key)}" if key else "Edit field")

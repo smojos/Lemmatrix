@@ -31,7 +31,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QAbstractScrollArea, QDialog, 
 
 from ..interlinear import bare, split_units
 from . import searchmark, theme
-from .icons import icon
+from .icons import icon, themed_icon
 from .widgets import ipa_font, meaning
 
 MARGIN = 24              # the buffer on the left
@@ -735,7 +735,7 @@ class LinesView(QAbstractScrollArea):
             if words and spec is not None and not spec.ipa:
                 words = words.strip(EDGE_PUNCT + " ")
             first = m.actions()[0] if m.actions() else None
-            a = QAction(icon("lemma-token", 16), f"Create token from “{words}”…" if words
+            a = QAction(themed_icon("text-token", 16), f"Create token from “{words}”…" if words
                         else "Create token (select words first)", m)
             a.setEnabled(bool(words))
             line = next((x for x in self.rows if x.id == line_id), None)
