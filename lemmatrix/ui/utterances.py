@@ -848,6 +848,7 @@ class UtteranceDialog(TokenDialog):
     """The token dialogue for an utterance: a header with its reference, category and file label;
     the token fields and recording as for tokens; the utterance-only tag groups and the groups
     with no "usual for" hint first; a Lemmas box; Back and Next through the Utterances grid."""
+    MULTI_TOKENS = False      # one utterance at a time
 
     def __init__(self, main, slots: list[Slot], index: int, parent=None):
         self.lemma_ids: list[str] = []
@@ -1110,7 +1111,7 @@ class UtteranceDialog(TokenDialog):
             self.lemma_ids.remove(ident)
             self._show_lemmas()
 
-    def _commit(self, keep_empty: bool = False, check_clash: bool = True) -> bool:
+    def _commit(self, keep_empty: bool = False, check_clash: bool = True, extras: bool = False) -> bool:
         """Save the working utterance (token, file label and lemma links) with undo."""
         self._collect()
         u = self.slot.entry

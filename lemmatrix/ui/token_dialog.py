@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (QComboBox, QDialog, QFrame, QGridLayout, QGroupBo
 from PySide6.QtCore import QFile
 
 from .. import audio, matrix as mx, pitch as pitchmod, predict, storage
-from ..model import Entry, Token
+from ..model import Entry, Token, new_id
 from PySide6.QtCore import QSize
 
 from . import spellui, theme
@@ -50,6 +50,9 @@ class Slot:
 
 
 class TokenDialog(QDialog):
+    MULTI_TOKENS = True       # Ctrl+click picks several tags in a group: one token per combination
+    MAX_TOKENS = 50           # at most this many tokens from one OK
+
     def __init__(self, main, slots: list[Slot], index: int, parent=None):
         super().__init__(parent or main)
         self.main = main
@@ -161,6 +164,10 @@ class TokenDialog(QDialog):
         self.tags = TagPanel()
         self.tags.setFont(self.font())
         self.tags.on_change = self._tags_changed
+        self.tags.multi = self.MULTI_TOKENS
+        if self.MULTI_TOKENS:
+            tags_box.setToolTip("Ctrl+click picks more than one tag in a group: OK then makes one "
+                                "token for each combination (e.g. 3SG.A, 3PL.A × FUT1, FUT2 = 4 tokens).")
         scroll = QScrollArea()
         scroll.setFocusPolicy(Qt.NoFocus)          # not a stop of its own when tabbing
         scroll.setWidgetResizable(True)
@@ -192,6 +199,12 @@ class TokenDialog(QDialog):
         self.unusual_note.setTextFormat(Qt.RichText)
         self.unusual_note.linkActivated.connect(lambda *_: self._stop_unusual_warning())
         tl.addWidget(self.unusual_note)
+        self.combo_note = QLabel()                # "→ 4 tokens", as in Configure matrix
+        self.combo_note.setFont(self.font())
+        self.combo_note.setStyleSheet("font-weight: 600;")
+        self.combo_note.setWordWrap(True)
+        self.combo_note.hide()
+        tl.addWidget(self.combo_note)
         top.addWidget(tags_box, 2)
 
         rec = QGroupBox()
@@ -397,7 +410,7 @@ class TokenDialog(QDialog):
                 t.set(name, text)
         for (name, lang), ed in self.other_edits.items():
             t.set(name, ed.text().strip(), lang)
-        t.tags = s.tags.sort(self.tags.selected() + self.unknown_tags)
+        t.tags = self.tag_combinations()[0]
         t.speaker = self.speaker.currentText()
         t.collected = self.date.text().strip()
         t.rerecord = self.rerecord_btn.isChecked()
@@ -409,7 +422,85 @@ class TokenDialog(QDialog):
     def _tags_changed(self):
         self._fields_changed()
         self._update_unusual()
+        self._update_combo_note()
         self._update_suggestion()
+
+    # ---- several tokens at once (IDEAS.md idea 25, section 5.6) ------
+    def tag_combinations(self) -> list[list[str]]:
+        """The tag lists the picked tags make: one, or one per combination after Ctrl+click.
+
+        The first is this token's own. An existing token keeps its tags in first place when
+        they are one of the combinations (so editing it adds tokens around it)."""
+        ts = self.db.settings.tags
+        if self.tags.multi:
+            combos = [ts.sort(c + self.unknown_tags) for c in self.tags.combinations()]
+        else:
+            combos = [ts.sort(self.tags.selected() + self.unknown_tags)]
+        if self.original is not None and list(self.original.tags) in combos[1:]:
+            own = list(self.original.tags)
+            combos.remove(own)
+            combos.insert(0, own)
+        return combos
+
+    def _update_combo_note(self):
+        n = len(self.tag_combinations()) if self.tags.multi else 1
+        if n > 1:
+            more = (f" More than {self.MAX_TOKENS}: pick fewer tags." if n > self.MAX_TOKENS else "")
+            self.combo_note.setText(f"→ {n} tokens, one for each combination." + more)
+        self.combo_note.setVisible(n > 1)
+
+    def _plan_extras(self, combos: list[list[str]]):
+        """The combinations after the first: (to make, already in the database, so skipped)."""
+        make, skipped = [], []
+        for tags in combos[1:]:
+            (skipped if self._clashes(tags) else make).append(tags)
+        return make, skipped
+
+    def _label(self, tags) -> str:
+        return " + ".join(mx.chips(self.db, tags)) or "citation"
+
+    def _confirm_extras(self, make: list, skipped: list):
+        """Ask before making the extra tokens. None: Cancel; else whether to copy the fields."""
+        n = 1 + len(make)
+        lines = [f"{self._label(self.token.tags)}  (this token)"] + [self._label(t) for t in make]
+        text = f"This makes {n} token{'s' if n != 1 else ''}:\n\n" + "\n".join("  " + x for x in lines)
+        if skipped:
+            text += ("\n\nAlready in the database, so skipped:\n"
+                     + "\n".join("  " + self._label(t) for t in skipped))
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Question)
+        box.setWindowTitle("Several tokens")
+        box.setText(text)
+        typed = bool(self.token.values or self.token.multi)
+        check = None
+        if make and typed:
+            from PySide6.QtWidgets import QCheckBox
+            check = QCheckBox("Copy what's typed here (Phonetic, Translation…) to the new tokens")
+            check.setChecked(self.main.prefs.get_bool("token_dialog/copy_to_new_tokens", True))
+            box.setCheckBox(check)
+        if make:
+            box.setInformativeText("The recording stays with this token; the new ones have none yet.")
+        ok = box.addButton(f"Make {n} token{'s' if n != 1 else ''}", QMessageBox.AcceptRole)
+        box.addButton("Cancel", QMessageBox.RejectRole)
+        box.setDefaultButton(ok)
+        box.exec()
+        if box.clickedButton() is not ok:
+            return None
+        if check is not None:
+            self.main.prefs.set_value("token_dialog/copy_to_new_tokens", check.isChecked())
+            return check.isChecked()
+        return False
+
+    def _extra_token(self, tags, copy_fields: bool) -> Token:
+        base = self.token
+        if copy_fields:
+            x = base.copy()
+            x.id = new_id()
+            x.file, x.rerecord, x.changed = "", False, {}
+        else:
+            x = Token(speaker=base.speaker, collected=base.collected)
+        x.tags = list(tags)
+        return x
 
     # ---- predicted translation ---------------------------------------
     def _update_suggestion(self):
@@ -518,6 +609,7 @@ class TokenDialog(QDialog):
             b.setText(f"Show all tags ({hidden} more group{'s' if hidden != 1 else ''})")
             b.setVisible(hidden > 0)
         self._update_unusual()
+        self._update_combo_note()
 
     def _show_all_toggled(self, on: bool):
         self.show_all = bool(on)
@@ -585,11 +677,30 @@ class TokenDialog(QDialog):
             self.name_note.setText(self.name_note.text() + " It will be renamed when you leave this token.")
 
     # ---------------------------------------------------------- committing
-    def _commit(self, keep_empty: bool = False, check_clash: bool = True) -> bool:
-        """Save the working token into the entry (with undo). Returns False on a problem."""
+    def _commit(self, keep_empty: bool = False, check_clash: bool = True, extras: bool = False) -> bool:
+        """Save the working token into the entry (with undo). Returns False on a problem.
+
+        extras: leaving the token (OK, Back, Next), so tags picked with Ctrl+click also make
+        a token for each further combination, in the same undo step. Saves on the way
+        (recording, Push to question…) keep only the first combination for now."""
         self._collect()
         e = self.slot.entry
         t = self.token
+        combos = self.tag_combinations() if extras else [list(t.tags)]
+        new_tokens: list[Token] = []
+        if len(combos) > 1:
+            if len(combos) > self.MAX_TOKENS:
+                QMessageBox.warning(self, "Several tokens", f"These tags make {len(combos)} tokens; "
+                                    f"at most {self.MAX_TOKENS} can be made at once. Pick fewer tags.")
+                return False
+            problems = []
+            for c in combos:
+                problems += [p for p in self.db.settings.tags.conflicts(
+                    [x for x in c if x not in self.unknown_tags]) if p not in problems]
+            if problems:
+                QMessageBox.warning(self, "Tags", "\n".join(problems))
+                return False
+            keep_empty = True                     # tokens picked on purpose, typed or not
         saving = (t.has_content() or keep_empty or self.slot.explicit) if self.original is None \
             else self.original != t
         # A new token, or one whose tags changed, may not take a name another token's recording
@@ -601,6 +712,12 @@ class TokenDialog(QDialog):
                 return False                      # Cancel: back to the dialogue, nothing saved
             self._collect()
             t = self.token
+        if len(combos) > 1:
+            make, skipped = self._plan_extras(combos)
+            copy_fields = self._confirm_extras(make, skipped)
+            if copy_fields is None:
+                return False                      # Cancel: back to the dialogue, nothing saved
+            new_tokens = [self._extra_token(c, copy_fields) for c in make]
         problems = self.db.settings.tags.conflicts([x for x in t.tags if x not in self.unknown_tags])
         if problems:
             QMessageBox.warning(self, "Tags", "\n".join(problems))
@@ -613,20 +730,29 @@ class TokenDialog(QDialog):
                 return True                       # passing through an empty cell
             token = t.copy()
             renames, self._renames = self._renames, []
-            self.doc.edit_entry(e, lambda en: en.tokens.append(token), f"Add token to {e.ref}",
+
+            def add(en, token=token, more=new_tokens):
+                en.tokens.append(token)
+                en.tokens.extend(more)
+            n = 1 + len(new_tokens)
+            self.doc.edit_entry(e, add, f"Add {n} tokens to {e.ref}" if n > 1 else f"Add token to {e.ref}",
                                 renames=renames)
-            self.slot.index = len(e.tokens) - 1
+            self.slot.index = len(e.tokens) - 1 - len(new_tokens)
             self.original = e.tokens[self.slot.index]
-        elif self.original != t:
+        elif self.original != t or new_tokens:
             idx = self.slot.index
             token = t.copy()
 
-            def change(en, idx=idx, token=token):
+            def change(en, idx=idx, token=token, more=new_tokens):
                 en.tokens[idx] = token
+                en.tokens.extend(more)
             renames, self._renames = self._renames, []
-            self.doc.edit_entry(e, change, f"Edit token in {e.ref}", renames=renames)
+            label = f"Edit token and add {len(new_tokens)} in {e.ref}" if new_tokens else f"Edit token in {e.ref}"
+            self.doc.edit_entry(e, change, label, renames=renames)
             self.original = e.tokens[idx]
         self.token = self.original.copy()
+        if len(combos) > 1:                       # made: the picks go back to this token's own
+            self._build_tags(set(self.token.tags))
         return True
 
     # ------------------------------------------------ recordings sharing a name
@@ -740,7 +866,7 @@ class TokenDialog(QDialog):
         target = self.pos + step
         if not 0 <= target < len(self.slots):
             return
-        if not self._commit():
+        if not self._commit(extras=True):
             return
         self.main.player.stop()
         self.pos = target
@@ -749,7 +875,7 @@ class TokenDialog(QDialog):
     def _ok(self):
         if self.recorder:
             self._stop_recording()
-        if self._commit(keep_empty=self.slot.explicit):
+        if self._commit(keep_empty=self.slot.explicit, extras=True):
             self.main.player.stop()
             self.accept()
 
