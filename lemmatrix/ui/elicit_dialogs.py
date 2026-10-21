@@ -140,7 +140,7 @@ def _divider() -> QFrame:
     return line
 
 
-LOGO_HEIGHT = 60
+LOGO_HEIGHT = 88                                  # Josh's web icon: square
 
 
 def _section(text: str, tip: str) -> QLabel:
@@ -391,18 +391,11 @@ class RequestDialog(QDialog):
         left.addLayout(form)
         head.addLayout(left, 1)
         from .icons import elicit_logo
-        from PySide6.QtGui import QColor
-        from PySide6.QtWidgets import QGraphicsDropShadowEffect
         self.logo = QLabel()
         self.logo.setPixmap(elicit_logo(LOGO_HEIGHT))
         self.logo.setAlignment(Qt.AlignRight | Qt.AlignTop)
         gap = round(LOGO_HEIGHT * 0.15)           # a little more room from the window's top and side
         self.logo.setContentsMargins(0, gap, gap, 0)
-        shadow = QGraphicsDropShadowEffect(self.logo)   # the white letters show on a light background
-        shadow.setBlurRadius(8)
-        shadow.setOffset(0, 1)
-        shadow.setColor(QColor(0, 0, 0, 180))
-        self.logo.setGraphicsEffect(shadow)
         self.logo.setToolTip(f"{NAME}: the page your speaker records on ({el.WEB_PAGE})")
         head.addWidget(self.logo, 1)
         lay.addLayout(head)

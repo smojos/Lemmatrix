@@ -96,12 +96,18 @@ def test_every_built_in_language_has_every_prompt_with_the_same_placeholders():
     assert elicit_prompts.prompts("ar-SD") is elicit_prompts.PROMPTS["ar"]
 
 
-def test_the_artwork_is_svg_in_the_colours_asked_for():
-    svg = elicit_art.main("#123456", "#ffffff")
-    assert svg.startswith("<svg") and "#123456" in svg and "#ffffff" in svg
-    w = elicit_art.waiting("#4d4d4d", "#000000", "#abcdef")
-    assert w.count("<ellipse") == len(elicit_art.DROPS) == 15 and "#abcdef" in w
-    assert "clipPath" in elicit_art.logo("#198583", "#1b1b1b")
+def test_the_artwork_is_joshs_files_in_the_theme_colour():
+    """Josh's three Inkscape files (21 October), used as drawn: only the teal follows the theme;
+    the grey ɛλ and rain cloud (#b3b3b3) stay; no ɛλ in the rain cloud."""
+    for kind, name in elicit_art.FILES.items():
+        assert (elicit_art.FOLDER / name).exists(), name
+        svg = elicit_art.svg(kind, "#123456")
+        assert "#123456" in svg and elicit_art.TEAL not in svg.lower()
+    assert elicit_art.GREY in elicit_art.main() and elicit_art.GREY in elicit_art.waiting()
+    assert elicit_art.waiting().count("<ellipse") == 15 and "text1" not in elicit_art.waiting()
+    assert "text1" in elicit_art.main() and "text1" in elicit_art.logo()
+    web = (ROOT / "docs" / "elicit" / "logo.svg").read_text(encoding="utf-8")
+    assert web.startswith("<svg") and "var(--accent" in web
 
 
 # ---- requests ----------------------------------------------------------------------

@@ -1,13 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders
-"""Make the ɛλicit web page's pictures from lemmatrix/elicit_art.py (Josh's drawings).
+"""Make the ɛλicit web page's pictures from Josh's drawings (lemmatrix/resources/elicit/).
 
     python tools/make_elicit_web.py
 
-Writes docs/elicit/favicon.svg (the main icon; its letters dark or white with the browser's
-light or dark mode), docs/elicit/logo.svg (the wordmark, cropped to its drawing) and the PNGs
-phones use for a page saved to the home screen (icon-180.png, icon-512.png). Uses Qt, which
-Lemmatrix needs anyway.
+Writes docs/elicit/favicon.svg, docs/elicit/logo.svg and the PNGs phones use for a page saved
+to the home screen (icon-180.png, icon-512.png). Uses Qt, which Lemmatrix needs anyway.
 """
 
 from __future__ import annotations
@@ -23,8 +21,6 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from lemmatrix import elicit_art as art  # noqa: E402
 
 OUT = HERE / "docs" / "elicit"
-TEAL, INK = "#198583", "#1b1b1b"
-DARK_STYLE = "@media (prefers-color-scheme: dark){.ink{fill:#ffffff}}"
 
 
 def png(svg: str, size: int, path: Path, background: str | None = None):
@@ -43,14 +39,16 @@ def png(svg: str, size: int, path: Path, background: str | None = None):
 
 
 def main():
+    """favicon.svg: Elicit.svg as it is; logo.svg (the page's heading): Ellicit_webicon.svg, its teal
+    the researcher's theme colour (the --accent the request sets); the home-screen icons from
+    Elicit.svg on white."""
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "favicon.svg").write_text(art.main(TEAL, INK, DARK_STYLE), encoding="utf-8")
-    logo = art.logo(TEAL, INK, style=DARK_STYLE + ".cloud{fill:var(--accent,#198583)}")
-    # cropped to the drawing (measured from it: the wordmark sits in a band across the square)
-    logo = logo.replace(f'viewBox="0 0 {art.VIEW} {art.VIEW}"', 'viewBox="3.1 10.2 27.6 13.3"', 1)
+    (OUT / "favicon.svg").write_text(art.main(), encoding="utf-8")
+    logo = art.logo("var(--accent,#198583)")
+    logo = logo[logo.index("<svg"):]              # the page puts it inline: no XML header or comment
     (OUT / "logo.svg").write_text(logo, encoding="utf-8")
     for size in (180, 512):                       # on white: home-screen icons have no transparency
-        png(art.main(TEAL, INK), size, OUT / f"icon-{size}.png", background="#ffffff")
+        png(art.main(), size, OUT / f"icon-{size}.png", background="#ffffff")
     print("Wrote", ", ".join(p.name for p in sorted(OUT.glob("*")) if p.suffix in (".svg", ".png")))
 
 

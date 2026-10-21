@@ -36,7 +36,7 @@ body {
   flex-direction: column;
 }
 header { padding: 14px 16px 0; text-align: center; }
-#logo { height: 56px; display: inline-block; }
+#logo { height: 72px; display: inline-block; }
 #logo svg { height: 100%; width: auto; }
 #app { transition: opacity .32s ease-in-out; }
 #app.out { opacity: 0; pointer-events: none; transition-duration: .22s; }
