@@ -29,9 +29,10 @@ def test_search_ignores_diacritics_and_capitals():
     assert f.find_all("") == []
 
 
-def test_button_sits_between_elicit_and_texts(win):
+def test_button_sits_between_elicit_and_questions(win):
     order = [win.head_icons.itemAt(i).widget() for i in range(win.head_icons.count())]
-    assert order.index(win.elicit_btn) + 1 == order.index(win.xml_btn) == order.index(win.texts_btn) - 1
+    assert [order.index(b) for b in (win.elicit_btn, win.xml_btn, win.questions_btn, win.texts_btn)] \
+        == [0, 1, 2, 3]                      # ɛλicit, XML viewer, Questions, Texts and utterances
     assert not win.xml_btn.icon().isNull()
 
 

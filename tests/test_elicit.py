@@ -207,8 +207,9 @@ def win(tmp_path, monkeypatch, db):
 
 def test_the_button_sits_left_of_texts_and_utterances(win):
     lay = win.head_icons
-    assert lay.itemAt(0).widget() is win.elicit_btn and lay.itemAt(2).widget() is win.texts_btn
-    assert lay.itemAt(1).widget() is win.xml_btn          # the XML viewer between them (21 October)
+    assert lay.itemAt(0).widget() is win.elicit_btn and lay.itemAt(3).widget() is win.texts_btn
+    assert lay.itemAt(1).widget() is win.xml_btn          # the XML viewer and Questions between them
+    assert lay.itemAt(2).widget() is win.questions_btn
     texts = [a.text() for a in win.elicit_menu.actions() if a.isVisible() and not a.isSeparator()]
     assert texts == ["Make ɛλicit request…", "Receive ɛλicitation…"]
     assert "remote elicitation" in win.elicit_btn.toolTip()

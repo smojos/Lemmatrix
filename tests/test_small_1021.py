@@ -101,3 +101,47 @@ def test_current_session_codes_and_width(app):
     assert w.sess_panel.width() <= int(w.right_split.width() * w.SESSION_MAX) + 1   # a third at most
     assert rows[chips.PARTICIPANTS].height() > rows[chips.RESEARCHERS].height()   # then wraps
     w.close()
+
+
+def test_questions_button_opens_questions(app, monkeypatch):
+    from lemmatrix.ui.main_window import MainWindow
+    w = MainWindow()
+    opened = []
+    monkeypatch.setattr(w, "open_questions", lambda: opened.append(1))
+    assert not w.questions_btn.icon().isNull()
+    w.questions_btn.click()
+    assert opened
+    w.close()
+
+
+def test_new_day_asks_to_keep_or_reset_the_session(app, monkeypatch):
+    from PySide6.QtWidgets import QMessageBox
+    from lemmatrix.model import Person
+    from lemmatrix.ui import chiprow as chips
+    from lemmatrix.ui.main_window import MainWindow
+    w = MainWindow()
+    w.doc.db.path = "x.xml"                       # as if opened from a file
+    w.doc.db.metadata.researchers.append(Person("RS1"))
+    w.sess_rows[chips.RESEARCHERS].set_keys(["RS1"])
+    asked = []
+
+    def answer(which):
+        def exec_(box):
+            asked.append(box.text())
+            box.clickedButton = lambda: next(b for b in box.buttons() if b.text() == which)
+        return exec_
+    monkeypatch.setattr(QMessageBox, "exec", answer("Keep"))
+    w._session_last_day = "2026-10-20"
+    monkeypatch.setattr("lemmatrix.ui.main_window.today", lambda: "2026-10-21")
+    w._remind_new_day()
+    assert asked and w.sess_rows[chips.RESEARCHERS].keys == ["RS1"]
+    monkeypatch.setattr(QMessageBox, "exec", answer("Reset"))
+    w._remind_new_day()
+    assert w.sess_rows[chips.RESEARCHERS].keys == []
+    asked.clear()
+    w._session_last_day = "2026-10-21"            # the same day: nothing asked
+    w.sess_rows[chips.RESEARCHERS].set_keys(["RS1"])
+    w._remind_new_day()
+    assert not asked
+    w.doc.db.path = ""
+    w.close()

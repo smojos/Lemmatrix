@@ -275,6 +275,7 @@ class MainWindow(QMainWindow):
         self.head_icons.setSpacing(4)
         self.head_icons.addWidget(self._elicit_button())   # ɛλicit, left of Texts and utterances
         self.head_icons.addWidget(self._xml_button())      # the XML viewer, between them (21 October)
+        self.head_icons.addWidget(self._questions_button())   # Questions, then Texts and utterances
         self.head_icons.addWidget(self._texts_button())
         top.addLayout(self.head_icons)
         self.tabs = QTabBar()
@@ -681,6 +682,16 @@ class MainWindow(QMainWindow):
         b.setCursor(Qt.PointingHandCursor)
         b.setToolTip("XML viewer: the database file, read-only, at the selected token or lemma")
         b.clicked.connect(lambda *_: self.open_xml_viewer())
+        return b
+
+    def _questions_button(self) -> QToolButton:
+        """Beside the tabs, between the XML viewer and Texts and utterances: View → Questions (Josh's ?)."""
+        b = self.questions_btn = QToolButton()
+        b.setIconSize(QSize(self.TEXTS_ICON, self.TEXTS_ICON))
+        b.setAutoRaise(True)
+        b.setCursor(Qt.PointingHandCursor)
+        b.setToolTip("Questions: every question in the notebook")
+        b.clicked.connect(lambda *_: self.open_questions())
         return b
 
     def xml_target(self):
@@ -1282,6 +1293,7 @@ class MainWindow(QMainWindow):
             self.doc.settings_changed()
             self.statusBar().showMessage(
                 f"Consent forms found in Documentation and relinked: {', '.join(relinked)}.", 10000)
+        self._remind_new_day()
         self._remind_full_backup()
         self._remind_elicit()
 
@@ -1493,6 +1505,8 @@ class MainWindow(QMainWindow):
                     else {k: [] for k in self.sess_rows})
             if not db.path and not keys[chips.PARTICIPANTS] and self.speaker_code in db.participant_codes():
                 keys[chips.PARTICIPANTS] = [self.speaker_code]
+        # the day the panel was last used (for the new-day question, _remind_new_day)
+        self._session_last_day = str(self.doc.ws.get("session/day", "") or "") if db.path else ""
         for kind, row in self.sess_rows.items():
             row.set_keys(keys.get(kind, []))
         self._remember_session()
@@ -1510,6 +1524,31 @@ class MainWindow(QMainWindow):
         (picked, or loaded from a day in the notebook)."""
         if self.doc.db.path:                      # an empty panel is remembered too (in the workspace)
             self.doc.ws_set("session", self.session_keys())
+            self.doc.ws_set("session/day", today())
+
+    def _remind_new_day(self):
+        """On opening on a new day (Josh, 21 October): the Current Session still has the people and
+        places of the last day it was used, so ask whether to keep them or start with an empty panel."""
+        last = getattr(self, "_session_last_day", "")
+        if not self.doc.db.path or not last or last >= today():
+            return
+        if not any(self.session_keys().values()):
+            return
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Question)
+        box.setWindowTitle("Current Session")
+        box.setText(f"It's a new day. The Current Session was last used on {last}.")
+        names = "  ·  ".join(", ".join(v) for v in self.session_keys().values() if v)
+        box.setInformativeText(f"Keep its people and places ({names}) for today, or reset it?")
+        keep = box.addButton("Keep", QMessageBox.AcceptRole)
+        box.addButton("Reset", QMessageBox.DestructiveRole)
+        box.setDefaultButton(keep)
+        box.exec()
+        if box.clickedButton() is not keep:
+            for row in self.sess_rows.values():
+                row.set_keys([])
+            self._fill_speakers()
+        self._remember_session()
 
     def _fill_db_title(self):
         md = self.doc.db.metadata
@@ -1588,6 +1627,7 @@ class MainWindow(QMainWindow):
         self.notebook_btn.setIcon(icon("notebook", 34, a))
         self.texts_btn.setIcon(icon("texts-utterances", self.TEXTS_ICON, a))
         self.xml_btn.setIcon(icon("xml-viewer", self.TEXTS_ICON, theme.colour("pitch").name()))
+        self.questions_btn.setIcon(icon("questions", self.TEXTS_ICON, theme.colour("pitch").name()))
         self.refresh_elicit_icon()
         self.write_btn.setIcon(icon("write-notebook", 34))
         self._save_icon()
