@@ -66,17 +66,31 @@ class _Keeper(QObject):
         g = self.prefs.get_bytes(self.key)
         if g:
             self.window.restoreGeometry(g)
-        for i, sp in enumerate(self.splitters()):
-            st = self.prefs.get_bytes(f"{self.key}/split{i}")
+        for sp, k in self._keyed():
+            st = self.prefs.get_bytes(k)
             if st:
+                way = sp.orientation()           # a state saved for another splitter never turns this one
                 sp.restoreState(st)
+                sp.setOrientation(way)
         self.restoring = False
+
+    def _keyed(self):
+        """(splitter, its key): named ones by name, so adding one doesn't shift the others, which
+        are counted by place (as before)."""
+        out, i = [], 0
+        for sp in self.splitters():
+            if sp.objectName():
+                out.append((sp, f"{self.key}/split-{sp.objectName()}"))
+            else:
+                out.append((sp, f"{self.key}/split{i}"))
+                i += 1
+        return out
 
     def save(self):
         try:
             self.prefs.set_value(self.key, self.window.saveGeometry())
-            for i, sp in enumerate(self.splitters()):
-                self.prefs.set_value(f"{self.key}/split{i}", sp.saveState())
+            for sp, k in self._keyed():
+                self.prefs.set_value(k, sp.saveState())
         except RuntimeError:                    # the window has gone already
             pass
 

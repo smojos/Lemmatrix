@@ -44,32 +44,59 @@ def cell_order(cell: list[str], natural: list[str]) -> list[str]:
 
 
 class ConfigureCellDialog(QDialog):
-    """Which lines a matrix cell shows, and in what order."""
+    """Which lines a matrix cell shows, in what order, and which line up word by word (idea 2:
+    the text lines' glossing rules; the Line up ticks are one setting for every cell view)."""
 
-    def __init__(self, parent, db: Database, cell: list[str]):
+    def __init__(self, parent, db: Database, cell: list[str], aligned: set | None = None):
         super().__init__(parent)
+        from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
         self.setWindowTitle("Configure cell")
         self.setWindowIcon(icon("gear"))
-        self.resize(340, 380)
+        self.resize(380, 400)
         lay = QVBoxLayout(self)
-        lay.addWidget(QLabel("Tick what each cell shows; drag to reorder."))
-        self.list = QListWidget()
+        note = QLabel("Tick what each cell shows; drag to reorder. Lines ticked in “Line up” are aligned "
+                      "word by word, as in a text's lines (spaces separate the units, {braces} group "
+                      "several words into one); the same ticks for every cell view.")
+        note.setWordWrap(True)
+        lay.addWidget(note)
+        self.list = QTreeWidget()
+        self.list.setHeaderLabels(["Line", "Line up"])
+        self.list.setRootIsDecorated(False)
         self.list.setDragDropMode(QAbstractItemView.InternalMove)
+        self.list.setSelectionMode(QAbstractItemView.SingleSelection)
+        aligned = set(aligned or ())
         options = mx.cell_options(db)
         titles = dict(options)
         order = cell_order(cell, [k for k, _ in options])
         for k in order:
-            it = QListWidgetItem(titles[k])
-            it.setData(Qt.UserRole, k)
-            it.setFlags(it.flags() | Qt.ItemIsUserCheckable)
-            it.setCheckState(Qt.Checked if k in cell else Qt.Unchecked)
-            self.list.addItem(it)
+            it = QTreeWidgetItem([titles[k], ""])
+            it.setData(0, Qt.UserRole, k)
+            it.setFlags((it.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsDragEnabled) & ~Qt.ItemIsDropEnabled)
+            it.setCheckState(0, Qt.Checked if k in cell else Qt.Unchecked)
+            if k != "drawing":                    # the pitch drawing doesn't line up
+                it.setCheckState(1, Qt.Checked if mx.is_aligned(db, k, aligned) else Qt.Unchecked)
+            self.list.addTopLevelItem(it)
+        self.list.resizeColumnToContents(0)
         lay.addWidget(self.list)
         lay.addWidget(_buttons(self))
 
     def chosen(self) -> list[str]:
-        return [self.list.item(i).data(Qt.UserRole) for i in range(self.list.count())
-                if self.list.item(i).checkState() == Qt.Checked]
+        out = []
+        for i in range(self.list.topLevelItemCount()):
+            it = self.list.topLevelItem(i)
+            if it.checkState(0) == Qt.Checked:
+                out.append(it.data(0, Qt.UserRole))
+        return out
+
+    def aligned(self) -> dict[str, bool]:
+        """Each line's Line up tick (key -> ticked), to merge into the shared setting."""
+        out = {}
+        for i in range(self.list.topLevelItemCount()):
+            it = self.list.topLevelItem(i)
+            k = it.data(0, Qt.UserRole)
+            if k != "drawing":
+                out[k] = it.checkState(1) == Qt.Checked
+        return out
 
 
 # ==========================================================================

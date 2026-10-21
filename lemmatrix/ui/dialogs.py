@@ -604,9 +604,27 @@ class PreferencesDialog(QDialog):
             ("This computer", [("Recording source", self.source), ("Bit depth", self.bits),
                                ("Sample rate", self.rate), (None, self.with_tokens),
                                ("Path to Praat", self.praat)])])
+        from . import conventions as conv            # the cell views' display conventions (idea 26)
+        c = conv.CURRENT
+        self.conv_on = QCheckBox("Use the display conventions (the /[β]/ button under every cell view)")
+        self.conv_on.setChecked(c.on)
+        self.conv_brackets = QCheckBox("Phonetic in [square brackets]")
+        self.conv_brackets.setChecked(c.brackets)
+        self.conv_slashes = QCheckBox("Phonemic in /slashes/")
+        self.conv_slashes.setChecked(c.slashes)
+        self.conv_caps = QCheckBox("Glosses in capitals (PL, 1SG) in small caps, in the Morphemes line")
+        self.conv_caps.setChecked(c.small_caps)
+        self.conv_quotes = QComboBox()
+        for key, label in ((conv.SINGLE, "‘single’ quotes"), (conv.DOUBLE, "“double” quotes"),
+                           (conv.NO_QUOTES, "no quotes")):
+            self.conv_quotes.addItem(label, key)
+        self.conv_quotes.setCurrentIndex(max(0, self.conv_quotes.findData(c.quotes)))
         page("Display", [("This computer", [("Theme", self.theme), ("Accent colour", self.accent),
                                             ("IPA font size", self.ipa),
-                                            ("Splash screen", self.splash)])])
+                                            ("Splash screen", self.splash)]),
+                         ("Display conventions: matrix cells, text lines, the utterance cell (this computer)",
+                          [(None, self.conv_on), (None, self.conv_brackets), (None, self.conv_slashes),
+                           (None, self.conv_caps), ("Translations in", self.conv_quotes)])])
         page("Pitch", [("This database", [("Lowest pitch digit", self.low),
                                           ("Highest pitch digit", self.high)]),
                        ("This computer", [("Pitch playback", voice_row),
@@ -676,6 +694,10 @@ class PreferencesDialog(QDialog):
         p.pitch_voice = self.voice.currentData()
         p.pitch_volume = self.volume.value()
         p.full_backup_folder = self.backups.text().strip()
+        from . import conventions as conv
+        conv.save(p, conv.Conventions(on=self.conv_on.isChecked(), brackets=self.conv_brackets.isChecked(),
+                                      slashes=self.conv_slashes.isChecked(), small_caps=self.conv_caps.isChecked(),
+                                      quotes=self.conv_quotes.currentData()))
         return old != (s.filename_pattern, s.tag_separator, s.utterance_pattern, s.text_pattern)
 
 

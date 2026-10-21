@@ -84,3 +84,23 @@ def _ask_through_question(monkeypatch):
     monkeypatch.setattr(widgets, "ask", lambda parent, title, text, go, stop="Cancel", icon=None:
                         QMessageBox.question(parent, title, text) in (QMessageBox.Yes, QMessageBox.Save,
                                                                      QMessageBox.Ok))
+
+
+@pytest.fixture(autouse=True)
+def _no_old_computer_settings():
+    """Opening a format 6 database copies this computer's settings into its new workspace (idea
+    36). In tests that copy would carry one test's columns or options into the next (the test
+    settings are one store), so the settings that move are cleared before each test."""
+    try:
+        import os
+
+        from PySide6.QtCore import QSettings
+    except ImportError:
+        yield
+        return
+    q = QSettings("Lemmatrix", os.environ.get("LEMMATRIX_SETTINGS", "Lemmatrix-tests"))
+    if q.applicationName() not in ("Lemmatrix",):         # never the real preferences
+        for key in ("columns", "lines", "matrix/autoplay", "matrix/only_with_data", "notebook/sort",
+                    "session/speaker"):
+            q.remove(key)
+    yield

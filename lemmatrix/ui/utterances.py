@@ -29,7 +29,7 @@ from .. import spelling, audio, layout, matrix as mx, pitch as pitchmod, pull, s
 from ..model import FORBIDDEN_CHARS, UTTERANCES, Token, Utterance, nfc
 from . import theme
 from .filter_dialogs import ConfigureColumnsDialog
-from .icons import icon, ink_icon
+from .icons import icon, ink_icon, themed_icon
 from .spellui import SpellDelegate
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, ListEditDelegate
 from .token_dialog import Slot, TokenDialog
@@ -175,6 +175,7 @@ class TextsUtterancesWindow(QDialog):
         t.filtersChanged.connect(self._update_count)
         t.clicked.connect(lambda *_: self.autoplay.isChecked() and self.play())
         t.model_.edited.connect(self._edited)
+        t.selectionModel().currentRowChanged.connect(lambda *_: self.show_cell())
         self.search.textChanged.connect(lambda text: t.proxy.set_search(text))
         from PySide6.QtGui import QShortcut
         QShortcut(QKeySequence("Ctrl+Space"), self, self._play_key)       # an utterance, or a text's line
@@ -227,7 +228,117 @@ class TextsUtterancesWindow(QDialog):
         self.hint = QLabel("Drop WAV files on the grid to add them as utterances.")
         bl.addWidget(self.hint)
         bl.addStretch(1)
-        return bar
+        # the selected utterance as a cell, at the right of the options panel (IDEAS.md idea 22)
+        split = self.cell_split = HalfSplitter(Qt.Horizontal)
+        split.setObjectName("utterance-cell")
+        split.addWidget(bar)
+        split.addWidget(self._utterance_cell())
+        split.setCollapsible(0, False)
+        split.setSizes([700, 500])
+        return split
+
+    # ---- the utterance cell (IDEAS.md idea 22, 21 October) --------------------------
+    # The selected utterance in the text lines' cell style: the same Configure view (which
+    # fields, their order, which line up), the same glossing rules, edit mode (Ctrl+E), zoom
+    # (Ctrl + wheel), Create token from highlighted words and Push to question.
+    def _utterance_cell(self) -> QWidget:
+        from .lines_view import LinesView
+        box = QWidget()
+        lay = QVBoxLayout(box)
+        lay.setContentsMargins(4, 0, 0, 0)
+        lay.setSpacing(2)
+        head = QHBoxLayout()
+        head.setContentsMargins(0, 0, 0, 0)
+        from .main_window import tool
+        self.cell_edit_btn = tool("Edit mode", "edit", lambda: self.set_cell_edit_mode(self.cell_edit_btn.isChecked()),
+                                  "Edit mode (Ctrl+E): click a field of the cell to edit it in place")
+        self.cell_edit_btn.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        self.cell_edit_btn.setCheckable(True)
+        self.cell_title = QLabel("")
+        head.addWidget(self.cell_edit_btn)
+        head.addWidget(main_conv := self.main.conventions_button())
+        head.addWidget(self.cell_title, 1)
+        lay.addLayout(head)
+        v = self.cell = LinesView()
+        v.bookmarks_enabled = False
+        v.head_fn = self._cell_head
+        v.playRequested.connect(self.play)
+        v.editCommitted.connect(lambda line, key, text: self._cell_edited(line, key, text))
+        v.pushRequested.connect(lambda line: self._cell_push(line))
+        v.createTokenRequested.connect(lambda line, key, words: self.texts.create_token(line, key, words, view=v))
+        v.contextRequested.connect(self._cell_menu)
+        lay.addWidget(v, 1)
+        return box
+
+    def _cell_head(self, line) -> str:
+        u = getattr(line, "utterance", None)
+        return f"{u.ref}  {u.file_gloss}".strip() if u is not None else ""
+
+    def set_cell_edit_mode(self, on: bool):
+        self.cell_edit_btn.setChecked(on)
+        self.cell.set_edit_mode(on)
+
+    def show_cell(self, u=None):
+        """The utterance cell shows the selected utterance (or nothing)."""
+        if not hasattr(self, "cell"):
+            return
+        u = u if u is not None else self.table.current_row()
+        self.cell.set_fields(self.texts.view_specs(), self.texts.comment_key())
+        if u is None:
+            self.cell.set_lines([])
+            self.cell_title.setText("Select an utterance to see it here as a cell.")
+            return
+        self.cell_title.setText("")
+        self.cell.set_lines([UtteranceLine.of(self.db, u, self.cell.fields, self.texts.comment_key())])
+        self.cell.select_row(self.cell.rows[0])
+
+    def _cell_edited(self, line, key: str, text: str):
+        u = getattr(line, "utterance", None)
+        if u is not None:
+            self._edited(u, "f:" + key, text)
+            self.show_cell(u)
+
+    def _cell_push(self, line):
+        """The ? on the cell's Comment: an open question in the notebook, linked to the utterance."""
+        u = getattr(line, "utterance", None)
+        key = self.texts.comment_key()
+        if u is None or not key:
+            return
+        text = (u.token.get(key) or "").strip()
+        if not text:
+            return
+        from .. import notebook as nbmod
+        from . import chiprow as chips
+        main = self.main
+        date = main.work_date()
+        keys = main.session_keys()
+        nbmod.push_question(self.doc.notebook, self.db, date, text, u, u.token,
+                            keys[chips.RESEARCHERS], keys[chips.PARTICIPANTS], keys[chips.LOCATIONS])
+        self.doc.notebook_changed()
+        if getattr(main, "notebook_dialog", None) is not None:
+            main.notebook_dialog.reload()
+        self._edited(u, "f:" + key, "")
+        self.show_cell(u)
+        main.statusBar().showMessage(f"Added to the questions of {date}", 5000)
+
+    def _cell_menu(self, line, pos):
+        m = QMenu(self)
+        sel = self.cell.text_selection()
+        if sel is not None:
+            _, key, words = sel
+            a = m.addAction(themed_icon("text-token", 16), f"Create token from “{words}”…")
+            a.triggered.connect(lambda *_: self.texts.create_token(sel[0], key, words, view=self.cell))
+        else:
+            a = m.addAction(themed_icon("text-token", 16), "Create token (highlight words first)")
+            a.setEnabled(False)
+        m.addSeparator()
+        key = self.cell.menu_key
+        a = m.addAction(icon("edit", 16), f"Edit {self.cell.title(key)}" if key else "Edit field")
+        a.setEnabled(bool(key) and line is not None)
+        a.triggered.connect(lambda *_: self.cell.start_edit(line, key))
+        a = m.addAction(icon("play", 16), "Play")
+        a.triggered.connect(lambda *_: self.play())
+        m.exec(pos)
 
     def _main_autoplay(self, on: bool):
         if self.autoplay.isChecked() != bool(on):
@@ -416,6 +527,7 @@ class TextsUtterancesWindow(QDialog):
         self.checks = pull.check_all(self.db, self.doc.text_buffers)
         self.table.set_rows(list(self.db.utterances))
         self._update_count()
+        self.show_cell()
         if hasattr(self, "texts"):
             self.texts.refresh()
 
@@ -857,6 +969,51 @@ class TextsUtterancesWindow(QDialog):
         if getattr(self.main, "utterances_window", None) is self:
             self.main.utterances_window = None
         super().closeEvent(event)
+
+
+class HalfSplitter(QSplitter):
+    """A splitter whose second part is never wider than half of it (the utterance cell, idea 22)."""
+
+    def __init__(self, *a):
+        super().__init__(*a)
+        self.splitterMoved.connect(lambda *_: self._clamp())
+
+    def _clamp(self):
+        sizes = self.sizes()
+        if len(sizes) == 2 and sizes[1] > sum(sizes) // 2:
+            half = sum(sizes) // 2
+            self.blockSignals(True)
+            self.setSizes([sum(sizes) - half, half])
+            self.blockSignals(False)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._clamp()
+
+
+class UtteranceLine:
+    """An utterance in the shape a text's line has, for the lines view (the utterance cell)."""
+
+    def __init__(self, u, values: dict):
+        self.utterance = u
+        self.values = values
+        self.start = self.end = 0.0
+        self.speaker = u.token.speaker
+        self.missing_main = False
+        self.id = u.id
+
+    @classmethod
+    def of(cls, db, u, specs, comment_key: str = ""):
+        s = db.settings
+        values = {}
+        for key in [sp.key for sp in specs] + ([comment_key] if comment_key else []):
+            name, _, lang = key.partition(":")
+            f = s.token_field(name)
+            if f is not None:
+                v = u.token.get(name, lang or s.primary_gloss) if f.multilingual else u.token.get(name)
+                if v:
+                    values[key] = v
+        return cls(u, values)
 
 
 def mx_item(c):

@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QHeaderView, QStyle, QStyledIt
 from .. import matrix as mx
 from ..model import Database
 from .icons import icon
-from . import theme, widgets
+from . import conventions, theme, widgets
 from .widgets import meaning
 from .widgets import (chip_metrics, chips_width, draw_pitch, ipa_font, paint_chips,
                       pitch_width, underscore_unit)
@@ -276,8 +276,42 @@ class TokenCellDelegate(QStyledItemDelegate):
     def _lines(self):
         return [f for f in self.view.cell_fields if f != "drawing"]
 
+    UNIT_GAP = 12        # between lined-up units (idea 2)
+
+    def _role(self, name) -> str:
+        f = self.view.db.settings.token_field(name.partition(":")[0])
+        return f.role if f is not None else ""
+
     def _text(self, t, name):
-        return mx.cell_text(self.view.db, t, name)
+        """A line's text as shown: the glossing symbols hidden ({big dog} → big dog), the display
+        conventions on (idea 26)."""
+        from .lines_view import shown
+        return conventions.wrap(self._role(name), shown(mx.cell_text(self.view.db, t, name)))
+
+    def _w(self, name, text) -> int:
+        return conventions.width(text, self._font(name), conventions.small_caps_on(self._role(name)))
+
+    def _aligned(self, name) -> bool:
+        return mx.is_aligned(self.view.db, name, self.view.aligned)
+
+    def _units(self, t, name) -> list[str]:
+        from ..interlinear import bare, split_units
+        return conventions.wrap_units(self._role(name),
+                                      [bare(u) for u in split_units(mx.cell_text(self.view.db, t, name))])
+
+    def _cols(self, t) -> list[int]:
+        """The lined-up columns of a token: each the widest unit at that place in its aligned lines."""
+        cols: list[int] = []
+        for name in self._lines():
+            if not self._aligned(name):
+                continue
+            for i, u in enumerate(self._units(t, name)):
+                w = self._w(name, u) + self.UNIT_GAP
+                if i < len(cols):
+                    cols[i] = max(cols[i], w)
+                else:
+                    cols.append(w)
+        return cols
 
     def _font(self, name):
         return self.ipa if name in IPA_FIELDS else self.plain
@@ -301,8 +335,12 @@ class TokenCellDelegate(QStyledItemDelegate):
             w = 0.0
             if "drawing" in self.view.cell_fields:
                 w = pitch_width(t.get("Pitch"), self.unit)
+            cols = self._cols(t)
             for name in self._lines():
-                w = max(w, QFontMetrics(self._font(name)).horizontalAdvance(self._text(t, name) or "—"))
+                if self._aligned(name) and self._units(t, name):
+                    w = max(w, sum(cols) - self.UNIT_GAP)
+                else:
+                    w = max(w, self._w(name, self._text(t, name) or "—"))
             chips = self.chips_for(r, c, t)
             if chips:
                 w = max(w, chips_width(chips, self.small))
@@ -377,14 +415,25 @@ class TokenCellDelegate(QStyledItemDelegate):
                 draw_pitch(painter, QRectF(x, y, w, self.draw_h), t.get("Pitch"), db.settings.pitch_low,
                            db.settings.pitch_high, width=2.2, unit=self.unit)
                 y += self.draw_h + 4
+            cols = self._cols(t)
             for name in self._lines():
                 font = self._font(name)
                 fm = QFontMetrics(font)
                 text = self._text(t, name)
                 painter.setFont(font)
                 painter.setPen(theme.colour("text") if text else theme.colour("faint"))
-                painter.drawText(QRect(int(x), int(y), int(w) + 2, fm.height()),
-                                 Qt.AlignLeft | Qt.AlignVCenter, text or "—")
+                units = self._units(t, name) if self._aligned(name) else []
+                if units:                         # word by word, under each other (idea 2)
+                    ux = x
+                    caps = conventions.small_caps_on(self._role(name))
+                    for cw, u in zip(cols, units):
+                        conventions.draw(painter, QRect(int(ux), int(y), int(cw) + 2, fm.height()),
+                                         Qt.AlignLeft | Qt.AlignVCenter, u, font, caps)
+                        ux += cw
+                else:
+                    conventions.draw(painter, QRect(int(x), int(y), int(w) + 2, fm.height()),
+                                     Qt.AlignLeft | Qt.AlignVCenter, text or "—", font,
+                                     bool(text) and conventions.small_caps_on(self._role(name)))
                 y += fm.height() + 1
             draw_sound_mark(painter, x + w - SOUND_W + 2, rect.top() + PAD, state)
             x += w + GAP
@@ -412,6 +461,7 @@ class MatrixView(QTableView):
         self.db = db
         self.defaults = mx.default_names(db)
         self.cell_fields = list(mx.DEFAULT_CELL)
+        self.aligned: set[str] = set()          # the lines that line up word by word (idea 2)
         self.selected: tuple | None = None      # (row, column, token number)
         self.sound_files: set[str] = set()      # recordings present in the sound folder
         self.cloud_files: set[str] = set()      # those that are online-only

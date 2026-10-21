@@ -41,6 +41,9 @@ class Line:
     values: dict[str, str] = field(default_factory=dict)   # field key (Phonetic, Translation:en) -> text
     copied: dict[str, str] = field(default_factory=dict)   # tier name -> its text in this line
     index: int = 0
+    # the main tier has no text here, only other tiers do (21 October: shown as a line, flagged,
+    # so a TextGrid from elsewhere can be finished in Lemmatrix; typing the main field makes it real)
+    missing_main: bool = False
 
     @property
     def id(self):                       # for the grid
@@ -166,14 +169,9 @@ def lines_from(tg, mapping: TierMapping, default_speaker: str = "") -> list[Line
             if not speaker and tier_base(n)[1]:
                 continue
             others.append((n, rule, tier))
-        for start, end, label in interval[main].entries:
-            text = nfc((label or "").strip())
-            if not text:
-                continue
-            ln = Line(float(start), float(end), speaker or default_speaker)
-            ln.copied[main] = text
-            if main_rule is not None and main_rule.field and main_rule.field != SPEAKER_FIELD:
-                ln.values[main_rule.key] = text
+        spans = [(float(a), float(b)) for a, b, label in interval[main].entries if nfc((label or "").strip())]
+
+        def fill(ln):
             for n, rule, tier in others:
                 entries = tier.entries
                 part = joined(entries, segments_in(entries, ln.start, ln.end), ln.start, ln.end)
@@ -185,7 +183,31 @@ def lines_from(tg, mapping: TierMapping, default_speaker: str = "") -> list[Line
                 ln.copied[n] = part
                 key = rule.key
                 ln.values[key] = (ln.values[key] + " " + part) if ln.values.get(key) else part
+        for start, end, label in interval[main].entries:
+            text = nfc((label or "").strip())
+            if not text:
+                continue
+            ln = Line(float(start), float(end), speaker or default_speaker)
+            ln.copied[main] = text
+            if main_rule is not None and main_rule.field and main_rule.field != SPEAKER_FIELD:
+                ln.values[main_rule.key] = text
+            fill(ln)
             lines.append(ln)
+        # stretches where only other tiers have text: lines too, flagged as missing the main tier's
+        orphans = sorted((float(a), float(b)) for n, rule, tier in others if rule.field != SPEAKER_FIELD
+                         for a, b, label in tier.entries if nfc((label or "").strip())
+                         and not any(min(b, e) - max(a, s) > SAME_TIME for s, e in spans))
+        stretches: list[list[float]] = []
+        for a, b in orphans:                    # overlapping ones (across tiers) make one stretch
+            if stretches and a < stretches[-1][1] - SAME_TIME:
+                stretches[-1][1] = max(stretches[-1][1], b)
+            else:
+                stretches.append([a, b])
+        for a, b in stretches:
+            ln = Line(a, b, speaker or default_speaker, missing_main=True)
+            fill(ln)
+            if ln.values:
+                lines.append(ln)
     lines.sort(key=lambda x: (x.start, x.speaker))
     for i, ln in enumerate(lines):
         ln.index = i

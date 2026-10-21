@@ -30,9 +30,9 @@ from PySide6.QtWidgets import (QAbstractItemView, QAbstractScrollArea, QDialog, 
                                QLineEdit, QMenu, QPlainTextEdit, QTreeWidget, QTreeWidgetItem, QVBoxLayout)
 
 from ..interlinear import bare, split_units
-from . import searchmark, theme
+from . import conventions, searchmark, theme
 from .icons import icon, themed_icon
-from .widgets import ipa_font, meaning
+from .widgets import ipa_font
 
 MARGIN = 40              # the buffer on the left, with room for the bookmark (idea 32; 24 before)
 BOOKMARK_W = 14          # the bookmark ribbon in the margin
@@ -55,6 +55,7 @@ class FieldSpec:
     ipa: bool = False
     aligned: bool = False
     translation: bool = False
+    role: str = ""       # the token field's role (phonetic, phonemic, morphemes…): the display conventions
 
 
 @dataclass
@@ -132,6 +133,8 @@ class LinesView(QAbstractScrollArea):
         self._text_sel = None                     # (line id, field key, first word, last word)
         self._drag = None                         # (line id, field key, word, x) while pressing on a field
         self.bookmark = None                      # the id of the text's bookmarked line (idea 32)
+        self.bookmarks_enabled = True             # off in the utterance cell (idea 22)
+        self.head_fn = None                       # line -> the side's first line (default: its times)
         self.zoom = 1.0                           # Ctrl + mouse wheel (this view's own, not saved)
         self._base_pt = self.font().pointSizeF()
         self._apply_fonts()
@@ -269,21 +272,31 @@ class LinesView(QAbstractScrollArea):
     def _row_h(self, spec: FieldSpec) -> int:
         return QFontMetrics(self._font(spec)).height() + ROW_EXTRA
 
+    def _role(self, spec: FieldSpec) -> str:
+        return spec.role or ("translation" if spec.translation else "")
+
     def _display(self, line, spec: FieldSpec) -> str:
-        text = shown(self.value(line, spec.key))
-        return meaning(text) if spec.translation and text else text
+        """A field as shown: the glossing symbols hidden, the display conventions on (idea 26)."""
+        return conventions.wrap(self._role(spec), shown(self.value(line, spec.key)))
 
     def _units(self, line, spec: FieldSpec) -> list[str]:
-        return [bare(u) for u in split_units(self.value(line, spec.key))]
+        return conventions.wrap_units(self._role(spec), [bare(u) for u in split_units(self.value(line, spec.key))])
+
+    def _w(self, spec: FieldSpec, text: str) -> int:
+        """How wide a field's text is drawn (small caps included)."""
+        return conventions.width(text, self._font(spec), conventions.small_caps_on(self._role(spec)))
+
+    def _draw_text(self, p, rect, spec: FieldSpec, text: str):
+        conventions.draw(p, rect, Qt.AlignVCenter | Qt.AlignLeft, text, self._font(spec),
+                         conventions.small_caps_on(self._role(spec)))
 
     def _cell(self, line, y: int) -> _Cell:
         rows, cols, top = [], [], PAD
         width = 0
         aligned = [s for s in self.fields if s.aligned]
         for s in aligned:                         # the aligned columns: the widest unit in each
-            fm = QFontMetrics(self._font(s))
             for i, u in enumerate(self._units(line, s)):
-                w = fm.horizontalAdvance(u) + GAP
+                w = self._w(s, u) + GAP
                 if i < len(cols):
                     cols[i] = max(cols[i], w)
                 else:
@@ -295,7 +308,7 @@ class LinesView(QAbstractScrollArea):
             if s.aligned:
                 width = max(width, sum(cols))
             else:
-                width = max(width, QFontMetrics(self._font(s)).horizontalAdvance(self._display(line, s)))
+                width = max(width, self._w(s, self._display(line, s)))
         fields_h = top + PAD
         comment = self.value(line, self.comment_key)
         fm = QFontMetrics(self.plain)                 # the Comment: the same size as the Translation
@@ -409,7 +422,7 @@ class LinesView(QAbstractScrollArea):
         if i < 0 or i >= len(self._cells) or y > self._cells[i].y + self._cells[i].h:
             return None, ""
         c = self._cells[i]
-        if self._bookmark_rect(c, c.y - self.verticalScrollBar().value()).contains(QPointF(pos)):
+        if self.bookmarks_enabled and self._bookmark_rect(c, c.y - self.verticalScrollBar().value()).contains(QPointF(pos)):
             return i, "bookmark"
         if pos.x() >= self._side_x():
             if pos.y() + self.verticalScrollBar().value() < c.y + PAD + self._time_h():
@@ -430,19 +443,18 @@ class LinesView(QAbstractScrollArea):
         """A field's words in a visible line: (x start, x end, text), in content coordinates
         (the left margin included). An aligned field's words are its units ({big dog} is one)."""
         ln, c = self._visible[i], self._cells[i]
-        fm = QFontMetrics(self._font(spec))
         out = []
         if spec.aligned:
             x = MARGIN
             for w, u in zip(c.cols, self._units(ln, spec)):
                 if u:
-                    out.append((x, x + fm.horizontalAdvance(u), u))
+                    out.append((x, x + self._w(spec, u), u))
                 x += w
             return out
         t = self._display(ln, spec)
         for m in re.finditer(r"\S+", t):
-            x = MARGIN + fm.horizontalAdvance(t[:m.start()])
-            out.append((x, x + fm.horizontalAdvance(m.group()), m.group()))
+            x = MARGIN + self._w(spec, t[:m.start()])
+            out.append((x, x + self._w(spec, m.group()), m.group()))
         return out
 
     def _word_at(self, i: int, key: str, x: float) -> int:
@@ -481,6 +493,8 @@ class LinesView(QAbstractScrollArea):
             words = t[found[a].start():found[b].end()]
             if not spec.ipa:
                 words = words.strip(EDGE_PUNCT + " ")
+        if conventions.CURRENT.on:                # the display conventions' brackets, slashes, quotes
+            words = words.strip(conventions.DECORATIONS + " ")
         return (ln, key, words) if words.strip() else None
 
     def select_words(self, line, key: str, first: int, last: int):
@@ -537,7 +551,7 @@ class LinesView(QAbstractScrollArea):
                     p.setPen(text)
                     fm = p.fontMetrics()
                     for w, u in zip(c.cols, self._units(ln, s)):
-                        p.drawText(QRect(x, y, w, rh), Qt.AlignVCenter | Qt.AlignLeft, u)
+                        self._draw_text(p, QRect(x, y, w, rh), s, u)
                         if self._search:
                             searchmark.mark_text(p, x, y + (rh - fm.height()) / 2, fm.height(), u, self._search, fm)
                         x += w
@@ -549,7 +563,7 @@ class LinesView(QAbstractScrollArea):
                     t = self._display(ln, s)
                     if t:
                         p.setPen(text)
-                        p.drawText(QRect(x0, y, c.width + 40, rh), Qt.AlignVCenter | Qt.AlignLeft, t)
+                        self._draw_text(p, QRect(x0, y, c.width + 40, rh), s, t)
                         if self._search:
                             fm = p.fontMetrics()
                             searchmark.mark_text(p, x0, y + (rh - fm.height()) / 2, fm.height(), t, self._search, fm)
@@ -565,10 +579,13 @@ class LinesView(QAbstractScrollArea):
             p.setFont(self.small)
             p.setPen(dim)
             from .texts import clock
-            head = f"{clock(ln.start)} – {clock(ln.end)}"
+            head = self.head_fn(ln) if self.head_fn is not None else f"{clock(ln.start)} – {clock(ln.end)}"
             if self.show_speaker and ln.speaker:
                 head += f"   {ln.speaker}"
             th = self._time_h()
+            if getattr(ln, "missing_main", False):    # only other tiers have text here (21 October)
+                head += "   no main-tier segment"
+                p.setPen(theme.colour("error"))
             p.drawText(QRect(side_x + 10, top + PAD - 2, side_w - 20, th), Qt.AlignVCenter, head)
             refs = self.clips.get(ln.id)
             if refs:
@@ -590,7 +607,7 @@ class LinesView(QAbstractScrollArea):
                     icon("push-question", PUSH).paint(p, self._push_rect(box).toRect())
                 if comment and self._search:
                     searchmark.mark_wrapped(p, inner, comment, self._search)
-            if ln.id == self.bookmark or self.edit_mode:     # the bookmark (idea 32), pinned in the margin
+            if self.bookmarks_enabled and (ln.id == self.bookmark or self.edit_mode):   # the bookmark (idea 32)
                 br = self._bookmark_rect(c, top)
                 p.fillRect(QRectF(0, top, MARGIN - 4, c.h), theme.mix(base, accent, 0.16 if sel else 0.07)
                            if sel or cur else base)

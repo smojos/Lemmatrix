@@ -519,7 +519,8 @@ class TextsPanel(QObject):
                                  "Refresh text: read the text's TextGrid again from its file and find all its "
                                  "lines again (asks first if there are line edits not yet saved)"),
                        icon_tool("gear", self.configure_view, "Configure view: which fields each line shows, "
-                                 "in what order, and which line up word by word"))
+                                 "in what order, and which line up word by word"),
+                       self.main.conventions_button())
         self.restyle_icons()
         self.edit_label = QLabel("Edit mode")
         self.edit_label.hide()
@@ -708,13 +709,11 @@ class TextsPanel(QObject):
         if not keys:                              # at first: the fields the tier mapping fills
             mapped = {r.key for r in self.db.settings.tier_mapping.rules if r.field}
             keys = [k for k in choices if k in mapped] or list(choices)[:4]
-        saved = self.doc.ws.get_list("lines/aligned")
-        aligned = set(saved) if saved != ["-"] else set()
-        if not saved:                             # at first: Phonemic and Morphemes line up
-            aligned = {k for k in keys if k.split(":")[0] in ("Phonemic", "Morphemes")}
+        aligned = self.main.aligned_set()         # one Line up setting for every cell view (idea 2)
         s = self.db.settings
         return [FieldSpec(k, choices[k][0], choices[k][1], k in aligned,
-                          bool((fd := s.token_field(k.split(":")[0])) and fd.role == "translation"))
+                          bool((fd := s.token_field(k.split(":")[0])) and fd.role == "translation"),
+                          fd.role if fd is not None else "")
                 for k in keys]
 
     def configure_view(self):
@@ -722,12 +721,15 @@ class TextsPanel(QObject):
         if dlg.exec():
             keys, aligned = dlg.chosen()
             self.doc.ws_set("lines/fields", keys)                 # in the workspace (idea 36)
-            self.doc.ws_set("lines/aligned", aligned or ["-"])
+            old = self.main.aligned_set() - {k for k, _, _ in self.view_choices()}
+            self.main.set_aligned(old | set(aligned))
             self._apply_view()
 
     def _apply_view(self):
         specs = self.view_specs()
         self.lines.set_fields(specs, self.comment_key())
+        if callable(getattr(self.win, "show_cell", None)):    # the utterance cell shows the same fields
+            self.win.show_cell()
         current = self.next_field.currentData()
         self.next_field.blockSignals(True)
         self.next_field.clear()
@@ -854,6 +856,8 @@ class TextsPanel(QObject):
         """Ctrl+E: Edit mode on or off, while the lines are shown (the Texts tab)."""
         if self.lines.isVisible():
             self.set_edit_mode(not self.edit_btn.isChecked())
+        elif getattr(self.win, "cell", None) is not None and self.win.cell.isVisible():   # the utterance cell
+            self.win.set_cell_edit_mode(not self.win.cell_edit_btn.isChecked())
 
     def set_edit_mode(self, on: bool):
         self.edit_btn.setChecked(on)
@@ -1325,10 +1329,11 @@ class TextsPanel(QObject):
             a.triggered.connect(lambda *_, fn=fn: fn())
         m.exec(pos)
 
-    def create_token(self, line, key: str, words: str):
+    def create_token(self, line, key: str, words: str, view=None):
         """Create token from a text's line (IDEAS.md idea 31, Josh 21 October): the lemma is picked
         first, then the token dialogue opens on a new token with only the highlighted words, in the
-        field they came from (\"my dog\" from the Translation into the Translation)."""
+        field they came from (\"my dog\" from the Translation into the Translation). New lemma…
+        makes a lemma instead, the words in its citation token."""
         from .move_dialog import CreateTokenDialog
         from .token_dialog import Slot, TokenDialog
         words = (words or "").strip()
@@ -1336,19 +1341,24 @@ class TextsPanel(QObject):
         f = self.db.settings.token_field(name)
         if not words or f is None:
             return
-        title = self.lines.title(key)
-        dlg = CreateTokenDialog(self.win, self.db, words, title, self.main.prefs.ipa_size)
+        view = view or self.lines                 # the text's lines, or the utterance cell
+        title = view.title(key)
+        dlg = CreateTokenDialog(self.win, self.db, words, title, self.main.prefs.ipa_size,
+                                new_lemma=lambda: self.main.new_lemma_for(dlg, words, name, lang))
         if not dlg.exec() or dlg.chosen() is None:
             return
-        slot = Slot(dlg.chosen(), None, (), explicit=True, defaults=True,
-                    values={(name, lang or None): words})
+        if dlg.made is not None:                  # a new lemma: the words are in its citation token
+            slot = Slot(dlg.made, 0)
+        else:
+            slot = Slot(dlg.chosen(), None, (), explicit=True, defaults=True,
+                        values={(name, lang or None): words})
         main = self.main
         main.dialog_autoplay = False
         tok = TokenDialog(main, [slot], 0, parent=self.win)
         tok.exec()
         tok.deleteLater()
         main.refresh()
-        self.lines.clear_text_selection()
+        view.clear_text_selection()
 
     def _open_clip(self, line):
         """Double-click on a line's Utterances: show the (first) utterance clipped from it."""

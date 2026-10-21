@@ -126,6 +126,8 @@ class MainWindow(QMainWindow):
     def __init__(self, db: Database | None = None):
         super().__init__()
         self.prefs = Prefs()
+        from . import conventions                 # the cell views' display conventions (idea 26)
+        conventions.load(self.prefs)
         self.player = audio.Player()
         self.doc = Document(db or new_database())
         self.doc.setParent(self)
@@ -416,7 +418,8 @@ class MainWindow(QMainWindow):
                   tool("Configure matrix", "gear-matrix", lambda tab=tab: self.configure_matrix(tab),
                        "Configure matrix: choose the rows and columns"),
                   tool("Clear matrix", "reset-filters", lambda tab=tab: self.clear_matrix(tab),
-                       "Clear matrix: empty the view, no rows or columns"))
+                       "Clear matrix: empty the view, no rows or columns"),
+                  self.conventions_button())
         d["saved"] = QComboBox()
         d["saved"].setMinimumWidth(170)
         d["saved"].setToolTip("Saved matrices" + (": the lemmas are the ones the lemma list shows"
@@ -434,6 +437,50 @@ class MainWindow(QMainWindow):
         bl.addWidget(d["count"])
         bl.addStretch(1)
         return d
+
+    # ---- the display conventions (idea 26): one switch for every cell view ------------------
+    def conventions_button(self) -> QToolButton:
+        """The /[β]/ button under a cell view: all the display conventions on or off at once."""
+        from . import conventions
+        b = QToolButton()
+        b.setText("/[β]/")
+        b.setFont(widgets.ipa_font(12))
+        b.setCheckable(True)
+        b.setAutoRaise(True)
+        b.setChecked(conventions.CURRENT.on)
+        b.setToolTip("Display conventions on or off, in every cell view: Phonetic in [brackets], Phonemic "
+                     "in /slashes/, glosses in capitals in small caps, translations in quotes (which ones: "
+                     "Settings → Display). Display only: the data stays as typed")
+        b.toggled.connect(self.set_conventions_on)
+        if not hasattr(self, "_conv_buttons"):
+            self._conv_buttons = []
+        self._conv_buttons.append(b)
+        return b
+
+    def set_conventions_on(self, on: bool):
+        from . import conventions
+        c = conventions.Conventions(**{**conventions.CURRENT.__dict__, "on": bool(on)})
+        conventions.save(self.prefs, c)
+        self.conventions_changed()
+
+    def conventions_changed(self):
+        """Every cell view follows the display conventions as they are now."""
+        from . import conventions
+        alive = []
+        for b in getattr(self, "_conv_buttons", []):
+            try:
+                b.blockSignals(True)
+                b.setChecked(conventions.CURRENT.on)
+                b.blockSignals(False)
+                alive.append(b)
+            except RuntimeError:                  # a window that has gone
+                pass
+        self._conv_buttons = alive
+        self.refresh()
+        w = self.utterances_window
+        if w is not None:
+            w.texts.lines._relayout()
+            w.show_cell()
 
     def count_label(self, tab) -> QLabel:
         """The line under a tab's options that says what it shows."""
@@ -1976,6 +2023,7 @@ class MainWindow(QMainWindow):
         if self.switched[tab]:
             lay = lay.transposed()
         self.layouts[tab] = lay
+        view.aligned = self.aligned_set()
         view.set_layout(lay, cfg.cell)
 
     def _update_counts(self):
@@ -1994,10 +2042,37 @@ class MainWindow(QMainWindow):
 
     def configure_cell(self, tab):
         cfg = self.config_for(tab)
-        dlg = ConfigureCellDialog(self, self.doc.db, cfg.cell)
+        dlg = ConfigureCellDialog(self, self.doc.db, cfg.cell, self.aligned_set())
         if dlg.exec():
             cfg.cell = dlg.chosen()
+            db = self.doc.db
+            aligned = self.aligned_set()
+            for k, on in dlg.aligned().items():
+                aligned -= {k, mx.line_key(db, k)}
+                if on:
+                    aligned.add(mx.line_key(db, k))
+            self.set_aligned(aligned)
             self.refresh()
+
+    # ---- which lines line up word by word (idea 2), one setting for every cell view -----------
+    def aligned_set(self) -> set[str]:
+        """The keys of the fields that line up (Phonemic, Morphemes, Translation:en…), in the
+        workspace; Phonemic and Morphemes at first."""
+        saved = self.doc.ws.get_list("lines/aligned")
+        if saved == ["-"]:
+            return set()
+        if saved:
+            return set(saved)
+        s = self.doc.db.settings
+        return {f.name for f in s.token_fields if f.role in ("phonemic", "morphemes")}
+
+    def set_aligned(self, keys: set[str]):
+        self.doc.ws_set("lines/aligned", sorted(keys) or ["-"])
+        for v in (self.lt_view, self.tt_view):
+            v.aligned = set(keys)
+        w = self.utterances_window
+        if w is not None:
+            w.texts._apply_view()
 
     def configure_matrix(self, tab):
         cfg = self.config_for(tab)
@@ -2639,6 +2714,30 @@ class MainWindow(QMainWindow):
             self.lemmas.set_rows(self.doc.db.entries)
             self.lemmas.select_row(e)
 
+    def new_lemma_for(self, parent, words: str, field: str, lang: str = ""):
+        """New lemma… in Create token (idea 31): the lemma dialogue, with the words as the gloss
+        (from a translation) or the lemma form (from a transcription) to start with; the words go
+        into its citation token's field too. Returns the new entry, or None if cancelled."""
+        db = self.doc.db
+        s = db.settings
+        f = s.token_field(field)
+        dlg = EntryDialog(parent, db)
+        role = f.role if f is not None else ""
+        target = s.entry_field("gloss") if role == "translation" else \
+            s.entry_field("lemma") if role in ("phonetic", "phonemic") else None
+        if target is not None:
+            ed = dlg.fields.get((target.name, (lang or s.primary_gloss) if target.multilingual else ""))
+            if ed is not None and hasattr(ed, "setText"):
+                ed.setText(words)
+        if not dlg.exec():
+            return None
+        e = dlg.new_entry(self.session_speaker(), self.session_date())
+        if e.tokens and f is not None:
+            e.tokens[0].set(field, words, (lang or s.primary_gloss) if f.multilingual else None, f.multilingual)
+        self.doc.add_entry(e)
+        self.lemmas.set_rows(db.entries)
+        return e
+
     def edit_entry(self):
         e = self.lemmas.current_row()
         if e is None:
@@ -2815,6 +2914,7 @@ class MainWindow(QMainWindow):
             self._restyle()
             self.all_table.model_.ipa.setPointSize(self.prefs.ipa_size)
             self.lemmas.model_.ipa.setPointSize(self.prefs.ipa_size)
+            self.conventions_changed()
             self.doc.settings_changed()
             if names_changed:
                 self._maybe_update_names()

@@ -44,6 +44,22 @@ def cell_text(db, t, key: str) -> str:
     return t.get(name)
 
 
+def line_key(db, key: str) -> str:
+    """A cell line's key as the text lines name it: a multilingual field with its language
+    (Translation → Translation:en), others as they are."""
+    name, _, lang = key.partition(":")
+    f = db.settings.token_field(name)
+    if f is not None and f.multilingual and not lang:
+        return f"{name}:{db.settings.primary_gloss}"
+    return key
+
+
+def is_aligned(db, key: str, aligned) -> bool:
+    """Whether a cell line lines up word by word: the shared Line up setting (idea 2), which the
+    text lines' Configure view and Configure cell both set."""
+    return key != "drawing" and (key in aligned or line_key(db, key) in aligned)
+
+
 def cell_options(db) -> list[tuple[str, str]]:
     """(key, title) of every line a cell can show, in their usual order: the pitch drawing, then
     the token fields, each translation followed by its second languages' (not ticked by default)."""

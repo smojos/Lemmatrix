@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QLabel, QLineEdit, QListWidget, QListWidgetItem,
-                               QVBoxLayout)
+                               QPushButton, QVBoxLayout)
 
 from .. import matrix as mx
 from ..filters import fold_diacritics
@@ -78,6 +78,8 @@ class LemmaPicker(QDialog):
         self.buttons.button(QDialogButtonBox.Ok).setEnabled(self.list.currentItem() is not None)
 
     def chosen(self) -> Entry | None:
+        if getattr(self, "made", None) is not None:      # New lemma…
+            return self.made
         it = self.list.currentItem()
         return it.data(Qt.UserRole) if it else None
 
@@ -115,8 +117,23 @@ def matching_first(db: Database, words: str) -> list:
 class CreateTokenDialog(LemmaPicker):
     """Create token from a text's line (IDEAS.md idea 31): the lemma to put the token under."""
 
-    def __init__(self, parent, db: Database, words: str, field_title: str, ipa_size: int = 13):
+    def __init__(self, parent, db: Database, words: str, field_title: str, ipa_size: int = 13, new_lemma=None):
         super().__init__(parent, db, "Create token",
                          f"Create a token with “{words}” in its {field_title}, under the lemma:",
-                         "Create token", "The token dialogue opens next, with only those words filled in.",
+                         "Create token", "The token dialogue opens next, with only those words filled in. "
+                         "None fits? New lemma… makes one, and the words go in its citation token.",
                          matching_first(db, words), ipa_size)
+        self.made = None
+        self.new_lemma = new_lemma                         # () -> a new Entry, or None if cancelled
+        if new_lemma is not None:
+            btn = QPushButton("New lemma…")
+            btn.setToolTip("No lemma fits: make a new one (the lemma dialogue), and put the words in "
+                           "its citation token")
+            btn.clicked.connect(self._make)
+            self.buttons.addButton(btn, QDialogButtonBox.ActionRole)
+
+    def _make(self):
+        e = self.new_lemma()
+        if e is not None:
+            self.made = e
+            self.accept()

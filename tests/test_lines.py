@@ -147,3 +147,19 @@ def test_clipped_utterances_follow_their_line(tmp_path):
     u.__dict__.update(after.__dict__)
     c = pull.check(db, u, {t.id: buf})                       # unsaved: compared with the edit, not the file
     assert c.status == pull.OK and not c.edited
+
+
+def test_a_stretch_with_no_main_tier_text_is_a_flagged_line_until_it_gets_some(tmp_path):
+    """21 October (Josh: much easier on import): where only other tiers have text, a line too."""
+    db, t, buf, grid = _setup(tmp_path, {
+        "tx": [(0.5, 1.5, "ʔəŋ kɒ")],
+        "ge": [(0.5, 1.5, "hare run.PST"), (2.0, 2.6, "where.3SG")],
+        "ft": [(0.5, 1.5, "the hare ran"), (2.2, 3.0, "where is he?")]})
+    lines = buf.lines(db, t)
+    assert [ln.missing_main for ln in lines] == [False, True]
+    orphan = lines[1]
+    assert (orphan.start, orphan.end) == (2.0, 3.0)              # the two tiers' stretches together
+    assert orphan.values["Translation:en"] == "where is he?" and "Phonetic" not in orphan.values
+    _set(buf, db, t, 1, "Phonetic", "ɛ ŋəə")                     # typing the main field makes it real
+    lines = buf.lines(db, t)
+    assert [ln.missing_main for ln in lines] == [False, False] and lines[1].values["Phonetic"] == "ɛ ŋəə"
