@@ -36,7 +36,7 @@ def about_text() -> str:
             "lemminflect, pyspellchecker, pyzipper, praatio, Pillow and soundfile, each under its own licence "
             "(THIRD-PARTY.md).</small>")
 from ..defaults import new_database
-from .. import bulk, notebook as nbmod, predict, spelling
+from .. import bulk, notebook as nbmod, predict, report, spelling
 from ..model import Database, Entry, ListItem, Person, forbidden_in, today
 from . import chiprow as chips
 from .dialogs import EntryDialog, MetadataDialog, PreferencesDialog
@@ -84,7 +84,7 @@ class TokenRow:
 
 INK_ICONS = THEMED                 # drawn in the theme's colours, so they follow the theme
 ICON_ONLY = {"add", "delete", "edit", "play", "reset-filters",   # obvious, shared actions: the name is in the tooltip
-             "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token", "lemma-token"}
+             "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token", "lemma-token", "tick"}
 
 
 class _ElicitChecked(QObject):
@@ -245,6 +245,9 @@ class MainWindow(QMainWindow):
         cv.setToolTip("Matches the Lemma field. Needs the analysis engine (Stage 2).")
         bl.addWidget(cv)
         bl.addStretch(1)
+        self.tick_button = tool("I found a tick!", "tick", lambda: self.send_report("bug"),
+                                "I found a tick! Report a bug: an email to " + report.SUPPORT_EMAIL)
+        self._row(bl, self.tick_button)            # bottom left of the lemma controls
         left.addWidget(bar)
         left.setSizes([700, 170])
         main.addWidget(left)
@@ -822,7 +825,21 @@ class MainWindow(QMainWindow):
         x = a.addAction("Analysis tools arrive with the analysis engine (Stage 2)")
         x.setEnabled(False)
         h = mb.addMenu("&Help")
+        self.tick_action = self._act(h, "I found a tick!", lambda: self.send_report("bug"))
+        self.tick_action.setIcon(themed_icon("tick", 16))
+        self.tick_action.setToolTip("Report a bug: an email to " + report.SUPPORT_EMAIL)
+        self._act(h, "Request a feature", lambda: self.send_report("feature"))
+        h.addSeparator()
         self._act(h, "About Lemmatrix", self.about)
+
+    def send_report(self, kind: str):
+        """I found a tick! (kind "bug") or Request a feature: opens an email to the support address."""
+        from PySide6.QtCore import QUrl
+        from PySide6.QtGui import QDesktopServices
+        url = report.mailto(kind)
+        if not QDesktopServices.openUrl(QUrl(url, QUrl.TolerantMode)):
+            QMessageBox.information(self, "Email", "No email program opened. Please write to "
+                                    f"{report.SUPPORT_EMAIL}.")
 
     def _act(self, menu, text, fn, shortcut=None):
         a = QAction(text, self)
@@ -1367,6 +1384,8 @@ class MainWindow(QMainWindow):
         self._save_icon()
         self._style_menu_bar()
         self._panels_icon()
+        if hasattr(self, "tick_action"):
+            self.tick_action.setIcon(themed_icon("tick", 16))
         for w in QApplication.topLevelWidgets():         # icons in the theme's colours follow it, every window
             for b in w.findChildren(QToolButton):
                 if b.property("icon_name") in INK_ICONS:
