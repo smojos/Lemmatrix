@@ -140,13 +140,13 @@ def _divider() -> QFrame:
     return line
 
 
+LOGO_HEIGHT = 60
+
+
 def _section(text: str, tip: str) -> QLabel:
-    """A section's title (bold), its explanation in the hover tip."""
-    lbl = QLabel(text + " ⓘ")
-    f = lbl.font()
-    f.setBold(True)
-    f.setPointSizeF(f.pointSizeF() * 1.1)
-    lbl.setFont(f)
+    """A section's title, like Request details (bold, larger, in the theme colour), its
+    explanation in the hover tip."""
+    lbl = _title(text + " ⓘ")
     lbl.setToolTip(tip)
     lbl.setCursor(Qt.WhatsThisCursor)
     return lbl
@@ -332,7 +332,7 @@ class RequestDialog(QDialog):
         lay = QVBoxLayout(self)
         head = QHBoxLayout()                      # the settings on the left half, the logo on the right
         left = QVBoxLayout()
-        left.addWidget(_title(f"Make {NAME} request"))
+        left.addWidget(_title("Request details"))
         form = QFormLayout()
         self.speaker = QComboBox()
         for p in md.participants:
@@ -381,9 +381,18 @@ class RequestDialog(QDialog):
         left.addLayout(form)
         head.addLayout(left, 1)
         from .icons import elicit_logo
+        from PySide6.QtGui import QColor
+        from PySide6.QtWidgets import QGraphicsDropShadowEffect
         self.logo = QLabel()
-        self.logo.setPixmap(elicit_logo(96))
+        self.logo.setPixmap(elicit_logo(LOGO_HEIGHT))
         self.logo.setAlignment(Qt.AlignRight | Qt.AlignTop)
+        gap = round(LOGO_HEIGHT * 0.15)           # a little more room from the window's top and side
+        self.logo.setContentsMargins(0, gap, gap, 0)
+        shadow = QGraphicsDropShadowEffect(self.logo)   # the white letters show on a light background
+        shadow.setBlurRadius(8)
+        shadow.setOffset(0, 1)
+        shadow.setColor(QColor(0, 0, 0, 180))
+        self.logo.setGraphicsEffect(shadow)
         self.logo.setToolTip(f"{NAME}: the page your speaker records on ({el.WEB_PAGE})")
         head.addWidget(self.logo, 1)
         lay.addLayout(head)
