@@ -136,6 +136,7 @@ class MainWindow(QMainWindow):
         self.notebook_dialog = None               # the notebook window, once opened
         self.bulk_window = None                   # the bulk edit window, while it's open
         self.utterances_window = None             # View → Texts and utterances, while it's open
+        self.xml_window = None                    # View → XML viewer, while it's open
         self.elicit_basket: list[str] = []        # token ids ticked for the next ɛλicit request
         self.elicit_draft: dict = {}              # its settings and new sentences, as last left
         self.sound_files: set[str] = set()       # names in the sound folder, refreshed with the views
@@ -264,6 +265,7 @@ class MainWindow(QMainWindow):
         self.head_icons.setContentsMargins(0, 0, 8, 0)
         self.head_icons.setSpacing(4)
         self.head_icons.addWidget(self._elicit_button())   # ɛλicit, left of Texts and utterances
+        self.head_icons.addWidget(self._xml_button())      # the XML viewer, between them (21 October)
         self.head_icons.addWidget(self._texts_button())
         top.addLayout(self.head_icons)
         self.tabs = QTabBar()
@@ -591,6 +593,40 @@ class MainWindow(QMainWindow):
         from .elicit_dialogs import review_waiting
         review_waiting(self)
 
+    def _xml_button(self) -> QToolButton:
+        """Beside the tabs, between ɛλicit and Texts and utterances: the XML viewer (Josh's χμλ)."""
+        b = self.xml_btn = QToolButton()
+        b.setIconSize(QSize(self.TEXTS_ICON, self.TEXTS_ICON))
+        b.setAutoRaise(True)
+        b.setCursor(Qt.PointingHandCursor)
+        b.setToolTip("XML viewer: the database file, read-only, at the selected token or lemma")
+        b.clicked.connect(lambda *_: self.open_xml_viewer())
+        return b
+
+    def xml_target(self):
+        """Where the XML viewer opens: the selected token (All data or a matrix cell), else the lemma
+        list's lemma, as ("token" | "entry", id); None for the beginning."""
+        hit = self.selected_token()
+        if hit is not None:
+            e, i = hit
+            if 0 <= i < len(e.tokens):
+                return "token", e.tokens[i].id
+        e = self.lemmas.current_row()
+        return ("entry", e.id) if e is not None else None
+
+    def open_xml_viewer(self):
+        """View → XML viewer: the database file, read-only, at the selected token or lemma."""
+        from .xml_viewer import XmlViewerWindow
+        if self.xml_window is None:
+            self.xml_window = XmlViewerWindow(self)
+        w = self.xml_window
+        w.refresh(keep_place=False)
+        w.go_to(self.xml_target())
+        w.show()
+        w.raise_()
+        w.activateWindow()
+        return w
+
     def _texts_button(self) -> QToolButton:
         """Beside the tabs: the button that opens Texts and utterances (Josh's icon)."""
         self.texts_btn = QToolButton()
@@ -771,6 +807,7 @@ class MainWindow(QMainWindow):
         self._act(v, "&Notebook", self.open_notebook, "Ctrl+B")
         self._act(v, "&Questions", self.open_questions)
         self._act(v, "&Texts and utterances", lambda *_: self.open_utterances(), "Ctrl+U")
+        self._act(v, "&XML viewer", lambda *_: self.open_xml_viewer())
         v.addSeparator()
         self._act(v, "Hide or show the option panels", self.toggle_panels)
         self._act(v, "Swap rows and columns", lambda: self.switch_axes(self.tabs.currentIndex()), "Ctrl+T")
@@ -972,6 +1009,10 @@ class MainWindow(QMainWindow):
             self.bulk_window.close()
         if self.utterances_window is not None:
             self.utterances_window.close()
+        if self.xml_window is not None:           # it shows the database being closed
+            self.xml_window.close()
+            self.xml_window.deleteLater()
+            self.xml_window = None
         if self.doc.db is not db:
             self._save_view()
         self._mark_open(db.path)
@@ -1320,6 +1361,7 @@ class MainWindow(QMainWindow):
         a = theme.accent().name()
         self.notebook_btn.setIcon(icon("notebook", 34, a))
         self.texts_btn.setIcon(icon("texts-utterances", self.TEXTS_ICON, a))
+        self.xml_btn.setIcon(icon("xml-viewer", self.TEXTS_ICON, theme.colour("pitch").name()))
         self.refresh_elicit_icon()
         self.write_btn.setIcon(icon("write-notebook", 34))
         self._save_icon()
