@@ -57,6 +57,18 @@ def waiting(cloud: str, ink: str, drops: str) -> str:
                 f'<g fill="{drops}" transform="{WAITING_SHIFT}">{rain}</g>')
 
 
+LOGO_VIEW = "3.1 10.2 27.6 13.3"        # the wordmark's own box (measured from the drawing)
+LOGO_RATIO = 27.6 / 13.3
+
+
+def logo_layer(part: str, fill: str) -> str:
+    """One layer of the wordmark in its own box, for drawing it where SVG clip paths aren't
+    available (Qt): "cloud" or "letters", in one colour."""
+    d = LOGO_CLOUD if part == "cloud" else LOGO_LETTERS
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{LOGO_VIEW}">'
+            f'<g transform="{LOGO_TRANSFORM}"><path fill="{fill}" d="{d}"/></g></svg>')
+
+
 def logo(cloud: str, ink: str, on_cloud: str = "#ffffff", style: str = "") -> str:
     """The wordmark: the letters in ink, and white where they lie on the cloud."""
     return _svg(f'<defs><clipPath id="c"><path d="{LOGO_CLOUD}"/></clipPath></defs>'

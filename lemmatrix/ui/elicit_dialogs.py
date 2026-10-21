@@ -9,12 +9,12 @@ import datetime as _dt
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import QAbstractTableModel, QModelIndex, QSortFilterProxyModel, Qt, QUrl
+from PySide6.QtCore import QAbstractTableModel, QModelIndex, QSize, QSortFilterProxyModel, Qt, QUrl
 from PySide6.QtGui import QDesktopServices, QGuiApplication
 from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
-                               QFileDialog, QFormLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+                               QFileDialog, QFormLayout, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
                                QMessageBox, QPlainTextEdit, QPushButton, QSplitter, QTableView,
-                               QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
+                               QTableWidget, QTableWidgetItem, QToolButton, QVBoxLayout, QWidget)
 
 from .. import cloud_keys, gdrive
 from .. import elicit as el
@@ -128,6 +128,28 @@ def _drive_problem(main, title, exc):
         QMessageBox.warning(main, title, f"{exc}\n\nTry again: Lemmatrix will ask you to sign in.")
     else:
         QMessageBox.warning(main, title, str(exc))
+
+
+def _divider() -> QFrame:
+    """A subtle line between sections."""
+    line = QFrame()
+    line.setFrameShape(QFrame.HLine)
+    line.setFixedHeight(1)
+    m = theme.colour("muted")
+    line.setStyleSheet(f"background: rgba({m.red()}, {m.green()}, {m.blue()}, 0.4); border: none;")
+    return line
+
+
+def _section(text: str, tip: str) -> QLabel:
+    """A section's title (bold), its explanation in the hover tip."""
+    lbl = QLabel(text + " ⓘ")
+    f = lbl.font()
+    f.setBold(True)
+    f.setPointSizeF(f.pointSizeF() * 1.1)
+    lbl.setFont(f)
+    lbl.setToolTip(tip)
+    lbl.setCursor(Qt.WhatsThisCursor)
+    return lbl
 
 
 def _mb(n: int) -> str:
@@ -308,7 +330,9 @@ class RequestDialog(QDialog):
     def _build(self, preselect, new_utterances, speaker):
         db, md, s = self.db, self.db.metadata, self.db.settings
         lay = QVBoxLayout(self)
-        lay.addWidget(_title(f"Make {NAME} request"))
+        head = QHBoxLayout()                      # the settings on the left half, the logo on the right
+        left = QVBoxLayout()
+        left.addWidget(_title(f"Make {NAME} request"))
         form = QFormLayout()
         self.speaker = QComboBox()
         for p in md.participants:
@@ -354,12 +378,27 @@ class RequestDialog(QDialog):
             self.send_by.setItemText(0, "A link, through Google Drive (this copy of Lemmatrix has no Google keys yet)")
             self.send_by.setCurrentIndex(1)
         form.addRow("Send as", self.send_by)
-        lay.addLayout(form)
+        left.addLayout(form)
+        head.addLayout(left, 1)
+        from .icons import elicit_logo
+        self.logo = QLabel()
+        self.logo.setPixmap(elicit_logo(96))
+        self.logo.setAlignment(Qt.AlignRight | Qt.AlignTop)
+        self.logo.setToolTip(f"{NAME}: the page your speaker records on ({el.WEB_PAGE})")
+        head.addWidget(self.logo, 1)
+        lay.addLayout(head)
 
-        split = QSplitter(Qt.Vertical)
+        split = QSplitter(Qt.Vertical)            # the two sections, adjustable against each other
+        split.setChildrenCollapsible(False)
         top = QWidget()
         tl = QVBoxLayout(top)
         tl.setContentsMargins(0, 0, 0, 0)
+        tl.addWidget(_divider())
+        tl.addWidget(_section("Tokens and Utterances",
+                              "Tick what to ask for (or double-click a row). One with a soundfile is a Rerecord: "
+                              "the speaker hears it and repeats it. One without is New: the card shows its gloss "
+                              "or translation. Right-click → Add to ɛλicit request in All data, the matrices and "
+                              "Utterances ticks things here too."))
         bar = QHBoxLayout()
         self.search = QLineEdit()
         self.search.setPlaceholderText("search the references, forms, tags and glosses")
@@ -397,16 +436,14 @@ class RequestDialog(QDialog):
         self.table.doubleClicked.connect(self._double_clicked)
         self.model.dataChanged.connect(lambda *_: self._update_counts())
         tl.addWidget(self.table, 1)
-        tl.addWidget(QLabel("Tick what to ask for (or double-click a row). One with a soundfile is a Rerecord: "
-                            "the speaker hears it and repeats it. One without is New: the card shows its gloss "
-                            "or translation."))
         split.addWidget(top)
 
         bottom = QWidget()
         bl = QVBoxLayout(bottom)
         bl.setContentsMargins(0, 0, 0, 0)
-        bl.addWidget(QLabel("<b>New utterances</b>: sentences to ask for, typed here; each answer becomes a new "
-                            "utterance (U) when the recordings come back."))
+        bl.addWidget(_divider())
+        bl.addWidget(_section("New Utterances", "Sentences to ask for, typed here, with their translations; each "
+                              "answer becomes a new utterance (U) when the recordings come back."))
         self.new_table = QTableWidget(0, 2)
         self.new_table.verticalHeader().hide()
         self.new_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -415,16 +452,25 @@ class RequestDialog(QDialog):
             self._add_new_row(tr)
         bl.addWidget(self.new_table, 1)
         nb = QHBoxLayout()
-        add = QPushButton("Add a sentence")
+        from .icons import icon
+        add = QToolButton()                       # the program's Add and Delete icons, names in the tooltips
+        add.setIcon(icon("add", 22))
+        add.setIconSize(QSize(22, 22))
+        add.setAutoRaise(True)
+        add.setToolTip("Add a sentence")
         add.clicked.connect(lambda: self._add_new_row({}, edit=True))
-        rem = QPushButton("Remove")
+        rem = QToolButton()
+        rem.setIcon(icon("delete", 22))
+        rem.setIconSize(QSize(22, 22))
+        rem.setAutoRaise(True)
+        rem.setToolTip("Remove the selected sentences")
         rem.clicked.connect(self._remove_new_row)
         nb.addWidget(add)
         nb.addWidget(rem)
         nb.addStretch(1)
         bl.addLayout(nb)
         split.addWidget(bottom)
-        split.setSizes([520, 160])
+        split.setSizes([500, 200])
         lay.addWidget(split, 1)
 
         self.count = QLabel()
@@ -434,6 +480,11 @@ class RequestDialog(QDialog):
         reset.setToolTip("Unticks everything and clears the new sentences (the settings stay)")
         reset.clicked.connect(self.reset_request)
         self.make_btn = buttons.addButton("Make request…", QDialogButtonBox.AcceptRole)
+        a = theme.accent()                        # in the theme colour
+        self.make_btn.setStyleSheet(
+            f"QPushButton {{ background: {a.name()}; color: {theme.text_on(a).name()}; border: none; "
+            "border-radius: 4px; padding: 5px 14px; font-weight: bold; } "
+            f"QPushButton:disabled {{ background: {theme.colour('muted').name()}; }}")
         buttons.addButton(QDialogButtonBox.Cancel)
         buttons.accepted.connect(self._make)
         buttons.rejected.connect(self.reject)
