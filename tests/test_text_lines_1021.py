@@ -48,14 +48,15 @@ def test_save_textgrid_writes_this_text_only_and_leaves_the_database_unsaved(win
     assert not p.save_btn.isEnabled()
 
 
-def test_ctrl_s_does_nothing_on_the_utterances_tab(win, tmp_path, monkeypatch):
+def test_ctrl_s_on_the_utterances_tab_saves_the_database(win, tmp_path, monkeypatch):
     uw, t = _add_text(win, tmp_path, monkeypatch)
     p = uw.texts
     _edit(p, p.lines.rows[0], "Translation:en", "the hare fled")
     uw.show()
     uw.tabs.setCurrentIndex(1)
+    assert win.doc.dirty
     p.save_key()
-    assert p.save_btn.isEnabled()                             # still waiting
+    assert not win.doc.dirty and not p.save_btn.isEnabled()   # the database, with the TextGrid
 
 
 def _wheel(v, delta, mods):
@@ -200,3 +201,34 @@ def test_texts_worked_on_are_kept_in_the_notebook_file(tmp_path):
     path = tmp_path / "Lex.notebook"
     nbmod.save(nb, path)
     assert nbmod.load(path).session("2026-10-20").texts == [t.id]
+
+
+def _matrix_wheel(view, delta, mods):
+    pos = QPointF(50, 30)
+    view.wheelEvent(QWheelEvent(pos, view.viewport().mapToGlobal(pos), QPoint(), QPoint(0, delta), Qt.NoButton,
+                                mods, Qt.NoScrollPhase, False))
+
+
+def test_ctrl_wheel_zooms_a_matrix_and_ctrl_0_resets_it(win):
+    from PySide6.QtTest import QTest
+    from lemmatrix.ui.main_window import LEMMA_TAG
+    from lemmatrix import matrix as mx
+    win.tabs.setCurrentIndex(LEMMA_TAG)
+    cfg = win.config_for(LEMMA_TAG)
+    cfg.x = [mx.Spec.citation(), mx.Spec(frozenset({"Plural"}), mx.EXACT)]
+    win.refresh()
+    view = win._view(LEMMA_TAG)
+    assert view.model_.layout_.cols
+    col_w = view.horizontalHeader().sectionSize(0)
+    d = view.delegate
+    size, unit = d.ipa.pointSize(), d.unit
+    _matrix_wheel(view, 240, Qt.ControlModifier)
+    assert view.zoom > 1.0 and d.ipa.pointSize() > size and d.unit > unit
+    assert view.horizontalHeader().chip_font.pointSizeF() > view.font().pointSizeF()
+    assert view.horizontalHeader().sectionSize(0) > col_w                # sized from the content again
+    win.refresh()                                                      # the zoom stays with the view
+    assert view.zoom > 1.0 and view.delegate.ipa.pointSize() > size
+    _matrix_wheel(view, 120, Qt.NoModifier)                    # an ordinary wheel still scrolls
+    assert view.zoom > 1.0
+    QTest.keyClick(view, Qt.Key_0, Qt.ControlModifier)
+    assert view.zoom == 1.0 and d.ipa.pointSize() == size

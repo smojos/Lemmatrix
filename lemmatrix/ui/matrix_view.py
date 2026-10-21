@@ -68,6 +68,8 @@ IPA_FIELDS = {"Phonetic", "Phonemic"}
 
 
 class MatrixModel(QAbstractTableModel):
+    zoom = 1.0           # the view's Ctrl + mouse wheel zoom (the lemma headers' font follows it)
+
     def __init__(self, db: Database):
         super().__init__()
         self.db = db
@@ -128,7 +130,7 @@ class MatrixModel(QAbstractTableModel):
         if role == Qt.UserRole + 1:
             return it.spec.match == mx.LOOSE if it.spec else False
         if role == Qt.FontRole and it.entry is not None:
-            return ipa_font(13)
+            return ipa_font(round(13 * self.zoom))
         if role == Qt.ToolTipRole:
             if it.entry is not None:
                 return f"{it.entry.ref}  {self.db.lemma(it.entry)}  {meaning(self.db.gloss(it.entry))}"
@@ -150,6 +152,13 @@ class ChipHeader(QHeaderView):
         self.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         f = self.font()
         self.chip_font = QFont(f)
+        self._base_pt = f.pointSizeF()
+
+    def set_zoom(self, zoom: float):
+        self.chip_font.setPointSizeF(self._base_pt * zoom)
+        f = QFont(self.font())                   # the headers' own labels (Citation, a lemma's form)
+        f.setPointSizeF(self._base_pt * zoom)
+        self.setFont(f)
 
     def _chips(self, section):
         m = self.model()
@@ -250,11 +259,18 @@ class TokenCellDelegate(QStyledItemDelegate):
     def __init__(self, view: "MatrixView"):
         super().__init__(view)
         self.view = view
-        self.ipa = ipa_font(13)
-        self.plain = QFont(view.font())
-        self.small = QFont(view.font())
-        self.small.setPointSizeF(max(7.0, self.small.pointSizeF() - 1.5))
+        self._base_pt = view.font().pointSizeF()
+        self.set_zoom(1.0)
+
+    def set_zoom(self, zoom: float):
+        """Fonts and the pitch drawing at the view's zoom (Ctrl + mouse wheel)."""
+        self.ipa = ipa_font(round(13 * zoom))
+        self.plain = QFont(self.view.font())
+        self.plain.setPointSizeF(self._base_pt * zoom)
+        self.small = QFont(self.view.font())
+        self.small.setPointSizeF(max(7.0, (self._base_pt - 1.5) * zoom))
         self.unit = underscore_unit(self.ipa)
+        self.draw_h = round(22 * zoom)          # the pitch drawing's height, and its row's (+4)
 
     # ---- geometry --------------------------------------------------------
     def _lines(self):
@@ -301,7 +317,7 @@ class TokenCellDelegate(QStyledItemDelegate):
         if self.chip_row_needed(r, c, hits):
             h += chip_metrics(self.small)[1] + 4
         if "drawing" in self.view.cell_fields:
-            h += 26
+            h += self.draw_h + 4
         for name in self._lines():
             h += QFontMetrics(self._font(name)).height() + 1
         return h
@@ -358,9 +374,9 @@ class TokenCellDelegate(QStyledItemDelegate):
                     paint_chips(painter, x, y, chips, self.small)
                 y += chip_metrics(self.small)[1] + 4
             if "drawing" in self.view.cell_fields:
-                draw_pitch(painter, QRectF(x, y, w, 22), t.get("Pitch"), db.settings.pitch_low,
+                draw_pitch(painter, QRectF(x, y, w, self.draw_h), t.get("Pitch"), db.settings.pitch_low,
                            db.settings.pitch_high, width=2.2, unit=self.unit)
-                y += 26
+                y += self.draw_h + 4
             for name in self._lines():
                 font = self._font(name)
                 fm = QFontMetrics(font)
@@ -421,6 +437,33 @@ class MatrixView(QTableView):
         self.switch.setIcon(icon("switch", 20))
         self.switch.setToolTip("Swap rows and columns (display only)")
         self.switch.clicked.connect(self.switchRequested.emit)
+        self.zoom = 1.0                          # Ctrl + mouse wheel; not saved: back to 1 when Lemmatrix closes
+
+    # ---- zoom (Ctrl + mouse wheel, Ctrl+0; Josh, 21 October) -------------
+    ZOOM_MIN, ZOOM_MAX, ZOOM_STEP = 0.6, 2.5, 1.1
+
+    def set_zoom(self, zoom: float):
+        zoom = max(self.ZOOM_MIN, min(self.ZOOM_MAX, zoom))
+        if abs(zoom - self.zoom) < 1e-6:
+            return
+        self.zoom = zoom
+        self.delegate.set_zoom(zoom)
+        self.model_.zoom = zoom
+        for hdr in (self.horizontalHeader(), self.verticalHeader()):
+            hdr.set_zoom(zoom)
+        selected = self.selected
+        self.set_layout(self.model_.layout_, self.cell_fields)   # sizes from the content again
+        self.selected = selected
+        self.viewport().update()
+
+    def wheelEvent(self, event):
+        if event.modifiers() & Qt.ControlModifier:
+            d = event.angleDelta().y() or event.angleDelta().x()
+            if d:
+                self.set_zoom(self.zoom * (self.ZOOM_STEP ** (d / 120)))
+            event.accept()
+            return
+        super().wheelEvent(event)
 
     def _header_activated(self, lines: str, i: int):
         items = getattr(self.model_.layout_, lines, [])
@@ -440,13 +483,14 @@ class MatrixView(QTableView):
         # Sizes from the content (faster than letting Qt measure every cell).
         d = self.delegate
         widths = [0] * len(layout.cols)
-        heights = [40] * len(layout.rows)
+        z = getattr(self, "zoom", 1.0)
+        heights = [round(40 * z)] * len(layout.rows)
         for (r, c), hits in layout.cells.items():
             widths[c] = max(widths[c], d.cell_width(r, c, hits))
             heights[r] = max(heights[r], d.cell_height(r, c, hits))
         hh, vh = self.horizontalHeader(), self.verticalHeader()
         for c, w in enumerate(widths):
-            hh.resizeSection(c, max(110, w, hh.sectionSizeFromContents(c).width()))
+            hh.resizeSection(c, max(round(110 * z), w, hh.sectionSizeFromContents(c).width()))
         for r, h in enumerate(heights):
             vh.resizeSection(r, max(h, vh.sectionSizeFromContents(r).height()))
         if layout.cols:                    # its height follows the widths just set (one line or two)
@@ -503,6 +547,9 @@ class MatrixView(QTableView):
         """No type-to-jump: IPA takes several keystrokes per symbol, so jumping only confuses (Josh, 19 October)."""
 
     def keyPressEvent(self, event):
+        if event.key() == Qt.Key_0 and event.modifiers() & Qt.ControlModifier:   # the zoom back to normal
+            self.set_zoom(1.0)
+            return
         if event.key() in (Qt.Key_Return, Qt.Key_Enter):
             idx = self.currentIndex()
             if idx.isValid():

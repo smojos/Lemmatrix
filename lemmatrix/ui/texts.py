@@ -961,9 +961,12 @@ class TextsPanel(QObject):
         self.save_btn.setEnabled(on)
 
     def save_key(self):
-        """Ctrl+S in the Texts and utterances window: on the Texts tab, this text's TextGrid."""
+        """Ctrl+S in the Texts and utterances window: on the Texts tab, this text's TextGrid; on
+        the Utterances tab, the database (Josh, 21 October), as the main window's Save."""
         if self.page.isVisible():
             self.save_textgrid()
+        else:
+            self.main.save()
 
     def save_textgrid(self) -> bool:
         """Write the current text's line edits into its TextGrid now (backed up first), without
