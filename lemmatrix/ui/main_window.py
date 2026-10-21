@@ -379,6 +379,7 @@ class MainWindow(QMainWindow):
             view.contextRequested.connect(lambda r, c, n, pos, tab=tab: self._matrix_menu(tab, pos))
             view.deleteRequested.connect(self.delete_token)
             view.switchRequested.connect(lambda tab=tab: self.switch_axes(tab))
+            view.columnMoved.connect(lambda a, b, tab=tab: self.move_matrix_column(tab, a, b))
             view.playRequested.connect(self.play_selected)
         self.lt_view.entryActivated.connect(self._jump_to_lemma)
 
@@ -2186,6 +2187,25 @@ class MainWindow(QMainWindow):
         w = self.utterances_window
         if w is not None:
             w.texts._apply_view()
+
+    def move_matrix_column(self, tab, old: int, new: int):
+        """A column dragged to another place (21 October): its line moves in the matrix's
+        configuration (the rows' list when the axes are swapped), as Configure matrix's arrows would."""
+        cfg = self.config_for(tab)
+        if self.switched[tab]:
+            if tab != TAG_TAG:
+                return                            # lemmas along the top: their order is the lemma list's
+            lines = cfg.y
+        else:
+            lines = cfg.x
+        if not (0 <= old < len(lines) and 0 <= new < len(lines)):
+            return
+        new_cfg = cfg.copy()
+        target = new_cfg.y if lines is cfg.y else new_cfg.x
+        target.insert(new, target.pop(old))
+        new_cfg.name = ""                         # as after Configure matrix: it's now the current one
+        self.configs[cfg.kind] = new_cfg
+        self.refresh()
 
     def configure_matrix(self, tab):
         cfg = self.config_for(tab)

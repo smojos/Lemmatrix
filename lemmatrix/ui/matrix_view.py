@@ -477,6 +477,7 @@ class MatrixView(QTableView):
     contextRequested = Signal(int, int, int, object)
     deleteRequested = Signal()
     switchRequested = Signal()
+    columnMoved = Signal(int, int)            # a column dragged from one place to another (its config line)
     playRequested = Signal()                  # spacebar
     entryActivated = Signal(object)           # a lemma's header double-clicked (on either axis)
 
@@ -513,7 +514,18 @@ class MatrixView(QTableView):
         self.switch.setIcon(icon("switch", 20))
         self.switch.setToolTip("Swap rows and columns (display only)")
         self.switch.clicked.connect(self.switchRequested.emit)
+        self.horizontalHeader().sectionMoved.connect(self._column_dragged)   # drag a column to reorder
         self.zoom = 1.0                          # Ctrl + mouse wheel; not saved: back to 1 when Lemmatrix closes
+
+    def _column_dragged(self, logical: int, old: int, new: int):
+        """A column dragged in the header (Josh, 21 October): the header is put back as it was and
+        the matrix's own line is moved instead (columnMoved), so the order is the configuration's."""
+        hh = self.horizontalHeader()
+        hh.blockSignals(True)
+        hh.moveSection(new, old)
+        hh.blockSignals(False)
+        if old != new:
+            self.columnMoved.emit(old, new)
 
     # ---- zoom (Ctrl + mouse wheel, Ctrl+0; Josh, 21 October) -------------
     ZOOM_MIN, ZOOM_MAX, ZOOM_STEP = 0.6, 2.5, 1.1
@@ -556,6 +568,10 @@ class MatrixView(QTableView):
         self.defaults = mx.default_names(self.db)
         self.selected = None
         self.model_.set_layout(layout)
+        # Columns of tags can be dragged into another order; lemmas along the top (Lemma/Tag swapped)
+        # follow the lemma list, so they can't.
+        self.horizontalHeader().setSectionsMovable(bool(layout.cols)
+                                                   and all(it.entry is None for it in layout.cols))
         # Sizes from the content (faster than letting Qt measure every cell).
         d = self.delegate
         widths = [0] * len(layout.cols)

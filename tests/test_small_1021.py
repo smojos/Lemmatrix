@@ -7,7 +7,7 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 
-from test_ui import app  # noqa: E402,F401
+from test_ui import app, win  # noqa: E402,F401
 
 
 def test_splash_has_rounded_corners(app):
@@ -145,3 +145,34 @@ def test_new_day_asks_to_keep_or_reset_the_session(app, monkeypatch):
     assert not asked
     w.doc.db.path = ""
     w.close()
+
+
+def test_splash_says_entering_with_a_moving_fade(app):
+    import time
+    from lemmatrix.ui import splash
+    s = splash.show(app)
+    assert isinstance(s, splash.Splash) and s._timer.isActive()
+    s._start = time.monotonic() - 0.5 * splash.SWEEP
+    a = s.grab().toImage()
+    s._start = time.monotonic() - 0.9 * splash.SWEEP
+    b = s.grab().toImage()
+    assert a != b                                  # the fade has moved
+    s.finish(None)
+    assert not s._timer.isActive()
+
+
+def test_dragging_a_matrix_column_reorders_its_lines(win):
+    from lemmatrix import matrix as mx
+    from lemmatrix.ui.main_window import LEMMA_TAG
+    win.tabs.setCurrentIndex(LEMMA_TAG)
+    cols = [mx.Spec.citation(), mx.Spec(frozenset({"Plural"}), mx.EXACT),
+            mx.Spec(frozenset({"Singular"}), mx.EXACT)]
+    win.config_for(LEMMA_TAG).x = list(cols)
+    win.refresh()
+    hh = win.lt_view.horizontalHeader()
+    assert hh.sectionsMovable()
+    hh.moveSection(0, 2)                          # as a drag does
+    assert win.config_for(LEMMA_TAG).x == [cols[1], cols[2], cols[0]]
+    assert [hh.logicalIndex(i) for i in range(hh.count())] == [0, 1, 2]   # the header is the order
+    win.switch_axes(LEMMA_TAG)                    # lemmas along the top: not movable
+    assert not win.lt_view.horizontalHeader().sectionsMovable()
