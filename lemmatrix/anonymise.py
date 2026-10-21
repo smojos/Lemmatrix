@@ -159,8 +159,9 @@ def anonymise(db: Database, nb: nbmod.Notebook | None, opts: Options, report: Re
                 s.locations = list(dict.fromkeys(moved.get(k, k) for k in s.locations))
             if patterns:
                 s.notes = replace_names(s.notes, patterns, f"Notebook {s.date} notes", report)
-                for q in s.questions:
-                    q.text = replace_names(q.text, patterns, f"Notebook {s.date} question", report)
+                for q in s.questions + s.todos:
+                    q.text = replace_names(q.text, patterns, f"Notebook {s.date} {'To Do' if q.is_todo else 'question'}",
+                                           report)
                 for c in s.comments:
                     c.text = replace_names(c.text, patterns, f"Notebook {s.date} comment", report)
     return out, book

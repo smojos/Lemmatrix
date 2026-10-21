@@ -136,11 +136,21 @@ class TokenDialog(QDialog):
                 self.push_btn.setToolTip("Push to question: the comment becomes an open question in the "
                                          "session's notebook, linked to this token, and the box is cleared")
                 self.push_btn.clicked.connect(lambda *_: self.push_to_question())
-                ed.textChanged.connect(lambda text: self.push_btn.setEnabled(bool(text.strip())))
-                box = QHBoxLayout()               # the box, with the button beside it
+                self.todo_btn = QToolButton()     # Push to To Do: the orange flag (Josh, 21 October)
+                self.todo_btn.setIcon(icon("push-todo", 22))
+                self.todo_btn.setIconSize(QSize(22, 22))
+                self.todo_btn.setAutoRaise(True)
+                self.todo_btn.setToolTip("Push to To Do: the comment becomes an open to do in the "
+                                         "session's notebook, linked to this token, and the box is cleared")
+                self.todo_btn.clicked.connect(lambda *_: self.push_to_todo())
+                for b in (self.push_btn, self.todo_btn):
+                    b.setEnabled(False)
+                    ed.textChanged.connect(lambda text, b=b: b.setEnabled(bool(text.strip())))
+                box = QHBoxLayout()               # the box, with the buttons beside it
                 box.setContentsMargins(0, 0, 0, 0)
                 box.addWidget(ed, 1)
                 box.addWidget(self.push_btn, 0, Qt.AlignVCenter)
+                box.addWidget(self.todo_btn, 0, Qt.AlignVCenter)
                 left.addLayout(box, row, 1)
             else:
                 left.addWidget(ed, row, 1)
@@ -361,6 +371,7 @@ class TokenDialog(QDialog):
         self._show_rerecord(t.rerecord)
         if self.comment is not None:
             self.push_btn.setEnabled(bool(self.comment.text().strip()))
+            self.todo_btn.setEnabled(bool(self.comment.text().strip()))
         self.position.setText(self._position_text())
         self.back_btn.setEnabled(self.pos > 0)
         self.next_btn.setEnabled(self.pos < len(self.slots) - 1)
@@ -988,8 +999,13 @@ class TokenDialog(QDialog):
         self._fields_changed()
 
     # --------------------------------------------------- push to question
-    def push_to_question(self):
-        """The comment becomes an open question in the session's notebook, linked to this token."""
+    def push_to_todo(self):
+        """Push to To Do: as Push to question, into the day's To Do list."""
+        from .. import notebook as nbmod
+        self.push_to_question(nbmod.TODO)
+
+    def push_to_question(self, kind: str = "question"):
+        """The comment becomes an open question (or to do) in the session's notebook, linked to this token."""
         if self.comment is None or not self.comment.text().strip():
             return
         text = self.comment.text().strip()
@@ -1003,14 +1019,15 @@ class TokenDialog(QDialog):
         from .. import notebook as nbmod
         from . import chiprow as chips
         nbmod.push_question(self.doc.notebook, self.db, date, text, self.slot.entry, self.token,
-                            keys[chips.RESEARCHERS], keys[chips.PARTICIPANTS], keys[chips.LOCATIONS])
+                            keys[chips.RESEARCHERS], keys[chips.PARTICIPANTS], keys[chips.LOCATIONS], kind)
         self.doc.notebook_changed()
         if getattr(main, "notebook_dialog", None) is not None:
             main.notebook_dialog.reload()
         self.comment.clear()
         from PySide6.QtWidgets import QToolTip
-        QToolTip.showText(self.push_btn.mapToGlobal(self.push_btn.rect().bottomLeft()),
-                          f"Added to the questions of {date}", self.push_btn)
+        b = self.todo_btn if kind == nbmod.TODO else self.push_btn
+        QToolTip.showText(b.mapToGlobal(b.rect().bottomLeft()),
+                          f"Added to the {nbmod.name(kind, True, title=False)} of {date}", b)
 
     def _update_meter(self):
         if self.recorder:

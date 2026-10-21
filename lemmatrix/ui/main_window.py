@@ -965,6 +965,7 @@ class MainWindow(QMainWindow):
         v = mb.addMenu("&View")
         self._act(v, "&Notebook", self.open_notebook, "Ctrl+B")
         self._act(v, "&Questions", self.open_questions)
+        self._act(v, "To &Do", self.open_todos)
         self._act(v, "&Texts and utterances", lambda *_: self.open_utterances(), "Ctrl+U")
         self._act(v, "&XML viewer", lambda *_: self.open_xml_viewer())
         v.addSeparator()
@@ -1827,6 +1828,14 @@ class MainWindow(QMainWindow):
     def open_questions(self):
         from .notebook_dialog import QuestionsDialog
         dlg = QuestionsDialog(self)
+        dlg.exec()
+        if self.notebook_dialog is not None:
+            self.notebook_dialog.reload()
+
+    def open_todos(self):
+        """View → To Do: every to do in the notebook, as View → Questions (Josh, 21 October)."""
+        from .notebook_dialog import TodoDialog
+        dlg = TodoDialog(self)
         dlg.exec()
         if self.notebook_dialog is not None:
             self.notebook_dialog.reload()

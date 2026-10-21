@@ -42,7 +42,7 @@ PAD = 8                  # inside a cell, above and below
 GAP = 16                 # between aligned columns
 ROW_EXTRA = 6            # a field row's height beyond its font's
 TIME_H = 20
-PUSH = 20                # the Push to question button in a Comment box
+PUSH = 20                # the Push to question and Push to To Do buttons in a Comment box (each)
 ZOOM_MIN, ZOOM_MAX, ZOOM_STEP = 0.6, 2.5, 1.1     # Ctrl + mouse wheel
 DRAG = 4                 # pixels the mouse moves before a press becomes a drag over words
 EDGE_PUNCT = "‘’“”'\"«».,;:!?"   # stripped from the ends of words taken from a translation
@@ -110,6 +110,7 @@ class LinesView(QAbstractScrollArea):
     currentChanged = Signal(object)               # a line chosen with the mouse or keys
     countChanged = Signal()
     pushRequested = Signal(object)                # the ? on a line's Comment: Push to question
+    todoRequested = Signal(object)                # the orange flag beside it: Push to To Do (21 October)
     createTokenRequested = Signal(object, str, str)   # line, field key, the words chosen (idea 31)
     bookmarkToggled = Signal(object)              # the margin's bookmark clicked in edit mode (idea 32)
 
@@ -315,7 +316,7 @@ class LinesView(QAbstractScrollArea):
         comment = self.value(line, self.comment_key)
         fm = QFontMetrics(self.plain)                 # the Comment: the same size as the Translation
         box_w = self.side_w - 20
-        text_h = fm.boundingRect(QRect(0, 0, box_w - 12 - PUSH, 2000), Qt.TextWordWrap,
+        text_h = fm.boundingRect(QRect(0, 0, box_w - 12 - 2 * PUSH, 2000), Qt.TextWordWrap,
                                  comment).height() if comment else 0
         if self.comment_below:                    # the Comment takes the room left under the fields
             left = self.viewport().height() - fields_h - 1
@@ -404,9 +405,17 @@ class LinesView(QAbstractScrollArea):
         th = self._time_h()
         return QRectF(self._side_x() + 10, top + PAD + th, self.side_w - 20, max(30, c.h - PAD * 2 - th))
 
-    def _push_rect(self, box: QRectF) -> QRectF:
-        """The Push to question button, at the top right of a Comment box that has a comment."""
-        return QRectF(box.right() - PUSH - 1, box.top() + 3, PUSH - 3, PUSH - 3)
+    def _push_rect(self, box: QRectF, todo: bool = False) -> QRectF:
+        """The Push to question button, at the top right of a Comment box that has a comment; Push to
+        To Do (the flag) just left of it."""
+        x = box.right() - PUSH - 1 - (PUSH if todo else 0)
+        return QRectF(x, box.top() + 3, PUSH - 3, PUSH - 3)
+
+    def _push_hit(self, box: QRectF, pos) -> str:
+        """"push", "push-todo" or "" for a point in a Comment box that has a comment."""
+        pt = QPointF(pos)
+        return "push" if self._push_rect(box).contains(pt) else \
+            "push-todo" if self._push_rect(box, True).contains(pt) else ""
 
     def _bookmark_rect(self, c, top: float) -> QRectF:
         """Where a line's bookmark sits: in the left margin, pinned (it doesn't scroll sideways)."""
@@ -438,7 +447,7 @@ class LinesView(QAbstractScrollArea):
         self.viewport().update()
 
     def _hit(self, pos) -> tuple[int | None, str]:
-        """(visible line index, what: a field key, "comment", "push", "clips", "side" or "")."""
+        """(visible line index, what: a field key, "comment", "push", "push-todo", "clips", "side" or "")."""
         y = pos.y() + self.verticalScrollBar().value()
         i = bisect.bisect_right(self._tops, y) - 1
         if i < 0 or i >= len(self._cells) or y > self._cells[i].y + self._cells[i].h:
@@ -449,16 +458,16 @@ class LinesView(QAbstractScrollArea):
         if self.comment_below and self.comment_key and y - c.y >= c.fields_h:
             vy = self.verticalScrollBar().value()
             if self.value(self._visible[i], self.comment_key) and \
-                    self._push_rect(self._comment_box(c, c.y - vy)).contains(QPointF(pos)):
-                return i, "push"
+                    (hit := self._push_hit(self._comment_box(c, c.y - vy), pos)):
+                return i, hit
             return i, "comment"
         if pos.x() >= self._side_x():
             if pos.y() + self.verticalScrollBar().value() < c.y + PAD + self._time_h():
                 return i, "clips" if self.clips.get(self._visible[i].id) else "side"
             if self.comment_key and self.value(self._visible[i], self.comment_key):
                 vy = self.verticalScrollBar().value()
-                if self._push_rect(self._comment_box(c, c.y - vy)).contains(QPointF(pos)):
-                    return i, "push"
+                if hit := self._push_hit(self._comment_box(c, c.y - vy), pos):
+                    return i, hit
             return i, "comment" if self.comment_key else "side"
         oy = y - c.y
         for s, top, h in c.rows:
@@ -610,11 +619,12 @@ class LinesView(QAbstractScrollArea):
                 comment = self.value(ln, self.comment_key)
                 p.setPen(text if comment else dim)
                 p.setFont(self.plain if comment else self.small)
-                inner = box.adjusted(6, 4, -6 - (PUSH if comment else 0), -4)
+                inner = box.adjusted(6, 4, -6 - (2 * PUSH if comment else 0), -4)
                 p.drawText(inner.toRect(), Qt.TextWordWrap | Qt.AlignTop,
                            comment or ("Comment" if self.edit_mode else ""))
-                if comment:                       # Push to question, as beside the token dialogue's Comment
+                if comment:                       # Push to question and To Do, as beside the token dialogue's Comment
                     icon("push-question", PUSH).paint(p, self._push_rect(box).toRect())
+                    icon("push-todo", PUSH).paint(p, self._push_rect(box, True).toRect())
                 if comment and self._search:
                     searchmark.mark_wrapped(p, inner, comment, self._search)
             if self.bookmarks_enabled and (ln.id == self.bookmark or self.edit_mode):   # the bookmark (idea 32)
@@ -678,11 +688,11 @@ class LinesView(QAbstractScrollArea):
                 and not event.modifiers() & (Qt.ControlModifier | Qt.ShiftModifier)):
             x = event.position().x() + self.horizontalScrollBar().value()
             self._drag = (ln.id, what, self._word_at(i, what, x), event.position().x())
-        if what == "push":
+        if what in ("push", "push-todo"):
             self.select_row(ln)
             self.viewport().update()
             self.currentChanged.emit(ln)
-            self.pushRequested.emit(ln)
+            (self.pushRequested if what == "push" else self.todoRequested).emit(ln)
             return
         mods = event.modifiers()
         if mods & Qt.ControlModifier:
@@ -724,7 +734,7 @@ class LinesView(QAbstractScrollArea):
         if i is None:
             return
         ln = self._visible[i]
-        if what in ("push", "bookmark"):
+        if what in ("push", "push-todo", "bookmark"):
             return
         if what == "clips":
             self.clipActivated.emit(ln)
@@ -735,7 +745,7 @@ class LinesView(QAbstractScrollArea):
     def contextMenuEvent(self, event):
         i, what = self._hit(event.pos())
         # the field under the mouse, for the menu's Edit item ("" outside a field)
-        self.menu_key = (self.comment_key if what in ("comment", "push") else
+        self.menu_key = (self.comment_key if what in ("comment", "push", "push-todo") else
                          "" if what in ("", "side", "clips", "bookmark") else what) if i is not None else ""
         self.contextRequested.emit(self._visible[i] if i is not None else None, event.globalPos())
 

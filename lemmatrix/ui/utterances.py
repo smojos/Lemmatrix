@@ -270,6 +270,7 @@ class TextsUtterancesWindow(QDialog):
         v.playRequested.connect(self.play)
         v.editCommitted.connect(lambda line, key, text: self._cell_edited(line, key, text))
         v.pushRequested.connect(lambda line: self._cell_push(line))
+        v.todoRequested.connect(lambda line: self._cell_push(line, "todo"))
         v.createTokenRequested.connect(lambda line, key, words: self.texts.create_token(line, key, words, view=v))
         v.contextRequested.connect(self._cell_menu)
         lay.addWidget(v, 1)
@@ -318,8 +319,9 @@ class TextsUtterancesWindow(QDialog):
             self._edited(u, "f:" + key, text)
             self.show_cell(u)
 
-    def _cell_push(self, line):
-        """The ? on the cell's Comment: an open question in the notebook, linked to the utterance."""
+    def _cell_push(self, line, kind: str = "question"):
+        """The ? on the cell's Comment: an open question in the notebook, linked to the utterance;
+        the orange flag beside it: an open to do."""
         u = getattr(line, "utterance", None)
         key = self.texts.comment_key()
         if u is None or not key:
@@ -333,13 +335,13 @@ class TextsUtterancesWindow(QDialog):
         date = main.work_date()
         keys = main.session_keys()
         nbmod.push_question(self.doc.notebook, self.db, date, text, u, u.token,
-                            keys[chips.RESEARCHERS], keys[chips.PARTICIPANTS], keys[chips.LOCATIONS])
+                            keys[chips.RESEARCHERS], keys[chips.PARTICIPANTS], keys[chips.LOCATIONS], kind)
         self.doc.notebook_changed()
         if getattr(main, "notebook_dialog", None) is not None:
             main.notebook_dialog.reload()
         self._edited(u, "f:" + key, "")
         self.show_cell(u)
-        main.statusBar().showMessage(f"Added to the questions of {date}", 5000)
+        main.statusBar().showMessage(f"Added to the {nbmod.name(kind, True, title=False)} of {date}", 5000)
 
     def _cell_menu(self, line, pos):
         m = QMenu(self)

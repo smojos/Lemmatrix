@@ -451,6 +451,7 @@ class TextsPanel(QObject):
                                           and self.play_line())
         self.lines.editCommitted.connect(self.set_line_field)
         self.lines.pushRequested.connect(self.push_to_question)
+        self.lines.todoRequested.connect(self.push_to_todo)
         self.lines.createTokenRequested.connect(self.create_token)
         self.lines.bookmarkToggled.connect(self.toggle_bookmark)
         self._bookmark_shown_for = None           # the text last opened at its bookmark
@@ -1272,9 +1273,14 @@ class TextsPanel(QObject):
         except (audio.AudioError, OSError, EOFError, Exception) as exc:      # wave.Error too
             QMessageBox.warning(self.win, "Play", f"Couldn't play {wav.name}: {exc}")
 
-    def push_to_question(self, line=None):
-        """A line's Comment becomes an open question in the notebook (the session's day), linked to
-        the line, and the Comment is emptied: as the token dialogue's Push to question (Josh, 20 October)."""
+    def push_to_todo(self, line=None):
+        """Push to To Do from a line's Comment (the orange flag; Josh, 21 October)."""
+        self.push_to_question(line, nbmod.TODO)
+
+    def push_to_question(self, line=None, kind: str = nbmod.QUESTION):
+        """A line's Comment becomes an open question (or to do) in the notebook (the session's day),
+        linked to the line, and the Comment is emptied: as the token dialogue's Push to question
+        (Josh, 20 October)."""
         line = line or self.lines.current_row()
         t, key = self.current(), self.comment_key()
         if line is None or t is None or not key:
@@ -1286,12 +1292,13 @@ class TextsPanel(QObject):
         date = main.work_date()
         k = main.session_keys()
         nbmod.push_line_question(self.doc.notebook, self.db, date, question, t, line.start, clock(line.start),
-                                 k.get("researchers", []), k.get("participants", []), k.get("locations", []))
+                                 k.get("researchers", []), k.get("participants", []), k.get("locations", []),
+                                 kind)
         self.doc.notebook_changed()
         if getattr(main, "notebook_dialog", None) is not None:
             main.notebook_dialog.reload()
         self.set_line_field(line, key, "")
-        main.statusBar().showMessage(f"Added to the questions of {date}", 5000)
+        main.statusBar().showMessage(f"Added to the {nbmod.name(kind, True, title=False)} of {date}", 5000)
 
     def _line_menu(self, row, pos):
         m = QMenu(self.win)
@@ -1316,9 +1323,13 @@ class TextsPanel(QObject):
         a.setEnabled(self.current() is not None)
         a.triggered.connect(lambda *_: self.edit())
         key_c = self.comment_key()
+        has_c = on and bool(key_c) and bool((row.values.get(key_c) or "").strip())
         a = m.addAction(icon("push-question", 16), "Push comment to question")
-        a.setEnabled(on and bool(key_c) and bool((row.values.get(key_c) or "").strip()))
+        a.setEnabled(has_c)
         a.triggered.connect(lambda *_: self.push_to_question(row))
+        a = m.addAction(icon("push-todo", 16), "Push comment to To Do")
+        a.setEnabled(has_c)
+        a.triggered.connect(lambda *_: self.push_to_todo(row))
         m.addSeparator()
         for text, name, fn in (("Play line", "play", self.play_line),
                                ("Play in context", None, lambda: self.play_line(context=True)),

@@ -429,7 +429,8 @@ def test_notebook_lists_the_days_texts(win, tmp_path, monkeypatch):
     nb = win.notebook_dialog
     nb.reload(t.date)
     assert nb.texts.topLevelItemCount() == 1 and "T001" in nb.texts.topLevelItem(0).text(0)
-    assert nb.tabs.tabText(3) == "Texts (1)"
+    from lemmatrix.ui.notebook_dialog import TEXTS_TAB
+    assert nb.tabs.tabText(TEXTS_TAB) == "Texts (1)"
     nb._open_text(nb.texts.topLevelItem(0))
     assert uw.texts.current() is t and uw.tabs.currentIndex() == 0
     nb.close()

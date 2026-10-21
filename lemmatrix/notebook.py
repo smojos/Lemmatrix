@@ -3,8 +3,12 @@
 """The notebook: one session a day, kept next to the database as <database>.notebook.
 
 A session holds who was there (researchers, participants), where (locations), free
-notes, open questions, and a record of the comments written that day. It is plain
+notes, open questions and to dos, and a record of the comments written that day. It is plain
 Python, no Qt; the dialogue lives in ui/notebook_dialog.py.
+
+Questions and To Dos (Josh, 21 October) are one kind of thing with two lists: the same fields,
+dates, links and Resolve; Push to question and Push to To Do make them, and Convert moves one
+from a list to the other, keeping its dates, link and status.
 
 Comments (agreed 17 October 2026). Only the comment fields count. Every comment field
 keeps the date it was last changed (Entry.changed / Token.changed), and a session
@@ -34,8 +38,23 @@ from pathlib import Path
 
 from .model import Database, Entry, Token, nfc, today, write_atomically, xml_safe
 
-FORMAT_VERSION = "1"
+FORMAT_VERSION = "2"                  # 2: <todo> beside <question> (21 October)
 SUFFIX = ".notebook"
+
+QUESTION, TODO = "question", "todo"   # a notebook item's kind: its list, its element in the file
+KINDS = (QUESTION, TODO)
+# how each kind is named: (Title, Titles, a lowercase one, lowercase plural); "To Do", as Josh writes it
+NAMES = {QUESTION: ("Question", "Questions", "question", "questions"),
+         TODO: ("To Do", "To Dos", "To Do", "To Dos")}   # capitalised in sentences too
+
+
+def other(kind: str) -> str:
+    return TODO if kind == QUESTION else QUESTION
+
+
+def name(kind: str, plural: bool = False, title: bool = True) -> str:
+    """"Question", "To Dos", "to do"…"""
+    return NAMES[kind][(0 if title else 2) + (1 if plural else 0)]
 
 
 class NotebookError(Exception):
@@ -52,6 +71,11 @@ class Question:
     token_id: str = ""
     ref: str = ""                     # the lemma's reference then (the link falls back on it)
     about: str = ""                   # how the link reads: "D011 sheep · SG"
+    kind: str = QUESTION              # QUESTION or TODO (a To Do is a Question in the other list)
+
+    @property
+    def is_todo(self) -> bool:
+        return self.kind == TODO
 
     @property
     def link(self) -> "NoteComment | None":
@@ -116,7 +140,24 @@ class Session:
     notes: str = ""
     comments: list[NoteComment] = field(default_factory=list)
     questions: list[Question] = field(default_factory=list)
+    todos: list[Question] = field(default_factory=list)  # To Dos: Questions of kind TODO
     texts: list[str] = field(default_factory=list)       # ids of the texts worked on that day (their lines)
+
+
+def items(s: Session, kind: str) -> list[Question]:
+    """A day's questions or to dos (the list itself)."""
+    return s.todos if kind == TODO else s.questions
+
+
+def convert(s: Session, q: Question) -> Question:
+    """Convert to To Do / Convert to question: the item moves to the end of the day's other list,
+    keeping its text, dates, link and status. Returns it."""
+    lst = items(s, q.kind)
+    i = next(i for i, x in enumerate(lst) if x is q)
+    del lst[i]
+    q.kind = other(q.kind)
+    items(s, q.kind).append(q)
+    return q
 
 
 @dataclass
@@ -152,7 +193,13 @@ class Notebook:
         return sorted(self.sessions, key=lambda s: s.date, reverse=True)
 
     def all_questions(self) -> list[tuple[Session, Question]]:
-        return [(s, q) for s in self.newest_first() for q in s.questions]
+        return self.all_items(QUESTION)
+
+    def all_todos(self) -> list[tuple[Session, Question]]:
+        return self.all_items(TODO)
+
+    def all_items(self, kind: str) -> list[tuple[Session, Question]]:
+        return [(s, q) for s in self.newest_first() for q in items(s, kind)]
 
     def people(self) -> tuple[list[str], list[str]]:
         """Every researcher and participant code that appears, in order of first appearance."""
@@ -324,7 +371,7 @@ def speakers(db: Database, date: str) -> list[str]:
 def write_session(nb: Notebook, db: Database, date: str, researchers, participants, locations) -> Session:
     """Write to notebook: the day's session gets these people and places and its comments.
 
-    The notes and questions are never touched.
+    The notes, questions and to dos are never touched.
     """
     s = nb.add_session(date)
     for attr, value in (("researchers", researchers), ("participants", participants),
@@ -339,16 +386,17 @@ def write_session(nb: Notebook, db: Database, date: str, researchers, participan
 
 
 def push_question(nb: Notebook, db: Database, date: str, text: str, e: Entry, t: Token | None,
-                  researchers=(), participants=(), locations=()) -> Question:
-    """Push to question: an open question on a day, linked to a token (or lemma).
+                  researchers=(), participants=(), locations=(), kind: str = QUESTION) -> Question:
+    """Push to question (or, with kind TODO, Push to To Do): an open item on a day, linked to a
+    token (or lemma).
 
     A day without notes yet gets them, with these people and places."""
     s = nb.session(date)
     if s is None:
         s = write_session(nb, db, date, researchers, participants, locations)
     q = Question(text, today(), entry_id=e.id, token_id=t.id if t is not None else "", ref=e.ref,
-                 about=describe(db, e, t))
-    s.questions.append(q)
+                 about=describe(db, e, t), kind=kind)
+    items(s, kind).append(q)
     nb.dirty = True
     return q
 
@@ -363,21 +411,22 @@ def add_note_line(nb: Notebook, date: str, line: str) -> Session:
 
 
 def push_line_question(nb: Notebook, db: Database, date: str, question: str, text, start: float,
-                       clock: str = "", researchers=(), participants=(), locations=()) -> Question:
-    """Push to question from a text's line (its Comment): an open question linked to the line."""
+                       clock: str = "", researchers=(), participants=(), locations=(),
+                       kind: str = QUESTION) -> Question:
+    """Push to question (or To Do) from a text's line (its Comment): an open item linked to the line."""
     s = nb.session(date)
     if s is None:
         s = write_session(nb, db, date, researchers, participants, locations)
     link = line_comment(db, text, start, "", question, clock)
     q = Question(link.text, today(), entry_id=link.entry_id, token_id=link.token_id, ref=link.ref,
-                 about=link.about)
-    s.questions.append(q)
+                 about=link.about, kind=kind)
+    items(s, kind).append(q)
     nb.dirty = True
     return q
 
 
 def matches(s: Session, db: Database | None, text: str) -> bool:
-    """Search: the date, notes, people, places, comments and questions."""
+    """Search: the date, notes, people, places, comments, questions and to dos."""
     text = text.strip().lower()
     if not text:
         return True
@@ -390,7 +439,7 @@ def matches(s: Session, db: Database | None, text: str) -> bool:
     for key in s.locations:
         parts.append(md.location_path(key) if md else key)
     parts += [c.text for c in s.comments] + [c.about for c in s.comments]
-    parts += [q.text for q in s.questions]
+    parts += [q.text for q in s.questions + s.todos]
     return any(text in (x or "").lower() for x in parts)
 
 
@@ -457,10 +506,11 @@ def load(path: str | os.PathLike) -> Notebook:
             s.comments.append(NoteComment(_text(c), c.get("entry", ""), c.get("token", ""),
                                           nfc(c.get("ref", "")), nfc(c.get("about", "")),
                                           c.get("field", "Comment")))
-        for q in el.findall("question"):
-            s.questions.append(Question(_text(q), q.get("created", ""), q.get("edited", ""),
-                                        q.get("resolved", ""), q.get("entry", ""), q.get("token", ""),
-                                        nfc(q.get("ref", "")), nfc(q.get("about", ""))))
+        for kind in KINDS:
+            for q in el.findall(kind):
+                items(s, kind).append(Question(_text(q), q.get("created", ""), q.get("edited", ""),
+                                               q.get("resolved", ""), q.get("entry", ""), q.get("token", ""),
+                                               nfc(q.get("ref", "")), nfc(q.get("about", "")), kind))
         s.texts = [x.get("id", "") for x in el.findall("text") if x.get("id")]
         nb.sessions.append(s)
     nb.sort()
@@ -489,7 +539,7 @@ def to_string(nb: Notebook, database_name: str = "") -> str:
                 ca["token"] = c.token_id
             ca.update({"ref": c.ref, "about": c.about, "field": c.field})
             ET.SubElement(el, "comment", ca).text = c.text
-        for q in s.questions:
+        for q in s.questions + s.todos:
             qa = {"created": q.created}
             if q.edited:
                 qa["edited"] = q.edited
@@ -498,7 +548,7 @@ def to_string(nb: Notebook, database_name: str = "") -> str:
             for key, val in (("entry", q.entry_id), ("token", q.token_id), ("ref", q.ref), ("about", q.about)):
                 if val:
                     qa[key] = val
-            ET.SubElement(el, "question", qa).text = q.text
+            ET.SubElement(el, q.kind, qa).text = q.text
         for tid in s.texts:                       # the texts worked on that day
             ET.SubElement(el, "text", id=tid)
     ET.indent(root, space="  ")

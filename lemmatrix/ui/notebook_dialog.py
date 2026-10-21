@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders
-"""The notebook window (View → Notebook) and the list of all questions (View → Questions).
+"""The notebook window (View → Notebook) and the lists of all questions and to dos (View →
+Questions, View → To Do).
 
 The notebook is one page a day: the session's date, who was there and where, notes
 (in Charis, so IPA can be typed), the comments written that day with links to
-their lemmas and tokens, the recordings made that day, and the open questions.
+their lemmas and tokens, the recordings made that day, and the questions and to dos.
 The window stays open beside the main one; changes are saved with the database
 (or by Write to notebook).
 """
@@ -16,8 +17,8 @@ from PySide6.QtGui import QBrush, QColor, QFont, QFontMetrics, QTextCharFormat
 from PySide6.QtWidgets import (QAbstractItemView, QCalendarWidget, QComboBox, QDialog, QDialogButtonBox,
                                QGridLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget,
                                QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton, QSplitter,
-                               QStyledItemDelegate, QTabWidget, QTextEdit, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
-                               QWidget)
+                               QMenu, QStyledItemDelegate, QTabWidget, QTextEdit, QToolButton, QToolTip,
+                               QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from .. import matrix as mx, notebook as nbmod
 from ..model import today
@@ -27,6 +28,17 @@ from .icons import icon
 from .widgets import ipa_font, meaning
 
 NEWEST, OLDEST = "newest", "oldest"
+QUESTIONS_TAB, TODO_TAB, COMMENTS_TAB, RECORDINGS_TAB, TEXTS_TAB = range(5)   # the notebook's tabs
+KIND_ICON = {nbmod.QUESTION: "push-question", nbmod.TODO: "push-todo"}        # the green ?, the orange flag
+
+
+def kind_icon(kind: str, size: int = 18):
+    return icon(KIND_ICON[kind], size)
+
+
+def convert_label(kind: str) -> str:
+    """What converting an item of this kind is called: "Convert to To Do", "Convert to question"."""
+    return "Convert to To Do" if kind == nbmod.QUESTION else "Convert to question"
 
 
 class WrapDelegate(QStyledItemDelegate):
@@ -202,7 +214,7 @@ class NotebookDialog(QDialog):
         self.search = QLineEdit()
         self.search.setPlaceholderText("Search the notebook")
         self.search.setClearButtonEnabled(True)
-        self.search.setToolTip("Searches the notes, people, places, comments and questions")
+        self.search.setToolTip("Searches the notes, people, places, comments, questions and To Dos")
         self._search_timer = QTimer(self)
         self._search_timer.setSingleShot(True)
         self._search_timer.setInterval(200)
@@ -239,7 +251,7 @@ class NotebookDialog(QDialog):
         self.delete_note_btn = QToolButton()
         self.delete_note_btn.setIcon(icon("delete", 20))
         self.delete_note_btn.setAutoRaise(True)
-        self.delete_note_btn.setToolTip("Delete note: this day's note: its notes, questions and record of comments")
+        self.delete_note_btn.setToolTip("Delete note: this day's note: its notes, questions, To Dos and record of comments")
         self.delete_note_btn.clicked.connect(lambda *_: self.delete_note())
         br.addWidget(self.sort)
         br.addStretch(1)
@@ -282,41 +294,13 @@ class NotebookDialog(QDialog):
         self.texts.header().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.texts.itemDoubleClicked.connect(lambda it, col: self._open_text(it))
         self.texts.setToolTip("Texts and songs dated this day. Double-click to open one.")
-        qbox = QWidget()                          # the Questions tab: its buttons, then the list
-        ql = QVBoxLayout(qbox)
-        ql.setContentsMargins(0, 0, 0, 0)
-        qb = QHBoxLayout()
-
-        def qbutton(name, tip, fn, size=30):
-            b = QToolButton()
-            b.setIcon(icon(name, size))
-            b.setIconSize(QSize(size, size))
-            b.setAutoRaise(True)
-            b.setToolTip(tip)
-            b.clicked.connect(lambda *_: fn())
-            qb.addWidget(b)
-            return b
-        qbutton("add", "Add a question", self.add_question)
-        self.q_delete = qbutton("delete", "Delete the selected question", self.delete_question)
-        self.q_edit = qbutton("edit", "Edit the selected question", self.edit_question)
-        self.q_resolve = qbutton("resolve", "Resolve the selected question", self.toggle_resolved)
-        qb.addStretch(1)
-        ql.addLayout(qb)
-        self.questions = QTreeWidget()
-        self.questions.setColumnCount(5)
-        self.questions.setHeaderLabels(["Question", "Token", "Status", "Created / edited", "Resolved"])
-        self.questions.setRootIsDecorated(False)
-        wrapping(self.questions, lambda: self.search.text())
-        self.questions.setFont(ipa_font(self.main.prefs.ipa_size))
-        h = self.questions.header()
-        h.setSectionResizeMode(0, QHeaderView.Stretch)
-        for c in (1, 2, 3, 4):
-            h.setSectionResizeMode(c, QHeaderView.ResizeToContents)
-        h.setStretchLastSection(False)
-        self.questions.itemDoubleClicked.connect(self._question_double_clicked)
-        self.questions.currentItemChanged.connect(lambda *_: self._question_buttons())
-        ql.addWidget(self.questions, 1)
-        self.tabs.addTab(qbox, "Questions")       # first (Josh, 18 October), then Comments, Recordings
+        self.q_panel = ItemsPanel(self, nbmod.QUESTION)    # the Questions tab, then To Do (21 October)
+        self.t_panel = ItemsPanel(self, nbmod.TODO)
+        self.questions, self.todos = self.q_panel.tree, self.t_panel.tree
+        self.q_delete, self.q_edit, self.q_resolve = self.q_panel.delete_btn, self.q_panel.edit_btn, \
+            self.q_panel.resolve_btn
+        self.tabs.addTab(self.q_panel, "Questions")       # first (Josh, 18 October), then To Do, Comments…
+        self.tabs.addTab(self.t_panel, "To Do")
         self.tabs.addTab(self.comments, "Comments")
         self.tabs.addTab(self.recordings, "Recordings")
         self.tabs.addTab(self.texts, "Texts")
@@ -358,8 +342,10 @@ class NotebookDialog(QDialog):
             it.setFont(f)
             it.setData(Qt.UserRole, s.date)
             n_open = sum(1 for q in s.questions if q.is_open)
+            t_open = sum(1 for q in s.todos if q.is_open)
             it.setToolTip(f"{nbmod.weekday(s.date)} {s.date}" +
-                          (f"\n{n_open} open question(s)" if n_open else ""))
+                          (f"\n{n_open} open question(s)" if n_open else "") +
+                          (f"\n{t_open} open To Do(s)" if t_open else ""))
             self.days.addItem(it)
             if s.date == want:
                 chosen = it
@@ -380,7 +366,7 @@ class NotebookDialog(QDialog):
     def _search_changed(self):
         self._fill_days(self.session.date if self.session else None)
         self._highlight()
-        for view in (self.comments, self.questions):      # their marks
+        for view in (self.comments, self.questions, self.todos):      # their marks
             view.viewport().update()
 
     # ============================================================== one day
@@ -388,7 +374,7 @@ class NotebookDialog(QDialog):
         self.session = s
         self._loading = True
         on = s is not None
-        for w in (self.notes, self.tabs, self.questions, self.delete_note_btn, self.date_label):
+        for w in (self.notes, self.tabs, self.questions, self.todos, self.delete_note_btn, self.date_label):
             w.setEnabled(on)
         for row in self.rows.values():
             row.setEnabled(on)
@@ -402,13 +388,15 @@ class NotebookDialog(QDialog):
             self.recordings.clear()
             self.texts.clear()
             self.questions.clear()
+            self.todos.clear()
             self.empty_note.setText("No notes match the search." if self.search.text() and self.book.sessions
                                     else "No notes yet. Add note starts a day's page; so does Write to "
                                     "notebook in the Current Session.")
-            self.tabs.setTabText(0, "Questions")
-            self.tabs.setTabText(1, "Comments")
-            self.tabs.setTabText(2, "Recordings")
-            self.tabs.setTabText(3, "Texts")
+            self.tabs.setTabText(QUESTIONS_TAB, "Questions")
+            self.tabs.setTabText(TODO_TAB, "To Do")
+            self.tabs.setTabText(COMMENTS_TAB, "Comments")
+            self.tabs.setTabText(RECORDINGS_TAB, "Recordings")
+            self.tabs.setTabText(TEXTS_TAB, "Texts")
         else:
             self.empty_note.setText("")
             self.date_label.setText(nbmod.long_date(s.date))
@@ -447,7 +435,7 @@ class NotebookDialog(QDialog):
                 it.setFont(1, f)
                 it.setForeground(1, QBrush(theme.accent()))
             self.comments.addTopLevelItem(it)
-        self.tabs.setTabText(1, f"Comments ({len(s.comments)})")
+        self.tabs.setTabText(COMMENTS_TAB, f"Comments ({len(s.comments)})")
         QTimer.singleShot(0, self.comments.doItemsLayout)
 
     def _fill_recordings(self):
@@ -468,25 +456,12 @@ class NotebookDialog(QDialog):
             it.setFont(0, ipa_font(self.main.prefs.ipa_size))
             it.setData(0, Qt.UserRole, (e, i))
             self.recordings.addTopLevelItem(it)
-        self.tabs.setTabText(2, f"Recordings ({len(rows)})")
+        self.tabs.setTabText(RECORDINGS_TAB, f"Recordings ({len(rows)})")
 
     def _fill_questions(self, select: nbmod.Question | None = None):
-        self.questions.clear()
-        muted = QBrush(QColor(theme.muted()))
-        for q in self.session.questions:
-            it = QTreeWidgetItem([q.text, q.about, q.status, q.dated, q.resolved])
-            it.setData(0, Qt.UserRole, q)
-            it.setToolTip(0, q.text)
-            link_look(it, 1, q)
-            if not q.is_open:
-                for c in (0, 2, 3, 4):
-                    it.setForeground(c, muted)
-            self.questions.addTopLevelItem(it)
-            if q is select:
-                self.questions.setCurrentItem(it)
-        open_ = sum(1 for q in self.session.questions if q.is_open)
-        self.tabs.setTabText(0, f"Questions ({open_} open)" if self.session.questions else "Questions")
-        QTimer.singleShot(0, self.questions.doItemsLayout)
+        """Both lists, questions and to dos (an item selected in whichever it is in)."""
+        for panel in (self.q_panel, self.t_panel):
+            panel.fill(select)
 
     def _highlight(self):
         """Mark what the search found in the notes."""
@@ -597,6 +572,8 @@ class NotebookDialog(QDialog):
             what.append("its notes")
         if s.questions:
             what.append(f"{len(s.questions)} question(s)")
+        if s.todos:
+            what.append(f"{len(s.todos)} To Do(s)")
         if s.comments:
             what.append(f"the record of {len(s.comments)} comment(s)")
         if QMessageBox.question(self, "Delete note", f"Delete the note for {s.date}" +
@@ -631,7 +608,7 @@ class NotebookDialog(QDialog):
                                   " ".join(t.participants), t.file])
             it.setData(0, Qt.UserRole, t)
             self.texts.addTopLevelItem(it)
-        self.tabs.setTabText(3, f"Texts ({len(rows)})")
+        self.tabs.setTabText(TEXTS_TAB, f"Texts ({len(rows)})")
 
     def _open_text(self, item):
         t = item.data(0, Qt.UserRole)
@@ -658,67 +635,203 @@ class NotebookDialog(QDialog):
         elif isinstance(data, tuple):
             self.main.go_to(*data)
 
-    # ---- questions ---------------------------------------------------------
+    # ---- questions (the ItemsPanel does the work; these names are kept for the Questions tab) --
     def _current_question(self) -> nbmod.Question | None:
-        it = self.questions.currentItem()
-        return it.data(0, Qt.UserRole) if it is not None else None
-
-    def _question_double_clicked(self, item, column):
-        q = item.data(0, Qt.UserRole)
-        if column == 1 and q.link is not None:          # the token's link: go to it
-            follow_link(self, self.main, q.link)
-        else:
-            self.edit_question()
+        return self.q_panel.current()
 
     def _question_buttons(self):
-        q = self._current_question() if self.session else None
-        for b in (self.q_delete, self.q_edit, self.q_resolve):
-            b.setEnabled(q is not None)
-        self.q_resolve.setToolTip("Mark the selected question as open again" if q and not q.is_open
-                                  else "Resolve the selected question")
+        for panel in (self.q_panel, self.t_panel):
+            panel.buttons()
 
     def add_question(self):
-        if self.session is None:
-            return
-        text = ask_text(self, "Add question", "Question:")
-        if text:
-            q = nbmod.Question(text, today())
-            self.session.questions.append(q)
-            self._changed()
-            self._fill_questions(q)
+        self.q_panel.add()
 
     def edit_question(self):
-        q = self._current_question()
+        self.q_panel.edit()
+
+    def delete_question(self):
+        self.q_panel.delete()
+
+    def toggle_resolved(self):
+        self.q_panel.toggle()
+
+
+class ItemsPanel(QWidget):
+    """A notebook tab of questions or to dos (Josh, 21 October: To Do is the same as Questions):
+    Add, Delete, Edit, Resolve and Convert at the top, then the list; right-click for the same."""
+
+    def __init__(self, dlg: "NotebookDialog", kind: str):
+        super().__init__()
+        self.dlg, self.kind = dlg, kind
+        one = nbmod.name(kind, title=False)
+        ql = QVBoxLayout(self)
+        ql.setContentsMargins(0, 0, 0, 0)
+        qb = QHBoxLayout()
+
+        def qbutton(name, tip, fn, size=30, ic=None):
+            b = QToolButton()
+            b.setIcon(ic or icon(name, size))
+            b.setIconSize(QSize(size, size))
+            b.setAutoRaise(True)
+            b.setToolTip(tip)
+            b.clicked.connect(lambda *_: fn())
+            qb.addWidget(b)
+            return b
+        self.add_btn = qbutton("add", f"Add a {one}", self.add)
+        self.delete_btn = qbutton("delete", f"Delete the selected {one}", self.delete)
+        self.edit_btn = qbutton("edit", f"Edit the selected {one}", self.edit)
+        self.resolve_btn = qbutton("resolve", f"Resolve the selected {one}", self.toggle)
+        to = nbmod.other(kind)
+        self.convert_btn = qbutton("", f"{convert_label(kind)}: the selected {one} moves to the "
+                                   f"{nbmod.name(to, True)} tab, keeping its dates and link", self.convert,
+                                   ic=kind_icon(to, 30))
+        qb.addStretch(1)
+        ql.addLayout(qb)
+        self.tree = QTreeWidget()
+        self.tree.setColumnCount(5)
+        self.tree.setHeaderLabels([nbmod.name(kind), "Token", "Status", "Created / edited", "Resolved"])
+        self.tree.setRootIsDecorated(False)
+        wrapping(self.tree, lambda: dlg.search.text())
+        self.tree.setFont(ipa_font(dlg.main.prefs.ipa_size))
+        h = self.tree.header()
+        h.setSectionResizeMode(0, QHeaderView.Stretch)
+        for c in (1, 2, 3, 4):
+            h.setSectionResizeMode(c, QHeaderView.ResizeToContents)
+        h.setStretchLastSection(False)
+        self.tree.itemDoubleClicked.connect(self._double_clicked)
+        self.tree.currentItemChanged.connect(lambda *_: self.buttons())
+        self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self._menu)
+        ql.addWidget(self.tree, 1)
+
+    @property
+    def session(self):
+        return self.dlg.session
+
+    def _changed(self):
+        self.dlg._changed()
+
+    def fill(self, select: nbmod.Question | None = None):
+        self.tree.clear()
+        s = self.session
+        if s is None:
+            return
+        muted = QBrush(QColor(theme.muted()))
+        lst = nbmod.items(s, self.kind)
+        for q in lst:
+            it = QTreeWidgetItem([q.text, q.about, q.status, q.dated, q.resolved])
+            it.setData(0, Qt.UserRole, q)
+            it.setToolTip(0, q.text)
+            link_look(it, 1, q)
+            if not q.is_open:
+                for c in (0, 2, 3, 4):
+                    it.setForeground(c, muted)
+            self.tree.addTopLevelItem(it)
+            if q is select:
+                self.tree.setCurrentItem(it)
+        open_ = sum(1 for q in lst if q.is_open)
+        title = "Questions" if self.kind == nbmod.QUESTION else "To Do"
+        self.dlg.tabs.setTabText(QUESTIONS_TAB if self.kind == nbmod.QUESTION else TODO_TAB,
+                                 f"{title} ({open_} open)" if lst else title)
+        self.buttons()
+        QTimer.singleShot(0, self.tree.doItemsLayout)
+
+    def current(self) -> nbmod.Question | None:
+        it = self.tree.currentItem()
+        return it.data(0, Qt.UserRole) if it is not None and self.session is not None else None
+
+    def buttons(self):
+        q = self.current()
+        for b in (self.delete_btn, self.edit_btn, self.resolve_btn, self.convert_btn):
+            b.setEnabled(q is not None)
+        one = nbmod.name(self.kind, title=False)
+        self.resolve_btn.setToolTip(f"Mark the selected {one} as open again" if q and not q.is_open
+                                    else f"Resolve the selected {one}")
+
+    def _double_clicked(self, item, column):
+        q = item.data(0, Qt.UserRole)
+        if column == 1 and q.link is not None:          # the token's link: go to it
+            follow_link(self.dlg, self.dlg.main, q.link)
+        else:
+            self.edit()
+
+    def _menu(self, pos):
+        it = self.tree.itemAt(pos)
+        if it is not None:
+            self.tree.setCurrentItem(it)
+        q = self.current()
+        one = nbmod.name(self.kind, title=False)
+        m = QMenu(self.tree)
+        on = q is not None
+        for text, ic, fn, enabled in (
+                (f"Add a {one}…", icon("add", 16), self.add, self.session is not None),
+                (f"Edit {one}…", icon("edit", 16), self.edit, on),
+                ("Mark as open" if on and not q.is_open else "Resolve", icon("resolve", 16), self.toggle, on),
+                (convert_label(self.kind), kind_icon(nbmod.other(self.kind), 16), self.convert, on),
+                ("Go to token", None, lambda: follow_link(self.dlg, self.dlg.main, q.link),
+                 on and q.link is not None),
+                (f"Delete {one}", icon("delete", 16), self.delete, on)):
+            a = m.addAction(ic, text) if ic is not None else m.addAction(text)
+            a.setEnabled(enabled)
+            a.triggered.connect(lambda *_, fn=fn: fn())
+        m.exec(self.tree.viewport().mapToGlobal(pos))
+
+    def add(self):
+        if self.session is None:
+            return
+        one = nbmod.name(self.kind)
+        text = ask_text(self, f"Add {one if self.kind == nbmod.TODO else one.lower()}", f"{one}:")
+        if text:
+            q = nbmod.Question(text, today(), kind=self.kind)
+            nbmod.items(self.session, self.kind).append(q)
+            self._changed()
+            self.fill(q)
+
+    def edit(self):
+        q = self.current()
         if q is None:
             return
-        text = ask_text(self, "Edit question", "Question:", q.text)
+        one = nbmod.name(self.kind)
+        text = ask_text(self, f"Edit {one if self.kind == nbmod.TODO else one.lower()}", f"{one}:", q.text)
         if text and text != q.text:
             q.text, q.edited = text, today()
             self._changed()
-            self._fill_questions(q)
+            self.fill(q)
 
-    def delete_question(self):
-        q = self._current_question()
+    def delete(self):
+        q = self.current()
         if q is None:
             return
-        if QMessageBox.question(self, "Delete question", f"Delete this question?\n\n{q.text}") != QMessageBox.Yes:
+        one = nbmod.name(self.kind, title=False)
+        if QMessageBox.question(self, f"Delete {one}", f"Delete this {one}?\n\n{q.text}") != QMessageBox.Yes:
             return
-        self.session.questions.remove(q)
+        nbmod.items(self.session, self.kind).remove(q)
         self._changed()
-        self._fill_questions()
+        self.fill()
 
-    def toggle_resolved(self):
-        q = self._current_question()
+    def toggle(self):
+        q = self.current()
         if q is None:
             return
         q.resolved = "" if q.resolved else today()
         self._changed()
-        self._fill_questions(q)
-        self._question_buttons()
+        self.fill(q)
+
+    def convert(self):
+        """Convert to To Do / Convert to question: it moves to the other tab, dates and link kept."""
+        q = self.current()
+        if q is None:
+            return
+        nbmod.convert(self.session, q)
+        self._changed()
+        self.dlg._fill_days(self.session.date)        # the day's tooltip counts
+        self.dlg._fill_questions()
+        QToolTip.showText(self.tree.viewport().mapToGlobal(self.tree.viewport().rect().topLeft()),
+                          f"Moved to {'To Do' if q.is_todo else 'Questions'}", self.tree)
 
 
 # ==========================================================================
-# View → Questions
+# View → Questions and View → To Do
 # ==========================================================================
 
 ALL, OPEN, RESOLVED = "all", "open", "resolved"
@@ -752,23 +865,25 @@ def follow_link(parent, main, link):
     main.go_to(*where)
 
 
-class QuestionsDialog(QDialog):
-    """Every question in the notebook, newest day first."""
+class ItemsDialog(QDialog):
+    """Every question (or to do) in the notebook, newest day first."""
 
-    def __init__(self, main):
+    def __init__(self, main, kind: str = nbmod.QUESTION):
         super().__init__(main)
-        self.main = main
-        self.setWindowTitle("Questions")
+        self.main, self.kind = main, kind
+        one, many = nbmod.name(kind, title=False), nbmod.name(kind, True, title=False)
+        self.setWindowTitle("Questions" if kind == nbmod.QUESTION else "To Do")
+        self.setWindowIcon(kind_icon(kind, 32))
         self.resize(980, 620)
         lay = QVBoxLayout(self)
         top = QHBoxLayout()
         self.show_which = QComboBox()
-        self.show_which.addItem("Open questions", OPEN)
-        self.show_which.addItem("Resolved questions", RESOLVED)
-        self.show_which.addItem("All questions", ALL)
+        self.show_which.addItem(f"Open {many}", OPEN)
+        self.show_which.addItem(f"Resolved {many}", RESOLVED)
+        self.show_which.addItem(f"All {many}", ALL)
         self.show_which.currentIndexChanged.connect(lambda *_: self._fill())
         self.search = QLineEdit()
-        self.search.setPlaceholderText("Search the questions")
+        self.search.setPlaceholderText(f"Search the {many}")
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(lambda *_: self._fill())
         top.addWidget(self.show_which)
@@ -776,7 +891,7 @@ class QuestionsDialog(QDialog):
         lay.addLayout(top)
         self.tree = QTreeWidget()
         self.tree.setColumnCount(6)
-        self.tree.setHeaderLabels(["Session", "Question", "Token", "Status", "Created / edited", "Resolved"])
+        self.tree.setHeaderLabels(["Session", nbmod.name(kind), "Token", "Status", "Created / edited", "Resolved"])
         self.tree.setRootIsDecorated(False)
         wrapping(self.tree, lambda: self.search.text())
         self.tree.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -787,23 +902,30 @@ class QuestionsDialog(QDialog):
         h.setStretchLastSection(False)
         self.tree.itemDoubleClicked.connect(self._double_clicked)
         self.tree.currentItemChanged.connect(lambda *_: self._buttons())
+        self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self._menu)
         lay.addWidget(self.tree, 1)
         row = QHBoxLayout()
         self.resolve_btn = QPushButton(icon("resolve", 18), "Resolve")
         self.resolve_btn.clicked.connect(lambda *_: self.toggle())
         self.edit_btn = QPushButton(icon("edit", 18), "")
-        self.edit_btn.setToolTip("Edit the selected question")
+        self.edit_btn.setToolTip(f"Edit the selected {one}")
         self.edit_btn.clicked.connect(lambda *_: self.edit())
+        self.convert_btn = QPushButton(kind_icon(nbmod.other(kind), 18), "")      # icon only, named in its tooltip
+        self.convert_btn.setToolTip(f"{convert_label(kind)}: the selected {one} moves to "
+                                    f"{'View → To Do' if kind == nbmod.QUESTION else 'View → Questions'} "
+                                    "(and the notebook's other tab), keeping its day, dates and link")
+        self.convert_btn.clicked.connect(lambda *_: self.convert())
         self.open_btn = QPushButton(icon("notebook", 18, theme.accent().name()), "Open in notebook")
         self.open_btn.clicked.connect(lambda *_: self.open_day())
         self.token_btn = QPushButton("Go to token")
-        self.token_btn.setToolTip("Show the token the question was pushed from (also: double-click its link)")
+        self.token_btn.setToolTip(f"Show the token the {one} was pushed from (also: double-click its link)")
         self.token_btn.clicked.connect(lambda *_: self.go_to_token())
         self.count = QLabel()
         self.count.setStyleSheet(f"color: {theme.muted()};")
         close = QPushButton("Close")
         close.clicked.connect(self.accept)
-        for w in (self.resolve_btn, self.edit_btn, self.open_btn, self.token_btn):
+        for w in (self.resolve_btn, self.edit_btn, self.convert_btn, self.open_btn, self.token_btn):
             row.addWidget(w)
         row.addWidget(self.count)
         row.addStretch(1)
@@ -811,13 +933,16 @@ class QuestionsDialog(QDialog):
         lay.addLayout(row)
         self._fill()
 
+    def _all(self):
+        return self.main.doc.notebook.all_items(self.kind)
+
     def _fill(self, select=None):
         which = self.show_which.currentData()
         text = self.search.text().strip().lower()
         self.tree.clear()
         muted = QBrush(QColor(theme.muted()))
         shown = 0
-        for s, q in self.main.doc.notebook.all_questions():
+        for s, q in self._all():
             if (which == OPEN and not q.is_open) or (which == RESOLVED and q.is_open):
                 continue
             if text and text not in q.text.lower() and text not in s.date:
@@ -833,11 +958,11 @@ class QuestionsDialog(QDialog):
             shown += 1
             if q is select:
                 self.tree.setCurrentItem(it)
-        total = len(self.main.doc.notebook.all_questions())
-        open_ = sum(1 for _, q in self.main.doc.notebook.all_questions() if q.is_open)
-        self.count.setText(f"{shown} shown · {open_} open of {total}")
+        every = self._all()
+        open_ = sum(1 for _, q in every if q.is_open)
+        self.count.setText(f"{shown} shown · {open_} open of {len(every)}")
         self._buttons()
-        QTimer.singleShot(0, self.tree.doItemsLayout)      # wrapped questions get their height
+        QTimer.singleShot(0, self.tree.doItemsLayout)      # wrapped items get their height
 
     def _current(self):
         it = self.tree.currentItem()
@@ -845,7 +970,7 @@ class QuestionsDialog(QDialog):
 
     def _buttons(self):
         cur = self._current()
-        for b in (self.resolve_btn, self.edit_btn, self.open_btn):
+        for b in (self.resolve_btn, self.edit_btn, self.convert_btn, self.open_btn):
             b.setEnabled(cur is not None)
         self.resolve_btn.setText("Mark as open" if cur and not cur[1].is_open else "Resolve")
         self.token_btn.setEnabled(cur is not None and cur[1].link is not None)
@@ -855,6 +980,26 @@ class QuestionsDialog(QDialog):
             self.go_to_token()
         else:
             self.edit()
+
+    def _menu(self, pos):
+        it = self.tree.itemAt(pos)
+        if it is not None:
+            self.tree.setCurrentItem(it)
+        cur = self._current()
+        if cur is None:
+            return
+        q = cur[1]
+        m = QMenu(self.tree)
+        for text, ic, fn, enabled in (
+                (f"Edit {nbmod.name(self.kind, title=False)}…", icon("edit", 16), self.edit, True),
+                ("Mark as open" if not q.is_open else "Resolve", icon("resolve", 16), self.toggle, True),
+                (convert_label(self.kind), kind_icon(nbmod.other(self.kind), 16), self.convert, True),
+                ("Open in notebook", icon("notebook", 16, theme.accent().name()), self.open_day, True),
+                ("Go to token", None, self.go_to_token, q.link is not None)):
+            a = m.addAction(ic, text) if ic is not None else m.addAction(text)
+            a.setEnabled(enabled)
+            a.triggered.connect(lambda *_, fn=fn: fn())
+        m.exec(self.tree.viewport().mapToGlobal(pos))
 
     def go_to_token(self):
         cur = self._current()
@@ -875,15 +1020,47 @@ class QuestionsDialog(QDialog):
         if cur is None:
             return
         q = cur[1]
-        text = ask_text(self, "Edit question", f"Question (from {cur[0].date}):", q.text)
+        one = nbmod.name(self.kind)
+        text = ask_text(self, f"Edit {one if self.kind == nbmod.TODO else one.lower()}",
+                        f"{one} (from {cur[0].date}):", q.text)
         if text and text != q.text:
             q.text, q.edited = text, today()
             self.main.doc.notebook_changed()
             self._fill(q)
+
+    def convert(self):
+        """Convert to To Do / Convert to question: it leaves this list for the other one."""
+        cur = self._current()
+        if cur is None:
+            return
+        s, q = cur
+        nbmod.convert(s, q)
+        self.main.doc.notebook_changed()
+        self._fill()
+        self.count.setText(self.count.text() + f" · moved to {'To Do' if q.is_todo else 'Questions'}")
+        if getattr(self.main, "notebook_dialog", None) is not None:
+            self.main.notebook_dialog.reload()
 
     def open_day(self):
         cur = self._current()
         if cur is None:
             return
         self.main.open_notebook(cur[0].date)
+        if getattr(self.main, "notebook_dialog", None) is not None:      # on the tab it is in
+            self.main.notebook_dialog.tabs.setCurrentIndex(TODO_TAB if cur[1].is_todo else QUESTIONS_TAB)
+            self.main.notebook_dialog._fill_questions(cur[1])
         self.accept()
+
+
+class QuestionsDialog(ItemsDialog):
+    """View → Questions."""
+
+    def __init__(self, main):
+        super().__init__(main, nbmod.QUESTION)
+
+
+class TodoDialog(ItemsDialog):
+    """View → To Do."""
+
+    def __init__(self, main):
+        super().__init__(main, nbmod.TODO)
