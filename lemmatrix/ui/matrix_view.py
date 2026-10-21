@@ -364,6 +364,25 @@ class TokenCellDelegate(QStyledItemDelegate):
         widths = self.block_widths(r, c, hits)
         return PAD * 2 + sum(widths) + GAP * max(0, len(widths) - 1)
 
+    def line_rects(self, r, c, hits, rect) -> list:
+        """(token number, line key, QRect) for every field line drawn in a cell (edit mode, Ctrl+E)."""
+        out = []
+        widths = self.block_widths(r, c, hits)
+        chip_row = self.chip_row_needed(r, c, hits)
+        x = rect.left() + PAD
+        for n, w in enumerate(widths):
+            y = rect.top() + PAD
+            if chip_row:
+                y += chip_metrics(self.small)[1] + 4
+            if "drawing" in self.view.cell_fields:
+                y += self.draw_h + 4
+            for name in self._lines():
+                h = QFontMetrics(self._font(name)).height()
+                out.append((n, name, QRect(int(x), int(y), int(w - SOUND_W) + 2, h)))
+                y += h + 1
+            x += w + GAP
+        return out
+
     def block_at(self, r, c, hits, x_in_cell: float) -> int:
         """Which side-by-side token a click at x (inside the cell) hits; -1 for none."""
         x = PAD
@@ -420,6 +439,10 @@ class TokenCellDelegate(QStyledItemDelegate):
                 font = self._font(name)
                 fm = QFontMetrics(font)
                 text = self._text(t, name)
+                if self.view.edit_mode:           # edit mode (Ctrl+E): each line shows as a box to type in
+                    painter.setPen(QPen(theme.colour("faint"), 1))
+                    painter.setBrush(Qt.NoBrush)
+                    painter.drawRoundedRect(QRectF(x - 2, y, w - SOUND_W + 6, fm.height()), 3, 3)
                 painter.setFont(font)
                 painter.setPen(theme.colour("text") if text else theme.colour("faint"))
                 units = self._units(t, name) if self._aligned(name) else []
@@ -449,6 +472,7 @@ class TokenCellDelegate(QStyledItemDelegate):
 
 class MatrixView(QTableView):
     tokenClicked = Signal(int, int, int)      # row, column, token number in cell (-1: none)
+    fieldEdited = Signal(object, object, str, str)   # entry, token, line key, new text (edit mode)
     cellActivated = Signal(int, int, int)     # double-click / Enter
     contextRequested = Signal(int, int, int, object)
     deleteRequested = Signal()
@@ -462,6 +486,8 @@ class MatrixView(QTableView):
         self.defaults = mx.default_names(db)
         self.cell_fields = list(mx.DEFAULT_CELL)
         self.aligned: set[str] = set()          # the lines that line up word by word (idea 2)
+        self.edit_mode = False                  # Ctrl+E: a token's fields edited in place in its cell
+        self._editor = None                     # (QLineEdit, entry, token, key, original)
         self.selected: tuple | None = None      # (row, column, token number)
         self.sound_files: set[str] = set()      # recordings present in the sound folder
         self.cloud_files: set[str] = set()      # those that are online-only
@@ -574,11 +600,97 @@ class MatrixView(QTableView):
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
-        hit = self._hit(event.position().toPoint())
+        pos = event.position().toPoint()
+        hit = self._hit(pos)
         if hit:
             self.selected = hit if hit[2] >= 0 else (hit[0], hit[1], -1)
             self.viewport().update()
             self.tokenClicked.emit(*hit)
+            if self.edit_mode and event.button() == Qt.LeftButton and hit[2] >= 0:
+                line = self._line_at(hit, pos)
+                if line is not None:
+                    self.start_edit(hit[0], hit[1], hit[2], line[1])
+
+    # ---- edit mode (Ctrl+E, 21 October): a field edited in its cell, without the token dialogue
+    def set_edit_mode(self, on: bool):
+        self._close_editor(commit=True)
+        self.edit_mode = bool(on)
+        self.viewport().update()
+
+    def _line_at(self, hit, pos):
+        r, c, n = hit
+        hits = self.model_.layout_.tokens(r, c)
+        rect = self.visualRect(self.model_.index(r, c))
+        return next(((k, name, q) for k, name, q in self.delegate.line_rects(r, c, hits, rect)
+                     if k == n and q.adjusted(-2, -1, 2, 1).contains(pos)), None)
+
+    def start_edit(self, r: int, c: int, n: int, key: str):
+        """Edit one line of a cell's token in place: Enter keeps, Esc drops, Tab and Shift+Tab go
+        to the next and previous line of the same token."""
+        from PySide6.QtWidgets import QLineEdit
+        self._close_editor(commit=True)
+        hits = self.model_.layout_.tokens(r, c)
+        if not (0 <= n < len(hits)):
+            return
+        e, t = hits[n]
+        rect = self.visualRect(self.model_.index(r, c))
+        q = next((q for k, name, q in self.delegate.line_rects(r, c, hits, rect) if k == n and name == key), None)
+        if q is None:
+            return
+        ed = QLineEdit(self.viewport())
+        ed.setFont(self.delegate._font(key))
+        original = mx.cell_text(self.db, t, key)
+        ed.setText(original)                     # the glossing symbols show while editing
+        ed.setGeometry(q.adjusted(-3, -2, 40, 3))
+        ed.installEventFilter(self)
+        ed.editingFinished.connect(lambda: self._editor is not None and self._editor[0] is ed
+                                   and not getattr(self, "_moving", False) and self._close_editor(commit=True))
+        self._editor = (ed, e, t, key, original, (r, c, n))
+        self.selected = (r, c, n)
+        ed.show()
+        ed.setFocus()
+        ed.end(False)
+
+    def editing(self) -> bool:
+        return self._editor is not None
+
+    def _close_editor(self, commit: bool, then=None):
+        if self._editor is None:
+            return
+        ed, e, t, key, original, place = self._editor
+        self._editor = None
+        text = ed.text()
+        ed.removeEventFilter(self)
+        ed.hide()
+        ed.deleteLater()
+        self.setFocus()
+        if commit and text.strip() != (original or "").strip():
+            self.fieldEdited.emit(e, t, key, text)
+        if then is not None:
+            self.start_edit(*place, then)
+        self.viewport().update()
+
+    def eventFilter(self, obj, event):
+        from PySide6.QtCore import QEvent
+        if self._editor is not None and obj is self._editor[0] and event.type() == QEvent.KeyPress:
+            k = event.key()
+            if k == Qt.Key_Escape:
+                self._close_editor(commit=False)
+                return True
+            if k in (Qt.Key_Return, Qt.Key_Enter):
+                self._close_editor(commit=True)
+                return True
+            if k in (Qt.Key_Tab, Qt.Key_Backtab):
+                keys = self.delegate._lines()
+                key = self._editor[3]
+                i = keys.index(key) + (1 if k == Qt.Key_Tab else -1) if key in keys else -1
+                self._moving = True
+                try:
+                    self._close_editor(commit=True, then=keys[i] if 0 <= i < len(keys) else None)
+                finally:
+                    self._moving = False
+                return True
+        return super().eventFilter(obj, event)
 
     def mouseDoubleClickEvent(self, event):
         hit = self._hit(event.position().toPoint())

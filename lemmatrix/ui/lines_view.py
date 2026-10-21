@@ -65,6 +65,7 @@ class _Cell:
     rows: list           # (spec, y offset, height)
     cols: list           # widths of the aligned columns
     width: int
+    fields_h: int = 0    # the stacked fields' height (the Comment goes under them in the utterance cell)
 
 
 class CommentEdit(QPlainTextEdit):
@@ -135,6 +136,7 @@ class LinesView(QAbstractScrollArea):
         self.bookmark = None                      # the id of the text's bookmarked line (idea 32)
         self.bookmarks_enabled = True             # off in the utterance cell (idea 22)
         self.head_fn = None                       # line -> the side's first line (default: its times)
+        self.comment_below = False                # the utterance cell: no side; the Comment under the fields
         self.zoom = 1.0                           # Ctrl + mouse wheel (this view's own, not saved)
         self._base_pt = self.font().pointSizeF()
         self._apply_fonts()
@@ -155,8 +157,8 @@ class LinesView(QAbstractScrollArea):
 
     @property
     def side_w(self) -> int:
-        """The pinned side's width (time and Comment), growing with the zoom."""
-        return round(SIDE_W * max(1.0, self.zoom))
+        """The pinned side's width (time and Comment), growing with the zoom; none with the Comment below."""
+        return 0 if self.comment_below else round(SIDE_W * max(1.0, self.zoom))
 
     def set_zoom(self, zoom: float):
         zoom = max(ZOOM_MIN, min(ZOOM_MAX, zoom))
@@ -315,8 +317,21 @@ class LinesView(QAbstractScrollArea):
         box_w = self.side_w - 20
         text_h = fm.boundingRect(QRect(0, 0, box_w - 12 - PUSH, 2000), Qt.TextWordWrap,
                                  comment).height() if comment else 0
+        if self.comment_below:                    # the Comment takes the room left under the fields
+            left = self.viewport().height() - fields_h - 1
+            return _Cell(y, fields_h + max(self.comment_min(), left), rows, cols, width, fields_h)
         side_h = PAD + self._time_h() + max(fm.height() + 20, text_h + 14) + PAD
-        return _Cell(y, max(fields_h, side_h, 44), rows, cols, width)
+        return _Cell(y, max(fields_h, side_h, 44), rows, cols, width, fields_h)
+
+    def comment_min(self) -> int:
+        """The Comment box's least height under the fields (two lines of text)."""
+        return QFontMetrics(self.plain).height() * 2 + 20 if self.comment_key else 0
+
+    def needed_height(self) -> int:
+        """How tall the view must be to show its first cell whole, Comment included."""
+        if not self._cells:
+            return 0
+        return self._cells[0].fields_h + self.comment_min() + 2 * self.frameWidth() + 2
 
     def _relayout(self):
         self._cells, self._tops = [], []
@@ -341,6 +356,8 @@ class LinesView(QAbstractScrollArea):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
+        if self.comment_below:                    # the Comment fills what the height leaves
+            self._relayout()
         self._update_bars()
         self._place_editor()
 
@@ -364,6 +381,8 @@ class LinesView(QAbstractScrollArea):
         return max(TIME_H, QFontMetrics(self.small).height() + 4)
 
     def _side_x(self) -> int:
+        if self.comment_below:
+            return self.viewport().width()
         return max(MARGIN + 120, self.viewport().width() - self.side_w)
 
     def _field_rect(self, i: int, key: str) -> QRect | None:
@@ -379,6 +398,9 @@ class LinesView(QAbstractScrollArea):
 
     def _comment_box(self, c, top: float) -> QRectF:
         """A cell's Comment box (top: the cell's top, in the same coordinates as the result)."""
+        if self.comment_below:                    # under the fields, as wide as the cell
+            return QRectF(MARGIN - 4, top + c.fields_h, max(60, self.viewport().width() - MARGIN - 4),
+                          max(30, c.h - c.fields_h - PAD))
         th = self._time_h()
         return QRectF(self._side_x() + 10, top + PAD + th, self.side_w - 20, max(30, c.h - PAD * 2 - th))
 
@@ -424,6 +446,12 @@ class LinesView(QAbstractScrollArea):
         c = self._cells[i]
         if self.bookmarks_enabled and self._bookmark_rect(c, c.y - self.verticalScrollBar().value()).contains(QPointF(pos)):
             return i, "bookmark"
+        if self.comment_below and self.comment_key and y - c.y >= c.fields_h:
+            vy = self.verticalScrollBar().value()
+            if self.value(self._visible[i], self.comment_key) and \
+                    self._push_rect(self._comment_box(c, c.y - vy)).contains(QPointF(pos)):
+                return i, "push"
+            return i, "comment"
         if pos.x() >= self._side_x():
             if pos.y() + self.verticalScrollBar().value() < c.y + PAD + self._time_h():
                 return i, "clips" if self.clips.get(self._visible[i].id) else "side"
@@ -572,26 +600,8 @@ class LinesView(QAbstractScrollArea):
                         p.setFont(self.small)
                         p.drawText(QRect(x0, y, 300, rh), Qt.AlignVCenter, s.title)
             # the side, pinned at the right: time (speaker, clipped utterances) and the Comment
-            side_w = self.side_w
-            p.fillRect(QRect(side_x, top, side_w, c.h), theme.mix(base, accent, 0.10) if sel or cur else base)
-            p.setPen(QPen(line_col, 1))
-            p.drawLine(side_x, top + 4, side_x, top + c.h - 4)
-            p.setFont(self.small)
-            p.setPen(dim)
-            from .texts import clock
-            head = self.head_fn(ln) if self.head_fn is not None else f"{clock(ln.start)} – {clock(ln.end)}"
-            if self.show_speaker and ln.speaker:
-                head += f"   {ln.speaker}"
-            th = self._time_h()
-            if getattr(ln, "missing_main", False):    # only other tiers have text here (21 October)
-                head += "   no main-tier segment"
-                p.setPen(theme.colour("error"))
-            p.drawText(QRect(side_x + 10, top + PAD - 2, side_w - 20, th), Qt.AlignVCenter, head)
-            refs = self.clips.get(ln.id)
-            if refs:
-                p.setPen(accent)
-                p.drawText(QRect(side_x + 10, top + PAD - 2, side_w - 20, th), Qt.AlignVCenter | Qt.AlignRight,
-                           ", ".join(refs))
+            if not self.comment_below:
+                self._paint_side(p, ln, c, top, sel or cur)
             if self.comment_key:
                 box = self._comment_box(c, top)
                 p.setPen(QPen(theme.mix(base, text, 0.25), 1))
@@ -620,6 +630,32 @@ class LinesView(QAbstractScrollArea):
             p.drawText(self.viewport().rect().adjusted(MARGIN, 20, -20, 0), Qt.AlignTop | Qt.AlignLeft,
                        "No lines match the search." if self.rows else "")
         p.end()
+
+    def _paint_side(self, p, ln, c, top, marked: bool):
+        """The side pinned at the right: the line's times (speaker, clipped utterances)."""
+        pal = self.palette()
+        base, text = pal.base().color(), pal.text().color()
+        dim, accent = theme.colour("dim"), theme.accent()
+        side_x, side_w = self._side_x(), self.side_w
+        p.fillRect(QRect(side_x, top, side_w, c.h), theme.mix(base, accent, 0.10) if marked else base)
+        p.setPen(QPen(theme.mix(base, text, 0.12), 1))
+        p.drawLine(side_x, top + 4, side_x, top + c.h - 4)
+        p.setFont(self.small)
+        p.setPen(dim)
+        from .texts import clock
+        head = self.head_fn(ln) if self.head_fn is not None else f"{clock(ln.start)} – {clock(ln.end)}"
+        if self.show_speaker and ln.speaker:
+            head += f"   {ln.speaker}"
+        th = self._time_h()
+        if getattr(ln, "missing_main", False):    # only other tiers have text here (21 October)
+            head += "   no main-tier segment"
+            p.setPen(theme.colour("error"))
+        p.drawText(QRect(side_x + 10, top + PAD - 2, side_w - 20, th), Qt.AlignVCenter, head)
+        refs = self.clips.get(ln.id)
+        if refs:
+            p.setPen(accent)
+            p.drawText(QRect(side_x + 10, top + PAD - 2, side_w - 20, th), Qt.AlignVCenter | Qt.AlignRight,
+                       ", ".join(refs))
 
     # ---- mouse and keys -------------------------------------------------------------------
     def mousePressEvent(self, event):

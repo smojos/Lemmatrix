@@ -35,7 +35,8 @@ def test_the_utterance_cell_shows_and_edits_the_selected_utterance(win, tmp_path
     cell = uw.cell
     assert len(cell.rows) == 1 and cell.rows[0].utterance is u
     assert cell.rows[0].values["Translation:en"] == "the lions' houses"
-    assert uw._cell_head(cell.rows[0]).startswith(u.ref)
+    assert uw._cell_head(u).startswith(u.ref) and uw.cell_title.text().startswith(u.ref)
+    assert cell.comment_below and not cell.side_w           # the Comment under the fields (21 October)
     uw.set_cell_edit_mode(True)
     cell.start_edit(cell.rows[0], "Translation:en")
     ed = cell._editor[0]
@@ -190,3 +191,64 @@ def test_a_stretch_without_main_tier_text_shows_as_a_flagged_line(win, tmp_path,
     uw, t = _add_text(win, tmp_path, monkeypatch, src=src)
     rows = uw.texts.lines.rows
     assert len(rows) == 2 and rows[1].missing_main and rows[1].values["Translation:en"] == "where is he?"
+
+
+# ---- 21 October, later: edit mode in the matrices, the cell's Comment below ----------------
+
+def test_ctrl_e_edits_a_matrix_cell_in_place(win):
+    from PySide6.QtGui import QKeySequence
+    from PySide6.QtTest import QTest
+    from lemmatrix.ui.main_window import LEMMA_TAG
+    acts = {a.shortcut().toString(): a.text() for a in win.findChildren(type(win.menuBar().actions()[0]))
+            if not a.shortcut().isEmpty()}
+    assert acts.get(QKeySequence("Ctrl+Shift+B").toString()) == "&Bulk edit…"     # moved from Ctrl+E
+    win.tabs.setCurrentIndex(LEMMA_TAG)
+    cfg = win.config_for(LEMMA_TAG)
+    cfg.x = [mx.Spec.citation()]
+    cfg.cell = ["Phonetic", "Translation"]
+    win.refresh()
+    view = win._view(LEMMA_TAG)
+    win.toggle_matrix_edit()
+    assert view.edit_mode and not win.lt_bar["edit_mode"].isHidden()
+    lay = view.model_.layout_
+    r = next(i for i, row in enumerate(lay.rows) if lay.tokens(i, 0))
+    e, t = lay.tokens(r, 0)[0]
+    view.start_edit(r, 0, 0, "Translation")
+    ed = view._editor[0]
+    assert ed.text() == t.get("Translation", "en")
+    ed.setText("a new translation")
+    QTest.keyClick(ed, Qt.Key_Return)
+    assert e.tokens[0].get("Translation", "en") == "a new translation"
+    win.doc.undo.undo()
+    assert e.tokens[0].get("Translation", "en") != "a new translation"
+    win.toggle_matrix_edit()
+    assert not view.edit_mode
+
+
+def test_the_utterance_cells_comment_is_under_the_fields(win, tmp_path):
+    uw, u = _utterance(win, tmp_path)
+    uw.resize(1200, 800)
+    uw.show()
+    cell = uw.cell
+    c = cell._cells[0]
+    box = cell._comment_box(c, c.y)
+    assert box.top() >= c.fields_h - 1 and box.width() > cell.viewport().width() * 0.7
+    assert cell.needed_height() >= c.fields_h + cell.comment_min()
+    assert uw.cell_config_btn.toolTip().startswith("Configure view")
+
+
+def test_new_databases_line_up_phonemic_and_morphemes(win):
+    from lemmatrix.defaults import new_database
+    win.load_database(new_database())
+    assert win.aligned_set() == {"Phonemic", "Morphemes"}
+
+
+def test_the_matrix_pencil_is_edit_mode(win):
+    from lemmatrix.ui.main_window import LEMMA_TAG
+    win.tabs.setCurrentIndex(LEMMA_TAG)
+    btn = win.lt_bar["edit_btn"]
+    assert btn.isCheckable() and "Ctrl+E" in btn.toolTip()
+    btn.click()
+    assert win._view(LEMMA_TAG).edit_mode and btn.isChecked() and win.tt_bar["edit_btn"].isChecked()
+    btn.click()
+    assert not win._view(LEMMA_TAG).edit_mode and not btn.isChecked()

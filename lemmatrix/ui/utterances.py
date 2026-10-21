@@ -255,13 +255,18 @@ class TextsUtterancesWindow(QDialog):
         self.cell_edit_btn.setToolButtonStyle(Qt.ToolButtonIconOnly)
         self.cell_edit_btn.setCheckable(True)
         self.cell_title = QLabel("")
+        self.cell_config_btn = tool("Configure view", "gear", lambda: self.texts.configure_view(),
+                                    "Configure view: which fields the cell shows, in what order, and which "
+                                    "line up word by word (the same setting as a text's lines)")
+        self.cell_config_btn.setToolButtonStyle(Qt.ToolButtonIconOnly)
         head.addWidget(self.cell_edit_btn)
+        head.addWidget(self.cell_config_btn)
         head.addWidget(main_conv := self.main.conventions_button())
         head.addWidget(self.cell_title, 1)
         lay.addLayout(head)
         v = self.cell = LinesView()
         v.bookmarks_enabled = False
-        v.head_fn = self._cell_head
+        v.comment_below = True                    # the Comment under the fields (Josh, 21 October)
         v.playRequested.connect(self.play)
         v.editCommitted.connect(lambda line, key, text: self._cell_edited(line, key, text))
         v.pushRequested.connect(lambda line: self._cell_push(line))
@@ -270,8 +275,8 @@ class TextsUtterancesWindow(QDialog):
         lay.addWidget(v, 1)
         return box
 
-    def _cell_head(self, line) -> str:
-        u = getattr(line, "utterance", None)
+    def _cell_head(self, u) -> str:
+        """The cell's title: the utterance's reference and file label."""
         return f"{u.ref}  {u.file_gloss}".strip() if u is not None else ""
 
     def set_cell_edit_mode(self, on: bool):
@@ -288,9 +293,24 @@ class TextsUtterancesWindow(QDialog):
             self.cell.set_lines([])
             self.cell_title.setText("Select an utterance to see it here as a cell.")
             return
-        self.cell_title.setText("")
+        self.cell_title.setText(self._cell_head(u))
         self.cell.set_lines([UtteranceLine.of(self.db, u, self.cell.fields, self.texts.comment_key())])
         self.cell.select_row(self.cell.rows[0])
+        from PySide6.QtCore import QTimer
+        QTimer.singleShot(0, self._fit_cell)
+
+    def _fit_cell(self):
+        """The cell whole, Comment included: if it doesn't fit, the options area is pulled up."""
+        try:
+            need = self.cell.needed_height() - self.cell.height()
+        except RuntimeError:
+            return
+        if need <= 0 or not self.isVisible():
+            return
+        a, b = self.split.sizes()
+        give = min(need, max(0, a - 160))         # the grid keeps some room
+        if give > 0:
+            self.split.setSizes([a - give, b + give])
 
     def _cell_edited(self, line, key: str, text: str):
         u = getattr(line, "utterance", None)

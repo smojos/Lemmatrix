@@ -100,7 +100,8 @@ def _no_old_computer_settings():
         return
     q = QSettings("Lemmatrix", os.environ.get("LEMMATRIX_SETTINGS", "Lemmatrix-tests"))
     if q.applicationName() not in ("Lemmatrix",):         # never the real preferences
-        for key in ("columns", "lines", "matrix/autoplay", "matrix/only_with_data", "notebook/sort",
+        for key in ("columns", "lines", "views", "sessions", "fullbackup", "matrix/autoplay",
+                    "matrix/only_with_data", "notebook/sort",
                     "session/speaker"):
             q.remove(key)
     yield

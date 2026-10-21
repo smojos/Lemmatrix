@@ -7,7 +7,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import QDate, QDir, QEvent, QObject, QSize, Qt, QTimer, QUrl, Signal
+from PySide6.QtCore import QDate, QDir, QEvent, QObject, QRectF, QSize, Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import QAction, QColor, QDesktopServices, QFont, QIcon, QKeySequence
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QFileDialog, QFrame, QGridLayout,
                                QProgressDialog,
@@ -375,6 +375,7 @@ class MainWindow(QMainWindow):
         for view, tab in ((self.lt_view, LEMMA_TAG), (self.tt_view, TAG_TAG)):
             view.tokenClicked.connect(lambda r, c, n, tab=tab: self._token_clicked(tab, r, c, n))
             view.cellActivated.connect(lambda r, c, n, tab=tab: self._cell_activated(tab, r, c, n))
+            view.fieldEdited.connect(self._matrix_field_edited)
             view.contextRequested.connect(lambda r, c, n, pos, tab=tab: self._matrix_menu(tab, pos))
             view.deleteRequested.connect(self.delete_token)
             view.switchRequested.connect(lambda tab=tab: self.switch_axes(tab))
@@ -410,9 +411,15 @@ class MainWindow(QMainWindow):
     def _matrix_bar(self, tab) -> dict:
         bar, bl = self._bar()
         d = {"widget": bar}
+        # the pencil is edit mode here (Josh, 21 October): a token's lines edited in its cell; the
+        # token dialogue opens with Enter, a double-click or the right-click menu
+        d["edit_btn"] = tool("Edit mode", "edit", self.toggle_matrix_edit,
+                             "Edit mode (Ctrl+E): click a line of a token to edit it in its cell (Enter keeps, "
+                             "Esc drops, Tab goes to the next line). The token dialogue: Enter or double-click")
+        d["edit_btn"].setCheckable(True)
         self._row(bl, tool("Add", "add", self.add_token, "Add a token in the selected cell"),
                   tool("Delete", "delete", self.delete_token, "Delete the selected token (Delete)"),
-                  tool("Edit", "edit", self.edit_token, "Edit the selected token (Enter)"),
+                  d["edit_btn"],
                   tool("Play", "play", self.play_selected, "Play the selected token (Ctrl+Space)"),
                   tool("Configure cell", "gear-cells", lambda tab=tab: self.configure_cell(tab),
                        "Configure cell: choose what each cell shows"),
@@ -433,11 +440,50 @@ class MainWindow(QMainWindow):
                        "Rename the chosen saved matrix"),
                   tool("Delete matrix", None, lambda tab=tab: self.delete_saved_matrix(tab),
                        "Delete the chosen saved matrix"))
+        d["edit_mode"] = QLabel("Edit mode")      # shown while Ctrl+E edit mode is on
+        d["edit_mode"].hide()
+        bl.itemAt(0).layout().insertWidget(4, d["edit_mode"])
         d["count"] = QLabel()                     # lemmas shown, the lemma, the matrix's messages
         d["count"].setWordWrap(True)
         bl.addWidget(d["count"])
         bl.addStretch(1)
         return d
+
+    # ---- edit mode in the matrices (Ctrl+E, 21 October) --------------------------------------
+    def toggle_matrix_edit(self):
+        """Ctrl+E on Lemma/Tag or Tag/Tag: a click on a token's line edits it in its cell."""
+        tab = self.tabs.currentIndex()
+        if tab not in (LEMMA_TAG, TAG_TAG):
+            return
+        on = not self._view(tab).edit_mode
+        for t in (LEMMA_TAG, TAG_TAG):            # one edit mode for both matrices
+            self._view(t).set_edit_mode(on)
+        for bar in (self.lt_bar, self.tt_bar):
+            bar["edit_mode"].setVisible(on)
+            bar["edit_btn"].setChecked(on)
+            bar["edit_mode"].setStyleSheet(f"color: {theme.accent().name()}; font-weight: bold;")
+        self.statusBar().showMessage("Edit mode: click a line of a token to edit it (Enter keeps, Esc drops, "
+                                     "Tab goes to the next line); Ctrl+E again to stop." if on else
+                                     "Edit mode off.", 6000)
+
+    def _matrix_field_edited(self, e, t, key: str, text: str):
+        """An edit made in a matrix cell: the token's field, one undo step (as in All data)."""
+        if t not in e.tokens:
+            return
+        s = self.doc.db.settings
+        name, _, lang = key.partition(":")
+        f = s.token_field(name)
+        if f is None:
+            return
+        if f.role == "pitch":
+            from .. import pitch as pitchmod
+            text = pitchmod.normalise(text)
+        i = e.tokens.index(t)
+
+        def change(x, i=i):
+            x.tokens[i].set(name, text.strip(), (lang or s.primary_gloss) if f.multilingual else None,
+                            f.multilingual)
+        self.doc.edit_entry(e, change, f"Edit {f.title}" + (f" ({lang})" if lang else ""))
 
     # ---- the display conventions (idea 26): one switch for every cell view ------------------
     def conventions_button(self) -> QToolButton:
@@ -445,7 +491,10 @@ class MainWindow(QMainWindow):
         from . import conventions
         b = QToolButton()
         b.setText("/[β]/")
-        b.setFont(widgets.ipa_font(12))
+        b.setProperty("icon_name", "conventions")
+        b.setToolButtonStyle(Qt.ToolButtonIconOnly)   # drawn as an icon, so it sits level with the others
+        b.setIcon(self._conventions_icon())
+        b.setIconSize(QSize(round(20 * 2.3), 20))
         b.setCheckable(True)
         b.setAutoRaise(True)
         b.setChecked(conventions.CURRENT.on)
@@ -457,6 +506,23 @@ class MainWindow(QMainWindow):
             self._conv_buttons = []
         self._conv_buttons.append(b)
         return b
+
+    def _conventions_icon(self) -> QIcon:
+        """/[β]/ drawn in the text colour, 20 px high like the other buttons' icons."""
+        from PySide6.QtGui import QPainter, QPixmap
+        h, w = 20, round(20 * 2.3)
+        pm = QPixmap(w * 2, h * 2)
+        pm.setDevicePixelRatio(2.0)
+        pm.fill(Qt.transparent)
+        p = QPainter(pm)
+        p.setRenderHint(QPainter.Antialiasing)
+        f = widgets.ipa_font(12)
+        f.setPixelSize(15)
+        p.setFont(f)
+        p.setPen(theme.colour("window_text"))
+        p.drawText(QRectF(0, 0, w, h), Qt.AlignCenter, "/[β]/")
+        p.end()
+        return QIcon(pm)
 
     def set_conventions_on(self, on: bool):
         from . import conventions
@@ -472,6 +538,7 @@ class MainWindow(QMainWindow):
             try:
                 b.blockSignals(True)
                 b.setChecked(conventions.CURRENT.on)
+                b.setIcon(self._conventions_icon())   # the theme's text colour
                 b.blockSignals(False)
                 alive.append(b)
             except RuntimeError:                  # a window that has gone
@@ -881,7 +948,7 @@ class MainWindow(QMainWindow):
         self._act(e, "&Lists (people, places, field lists, tags)…", self.edit_lists)
         self._act(e, "&Tag structure…", lambda: self.edit_lists("tags"))
         e.addSeparator()
-        self._act(e, "&Bulk edit…", self.open_bulk_edit, "Ctrl+E")
+        self._act(e, "&Bulk edit…", self.open_bulk_edit, "Ctrl+Shift+B")   # Ctrl+E is edit mode (21 October)
         e.addSeparator()
         self._act(e, "&Settings…", self.edit_settings, QKeySequence.Preferences)
         t = mb.addMenu("&Tools")
@@ -909,6 +976,7 @@ class MainWindow(QMainWindow):
                                            "Ctrl+Shift+Space")
         self._act(None, "Open the selected token in Praat", self.open_selected_in_praat, "Ctrl+Alt+Space")
         self._act(None, "Record the selected token", self.record_selected, "Ctrl+R")
+        self._act(None, "Edit mode in the matrices", self.toggle_matrix_edit, "Ctrl+E")
         a = mb.addMenu("&Analyze")
         x = a.addAction("Analysis tools arrive with the analysis engine (Stage 2)")
         x.setEnabled(False)
@@ -1858,6 +1926,11 @@ class MainWindow(QMainWindow):
         for w in (self.lemmas, self.all_table, self.lt_view, self.tt_view):
             theme.as_data(w)
             w.viewport().update()
+        for b in list(getattr(self, "_conv_buttons", [])):   # /[β]/ in the theme's text colour
+            try:
+                b.setIcon(self._conventions_icon())
+            except RuntimeError:
+                self._conv_buttons.remove(b)
         # windows already open (Texts and utterances, Bulk edit…) follow a theme change too
         from PySide6.QtWidgets import QApplication
         for w in QApplication.topLevelWidgets():
