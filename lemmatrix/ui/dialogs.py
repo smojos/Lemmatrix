@@ -274,7 +274,7 @@ class RenameDatabaseDialog(QDialog):
         self.name = QLineEdit(md.name)
         self.name.setToolTip("The database's own name, shown in the title (Edit → Metadata)")
         self.stem = QLineEdit(self.old.stem)
-        self.stem.setToolTip("The database's file name. Its notebook and automatic backups follow it.")
+        self.stem.setToolTip("The database's file name. Its notebook, workspace and automatic backups follow it.")
         self._follow = True                       # the file name follows the name until edited
         self.name.textEdited.connect(self._name_edited)
         self.stem.textEdited.connect(self._stem_edited)
@@ -325,14 +325,14 @@ class RenameDatabaseDialog(QDialog):
             self.note.setText("The file name stays the same." if changed else "")
         else:
             parts = [f"{self.old.name} → {plan[0][1].name}"]
-            nb = [d for s, d in plan[1:] if s.parent == self.old.parent]
-            if nb:
-                parts.append(f"the notebook → {nb[0].name}")
-            backups = len(plan) - 1 - len(nb)
+            beside = [d for s, d in plan[1:] if s.parent == self.old.parent]
+            for d in beside:
+                what = {".notebook": "the notebook", ".workspace": "the workspace"}.get(d.suffix, d.suffix)
+                parts.append(f"{what} → {d.name}")
+            backups = len(plan) - 1 - len(beside)
             if backups:
                 parts.append(f"{backups} automatic backup{'s' if backups != 1 else ''} in Backups")
-            self.note.setText("Renames " + "; ".join(parts) + ". The window's settings and the "
-                              "full-backup reminder follow.")
+            self.note.setText("Renames " + "; ".join(parts) + ". The window's settings follow.")
         ok_btn.setEnabled(changed)
 
 

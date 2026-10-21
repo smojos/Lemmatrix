@@ -47,12 +47,16 @@ def test_the_word_list():
     assert words(c, "in Pade") == ["Pade"]
 
 
-def test_word_list_is_saved_in_the_database(db, tmp_path):
+def test_word_list_is_saved_in_the_workspace(db, tmp_path):
+    from lemmatrix import workspace
     db.settings.spelling_words = ["tilapia", "Pade"]
     storage.save(db, tmp_path / "x.xml", backup=False)
-    text = (tmp_path / "x.xml").read_text(encoding="utf-8")
+    assert "<spelling" not in (tmp_path / "x.xml").read_text(encoding="utf-8")   # format 7: not in the database
+    workspace.save(workspace.Workspace(), db)
+    text = (tmp_path / "x.workspace").read_text(encoding="utf-8")
     assert "<spelling>" in text and "<word>Pade</word>" in text
     again = storage.load(tmp_path / "x.xml")
+    workspace.load(tmp_path / "x.workspace", again)
     assert sorted(again.settings.spelling_words) == ["Pade", "tilapia"]
 
 

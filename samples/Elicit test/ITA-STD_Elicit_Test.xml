@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<database format="6">
+<database format="7">
   <metadata>
     <language code="ITA">Italian</language>
     <variety code="STD">Standard Italian</variety>
@@ -231,7 +231,7 @@
       <category letter="S" for="texts">Songs</category>
     </references>
     <sounds pattern="{language}-{variety}_{reference}_{gloss}_{tags}" utterance-pattern="{language}-{variety}_{reference}_{label}" text-pattern="{language}-{variety}_{reference}_{title}" clip-padding="100" tag-separator="-" auto-update-names="yes" />
-    <pitch display-range="1-5" style="contours" />
+    <pitch display-range="1-5" />
   </settings>
   <entry ref="D001" file-gloss="cat" id="0893ecdff4">
     <Lemma>gatto</Lemma>

@@ -141,3 +141,42 @@ def matches(flt, value, unmarked: set = frozenset()) -> bool:
             vals = {CITATION_ITEM}
         return flt.matches_values(vals, unmarked)
     return True
+
+
+# ---- kept in the workspace (idea 36): a column filter as JSON and back --------------------------
+
+def encode(flt) -> dict | None:
+    """A column filter as a plain dict (for the workspace file); None for none."""
+    if isinstance(flt, Blanks):
+        return {"kind": "blanks"}
+    if isinstance(flt, NonBlanks):
+        return {"kind": "non-blanks"}
+    if isinstance(flt, Flagged):
+        return {"kind": "flagged", "label": flt.label}
+    if isinstance(flt, TextFilter):
+        return {"kind": "text", "text": flt.text, "mode": flt.mode, "case": flt.match_case,
+                "diacritics": flt.match_diacritics}
+    if isinstance(flt, ChoiceFilter):
+        return {"kind": "choice", "selected": sorted(flt.selected), "mode": flt.mode}
+    return None
+
+
+def decode(d):
+    """encode()'s dict back into a filter; None if it can't be read."""
+    if not isinstance(d, dict):
+        return None
+    kind = d.get("kind")
+    if kind == "blanks":
+        return Blanks()
+    if kind == "non-blanks":
+        return NonBlanks()
+    if kind == "flagged":
+        return Flagged(str(d.get("label", "Flagged")))
+    if kind == "text" and isinstance(d.get("text"), str):
+        mode = d.get("mode", ANYWHERE)
+        return TextFilter(d["text"], mode if mode in (ANYWHERE, WHOLE, START, END, REGEX) else ANYWHERE,
+                          bool(d.get("case")), bool(d.get("diacritics")))
+    if kind == "choice" and isinstance(d.get("selected"), list):
+        mode = d.get("mode", ANY)
+        return ChoiceFilter({str(x) for x in d["selected"]}, mode if mode in (ANY, NONE, EXACTLY) else ANY)
+    return None

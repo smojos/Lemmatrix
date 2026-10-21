@@ -533,6 +533,25 @@ class FilterTable(QTableView):
         self.select_row(row)
         self.filtersChanged.emit()
 
+    def filter_state(self) -> dict:
+        """The column filters and the Ctrl+click pin, as plain data (kept in the workspace)."""
+        out = {"filters": {k: d for k, f in self.proxy.filters.items() if (d := fl.encode(f)) is not None}}
+        if self.proxy.pinned is not None:
+            out["pinned"] = self.proxy.pinned
+        return out
+
+    def set_filter_state(self, state: dict):
+        """Put back filter_state(): filters on columns this grid has, and the pin (by id)."""
+        state = state if isinstance(state, dict) else {}
+        keys = {c.key for c in self.model_.all_columns}
+        self.proxy.filters = {k: f for k, d in (state.get("filters") or {}).items()
+                              if k in keys and (f := fl.decode(d)) is not None}
+        pin = state.get("pinned")
+        self.proxy.pinned = pin if isinstance(pin, str) and pin else None
+        self.proxy.refilter()
+        self._refresh_header()
+        self.filtersChanged.emit()
+
     def pinned_row(self):
         if self.proxy.pinned is None:
             return None

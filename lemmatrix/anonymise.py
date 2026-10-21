@@ -216,6 +216,8 @@ def export(db: Database, nb: nbmod.Notebook | None, folder: str | Path, opts: Op
     out.path = str(target)
     storage.save(out, target, backup=False)
     report.files.append(target.name)
+    from . import workspace as wsmod                # a blank one: no working state goes with the data
+    wsmod.save_blank(wsmod.path_for(target))
     if book is not None and book.sessions:
         nb_path = nbmod.path_for(target)
         nbmod.save(book, nb_path, target.name)

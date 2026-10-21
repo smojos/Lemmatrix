@@ -17,6 +17,11 @@ the database, and its unsaved changes count as unsaved changes. Every change to
 a comment field is dated with the session's date (work_date), which is what the
 notebook's record of comments goes by.
 
+The workspace (<database>.workspace, workspace.py; idea 36) belongs to the document as well, but
+never counts as unsaved: it is written a moment after anything in it changes (saved matrices,
+rerecord flags, the spelling list, the view, filters, the session…), and again on saving, when
+a copy of the one before goes to Backups.
+
 Texts' lines are edited in their TextGrids (lines.py): a TextGrid being edited is held in a
 Buffer here, its edits are undo steps like any other, and it is written when the database is
 saved; not saving leaves the file as it was.
@@ -27,7 +32,7 @@ from __future__ import annotations
 import copy
 from pathlib import Path
 
-from PySide6.QtCore import QFile, QObject, Signal
+from PySide6.QtCore import QFile, QObject, QTimer, Signal
 from PySide6.QtGui import QUndoCommand, QUndoStack
 
 from .. import lines as lmod, notebook as nbmod, predict, storage
@@ -197,6 +202,14 @@ class Document(QObject):
         self.predictor = predict.Predictor()    # suggested translations, learned from this database
         self.text_buffers: dict[str, lmod.Buffer] = {}   # text id -> its TextGrid being edited
         self.undo.cleanChanged.connect(self._clean_changed)
+        from .. import workspace as wsmod
+        self.workspace = wsmod.Workspace()      # the working state, beside the database (idea 36)
+        self._ws_written = None                 # (path, text) as last written, so nothing is written twice
+        self._ws_timer = QTimer(self)
+        self._ws_timer.setSingleShot(True)
+        self._ws_timer.setInterval(400)         # a moment after the last change
+        self._ws_timer.timeout.connect(self.write_workspace)
+        self.changed.connect(self._ws_timer.start)   # e.g. a rerecord flag set in an edit
 
     # ---- texts' lines (edited in their TextGrids) -------------------------
     def buffer(self, text, reload_if_saved_elsewhere: bool = True):
@@ -432,8 +445,55 @@ class Document(QObject):
         self.settingsChanged.emit()
         self.changed.emit()
 
+    # ---- the workspace (idea 36) ---------------------------------------------
+    @property
+    def ws(self):
+        return self.workspace
+
+    def ws_set(self, name: str, value):
+        """Set one of the workspace's values; it is written a moment later."""
+        self.workspace.set(name, value)
+        if self.workspace.dirty:
+            self._ws_timer.start()
+
+    def workspace_changed(self):
+        """Something of the workspace's kept in the database's objects changed (a saved matrix,
+        the spelling list…): written a moment later; the database stays as saved or unsaved as it was."""
+        self.workspace.touch()
+        self._ws_timer.start()
+        self.settingsChanged.emit()
+        self.changed.emit()
+
+    def write_workspace(self) -> bool:
+        """Write the workspace beside the database, if it has changed since it was last written."""
+        from .. import workspace as wsmod
+        self._ws_timer.stop()
+        ws = self.workspace
+        if not self.db.path or ws.unreadable:
+            return False
+        path = str(wsmod.path_for(self.db.path))
+        text = wsmod.to_string(ws, self.db)
+        if self._ws_written == (path, text) and Path(path).exists():
+            ws.dirty = False
+            return False
+        try:
+            wsmod.save(ws, self.db, path)
+        except OSError:
+            return False                        # tried again with the next change, or on saving
+        self._ws_written = (path, text)
+        return True
+
+    def set_workspace(self, ws, written: bool):
+        """The workspace that goes with the database just opened (written: as it is on disk)."""
+        from .. import workspace as wsmod
+        self._ws_timer.stop()
+        self.workspace = ws
+        self._ws_written = ((str(wsmod.path_for(self.db.path)), wsmod.to_string(ws, self.db))
+                            if written and self.db.path else None)
+
     # ---- saving --------------------------------------------------------
     def save(self, path: str | None = None):
+        from .. import workspace as wsmod
         for text, buf in self.edited_buffers():  # texts' TextGrids first (each backed up)
             buf.write(self.db)
         storage.save(self.db, path)
@@ -441,6 +501,10 @@ class Document(QObject):
         self._settings_dirty = False
         self.undo.setClean()
         self.save_notebook()
+        if not self.workspace.unreadable:       # a copy of the workspace into Backups, then the new one
+            wsmod.backup(self.db)
+            self._ws_written = None
+            self.write_workspace()
         self.dirtyChanged.emit(False)
 
     # ---- the notebook --------------------------------------------------

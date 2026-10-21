@@ -228,7 +228,7 @@ class NotebookDialog(QDialog):
         self.sort = QComboBox()
         self.sort.addItem("New to old", NEWEST)
         self.sort.addItem("Old to new", OLDEST)
-        self.sort.setCurrentIndex(max(0, self.sort.findData(self.main.prefs._get("notebook/sort", NEWEST))))
+        self.sort.setCurrentIndex(max(0, self.sort.findData(self.main.doc.ws.get("notebook/sort", NEWEST))))
         self.sort.currentIndexChanged.connect(lambda *_: self._sort_changed())
         add = QToolButton()
         add.setIcon(icon("add", 20))
@@ -374,7 +374,7 @@ class NotebookDialog(QDialog):
         self._show(self.book.session(item.data(Qt.UserRole)) if item is not None else None)
 
     def _sort_changed(self):
-        self.main.prefs.set_value("notebook/sort", self.sort.currentData())
+        self.main.doc.ws_set("notebook/sort", self.sort.currentData())
         self._fill_days(self.session.date if self.session else None)
 
     def _search_changed(self):

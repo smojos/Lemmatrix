@@ -845,7 +845,7 @@ def test_write_to_notebook_keeps_notes_and_saves_the_notebook(win, tmp_path):
 
 def test_first_participant_is_the_speaker_until_another_is_chosen(win):
     from lemmatrix.ui.token_dialog import Slot, TokenDialog
-    win.prefs.speaker = ""
+    win.speaker_code = ""
     win.sess_rows["participants"].set_keys(["ABC", "SP1"])
     win._session_people_changed()
     assert win.session_speaker() == "ABC"
@@ -1179,13 +1179,13 @@ def test_session_people_carry_over_to_the_next_day(win, tmp_path):
     """A new day starts with the last people and places: remembered, or the latest notebook day."""
     from lemmatrix.ui import chiprow as chips
     path = win.doc.db.path
-    win.prefs.set_session_for(path, {})                      # nothing remembered
+    win.doc.ws_set("session", None)                          # nothing remembered
     s = win.doc.notebook.add_session("2026-01-05")         # yesterday, say: a day with notes
     s.researchers, s.participants = ["JS"], ["SP1"]
     win._fill_session()                                    # opening on a day without notes
     assert win.sess_rows[chips.RESEARCHERS].keys == ["JS"]
     assert win.sess_rows[chips.PARTICIPANTS].keys == ["SP1"]
-    assert win.prefs.session_for(path)[chips.PARTICIPANTS] == ["SP1"]   # and now remembered
+    assert win.doc.ws.get_dict("session")[chips.PARTICIPANTS] == ["SP1"]   # and now remembered
     win.sess_rows[chips.PARTICIPANTS]._add("ABC")         # picked in the panel
     win._fill_session()
     assert win.sess_rows[chips.PARTICIPANTS].keys == ["SP1", "ABC"]
@@ -1383,7 +1383,7 @@ def test_check_spelling_window(win):
     w._go(w.places.topLevelItem(0)) if w.places.topLevelItemCount() else None
     w.close()
     assert win.spelling_window is None
-    win.spelling_ignored.clear()
+    win.doc.ws_set("spelling/ignored", None)
 
 
 def test_spelling_in_the_lemma_dialogue(win):
@@ -1424,7 +1424,7 @@ def test_session_panel_is_remembered_as_it_was_left(win):
     path = win.doc.db.path
     s = win.doc.notebook.add_session(win.session_date())     # today's notes, with people and a place
     s.researchers, s.participants, s.locations = ["JS"], ["SP1", "ABC"], ["Juba"]
-    win.prefs.set_session_for(path, {})
+    win.doc.ws_set("session", None)
     win._fill_session()
     assert win.sess_rows[chips.PARTICIPANTS].keys == ["SP1", "ABC"]
     win.sess_rows[chips.PARTICIPANTS]._remove("ABC")
@@ -1470,8 +1470,12 @@ def test_rerecord_flag_saves_filters_and_clears_on_recording(win, tmp_path):
     dlg.rerecord_btn.click()                                 # flag it
     dlg._ok()
     assert e.tokens[0].rerecord
-    storage.save(db, tmp_path / "flag.xml")
-    assert storage.load(tmp_path / "flag.xml").entry_by_ref("D002").tokens[0].rerecord
+    win.doc.write_workspace()                                 # the flag goes in the workspace (idea 36)
+    from lemmatrix import workspace as wsmod
+    back = storage.load(db.path)
+    wsmod.load(wsmod.path_for(db.path), back)
+    assert back.entry_by_ref("D002").tokens[0].rerecord
+    assert 'rerecord' not in storage.to_string(db)            # not in the database file
     win.tabs.setCurrentIndex(0)
     win.refresh()
     t = win.all_table
@@ -1663,7 +1667,7 @@ def test_full_backup_from_the_window(win, tmp_path, monkeypatch):
         with zipfile.ZipFile(target) as zf:
             assert f"{tmp_path.name}/Sample.xml" in zf.namelist()
         from lemmatrix.model import today
-        assert win.prefs.full_backup_dates(win.doc.db.path)["last"] == today()
+        assert win._backup_dates()["last"] == today()
         # inside the database's own folder: refused
         monkeypatch.setattr(win, "_full_backup_path", lambda suggested: str(tmp_path / "Exports" / "x.zip"))
         assert not win.full_backup()
@@ -1681,10 +1685,10 @@ def test_full_backup_reminder_after_a_week(win, monkeypatch):
     win._remind_full_backup()                             # first seen when the window opened it
     assert asked == []
     week_ago = (dt.date.today() - dt.timedelta(days=8)).isoformat()
-    win.prefs.set_full_backup_date(path, "first_seen", week_ago)
+    win._set_backup_date("first_seen", week_ago)
     win._remind_full_backup()
     assert asked == [""]                                  # never backed up: reminded
-    snoozed = win.prefs.full_backup_dates(path)["snoozed"]
+    snoozed = win._backup_dates()["snoozed"]
     assert snoozed == (dt.date.today() + dt.timedelta(days=7)).isoformat()
     win._remind_full_backup()
     assert len(asked) == 1                                # remind me again in 7 days
@@ -1771,7 +1775,7 @@ def test_rename_database(win, tmp_path, monkeypatch):
     old = win.doc.db.path
     win.save()                                             # a backup and a notebook-free database
     win.prefs.set_view_for(old, {"tab": 2})
-    win.prefs.set_full_backup_date(old, "last", "2026-10-11")
+    win._set_backup_date("last", "2026-10-11")
     win.prefs.last_file = old
 
     def fake_exec(dlg):
@@ -1786,7 +1790,8 @@ def test_rename_database(win, tmp_path, monkeypatch):
     assert new.exists() and not Path(old).exists()
     assert storage.load(new).metadata.name == "Main Database"
     assert win.prefs.view_for(str(new)) == {"tab": 2} and win.prefs.view_for(old) == {}
-    assert win.prefs.full_backup_dates(str(new))["last"] == "2026-10-11"
+    assert win._backup_dates()["last"] == "2026-10-11"
+    assert new.with_suffix(".workspace").exists() and not Path(old).with_suffix(".workspace").exists()
     assert win.prefs.last_file == str(new)
     assert lockmod.read(new) is not None and not lockmod.lock_path(old).exists()
     assert not any(f.name.startswith("Sample_") for f in (tmp_path / "Backups").iterdir())
@@ -1805,7 +1810,9 @@ def test_rename_database_dialog(win, tmp_path):
     dlg.name.setText("Main Database")
     dlg._name_edited("Main Database")
     assert dlg.stem.text() == "Main_Database" and ok.isEnabled()
-    assert "the notebook → Main_Database.notebook" in dlg.note.text() and "1 automatic backup" in dlg.note.text()
+    assert "the notebook → Main_Database.notebook" in dlg.note.text()
+    assert "the workspace → Main_Database.workspace" in dlg.note.text()
+    assert "2 automatic backups" in dlg.note.text()          # the database's and the workspace's
     dlg.stem.setText("Bad:name")
     dlg._stem_edited("Bad:name")
     assert not ok.isEnabled() and ":" in dlg.note.text()

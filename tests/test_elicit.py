@@ -278,8 +278,8 @@ def test_everything_shows_and_right_click_ticks(win, monkeypatch):
     dlg.accept()
     assert win.elicit_basket == []
     win.toggle_elicit(gatto.tokens[0])
-    win.load_database(storage.load(db.path))                        # another database: none ticked
-    assert win.elicit_basket == []
+    win.load_database(storage.load(db.path))                        # opened again: its workspace keeps it
+    assert win.elicit_basket == [gatto.tokens[0].id]
 
 
 def test_review_puts_recordings_in_and_undo_takes_them_out(win, tmp_path):

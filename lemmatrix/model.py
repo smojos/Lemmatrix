@@ -754,6 +754,9 @@ class Database:
     texts: list[Text] = field(default_factory=list)
     path: str = ""                                    # where it was loaded from / saved to
     load_notes: list = field(default_factory=list, compare=False)   # e.g. what an upgrade changed
+    # read from a format before 7, so the working state (saved matrices, rerecord flags, the
+    # spelling list…) came from the database file: its workspace is to be made from it (idea 36)
+    workspace_from_file: bool = field(default=False, compare=False)
 
     # ---- convenience accessors ---------------------------------------
     def lemma(self, e: Entry) -> str:

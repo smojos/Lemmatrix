@@ -21,12 +21,12 @@ from .model import (LEMMAS, TEXTS, UTTERANCES, ClipSource, Database, Entry, Fiel
                     Location, Metadata, Person, RefCategory, Settings, Tag, TagStructure, Text, TierMapping,
                     TierRule, Token, Utterance, is_utterance, new_id, nfc, write_atomically, xml_safe)
 
-FORMAT_VERSION = "6"
+FORMAT_VERSION = "7"
 # Until version 1.0 only the current format is read (Josh, 18 October 2026: his database is the
 # only one, so there is no compatibility code for older formats). When the format changes, a
 # provisional upgrade from the format before is written for his database and taken out again
 # once it has been saved in the new one.
-READABLE = ("5", FORMAT_VERSION)   # 5: Josh's database before texts (provisional upgrade below)
+READABLE = ("5", "6", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file (upgrades below)
 BACKUPS_KEPT = 10
 
 
@@ -107,6 +107,18 @@ def _load_specs(el, tag: str) -> list[Spec]:
         tags = frozenset(nfc(t.strip()) for t in (c.get("tags") or "").split(",") if t.strip())
         out.append(Spec(frozenset() if match == CITATION else tags, match))
     return out
+
+
+def save_matrices(parent, matrices, tags):
+    """Saved matrices as <matrix> elements (in the workspace file since format 7)."""
+    for m in matrices:
+        mel = ET.SubElement(parent, "matrix", {"name": m.name, "kind": m.kind, "cell": " ".join(m.cell)})
+        for axis, specs in (("y", m.y), ("x", m.x)):
+            for sp in specs:
+                a = {"match": sp.match}
+                if sp.tags:
+                    a["tags"] = ", ".join(tags.sort(list(sp.tags)))
+                ET.SubElement(mel, axis, a)
 
 
 def _load_matrices(el) -> list[MatrixConfig]:
@@ -292,6 +304,8 @@ def load(path: str | os.PathLike) -> Database:
             "need it, so it can be renamed or moved in Edit → Fields but not deleted. It's empty."]
     if version == "5":
         _upgrade_5_to_6(db)
+    if version in ("5", "6"):            # format 7 (21 October): the working state moves to the workspace
+        db.workspace_from_file = True
     if repaired:
         db.load_notes = list(db.load_notes) + [REPAIRED_NOTE]
     return db
@@ -467,23 +481,9 @@ def to_element(db: Database) -> ET.Element:
                                  "text-pattern": s.text_pattern, "clip-padding": str(s.clip_padding),
                                  "tag-separator": s.tag_separator,
                                  "auto-update-names": _yes(s.auto_update_names)})
-    ET.SubElement(st, "pitch", {"display-range": f"{s.pitch_low}-{s.pitch_high}",
-                                "style": s.pitch_style})
-    if s.spelling_words:                          # the spellcheck's own words, one per line
-        sp = ET.SubElement(st, "spelling")
-        for w in sorted(dict.fromkeys(s.spelling_words), key=str.lower):
-            ET.SubElement(sp, "word").text = w
-    if s.matrices:
-        disp = ET.SubElement(st, "display")
-        for m in s.matrices:
-            mel = ET.SubElement(disp, "matrix", {"name": m.name, "kind": m.kind,
-                                                 "cell": " ".join(m.cell)})
-            for axis, specs in (("y", m.y), ("x", m.x)):
-                for sp in specs:
-                    a = {"match": sp.match}
-                    if sp.tags:
-                        a["tags"] = ", ".join(s.tags.sort(list(sp.tags)))
-                    ET.SubElement(mel, axis, a)
+    # how to read the pitch digits; the display style, saved matrices and the spelling list are
+    # working state, kept in the workspace file since format 7 (workspace.py)
+    ET.SubElement(st, "pitch", {"display-range": f"{s.pitch_low}-{s.pitch_high}"})
     for extra in s.extra:
         st.append(extra)
 
@@ -496,8 +496,6 @@ def to_element(db: Database) -> ET.Element:
         for key, val in (("speaker", t.speaker), ("collected", t.collected), ("file", t.file)):
             if val:
                 tattrs[key] = val
-        if t.rerecord:
-            tattrs["rerecord"] = "yes"
         tattrs["id"] = t.id
         tel = ET.SubElement(parent, "token", tattrs)
         _save_values(tel, t, s.token_fields, langs)

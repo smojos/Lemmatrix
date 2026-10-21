@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<database format="6">
+<database format="7">
   <metadata>
     <language code="TST">Testish</language>
     <variety code="CEN">Central</variety>
@@ -233,7 +233,7 @@
       <category letter="S" for="texts">Songs</category>
     </references>
     <sounds pattern="{language}-{variety}_{reference}_{gloss}_{tags}" utterance-pattern="{language}-{variety}_{reference}_{label}" text-pattern="{language}-{variety}_{reference}_{title}" clip-padding="100" tag-separator="-" auto-update-names="yes" />
-    <pitch display-range="1-5" style="contours" />
+    <pitch display-range="1-5" />
   </settings>
   <entry ref="A001" file-gloss="head" id="fa3c3d60c8">
     <Lemma>ʔalɛn</Lemma>

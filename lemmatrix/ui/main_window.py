@@ -137,8 +137,6 @@ class MainWindow(QMainWindow):
         self.bulk_window = None                   # the bulk edit window, while it's open
         self.utterances_window = None             # View → Texts and utterances, while it's open
         self.xml_window = None                    # View → XML viewer, while it's open
-        self.elicit_basket: list[str] = []        # token ids ticked for the next ɛλicit request
-        self.elicit_draft: dict = {}              # its settings and new sentences, as last left
         self.sound_files: set[str] = set()       # names in the sound folder, refreshed with the views
         self.cloud_files: set[str] = set()       # those of them that are online-only (OneDrive)
         self._suggestions: dict = {}             # (entry id, tags) -> predicted translation, for All data
@@ -146,7 +144,6 @@ class MainWindow(QMainWindow):
         self.spell_checker = spelling.Checker()  # English spelling, with the database's word list
         self.speller = spellui.Speller(self.spelling_spans, self.spell_checker.suggestions,
                                        self.add_spelling_word)
-        self.spelling_ignored: set[str] = set()  # Check spelling → Ignore: until Lemmatrix closes
         self.spelling_window = None
         self.resize(1500, 920)
         theme.from_prefs(self.prefs)
@@ -166,6 +163,13 @@ class MainWindow(QMainWindow):
         self.heartbeat.setInterval(5 * 60_000)
         self.heartbeat.timeout.connect(lambda: self._locked_path and lockmod.claim(self._locked_path))
         self._apply_autosave()
+        self._view_timer = QTimer(self)           # the view, filters and searches into the workspace,
+        self._view_timer.setSingleShot(True)      # a moment after they change (idea 36)
+        self._view_timer.setInterval(800)
+        self._view_timer.timeout.connect(self._save_view)
+        for sig in (self.lemmas.filtersChanged, self.all_table.filtersChanged, self.lemma_search.textChanged,
+                    self.all_search.textChanged, self.tabs.currentChanged):
+            sig.connect(lambda *_: self._view_timer.start())
         self.elicit_drive_ready: dict[str, tuple[str, int, str]] = {}   # request id -> (speaker, recordings, why)
         self._elicit_checking = False
         self._elicit_signal = _ElicitChecked(self)  # the background look in Drive reports here
@@ -288,13 +292,11 @@ class MainWindow(QMainWindow):
         self.autoplay = QCheckBox("Auto-play token soundfile")
         self.autoplay.setToolTip("Play a token's recording when you click it (in any tab) and when "
                                  "the token dialogue opens on it")
-        self.autoplay.setChecked(self.prefs.autoplay_tokens)
-        self.autoplay.toggled.connect(lambda on: setattr(self.prefs, "autoplay_tokens", bool(on)))
+        self.autoplay.toggled.connect(lambda on: self.doc.ws_set("autoplay", bool(on)))   # each database its own
         self.only_data = QCheckBox("Show only lemmas with token data")
         self.only_data.setToolTip("All data: leave out lemmas whose tokens are all empty. Lemma/Tag: "
                                   "leave out lemmas with nothing in any of the matrix's columns. "
                                   "Tag/Tag: show nothing for a lemma without token data.")
-        self.only_data.setChecked(self.prefs.only_lemmas_with_data)
         self.only_data.toggled.connect(self._only_data_toggled)
         opts = QHBoxLayout()
         opts.setContentsMargins(4, 0, 0, 0)
@@ -537,6 +539,32 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(f"ɛλicit: {names} — recordings ready in Google Drive "
                                          "(Receive ɛλicitation).", 15000)
 
+    # ɛλicit's next request, kept in the database's workspace (idea 36): the tokens ticked for it
+    # (right-click Add to ɛλicit request, or left ticked), and its settings and new sentences
+    @property
+    def elicit_basket(self) -> list[str]:
+        return self.doc.ws.get_list("elicit/basket")
+
+    @elicit_basket.setter
+    def elicit_basket(self, ids: list[str]):
+        self.doc.ws_set("elicit/basket", list(ids) or None)
+
+    @property
+    def elicit_draft(self) -> dict:
+        return self.doc.ws.get_dict("elicit/draft")
+
+    @elicit_draft.setter
+    def elicit_draft(self, draft: dict):
+        self.doc.ws_set("elicit/draft", dict(draft) if draft else None)
+
+    @property
+    def spelling_ignored(self) -> set[str]:
+        """Check spelling → Ignore: words left out of its list, kept in the workspace (idea 36)."""
+        return set(self.doc.ws.get_list("spelling/ignored"))
+
+    def ignore_spelling(self, word: str):
+        self.doc.ws_set("spelling/ignored", sorted(self.spelling_ignored | {word.lower()}))
+
     def _elicit_preselect(self) -> list[str]:
         """The tokens added with the right-click Add to ɛλicit request (and those left ticked when
         the request dialogue was last closed): ticked to begin with in Make ɛλicit request."""
@@ -550,11 +578,13 @@ class MainWindow(QMainWindow):
         request opens next."""
         if token is None:
             return
-        if token.id in self.elicit_basket:
-            self.elicit_basket.remove(token.id)
+        basket = self.elicit_basket
+        if token.id in basket:
+            basket.remove(token.id)
+            self.elicit_basket = basket
             msg = "Taken out of the ɛλicit request"
         else:
-            self.elicit_basket.append(token.id)
+            self.elicit_basket = basket + [token.id]
             item = next((e for e, t in self.doc.db.all_tokens() if t is token), None)
             from .. import elicit
             kind = "a rerecord" if item is not None and elicit.recording_path(self.doc.db, item, token) else "new"
@@ -965,14 +995,14 @@ class MainWindow(QMainWindow):
     def _setup_columns(self):
         db = self.doc.db
         cols = self._lemma_columns()
-        saved = self.prefs.get_list("columns/lemma")
+        saved = self.doc.ws.get_list("columns/lemma")
         keys = [k for k in saved if any(c.key == k for c in cols)] or self._default_lemma_keys()
         self.lemmas.set_columns(cols, keys)
         self._closed_editors(self.lemmas)
         self._spell_delegates()
         self.lemmas.resizeColumnsToContents()
         cols = self._all_columns()
-        saved = self.prefs.get_list("columns/alldata")
+        saved = self.doc.ws.get_list("columns/alldata")
         keys = [k for k in saved if any(c.key == k for c in cols)] or self._default_all_keys()
         self.all_table.set_columns(cols, keys)
         defaults = mx.default_names(db)
@@ -1002,7 +1032,7 @@ class MainWindow(QMainWindow):
         cols = self._lemma_columns()
         dlg = ConfigureColumnsDialog(self, [(c.key, c.title) for c in cols], self.lemmas.visible_keys())
         if dlg.exec():
-            self.prefs.set_list("columns/lemma", dlg.chosen())
+            self.doc.ws_set("columns/lemma", dlg.chosen())
             self.lemmas.set_columns(cols, dlg.chosen())
             self._closed_editors(self.lemmas)
             self._spell_delegates()
@@ -1013,12 +1043,14 @@ class MainWindow(QMainWindow):
         cols = self._all_columns()
         dlg = ConfigureColumnsDialog(self, [(c.key, c.title) for c in cols], self.all_table.visible_keys())
         if dlg.exec():
-            self.prefs.set_list("columns/alldata", dlg.chosen())
+            self.doc.ws_set("columns/alldata", dlg.chosen())
             self._setup_columns()
             self.refresh()
 
     # ============================================================ database
-    def load_database(self, db: Database):
+    def load_database(self, db: Database, workspace=None):
+        """Show a database. workspace: (Workspace, as on disk?) from _workspace_for(); without it
+        the workspace is found without asking (a missing one starts blank)."""
         self.player.stop()
         if self.doc.db is not db:
             self.doc.empty_held()                 # the closed database's deleted recordings: Recycle Bin
@@ -1032,11 +1064,16 @@ class MainWindow(QMainWindow):
             self.xml_window = None
         if self.doc.db is not db:
             self._save_view()
+            self.doc.write_workspace()            # the closed database's working state, written now
+        if workspace is None:
+            workspace = self._workspace_for(db, ask=False)
         self._mark_open(db.path)
         self.doc.db = db
+        ws, written = workspace
+        self.doc.set_workspace(ws, written)
+        if not written:
+            self.doc.write_workspace()            # made now (from an older database, or blank)
         self.doc.text_buffers.clear()             # unsaved line edits of the database closed are dropped
-        self.elicit_basket = []                   # the ticks belong to the database closed
-        self.elicit_draft = {}                    # and so do the request's settings and new sentences
         self.doc.undo.clear()
         self.doc.undo.setClean()
         self.doc._settings_dirty = False
@@ -1050,8 +1087,15 @@ class MainWindow(QMainWindow):
         self.configs.clear()
         for v in (self.lt_view, self.tt_view):
             v.set_database(db)
+        for box, name in ((self.autoplay, "autoplay"), (self.only_data, "only_with_data")):
+            box.blockSignals(True)                # each database has its own (in its workspace)
+            box.setChecked(self.doc.ws.get_bool(name))
+            box.blockSignals(False)
         self._setup_columns()
         self.lemmas.proxy.pinned = None           # a Ctrl+click pin belongs to the database closed
+        self.all_table.proxy.pinned = None
+        self.lemmas.proxy.filters.clear()         # so do the filters (this one's come back with its view)
+        self.all_table.proxy.filters.clear()
         self.lemmas.set_rows(db.entries)
         self.lemma_search.clear()
         self.all_search.clear()
@@ -1067,11 +1111,108 @@ class MainWindow(QMainWindow):
         self._report_missing()
         if self.notebook_dialog is not None:
             self.notebook_dialog.reload()
+        if db.workspace_from_file and not db.load_notes:   # format 6 → 7: quietly, saving writes format 7
+            self.doc.settings_changed()
         if db.load_notes:                         # e.g. an older file upgraded to the current format
             notes, db.load_notes = db.load_notes, []
             self.doc.settings_changed()           # unsaved, so saving writes the new format
             QMessageBox.information(self, "Database upgraded", "\n\n".join(notes))
         self._check_layout(db)
+
+    # ------------------------------------------------- the workspace file (idea 36)
+    def _workspace_for(self, db: Database, ask: bool = True):
+        """(the Workspace that goes with the database, whether it is as on disk), or None if the
+        person cancelled. A database from before format 7 makes its workspace from what it held,
+        with this computer's remembered settings for it; a missing one asks (Locate…, Cancel,
+        Start a new workspace) when ask, and starts blank otherwise."""
+        from .. import workspace as wsmod
+        if not db.path:
+            return wsmod.Workspace(), False
+        path = wsmod.path_for(db.path)
+        if path.exists():
+            try:
+                return wsmod.load(path, db), True
+            except wsmod.WorkspaceError as exc:
+                if ask:
+                    QMessageBox.warning(self, "Workspace", f"{exc}\n\nThe database opens with the default "
+                                        "workspace this time, and the file is left as it is (it isn't "
+                                        "written over).")
+                return wsmod.Workspace(path=str(path), unreadable=True), True
+        if db.workspace_from_file:                # format 6: its working state moves out of it
+            return self._migrated_workspace(db, str(path)), False
+        if ask:
+            choice = self._ask_missing_workspace(db)
+            if choice is None:
+                return None
+            if choice:                            # located: copied beside the database
+                try:
+                    shutil.copy2(choice, path)
+                    return wsmod.load(path, db), True
+                except (OSError, wsmod.WorkspaceError) as exc:
+                    QMessageBox.warning(self, "Workspace", f"Couldn't use {Path(choice).name}: {exc}\n\n"
+                                        "The database opens with a new workspace.")
+        self._clear_working_state(db)
+        return wsmod.Workspace(path=str(path)), False
+
+    @staticmethod
+    def _clear_working_state(db: Database):
+        """A blank workspace: nothing of the working state kept in the database's objects."""
+        s = db.settings
+        s.matrices, s.spelling_words = [], []
+        s.play_cell_on_click, s.pitch_style = False, "contours"
+        for _, t in db.all_tokens():
+            t.rerecord = False
+
+    def _ask_missing_workspace(self, db: Database):
+        """Missing workspace: a path picked (Locate…), "" (Start a new workspace) or None (Cancel)."""
+        from .. import workspace as wsmod
+        name = Path(db.path).name
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Warning)
+        box.setWindowTitle("Workspace missing")
+        box.setText(f"The workspace file for {name} is missing.")
+        box.setInformativeText(f"{wsmod.path_for(db.path).name} keeps what you were working on: saved "
+                               "matrices, filters and columns, the Current Session, tokens flagged to be "
+                               "recorded again, the spelling list. It should be beside the database.\n\n"
+                               "Locate it, or start a new workspace with the defaults.")
+        locate = box.addButton("Locate…", QMessageBox.AcceptRole)
+        new = box.addButton("Start a new workspace", QMessageBox.DestructiveRole)
+        box.addButton(QMessageBox.Cancel)
+        box.exec()
+        hit = box.clickedButton()
+        if hit is new:
+            return ""
+        if hit is not locate:
+            return None
+        found, _ = QFileDialog.getOpenFileName(self, "Locate the workspace", str(Path(db.path).parent),
+                                               "Lemmatrix workspace (*.workspace);;All files (*)")
+        return found or None
+
+    def _migrated_workspace(self, db: Database, path: str):
+        """The workspace for a database from before format 7: its saved matrices, rerecord flags and
+        spelling list stay in its objects (written into the workspace), and this computer's settings
+        for it are copied in once (the view, the Current Session, columns, Configure view…)."""
+        from .. import workspace as wsmod
+        ws = wsmod.Workspace(path=path)
+        p = self.prefs
+        if (v := p.view_for(db.path)):
+            ws.set("view", v)
+        if (v := p.session_for(db.path)):
+            ws.set("session", v)
+        if (sp := p.get_value("session/speaker")) and isinstance(sp, str):
+            ws.set("session/speaker", sp)
+        dates = p.full_backup_dates(db.path)
+        if any(dates.values()):
+            ws.set("fullbackup", dates)
+        for key in ("columns/lemma", "columns/alldata", "columns/utterances", "columns/texts",
+                    "columns/bulk-lemmas", "columns/bulk-tokens", "lines/fields", "lines/aligned"):
+            if (v := p.get_list(key)):
+                ws.set(key, v)
+        ws.set("autoplay", p.autoplay_tokens)
+        ws.set("only_with_data", p.only_lemmas_with_data)
+        if (v := p.get_value("notebook/sort")):
+            ws.set("notebook/sort", str(v))
+        return ws
 
     # ------------------------------------------------- the fixed folder layout
     def _check_layout(self, db: Database):
@@ -1175,9 +1316,9 @@ class MainWindow(QMainWindow):
         path = self.doc.db.path
         if not path:
             return
-        dates = self.prefs.full_backup_dates(path)
+        dates = self._backup_dates()
         if not dates["first_seen"]:
-            self.prefs.set_full_backup_date(path, "first_seen", today())
+            self._set_backup_date("first_seen", today())
             return
         if not layout.reminder_due(dates["last"], dates["snoozed"], dates["first_seen"]):
             return
@@ -1186,7 +1327,18 @@ class MainWindow(QMainWindow):
         else:
             import datetime as _dt
             later = (_dt.date.today() + _dt.timedelta(days=layout.REMIND_DAYS)).isoformat()
-            self.prefs.set_full_backup_date(path, "snoozed", later)
+            self._set_backup_date("snoozed", later)
+
+    def _backup_dates(self) -> dict:
+        """The full backup's dates for this database, kept in its workspace (a backup made on one
+        computer counts on every computer): last, snoozed (no reminder before), first_seen."""
+        d = self.doc.ws.get_dict("fullbackup")
+        return {k: str(d.get(k, "") or "") for k in ("last", "snoozed", "first_seen")}
+
+    def _set_backup_date(self, which: str, day: str):
+        d = self._backup_dates()
+        d[which] = day
+        self.doc.ws_set("fullbackup", d)
 
     def _ask_backup_reminder(self, last: str) -> bool:
         """True for Back up now; False for remind me again in 7 days."""
@@ -1253,8 +1405,8 @@ class MainWindow(QMainWindow):
         progress.close()
         if not self.prefs.full_backup_folder:     # the first one: next time it starts there
             self.prefs.full_backup_folder = str(Path(path).parent)
-        self.prefs.set_full_backup_date(db.path, "last", today())
-        self.prefs.set_full_backup_date(db.path, "snoozed", "")
+        self._set_backup_date("last", today())
+        self._set_backup_date("snoozed", "")
         self.statusBar().showMessage(f"Full backup made: {n} files in {QDir.toNativeSeparators(path)}.", 10000)
         return True
 
@@ -1282,7 +1434,7 @@ class MainWindow(QMainWindow):
         the session's day if it has notes, otherwise the latest day with people or places."""
         db = self.doc.db
         self._fill_db_title()
-        last = self.prefs.session_for(db.path) if db.path else {}
+        last = self.doc.ws.get_dict("session") if db.path else {}
         if last:
             keys = {k: [x for x in last.get(k, []) if isinstance(x, str)] for k in self.sess_rows}
         else:
@@ -1292,8 +1444,8 @@ class MainWindow(QMainWindow):
             keys = ({chips.RESEARCHERS: list(s.researchers), chips.PARTICIPANTS: list(s.participants),
                      chips.LOCATIONS: list(s.locations)} if s is not None
                     else {k: [] for k in self.sess_rows})
-            if not db.path and not keys[chips.PARTICIPANTS] and self.prefs.speaker in db.participant_codes():
-                keys[chips.PARTICIPANTS] = [self.prefs.speaker]
+            if not db.path and not keys[chips.PARTICIPANTS] and self.speaker_code in db.participant_codes():
+                keys[chips.PARTICIPANTS] = [self.speaker_code]
         for kind, row in self.sess_rows.items():
             row.set_keys(keys.get(kind, []))
         self._remember_session()
@@ -1309,8 +1461,8 @@ class MainWindow(QMainWindow):
     def _remember_session(self):
         """The panel's people and places are remembered for the next run, whichever way they got there
         (picked, or loaded from a day in the notebook)."""
-        if self.doc.db.path:                      # an empty panel is remembered too
-            self.prefs.set_session_for(self.doc.db.path, self.session_keys())
+        if self.doc.db.path:                      # an empty panel is remembered too (in the workspace)
+            self.doc.ws_set("session", self.session_keys())
 
     def _fill_db_title(self):
         md = self.doc.db.metadata
@@ -1326,23 +1478,33 @@ class MainWindow(QMainWindow):
         """The speaker follows the session's participants: it stays if still there, otherwise it
         is the first participant. (It is chosen in the token dialogue.)"""
         choices = self.speaker_choices()
-        current = self.prefs.speaker
+        current = self.speaker_code
         if current and current not in choices:
             current = ""
         if not current and self.sess_rows[chips.PARTICIPANTS].keys:
             current = choices[0]
-        self.prefs.speaker = current
+        self.speaker_code = current
 
     def set_speaker(self, code: str):
         """The speaker for the next tokens and recordings (chosen in the token dialogue)."""
-        self.prefs.speaker = code
+        self.speaker_code = code
+
+    @property
+    def speaker_code(self) -> str:
+        """The session's speaker, kept in the database's workspace."""
+        v = self.doc.ws.get("session/speaker", "")
+        return v if isinstance(v, str) else ""
+
+    @speaker_code.setter
+    def speaker_code(self, code: str):
+        self.doc.ws_set("session/speaker", code or "")
 
     def session_keys(self) -> dict[str, list[str]]:
         return {k: list(row.keys) for k, row in self.sess_rows.items()}
 
     def _session_people_changed(self):
         if self.doc.db.path:                      # (also when the last chip is removed)
-            self.prefs.set_session_for(self.doc.db.path, self.session_keys())
+            self.doc.ws_set("session", self.session_keys())
         self._fill_speakers()
 
     def _session_date_changed(self):
@@ -1371,7 +1533,7 @@ class MainWindow(QMainWindow):
         return self.session_date() or today()
 
     def session_speaker(self) -> str:
-        return self.prefs.speaker
+        return self.speaker_code
 
     # ============================================================= notebook
     def _notebook_icons(self):
@@ -1640,13 +1802,15 @@ class MainWindow(QMainWindow):
                          "cell": list(c.cell), "x": [self._spec_json(x) for x in c.x],
                          "y": [self._spec_json(y) for y in c.y]} for c in self.configs.values()],
         }
-        self.prefs.set_view_for(db.path, view)
+        view["filters"] = {"lemma": self.lemmas.filter_state(), "alldata": self.all_table.filter_state()}
+        view["search"] = {"lemma": self.lemma_search.text(), "alldata": self.all_search.text()}
+        self.doc.ws_set("view", view)
 
     def _restore_view(self):
         db = self.doc.db
         if not db.path:
             return
-        view = self.prefs.view_for(db.path)
+        view = self.doc.ws.get_dict("view")
         if not view:
             return
         try:
@@ -1664,6 +1828,12 @@ class MainWindow(QMainWindow):
                 self.configs[cfg.kind] = cfg
             for t in (LEMMA_TAG, TAG_TAG):
                 self.switched[t] = bool(view.get("switched", {}).get(KINDS[t], False))
+            f = view.get("filters") or {}             # the filters, searches and pin (idea 36)
+            self.lemmas.set_filter_state(f.get("lemma") or {})
+            self.all_table.set_filter_state(f.get("alldata") or {})
+            q = view.get("search") or {}
+            self.lemma_search.setText(str(q.get("lemma", "") or ""))
+            self.all_search.setText(str(q.get("alldata", "") or ""))
             ref = view.get("lemma")
             e = db.entry_by_ref(ref) if ref else None
             if e is not None:
@@ -1737,7 +1907,7 @@ class MainWindow(QMainWindow):
         self.refresh()
 
     def _only_data_toggled(self, on):
-        self.prefs.only_lemmas_with_data = bool(on)
+        self.doc.ws_set("only_with_data", bool(on))
         self.refresh()
 
     def _scan_sound_folder(self):
@@ -1748,6 +1918,8 @@ class MainWindow(QMainWindow):
             v.cloud_files = self.cloud_files
 
     def refresh(self):
+        if hasattr(self, "_view_timer"):
+            self._view_timer.start()              # the lemma or matrix shown may have changed
         db = self.doc.db
         tab = self.tabs.currentIndex()
         self._scan_sound_folder()
@@ -1851,7 +2023,7 @@ class MainWindow(QMainWindow):
         saved.name = name
         mats[:] = [m for m in mats if not (m.kind == saved.kind and m.name == name)] + [saved]
         self.configs[cfg.kind] = saved.copy()
-        self.doc.settings_changed()
+        self.doc.workspace_changed()              # saved matrices are in the workspace (idea 36)
 
     def rename_matrix(self, tab):
         cfg = self.config_for(tab)
@@ -1867,7 +2039,7 @@ class MainWindow(QMainWindow):
             if m.name == cfg.name:
                 m.name = name
         cfg.name = name
-        self.doc.settings_changed()
+        self.doc.workspace_changed()
 
     def clear_matrix(self, tab):
         """Back to a blank view: no rows or columns, nothing chosen."""
@@ -1887,7 +2059,7 @@ class MainWindow(QMainWindow):
         mats = self.doc.db.settings.matrices
         mats[:] = [m for m in mats if not (m.kind == cfg.kind and m.name == cfg.name)]
         cfg.name = ""
-        self.doc.settings_changed()
+        self.doc.workspace_changed()
 
     # ================================================ tokens and playback
     def _view(self, tab):
@@ -2227,7 +2399,7 @@ class MainWindow(QMainWindow):
             return
         s.spelling_words.append(word)
         self.spell_checker.set_words(s.spelling_words)
-        self.doc.settings_changed()
+        self.doc.workspace_changed()              # the word list is in the workspace (idea 36)
         self._repaint_spelling()
         self.statusBar().showMessage(f"“{word}” added to the database's word list.", 5000)
 
@@ -2550,8 +2722,8 @@ class MainWindow(QMainWindow):
                 if t.speaker in speakers:
                     t.speaker = speakers[t.speaker]
             self.doc.undo.clear()                 # renames can't be undone safely
-            if self.prefs.speaker in speakers:
-                self.prefs.speaker = speakers[self.prefs.speaker]
+            if self.speaker_code in speakers:
+                self.speaker_code = speakers[self.speaker_code]
         if any(renames.values()):
             for t in db.texts:                    # texts' people and places follow renamed codes
                 t.participants = [speakers.get(c, c) for c in t.participants]
@@ -3077,8 +3249,11 @@ class MainWindow(QMainWindow):
             return
         if not self._open_elsewhere_ok(path):
             return
+        workspace = self._workspace_for(db)
+        if workspace is None:                     # Cancel at "the workspace file is missing"
+            return
         self.prefs.last_file = path
-        self.load_database(db)
+        self.load_database(db, workspace)
 
     def open_sample(self):
         target = Path.home() / "Documents" / "Lemmatrix Sample"
@@ -3092,6 +3267,9 @@ class MainWindow(QMainWindow):
             return
         target.mkdir(parents=True, exist_ok=True)
         shutil.copy2(SAMPLE, dst)
+        from .. import workspace as wsmod
+        if wsmod.path_for(SAMPLE).exists():       # its saved matrices are in its workspace
+            shutil.copy2(wsmod.path_for(SAMPLE), wsmod.path_for(dst))
         sounds = SAMPLE.parent / "Soundfiles"
         if sounds.exists():
             if (target / "Soundfiles").exists():
@@ -3130,6 +3308,7 @@ class MainWindow(QMainWindow):
             self._mark_open(path)
             self._update_title()
         self._record_comments()
+        self._save_view()                         # into the workspace, written with the save
         if not self._textgrid_conflicts():
             return False
         try:
@@ -3266,6 +3445,7 @@ class MainWindow(QMainWindow):
                 pass
             try:
                 self._save_view()
+                self.doc.write_workspace()        # the working state, written now (idea 36)
                 self._save_window()
                 self._mark_open("")
             except Exception:                           # never stop the window closing

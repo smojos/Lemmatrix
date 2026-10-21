@@ -301,8 +301,12 @@ def test_saved_matrices_round_trip(tmp_path, db):
     db.settings.matrices.append(cfg)
     path = tmp_path / "m.xml"
     storage.save(db, path)
-    back = storage.load(path).settings.matrices
-    assert back == [cfg]
+    from lemmatrix import workspace                 # in the workspace since format 7 (idea 36)
+    workspace.save(workspace.Workspace(), db)
+    assert "<matrix" not in path.read_text(encoding="utf-8")
+    again = storage.load(path)
+    workspace.load(workspace.path_for(path), again)
+    assert again.settings.matrices == [cfg]
 
 
 def test_reading_order_is_column_by_column():

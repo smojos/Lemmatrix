@@ -558,7 +558,7 @@ class BulkEditWindow(QDialog):
         return [self._tick_column()] + cols
 
     def _default_keys(self, level: str) -> list[str]:
-        saved = self.main.prefs.get_list(f"columns/bulk-{level}")
+        saved = self.main.doc.ws.get_list(f"columns/bulk-{level}")
         if saved:
             return saved
         if level == bulk.LEMMAS:
@@ -594,7 +594,7 @@ class BulkEditWindow(QDialog):
         current = [k for k in self.tables[level].visible_keys() if k != TICK]
         dlg = ConfigureColumnsDialog(self, [(c.key, c.title) for c in cols], current)
         if dlg.exec():
-            self.main.prefs.set_list(f"columns/bulk-{level}", dlg.chosen())
+            self.main.doc.ws_set(f"columns/bulk-{level}", dlg.chosen())
             self._set_columns(level, dlg.chosen())
             self._fill_rows()
 

@@ -36,7 +36,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
-from lemmatrix import layout, storage  # noqa: E402
+from lemmatrix import layout, storage, workspace  # noqa: E402
 from lemmatrix.defaults import new_database  # noqa: E402
 from lemmatrix.model import Person  # noqa: E402
 
@@ -222,6 +222,7 @@ def build(recordings: Path | None = None):
         db.utterances.append(u)
     make_images(layout.images_folder(db.path))
     storage.save(db, db.path, backup=False)
+    workspace.save(workspace.Workspace(), db)                 # beside it, so opening a copy doesn't warn
     shutil.rmtree(tmp / "Backups", ignore_errors=True)
     for sub in ("Exports", "Documentation"):      # empty folders aren't kept by git; Lemmatrix makes them
         shutil.rmtree(tmp / sub, ignore_errors=True)

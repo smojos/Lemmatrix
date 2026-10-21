@@ -5,6 +5,7 @@
     Main folder/
     ├─ <database>.xml
     ├─ <database>.notebook
+    ├─ <database>.workspace    working state: saved matrices, filters, the session… (idea 36)
     ├─ Soundfiles/
     │  ├─ Tokens/              lemma tokens' recordings
     │  ├─ Utterances/          (idea 7, stage 2)
@@ -310,11 +311,11 @@ def stem_problem(stem: str) -> str:
 
 def _backup_pattern(stem: str):
     import re
-    return re.compile(re.escape(stem) + r"(_\d{4}-\d{2}-\d{2}_\d{6}(?:_\d+)?)(\.xml|\.notebook)$")
+    return re.compile(re.escape(stem) + r"(_\d{4}-\d{2}-\d{2}_\d{6}(?:_\d+)?)(\.xml|\.notebook|\.workspace)$")
 
 
 def rename_plan(db_path, new_stem: str) -> list[tuple[Path, Path]]:
-    """What renaming the database renames: the database, its notebook and its automatic
+    """What renaming the database renames: the database, its notebook, its workspace and its automatic
     backups (so they are still cleared out as new ones are made). Raises RenameError."""
     old = Path(db_path)
     problem = stem_problem(new_stem)
@@ -325,6 +326,9 @@ def rename_plan(db_path, new_stem: str) -> list[tuple[Path, Path]]:
     notebook = old.with_suffix(".notebook")
     if notebook.exists():
         plan.append((notebook, new.with_suffix(".notebook")))
+    workspace = old.with_suffix(".workspace")
+    if workspace.exists():
+        plan.append((workspace, new.with_suffix(".workspace")))
     folder = backups_folder(old)
     if folder.is_dir():
         pat = _backup_pattern(old.stem)

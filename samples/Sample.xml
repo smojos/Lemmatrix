@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<database format="6">
+<database format="7">
   <metadata>
     <language code="LXX">Sample language</language>
     <variety code="VXX">Sample variety</variety>
@@ -232,39 +232,7 @@
       <category letter="S" for="texts">Songs</category>
     </references>
     <sounds pattern="{language}-{variety}_{reference}_{gloss}_{tags}" utterance-pattern="{language}-{variety}_{reference}_{label}" text-pattern="{language}-{variety}_{reference}_{title}" clip-padding="100" tag-separator="-" auto-update-names="yes" />
-    <pitch display-range="1-5" style="contours" />
-    <display>
-      <matrix name="Nouns: citation, plural and frames" kind="lemma-tag" cell="drawing Phonetic Phonemic Translation">
-        <x match="citation" />
-        <x match="exact" tags="Plural" />
-        <x match="exact" tags="Frame 1" />
-        <x match="exact" tags="Frame 2" />
-      </matrix>
-      <matrix name="Nouns: number and possession" kind="tag-tag" cell="drawing Phonetic Phonemic Translation">
-        <y match="exact" tags="Singular" />
-        <y match="exact" tags="Plural" />
-        <x match="exact" tags="1SG.POSS" />
-        <x match="exact" tags="2SG.POSS" />
-        <x match="exact" tags="3SG.POSS" />
-        <x match="exact" tags="1PL.POSS" />
-        <x match="exact" tags="2PL.POSS" />
-        <x match="exact" tags="3PL.POSS" />
-      </matrix>
-      <matrix name="Verbs: imperatives" kind="lemma-tag" cell="drawing Phonetic Phonemic Translation">
-        <x match="citation" />
-        <x match="exact" tags="2SG.A, Imperative" />
-        <x match="exact" tags="2PL.A, Imperative" />
-        <x match="exact" tags="2SG.A, Imperative, Negative" />
-        <x match="exact" tags="2PL.A, Imperative, Negative" />
-      </matrix>
-      <matrix name="Verbs: person and tense" kind="tag-tag" cell="drawing Phonetic Phonemic Translation">
-        <y match="exact" tags="3SG.A, NP.O" />
-        <y match="exact" tags="3PL.A, NP.O" />
-        <x match="exact" tags="Present" />
-        <x match="exact" tags="Past" />
-        <x match="exact" tags="Future" />
-      </matrix>
-    </display>
+    <pitch display-range="1-5" />
   </settings>
   <entry ref="A001" file-gloss="head" id="eac5d624e4">
     <Lemma>tʊ́ʊm</Lemma>

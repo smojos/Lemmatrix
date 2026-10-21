@@ -192,6 +192,10 @@ class TextsUtterancesWindow(QDialog):
         self.refresh()
         self.tabs.setCurrentIndex(TEXTS)           # it always opens on Texts (Josh, 18 October)
         self._tab_changed(TEXTS)
+        self._restore_state()                     # the filters and searches as left (the workspace)
+        for sig in (t.filtersChanged, self.search.textChanged, self.texts.table.filtersChanged,
+                    self.texts.search.textChanged):
+            sig.connect(lambda *_: self._save_state())
         self._restyle()
         from . import winstate
         winstate.keep(self, self.main.prefs, "window/utterances")   # size, place and splitters, as adjusted
@@ -376,7 +380,7 @@ class TextsUtterancesWindow(QDialog):
     def _setup_columns(self):
         db = self.db
         cols = self._columns()
-        saved = self.main.prefs.get_list("columns/utterances")
+        saved = self.doc.ws.get_list("columns/utterances")
         keys = [k for k in saved if any(c.key == k for c in cols)] or self._default_keys()
         self.table.set_columns(cols, keys)
         self.table.set_delegate("tags", ChipsDelegate(
@@ -395,7 +399,7 @@ class TextsUtterancesWindow(QDialog):
         cols = self._columns()
         dlg = ConfigureColumnsDialog(self, [(c.key, c.title) for c in cols], self.table.visible_keys())
         if dlg.exec():
-            self.main.prefs.set_list("columns/utterances", dlg.chosen())
+            self.doc.ws_set("columns/utterances", dlg.chosen())
             self._setup_columns()
             self.refresh()
 
@@ -807,6 +811,25 @@ class TextsUtterancesWindow(QDialog):
             a.setEnabled(on)
             a.triggered.connect(lambda *_, fn=fn: fn())
         m.exec(pos)
+
+    # ---- the filters and searches, kept in the workspace (idea 36) -----------------
+    def _save_state(self):
+        self.doc.ws_set("view/texts-utterances", {
+            "utterances": self.table.filter_state(), "texts": self.texts.table.filter_state(),
+            "search": {"utterances": self.search.text(), "texts": self.texts.search.text()}})
+
+    def _restore_state(self):
+        st = self.doc.ws.get_dict("view/texts-utterances")
+        if not st:
+            return
+        try:
+            self.table.set_filter_state(st.get("utterances") or {})
+            self.texts.table.set_filter_state(st.get("texts") or {})
+            q = st.get("search") or {}
+            self.search.setText(str(q.get("utterances", "") or ""))
+            self.texts.search.setText(str(q.get("texts", "") or ""))
+        except (TypeError, AttributeError):
+            pass                                  # an unreadable state is simply forgotten
 
     # ---- style and closing --------------------------------------------
     def _restyle(self):

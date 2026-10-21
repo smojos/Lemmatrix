@@ -32,7 +32,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
-from lemmatrix import pitch, storage  # noqa: E402
+from lemmatrix import pitch, storage, workspace  # noqa: E402
 from lemmatrix.defaults import new_database  # noqa: E402
 from lemmatrix.model import Participant  # noqa: E402
 
@@ -296,6 +296,7 @@ def main(out: Path):
             for v in sorted({e.get(f.name) for e in db.entries if e.get(f.name)}):
                 f.add_value(v)
     storage.save(db, out, backup=False)
+    workspace.save(workspace.Workspace(), db)
     n_tokens = sum(len(e.tokens) for e in db.entries)
     print(f"Wrote {out} with {n_entries} lemmas and {n_tokens} tokens.")
 

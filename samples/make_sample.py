@@ -43,7 +43,7 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
-from lemmatrix import audio, matrix as mx, pitch, storage  # noqa: E402
+from lemmatrix import audio, matrix as mx, pitch, storage, workspace  # noqa: E402
 from lemmatrix.defaults import new_database  # noqa: E402
 
 RATE = 11025
@@ -425,6 +425,7 @@ class Builder:
             self.simple("N", gloss, form, "ADVERB")
         self.matrices()
         storage.save(self.db, HERE / "Sample.xml", backup=False)
+        workspace.save(workspace.Workspace(), self.db)        # the saved matrices are in its workspace
         shutil.rmtree(HERE / "Backups", ignore_errors=True)
         return self.db
 

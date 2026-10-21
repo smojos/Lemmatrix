@@ -4,8 +4,8 @@
 
 A window of its own, beside the main one. The words are listed with how often they occur and
 where; the occurrences of the chosen word are listed under them (double-click one to go to its
-lemma or token). For each word: Replace everywhere (one undo step), Ignore (until Lemmatrix is
-closed), or Add to the word list (kept in the database).
+lemma or token). For each word: Replace everywhere (one undo step), Ignore (kept in the workspace,
+idea 36), or Add to the word list (kept in the workspace too).
 """
 
 from __future__ import annotations
@@ -71,7 +71,7 @@ class SpellingWindow(QDialog):
         self.replace_btn = QPushButton("Replace everywhere")
         self.replace_btn.setToolTip("Replace the word in every gloss and translation it's in (one undo step)")
         self.ignore_btn = QPushButton("Ignore")
-        self.ignore_btn.setToolTip("Leave it out of this list until Lemmatrix is closed")
+        self.ignore_btn.setToolTip("Leave it out of this list (remembered in the database's workspace)")
         self.add_btn = QPushButton("Add to word list")
         self.add_btn.setToolTip("Count it as spelled correctly from now on (kept in the database)")
         for b in (self.replace_btn, self.ignore_btn, self.add_btn):
@@ -188,7 +188,7 @@ class SpellingWindow(QDialog):
     def ignore(self):
         u = self.current()
         if u is not None:
-            self.main.spelling_ignored.add(u.word.lower())
+            self.main.ignore_spelling(u.word)
             self.rescan()
 
     def add(self):

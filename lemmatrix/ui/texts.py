@@ -611,7 +611,7 @@ class TextsPanel(QObject):
 
     def _setup_columns(self):
         cols = self._columns()
-        saved = self.main.prefs.get_list("columns/texts")
+        saved = self.doc.ws.get_list("columns/texts")
         keys = [k for k in saved if any(c.key == k for c in cols)] or self._default_keys()
         self.table.set_columns(cols, keys)
 
@@ -619,7 +619,7 @@ class TextsPanel(QObject):
         cols = self._columns()
         dlg = ConfigureColumnsDialog(self.win, [(c.key, c.title) for c in cols], self.table.visible_keys())
         if dlg.exec():
-            self.main.prefs.set_list("columns/texts", dlg.chosen())
+            self.doc.ws_set("columns/texts", dlg.chosen())
             self._setup_columns()
             self.refresh()
 
@@ -701,12 +701,11 @@ class TextsPanel(QObject):
     def view_specs(self) -> list[FieldSpec]:
         """The fields each line shows (Configure view; one setting for all texts)."""
         choices = {k: (title, ipa) for k, title, ipa in self.view_choices()}
-        prefs = self.main.prefs
-        keys = [k for k in prefs.get_list("lines/fields") if k in choices]
+        keys = [k for k in self.doc.ws.get_list("lines/fields") if k in choices]
         if not keys:                              # at first: the fields the tier mapping fills
             mapped = {r.key for r in self.db.settings.tier_mapping.rules if r.field}
             keys = [k for k in choices if k in mapped] or list(choices)[:4]
-        saved = prefs.get_list("lines/aligned")
+        saved = self.doc.ws.get_list("lines/aligned")
         aligned = set(saved) if saved != ["-"] else set()
         if not saved:                             # at first: Phonemic and Morphemes line up
             aligned = {k for k in keys if k.split(":")[0] in ("Phonemic", "Morphemes")}
@@ -719,8 +718,8 @@ class TextsPanel(QObject):
         dlg = ConfigureViewDialog(self.win, self.view_choices(), self.view_specs())
         if dlg.exec():
             keys, aligned = dlg.chosen()
-            self.main.prefs.set_list("lines/fields", keys)
-            self.main.prefs.set_list("lines/aligned", aligned or ["-"])
+            self.doc.ws_set("lines/fields", keys)                 # in the workspace (idea 36)
+            self.doc.ws_set("lines/aligned", aligned or ["-"])
             self._apply_view()
 
     def _apply_view(self):
