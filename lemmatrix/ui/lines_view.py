@@ -34,7 +34,9 @@ from . import searchmark, theme
 from .icons import icon, themed_icon
 from .widgets import ipa_font, meaning
 
-MARGIN = 24              # the buffer on the left
+MARGIN = 40              # the buffer on the left, with room for the bookmark (idea 32; 24 before)
+BOOKMARK_W = 14          # the bookmark ribbon in the margin
+GOLD = "#d4a017"
 SIDE_W = 260             # time and Comment, pinned at the right
 PAD = 8                  # inside a cell, above and below
 GAP = 16                 # between aligned columns
@@ -107,6 +109,7 @@ class LinesView(QAbstractScrollArea):
     countChanged = Signal()
     pushRequested = Signal(object)                # the ? on a line's Comment: Push to question
     createTokenRequested = Signal(object, str, str)   # line, field key, the words chosen (idea 31)
+    bookmarkToggled = Signal(object)              # the margin's bookmark clicked in edit mode (idea 32)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -128,6 +131,7 @@ class LinesView(QAbstractScrollArea):
         self.menu_key = ""                        # the field right-clicked last
         self._text_sel = None                     # (line id, field key, first word, last word)
         self._drag = None                         # (line id, field key, word, x) while pressing on a field
+        self.bookmark = None                      # the id of the text's bookmarked line (idea 32)
         self.zoom = 1.0                           # Ctrl + mouse wheel (this view's own, not saved)
         self._base_pt = self.font().pointSizeF()
         self._apply_fonts()
@@ -369,6 +373,35 @@ class LinesView(QAbstractScrollArea):
         """The Push to question button, at the top right of a Comment box that has a comment."""
         return QRectF(box.right() - PUSH - 1, box.top() + 3, PUSH - 3, PUSH - 3)
 
+    def _bookmark_rect(self, c, top: float) -> QRectF:
+        """Where a line's bookmark sits: in the left margin, pinned (it doesn't scroll sideways)."""
+        return QRectF((MARGIN - BOOKMARK_W) / 2 - 2, top + PAD, BOOKMARK_W, min(22.0, c.h - 2 * PAD))
+
+    def _paint_bookmark(self, p: QPainter, r: QRectF, golden: bool):
+        """A ribbon with a notch: golden for the text's bookmark, a faint shadow for the others (edit mode)."""
+        from PySide6.QtGui import QPolygonF
+        notch = r.height() * 0.28
+        shape = QPolygonF([QPointF(r.left(), r.top()), QPointF(r.right(), r.top()),
+                           QPointF(r.right(), r.bottom()), QPointF(r.center().x(), r.bottom() - notch),
+                           QPointF(r.left(), r.bottom())])
+        if golden:
+            gold = QColor(GOLD)
+            p.setPen(QPen(gold.darker(130), 1))
+            p.setBrush(gold)
+        else:
+            shade = QColor(self.palette().text().color())
+            shade.setAlphaF(0.13)
+            p.setPen(Qt.NoPen)
+            p.setBrush(shade)
+        p.drawPolygon(shape)
+
+    def bookmark_row(self):
+        return next((ln for ln in self._visible if ln.id == self.bookmark), None)
+
+    def set_bookmark(self, line_id):
+        self.bookmark = line_id
+        self.viewport().update()
+
     def _hit(self, pos) -> tuple[int | None, str]:
         """(visible line index, what: a field key, "comment", "push", "clips", "side" or "")."""
         y = pos.y() + self.verticalScrollBar().value()
@@ -376,6 +409,8 @@ class LinesView(QAbstractScrollArea):
         if i < 0 or i >= len(self._cells) or y > self._cells[i].y + self._cells[i].h:
             return None, ""
         c = self._cells[i]
+        if self._bookmark_rect(c, c.y - self.verticalScrollBar().value()).contains(QPointF(pos)):
+            return i, "bookmark"
         if pos.x() >= self._side_x():
             if pos.y() + self.verticalScrollBar().value() < c.y + PAD + self._time_h():
                 return i, "clips" if self.clips.get(self._visible[i].id) else "side"
@@ -555,6 +590,11 @@ class LinesView(QAbstractScrollArea):
                     icon("push-question", PUSH).paint(p, self._push_rect(box).toRect())
                 if comment and self._search:
                     searchmark.mark_wrapped(p, inner, comment, self._search)
+            if ln.id == self.bookmark or self.edit_mode:     # the bookmark (idea 32), pinned in the margin
+                br = self._bookmark_rect(c, top)
+                p.fillRect(QRectF(0, top, MARGIN - 4, c.h), theme.mix(base, accent, 0.16 if sel else 0.07)
+                           if sel or cur else base)
+                self._paint_bookmark(p, br, ln.id == self.bookmark)
             p.setPen(QPen(line_col, 1))
             p.drawLine(0, top + c.h, self.viewport().width(), top + c.h)
         if not self._visible:
@@ -574,6 +614,10 @@ class LinesView(QAbstractScrollArea):
         if event.button() == Qt.RightButton:
             if ln.id not in self._selected:
                 self.select_row(ln)
+            return
+        if what == "bookmark" and event.button() == Qt.LeftButton:
+            if self.edit_mode:                    # golden, or (again) gone
+                self.bookmarkToggled.emit(ln)
             return
         keys = {f.key for f in self.fields}
         self.clear_text_selection()
@@ -627,7 +671,7 @@ class LinesView(QAbstractScrollArea):
         if i is None:
             return
         ln = self._visible[i]
-        if what == "push":
+        if what in ("push", "bookmark"):
             return
         if what == "clips":
             self.clipActivated.emit(ln)
@@ -639,7 +683,7 @@ class LinesView(QAbstractScrollArea):
         i, what = self._hit(event.pos())
         # the field under the mouse, for the menu's Edit item ("" outside a field)
         self.menu_key = (self.comment_key if what in ("comment", "push") else
-                         "" if what in ("", "side", "clips") else what) if i is not None else ""
+                         "" if what in ("", "side", "clips", "bookmark") else what) if i is not None else ""
         self.contextRequested.emit(self._visible[i] if i is not None else None, event.globalPos())
 
     def keyPressEvent(self, event):

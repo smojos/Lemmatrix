@@ -232,3 +232,49 @@ def test_ctrl_wheel_zooms_a_matrix_and_ctrl_0_resets_it(win):
     assert view.zoom > 1.0
     QTest.keyClick(view, Qt.Key_0, Qt.ControlModifier)
     assert view.zoom == 1.0 and d.ipa.pointSize() == size
+
+
+def test_a_bookmark_per_text(win, tmp_path, monkeypatch):
+    """IDEAS.md idea 32: one bookmark per text, set in edit mode in the margin, kept in the
+    workspace by start time, and the text opens at it."""
+    from lemmatrix.ui.lines_view import MARGIN
+    uw, t = _add_text(win, tmp_path, monkeypatch)
+    p = uw.texts
+    v = p.lines
+    v.resize(900, 400)
+    assert MARGIN == 40
+    c = v._cells[1]
+    pos = v._bookmark_rect(c, c.y).center()
+    assert v._hit(pos.toPoint())[1] == "bookmark"
+    _press(v, pos.x(), pos.y())                               # outside edit mode: nothing
+    assert v.bookmark is None
+    p.set_edit_mode(True)
+    steps = win.doc.undo.count()
+    _press(v, pos.x(), pos.y())                               # golden
+    assert v.bookmark == v.rows[1].id and win.doc.ws.get_dict("bookmarks") == {t.id: v.rows[1].start}
+    assert win.doc.undo.count() == steps                      # not an undo step
+    c0 = v._cells[0]
+    p0 = v._bookmark_rect(c0, c0.y).center()
+    _press(v, p0.x(), p0.y())                                 # moved to the first line
+    assert v.bookmark == v.rows[0].id and win.doc.ws.get_dict("bookmarks")[t.id] == v.rows[0].start
+    _press(v, p0.x(), p0.y())                                 # again: gone
+    assert v.bookmark is None and win.doc.ws.get_dict("bookmarks") == {}
+    _press(v, pos.x(), pos.y())
+    p.set_edit_mode(False)
+    uw.close()
+    uw = win.open_utterances()                                # opened again: at the bookmark
+    v = uw.texts.lines
+    assert v.bookmark == v.rows[1].id and v.current_row() is v.rows[1]
+    v.select_row(v.rows[0])
+    uw.show()
+    uw.texts.go_to_bookmark()                                 # Ctrl+G
+    assert v.current_row() is v.rows[1]
+
+
+def test_the_bookmark_finds_the_nearest_line_when_a_boundary_moves(win, tmp_path, monkeypatch):
+    uw, t = _add_text(win, tmp_path, monkeypatch)
+    p = uw.texts
+    win.doc.ws_set("bookmarks", {t.id: 2.05})                 # the second line started at 2.0
+    p._bookmark_shown_for = None
+    p._show_lines()
+    assert p.lines.bookmark == p.lines.rows[1].id

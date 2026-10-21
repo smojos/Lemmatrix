@@ -452,8 +452,11 @@ class TextsPanel(QObject):
         self.lines.editCommitted.connect(self.set_line_field)
         self.lines.pushRequested.connect(self.push_to_question)
         self.lines.createTokenRequested.connect(self.create_token)
+        self.lines.bookmarkToggled.connect(self.toggle_bookmark)
+        self._bookmark_shown_for = None           # the text last opened at its bookmark
         QShortcut(QKeySequence("Ctrl+E"), win, self.toggle_edit_mode)   # Edit mode (Josh, 20 October)
         QShortcut(QKeySequence("Ctrl+S"), win, self.save_key)           # this text's TextGrid (21 October)
+        QShortcut(QKeySequence("Ctrl+G"), win, self.go_to_bookmark)     # back to where you were (idea 32)
         self.doc.linesChanged.connect(self._lines_edited)
         self.doc.dirtyChanged.connect(lambda *_: self._save_icon())   # saving the database writes TextGrids too
         bl.addWidget(self.lines, 1)
@@ -797,6 +800,56 @@ class TextsPanel(QObject):
         self.main.statusBar().showMessage(f"{t.ref} read again from {path.name}: {n} line{'s' if n != 1 else ''}.",
                                           6000)
 
+    # ---- the bookmark (IDEAS.md idea 32, 21 October) ----------------------------------
+    # One per text, for getting back to where you were in the narrative: kept in the workspace
+    # (shared wherever the database is opened) by the text's id and the line's start time, so a
+    # boundary moved in Praat still finds the nearest line. Set in edit mode; not an undo step.
+    def _bookmarks(self) -> dict:
+        return self.doc.ws.get_dict("bookmarks")
+
+    def _bookmark_line(self, t, lines):
+        if t is None or not lines:
+            return None
+        start = self._bookmarks().get(t.id)
+        if not isinstance(start, (int, float)):
+            return None
+        return min(lines, key=lambda ln: abs(ln.start - start))
+
+    def toggle_bookmark(self, line):
+        """The margin clicked in edit mode: this line becomes the text's bookmark (moved from any
+        other); clicked again on the bookmark, it goes."""
+        t = self.current()
+        if t is None or line is None:
+            return
+        marks = self._bookmarks()
+        if self.lines.bookmark == line.id:
+            marks.pop(t.id, None)
+            self.lines.set_bookmark(None)
+            note = f"Bookmark taken off {t.ref}."
+        else:
+            marks[t.id] = round(line.start, 4)
+            self.lines.set_bookmark(line.id)
+            note = f"{t.ref} bookmarked at {clock(line.start)} (Ctrl+G goes back to it)."
+        self.doc.ws_set("bookmarks", marks or None)
+        self.main.statusBar().showMessage(note, 5000)
+
+    def go_to_bookmark(self):
+        """Ctrl+G: the text's bookmarked line."""
+        if not self.page.isVisible():
+            return
+        mark = self.lines.bookmark_row()
+        if mark is None:
+            if self.lines.bookmark is not None:       # hidden by the lines' search
+                self.line_search.clear()
+                mark = self.lines.bookmark_row()
+        if mark is None:
+            t = self.current()
+            self.main.statusBar().showMessage(f"{t.ref if t else 'This text'} has no bookmark: in edit mode, "
+                                              "click the margin beside a line.", 5000)
+            return
+        self.lines.select_row(mark)
+        self.lines.setFocus()
+
     def toggle_edit_mode(self):
         """Ctrl+E: Edit mode on or off, while the lines are shown (the Texts tab)."""
         if self.lines.isVisible():
@@ -927,6 +980,12 @@ class TextsPanel(QObject):
                 if ln is not None and abs(ln.start - u.source.start) < 0.01:
                     clips.setdefault(ln.id, []).append(u.ref)
         self.lines.set_lines(lines, clips, show_speaker=len({ln.speaker for ln in lines if ln.speaker}) > 1)
+        mark = self._bookmark_line(t, lines)
+        self.lines.set_bookmark(mark.id if mark is not None else None)
+        if t is not None and self._bookmark_shown_for != t.id:   # a text chosen: it opens at its bookmark
+            self._bookmark_shown_for = t.id
+            if mark is not None:
+                self.lines.select_row(mark)
         buf = self.doc.text_buffers.get(t.id) if t is not None else None
         if t is None:
             self.lines_title.setText("Lines" if self.db.texts else
@@ -1246,6 +1305,9 @@ class TextsPanel(QObject):
         a = m.addAction(icon("edit", 16), f"Edit {self.lines.title(key)}" if key else "Edit field")
         a.setEnabled(bool(key))
         a.triggered.connect(lambda *_: self.lines.start_edit(row, key))
+        a = m.addAction("Go to bookmark (Ctrl+G)")
+        a.setEnabled(self.lines.bookmark is not None)
+        a.triggered.connect(lambda *_: self.go_to_bookmark())
         a = m.addAction("Edit text…")
         a.setEnabled(self.current() is not None)
         a.triggered.connect(lambda *_: self.edit())
