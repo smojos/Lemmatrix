@@ -243,7 +243,7 @@ The libraries Lemmatrix uses keep their own licences: see [THIRD-PARTY.md](THIRD
 
 ## Citing Lemmatrix
 
-Smolders, Joshua A. G. 2026. *Lemmatrix* (version 0.1.1). Zenodo.
+Smolders, Joshua A. G. 2026. *Lemmatrix* (version 0.1.2). Zenodo.
 https://doi.org/10.5281/zenodo.23512411
 
 This DOI always points to the latest version. Each version also has its own on Zenodo
