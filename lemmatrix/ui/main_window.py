@@ -136,6 +136,7 @@ class MainWindow(QMainWindow):
         self.bulk_window = None                   # the bulk edit window, while it's open
         self.utterances_window = None             # View → Texts and utterances, while it's open
         self.elicit_basket: list[str] = []        # token ids ticked for the next ɛλicit request
+        self.elicit_draft: dict = {}              # its settings and new sentences, as last left
         self.sound_files: set[str] = set()       # names in the sound folder, refreshed with the views
         self.cloud_files: set[str] = set()       # those of them that are online-only (OneDrive)
         self._suggestions: dict = {}             # (entry id, tags) -> predicted translation, for All data
@@ -571,7 +572,7 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Make ɛλicit request", "A request goes to a participant: add the "
                                     "speaker to the participants first (Edit → Lists → Participants).")
             return
-        RequestDialog(self, self._elicit_preselect()).exec()
+        RequestDialog(self, self._elicit_preselect(), draft=self.elicit_draft).exec()
 
     def receive_elicitation(self):
         from .elicit_dialogs import choose_and_receive
@@ -940,6 +941,7 @@ class MainWindow(QMainWindow):
         self.doc.db = db
         self.doc.text_buffers.clear()             # unsaved line edits of the database closed are dropped
         self.elicit_basket = []                   # the ticks belong to the database closed
+        self.elicit_draft = {}                    # and so do the request's settings and new sentences
         self.doc.undo.clear()
         self.doc.undo.setClean()
         self.doc._settings_dirty = False

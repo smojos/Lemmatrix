@@ -678,3 +678,32 @@ def test_the_button_rains_when_recordings_are_ready_in_drive(win, monkeypatch):
     win.refresh_elicit_icon()
     assert "has finished" not in win.elicit_btn.toolTip()
     win.prefs.google_token = {}
+
+
+def test_the_request_is_remembered_until_reset(win, monkeypatch):
+    """Josh, 21 October: closing Make ɛλicit request keeps its ticks, settings and new sentences;
+    Reset request clears the ticks and the sentences (the settings stay)."""
+    from PySide6.QtWidgets import QMessageBox
+    from lemmatrix.ui import elicit_dialogs as ed
+    db = win.doc.db
+    gatto = db.entry_by_ref("D001")
+    dlg = ed.RequestDialog(win, [gatto.tokens[0].id], draft=win.elicit_draft)
+    dlg.l2.setCurrentIndex(dlg.l2.findData(""))                       # no second language
+    dlg.repeat.setChecked(False)
+    dlg.speaker.setCurrentIndex(dlg.speaker.findData("SP2"))
+    dlg._add_new_row({"en": "The sun is hot."})
+    dlg.reject()
+    dlg = ed.RequestDialog(win, win._elicit_preselect(), draft=win.elicit_draft)
+    assert dlg.l2.currentData() == "" and not dlg.repeat.isChecked() and dlg.speaker.currentData() == "SP2"
+    assert dlg.new_utterance_rows() == [{"en": "The sun is hot."}]
+    assert [i.kind for i in dlg.items()] == [el.NEW, el.NEW_UTTERANCE]
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Yes)
+    dlg.reset_request()
+    assert dlg.items() == [] and dlg.l2.currentData() == "" and dlg.speaker.currentData() == "SP2"
+    dlg.reject()
+    assert win.elicit_basket == [] and win.elicit_draft["new"] == [] and win.elicit_draft["l2"] == ""
+    dlg = ed.RequestDialog(win, [gatto.tokens[0].id], draft=win.elicit_draft)
+    dlg._add_new_row({"en": "I read a book.", "da": "Jeg læser en bog."})
+    dlg.made = Path("made")                                          # a request made: the settings stay
+    dlg.accept()
+    assert win.elicit_basket == [] and win.elicit_draft["new"] == [] and win.elicit_draft["speaker"] == "SP2"

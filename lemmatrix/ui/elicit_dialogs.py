@@ -217,15 +217,66 @@ class RequestDialog(QDialog):
     """Choose the speaker, the researcher, the second language and the cards; then write the
     request's zip and show the message to send with it."""
 
-    def __init__(self, main, preselect=(), new_utterances=(), speaker: str = ""):
+    def __init__(self, main, preselect=(), new_utterances=(), speaker: str = "", draft: dict | None = None):
         super().__init__(main)
         self.main = main
         self.db = main.doc.db
         self.made = None                          # the zip, once made
         self.setWindowTitle(f"Make {NAME} request")
         self._images = self._image_index()
-        self._build(set(preselect), list(new_utterances), speaker)
+        draft = draft or {}
+        self._build(set(preselect), list(new_utterances or draft.get("new", [])), speaker)
+        self._apply_draft(draft, keep_speaker=bool(speaker))
         fit_to_screen(self, 1100, 760)
+
+    # ---- remembered between openings (Josh, 21 October) --------------
+    def _apply_draft(self, draft: dict, keep_speaker: bool = False):
+        """The settings as they were left when the dialogue was last closed (in memory, for the
+        open database): speaker, researcher, second language and its name, repetitions, Send as."""
+        def choose(combo, value):
+            i = combo.findData(value)
+            if i >= 0 and combo.model().item(i) is not None and combo.model().item(i).isEnabled():
+                combo.setCurrentIndex(i)
+        if "speaker" in draft and not keep_speaker:
+            choose(self.speaker, draft["speaker"])
+        if "researcher" in draft:
+            choose(self.researcher, draft["researcher"])
+        if "l2" in draft:
+            choose(self.l2, draft["l2"])
+        if "l2_name" in draft:
+            self.l2_name.setText(draft["l2_name"])
+        if "repeat" in draft:
+            self.repeat.setChecked(bool(draft["repeat"]))
+        if "send_by" in draft:
+            choose(self.send_by, draft["send_by"])
+
+    def new_utterance_rows(self) -> list[dict]:
+        """The new sentences typed in, as {language: translation}."""
+        en = self.db.settings.primary_gloss
+        lang = self.l2.currentData() or ""
+        out = []
+        for r in range(self.new_table.rowCount()):
+            a = (self.new_table.item(r, 0).text() if self.new_table.item(r, 0) else "").strip()
+            b = (self.new_table.item(r, 1).text() if self.new_table.item(r, 1) else "").strip()
+            if a or b:
+                out.append({k: v for k, v in ((en, a), (lang or "_", b)) if v})
+        return out
+
+    def draft(self, with_items: bool = True) -> dict:
+        d = {"speaker": self.speaker.currentData(), "researcher": self.researcher.currentData(),
+             "l2": self.l2.currentData() or "", "l2_name": self.l2_name.text(),
+             "repeat": self.repeat.isChecked(), "send_by": self.send_by.currentData()}
+        d["new"] = self.new_utterance_rows() if with_items else []
+        return d
+
+    def reset_request(self):
+        """Reset request: clears the ticks and the new sentences; the settings stay."""
+        if (any(r.ticked for r in self.model.rows) or self.new_table.rowCount()) and QMessageBox.question(
+                self, f"Make {NAME} request", "Untick everything and clear the new sentences?") != QMessageBox.Yes:
+            return
+        self._untick_all()
+        self.new_table.setRowCount(0)
+        self._update_counts()
 
     # ---- the rows -----------------------------------------------------
     def _image_index(self) -> set[str]:
@@ -379,6 +430,9 @@ class RequestDialog(QDialog):
         self.count = QLabel()
         lay.addWidget(self.count)
         buttons = QDialogButtonBox()
+        reset = buttons.addButton("Reset request", QDialogButtonBox.ResetRole)
+        reset.setToolTip("Unticks everything and clears the new sentences (the settings stay)")
+        reset.clicked.connect(self.reset_request)
         self.make_btn = buttons.addButton("Make request…", QDialogButtonBox.AcceptRole)
         buttons.addButton(QDialogButtonBox.Cancel)
         buttons.accepted.connect(self._make)
@@ -390,11 +444,13 @@ class RequestDialog(QDialog):
             self.table.scrollTo(self.proxy.mapFromSource(self.model.index(first, 0)))
 
     def done(self, result):
-        """The ticks are kept for next time (the right-click Add to ɛλicit request adds to
-        them); once a request is made they are cleared."""
+        """The ticks, the new sentences and the settings are kept for next time (the right-click
+        Add to ɛλicit request adds to the ticks); once a request is made the ticks and the new
+        sentences are cleared and the settings stay."""
         if hasattr(self.main, "elicit_basket"):
-            self.main.elicit_basket = ([] if self.made is not None else
-                                       [r.token.id for r in self.model.rows if r.ticked])
+            made = self.made is not None
+            self.main.elicit_basket = [] if made else [r.token.id for r in self.model.rows if r.ticked]
+            self.main.elicit_draft = self.draft(with_items=not made)
         super().done(result)
 
     def _l2_changed(self, *_):
@@ -1074,7 +1130,7 @@ class ReviewDialog(QDialog):
         self.accept()
         new_utts = [i.translations for i in items if i.kind == el.NEW_UTTERANCE]
         pre = [i.token.id for i in items if i.kind != el.NEW_UTTERANCE]
-        RequestDialog(self.main, pre, new_utts, speaker).exec()
+        RequestDialog(self.main, pre, new_utts, speaker, draft=getattr(self.main, "elicit_draft", None)).exec()
 
 
 def remind(main):
