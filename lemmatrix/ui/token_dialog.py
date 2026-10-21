@@ -61,7 +61,6 @@ class TokenDialog(QDialog):
         self.original: Token | None = None
         self.recorder: audio.Recorder | None = None
         self._renames: list = []                  # recordings renamed, to go with the next commit
-        self._clash_asked: set[str] = set()       # tokens already offered an Example tag on saving
         self.unknown_tags: list[str] = []
         self.suggestion: predict.Suggestion | None = None   # the predicted translation shown, if any
         self.setWindowTitle("Edit Token")
@@ -593,9 +592,13 @@ class TokenDialog(QDialog):
         t = self.token
         saving = (t.has_content() or keep_empty or self.slot.explicit) if self.original is None \
             else self.original != t
-        if check_clash and saving and t.id not in self._clash_asked and self._clashes():
-            self._clash_asked.add(t.id)           # offered once; "Keep" saves it as it is
-            self._offer_example(recording=False)
+        # A new token, or one whose tags changed, may not take a name another token's recording
+        # has (two soundfiles of one name, Josh 21 October): add an Example tag, or go back and
+        # change the tags. A clash it already had (converted data) doesn't stop other edits.
+        retagged = self.original is None or list(self.original.tags) != list(t.tags)
+        if check_clash and saving and retagged and self._clashes():
+            if not self._offer_example(recording=False):
+                return False                      # Cancel: back to the dialogue, nothing saved
             self._collect()
             t = self.token
         problems = self.db.settings.tags.conflicts([x for x in t.tags if x not in self.unknown_tags])
@@ -685,8 +688,10 @@ class TokenDialog(QDialog):
         who = "This lemma already has" if e is self.slot.entry else f"{e.ref} already has"
         box.setText(f"{who} a token with this file name ({what}): {name}\n\n"
                     f"Add the example tag {code} to this token, so its recording gets a name of its own?")
+        if not recording:
+            box.setInformativeText("Or Cancel and change the tags.")
         add = box.addButton(f"Add {code}" + (" and record" if recording else ""), QMessageBox.AcceptRole)
-        box.addButton("Cancel" if recording else "Keep as it is", QMessageBox.RejectRole)
+        box.addButton("Cancel", QMessageBox.RejectRole)
         box.setDefaultButton(add)
         box.exec()
         if box.clickedButton() is not add:

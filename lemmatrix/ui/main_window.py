@@ -1470,6 +1470,11 @@ class MainWindow(QMainWindow):
     def _doc_changed(self):
         self._suggestions_stale = True
         self.lemmas.set_rows(self.doc.db.entries)
+        # All data's rows point at tokens by position: a token just deleted (the last of its
+        # lemma, e.g. one just added) would be painted before the refresh below and crash.
+        rows = self.all_table.model_.rows
+        if any(r.index >= len(r.entry.tokens) for r in rows):
+            self.all_table.set_rows([r for r in rows if r.index < len(r.entry.tokens)])
         self.schedule_refresh()
         self._update_title()
 

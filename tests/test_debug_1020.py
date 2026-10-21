@@ -144,3 +144,34 @@ def test_no_message_names_a_button_it_doesnt_have():
                                    call))
             assert named <= buttons, f"{f.name}: {call[:120]}"
             assert "Ignore" not in buttons, f"{f.name}: an Ignore button never matches a question"
+
+
+def test_deleting_a_lemmas_last_token_in_all_data_doesnt_crash(win, monkeypatch):
+    """Josh, 21 October: deleting a token just added (the last of its lemma) in All data threw
+    IndexError while painting, before the rows were rebuilt."""
+    from PySide6.QtWidgets import QMessageBox
+
+    from lemmatrix.model import Token
+    errors = []
+    monkeypatch.setattr("sys.excepthook", lambda *a: errors.append(a))
+    win.resize(1400, 780)
+    win.show()
+    win.tabs.setCurrentIndex(0)
+    _settle()
+    e = win.doc.db.entries[0]
+    win.doc.edit_entry(e, lambda en: en.tokens.append(Token(tags=["Example 1"])), "add")
+    _settle()
+    t = win.all_table
+    row = next(r for r in t.model_.rows if r.entry is e and r.index == len(e.tokens) - 1)
+    t.select_row(row)
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Yes)
+    n = len(e.tokens)
+    win._refresh_timer.stop = lambda: None
+    win.schedule_refresh = lambda delay=0: None     # as if the refresh hadn't come yet
+    win.delete_token()
+    assert len(e.tokens) == n - 1
+    t.viewport().repaint()
+    for r in t.model_.rows:                          # every row still points at a token
+        assert r.index < len(r.entry.tokens)
+    _settle()
+    assert not errors
