@@ -690,6 +690,12 @@ class MainWindow(QMainWindow):
         cl.addWidget(self.db_title)
         cl.addWidget(self.save_btn)
         mb.setCornerWidget(corner, Qt.TopLeftCorner)        # away from the window's close button
+        self.theme_btn = QToolButton()              # top right: switch between the light and dark themes
+        self.theme_btn.setIconSize(QSize(22, 22))
+        self.theme_btn.setAutoRaise(True)
+        self.theme_btn.setCursor(Qt.PointingHandCursor)
+        self.theme_btn.clicked.connect(lambda *_: self.toggle_theme())
+        mb.setCornerWidget(self.theme_btn, Qt.TopRightCorner)
         f = mb.addMenu("&File")
         self._act(f, "&New database…", self.new_file, QKeySequence.New)
         self._act(f, "&Open…", self.open_file, QKeySequence.Open)
@@ -1488,6 +1494,8 @@ class MainWindow(QMainWindow):
     def _restyle(self):
         """Colours that follow the theme and accent (the data views stay black on white)."""
         self._notebook_icons()
+        self.theme_btn.setIcon(icon("lightbulb", 22, "#e8e8e8" if theme.dark() else "#1b1b1b"))
+        self.theme_btn.setToolTip("Switch to the light theme" if theme.dark() else "Switch to the dark theme")
         a = theme.accent()
         a_ = theme.accent()
         self.db_title.setStyleSheet(
@@ -2529,6 +2537,12 @@ class MainWindow(QMainWindow):
                 self.update_all_names(ask=False, only=moved)
                 return
         self._maybe_update_names()
+
+    def toggle_theme(self):
+        """The lightbulb: light theme to dark, or dark to light (the same as Settings → Display → Theme)."""
+        self.prefs.theme = "light" if theme.dark() else "dark"
+        theme.from_prefs(self.prefs)
+        self._restyle()
 
     def edit_settings(self):
         dlg = PreferencesDialog(self, self.doc.db, self.prefs)

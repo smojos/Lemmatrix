@@ -23,7 +23,6 @@ class FilterForDialog(QDialog):
     def __init__(self, parent, title: str, current: fl.TextFilter | None = None):
         super().__init__(parent)
         self.setWindowTitle(f"Filter {title} for items containing…")
-        self.resize(560, 190)
         lay = QVBoxLayout(self)
         lay.addWidget(QLabel("Enter text to search for:"))
         self.text = QLineEdit(current.text if current else "")
@@ -31,21 +30,26 @@ class FilterForDialog(QDialog):
         lay.addWidget(self.text)
         grid = QGridLayout()
         self.group = QButtonGroup(self)
-        modes = [("&Anywhere", fl.ANYWHERE, 0, 0), ("At &end", fl.END, 0, 1),
-                 ("&Whole item", fl.WHOLE, 1, 0), ("At &start", fl.START, 1, 1),
-                 ("Match for &regular expression", fl.REGEX, 2, 0)]
+        # Josh's wording and keys (21 October): Alt + the underlined letter. The capitals are on purpose.
+        modes = [("&Anywhere", fl.ANYWHERE, 0, 0, "Anywhere in the item"),
+                 ("&Beginning", fl.START, 0, 1, "At the beginning of the item"),
+                 ("&Discrete", fl.WHOLE, 1, 0, "The whole item, nothing more"),
+                 ("&End", fl.END, 1, 1, "At the end of the item"),
+                 ("Rege&X", fl.REGEX, 2, 0, "Match for a regular expression")]
         self.radios = {}
-        for text, mode, r, c in modes:
+        for text, mode, r, c, tip in modes:
             rb = QRadioButton(text)
+            rb.setToolTip(tip)
             self.group.addButton(rb)
             self.radios[mode] = rb
-            grid.addWidget(rb, r, c, 1, 2 if mode == fl.REGEX else 1)
+            grid.addWidget(rb, r, c)
         self.radios[current.mode if current else fl.ANYWHERE].setChecked(True)
-        self.case = QCheckBox("Match &case")
+        self.case = QCheckBox("Mat&Ch cAsE")
+        self.case.setToolTip("Match case: capitals and small letters count as different")
         self.case.setChecked(bool(current and current.match_case))
-        self.diacritics = QCheckBox("Match &diacritics")
+        self.diacritics = QCheckBox("Match &Fûnkỹ stṵff")
         self.diacritics.setChecked(bool(current and current.match_diacritics))
-        self.diacritics.setToolTip("When off, accents and other combining marks are ignored, and so "
+        self.diacritics.setToolTip("Match diacritics. When off, accents and other combining marks are ignored, and so "
                                    "are modifier letters such as ʰ ʷ ʲ ː (so deet finds dɪɪtʰ).")
         grid.addWidget(self.case, 0, 2)
         grid.addWidget(self.diacritics, 1, 2)
@@ -58,6 +62,7 @@ class FilterForDialog(QDialog):
         b.rejected.connect(self.reject)
         lay.addWidget(b)
         self.text.setFocus()
+        self.resize(self.sizeHint())             # as narrow as the options allow
 
     def result_filter(self) -> fl.TextFilter:
         mode = next(m for m, rb in self.radios.items() if rb.isChecked())

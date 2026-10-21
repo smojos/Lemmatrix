@@ -47,3 +47,28 @@ def test_splash_seconds_setting():
     assert p.splash_seconds == 1.5
     p.q.remove("display/splash_seconds")
     assert p.splash_seconds == 2.5
+
+
+def test_filter_for_wording_keys_and_size(app):
+    from PySide6.QtWidgets import QWidget
+    from lemmatrix import filters as fl
+    from lemmatrix.ui.filter_dialogs import FilterForDialog
+    parent = QWidget()
+    d = FilterForDialog(parent, "Gloss (en)")
+    texts = {m: rb.text() for m, rb in d.radios.items()}
+    assert texts == {fl.ANYWHERE: "&Anywhere", fl.START: "&Beginning", fl.WHOLE: "&Discrete",
+                     fl.END: "&End", fl.REGEX: "Rege&X"}
+    assert d.case.text() == "Mat&Ch cAsE" and d.diacritics.text() == "Match &Fûnkỹ stṵff"
+    assert d.width() == d.sizeHint().width()
+
+
+def test_lightbulb_switches_the_theme(app, tmp_path, monkeypatch):
+    from lemmatrix.ui import theme
+    from lemmatrix.ui.main_window import MainWindow
+    w = MainWindow()
+    before = theme.dark()
+    w.theme_btn.click()
+    assert theme.dark() != before and w.prefs.theme == ("dark" if not before else "light")
+    w.theme_btn.click()
+    assert theme.dark() == before
+    w.close()
