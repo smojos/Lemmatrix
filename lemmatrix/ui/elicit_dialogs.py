@@ -491,7 +491,9 @@ class RequestDialog(QDialog):
         reset = buttons.addButton("Reset request", QDialogButtonBox.ResetRole)
         reset.setToolTip("Unticks everything and clears the new sentences (the settings stay)")
         reset.clicked.connect(self.reset_request)
-        self.make_btn = buttons.addButton("Make request…", QDialogButtonBox.AcceptRole)
+        self.make_btn = buttons.addButton("Make it rain", QDialogButtonBox.AcceptRole)   # Josh, 21 October
+        self.make_btn.setToolTip("Make the request: put it in your Google Drive (or write the zip) and show "
+                                 "the message to send")
         a = theme.accent()                        # in the theme colour
         self.make_btn.setStyleSheet(
             f"QPushButton {{ background: {a.name()}; color: {theme.text_on(a).name()}; border: none; "
