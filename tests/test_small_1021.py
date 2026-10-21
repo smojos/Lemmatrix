@@ -147,18 +147,12 @@ def test_new_day_asks_to_keep_or_reset_the_session(app, monkeypatch):
     w.close()
 
 
-def test_splash_says_entering_with_a_moving_fade(app):
-    import time
+def test_splash_says_entering(app):
     from lemmatrix.ui import splash
     s = splash.show(app)
-    assert isinstance(s, splash.Splash) and s._timer.isActive()
-    s._start = time.monotonic() - 0.5 * splash.SWEEP
-    a = s.grab().toImage()
-    s._start = time.monotonic() - 0.9 * splash.SWEEP
-    b = s.grab().toImage()
-    assert a != b                                  # the fade has moved
-    s.finish(None)
-    assert not s._timer.isActive()
+    assert isinstance(s, splash.Splash) and splash.LOADING == "Entering Lemmatrix..."
+    s.grab()
+    s.close()
 
 
 def test_dragging_a_matrix_column_reorders_its_lines(win):

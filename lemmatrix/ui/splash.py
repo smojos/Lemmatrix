@@ -13,7 +13,7 @@ import datetime
 import time
 
 from PySide6.QtCore import QByteArray, QEvent, QObject, QRectF, Qt, QTimer
-from PySide6.QtGui import QColor, QFont, QGuiApplication, QLinearGradient, QPainter, QPainterPath, QPen, QPixmap
+from PySide6.QtGui import QColor, QFont, QGuiApplication, QPainter, QPainterPath, QPixmap
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QDialog, QSplashScreen
 
@@ -64,25 +64,14 @@ class _CloseOnDialog(QObject):
         return False
 
 
-LOADING = "Entering Lemmatrix..."              # bottom right, white, with a fade running through it
-SWEEP = 1.6                                    # seconds for the fade to cross the words once
+LOADING = "Entering Lemmatrix..."              # bottom right, in white (Josh, 21 October)
 
 
 class Splash(QSplashScreen):
-    """The splash, with "Entering Lemmatrix..." in its bottom right corner (Josh, 21 October): the
-    words are all there, and a faded band runs through them from left to right, over and over, as a
-    sign that something is happening."""
+    """The splash, with "Entering Lemmatrix..." in its bottom right corner."""
 
     def __init__(self, pm: QPixmap):
         super().__init__(pm, Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        self._start = time.monotonic()
-        self._timer = QTimer(self)
-        self._timer.timeout.connect(self.repaint)
-        self._timer.start(33)
-
-    def phase(self) -> float:
-        """Where the fade is, 0 to 1 across the words (a little beyond, so it leaves before coming back)."""
-        return ((time.monotonic() - self._start) / SWEEP) % 1.0 * 1.6 - 0.3
 
     def drawContents(self, p: QPainter):
         super().drawContents(p)
@@ -92,19 +81,9 @@ class Splash(QSplashScreen):
         fm = p.fontMetrics()
         w, h = fm.horizontalAdvance(LOADING), fm.height()
         r = self.rect()
-        x, y = r.right() - w - 22, r.bottom() - h - 16
-        g = QLinearGradient(x, 0, x + w, 0)
-        at, band = self.phase(), 0.18
-        for i in range(21):                      # white, dimmed where the band is
-            t = i / 20
-            near = max(0.0, 1 - abs(t - at) / band)
-            g.setColorAt(t, QColor(255, 255, 255, round(255 - 185 * near)))
-        p.setPen(QPen(g, 1))
-        p.drawText(QRectF(x, y, w + 2, h), Qt.AlignLeft | Qt.AlignVCenter, LOADING)
-
-    def finish(self, w):
-        self._timer.stop()
-        super().finish(w)
+        p.setPen(QColor("white"))
+        p.drawText(QRectF(r.right() - w - 22, r.bottom() - h - 16, w + 2, h), Qt.AlignLeft | Qt.AlignVCenter,
+                   LOADING)
 
 
 def show(app) -> QSplashScreen | None:
