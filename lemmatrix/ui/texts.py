@@ -451,8 +451,11 @@ class TextsPanel(QObject):
                                           and self.play_line())
         self.lines.editCommitted.connect(self.set_line_field)
         self.lines.pushRequested.connect(self.push_to_question)
+        self.lines.createTokenRequested.connect(self.create_token)
         QShortcut(QKeySequence("Ctrl+E"), win, self.toggle_edit_mode)   # Edit mode (Josh, 20 October)
+        QShortcut(QKeySequence("Ctrl+S"), win, self.save_key)           # this text's TextGrid (21 October)
         self.doc.linesChanged.connect(self._lines_edited)
+        self.doc.dirtyChanged.connect(lambda *_: self._save_icon())   # saving the database writes TextGrids too
         bl.addWidget(self.lines, 1)
         page.addWidget(box)
         page.setSizes([300, 400])
@@ -496,7 +499,14 @@ class TextsPanel(QObject):
                                   "Edit mode (Ctrl+E): click a field to edit it in place (Tab, Shift+Tab, Up, Down move; "
                                   "Enter keeps, Esc drops). Off: the lines are for playing, clipping and Praat",
                                   checkable=True)
-        self.main._row(bl, icon_tool("play", self.play_line, "Play the selected line (Ctrl+Space)"),
+        self.save_btn = QToolButton()                # the text's TextGrid (Josh, 21 October)
+        self.save_btn.setIconSize(QSize(20, 20))
+        self.save_btn.setAutoRaise(True)
+        self.save_btn.setToolTip("Save this text's TextGrid (Ctrl+S): write the line edits into it now. "
+                                 "The database itself is saved with the main window's Save")
+        self.save_btn.clicked.connect(lambda *_: self.save_textgrid())
+        self.main._row(bl, self.save_btn,
+                       icon_tool("play", self.play_line, "Play the selected line (Ctrl+Space)"),
                        self.edit_btn,
                        icon_tool("clip", self.clip, "Clip as utterance: cut the selected lines out of the "
                                  "recording as utterances, with their text (select several with Shift or Ctrl)"),
@@ -510,7 +520,7 @@ class TextsPanel(QObject):
         self.restyle_icons()
         self.edit_label = QLabel("Edit mode")
         self.edit_label.hide()
-        bl.itemAt(bl.count() - 1).layout().insertWidget(5, self.edit_label)
+        bl.itemAt(bl.count() - 1).layout().insertWidget(6, self.edit_label)
         self.line_search = QLineEdit()
         self.line_search.setPlaceholderText("quick search of the lines")
         self.line_search.setClearButtonEnabled(True)
@@ -520,11 +530,53 @@ class TextsPanel(QObject):
         self.next_empty_btn = QPushButton("Next empty")
         self.next_empty_btn.setToolTip("The next line (after the selected one) whose chosen field is empty")
         self.next_empty_btn.clicked.connect(lambda *_: self.next_empty())
-        self.main._row(bl, self.line_search, self.next_field, self.next_empty_btn, stretch=False).setStretch(0, 1)
+        self.line_search.setMinimumWidth(180)       # close to its field and Next empty (Josh, 21 October)
+        self.line_search.setMaximumWidth(320)
+        self.main._row(bl, self.line_search, self.next_field, self.next_empty_btn)
         self.count = QLabel()
         bl.addWidget(self.count)
+        bl.addWidget(self._scratchpad())
         bl.addStretch(1)
         return bar
+
+    def _scratchpad(self) -> QWidget:
+        """The pitch scratchpad (IDEAS.md idea 33): a pitch trace typed here is drawn and played
+        (Ctrl+Shift+Space, anywhere in the lines), and saved nowhere: it goes when the window closes."""
+        from .token_dialog import PitchValidator
+        from .widgets import PitchCanvas
+        box = QWidget()
+        box.setMaximumWidth(420)
+        lay = QVBoxLayout(box)
+        lay.setContentsMargins(0, 2, 0, 0)
+        lay.setSpacing(2)
+        s = self.db.settings
+        self.scratch_canvas = PitchCanvas(low=s.pitch_low, high=s.pitch_high,
+                                          font=ipa_font(self.main.prefs.ipa_size + 3))
+        self.scratch_canvas.setToolTip("Pitch scratchpad: the trace typed below, drawn")
+        lay.addWidget(self.scratch_canvas)
+        row = QHBoxLayout()
+        row.setSpacing(4)
+        self.scratch = QLineEdit()
+        self.scratch.setPlaceholderText("pitch scratchpad, e.g. 55 3:3 21")
+        self.scratch.setToolTip("Pitch scratchpad: type a pitch trace to see and hear it (Ctrl+Shift+Space "
+                                "plays it from anywhere in the lines). Nothing is saved: it's cleared when "
+                                "the window is closed")
+        self.scratch.setValidator(PitchValidator(self.scratch))
+        self.scratch.setFont(ipa_font(self.main.prefs.ipa_size))
+        self.scratch.textChanged.connect(self.scratch_canvas.set_pitch)
+        self.scratch.returnPressed.connect(self.play_scratch)
+        from .main_window import tool
+        play = tool("Play pitch scratchpad", "play-pitch", self.play_scratch,
+                    "Play the pitch scratchpad (Ctrl+Shift+Space)")
+        play.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        row.addWidget(self.scratch, 1)
+        row.addWidget(play)
+        lay.addLayout(row)
+        return box
+
+    def play_scratch(self):
+        """Ctrl+Shift+Space in the lines: the scratchpad's trace, in the voice of Settings → Pitch."""
+        self.main.play_pitch(self.scratch.text())
 
     def _columns(self) -> list[Column]:
         db = self.db
@@ -586,6 +638,8 @@ class TextsPanel(QObject):
         self._update_count()
 
     def settings_changed(self):
+        s = self.db.settings
+        self.scratch_canvas.set_range(s.pitch_low, s.pitch_high)
         self._setup_columns()
         self.refresh()
 
@@ -684,12 +738,14 @@ class TextsPanel(QObject):
         self.next_field.blockSignals(False)
 
     def restyle_icons(self):
-        """The Clip button's bubble and Refresh text's arrows in the theme colour."""
+        """The Clip button's bubble in the theme colour and its scissors in the text colour (white on
+        dark), and Refresh text's arrows in the theme colour."""
         for b in self.bar.findChildren(QToolButton) if hasattr(self, "bar") else []:
             if b.property("icon_name") == "clip":
-                b.setIcon(icon("clip", 20, theme.accent().name()))
+                b.setIcon(icon("clip", 20, theme.accent().name() + ";" + theme.colour("window_text").name()))
             elif b.property("icon_name") == "refresh-text":
                 b.setIcon(icon("refresh-text", 20, theme.colour("pitch").name()))
+        self._save_icon()
 
     def refresh_text(self):
         """Refresh text (Josh, 21 October): read the TextGrid again from its file, whatever its
@@ -826,6 +882,18 @@ class TextsPanel(QObject):
         title = self.db.settings.token_field(key.split(":")[0])
         self.doc.push_line_edit(f"Edit {t.ref} {clock(line.start)} {title.title if title else key}", t, buf,
                                 edits, utterances, note)
+        self.worked_on(t)
+
+    def worked_on(self, t):
+        """The text is listed in the notebook's Texts tab for the day being worked on (Josh, 21
+        October: the day its lines are edited or clipped, not the day it was added)."""
+        main = self.main
+        k = main.session_keys()
+        if nbmod.note_text_worked_on(self.doc.notebook, self.db, main.work_date(), t, k.get("researchers", []),
+                                     k.get("participants", []), k.get("locations", [])):
+            self.doc.notebook_changed()
+            if getattr(main, "notebook_dialog", None) is not None:
+                main.notebook_dialog.reload()
 
     def _lines_edited(self, text_id: str):
         t = self.current()
@@ -875,6 +943,63 @@ class TextsPanel(QObject):
                            " (and Praat has saved it since: saving will ask)" if buf.disk_changed() else ""))
             self.lines_title.setText(f"Lines of {t.ref} {self.db.text_title(t)}{note}")
         self._update_count()
+        self._save_icon()
+
+    # ---- saving the text's TextGrid (Ctrl+S, Josh 21 October) -------------------------
+    def _save_icon(self):
+        """The floppy: the theme colour while the text has line edits not yet in its TextGrid, grey otherwise."""
+        if not hasattr(self, "save_btn"):
+            return
+        try:
+            t = self.current()
+        except RuntimeError:                      # the window has gone
+            return
+        buf = self.doc.text_buffers.get(t.id) if t is not None else None
+        on = buf is not None and buf.changed
+        c = theme.colour("pitch") if on else (theme.colour("disabled"))
+        self.save_btn.setIcon(icon("save-solid", 20, c.name()))
+        self.save_btn.setEnabled(on)
+
+    def save_key(self):
+        """Ctrl+S in the Texts and utterances window: on the Texts tab, this text's TextGrid."""
+        if self.page.isVisible():
+            self.save_textgrid()
+
+    def save_textgrid(self) -> bool:
+        """Write the current text's line edits into its TextGrid now (backed up first), without
+        saving the database. Asks first if Praat has saved the TextGrid since."""
+        t = self.current()
+        buf = self.doc.text_buffers.get(t.id) if t is not None else None
+        if t is None or buf is None or not buf.changed:
+            if t is not None:
+                self.main.statusBar().showMessage(f"{t.ref} has no line edits to save into its TextGrid.", 4000)
+            return False
+        if buf.disk_changed():
+            box = QMessageBox(QMessageBox.Warning, "Save TextGrid",
+                              f"{t.ref}'s TextGrid was saved in Praat after you edited its lines here.",
+                              parent=self.win)
+            box.setInformativeText("Save my edits: Lemmatrix's version replaces Praat's (a copy of Praat's "
+                                   "goes to Backups first).\nKeep Praat's: the unsaved line edits to "
+                                   f"{t.ref} are dropped.")
+            mine = box.addButton("Save my edits", QMessageBox.AcceptRole)
+            praat = box.addButton("Keep Praat's", QMessageBox.DestructiveRole)
+            box.addButton(QMessageBox.Cancel)
+            box.exec()
+            if box.clickedButton() is praat:
+                buf.reload()
+                self.doc.linesChanged.emit(t.id)
+                return False
+            if box.clickedButton() is not mine:
+                return False
+        try:
+            buf.write(self.db)
+        except OSError as exc:
+            QMessageBox.warning(self.win, "Save TextGrid", f"Couldn't write {buf.path.name}: {exc}")
+            return False
+        self._shown_stamp = self._grid_stamp(t)
+        self._show_lines()
+        self.main.statusBar().showMessage(f"Saved {buf.path.name}. The previous version is in Backups.", 5000)
+        return True
 
     # ---- texts -------------------------------------------------------
     def add(self):
@@ -1107,6 +1232,15 @@ class TextsPanel(QObject):
         m = QMenu(self.win)
         on = row is not None
         key = self.lines.menu_key if on else ""
+        sel = self.lines.text_selection()
+        if sel is not None and on and sel[0].id == row.id:   # words highlighted in a field (idea 31)
+            _, skey, words = sel
+            a = m.addAction(icon("lemma-token", 16), f"Create token from “{words}”…")
+            a.triggered.connect(lambda *_: self.create_token(row, skey, words))
+        else:
+            a = m.addAction(icon("lemma-token", 16), "Create token (highlight words first)")
+            a.setEnabled(False)
+        m.addSeparator()
         a = m.addAction(icon("edit", 16), f"Edit {self.lines.title(key)}" if key else "Edit field")
         a.setEnabled(bool(key))
         a.triggered.connect(lambda *_: self.lines.start_edit(row, key))
@@ -1126,6 +1260,31 @@ class TextsPanel(QObject):
             a.setEnabled(on)
             a.triggered.connect(lambda *_, fn=fn: fn())
         m.exec(pos)
+
+    def create_token(self, line, key: str, words: str):
+        """Create token from a text's line (IDEAS.md idea 31, Josh 21 October): the lemma is picked
+        first, then the token dialogue opens on a new token with only the highlighted words, in the
+        field they came from (\"my dog\" from the Translation into the Translation)."""
+        from .move_dialog import CreateTokenDialog
+        from .token_dialog import Slot, TokenDialog
+        words = (words or "").strip()
+        name, _, lang = key.partition(":")
+        f = self.db.settings.token_field(name)
+        if not words or f is None:
+            return
+        title = self.lines.title(key)
+        dlg = CreateTokenDialog(self.win, self.db, words, title, self.main.prefs.ipa_size)
+        if not dlg.exec() or dlg.chosen() is None:
+            return
+        slot = Slot(dlg.chosen(), None, (), explicit=True, defaults=True,
+                    values={(name, lang or None): words})
+        main = self.main
+        main.dialog_autoplay = False
+        tok = TokenDialog(main, [slot], 0, parent=self.win)
+        tok.exec()
+        tok.deleteLater()
+        main.refresh()
+        self.lines.clear_text_selection()
 
     def _open_clip(self, line):
         """Double-click on a line's Utterances: show the (first) utterance clipped from it."""
@@ -1202,6 +1361,7 @@ class TextsPanel(QObject):
                 self.doc.add_entry(items[0], renames=renames)
             else:
                 self.doc.add_many(f"Clip {len(items)} lines of {t.ref}", items, renames)
+            self.worked_on(t)
             self.main.statusBar().showMessage(
                 f"Clipped as {items[0].ref}" + (f"–{items[-1].ref}" if len(items) > 1 else "") + ".", 8000)
         if problems:

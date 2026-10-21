@@ -116,6 +116,7 @@ class Session:
     notes: str = ""
     comments: list[NoteComment] = field(default_factory=list)
     questions: list[Question] = field(default_factory=list)
+    texts: list[str] = field(default_factory=list)       # ids of the texts worked on that day (their lines)
 
 
 @dataclass
@@ -255,6 +256,21 @@ def record_line_comment(nb: Notebook, db: Database, date: str, c: NoteComment,
     s.comments = out
     nb.dirty = True
     return s, before, list(out)
+
+
+def note_text_worked_on(nb: Notebook, db: Database, date: str, text, researchers=(), participants=(),
+                        locations=()) -> bool:
+    """A text whose lines were worked on (edited, clipped, pushed) on a day: it is listed in that
+    day's Texts tab (Josh, 21 October: the day it is worked on, not the day it was added). The day
+    gets a session if it has none. Returns True if the text wasn't listed for that day yet."""
+    s = nb.session(date)
+    if s is not None and text.id in s.texts:
+        return False
+    if s is None:
+        s = write_session(nb, db, date, researchers, participants, locations)
+    s.texts.append(text.id)
+    nb.dirty = True
+    return True
 
 
 def refresh_comments(db: Database, session: Session) -> bool:
@@ -445,6 +461,7 @@ def load(path: str | os.PathLike) -> Notebook:
             s.questions.append(Question(_text(q), q.get("created", ""), q.get("edited", ""),
                                         q.get("resolved", ""), q.get("entry", ""), q.get("token", ""),
                                         nfc(q.get("ref", "")), nfc(q.get("about", ""))))
+        s.texts = [x.get("id", "") for x in el.findall("text") if x.get("id")]
         nb.sessions.append(s)
     nb.sort()
     nb.dirty = nb.repaired                # so saving writes the repaired file
@@ -482,6 +499,8 @@ def to_string(nb: Notebook, database_name: str = "") -> str:
                 if val:
                     qa[key] = val
             ET.SubElement(el, "question", qa).text = q.text
+        for tid in s.texts:                       # the texts worked on that day
+            ET.SubElement(el, "text", id=tid)
     ET.indent(root, space="  ")
     return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(root, encoding="unicode") + "\n"
 

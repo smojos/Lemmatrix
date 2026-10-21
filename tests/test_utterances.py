@@ -313,6 +313,7 @@ def test_ctrl_shift_space_plays_an_utterances_pitch(win, tmp_path, monkeypatch):
     uw.import_files([str(_wav(tmp_path / "tune.wav"))])
     u = win.doc.db.utterances[0]
     win.doc.edit_entry(u, lambda x: x.token.set("Pitch", "11 4:42"))
+    uw.tabs.setCurrentIndex(1)                     # on the Texts tab it plays the lines' scratchpad
     uw.table.select_row(u)
     played = []
     monkeypatch.setattr(win, "play_pitch", lambda text: played.append(text))

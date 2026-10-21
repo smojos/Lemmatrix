@@ -415,8 +415,16 @@ def test_clipped_utterance_shows_its_source(win, tmp_path, monkeypatch):
 
 
 def test_notebook_lists_the_days_texts(win, tmp_path, monkeypatch):
+    """A text is listed on the day its lines are worked on, not the day it was added (21 October)."""
     uw, t = _add_text(win, tmp_path, monkeypatch)
     win.write_notebook()
+    win.open_notebook(win.work_date())
+    win.notebook_dialog.reload(win.work_date())
+    assert win.notebook_dialog.texts.topLevelItemCount() == 0      # added only
+    win.notebook_dialog.close()
+    t.date = win.work_date()
+    uw.texts.set_line_field(uw.texts.lines.rows[0], "Translation:en", "the hare fled")
+    assert t.id in win.doc.notebook.session(win.work_date()).texts
     win.open_notebook(t.date)
     nb = win.notebook_dialog
     nb.reload(t.date)

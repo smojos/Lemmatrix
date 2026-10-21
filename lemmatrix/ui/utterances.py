@@ -763,7 +763,11 @@ class TextsUtterancesWindow(QDialog):
         return u.token.get(f.name) if (u is not None and f is not None) else ""
 
     def play_pitch(self):
-        """Play the selected utterance's pitch in the voice chosen in Settings → Pitch."""
+        """Play the selected utterance's pitch in the voice chosen in Settings → Pitch; on the Texts
+        tab, the lines' pitch scratchpad (IDEAS.md idea 33)."""
+        if self.tabs.currentIndex() == TEXTS:
+            self.texts.play_scratch()
+            return
         u = self.table.current_row()
         if u is None:
             return

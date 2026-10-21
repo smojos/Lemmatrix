@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from PySide6.QtCore import QDir, QEvent, QRegularExpression, Qt, QTimer
@@ -47,6 +47,7 @@ class Slot:
     tags: tuple = ()               # tags for a new token
     explicit: bool = False         # created on purpose (double-click), so OK keeps it even if empty
     defaults: bool | None = None   # pre-select group defaults (None: only if tags were given)
+    values: dict = field(default_factory=dict)   # a new token's fields filled in: {(field, lang or None): text}
 
 
 class TokenDialog(QDialog):
@@ -332,6 +333,11 @@ class TokenDialog(QDialog):
         else:
             self.original = None
             self.token = self._new_token(sl)
+            for (name, lang), text in sl.values.items():   # e.g. words from a text's line (idea 31)
+                f = s.token_field(name)
+                if f is not None:
+                    self.token.set(name, text, (lang or s.primary_gloss) if f.multilingual else None,
+                                   f.multilingual)
         t = self.token
         self._show_header(e)
         for name, ed in self.edits.items():

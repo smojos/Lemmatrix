@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders
-"""Move token to another lemma: pick the lemma (IDEAS.md idea 11). The moving is in move.py."""
+"""Picking a lemma: for Move token to another lemma (IDEAS.md idea 11; the moving is in move.py)
+and for Create token from a text's line (idea 31)."""
 
 from __future__ import annotations
 
@@ -18,19 +19,18 @@ def _fold(text: str) -> str:
     return fold_diacritics(text or "").lower()
 
 
-class MoveTokenDialog(QDialog):
-    """A search over the lemmas (reference, form or gloss), those of the token's own word class
-    first; the lemma the token is in now isn't offered."""
+class LemmaPicker(QDialog):
+    """A search over the lemmas (reference, form or gloss; diacritics and capitals ignored).
+    first: the lemmas offered at the top of the list (the rest follow in database order)."""
 
-    def __init__(self, parent, db: Database, source: Entry, index: int, ipa_size: int = 13):
+    def __init__(self, parent, db: Database, title: str, heading: str, ok_text: str, note: str,
+                 entries: list, ipa_size: int = 13):
         super().__init__(parent)
         self.db = db
-        self.setWindowTitle("Move token to another lemma")
+        self.setWindowTitle(title)
         self.resize(460, 480)
-        t = source.tokens[index]
-        what = " + ".join(mx.chips(db, t.tags)) or "citation"
         lay = QVBoxLayout(self)
-        head = QLabel(f"Move the {what} token of {source.ref} {db.lemma(source)} {meaning(db.gloss(source))} to:")
+        head = QLabel(heading)
         head.setWordWrap(True)
         lay.addWidget(head)
         self.find = QLineEdit()
@@ -41,19 +41,16 @@ class MoveTokenDialog(QDialog):
         self.list = QListWidget()
         self.list.setFont(ipa_font(ipa_size))
         lay.addWidget(self.list, 1)
-        note = QLabel("It keeps its tags, fields and recording. Tags that aren't usual for the new lemma's "
-                      "word class are marked, as anywhere.")
-        note.setWordWrap(True)
-        lay.addWidget(note)
+        if note:
+            lbl = QLabel(note)
+            lbl.setWordWrap(True)
+            lay.addWidget(lbl)
         self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        self.buttons.button(QDialogButtonBox.Ok).setText("Move")
+        self.buttons.button(QDialogButtonBox.Ok).setText(ok_text)
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject)
         lay.addWidget(self.buttons)
-        own = db.word_class(source)
-        others = [e for e in db.entries if e is not source]
-        self.entries = [e for e in others if own and db.word_class(e) == own] + \
-                       [e for e in others if not own or db.word_class(e) != own]
+        self.entries = list(entries)
         self.find.textChanged.connect(self._fill)
         self.list.itemDoubleClicked.connect(lambda *_: self.accept())
         self.list.currentRowChanged.connect(self._enable)
@@ -83,3 +80,43 @@ class MoveTokenDialog(QDialog):
     def chosen(self) -> Entry | None:
         it = self.list.currentItem()
         return it.data(Qt.UserRole) if it else None
+
+
+class MoveTokenDialog(LemmaPicker):
+    """A search over the lemmas (reference, form or gloss), those of the token's own word class
+    first; the lemma the token is in now isn't offered."""
+
+    def __init__(self, parent, db: Database, source: Entry, index: int, ipa_size: int = 13):
+        t = source.tokens[index]
+        what = " + ".join(mx.chips(db, t.tags)) or "citation"
+        own = db.word_class(source)
+        others = [e for e in db.entries if e is not source]
+        entries = [e for e in others if own and db.word_class(e) == own] + \
+                  [e for e in others if not own or db.word_class(e) != own]
+        super().__init__(parent, db, "Move token to another lemma",
+                         f"Move the {what} token of {source.ref} {db.lemma(source)} {meaning(db.gloss(source))} to:",
+                         "Move", "It keeps its tags, fields and recording. Tags that aren't usual for the new "
+                         "lemma's word class are marked, as anywhere.", entries, ipa_size)
+
+
+def matching_first(db: Database, words: str) -> list:
+    """Every lemma, those whose form or gloss matches the words first (either contains the
+    other, diacritics and capitals ignored), then the rest in database order."""
+    q = _fold(words.strip())
+    if not q:
+        return list(db.entries)
+
+    def hit(e):
+        return any(x and (q in x or x in q) for x in (_fold(db.lemma(e)), _fold(db.gloss(e))))
+    first = [e for e in db.entries if hit(e)]
+    return first + [e for e in db.entries if not hit(e)]
+
+
+class CreateTokenDialog(LemmaPicker):
+    """Create token from a text's line (IDEAS.md idea 31): the lemma to put the token under."""
+
+    def __init__(self, parent, db: Database, words: str, field_title: str, ipa_size: int = 13):
+        super().__init__(parent, db, "Create token",
+                         f"Create a token with “{words}” in its {field_title}, under the lemma:",
+                         "Create token", "The token dialogue opens next, with only those words filled in.",
+                         matching_first(db, words), ipa_size)

@@ -12,17 +12,22 @@ Outside edit mode the lines are things to play, clip and open in Praat. In edit 
 on a field (or the Comment) edits it in place: Enter keeps it, Esc drops it, Tab and Shift+Tab
 go to the next and previous field (and on into the next line), Up and Down to the same field
 of the line above or below, Ctrl+Space plays the line.
+
+Ctrl + mouse wheel zooms the view (Ctrl+0 back to normal); the zoom belongs to this view and
+goes when the Texts and utterances window is closed (Josh, 21 October). Outside edit mode,
+dragging across the words of a field highlights them, for Create token (IDEAS.md idea 31).
 """
 
 from __future__ import annotations
 
 import bisect
+import re
 from dataclasses import dataclass
 
 from PySide6.QtCore import QEvent, QPointF, QRect, QRectF, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPen
+from PySide6.QtGui import QAction, QColor, QFont, QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import (QAbstractItemView, QAbstractScrollArea, QDialog, QDialogButtonBox, QLabel,
-                               QLineEdit, QTreeWidget, QTreeWidgetItem, QVBoxLayout)
+                               QLineEdit, QMenu, QPlainTextEdit, QTreeWidget, QTreeWidgetItem, QVBoxLayout)
 
 from ..interlinear import bare, split_units
 from . import searchmark, theme
@@ -36,6 +41,9 @@ GAP = 16                 # between aligned columns
 ROW_EXTRA = 6            # a field row's height beyond its font's
 TIME_H = 20
 PUSH = 20                # the Push to question button in a Comment box
+ZOOM_MIN, ZOOM_MAX, ZOOM_STEP = 0.6, 2.5, 1.1     # Ctrl + mouse wheel
+DRAG = 4                 # pixels the mouse moves before a press becomes a drag over words
+EDGE_PUNCT = "‘’“”'\"«».,;:!?"   # stripped from the ends of words taken from a translation
 
 
 @dataclass
@@ -56,6 +64,33 @@ class _Cell:
     width: int
 
 
+class CommentEdit(QPlainTextEdit):
+    """The Comment box's editor: the text wraps and starts at the top left, as in a chat box
+    (Josh, 21 October), with the same few methods as a QLineEdit for the view's editing."""
+    editingFinished = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setLineWrapMode(QPlainTextEdit.WidgetWidth)
+        self.setTabChangesFocus(True)
+        self.document().setDocumentMargin(3)
+
+    def text(self) -> str:
+        return " ".join(self.toPlainText().split("\n"))
+
+    def setText(self, text: str):
+        self.setPlainText(text or "")
+
+    def end(self, mark: bool = False):
+        c = self.textCursor()
+        c.movePosition(c.MoveOperation.End)
+        self.setTextCursor(c)
+
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.editingFinished.emit()
+
+
 def shown(text: str) -> str:
     """A field's text as shown: the glossing symbols hidden ({big dog} → big dog, {} → nothing)."""
     if "{" not in (text or ""):
@@ -71,6 +106,7 @@ class LinesView(QAbstractScrollArea):
     currentChanged = Signal(object)               # a line chosen with the mouse or keys
     countChanged = Signal()
     pushRequested = Signal(object)                # the ? on a line's Comment: Push to question
+    createTokenRequested = Signal(object, str, str)   # line, field key, the words chosen (idea 31)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -90,16 +126,53 @@ class LinesView(QAbstractScrollArea):
         self._anchor = None
         self._editor = None                       # (QLineEdit, line id, key, original text)
         self.menu_key = ""                        # the field right-clicked last
-        self.ipa = ipa_font(15)
-        self.plain = QFont(self.font())
-        self.plain.setPointSizeF(self.plain.pointSizeF() * 1.1)
-        self.small = QFont(self.font())
-        self.small.setPointSizeF(max(7.0, self.small.pointSizeF() * 0.9))
+        self._text_sel = None                     # (line id, field key, first word, last word)
+        self._drag = None                         # (line id, field key, word, x) while pressing on a field
+        self.zoom = 1.0                           # Ctrl + mouse wheel (this view's own, not saved)
+        self._base_pt = self.font().pointSizeF()
+        self._apply_fonts()
         self.setFocusPolicy(Qt.StrongFocus)
         self.viewport().setMouseTracking(False)
         self.horizontalScrollBar().setSingleStep(24)
         self.verticalScrollBar().setSingleStep(24)
         theme.as_data(self)
+
+    # ---- zoom (Ctrl + mouse wheel) ------------------------------------------------
+    def _apply_fonts(self):
+        z = self.zoom
+        self.ipa = ipa_font(round(15 * z))
+        self.plain = QFont(self.font())
+        self.plain.setPointSizeF(self._base_pt * 1.1 * z)
+        self.small = QFont(self.font())
+        self.small.setPointSizeF(max(7.0, self._base_pt * 0.9 * z))
+
+    @property
+    def side_w(self) -> int:
+        """The pinned side's width (time and Comment), growing with the zoom."""
+        return round(SIDE_W * max(1.0, self.zoom))
+
+    def set_zoom(self, zoom: float):
+        zoom = max(ZOOM_MIN, min(ZOOM_MAX, zoom))
+        if abs(zoom - self.zoom) < 1e-6:
+            return
+        self.zoom = zoom
+        self._apply_fonts()
+        if self._editor is not None:
+            ed, _, key, _ = self._editor
+            spec = next((s for s in self.fields if s.key == key), None)
+            ed.setFont(self._font(spec) if spec is not None else self.plain)
+        self._relayout()
+        if self._current is not None:
+            self._scroll_to(self._current)
+
+    def wheelEvent(self, event):
+        if event.modifiers() & Qt.ControlModifier:
+            d = event.angleDelta().y() or event.angleDelta().x()
+            if d:
+                self.set_zoom(self.zoom * (ZOOM_STEP ** (d / 120)))
+            event.accept()
+            return
+        super().wheelEvent(event)
 
     # ---- data ---------------------------------------------------------------
     def set_fields(self, specs: list[FieldSpec], comment_key: str = ""):
@@ -120,6 +193,8 @@ class LinesView(QAbstractScrollArea):
             self._current = None
         if editing is not None and editing[1] not in ids:
             self._close_editor(commit=False)
+        if self._text_sel is not None and self._text_sel[0] not in ids:
+            self._text_sel = None
         self._filter()
 
     def set_search(self, text: str):
@@ -129,6 +204,7 @@ class LinesView(QAbstractScrollArea):
     def set_edit_mode(self, on: bool):
         self._close_editor(commit=True)
         self.edit_mode = bool(on)
+        self._text_sel = None
         self.viewport().update()
 
     def value(self, line, key: str) -> str:
@@ -218,11 +294,11 @@ class LinesView(QAbstractScrollArea):
                 width = max(width, QFontMetrics(self._font(s)).horizontalAdvance(self._display(line, s)))
         fields_h = top + PAD
         comment = self.value(line, self.comment_key)
-        fm = QFontMetrics(self.small)
-        box_w = SIDE_W - 20
+        fm = QFontMetrics(self.plain)                 # the Comment: the same size as the Translation
+        box_w = self.side_w - 20
         text_h = fm.boundingRect(QRect(0, 0, box_w - 12 - PUSH, 2000), Qt.TextWordWrap,
                                  comment).height() if comment else 0
-        side_h = PAD + TIME_H + max(38, text_h + 14) + PAD
+        side_h = PAD + self._time_h() + max(fm.height() + 20, text_h + 14) + PAD
         return _Cell(y, max(fields_h, side_h, 44), rows, cols, width)
 
     def _relayout(self):
@@ -234,7 +310,7 @@ class LinesView(QAbstractScrollArea):
             self._tops.append(y)
             y += c.h + 1
         self._content_h = y
-        self._content_w = MARGIN + max((c.width for c in self._cells), default=0) + 32 + SIDE_W
+        self._content_w = MARGIN + max((c.width for c in self._cells), default=0) + 32 + self.side_w
         self._update_bars()
         self._place_editor()
         self.viewport().update()
@@ -267,15 +343,17 @@ class LinesView(QAbstractScrollArea):
             sb.setValue(c.y + c.h - self.viewport().height())
 
     # ---- geometry --------------------------------------------------------------------
+    def _time_h(self) -> int:
+        return max(TIME_H, QFontMetrics(self.small).height() + 4)
+
     def _side_x(self) -> int:
-        return max(MARGIN + 120, self.viewport().width() - SIDE_W)
+        return max(MARGIN + 120, self.viewport().width() - self.side_w)
 
     def _field_rect(self, i: int, key: str) -> QRect | None:
         c = self._cells[i]
         top = c.y - self.verticalScrollBar().value()
         if key == self.comment_key and key:
-            x = self._side_x() + 10
-            return QRect(x, top + PAD + TIME_H, SIDE_W - 20, max(30, c.h - PAD * 2 - TIME_H))
+            return self._comment_box(c, top).toRect()
         for s, oy, h in c.rows:
             if s.key == key:                      # from the field's start to the side, at least 220 wide
                 x = MARGIN - self.horizontalScrollBar().value() - 4
@@ -284,7 +362,8 @@ class LinesView(QAbstractScrollArea):
 
     def _comment_box(self, c, top: float) -> QRectF:
         """A cell's Comment box (top: the cell's top, in the same coordinates as the result)."""
-        return QRectF(self._side_x() + 10, top + PAD + TIME_H, SIDE_W - 20, max(30, c.h - PAD * 2 - TIME_H))
+        th = self._time_h()
+        return QRectF(self._side_x() + 10, top + PAD + th, self.side_w - 20, max(30, c.h - PAD * 2 - th))
 
     def _push_rect(self, box: QRectF) -> QRectF:
         """The Push to question button, at the top right of a Comment box that has a comment."""
@@ -298,7 +377,7 @@ class LinesView(QAbstractScrollArea):
             return None, ""
         c = self._cells[i]
         if pos.x() >= self._side_x():
-            if pos.y() + self.verticalScrollBar().value() < c.y + PAD + TIME_H:
+            if pos.y() + self.verticalScrollBar().value() < c.y + PAD + self._time_h():
                 return i, "clips" if self.clips.get(self._visible[i].id) else "side"
             if self.comment_key and self.value(self._visible[i], self.comment_key):
                 vy = self.verticalScrollBar().value()
@@ -310,6 +389,74 @@ class LinesView(QAbstractScrollArea):
             if top <= oy < top + h:
                 return i, s.key
         return i, ""
+
+    # ---- words, for Create token (idea 31) ------------------------------------------------
+    def _word_spans(self, i: int, spec: FieldSpec) -> list:
+        """A field's words in a visible line: (x start, x end, text), in content coordinates
+        (the left margin included). An aligned field's words are its units ({big dog} is one)."""
+        ln, c = self._visible[i], self._cells[i]
+        fm = QFontMetrics(self._font(spec))
+        out = []
+        if spec.aligned:
+            x = MARGIN
+            for w, u in zip(c.cols, self._units(ln, spec)):
+                if u:
+                    out.append((x, x + fm.horizontalAdvance(u), u))
+                x += w
+            return out
+        t = self._display(ln, spec)
+        for m in re.finditer(r"\S+", t):
+            x = MARGIN + fm.horizontalAdvance(t[:m.start()])
+            out.append((x, x + fm.horizontalAdvance(m.group()), m.group()))
+        return out
+
+    def _word_at(self, i: int, key: str, x: float) -> int:
+        """The word of the field at content x (the nearest one before it; -1 if it has none)."""
+        spec = next((f for f in self.fields if f.key == key), None)
+        spans = self._word_spans(i, spec) if spec is not None else []
+        if not spans:
+            return -1
+        k = 0
+        for j, (a, b, _) in enumerate(spans):
+            if x >= a - GAP / 2:
+                k = j
+        return k
+
+    def text_selection(self):
+        """(line, field key, the words highlighted) or None. A translation's words lose the
+        quotes and the punctuation at their ends ("my dog." → "my dog")."""
+        ts = self._text_sel
+        if ts is None:
+            return None
+        line_id, key, a, b = ts
+        i = self._index(line_id)
+        spec = next((f for f in self.fields if f.key == key), None)
+        if i is None or spec is None:
+            return None
+        spans = self._word_spans(i, spec)
+        a, b = max(0, a), min(len(spans) - 1, b)
+        if a > b:
+            return None
+        ln = self._visible[i]
+        if spec.aligned:
+            words = " ".join(w for _, _, w in spans[a:b + 1])
+        else:
+            t = self._display(ln, spec)
+            found = list(re.finditer(r"\S+", t))
+            words = t[found[a].start():found[b].end()]
+            if not spec.ipa:
+                words = words.strip(EDGE_PUNCT + " ")
+        return (ln, key, words) if words.strip() else None
+
+    def select_words(self, line, key: str, first: int, last: int):
+        """Highlight words of a line's field (first to last, counted from 0)."""
+        self._text_sel = (line.id, key, min(first, last), max(first, last))
+        self.viewport().update()
+
+    def clear_text_selection(self):
+        if self._text_sel is not None:
+            self._text_sel = None
+            self.viewport().update()
 
     # ---- painting ----------------------------------------------------------------------
     def paintEvent(self, event):
@@ -341,6 +488,14 @@ class LinesView(QAbstractScrollArea):
                     p.setPen(QPen(theme.mix(base, text, 0.18), 1))
                     p.setBrush(theme.mix(base, QColor("white") if not theme.dark() else QColor("black"), 0.5))
                     p.drawRoundedRect(box, 3, 3)
+                ts = self._text_sel
+                if ts is not None and ts[0] == ln.id and ts[1] == s.key:   # words highlighted (idea 31)
+                    spans = self._word_spans(i, s)
+                    if spans:
+                        a, b = max(0, ts[2]), min(len(spans) - 1, ts[3])
+                        if a <= b:
+                            p.fillRect(QRectF(spans[a][0] - vx - 2, y + 2, spans[b][1] - spans[a][0] + 4, rh - 4),
+                                       theme.mix(base, accent, 0.40))
                 p.setFont(self._font(s))
                 if s.aligned:
                     x = x0
@@ -368,7 +523,8 @@ class LinesView(QAbstractScrollArea):
                         p.setFont(self.small)
                         p.drawText(QRect(x0, y, 300, rh), Qt.AlignVCenter, s.title)
             # the side, pinned at the right: time (speaker, clipped utterances) and the Comment
-            p.fillRect(QRect(side_x, top, SIDE_W, c.h), theme.mix(base, accent, 0.10) if sel or cur else base)
+            side_w = self.side_w
+            p.fillRect(QRect(side_x, top, side_w, c.h), theme.mix(base, accent, 0.10) if sel or cur else base)
             p.setPen(QPen(line_col, 1))
             p.drawLine(side_x, top + 4, side_x, top + c.h - 4)
             p.setFont(self.small)
@@ -377,11 +533,12 @@ class LinesView(QAbstractScrollArea):
             head = f"{clock(ln.start)} – {clock(ln.end)}"
             if self.show_speaker and ln.speaker:
                 head += f"   {ln.speaker}"
-            p.drawText(QRect(side_x + 10, top + PAD - 2, SIDE_W - 20, TIME_H), Qt.AlignVCenter, head)
+            th = self._time_h()
+            p.drawText(QRect(side_x + 10, top + PAD - 2, side_w - 20, th), Qt.AlignVCenter, head)
             refs = self.clips.get(ln.id)
             if refs:
                 p.setPen(accent)
-                p.drawText(QRect(side_x + 10, top + PAD - 2, SIDE_W - 20, TIME_H), Qt.AlignVCenter | Qt.AlignRight,
+                p.drawText(QRect(side_x + 10, top + PAD - 2, side_w - 20, th), Qt.AlignVCenter | Qt.AlignRight,
                            ", ".join(refs))
             if self.comment_key:
                 box = self._comment_box(c, top)
@@ -390,6 +547,7 @@ class LinesView(QAbstractScrollArea):
                 p.drawRoundedRect(box, 3, 3)
                 comment = self.value(ln, self.comment_key)
                 p.setPen(text if comment else dim)
+                p.setFont(self.plain if comment else self.small)
                 inner = box.adjusted(6, 4, -6 - (PUSH if comment else 0), -4)
                 p.drawText(inner.toRect(), Qt.TextWordWrap | Qt.AlignTop,
                            comment or ("Comment" if self.edit_mode else ""))
@@ -417,6 +575,12 @@ class LinesView(QAbstractScrollArea):
             if ln.id not in self._selected:
                 self.select_row(ln)
             return
+        keys = {f.key for f in self.fields}
+        self.clear_text_selection()
+        if (event.button() == Qt.LeftButton and not self.edit_mode and what in keys
+                and not event.modifiers() & (Qt.ControlModifier | Qt.ShiftModifier)):
+            x = event.position().x() + self.horizontalScrollBar().value()
+            self._drag = (ln.id, what, self._word_at(i, what, x), event.position().x())
         if what == "push":
             self.select_row(ln)
             self.viewport().update()
@@ -439,6 +603,24 @@ class LinesView(QAbstractScrollArea):
                 self._start_edit(ln.id, self.comment_key if what == "comment" else what)
         self.viewport().update()
         self.currentChanged.emit(ln)
+
+    def mouseMoveEvent(self, event):
+        d = self._drag
+        if d is None or not event.buttons() & Qt.LeftButton:
+            return super().mouseMoveEvent(event)
+        line_id, key, start, x0 = d
+        i = self._index(line_id)
+        if i is None or start < 0:
+            return
+        if self._text_sel is None and abs(event.position().x() - x0) < DRAG:
+            return
+        k = self._word_at(i, key, event.position().x() + self.horizontalScrollBar().value())
+        self._text_sel = (line_id, key, min(start, k), max(start, k))
+        self.viewport().update()
+
+    def mouseReleaseEvent(self, event):
+        self._drag = None
+        super().mouseReleaseEvent(event)
 
     def mouseDoubleClickEvent(self, event):
         i, what = self._hit(event.position().toPoint())
@@ -477,6 +659,12 @@ class LinesView(QAbstractScrollArea):
             return
         if k == Qt.Key_A and mods & Qt.ControlModifier:
             self.selectAll()
+            return
+        if k == Qt.Key_0 and mods & Qt.ControlModifier:      # the zoom back to normal
+            self.set_zoom(1.0)
+            return
+        if k == Qt.Key_Escape and self._text_sel is not None:
+            self.clear_text_selection()
             return
         super().keyPressEvent(event)
 
@@ -517,9 +705,15 @@ class LinesView(QAbstractScrollArea):
         self._current = line_id
         self._scroll_to(line_id)
         ln = self._visible[i]
-        ed = QLineEdit(self.viewport())
         spec = next((s for s in self.fields if s.key == key), None)
-        ed.setFont(self._font(spec) if spec is not None else self.small)
+        if key == self.comment_key:               # wraps, from the top left (Josh, 21 October)
+            ed = CommentEdit(self.viewport())
+            ed.setFont(self.plain)
+        else:
+            ed = QLineEdit(self.viewport())
+            ed.setFont(self._font(spec) if spec is not None else self.plain)
+            ed.setContextMenuPolicy(Qt.CustomContextMenu)
+            ed.customContextMenuRequested.connect(lambda pos, ed=ed: self._editor_menu(ed, pos))
         original = self.value(ln, key)
         ed.setText(original)                       # the symbols show while editing
         ed.installEventFilter(self)
@@ -530,6 +724,27 @@ class LinesView(QAbstractScrollArea):
         ed.setFocus()
         ed.end(False)
         self.viewport().update()
+
+    def _editor_menu(self, ed, pos):
+        """The editor's usual menu, with Create token from the words selected in it (idea 31)."""
+        m = ed.createStandardContextMenu()
+        words = ed.selectedText().strip()
+        if self._editor is not None and self._editor[0] is ed:
+            _, line_id, key, _ = self._editor
+            spec = next((s for s in self.fields if s.key == key), None)
+            if words and spec is not None and not spec.ipa:
+                words = words.strip(EDGE_PUNCT + " ")
+            first = m.actions()[0] if m.actions() else None
+            a = QAction(icon("lemma-token", 16), f"Create token from “{words}”…" if words
+                        else "Create token (select words first)", m)
+            a.setEnabled(bool(words))
+            line = next((x for x in self.rows if x.id == line_id), None)
+            a.triggered.connect(lambda *_: line is not None and self.createTokenRequested.emit(line, key, words))
+            m.insertAction(first, a)
+            if first is not None:
+                m.insertSeparator(first)
+        m.exec(ed.mapToGlobal(pos))
+        m.deleteLater()
 
     def _place_editor(self):
         if self._editor is None:
@@ -583,7 +798,11 @@ class LinesView(QAbstractScrollArea):
             k, mods = event.key(), event.modifiers()
             _, line_id, key, _ = self._editor
             if k == Qt.Key_Space and mods & Qt.ControlModifier:     # plays; never types a space
-                self.playRequested.emit()
+                if mods & Qt.ShiftModifier:                         # the window's pitch (the scratchpad)
+                    from .ctrlspace import run_shortcut
+                    run_shortcut(self, pitch=True)
+                else:
+                    self.playRequested.emit()
                 return True
             if k == Qt.Key_Escape:
                 self._close_editor(commit=False)

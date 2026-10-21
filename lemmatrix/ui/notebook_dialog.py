@@ -624,7 +624,8 @@ class NotebookDialog(QDialog):
         self.texts.clear()
         db = self.db
         genre = db.settings.text_field("genre")
-        rows = [t for t in db.texts if t.date == self.session.date]
+        ids = set(self.session.texts)             # the texts worked on that day (21 October)
+        rows = [t for t in db.texts if t.id in ids]
         for t in rows:
             it = QTreeWidgetItem([f"{t.ref} {db.text_title(t)}", t.get(genre.name) if genre else "",
                                   " ".join(t.participants), t.file])
