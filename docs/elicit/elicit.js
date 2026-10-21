@@ -361,6 +361,7 @@ async function openLink(id, key) {
 }
 
 let uploading = null;
+let lastError = "";                  // shown small on the waiting screen, for whoever tests it
 
 async function uploadPending() {
   // Every recording that is good but not uploaded yet, in order; false if one couldn't go now.
@@ -377,6 +378,8 @@ async function uploadPending() {
         a.uploaded = true;
         await save();
       } catch (e) {
+        lastError = String(e && e.message || e) + (navigator.onLine ? " (online)" : " (offline)");
+        console.error("ɛλicit upload", c.n, e);
         ok = false;
         break;
       }
@@ -414,9 +417,10 @@ async function sendDrive() {
       try {
         await putJSON(S.req.drive.response, responseData());
         break;
-      } catch (e) { /* try again below */ }
+      } catch (e) { lastError = "response: " + String(e && e.message || e); }
     }
-    line.replaceChildren(...text("waiting_net").filter(Boolean).map(t => h("div", {}, t)));
+    line.replaceChildren(...text("waiting_net").filter(Boolean).map(t => h("div", {}, t)),
+      lastError ? h("div", { class: "note" }, lastError) : "");
     await new Promise(res => setTimeout(res, 8000));
   }
   await destroy();

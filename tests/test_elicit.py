@@ -179,7 +179,13 @@ def win(tmp_path, monkeypatch, db):
     monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: None)
     monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
     monkeypatch.setattr(elicit_dialogs, "remind", lambda main: None)
+    from lemmatrix import gdrive
+
+    def no_sign_in(*a, **k):                                         # tests never open a browser
+        raise gdrive.DriveError("no signing in during tests")
+    monkeypatch.setattr(gdrive, "authorize", no_sign_in)
     w = main_window.MainWindow()
+    w.prefs.google_token = {}
     w.load_database(db)
     yield w
     w.doc.undo.setClean()
@@ -214,6 +220,9 @@ def test_the_request_dialog(win, monkeypatch):
     monkeypatch.setattr(QMessageBox, "exec", lambda self: None)
     monkeypatch.setattr(QMessageBox, "clickedButton", lambda self: self.buttons()[0])
     monkeypatch.setattr(ed.SentDialog, "exec", lambda self: None)
+    from lemmatrix import cloud_keys
+    assert dlg.send_by.currentData() == ("drive" if cloud_keys.google_ready() else "file")
+    dlg.send_by.setCurrentIndex(dlg.send_by.findData("file"))       # the zip route (no Google in tests)
     dlg._make()
     assert dlg.made is not None and dlg.made.exists()
     assert dlg.request.cards[2].translations == {"en": "I read a book.", "da": "Jeg læser en bog."}
