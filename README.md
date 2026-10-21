@@ -201,6 +201,11 @@ AUTHORS, CITATION.cff who made Lemmatrix and how to cite it
 THIRD-PARTY.md        the libraries Lemmatrix uses, with their licences
 ```
 
+## Support
+
+Questions, bugs and suggestions: **lemmatrix.support@gmail.com**, or an issue at
+<https://github.com/smojos/Lemmatrix/issues>. (Help → About Lemmatrix has the address too.)
+
 ## Acknowledgements
 
 **Rod Casali**, professor and friend, for his years of dedicated work coding Dekereke and for
