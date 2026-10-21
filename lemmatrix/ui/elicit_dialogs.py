@@ -396,7 +396,7 @@ class RequestDialog(QDialog):
         self.logo.setAlignment(Qt.AlignRight | Qt.AlignTop)
         gap = round(LOGO_HEIGHT * 0.15)           # a little more room from the window's top and side
         self.logo.setContentsMargins(0, gap, gap, 0)
-        self.logo.setToolTip("this is a placeholder")       # Josh, 21 October: his own line goes here
+        self.logo.setToolTip("Bless the rains...")
         head.addWidget(self.logo, 1)
         lay.addLayout(head)
 
