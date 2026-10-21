@@ -578,6 +578,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 - **Icons beside the tabs** (20 October, Josh's mockup): on the Matrix title's row, just left of All data, the **Texts and utterances** button (48 px; Ctrl+U), and to its left the **ɛλicit** button (48 px; its menu: Make ɛλicit request…, Receive ɛλicitation…, and Review waiting recordings… while some wait; section 5.12). Texts and utterances used to be a big button in a panel of its own beside Current Session.
 - **Tags appear as small light-blue rounded "chips"** that size to their text: in the All data Tags column, in matrix headers, and in the token dialogue.
 - **Icons** (drawn by the program, no image files):
+  - The program's own icon: Josh's λχ in white on a teal (#198583) rounded square, flat (21 October; the first version had a shadow behind the letters). `lemmatrix/resources/lemmatrix.svg`, with the PNG sizes and `lemmatrix.ico` made from it by `tools/make_icons.py`.
   - Add: green circle with a white plus. Delete: red circle with a white X. Edit: black-on-white pencil.
   - Every "Configure…" option starts with a black-on-white gear; Configure cell, Configure columns and Configure matrix add stacked cell lines, two columns, or a χ beside it, in the theme colour (lighter on dark). The χ is drawn as strokes, not text, so Windows fonts can't change it.
   - Open in Praat: a white waveform on a Praat beige (#909068) rounded square (19 October, Josh's mockup).
