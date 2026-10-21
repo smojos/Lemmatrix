@@ -360,9 +360,11 @@ class TextsUtterancesWindow(QDialog):
         """Back from Praat: the TextGrids may have changed."""
         super().changeEvent(event)
         from PySide6.QtCore import QEvent
-        if event.type() == QEvent.ActivationChange and self.isActiveWindow() and self.db.utterances:
-            if self.recheck():
+        if event.type() == QEvent.ActivationChange and self.isActiveWindow():
+            if self.db.utterances and self.recheck():
                 self.table.set_rows(list(self.db.utterances))
+            # a text's lines are read again even with no utterances in the database (Josh,
+            # 21 October: a segment filled in Praat never showed up in a new database)
             if self.tabs.currentIndex() == TEXTS and hasattr(self, "texts"):
                 self.texts.lines_changed()
 

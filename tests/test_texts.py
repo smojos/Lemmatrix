@@ -918,3 +918,31 @@ def test_keys_in_the_lines_view(win, tmp_path, monkeypatch):
     assert v._editor[1] == v.rows[1].id and v._editor[2] == "Phonetic"
     QTest.keyClick(v._editor[0], Qt.Key_Escape)
     assert v._editor is None and win.doc.undo.count() == steps       # nothing typed: nothing recorded
+
+
+def test_a_segment_filled_in_praat_shows_up_with_no_utterances_in_the_database(win, tmp_path, monkeypatch):
+    """Josh, 21 October: a segment empty when the text was added, filled in Praat later, never
+    showed up: back from Praat, the lines were only read again if the database had utterances."""
+    import time
+    from PySide6.QtCore import QEvent
+    from lemmatrix.ui.utterances import TextsUtterancesWindow
+    src = tmp_path / "field"
+    src.mkdir()
+
+    def grid(path, filled):
+        tgmod.write_example(path, {
+            "tx": [(0.5, 1.5, "ʔəŋ kɒ"), (2.0, 3.0, "ɛ ŋəə" if filled else "")],
+            "ft": [(0.5, 1.5, "the hare ran" if filled else ""), (2.0, 3.0, "where is he?" if filled else "")],
+        }, 4.0)
+    grid(src / "story.TextGrid", False)
+    uw, t = _add_text(win, tmp_path, monkeypatch, src=src)
+    assert not win.doc.db.utterances
+    p = uw.texts
+    assert len(p.lines.rows) == 1 and "Translation:en" not in p.lines.rows[0].values
+    time.sleep(0.02)
+    grid(p.grid_path(t), True)                       # saved in Praat
+    monkeypatch.setattr(TextsUtterancesWindow, "isActiveWindow", lambda self: True)
+    uw.changeEvent(QEvent(QEvent.ActivationChange))  # back from Praat
+    assert len(p.lines.rows) == 2
+    assert p.lines.rows[0].values["Translation:en"] == "the hare ran"
+    assert p.lines.rows[1].values["Phonetic"] == "ɛ ŋəə"
