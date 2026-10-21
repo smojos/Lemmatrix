@@ -175,3 +175,62 @@ def test_deleting_a_lemmas_last_token_in_all_data_doesnt_crash(win, monkeypatch)
         assert r.index < len(r.entry.tokens)
     _settle()
     assert not errors
+
+
+def _click(table, row, col=0):
+    from PySide6.QtCore import QPoint, QPointF, Qt
+    from PySide6.QtGui import QMouseEvent
+    i = table.model_.rows.index(row)
+    idx = table.proxy.mapFromSource(table.model_.index(i, col))
+    pos = QPointF(table.visualRect(idx).center())
+    for kind in (QEvent.MouseButtonPress, QEvent.MouseButtonRelease):
+        ev = QMouseEvent(kind, pos, table.viewport().mapToGlobal(pos.toPoint()), Qt.LeftButton,
+                         Qt.LeftButton if kind == QEvent.MouseButtonPress else Qt.NoButton, Qt.NoModifier)
+        QApplication.sendEvent(table.viewport(), ev)
+
+
+def test_add_token_goes_to_the_selected_tokens_lemma_or_the_selected_lemma(win, monkeypatch):
+    """Josh, 21 October: a click on the selected token in All data unselects it; Add token then goes
+    to the lemma list's lemma; λ→τ always does."""
+    import time
+
+    from lemmatrix.ui import main_window
+    win.resize(1400, 780)
+    win.show()
+    win.tabs.setCurrentIndex(main_window.ALL_DATA)
+    _settle()
+    opened = []
+    monkeypatch.setattr(win, "_open_dialog", lambda slots, i, tab, *a: opened.append(slots[i].entry))
+    db = win.doc.db
+    lemma, other = db.entries[0], db.entries[1]
+    win.lemmas.select_row(lemma)
+    _settle()
+    t = win.all_table
+    row = next(r for r in t.model_.rows if r.entry is other)
+    key = next(i for i, c in enumerate(t.model_.columns) if not c.edit)
+    _click(t, row, key)
+    assert t.selected_row() == row
+    win.add_token()
+    assert opened[-1] is other                         # a token is selected: its lemma
+    win.add_token_to_lemma()
+    assert opened[-1] is lemma                         # λ→τ: the lemma list's lemma
+    _click(t, row, key)                                # a click on the selected token...
+    time.sleep(0.6)
+    _settle()
+    assert t.selected_row() is None                    # ...unselects it
+    win.add_token()
+    assert opened[-1] is lemma                         # only a lemma selected: that lemma
+    _click(t, row, key)
+    _settle()
+    assert t.selected_row() == row                     # a click selects it again
+
+
+def test_lemma_list_offers_create_token_for_this_lemma(win, monkeypatch):
+    from PySide6.QtWidgets import QToolButton
+    seen = []
+    monkeypatch.setattr(win, "_menu", lambda items, pos: seen.extend(i[0] for i in items if i))
+    from PySide6.QtCore import QPoint
+    win._lemma_menu(win.doc.db.entries[0], QPoint(0, 0))
+    assert "Create token for this lemma" in seen
+    tips = [b.toolTip() for b in win.findChildren(QToolButton)]
+    assert any(tip.startswith("Create token for this lemma") for tip in tips)

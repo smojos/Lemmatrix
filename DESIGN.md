@@ -606,7 +606,7 @@ New databases start with this structure (revised 20 October). Everything in it c
     - **Any selected** or **No selected**. For tags, also **Exactly selected**: only the exact combination (group defaults don't count).
 - **Ctrl+click a lemma** (cleared when another database is opened) to show only that lemma (the other filters still apply); Ctrl+click again, or Clear all filters, shows the rest again. The first column's funnel lights up and the count line names the lemma.
 - Active filters show as a highlighted funnel. **Clear all filters** is in the options bar.
-- **Options bar:** Add, Delete, Edit, Configure columns, Clear all filters, quick search, CV shape filter (Stage 2; matches the Lemma field).
+- **Options bar:** Add (a lemma), Delete, Edit, **Create token for this lemma** (λ→τ, in the theme colour, icon only; 21 October), Configure columns, Clear all filters, quick search, CV shape filter (Stage 2; matches the Lemma field). The right-click menu has Create token for this lemma too. It always adds a token to the lemma selected here, whatever is selected in the matrix.
 
 ### 5.3 All data
 
@@ -614,6 +614,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 - **Every column has the same filter menu as the lemma list.** All columns are open by default, except Tags, which is closed (so tags can be included or excluded). Speaker can be filtered here.
 - **Pitch drawings in a column too narrow for them** (All data, Utterances, Bulk edit) are cut off with an ellipsis, like text, instead of spilling into the next column (20 October).
 - **Soundfile's filter menu** (18 October): Show all, **Present** (the recording is in the sound folder), **Missing** (not recorded, or not in the folder), **Rerecord** (flagged in the token dialogue), then Filter for….
+- **Selecting and Add** (Josh, 21 October): clicking the selected token unselects it (a double-click still opens it). **Add** (a token) goes to the selected token's lemma; with no token selected, to the lemma selected in the lemma list. With nothing selected, Delete, Edit and Play do nothing.
 - **Options bar:** Add, Delete, Edit, Play, **Move token to another lemma** (λ→λ, section 5.11), **Find missing or unlinked recordings** (icon only, the same as Tools → Find missing or unlinked recordings…, 19 October), Configure columns, Clear all filters, quick search, CV shape filter (Stage 2; matches Phonetic).
 - **Right-click menu** with the same options (plus Play, and **Move to another lemma…**; the matrices' menus have it too). On the Pitch column (its digits or its drawing), **Raise pitch** and **Lower pitch**: Bulk edit's pitch shortcut for that one token, one undo step, greyed if it would go past the display range (19 October). The matrices' right-click menu has them too for a token with pitch. On the Tags column, **Filter for same** sets the Tags filter to **Exactly selected** with that token's tags (Citation for a token with none), 19 October.
 - **Double-click** a token's cell to open the token dialogue; double-click a **lemma's column** (Reference, Lemma, Gloss, Word Class) to select that lemma in the lemma list instead, as in Lemma/Tag (18 October). Enter still opens the token dialogue.

@@ -359,6 +359,7 @@ class FilterTable(QTableView):
         theme.as_data(self)
         self.space_plays = False                  # True: the spacebar asks to play (All data)
         self.ctrl_click_pins = False              # True: Ctrl+click shows only that row (the lemma list)
+        self.click_unselects = False              # True: a click on the selected row unselects it (All data)
         self.verticalHeader().hide()
         self.verticalHeader().setDefaultSectionSize(26)
         self.horizontalHeader().setStretchLastSection(True)
@@ -472,6 +473,13 @@ class FilterTable(QTableView):
     def current_row(self):
         return self.row_at(self.currentIndex())
 
+    def selected_row(self):
+        """The row that is selected (None when a click has unselected it), unlike current_row,
+        which Qt keeps after the selection is cleared."""
+        if not self.selectionModel().hasSelection():
+            return None
+        return self.current_row()
+
     def visible_rows(self) -> list:
         return [self.model_.rows[self.proxy.mapToSource(self.proxy.index(r, 0)).row()]
                 for r in range(self.proxy.rowCount())]
@@ -485,7 +493,10 @@ class FilterTable(QTableView):
             return
         idx = self.proxy.mapFromSource(self.model_.index(i, 0))
         if idx.isValid():
+            from PySide6.QtCore import QItemSelectionModel
             self.setCurrentIndex(idx)
+            # selected even when it was already current but unselected by a click (All data)
+            self.selectionModel().select(idx, QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows)
             self.scrollTo(idx)
 
     # ---- filters ---------------------------------------------------------
@@ -610,7 +621,33 @@ class FilterTable(QTableView):
                 self.toggle_pin(self.row_at(idx))
                 event.accept()
                 return
+        # click_unselects (All data, 21 October): a plain click on the selected row unselects it.
+        # Not when the click edits a cell in place, or is the first of a double-click.
+        self._unselect_on_release = False
+        if self.click_unselects and event.button() == Qt.LeftButton and not event.modifiers():
+            idx = self.indexAt(event.position().toPoint())
+            if idx.isValid() and self.selectionModel().isRowSelected(idx.row(), QModelIndex()) \
+                    and not (self.model_.columns[self.proxy.mapToSource(idx).column()].edit
+                             and idx == self.currentIndex()):
+                self._unselect_on_release = True
         super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        if getattr(self, "_unselect_on_release", False):
+            self._unselect_on_release = False
+            from PySide6.QtWidgets import QApplication
+            QTimer.singleShot(QApplication.doubleClickInterval() + 10, self._unselect_if_still)
+            self._pending_unselect = True
+
+    def mouseDoubleClickEvent(self, event):
+        self._pending_unselect = False             # a double-click opens; it never unselects
+        super().mouseDoubleClickEvent(event)
+
+    def _unselect_if_still(self):
+        if getattr(self, "_pending_unselect", False):
+            self._pending_unselect = False
+            self.clearSelection()
 
     def _double(self, idx):
         col = self.model_.columns[idx.column()]

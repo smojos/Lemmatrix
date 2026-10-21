@@ -84,7 +84,7 @@ class TokenRow:
 
 INK_ICONS = THEMED                 # drawn in the theme's colours, so they follow the theme
 ICON_ONLY = {"add", "delete", "edit", "play", "reset-filters",   # obvious, shared actions: the name is in the tooltip
-             "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token"}
+             "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token", "lemma-token"}
 
 
 class _ElicitChecked(QObject):
@@ -229,6 +229,8 @@ class MainWindow(QMainWindow):
         row = self._row(bl, tool("Add", "add", self.add_entry, "Add a lemma"),
                         tool("Delete", "delete", self.delete_entry, "Delete the selected lemma (Delete)"),
                         tool("Edit", "edit", self.edit_entry, "Edit the selected lemma (Enter)"),
+                        tool("Create token for this lemma", "lemma-token", self.add_token_to_lemma,
+                             "Create token for this lemma: a new token of the lemma selected here"),
                         tool("Configure columns", "gear-columns", self.configure_lemma_columns),
                         tool("Clear all filters", "reset-filters", self._clear_lemma_filters, "Clear all filters"))
         row.addWidget(self.lemma_count)
@@ -353,6 +355,7 @@ class MainWindow(QMainWindow):
         self.all_table.deleteRequested.connect(self.delete_token)
         self.all_table.contextRequested.connect(self._all_menu)
         self.all_table.space_plays = True
+        self.all_table.click_unselects = True     # a click on the selected token unselects it
         self.all_table.playRequested.connect(self.play_selected)
         self.all_table.clicked.connect(lambda *_: self.autoplay.isChecked() and self.play_selected())
         self.all_table.model_.edited.connect(self._cell_edited)
@@ -1890,7 +1893,7 @@ class MainWindow(QMainWindow):
         """(entry, token index) of the selected token in the current tab, or None."""
         tab = self.tabs.currentIndex()
         if tab == ALL_DATA:
-            r = self.all_table.current_row()
+            r = self.all_table.selected_row()
             return (r.entry, r.index) if r else None
         hit = self._view(tab).selected_token()
         if hit:
@@ -1911,12 +1914,23 @@ class MainWindow(QMainWindow):
                 if entry is not None:
                     self._open_dialog([Slot(entry, None, tuple(tags), explicit=True, defaults=True)], 0, tab)
                     return
-        row = self.all_table.current_row() if tab == ALL_DATA else None
+        # All data (Josh, 21 October): a selected token's lemma; with no token selected (a click on
+        # a selected row unselects it), the lemma selected in the lemma list.
+        row = self.all_table.selected_row() if tab == ALL_DATA else None
         entry = row.entry if row else self.lemmas.current_row()
         if entry is None:
             QMessageBox.information(self, "Add token", "Select a lemma first.")
             return
         self._open_dialog([Slot(entry, None, (), explicit=True, defaults=True)], 0, tab)
+
+    def add_token_to_lemma(self):
+        """λ→τ, Create token for this lemma: a new token of the lemma list's selected lemma,
+        whatever is selected in the matrix (21 October)."""
+        entry = self.lemmas.current_row()
+        if entry is None:
+            QMessageBox.information(self, "Create token", "Select a lemma first.")
+            return
+        self._open_dialog([Slot(entry, None, (), explicit=True, defaults=True)], 0, self.tabs.currentIndex())
 
     def edit_token(self, record: bool = False):
         tab = self.tabs.currentIndex()
@@ -2091,7 +2105,8 @@ class MainWindow(QMainWindow):
         if row is not None:
             self.lemmas.select_row(row)
         self._menu([*self._spelling_items(self.lemmas, pos, row), ("Add lemma", "add", self.add_entry), ("Delete lemma", "delete", self.delete_entry),
-                    ("Edit lemma", "edit", self.edit_entry), None,
+                    ("Edit lemma", "edit", self.edit_entry),
+                    ("Create token for this lemma", "lemma-token", self.add_token_to_lemma, row is not None), None,
                     ("Configure columns", "gear-columns", self.configure_lemma_columns),
                     ("Clear all filters", "reset-filters", self._clear_lemma_filters)], pos)
 
