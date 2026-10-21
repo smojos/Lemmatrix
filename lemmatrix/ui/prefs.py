@@ -121,6 +121,14 @@ class Prefs:
     @autosave_minutes.setter
     def autosave_minutes(self, v): self.q.setValue("safety/autosave_minutes", int(v))
 
+    @property
+    def splash_seconds(self) -> float:
+        """How long the splash screen stays at least (0: only while Lemmatrix starts)."""
+        return max(0.0, min(5.0, self._get("display/splash_seconds", 2.5, float)))
+
+    @splash_seconds.setter
+    def splash_seconds(self, v): self.q.setValue("display/splash_seconds", float(v))
+
     # display
     @property
     def ipa_size(self) -> int:

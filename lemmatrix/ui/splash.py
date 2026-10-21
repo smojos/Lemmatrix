@@ -10,9 +10,10 @@ resolution.
 from __future__ import annotations
 
 import datetime
+import time
 
-from PySide6.QtCore import QByteArray, QEvent, QObject, QRectF, Qt
-from PySide6.QtGui import QColor, QGuiApplication, QPainter, QPixmap
+from PySide6.QtCore import QByteArray, QEvent, QObject, QRectF, Qt, QTimer
+from PySide6.QtGui import QColor, QGuiApplication, QPainter, QPainterPath, QPixmap
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QDialog, QSplashScreen
 
@@ -21,6 +22,7 @@ from .icons import RESOURCES
 
 BACKGROUND = "#198583"
 WIDTH = 600                                    # logical pixels; the SVG is A4 landscape (297 × 210)
+RADIUS = 14                                    # its corners are rounded off slightly (Josh, 21 October)
 
 
 def svg_text(year: int | None = None) -> str:
@@ -37,9 +39,13 @@ def pixmap(width: int = WIDTH) -> QPixmap:
     ratio = screen.devicePixelRatio() if screen else 1.0
     pm = QPixmap(round(width * ratio), round(height * ratio))
     pm.setDevicePixelRatio(ratio)
-    pm.fill(QColor(BACKGROUND))                  # the SVG's gradient is partly see-through: Josh exported it on this
+    pm.fill(Qt.transparent)
     p = QPainter(pm)
     p.setRenderHint(QPainter.Antialiasing)
+    clip = QPainterPath()
+    clip.addRoundedRect(QRectF(0, 0, width, height), RADIUS, RADIUS)
+    p.setClipPath(clip)
+    p.fillRect(QRectF(0, 0, width, height), QColor(BACKGROUND))   # the SVG's gradient is partly see-through: Josh exported it on this
     r.render(p, QRectF(0, 0, width, height))
     p.end()
     return pm
@@ -62,16 +68,29 @@ def show(app) -> QSplashScreen | None:
     """Show the splash screen now; returns it (None if it can't be drawn)."""
     if not (RESOURCES / "splash.svg").exists():
         return None
-    splash = QSplashScreen(pixmap(), Qt.WindowStaysOnTopHint)
+    splash = QSplashScreen(pixmap(), Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+    splash.setAttribute(Qt.WA_TranslucentBackground)      # so the rounded corners show what's behind
     splash._filter = _CloseOnDialog(splash)
     app.installEventFilter(splash._filter)
     splash.show()
     app.processEvents()
+    splash._shown = time.monotonic()                     # on screen from now
     return splash
 
 
-def finish(app, splash, window):
+def finish(app, splash, window, seconds: float = 0.0):
+    """Close the splash once the window is up, but not before it has been shown for `seconds`
+    (Settings → Display → Splash screen). A click, or any dialogue, closes it sooner."""
     if splash is None:
         return
-    app.removeEventFilter(splash._filter)
-    splash.finish(window)
+
+    def done():
+        app.removeEventFilter(splash._filter)
+        if splash.isVisible():
+            splash.finish(window)
+
+    left = seconds - (time.monotonic() - splash._shown)
+    if left > 0 and splash.isVisible():
+        QTimer.singleShot(round(left * 1000), done)
+    else:
+        done()

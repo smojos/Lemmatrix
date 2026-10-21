@@ -520,6 +520,16 @@ class PreferencesDialog(QDialog):
         self.autosave.setSuffix(" min")
         self.autosave.setSpecialValueText("off")
         self.autosave.setValue(prefs.autosave_minutes)
+        from PySide6.QtWidgets import QDoubleSpinBox
+        self.splash = QDoubleSpinBox()
+        self.splash.setRange(0.0, 5.0)
+        self.splash.setSingleStep(0.5)
+        self.splash.setDecimals(1)
+        self.splash.setSuffix(" s")
+        self.splash.setSpecialValueText("as short as possible")
+        self.splash.setValue(prefs.splash_seconds)
+        self.splash.setToolTip("How long the splash screen stays when Lemmatrix starts, at least "
+                               "(it stays while the database opens either way). Click it to close it sooner.")
         self.ipa = QSpinBox()
         self.ipa.setRange(8, 30)
         self.ipa.setValue(prefs.ipa_size)
@@ -595,7 +605,8 @@ class PreferencesDialog(QDialog):
                                ("Sample rate", self.rate), (None, self.with_tokens),
                                ("Path to Praat", self.praat)])])
         page("Display", [("This computer", [("Theme", self.theme), ("Accent colour", self.accent),
-                                            ("IPA font size", self.ipa)])])
+                                            ("IPA font size", self.ipa),
+                                            ("Splash screen", self.splash)])])
         page("Pitch", [("This database", [("Lowest pitch digit", self.low),
                                           ("Highest pitch digit", self.high)]),
                        ("This computer", [("Pitch playback", voice_row),
@@ -658,6 +669,7 @@ class PreferencesDialog(QDialog):
         p.underline_spelling = self.spelling.isChecked()
         p.autosave_minutes = self.autosave.value()
         p.ipa_size = self.ipa.value()
+        p.splash_seconds = self.splash.value()
         p.theme = self.theme.currentData()
         p.accent = self.accent.colour()
         p.praat_path = self.praat.text().strip()

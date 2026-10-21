@@ -75,7 +75,7 @@ def main() -> int:
         splash.raise_()
     if path and Path(path).exists():
         win.open_file(path)                 # warns if it's open on another computer
-    splashmod.finish(app, splash, win)
+    splashmod.finish(app, splash, win, win.prefs.splash_seconds)
     if not win.doc.db.path:
         box = QMessageBox(win)
         box.setWindowTitle("Welcome to Lemmatrix")
