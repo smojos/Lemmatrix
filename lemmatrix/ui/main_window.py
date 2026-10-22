@@ -141,6 +141,7 @@ class MainWindow(QMainWindow):
         self.utterances_window = None             # View → Texts and utterances, while it's open
         self.xml_window = None                    # View → XML viewer, while it's open
         self.cogitate_window = None               # View → Cogitate (hypotheses), once opened
+        self.whiteboard_window = None             # Tools → Whiteboard (idea 45), once opened
         self.sound_files: set[str] = set()       # names in the sound folder, refreshed with the views
         self.cloud_files: set[str] = set()       # those of them that are online-only (OneDrive)
         self._suggestions: dict = {}             # (entry id, tags) -> predicted translation, for All data
@@ -911,6 +912,17 @@ class MainWindow(QMainWindow):
         e = self.lemmas.current_row()
         return ("entry", e.id) if e is not None else None
 
+    def open_whiteboard(self):
+        """Tools → Whiteboard (idea 45): a cheap drawing tool, kept in the workspace until wiped."""
+        from .whiteboard import WhiteboardWindow
+        if self.whiteboard_window is None:
+            self.whiteboard_window = WhiteboardWindow(self)
+        w = self.whiteboard_window
+        w.show()
+        w.raise_()
+        w.activateWindow()
+        return w
+
     def open_xml_viewer(self):
         """View → XML viewer: the database file, read-only, at the selected token or lemma."""
         from .xml_viewer import XmlViewerWindow
@@ -1109,6 +1121,8 @@ class MainWindow(QMainWindow):
         t.addSeparator()
         t.addMenu(self.elicit_menu)                    # the ɛλicit button's own menu (22 October)
         self.elicit_menu.setTitle("ɛλicit")
+        t.addSeparator()
+        self._act(t, "&Whiteboard", lambda *_: self.open_whiteboard(), "Ctrl+Shift+W")   # an Easter egg: no button
         v = mb.addMenu("&View")
         self._act(v, "&Notebook", self.open_notebook, "Ctrl+B")
         self._act(v, "&Questions", self.open_questions, "Ctrl+Shift+Q")
@@ -1180,8 +1194,9 @@ class MainWindow(QMainWindow):
                ("Soundfiles › Texts", (layout.SOUNDFILES, layout.TEXTS)),
                ("Soundfiles › _Deleted recordings", (layout.SOUNDFILES, layout.HELD)), None,
                ("Backups", (layout.BACKUPS,)), ("Documentation", (layout.DOCUMENTATION,)),
-               ("Images", (layout.IMAGES,)), ("Elicit", ("Elicit",)), ("Exports", (layout.EXPORTS,)))
-    MADE_ON_DEMAND = {layout.HELD, layout.BACKUPS, "Elicit"}       # made by Lemmatrix when needed
+               ("Images", (layout.IMAGES,)), ("Elicit", ("Elicit",)), ("Exports", (layout.EXPORTS,)),
+               ("Whiteboard", (layout.WHITEBOARD,)))
+    MADE_ON_DEMAND = {layout.HELD, layout.BACKUPS, "Elicit", layout.WHITEBOARD}   # made by Lemmatrix when needed
 
     def _fill_folder_menu(self):
         m = self.folder_menu
@@ -1233,7 +1248,12 @@ class MainWindow(QMainWindow):
                             ("Ctrl + mouse wheel, Ctrl+0", "Zoom, and back"))),
         ("Cogitate and the XML viewer", (("Alt+← / Alt+→", "Back / Next hypothesis"),
                                          ("Ctrl+F", "XML viewer: the search"),
-                                         ("Enter, Shift+Enter, F3", "Next / previous match"))))
+                                         ("Enter, Shift+Enter, F3", "Next / previous match"))),
+        ("The whiteboard", (("Mouse wheel", "The size of the marker or eraser"),
+                            ("Ctrl+Z, Ctrl+Y", "Undo / redo a stroke"),
+                            ("Ctrl+S", "Save as PNG in the Whiteboard folder"),
+                            ("Ctrl+C", "Copy the drawing"),
+                            ("Double-click the eraser", "Wipe the board"))))
 
     def shortcut_rows(self) -> list[tuple[str, list[tuple[str, str]]]]:
         """Every shortcut: the menus' (read from the menus themselves), then the others."""
@@ -1488,6 +1508,10 @@ class MainWindow(QMainWindow):
             self.cogitate_window.close()
             self.cogitate_window.deleteLater()
             self.cogitate_window = None
+        if self.whiteboard_window is not None:    # its drawing is the closed database's workspace's
+            self.whiteboard_window.close()
+            self.whiteboard_window.deleteLater()
+            self.whiteboard_window = None
         if self.doc.db is not db:
             self._save_view()
             self.doc.write_workspace()            # the closed database's working state, written now

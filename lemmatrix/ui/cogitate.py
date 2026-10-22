@@ -125,6 +125,11 @@ def open_link(main, link: hy.Link, parent=None) -> bool:
     if k == hy.SNAPSHOT:
         main.restore_snapshot(hit)
         return True
+    if k == hy.DRAWING:                            # a whiteboard drawing: opened as an image
+        from PySide6.QtCore import QUrl
+        from PySide6.QtGui import QDesktopServices
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(hit)))
+        return True
     return False
 
 

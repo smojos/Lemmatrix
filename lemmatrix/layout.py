@@ -14,6 +14,7 @@
     ├─ Backups/                the automatic local backups
     ├─ Documentation/          consent forms and other documentation
     ├─ Images/                 pictures for ɛλicit requests, named by reference and tags (idea 19)
+    ├─ Whiteboard/             drawings saved from Tools → Whiteboard (idea 45), the researcher's own
     └─ Exports/                where File → Export starts
 
 Lemmatrix assumes this layout instead of keeping paths in the settings. One database per
@@ -38,6 +39,7 @@ BACKUPS = "Backups"
 DOCUMENTATION = "Documentation"
 EXPORTS = "Exports"
 IMAGES = "Images"
+WHITEBOARD = "Whiteboard"                  # made when a drawing is first saved (idea 45)
 IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".gif")
 REMIND_DAYS = 7                            # the full-backup reminder
 

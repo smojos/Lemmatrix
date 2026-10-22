@@ -17,7 +17,9 @@ point at ids, so they survive reference and tag changes:
   archived with the notebook and restores that view when clicked;
 - a question or a To Do (its id; it may have been converted since), a comment (the notebook's
   record of it, that day's version, copied, so later edits don't change what was cited), and
-  another hypothesis.
+  another hypothesis;
+- a whiteboard drawing (22 October, idea 45): its file in the main folder's Whiteboard folder, by
+  its place relative to the main folder; a moved or deleted drawing is a broken link.
 
 A hypothesis joins a day's session when it is made or edited that day (linking and unlinking count),
 and the day's notes get a line for what happened (Josh: "automatically into the notebook entry's
@@ -42,13 +44,14 @@ EVIDENCE, COUNTER, RELEVANT = "evidence", "counterevidence", "relevant"
 MARKS = (EVIDENCE, COUNTER, RELEVANT)
 MARK_NAMES = {EVIDENCE: "Evidence", COUNTER: "Counterevidence", RELEVANT: "Relevant"}
 
-TOKEN, UTTERANCE, LINE, SNAPSHOT, QUESTION, COMMENT, HYPOTHESIS = (
-    "token", "utterance", "line", "snapshot", "question", "comment", "hypothesis")
-KINDS = (TOKEN, UTTERANCE, LINE, SNAPSHOT, QUESTION, COMMENT, HYPOTHESIS)
+TOKEN, UTTERANCE, LINE, SNAPSHOT, QUESTION, COMMENT, HYPOTHESIS, DRAWING = (
+    "token", "utterance", "line", "snapshot", "question", "comment", "hypothesis", "drawing")
+KINDS = (TOKEN, UTTERANCE, LINE, SNAPSHOT, QUESTION, COMMENT, HYPOTHESIS, DRAWING)
 KIND_NAMES = {TOKEN: "Token", UTTERANCE: "Utterance", LINE: "Text line", SNAPSHOT: "Snapshot",
-              QUESTION: "Question", COMMENT: "Comment", HYPOTHESIS: "Hypothesis"}
+              QUESTION: "Question", COMMENT: "Comment", HYPOTHESIS: "Hypothesis", DRAWING: "Drawing"}
 KIND_PLURALS = {TOKEN: "Tokens", UTTERANCE: "Utterances", LINE: "Text lines", SNAPSHOT: "Snapshots",
-                QUESTION: "Questions and To Dos", COMMENT: "Comments", HYPOTHESIS: "Hypotheses"}
+                QUESTION: "Questions and To Dos", COMMENT: "Comments", HYPOTHESIS: "Hypotheses",
+                DRAWING: "Drawings"}
 
 
 @dataclass
@@ -59,7 +62,7 @@ class Link:
     linked: str = ""                  # the date it was linked
     entry: str = ""                   # the lemma's or utterance's id; a text's id (a line); a comment's entry
     token: str = ""                   # the token's id; a comment's token (or "line:<start>")
-    target: str = ""                  # a question's or a hypothesis's id
+    target: str = ""                  # a question's or a hypothesis's id; a drawing's file (Whiteboard/…)
     start: float | None = None        # a text's line: its start time
     about: str = ""                   # how it read when linked ("D001 goat · PL"), the fallback label
     text: str = ""                    # a copy: the line's text, the question's, the comment as it was
@@ -363,6 +366,12 @@ def hypothesis_link(h: Hypothesis, mark: str = RELEVANT, note: str = "") -> Link
     return Link(HYPOTHESIS, mark, note, target=h.id, about=h.title())
 
 
+def drawing_link(rel_path: str, mark: str = RELEVANT, note: str = "") -> Link:
+    """A whiteboard drawing, by its place relative to the main folder (Whiteboard/….png)."""
+    from pathlib import PurePosixPath
+    return Link(DRAWING, mark, note, target=rel_path, about=PurePosixPath(rel_path).name, date=today())
+
+
 def find_question(nb, ident: str):
     for s in nb.sessions:
         for q in s.questions + s.todos:
@@ -375,10 +384,13 @@ def find(db: Database, nb, link: Link):
     """What a link points at now, or None if it is gone:
     token: (entry, index); utterance: the utterance; line: the text; question: (session, question);
     comment: what its comment was written on ((entry, index or None), or the text); hypothesis: it;
-    snapshot: its setup."""
+    snapshot: its setup; drawing: its file (a Path)."""
     k = link.kind
     if k == SNAPSHOT:
         return link.view
+    if k == DRAWING:
+        from . import whiteboard
+        return whiteboard.resolve(db.path if db is not None else "", link.target)
     if k == HYPOTHESIS:
         return by_id(nb, link.target)
     if k == QUESTION:
@@ -415,7 +427,8 @@ def gone_text(link: Link) -> str:
         return "Token no longer exists" if link.token else "Lemma no longer exists"
     return {TOKEN: "Token no longer exists", UTTERANCE: "Utterance no longer exists",
             LINE: "Text no longer exists", QUESTION: "Question no longer exists",
-            HYPOTHESIS: "Hypothesis no longer exists"}.get(k, "No longer exists")
+            HYPOTHESIS: "Hypothesis no longer exists",
+            DRAWING: "Drawing no longer in the Whiteboard folder"}.get(k, "No longer exists")
 
 
 def label(db: Database | None, nb, link: Link) -> str:
@@ -448,6 +461,8 @@ def label(db: Database | None, nb, link: Link) -> str:
         return hit.title() if hit is not None else (link.about or "Hypothesis")
     if k == SNAPSHOT:
         return link.about or "Snapshot"
+    if k == DRAWING:
+        return f"Drawing: {link.about or link.target}"
     return link.about or KIND_NAMES.get(k, k)
 
 
