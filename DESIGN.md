@@ -894,7 +894,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 - **Structure can still change:** file format upgrades are provisional, with no compatibility code for older formats (section 7, 18 October).
 - **Built so far:** everything in sections 3 and 5: database formats up to 7, the notebook (format 3) and workspace file, the main window, matrices and token dialogue, Bulk edit, predictive translation and spelling, texts and utterances, ɛλicit, the XML viewer, To Do and Cogitate. (The Stage 1 list this replaced, from 16 October, is all built.)
 - **Before v1:** settle anything structural that is still open, so v1's formats can stay as they are, e.g. what "hidden" means for core fields and the pitch system (IDEAS.md idea 9), how diacritics are stored (idea 21), and etymology, loan and root/complex marks on lemmas (idea 24).
-- **Ideas:** 9, 14, 16, 18, 21, 24.
+- **Ideas:** 9, 14, 16, 18, 21, 24, and Convert question → hypothesis (idea 35, Later; Josh, 22 October).
 
 ### v1 · Collect (data collection)
 
@@ -908,7 +908,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 
 - **Purpose:** analysis tools of the kind found in Phonology Assistant and Dekereke, for phonology and grammar, and perhaps discourse.
 - **From the earlier Stage 2:** segment parsing, features, syllabification, CV shapes (including both CV shape filters, sections 5.2 and 5.3), consonant and vowel charts, feature-based search, pitch tools, the Analyze menu and valency (section 7, open question 3); formant plots (`parselmouth`). Results are checked against other tools' output on the same data.
-- **Ideas:** 3, 4, 5, 8, 12, 13, 17, and Convert question → hypothesis (idea 35, Later).
+- **Ideas:** 3, 4, 5, 8, 12, 13, 17.
 
 ### v3 · Compose
 
