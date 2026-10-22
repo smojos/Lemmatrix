@@ -79,3 +79,26 @@ def test_texts_comparison_and_logo(win):
 def test_therefore_in_the_default_symbols():
     from lemmatrix.ui import symbols
     assert symbols.DEFAULT[-1] == "∴"
+
+
+def test_convert_question_to_hypothesis(win):
+    from lemmatrix import hypotheses as hy
+    from lemmatrix import notebook as nb
+    from lemmatrix.ui.notebook_dialog import QuestionsDialog, TodoDialog
+    s = win.doc.notebook.add_session("2026-10-02")
+    s.questions = [nb.Question("Does tone spread rightward?", "2026-10-02")]
+    dlg = QuestionsDialog(win)
+    dlg.tree.setCurrentItem(dlg.tree.topLevelItem(0))
+    assert dlg.hypothesis_btn is not None and dlg.hypothesis_btn.isEnabled()
+    dlg.to_hypothesis()
+    q = s.questions[0]
+    h = win.doc.notebook.hypotheses[-1]
+    assert h.summary == "Does tone spread rightward?" and h.confidence == hy.confidence_list(win.doc.notebook)[0]
+    assert [(ln.kind, ln.mark, ln.target) for ln in h.links] == [(hy.QUESTION, hy.RELEVANT, q.id)]
+    assert q.resolved and len(s.questions) == 1                  # stays, resolved
+    w = win.cogitate_window
+    assert w is not None and w.isVisible() and w.summary.text() == h.summary
+    win.doc.undo.undo()                                           # the hypothesis is one undo step
+    assert h.id not in [x.id for x in win.doc.notebook.hypotheses]
+    assert TodoDialog(win).hypothesis_btn is None                 # questions only
+    w.close()

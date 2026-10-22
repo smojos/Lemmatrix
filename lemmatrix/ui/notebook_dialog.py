@@ -41,6 +41,10 @@ def kind_icon(kind: str, size: int = 18):
     return icon(KIND_ICON[kind], size)
 
 
+HYPOTHESIS_TIP = ("Convert to hypothesis: a new hypothesis whose summary is this question, linked to it as "
+                  "Relevant; the question stays here, resolved, and Cogitate opens on the hypothesis")
+
+
 def convert_label(kind: str) -> str:
     """What converting an item of this kind is called: "Convert to To Do", "Convert to question"."""
     return "Convert to To Do" if kind == nbmod.QUESTION else "Convert to question"
@@ -787,6 +791,9 @@ class ItemsPanel(QWidget):
         self.convert_btn = qbutton("", f"{convert_label(kind)}: the selected {one} moves to the "
                                    f"{nbmod.name(to, True)} tab, keeping its dates and link", self.convert,
                                    ic=kind_icon(to, 30))
+        self.hypothesis_btn = None
+        if kind == nbmod.QUESTION:                    # Convert to hypothesis (Josh, 22 October)
+            self.hypothesis_btn = qbutton("", HYPOTHESIS_TIP, self.to_hypothesis, ic=_cogitate_icon(30))
         qb.addStretch(1)
         ql.addLayout(qb)
         self.tree = QTreeWidget()
@@ -844,7 +851,8 @@ class ItemsPanel(QWidget):
 
     def buttons(self):
         q = self.current()
-        for b in (self.delete_btn, self.edit_btn, self.resolve_btn, self.convert_btn):
+        for b in (self.delete_btn, self.edit_btn, self.resolve_btn, self.convert_btn) + \
+                ((self.hypothesis_btn,) if self.hypothesis_btn is not None else ()):
             b.setEnabled(q is not None)
         one = nbmod.name(self.kind, title=False)
         self.resolve_btn.setToolTip(f"Mark the selected {one} as open again" if q and not q.is_open
@@ -870,6 +878,8 @@ class ItemsPanel(QWidget):
                 (f"Edit {one}…", icon("edit", 16), self.edit, on),
                 ("Mark as open" if on and not q.is_open else "Resolve", icon("resolve", 16), self.toggle, on),
                 (convert_label(self.kind), kind_icon(nbmod.other(self.kind), 16), self.convert, on),
+                *((("Convert to hypothesis", _cogitate_icon(), self.to_hypothesis, on),)
+                  if self.kind == nbmod.QUESTION else ()),
                 ("Go to token", None, lambda: follow_link(self.dlg, self.dlg.main, q.link),
                  on and q.link is not None),
                 ("Link to hypothesis…", _cogitate_icon(), self.link_to_hypothesis, on),
@@ -878,6 +888,14 @@ class ItemsPanel(QWidget):
             a.setEnabled(enabled)
             a.triggered.connect(lambda *_, fn=fn: fn())
         m.exec(self.tree.viewport().mapToGlobal(pos))
+
+    def to_hypothesis(self):
+        """Convert to hypothesis: a new hypothesis from this question (the question stays, resolved)."""
+        q = self.current()
+        if q is None or self.session is None:
+            return
+        self.dlg.main.question_to_hypothesis(self.session, q)
+        self.dlg.reload()
 
     def link_to_hypothesis(self):
         """Link to hypothesis…: this question or To Do (it gets an id, kept after)."""
@@ -1035,6 +1053,11 @@ class ItemsDialog(QDialog):
                                     f"{'View → To Do' if kind == nbmod.QUESTION else 'View → Questions'} "
                                     "(and the notebook's other tab), keeping its day, dates and link")
         self.convert_btn.clicked.connect(lambda *_: self.convert())
+        self.hypothesis_btn = None
+        if kind == nbmod.QUESTION:                    # Convert to hypothesis (Josh, 22 October)
+            self.hypothesis_btn = QPushButton(_cogitate_icon(18), "")
+            self.hypothesis_btn.setToolTip(HYPOTHESIS_TIP)
+            self.hypothesis_btn.clicked.connect(lambda *_: self.to_hypothesis())
         self.open_btn = QPushButton(icon("notebook", 18, theme.accent().name()), "Open in notebook")
         self.open_btn.clicked.connect(lambda *_: self.open_day())
         self.token_btn = QPushButton("Go to token")
@@ -1044,8 +1067,10 @@ class ItemsDialog(QDialog):
         self.count.setStyleSheet(f"color: {theme.muted()};")
         close = QPushButton("Close")
         close.clicked.connect(self.accept)
-        for w in (self.resolve_btn, self.edit_btn, self.convert_btn, self.open_btn, self.token_btn):
-            row.addWidget(w)
+        for w in (self.resolve_btn, self.edit_btn, self.convert_btn, self.hypothesis_btn, self.open_btn,
+                  self.token_btn):
+            if w is not None:
+                row.addWidget(w)
         row.addWidget(self.count)
         row.addStretch(1)
         row.addWidget(close)
@@ -1106,8 +1131,9 @@ class ItemsDialog(QDialog):
 
     def _buttons(self):
         cur = self._current()
-        for b in (self.resolve_btn, self.edit_btn, self.convert_btn, self.open_btn):
-            b.setEnabled(cur is not None)
+        for b in (self.resolve_btn, self.edit_btn, self.convert_btn, self.open_btn, self.hypothesis_btn):
+            if b is not None:
+                b.setEnabled(cur is not None)
         self.resolve_btn.setText("Mark as open" if cur and not cur[1].is_open else "Resolve")
         self.token_btn.setEnabled(cur is not None and cur[1].link is not None)
 
@@ -1130,12 +1156,22 @@ class ItemsDialog(QDialog):
                 (f"Edit {nbmod.name(self.kind, title=False)}…", icon("edit", 16), self.edit, True),
                 ("Mark as open" if not q.is_open else "Resolve", icon("resolve", 16), self.toggle, True),
                 (convert_label(self.kind), kind_icon(nbmod.other(self.kind), 16), self.convert, True),
+                *((("Convert to hypothesis", _cogitate_icon(), self.to_hypothesis, True),)
+                  if self.kind == nbmod.QUESTION else ()),
                 ("Open in notebook", icon("notebook", 16, theme.accent().name()), self.open_day, True),
                 ("Go to token", None, self.go_to_token, q.link is not None)):
             a = m.addAction(ic, text) if ic is not None else m.addAction(text)
             a.setEnabled(enabled)
             a.triggered.connect(lambda *_, fn=fn: fn())
         m.exec(self.tree.viewport().mapToGlobal(pos))
+
+    def to_hypothesis(self):
+        """Convert to hypothesis: a new hypothesis from the selected question (it stays, resolved)."""
+        cur = self._current()
+        if cur is None:
+            return
+        self.main.question_to_hypothesis(*cur)
+        self._fill(cur[1])
 
     def go_to_token(self):
         cur = self._current()

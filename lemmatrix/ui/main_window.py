@@ -864,6 +864,29 @@ class MainWindow(QMainWindow):
             self.notebook_dialog.reload()
         return h
 
+    def question_to_hypothesis(self, session, q):
+        """Convert to hypothesis (Josh, 22 October; IDEAS.md idea 35, Later): a new hypothesis whose
+        summary is the question as written (confidence: the first level), linked to the question as
+        Relevant (one undo step); the question stays in Questions, resolved. Cogitate opens on the
+        new hypothesis with the cursor in Formulation. Returns the hypothesis."""
+        from .. import hypotheses as hy
+        if q is None or session is None:
+            return None
+        link = hy.question_link(session, q)          # gives the question an id, if it had none
+        book, date = self.doc.notebook, self.work_date()
+        h = self.doc.change_hypotheses(
+            "Convert to hypothesis",
+            lambda j: hy.make(book, j, date, summary=q.text, links=[link], db=self.doc.db))
+        if not q.resolved:
+            q.resolved = today()
+        self.doc.notebook_changed()
+        if self.notebook_dialog is not None and self.notebook_dialog.isVisible():
+            self.notebook_dialog.reload()
+        w = self.open_cogitate(h.id)
+        w.formulation.setFocus()
+        self.statusBar().showMessage(f"{h.label} made from the question, which is now resolved", 6000)
+        return hy.by_id(book, h.id)
+
     def link_token_to_hypothesis(self, entry=None, index=None, parent=None):
         """A token or an utterance (the selected one, if none is given) to a hypothesis."""
         from .. import hypotheses as hy
