@@ -62,6 +62,7 @@ class ArchiveExportDialog(QDialog):
         self.hide_language = QCheckBox("Hide the language code too (it becomes LXX)")
         self.hide_variety = QCheckBox("Hide the variety code too (it becomes VXX)")
         for w in (self.hide_language, self.hide_variety):
+            w.toggled.connect(lambda *_: self._update_folder())
             w.setToolTip("A code can be looked up, so it gives the language or variety away. Hide it when "
                          "naming the language or variety could identify its speakers; the archive is then much "
                          "less useful for future work on the language.")
@@ -124,6 +125,8 @@ class ArchiveExportDialog(QDialog):
         self.consent.currentIndexChanged.connect(lambda *_: self._enable())
         self.kinds.buttonToggled.connect(lambda b, on: on and self.set_kind(self._kind_of(b)))
         self.kind = ""
+        self._shown_default = ""
+        self.notebook.toggled.connect(lambda *_: self._update_folder())
         self.kind_buttons[kind].setChecked(True)
         self.set_kind(kind)
 
@@ -131,15 +134,30 @@ class ArchiveExportDialog(QDialog):
         return next(k for k, b in self.kind_buttons.items() if b is button)
 
     def _default_folder(self, kind: str) -> str:
+        """A new folder in Exports, named from the archive's stem (with any hidden codes and
+        names already replaced), the archive and the date; (2), (3)… if one is there already."""
         word = "anonymous" if kind == ANONYMOUS else "ethical"
-        return QDir.toNativeSeparators(str(self.base / f"{self.stem} {word} archive "
-                                                       f"{QDate.currentDate().toString('yyyy-MM-dd')}"))
+        opts = self.options(kind) if hasattr(self, "hide_language") else anonymise.Options.for_kind(kind)
+        stem = anonymise.archive_stem(self.main.doc.db, self.main.doc.notebook, opts)
+        base = self.base / f"{stem} {word} archive {QDate.currentDate().toString('yyyy-MM-dd')}"
+        path, n = base, 2
+        while path.exists() and any(path.iterdir()):
+            path, n = base.with_name(f"{base.name} ({n})"), n + 1
+        return QDir.toNativeSeparators(str(path))
+
+    def _update_folder(self):
+        """The default folder follows the options (a hidden code mustn't show in its name),
+        unless a folder of one's own was typed or chosen."""
+        if not self.kind:
+            return
+        if not self.folder.text() or self.folder.text() == self._shown_default:
+            self._shown_default = self._default_folder(self.kind)
+            self.folder.edit.setText(self._shown_default)
 
     def set_kind(self, kind: str):
         """Switch to the other archive: its own defaults (Josh, 22 October)."""
         if kind == self.kind:
             return
-        old_default = self._default_folder(self.kind) if self.kind else ""
         self.kind = kind
         anon = kind == ANONYMOUS
         defaults = anonymise.Options.for_kind(kind)
@@ -151,9 +169,10 @@ class ArchiveExportDialog(QDialog):
         for w in (self.hide_language, self.hide_variety):
             w.setChecked(False)
         self.notebook.setChecked(defaults.notebook)
-        self.names.setChecked(defaults.replace_names)
-        self.names.setText("Replace names and old codes in comments, translations, notes and TextGrids "
-                           "with the new codes" if anon else
+        self.names.setChecked(True)
+        self.names.setEnabled(not anon)           # nobody is named: always, in the anonymous archive
+        self.names.setText("Names in comments, translations, notes and TextGrids are replaced with codes "
+                           "(always, in an anonymous archive)" if anon else
                            "Replace the names of people who aren't identifiable, in comments, translations, "
                            "notes and TextGrids, with their codes")
         if anon:
@@ -169,8 +188,7 @@ class ArchiveExportDialog(QDialog):
                                  else "Add them as a password-protected zip")
         self.consent.setToolTip("The key (old code → new code) is kept only inside this zip, never in the clear"
                                 if anon else "")
-        if not self.folder.text() or self.folder.text() == old_default:
-            self.folder.edit.setText(self._default_folder(kind))
+        self._update_folder()
         self._enable()
 
     def _enable(self):
@@ -178,10 +196,11 @@ class ArchiveExportDialog(QDialog):
         for w in (self.password, self.password2):
             w.setEnabled(zipped)
 
-    def options(self) -> anonymise.Options:
-        anon = self.kind == ANONYMOUS
+    def options(self, kind: str | None = None) -> anonymise.Options:
+        kind = kind or self.kind
+        anon = kind == ANONYMOUS
         return anonymise.Options(
-            kind=self.kind, notebook=self.notebook.isChecked(), replace_names=self.names.isChecked(),
+            kind=kind, notebook=self.notebook.isChecked(), replace_names=self.names.isChecked() or anon,
             recordings=self.recordings.isChecked() and not anon, place_levels=int(self.places.currentData()),
             consent_password=self.password.text() if self.consent.currentData() else "",
             hide_language_code=anon and self.hide_language.isChecked(),
@@ -199,14 +218,15 @@ class ArchiveExportDialog(QDialog):
         if not str(folder).strip():
             QMessageBox.warning(self, "Export", "Choose a folder to export to.")
             return
-        if folder.exists() and any(folder.iterdir()):
-            if QMessageBox.question(self, "Export", f"{folder} isn't empty. Export into it anyway? "
-                                    "Files with the same names are replaced.") != QMessageBox.Yes:
-                return
         main = self.main
         try:
+            anonymise.check_folder(main.doc.db, folder)
+        except anonymise.ArchiveError as exc:
+            QMessageBox.warning(self, "Export", f"{exc}\n\nChoose a new or empty folder.")
+            return
+        try:
             report = anonymise.export(main.doc.db, main.doc.notebook, folder, self.options())
-        except OSError as exc:
+        except (OSError, anonymise.ArchiveError) as exc:
             QMessageBox.warning(self, "Export", f"Couldn't export: {exc}")
             return
         QMessageBox.information(self, anonymise.TITLES[self.kind], anonymise.summary(report, self.options()))

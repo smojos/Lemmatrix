@@ -146,8 +146,9 @@ def test_the_anonymous_archive_names_nobody_and_renumbers_every_code(tmp_path):
         assert gone not in everything, gone
     with pyzipper.AESZipFile(tmp_path / "out" / "LXX-VXX_Lexicon consent forms (password).zip") as zf:
         zf.setpassword(b"pw")
-        assert zf.read("SP1/KDB.pdf") == b"%PDF KDB"
-        key = zf.read("Code key.csv").decode("utf-8-sig")
+        assert zf.read("SP1/consent.pdf") == b"%PDF KDB"
+        key = zf.read("key.csv").decode("utf-8-sig")
+        assert sorted(zf.namelist()) == ["SP1/consent.pdf", "SP2/consent.pdf", "key.csv"]   # names readable without the password
     assert "participant,KDB,SP1" in key and "researcher,AB,RS2" in key
     assert rep.key_written and "key" in anonymise.summary(rep, opts)
     assert db.metadata.participants[0].name == "Kuku Dabi"                     # the original is untouched
@@ -280,3 +281,121 @@ def test_the_menu_has_both_archives(win):
     texts = [a.text().replace("&", "") for m in win.menuBar().findChildren(QMenu) for a in m.actions()]
     assert "Anonymous archive…" in texts and "Ethical archive…" in texts
     assert not any("Anonymous backup" in t for t in texts)
+
+
+# ---------------------------------------------------------------- the independent check's cases (22 October)
+
+def _anon(tmp_path, db, book, **kw):
+    opts = Options.for_kind(ANONYMOUS)
+    for k, v in kw.items():
+        setattr(opts, k, v)
+    rep = anonymise.export(db, book, tmp_path / "out", opts)
+    return rep, _all_text(tmp_path / "out")
+
+
+def test_the_zip_names_hold_no_original_file_name(tmp_path):
+    import zipfile
+    db, book = _db(tmp_path)
+    (tmp_path / "Consent" / "Kuku Dabi consent.pdf").write_bytes(b"%PDF")
+    db.metadata.participants[0].consent = "Consent/Kuku Dabi consent.pdf"
+    anonymise.export(db, book, tmp_path / "out", Options(kind=ETHICAL, consent_password="pw"))
+    with zipfile.ZipFile(next((tmp_path / "out").glob("*.zip"))) as zf:   # no password needed to list
+        names = zf.namelist()
+    assert names == ["KDB/consent.pdf", "HMA/consent.pdf"] and not any("Kuku" in n for n in names)
+
+
+def test_an_archive_needs_a_new_or_empty_folder(tmp_path):
+    db, book = _db(tmp_path)
+    (tmp_path / "out").mkdir()
+    (tmp_path / "out" / "old.notebook").write_text("from before")
+    with pytest.raises(anonymise.ArchiveError):
+        anonymise.export(db, book, tmp_path / "out", Options.for_kind(ETHICAL))
+    with pytest.raises(anonymise.ArchiveError):                 # nor the database's own folders
+        anonymise.check_folder(db, tmp_path / "Soundfiles" / "x")
+
+
+def test_closed_fields_deleted_fields_and_unknown_settings(tmp_path):
+    import xml.etree.ElementTree as ET
+    from lemmatrix.model import FieldDef, ListItem
+    db, book = _db(tmp_path)
+    db.settings.token_fields.append(FieldDef("Consultant", closed=True, items=[ListItem("Kuku Dabi"),
+                                                                               ListItem("KDB")]))
+    db.entries[0].tokens[0].set("Consultant", "Kuku Dabi")
+    db.entries[0].tokens[1].values["OldSpeaker"] = "Hana Mali (HMA)"        # a field since deleted
+    db.settings.extra = [ET.Element("analysis", note="checked with Kuku Dabi (KDB)")]
+    db.settings.ref_categories[0].name = "Kuku's words"
+    rep, everything = _anon(tmp_path, db, book)
+    for gone in ("Kuku", "Hana", "KDB", "HMA"):
+        assert gone not in everything, gone
+    out = storage.load(tmp_path / "out" / "LXX-VXX_Lexicon (anonymous).xml")
+    assert out.entries[0].tokens[0].get("Consultant") == "SP1"
+    assert [i.name for i in out.settings.token_field("Consultant").items] == ["SP1", "SP1"]
+    assert rep.extra_settings == 1
+
+
+def test_snapshots_and_codes_joined_by_underscores(tmp_path):
+    from lemmatrix import hypotheses as hy
+    db, book = _db(tmp_path)
+    db.entries[0].tokens[1].set("Comment", "see LXX-VXX-KDB_D001_goat.wav and Kuku_story; mail jo@example.org")
+    h = hy.make(book, hy.Journal(book), "2026-10-01", "tone", "")
+    h.links.append(hy.Link("snapshot", view={"search": "Kuku", "filters": {"selected": ["KDB", "HMA"]}}))
+    _, everything = _anon(tmp_path, db, book, notebook=True)
+    out = storage.load(tmp_path / "out" / "LXX-VXX_Lexicon (anonymous).xml")
+    assert out.entries[0].tokens[1].get("Comment") == "see LXX-VXX-SP1_D001_goat.wav and SP1_story; mail RS1"
+    for gone in ("Kuku", "KDB", "HMA"):
+        assert gone not in everything, gone
+
+
+def test_codes_only_a_tier_knows_and_tier_mappings_follow(tmp_path):
+    from lemmatrix.model import TierRule
+    db, book = _db(tmp_path)
+    grid = tmp_path / "Soundfiles" / "Texts" / "LXX-VXX_T001_Kuku_story.TextGrid"
+    tgmod.write_example(grid, {"tx@QQQ": [(0.0, 1.0, "dabuuba")], "Hana": [(0.0, 1.0, "a note")]}, 2.0)
+    db.settings.tier_mapping.rules.append(TierRule("Hana", "Comment"))
+    _, everything = _anon(tmp_path, db, book)
+    out = storage.load(tmp_path / "out" / "LXX-VXX_Lexicon (anonymous).xml")
+    assert "QQQ" not in everything and "Hana" not in everything
+    assert out.settings.tier_mapping.rule("SP2") is not None          # Hana Mali, HMA, is SP2
+    names = sorted(x.name for x in tgmod.tiers(tmp_path / "out" / "Soundfiles" / "Texts" / out.texts[0].textgrid))
+    assert names == ["SP2", "tx@SP3"]
+
+
+def test_the_ethical_archive_cleans_what_it_keeps(tmp_path):
+    db, book = _db(tmp_path)
+    db.path = str(tmp_path / "Hana_Dabi_words.xml")
+    db.metadata.participants[0].description = "a farmer, cousin of Hana Mali"
+    db.metadata.author = "Dr Ann Bell"
+    db.metadata.participants[0].name = "Kuku Dabi"
+    db.metadata.participants[1].name = "Hana Dabi"
+    db.entries[0].tokens[0].set("Comment", "Kuku Dabi and Hana Dabi came")
+    anonymise.export(db, book, tmp_path / "out", Options.for_kind(ETHICAL))
+    out = storage.load(next((tmp_path / "out").glob("* (ethical).xml")))
+    assert Path(out.path).name == "HMA_words (ethical).xml"
+    assert out.metadata.participants[0].description == "a farmer, cousin of HMA Mali"
+    assert out.metadata.author == "Dr AB"
+    assert out.entries[0].tokens[0].get("Comment") == "Kuku Dabi and HMA came"
+
+
+def test_transcriptions_are_never_touched(tmp_path):
+    db, book = _db(tmp_path)
+    db.metadata.language_name, db.metadata.variety_name = "Opo", "Hill"
+    grid = tmp_path / "Soundfiles" / "Texts" / "LXX-VXX_T001_Kuku_story.TextGrid"
+    tgmod.write_example(grid, {"tx@KDB": [(0.0, 1.0, "opo Kuku")], "ft@KDB": [(0.0, 1.0, "up the hill")]}, 2.0)
+    db.entries[0].tokens[0].set("Phonetic", "Kuku opo")
+    _anon(tmp_path, db, book)
+    out = storage.load(tmp_path / "out" / "LXX-VXX_Lexicon (anonymous).xml")
+    assert out.entries[0].tokens[0].get("Phonetic") == "Kuku opo"
+    text = (tmp_path / "out" / "Soundfiles" / "Texts" / out.texts[0].textgrid).read_text(encoding="utf-8")
+    assert "opo Kuku" in text and "up the hill" in text
+
+
+def test_names_without_capitals_and_people_in_both_lists(tmp_path):
+    db, book = _db(tmp_path)
+    db.metadata.participants[1].name = "ተስፋዬ ገብሬ"
+    db.entries[0].tokens[0].set("Comment", "ask ተስፋዬ; SP1 said so")       # a stray SP1: no one's code now
+    db.metadata.researchers.append(Person.researcher("KDB", "Kuku Dabi"))   # also a participant
+    rep, everything = _anon(tmp_path, db, book)
+    out = storage.load(tmp_path / "out" / "LXX-VXX_Lexicon (anonymous).xml")
+    assert out.entries[0].tokens[0].get("Comment") == "ask SP2; SP? said so"
+    assert [r.code for r in out.metadata.researchers] == ["RS1", "RS2", "RS3"]
+    assert ("researcher", "KDB", "RS3") in rep.key and ("participant", "KDB", "SP1") in rep.key
