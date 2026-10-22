@@ -34,6 +34,7 @@ from .table import Column, FilterTable
 
 LOGO = 88                         # Josh's icon at the window's top right, as in the ɛλicit request dialogue
 LIST_TAB, HYPOTHESIS_TAB = 0, 1
+TEXT_STEP = 1.2                   # the summary's and formulation's text: one size step above the usual
 
 
 def cogitate_icon(size: int = 16):
@@ -136,6 +137,7 @@ def open_link(main, link: hy.Link, parent=None) -> bool:
 # ==========================================================================
 # The link picker: Link to hypothesis…
 # ==========================================================================
+
 
 class LinkPicker(QDialog):
     """Which hypothesis to link to, as what, with a note; or Make a new hypothesis…"""
@@ -418,8 +420,12 @@ class CogitateWindow(QDialog):
         form.addRow("Summary", self.summary)
         self.formulation = _CommitText(self._commit)
         self.formulation.setPlaceholderText("the careful formulation")
-        self.formulation.setFixedHeight(96)
+        self.formulation.setFixedHeight(120)
         form.addRow("Formulation", self.formulation)
+        for w in (self.summary, self.formulation):  # one size step up from the usual text (Josh, 22 October)
+            f = QFont(w.font())
+            f.setPointSizeF(f.pointSizeF() * TEXT_STEP)
+            w.setFont(f)
         self.confidence = QComboBox()
         self.confidence.activated.connect(lambda *_: self._commit())
         self.confidence.setToolTip("The confidence levels are edited in Edit → Lists → Confidence")

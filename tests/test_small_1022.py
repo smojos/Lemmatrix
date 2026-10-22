@@ -41,7 +41,7 @@ def test_symbols_in_a_text_fields_menu(app):
             assert first.text() == "Σymbols"
             menu.close()
             g = symbols.open_grid(ed)
-            assert (g.table.columnCount(), g.table.rowCount()) == (4, 3)     # 10 symbols: 4 across, 3 down
+            assert (g.table.columnCount(), g.table.rowCount()) == (4, 3)     # 11 symbols: 4 across, 3 down
             assert g.table.item(0, 2).text() == "∅"
             g.table.cellDoubleClicked.emit(0, 2)
             assert (ed.text() if isinstance(ed, QLineEdit) else ed.toPlainText()) == "∅"
@@ -74,3 +74,8 @@ def test_texts_comparison_and_logo(win):
     assert not uw.logo.pixmap().isNull()                      # the logo, under both tabs
     assert uw.options.parentWidget() is uw.logo.parentWidget().parentWidget()
     uw.close()
+
+
+def test_therefore_in_the_default_symbols():
+    from lemmatrix.ui import symbols
+    assert symbols.DEFAULT[-1] == "∴"

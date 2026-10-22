@@ -16,7 +16,7 @@ from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QDialog, QLayout, QLineEdit, QMenu,
                                QPlainTextEdit, QTableWidget, QTableWidgetItem, QTextEdit, QVBoxLayout)
 
-DEFAULT = ["⟶", "⟵", "∅", "σ", "μ", "ω", "φ", "ι", "α", "β"]
+DEFAULT = ["⟶", "⟵", "∅", "σ", "μ", "ω", "φ", "ι", "α", "β", "∴"]
 LABEL = "Σymbols"
 STANDARD = {"edit-undo", "edit-redo", "edit-cut", "edit-copy", "edit-paste", "select-all"}   # Qt's own items
 
