@@ -247,3 +247,14 @@ def test_keyboard_shortcuts_list(win):
     flat = [d for r in rows.values() for _, d in r]
     assert any("Settings" in d for d in flat) and any("Edit mode" in d for d in flat)
     assert "A text's lines" in rows
+
+
+def test_josh_questions_and_todo_icons_1022(app):
+    """Josh's new ? (no grey oval, smaller) and To Do (three ✓ beside grey lines), 22 October."""
+    from lemmatrix.ui import icons
+    q = icons.QUESTIONS_FILE.read_text(encoding="utf-8")
+    assert "#b3b3b3" not in q.lower()                      # the grey inside is gone
+    t = icons.TODO_FILE.read_text(encoding="utf-8")
+    assert "<text" not in t and t.count("<path") == 3     # the ticks are outlines, no font needed
+    for name in ("questions", "todo"):
+        assert not icons.icon(name, 48, "#123456").pixmap(48, 48).isNull()

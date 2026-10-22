@@ -891,7 +891,7 @@ class MainWindow(QMainWindow):
         return b
 
     def _todo_button(self) -> QToolButton:
-        """Beside the ?: View → To Do (the orange flag, 48 px; Josh, 21 October)."""
+        """Beside the ?: View → To Do (Josh's ticks, 48 px; 21 October, icon 22 October)."""
         b = self.todo_btn = QToolButton()
         b.setIconSize(QSize(self.TEXTS_ICON, self.TEXTS_ICON))
         b.setAutoRaise(True)
@@ -1994,7 +1994,7 @@ class MainWindow(QMainWindow):
         self.texts_btn.setIcon(icon("texts-utterances", self.TEXTS_ICON, a))
         self.xml_btn.setIcon(icon("xml-viewer", self.TEXTS_ICON, theme.colour("pitch").name()))
         self.questions_btn.setIcon(icon("questions", self.TEXTS_ICON, theme.colour("pitch").name()))
-        self.todo_btn.setIcon(icon("push-todo", self.TEXTS_ICON))
+        self.todo_btn.setIcon(icon("todo", self.TEXTS_ICON, theme.colour("pitch").name()))
         self.cogitate_btn.setIcon(icon("cogitate", self.TEXTS_ICON, theme.colour("pitch").name()))
         if self.cogitate_window is not None:
             self.cogitate_window._restyle()
