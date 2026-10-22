@@ -262,6 +262,11 @@ They include, but are not limited to (in alphabetical order): Adam Werle, Ahmed 
 The **Opo** people, for years of fieldwork in a real language that gave me a linguist's
 intuition.
 
+The many people who supported my work in **SIL** for years and years, who believed in me,
+and who gave me the means to live and work in Ethiopia.
+
+**My mother**, for loving me unconditionally, and for being a foundation when life is difficult.
+
 Finally, my wife **Jennifer**, without whom I would be nothing. The default colour of
 Lemmatrix, its teal (#198583), belongs to her forever, as a symbol that she underlies
 everything I do. And our four children.
