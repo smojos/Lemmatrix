@@ -164,11 +164,25 @@ class TokenDialog(QDialog):
         self.pitch_note.setStyleSheet(f"color: {theme.colour('warning').name()};")
         left.addWidget(self.pitch_note, row, 1)
         row += 1
-        self.hyp_line = QLabel()                  # Cogitate: "In hypotheses: H3 (evidence)…  Link to hypothesis…"
+        # Cogitate: a 48 px button with Josh's icon (Link to hypothesis…; Josh, 22 October: it
+        # replaced the words), then "In hypotheses: H3 (evidence)…"
+        hyp_row = QHBoxLayout()
+        hyp_row.setContentsMargins(0, 0, 0, 0)
+        self.hyp_btn = QToolButton()
+        self.hyp_btn.setIconSize(QSize(48, 48))
+        self.hyp_btn.setAutoRaise(True)
+        self.hyp_btn.setCursor(Qt.PointingHandCursor)
+        self.hyp_btn.setToolTip("Link to hypothesis… (Cogitate): link this token to a hypothesis, as "
+                                "evidence, counterevidence or relevant")
+        self.hyp_btn.clicked.connect(lambda *_: self.link_to_hypothesis())
+        self._hyp_icon()
+        hyp_row.addWidget(self.hyp_btn, 0, Qt.AlignVCenter)
+        self.hyp_line = QLabel()
         self.hyp_line.setTextFormat(Qt.RichText)
         self.hyp_line.setWordWrap(True)
         self.hyp_line.linkActivated.connect(self._hypothesis_link)
-        left.addWidget(self.hyp_line, row, 1)
+        hyp_row.addWidget(self.hyp_line, 1)
+        left.addLayout(hyp_row, row, 1)
         try:
             self.doc.hypothesesChanged.connect(self._show_hypotheses)
         except (AttributeError, RuntimeError):
@@ -1107,10 +1121,16 @@ class TokenDialog(QDialog):
             found = hy.linked_to_item(self.doc.notebook, kind, e.id, t.id)
         a = theme.colour("pitch").name()
         links = ", ".join(f"<a href='h:{h.id}' style='color:{a}'>{h.label}</a> ({ln.mark})" for h, ln in found)
-        more = f"<a href='link' style='color:{a}'>Link to hypothesis…</a>"
-        lbl.setText((f"In hypotheses: {links}  ·  " if links else "") + more)
-        lbl.setToolTip("\n".join(h.title(80) for h, _ in found) or
-                       "Cogitate: link this token to a hypothesis, as evidence, counterevidence or relevant")
+        lbl.setText(f"In hypotheses: {links}" if links else "")
+        lbl.setToolTip("\n".join(h.title(80) for h, _ in found))
+        self._hyp_icon()
+
+    def _hyp_icon(self):
+        """The Cogitate button's icon, its teal in the theme colour (lighter on dark)."""
+        try:
+            self.hyp_btn.setIcon(icon("cogitate", 48, theme.colour("pitch").name()))
+        except (AttributeError, RuntimeError):
+            pass
 
     def _hypothesis_link(self, href: str):
         if href.startswith("h:"):

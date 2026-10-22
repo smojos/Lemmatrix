@@ -240,9 +240,26 @@ def test_the_token_dialogue_says_which_hypotheses_it_is_in(win, monkeypatch):
     e = win.doc.db.entry_by_ref("D002")
     _pick(monkeypatch, "make", hy.COUNTER)
     dlg = TokenDialog(win, [Slot(e, 0)], 0)
-    assert "Link to hypothesis" in dlg.hyp_line.text() and "In hypotheses" not in dlg.hyp_line.text()
-    h = dlg.link_to_hypothesis()
+    assert dlg.hyp_line.text() == ""                          # in none yet: only the button
+    b = dlg.hyp_btn                                           # the 48 px Cogitate button (22 October)
+    assert b.iconSize().width() == 48 and not b.icon().isNull() and b.text() == ""
+    b.click()                                                 # Link to hypothesis…
+    h = hy.by_id(win.doc.notebook, win.doc.notebook.hypotheses[-1].id)
     assert f">{h.label}</a> (counterevidence)" in dlg.hyp_line.text()
+    dlg.reject()
+
+
+def test_the_utterance_dialogue_has_the_cogitate_button_too(win, tmp_path, monkeypatch):
+    from lemmatrix.ui.token_dialog import Slot
+    from lemmatrix.ui.utterances import UtteranceDialog
+    uw, t = _add_text(win, tmp_path, monkeypatch)
+    uw.texts.lines.select_row(uw.texts.lines.rows[0])
+    u = uw.texts.clip()[0]
+    _pick(monkeypatch, "make", hy.EVIDENCE)
+    dlg = UtteranceDialog(win, [Slot(u, 0)], 0, uw)
+    assert dlg.hyp_btn.iconSize().width() == 48 and dlg.hyp_line.text() == ""
+    dlg.hyp_btn.click()
+    assert "(evidence)" in dlg.hyp_line.text()
     dlg.reject()
 
 
