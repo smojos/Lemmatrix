@@ -86,15 +86,15 @@ def test_log_lines_go_into_the_days_notes():
     hy.edit(book, j, DAY, h, confidence="developing")
     hy.add_link(book, j, DAY, h, hy.Link(hy.TOKEN, hy.EVIDENCE, about="D001 goat · PL", entry="e", token="t"))
     notes = book.session(DAY).notes.split("\n")
-    assert notes[0] == "Worked with SP1."
-    assert notes[1] == "H1 made: Tone spreads rightward"
-    assert notes[2] == "H1 Tone spreads rightward: confidence initial → developing"
-    assert notes[3] == "H1 Tone spreads rightward: evidence linked, D001 goat · PL"
+    assert notes[:3] == ["Worked with SP1.", "", "=====COGITATE HISTORY====="]   # Josh, 22 October
+    assert notes[3] == "H1 made: Tone spreads rightward"
+    assert notes[4] == "H1 Tone spreads rightward: confidence initial → developing"
+    assert notes[5] == "H1 Tone spreads rightward: evidence linked, D001 goat · PL"
     later = "2026-10-17"
     h.made = DAY
     hy.edit(book, j, later, h, summary="Tone spreads right")
     hy.edit(book, j, later, h, summary="H tone spreads right")
-    assert book.session(later).notes == "H1 edited: H tone spreads right"   # once a day, the new summary
+    assert book.session(later).notes == "\n\n=====COGITATE HISTORY=====\nH1 edited: H tone spreads right"   # once a day
     assert h.id in book.session(later).hypotheses
 
 
@@ -102,11 +102,11 @@ def test_the_journal_takes_its_lines_out_again():
     book, j = _book()
     book.add_session(DAY).notes = "Mine."
     h = hy.make(book, j, DAY, "X")
-    book.session(DAY).notes += "\nwritten by hand afterwards"
+    book.session(DAY).notes += "\n\nwritten by hand afterwards"
     j.undo_lines()
-    assert book.session(DAY).notes == "Mine.\nwritten by hand afterwards"
+    assert book.session(DAY).notes == "Mine.\n\nwritten by hand afterwards"   # the emptied section goes
     j.redo_lines()
-    assert book.session(DAY).notes.endswith("H1 made: X")
+    assert book.session(DAY).notes == "Mine.\n\nwritten by hand afterwards\n\n=====COGITATE HISTORY=====\nH1 made: X"
     j2 = hy.Journal(book)
     hy.make(book, j2, "2026-10-18", "Y")
     j2.undo_lines()
@@ -346,3 +346,50 @@ def test_links_note_before_mark_and_the_item_note_border_drags(win):
     h = w.links.horizontalHeader()
     assert h.sectionResizeMode(keys.index("item")) == QHeaderView.Interactive
     assert h.sectionResizeMode(keys.index("note")) == QHeaderView.Stretch
+
+
+# ---------------------------------------------------------------- the history sections (Josh, 22 October)
+def test_history_sections_in_the_notes():
+    add = nb.history_add
+    notes, _ = add("", nb.COGITATE_HISTORY, "H1 made: X")
+    assert notes == "\n\n=====COGITATE HISTORY=====\nH1 made: X"      # two blank lines on a blank page
+    notes, _ = add(notes, nb.ELICIT_HISTORY, "JS sent ɛλicit request to SP1")   # ɛλicit's first
+    assert notes.split("\n") == ["", "", "=====ELICIT HISTORY=====", "JS sent ɛλicit request to SP1", "",
+                                 "=====COGITATE HISTORY=====", "H1 made: X"]
+    notes, _ = add(notes, nb.ELICIT_HISTORY, "Received ɛλicit request from SP1")
+    notes, _ = add(notes, nb.COGITATE_HISTORY, "H2 made: Y")
+    assert notes.split("\n")[2:] == ["=====ELICIT HISTORY=====", "JS sent ɛλicit request to SP1",
+                                     "Received ɛλicit request from SP1", "", "=====COGITATE HISTORY=====",
+                                     "H1 made: X", "H2 made: Y"]
+    typed = "Worked with SP1." + notes                                  # typed on the top line: still a gap
+    assert typed.split("\n")[:3] == ["Worked with SP1.", "", "=====ELICIT HISTORY====="]
+    notes, _ = add("Worked with SP1.\n\n", nb.ELICIT_HISTORY, "a")
+    assert notes == "Worked with SP1.\n\n=====ELICIT HISTORY=====\na"    # one blank line after typed notes
+    assert nb.history_remove(notes, nb.ELICIT_HISTORY, "a") == "Worked with SP1."
+
+
+def test_history_can_be_switched_off(win, monkeypatch):
+    from lemmatrix.ui import elicit_dialogs as ed
+    doc = win.doc
+    date = win.work_date()
+    doc.ws_set(nb.HISTORY_SETTINGS[nb.COGITATE_HISTORY], False)
+    doc.ws_set(nb.HISTORY_SETTINGS[nb.ELICIT_HISTORY], False)
+    h = doc.change_hypotheses("Make", lambda j: hy.make(doc.notebook, j, date, "Quiet"))
+    ed.note_in_notebook(win, "JS sent ɛλicit request to SP1")
+    s = doc.notebook.session(date)
+    assert h.id in s.hypotheses and "HISTORY" not in s.notes       # still listed, nothing written
+    doc.ws_set(nb.HISTORY_SETTINGS[nb.COGITATE_HISTORY], True)
+    doc.change_hypotheses("Edit", lambda j: hy.edit(doc.notebook, j, date, h, confidence="proven"))
+    assert "=====COGITATE HISTORY=====" in s.notes and "ELICIT" not in s.notes
+    win.open_notebook(date)
+    ticks = win.notebook_dialog.history_ticks
+    assert ticks[nb.COGITATE_HISTORY].isChecked() and not ticks[nb.ELICIT_HISTORY].isChecked()
+    ticks[nb.ELICIT_HISTORY].setChecked(True)                       # the notebook window's tick
+    assert doc.ws.get_bool(nb.HISTORY_SETTINGS[nb.ELICIT_HISTORY], False)
+    from lemmatrix.ui.dialogs import PreferencesDialog
+    dlg = PreferencesDialog(win, doc.db, win.prefs)
+    assert dlg.history[nb.ELICIT_HISTORY].isChecked()
+    dlg.history[nb.COGITATE_HISTORY].setChecked(False)
+    dlg.apply()
+    assert not doc.ws.get_bool(nb.HISTORY_SETTINGS[nb.COGITATE_HISTORY], True)
+    assert "=====COGITATE HISTORY=====" in s.notes                 # what was written stays

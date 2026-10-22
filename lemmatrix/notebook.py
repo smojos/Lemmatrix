@@ -416,6 +416,103 @@ def add_note_line(nb: Notebook, date: str, line: str) -> Session:
     return s
 
 
+# --------------------------------------------------------------------------
+# History sections in the notes (Josh, 22 October)
+# --------------------------------------------------------------------------
+# The lines ɛλicit and Cogitate write go under a heading of their own at the end of the day's notes,
+# ɛλicit's first: a blank line between the sections and between them and the notes typed there; a
+# day with no notes yet starts with two blank lines, so typing on the top line still leaves a gap.
+# Whether they are written is switched per database (the workspace; Settings → General and the
+# notebook window): switching off never touches what is already written, and nothing is written
+# afterwards for the days missed.
+
+ELICIT_HISTORY, COGITATE_HISTORY = "elicit", "cogitate"
+HISTORY_ORDER = (ELICIT_HISTORY, COGITATE_HISTORY)
+HISTORY_HEADINGS = {ELICIT_HISTORY: "=====ELICIT HISTORY=====", COGITATE_HISTORY: "=====COGITATE HISTORY====="}
+HISTORY_SETTINGS = {ELICIT_HISTORY: "notebook/elicit_history", COGITATE_HISTORY: "notebook/cogitate_history"}
+
+
+def _is_heading(row: str) -> bool:
+    return row.strip() in HISTORY_HEADINGS.values()
+
+
+def _section(rows: list[str], section: str) -> tuple[int, int] | None:
+    """(heading row, the row after the section's last line), or None: a section runs from its
+    heading to the next blank line or heading."""
+    head = HISTORY_HEADINGS[section]
+    h = next((i for i, r in enumerate(rows) if r.strip() == head), None)
+    if h is None:
+        return None
+    e = h + 1
+    while e < len(rows) and rows[e].strip() and not _is_heading(rows[e]):
+        e += 1
+    return h, e
+
+
+def history_add(notes: str, section: str, line: str, replace_prefixes: tuple[str, ...] = ()) -> tuple[str, str]:
+    """Notes with a line written into a history section (made if need be); with replace_prefixes,
+    a line of the section starting with one of them is replaced instead (an edit's line, once a
+    day). Returns (the new notes, the line replaced or "")."""
+    rows = notes.split("\n") if notes else []
+    found = _section(rows, section)
+    if found is not None:
+        h, e = found
+        if replace_prefixes:
+            for i in range(e - 1, h, -1):
+                if any(rows[i].startswith(p) for p in replace_prefixes):
+                    old, rows[i] = rows[i], line
+                    return "\n".join(rows), old
+        rows.insert(e, line)
+        return "\n".join(rows), ""
+    later = [_section(rows, x) for x in HISTORY_ORDER[HISTORY_ORDER.index(section) + 1:]]
+    later = [f[0] for f in later if f is not None]
+    if later:                                      # ɛλicit's goes before Cogitate's
+        at = min(later)
+        rows[at:at] = [HISTORY_HEADINGS[section], line, ""]
+        return "\n".join(rows), ""
+    while rows and not rows[-1].strip():
+        rows.pop()
+    rows += (["", HISTORY_HEADINGS[section], line] if rows else ["", "", HISTORY_HEADINGS[section], line])
+    return "\n".join(rows), ""
+
+
+def history_remove(notes: str, section: str, line: str, old: str = "") -> str:
+    """Undo a history_add: the line taken out (or the line it replaced put back); a section left
+    with no lines goes, with the blank line it brought."""
+    rows = notes.split("\n") if notes else []
+    found = _section(rows, section)
+    if found is None:
+        return notes
+    h, e = found
+    for i in range(e - 1, h, -1):
+        if rows[i] == line:
+            if old:
+                rows[i] = old
+                return "\n".join(rows)
+            del rows[i]
+            e -= 1
+            break
+    else:
+        return notes
+    if e == h + 1:                                 # nothing left under the heading
+        del rows[h]
+        if h < len(rows) and not rows[h].strip():
+            del rows[h]
+        elif h > 0 and not rows[h - 1].strip():
+            del rows[h - 1]
+    if not any(r.strip() for r in rows):
+        return ""
+    return "\n".join(rows)
+
+
+def add_history_line(nb: Notebook, date: str, section: str, line: str) -> Session:
+    """A line in a day's history section (ɛλicit's); the day gets a session if it has none."""
+    s = nb.add_session(date)
+    s.notes, _ = history_add(s.notes, section, line)
+    nb.dirty = True
+    return s
+
+
 def push_line_question(nb: Notebook, db: Database, date: str, question: str, text, start: float,
                        clock: str = "", researchers=(), participants=(), locations=(),
                        kind: str = QUESTION) -> Question:

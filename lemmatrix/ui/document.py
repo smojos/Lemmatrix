@@ -293,7 +293,8 @@ class Document(QObject):
         from .. import hypotheses as hy
         nb = self.notebook
         before = _hyp_state(nb)
-        j = hy.Journal(nb)
+        from ..notebook import COGITATE_HISTORY, HISTORY_SETTINGS
+        j = hy.Journal(nb, self.workspace.get_bool(HISTORY_SETTINGS[COGITATE_HISTORY], True))
         result = change(j)
         after = _hyp_state(nb)
         if not j.lines and not j.made_days and before[0] == after[0] and before[2] == after[2]:

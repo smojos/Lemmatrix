@@ -3400,6 +3400,8 @@ class MainWindow(QMainWindow):
             self.lemmas.model_.ipa.setPointSize(self.prefs.ipa_size)
             self.conventions_changed()
             self.doc.settings_changed()
+            if self.notebook_dialog is not None:  # its history ticks follow Settings
+                self.notebook_dialog._show_history_ticks()
             if names_changed:
                 self._maybe_update_names()
 

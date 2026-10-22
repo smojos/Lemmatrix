@@ -592,8 +592,20 @@ class PreferencesDialog(QDialog):
             v.addStretch(1)
             tabs.addTab(w, title)
 
+        from .. import notebook as nbmod             # the notebook's history sections (this database)
+        ws = getattr(getattr(parent, "doc", None), "workspace", None)
+        self.history = {}
+        for section, label in ((nbmod.ELICIT_HISTORY, "Write ELICIT HISTORY"),
+                               (nbmod.COGITATE_HISTORY, "Write COGITATE HISTORY")):
+            box = QCheckBox(label)
+            box.setChecked(ws.get_bool(nbmod.HISTORY_SETTINGS[section], True) if ws is not None else True)
+            box.setToolTip(f"A line under {nbmod.HISTORY_HEADINGS[section]} in the day's notes for each "
+                           f"{'ɛλicit request made or received' if section == nbmod.ELICIT_HISTORY else 'change to a hypothesis'}"
+                           ". Switching it off leaves what is written; nothing is written later for the days it was off.")
+            self.history[section] = box
         page("General", [("This computer", [("Autosave every", self.autosave),
                                             ("Full backup folder", self.backups)]),
+                         ("Notebook (this database)", [(None, b) for b in self.history.values()]),
                          ("Warnings (this computer)", [(None, self.unusual), (None, self.spelling), (None, self.confirm)])])
         page("Sound", [
             ("This database", [("File name pattern", self.pattern), ("Tag separator", self.separator),
@@ -694,6 +706,11 @@ class PreferencesDialog(QDialog):
         p.pitch_voice = self.voice.currentData()
         p.pitch_volume = self.volume.value()
         p.full_backup_folder = self.backups.text().strip()
+        doc = getattr(self.parent(), "doc", None)
+        if doc is not None:                       # the notebook's history switches: the workspace's
+            from .. import notebook as nbmod
+            for section, box in self.history.items():
+                doc.ws_set(nbmod.HISTORY_SETTINGS[section], box.isChecked())
         from . import conventions as conv
         conv.save(p, conv.Conventions(on=self.conv_on.isChecked(), brackets=self.conv_brackets.isChecked(),
                                       slashes=self.conv_slashes.isChecked(), small_caps=self.conv_caps.isChecked(),

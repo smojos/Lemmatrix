@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QDate, QRect, QSize, Qt, QTimer
 from PySide6.QtGui import QBrush, QColor, QFont, QFontMetrics, QTextCharFormat
-from PySide6.QtWidgets import (QAbstractItemView, QCalendarWidget, QComboBox, QDialog, QDialogButtonBox,
+from PySide6.QtWidgets import (QAbstractItemView, QCalendarWidget, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
                                QGridLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget,
                                QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton, QSplitter,
                                QMenu, QStyledItemDelegate, QTabWidget, QTextEdit, QToolButton, QToolTip,
@@ -272,7 +272,26 @@ class NotebookDialog(QDialog):
         self.notes.setPlaceholderText("Write plain text notes here")
         self.notes.setFont(ipa_font(self.main.prefs.ipa_size))
         self.notes.textChanged.connect(self._notes_changed)
-        split.addWidget(self.notes)
+        notes_box = QWidget()                     # the notes, with the history switches under them
+        nl = QVBoxLayout(notes_box)
+        nl.setContentsMargins(0, 0, 0, 0)
+        nl.setSpacing(2)
+        nl.addWidget(self.notes, 1)
+        hist = QHBoxLayout()
+        self.history_ticks = {}
+        for section, label in ((nbmod.ELICIT_HISTORY, "Write ELICIT HISTORY"),
+                               (nbmod.COGITATE_HISTORY, "Write COGITATE HISTORY")):
+            box = QCheckBox(label)
+            box.setToolTip(f"Write a line under {nbmod.HISTORY_HEADINGS[section]} in the day's notes for each "
+                           f"{'ɛλicit request made or received' if section == nbmod.ELICIT_HISTORY else 'change to a hypothesis'}"
+                           ". Switching it off leaves what is written; nothing is written later for the days "
+                           "it was off. The same as Edit → Settings → General (this database).")
+            box.toggled.connect(lambda on, sec=section: self._history_toggled(sec, on))
+            self.history_ticks[section] = box
+            hist.addWidget(box)
+        hist.addStretch(1)
+        nl.addLayout(hist)
+        split.addWidget(notes_box)
 
         self.tabs = QTabWidget()
         self.comments = QTreeWidget()
@@ -333,8 +352,19 @@ class NotebookDialog(QDialog):
         outer.addWidget(self.empty_note)
 
     # ============================================================== the list
+    def _history_toggled(self, section: str, on: bool):
+        self.main.doc.ws_set(nbmod.HISTORY_SETTINGS[section], bool(on))
+
+    def _show_history_ticks(self):
+        ws = self.main.doc.ws
+        for section, box in self.history_ticks.items():
+            box.blockSignals(True)
+            box.setChecked(ws.get_bool(nbmod.HISTORY_SETTINGS[section], True))
+            box.blockSignals(False)
+
     def reload(self, date: str | None = None):
         """Fill the list of days again and show a day (the one shown, if no date is given)."""
+        self._show_history_ticks()
         want = date or (self.session.date if self.session and self.session in self.book.sessions else None)
         if want and (s := self.book.session(want)) is not None and want == self.main.session_date():
             if nbmod.refresh_comments(self.db, s):

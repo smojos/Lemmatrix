@@ -741,12 +741,16 @@ def received_note(req) -> str:
 
 
 def note_in_notebook(main, line: str):
-    """A line at the end of today's notes in the notebook (saved with the database)."""
+    """A line in today's =====ELICIT HISTORY===== section of the notebook's notes (saved with the
+    database), unless the database's workspace has it switched off."""
     doc = getattr(main, "doc", None)
     if doc is None or getattr(doc, "notebook", None) is None:
         return
+    ws = getattr(doc, "workspace", None)
+    if ws is not None and not ws.get_bool(nbmod.HISTORY_SETTINGS[nbmod.ELICIT_HISTORY], True):
+        return
     try:
-        nbmod.add_note_line(doc.notebook, today(), line)
+        nbmod.add_history_line(doc.notebook, today(), nbmod.ELICIT_HISTORY, line)
     except nbmod.NotebookError:
         return
     doc.notebook_changed()

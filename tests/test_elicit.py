@@ -246,7 +246,7 @@ def test_the_request_dialog(win, monkeypatch):
     from lemmatrix.model import today
     notes = win.doc.notebook.session(today()).notes             # Josh, 21 October: a line in the notebook
     rs = dlg.request.researcher["name"]
-    assert notes.splitlines()[-1] == f"{rs} sent ɛλicit request to SP1"
+    assert notes.splitlines()[-2:] == ["=====ELICIT HISTORY=====", f"{rs} sent ɛλicit request to SP1"]
     monkeypatch.setattr(ed.QFileDialog, "getOpenFileName", lambda *a, **k: (str(zp), ""))
     monkeypatch.setattr(ed.ReviewDialog, "exec", lambda self: None)
     zp = _response(el.stored_requests(db.path)[0], dlg.made.parent / "r.zip")

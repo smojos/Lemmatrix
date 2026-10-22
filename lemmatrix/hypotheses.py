@@ -113,8 +113,9 @@ class Journal:
     """The notebook changes of one hypothesis change (one undo step): lines written into days'
     notes, and the days that list a hypothesis or were made for it."""
 
-    def __init__(self, nb):
+    def __init__(self, nb, history: bool = True):
         self.nb = nb
+        self.history = history                         # write the lines (COGITATE HISTORY), or not
         self.lines: list[tuple[str, str, str]] = []   # (date, line replaced or "", line written)
         self.made_days: list[str] = []                 # sessions made by this change
 
@@ -133,57 +134,34 @@ class Journal:
         self.nb.dirty = True
 
     def write(self, date: str, line: str, replace_prefixes: tuple[str, ...] = ()):
-        """A line at the end of the day's notes; or, when a line starting with one of the prefixes
-        is already there, that line is replaced (an edit's line, once a day)."""
+        """A line in the day's =====COGITATE HISTORY===== section of the notes; or, when a line of it
+        starts with one of the prefixes, that line is replaced (an edit's line, once a day). Nothing
+        is written while the history is switched off."""
+        from .notebook import COGITATE_HISTORY, history_add
+        if not self.history:
+            return
         s = self._session(date)
-        rows = s.notes.split("\n") if s.notes else []
-        old = ""
-        for i in range(len(rows) - 1, -1, -1):
-            if replace_prefixes and any(rows[i].startswith(p) for p in replace_prefixes):
-                old = rows[i]
-                rows[i] = line
-                break
-        else:
-            while rows and not rows[-1].strip():
-                rows.pop()
-            rows.append(line)
-        s.notes = "\n".join(rows)
+        s.notes, old = history_add(s.notes, COGITATE_HISTORY, line, replace_prefixes)
         self.lines.append((date, old, line))
         self.nb.dirty = True
 
     # ---- undo and redo (by the document's command) -----------------------------------
     def undo_lines(self):
+        from .notebook import COGITATE_HISTORY, history_remove
         for date, old, new in reversed(self.lines):
             s = self.nb.session(date)
-            if s is None:
-                continue
-            rows = s.notes.split("\n")
-            for i in range(len(rows) - 1, -1, -1):
-                if rows[i] == new:
-                    if old:
-                        rows[i] = old
-                    else:
-                        del rows[i]
-                    break
-            s.notes = "\n".join(rows).rstrip("\n")
+            if s is not None:
+                s.notes = history_remove(s.notes, COGITATE_HISTORY, new, old)
         for date in self.made_days:              # a day made for this, empty again: gone again
             s = self.nb.session(date)
             if s is not None and _empty(s):
                 self.nb.sessions.remove(s)
 
     def redo_lines(self):
+        from .notebook import COGITATE_HISTORY, history_add
         for date, old, new in self.lines:
             s = self.nb.add_session(date)
-            rows = s.notes.split("\n") if s.notes else []
-            for i in range(len(rows) - 1, -1, -1):
-                if old and rows[i] == old:
-                    rows[i] = new
-                    break
-            else:
-                while rows and not rows[-1].strip():
-                    rows.pop()
-                rows.append(new)
-            s.notes = "\n".join(rows)
+            s.notes, _ = history_add(s.notes, COGITATE_HISTORY, new, (old,) if old else ())
 
 
 def _empty(s) -> bool:
