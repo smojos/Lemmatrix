@@ -586,7 +586,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 
 ## 4. Converting existing databases
 
-- **No import or export of other programs' formats in the program yet** (LIFT and SFM are planned, section 6). Existing databases, e.g. from Dekereke or FLEx, are converted with one-off scripts written for each database's own columns; they aren't part of this repository.
+- **No import or export of other programs' formats in the program yet** (LIFT and SFM are planned for v1, section 6). Existing databases, e.g. from Dekereke or FLEx, are converted with one-off scripts written for each database's own columns; they aren't part of this repository.
 - **Dekereke's files**, for reference: a flat UTF-16 XML file (`<phon_data><data_form>`, with one element per column) plus a separate `*-DkUserSettings.xml`.
 - **A conversion** makes the lemmas and their tokens from the columns (e.g. a form and its pitch as the citation token, a plural column as a PL token), keeps the recordings' names (Lemmatrix shows those that are out of date, and Tools → Update all soundfile names renames them when wanted), and reports what it couldn't convert (columns left out, glosses or codes with characters forbidden in file names).
 
@@ -658,7 +658,7 @@ New databases start with this structure (revised 20 October). Everything in it c
     - **Any selected** or **No selected**. For tags, also **Exactly selected**: only the exact combination (group defaults don't count).
 - **Ctrl+click a lemma** (cleared when another database is opened) to show only that lemma (the other filters still apply); Ctrl+click again, or Clear all filters, shows the rest again. The first column's funnel lights up and the count line names the lemma.
 - Active filters show as a highlighted funnel. **Clear all filters** is in the options bar.
-- **Options bar:** Add (a lemma), Delete, Edit, **Create token for this lemma** (λ→τ, in the theme colour, icon only; 21 October), Configure columns, Clear all filters, quick search, CV shape filter (Stage 2; matches the Lemma field). The right-click menu has Create token for this lemma too. It always adds a token to the lemma selected here, whatever is selected in the matrix.
+- **Options bar:** Add (a lemma), Delete, Edit, **Create token for this lemma** (λ→τ, in the theme colour, icon only; 21 October), Configure columns, Clear all filters, quick search, CV shape filter (v2; matches the Lemma field). The right-click menu has Create token for this lemma too. It always adds a token to the lemma selected here, whatever is selected in the matrix.
 
 ### 5.3 All data
 
@@ -667,7 +667,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 - **Pitch drawings in a column too narrow for them** (All data, Utterances, Bulk edit) are cut off with an ellipsis, like text, instead of spilling into the next column (20 October).
 - **Soundfile's filter menu** (18 October): Show all, **Present** (the recording is in the sound folder), **Missing** (not recorded, or not in the folder), **Rerecord** (flagged in the token dialogue), then Filter for….
 - **Selecting and Add** (Josh, 21 October): clicking the selected token unselects it (a double-click still opens it). **Add** (a token) goes to the selected token's lemma; with no token selected, to the lemma selected in the lemma list. With nothing selected, Delete, Edit and Play do nothing.
-- **Options bar:** Add, Delete, Edit, Play, **Move token to another lemma** (λ←τ since 21 October, mirroring the lemma list's λ→τ; λ→λ before; section 5.11), **Find missing or unlinked recordings** (icon only, the same as Tools → Find missing or unlinked recordings…, 19 October), Configure columns, Clear all filters, quick search, CV shape filter (Stage 2; matches Phonetic).
+- **Options bar:** Add, Delete, Edit, Play, **Move token to another lemma** (λ←τ since 21 October, mirroring the lemma list's λ→τ; λ→λ before; section 5.11), **Find missing or unlinked recordings** (icon only, the same as Tools → Find missing or unlinked recordings…, 19 October), Configure columns, Clear all filters, quick search, CV shape filter (v2; matches Phonetic).
 - **Right-click menu** with the same options (plus Play, and **Move to another lemma…**; the matrices' menus have it too). On the Pitch column (its digits or its drawing), **Raise pitch** and **Lower pitch**: Bulk edit's pitch shortcut for that one token, one undo step, greyed if it would go past the display range (19 October). The matrices' right-click menu has them too for a token with pitch. On the Tags column, **Filter for same** sets the Tags filter to **Exactly selected** with that token's tags (Citation for a token with none), 19 October.
 - **Double-click** a token's cell to open the token dialogue; double-click a **lemma's column** (Reference, Lemma, Gloss, Word Class) to select that lemma in the lemma list instead, as in Lemma/Tag (18 October). Enter still opens the token dialogue.
 
@@ -770,7 +770,7 @@ New databases start with this structure (revised 20 October). Everything in it c
   - **Copy:** one field into another: Overwrite, Append (after a space) or Only where empty.
   - **Clear:** empty a field.
   - **Predict** (section 5.9): fills empty English translations with their suggestions (Tokens tab only); translations already there and tokens without a suggestion are left alone, and the preview counts both. It learns from the database as it is, not from the suggestions it is filling in. The preview shows each suggestion, so wrong ones can be unticked.
-  - **Conditions:** a greyed placeholder tab for syllable and environment conditions (y → j only before a vowel), which arrive with Stage 2.
+  - **Conditions:** a greyed placeholder tab for syllable and environment conditions (y → j only before a vowel), which arrive with v2 (Analyze).
 - **Options** (each can be turned off or on; these are the defaults):
   - **Keep diacritics: on.** Tone and other marks stay on the new letter: y → j turns ỹ into j̃ and ý into j́. Off: a letter carrying a mark counts as a different letter and is left alone. Modifier letters (ʰ ʷ ʲ) are letters of their own, so yʷ becomes jʷ either way. (Text is compared decomposed; in a regular expression a letter and its marks are separate characters.)
   - **Rename soundfiles: on.** The preview warns how many recordings will be renamed and names them. Off: the names are left out of date, and the preview says how many.
@@ -886,26 +886,45 @@ New databases start with this structure (revised 20 October). Everything in it c
 
 ## 6. Roadmap
 
-- **Stage 1, Windows prototype:**
-  - The file format, with open and save.
-  - The tag structure dialogue (nested groups and tags, with "usual for" hints), with the default structure.
-  - The main window as in the mockup: filterable lemma list with entry buttons and search on the left, the matrix view on the right in all three modes, the matrix toolbar (including Play cell), and the current-session panel.
-  - The token dialogue, with built-in recording, level meter, tagging, Back/Next and keyboard shortcuts.
-  - File-name pattern settings, with the live file name shown on each token, and file-name updating (automatic or by button).
-  - Per-field fonts and sizes.
-  - Recording and playback per token, from the microphone or computer audio.
-  - Undo and redo, optional autosave, and backup copies.
-  - Then: converting existing Dekereke databases (section 4).
-  - Estimate: a first runnable version within 1–2 working sessions, and a solid prototype in about 2–3 weeks, depending on how often it can be tested.
-- **Stage 2, analysis engine:** segment parsing, features, syllabification, CV shapes (including both CV shape filters), consonant and vowel charts, feature-based search and pitch tools (including the drawn contour display). Results get checked against other tools' output on the same data.
-- **Stage 3, other formats and extras:** LIFT, Toolbox/SFM, HTML and LaTeX import and export; formant plots; and so on.
-- **Later ideas:**
-  - Play glosses with text-to-speech (e.g. Google).
-  - Machine-translate glosses (needs internet access and probably an API key).
+*Set by Josh on 22 October 2026, to be developed further. Lemmatrix grows through four versions, each with a purpose of its own. They replace the earlier Stages: Stage 1 (the Windows prototype) became v0, Stage 2 (the analysis engine) v2, and Stage 3 (other formats) is split between v1 (import and export for converting databases) and v3 (LaTeX, Word and HTML). The ideas log is grouped by these versions.*
+
+### v0 · Prototype (now: 0.1.x)
+
+- **Purpose:** honing the UI, search, brand, functionality and scope, and getting all the ideas out.
+- **Structure can still change:** file format upgrades are provisional, with no compatibility code for older formats (section 7, 18 October).
+- **Built so far:** everything in sections 3 and 5: database formats up to 7, the notebook (format 3) and workspace file, the main window, matrices and token dialogue, Bulk edit, predictive translation and spelling, texts and utterances, ɛλicit, the XML viewer, To Do and Cogitate. (The Stage 1 list this replaced, from 16 October, is all built.)
+- **Before v1:** settle anything structural that is still open, so v1's formats can stay as they are, e.g. what "hidden" means for core fields and the pitch system (IDEAS.md idea 9), how diacritics are stored (idea 21), and etymology, loan and root/complex marks on lemmas (idea 24).
+- **Ideas:** 9, 14, 16, 18, 21, 24.
+
+### v1 · Collect (data collection)
+
+- **Purpose:** a researcher collects data in Lemmatrix and works through it. Most of what this needs is built during v0.
+- **The structure stays from v1 on:** no major changes to the database, notebook and workspace formats; anything that does change after 1.0 comes with an upgrade that keeps older files opening.
+- **Import and export for converting databases:** from and to other programs (e.g. Dekereke, FLEx through LIFT, Toolbox/SFM), and hopefully Word tables and Excel sheets; exports in formats other programs can use. *This would change the decision of 16 October to keep Dekereke import and export out of the program (section 4); to be settled* (idea 39).
+- **Also planned:** a standalone .exe and installer, and later a fixed "field version".
+- **Ideas:** 1, 10, 19 (ɛλicit's future updates), 20, 27, 28, 34, 39.
+
+### v2 · Analyze
+
+- **Purpose:** analysis tools of the kind found in Phonology Assistant and Dekereke, for phonology and grammar, and perhaps discourse.
+- **From the earlier Stage 2:** segment parsing, features, syllabification, CV shapes (including both CV shape filters, sections 5.2 and 5.3), consonant and vowel charts, feature-based search, pitch tools, the Analyze menu and valency (section 7, open question 3); formant plots (`parselmouth`). Results are checked against other tools' output on the same data.
+- **Ideas:** 3, 4, 5, 8, 12, 13, 17, and Convert question → hypothesis (idea 35, Later).
+
+### v3 · Compose
+
+- **Purpose:** from analysis to writing up.
+- Export to LaTeX and Word (interlinear examples, tables, charts); organising papers in preparation; exporting visual aids (charts, diagrams, pictures).
+- **Ideas:** 2 (the LaTeX example viewer and export), 30, and a hypothesis report, Send to a paper and the snapshot's LaTeX table (idea 35, Later).
+
+### Not yet placed
+
+- Play glosses with text-to-speech (ɛλicit leaves audio prompts out, section 5.12).
 
 ## 7. Design sequence and open questions
 
 **Sequence:** 1. Data design (nearly done) → 2. Default categories and customisability → 3. Functionality → 4. UI (first mockup in; more to come).
+
+**Settled on 22 October (the roadmap, section 6):** four versions: v0 Prototype (now), v1 Collect (data collection; the structure stays from then on; import and export for converting databases), v2 Analyze, v3 Compose; the ideas log grouped by them; the earlier Stages folded in.
 
 **Settled on 21 October (Cogitate, section 3.14; IDEAS.md ideas 35 and 16):** hypotheses at the end of the notebook (format 3), numbered H1, H2… never reused; summary, formulation, confidence from an editable list (kept in the notebook); links by id to tokens, utterances, text lines, snapshots, questions and To Dos, comments and hypotheses, marked Evidence, Counterevidence or Relevant, with a note; no shortcut to make one, "make" not "add"; the link picker with Make a new hypothesis…; the Cogitate window with List and Hypothesis tabs and Josh's icon at the top right, between χμλ and the ? on the title row; Back and Next; Cited by; "In hypotheses" in the dialogues; the notebook's Hypotheses tab and lines in the day's notes (one per change, edits once a day); one undo step per change; the camera's snapshot kept inside its link and restoring the view.
 
@@ -954,4 +973,4 @@ New databases start with this structure (revised 20 October). Everything in it c
 **Open questions**
 1. **Adding entries:** how references are suggested from the category is built simply for now (next free number); a mockup may refine it.
 2. **Tone letters** as an alternative pitch display, and "Insert character": later.
-3. **Analyze → Valency (Stage 2):** work out each verb's valency from its tokens (A + O = transitive, S = intransitive, Antipassive/Passive stems), as a lemma property.
+3. **Analyze → Valency (v2):** work out each verb's valency from its tokens (A + O = transitive, S = intransitive, Antipassive/Passive stems), as a lemma property.
