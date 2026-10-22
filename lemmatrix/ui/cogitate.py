@@ -276,6 +276,7 @@ class CogitateWindow(QDialog):
         self.main = main
         self.doc = main.doc
         self.current_id: str | None = None
+        self.shown_id: str | None = None          # the hypothesis the Hypothesis tab's fields hold
         self._loading = False
         self.setWindowTitle("Cogitate")
         from .winstate import fit_to_screen, keep
@@ -556,6 +557,7 @@ class CogitateWindow(QDialog):
         h = self.current()
         on = h is not None
         self._loading = True
+        self.shown_id = h.id if h is not None else None
         for w in (self.summary, self.formulation, self.confidence, self.links, self.link_search,
                   self.mark_filter, self.kind_filter, self.show_broken, self.link_h_btn, self.cited):
             w.setEnabled(on)
@@ -632,11 +634,14 @@ class CogitateWindow(QDialog):
     def _tab_changed(self, i):
         self._commit()
         self.pages.setCurrentIndex(i)
-        if i == HYPOTHESIS_TAB and self.current_id is None:
-            r = self.table.current_row()
-            if r is not None:
-                self.current_id = r.id
-            self._show()
+        if i == HYPOTHESIS_TAB:
+            if self.current_id is None:
+                r = self.table.current_row()
+                if r is not None:
+                    self.current_id = r.id
+            if self.current_id != self.shown_id or self.current_id is None:
+                self._show()                      # the List's selection, not the one shown before
+                self._fill_confidence()
 
     # ---- going places ------------------------------------------------------
     def show_hypothesis(self, ident: str | None, focus_summary: bool = False):
@@ -700,10 +705,13 @@ class CogitateWindow(QDialog):
         self.refill()
 
     def _commit(self):
-        """The summary, formulation and confidence as typed, into the hypothesis (one undo step)."""
+        """The summary, formulation and confidence as typed, into the hypothesis they were filled
+        from (one undo step). Never into the List's selection: selecting another hypothesis there
+        changes current_id before the fields are filled again, and committing to it copied one
+        hypothesis's summary and formulation over another's (Josh, 22 October)."""
         if self._loading:
             return
-        h = self.current()
+        h = hy.by_id(self.book, self.shown_id) if self.shown_id else None
         if h is None:
             return
         summary, formulation = self.summary.text(), self.formulation.toPlainText()

@@ -393,3 +393,40 @@ def test_history_can_be_switched_off(win, monkeypatch):
     dlg.apply()
     assert not doc.ws.get_bool(nb.HISTORY_SETTINGS[nb.COGITATE_HISTORY], True)
     assert "=====COGITATE HISTORY=====" in s.notes                 # what was written stays
+
+
+def test_opening_another_hypothesis_from_the_list_never_copies_the_shown_one(win, monkeypatch):
+    """Josh, 22 October: with A shown, selecting B in the List and double-clicking it (or Edit,
+    or the Hypothesis tab) copied A's summary and formulation over B's."""
+    from lemmatrix.ui.cogitate import HYPOTHESIS_TAB, LIST_TAB, _HypRow
+    doc = win.doc
+    w = win.open_cogitate()
+    a = w.make()
+    w.summary.setText("Tone spreads rightward")
+    w.formulation.setPlainText("H spreads one syllable to the right.")
+    w._commit()
+    b = w.make()
+    w.summary.setText("Plural is -a")
+    w.formulation.setPlainText("Plurals add a low -a.")
+    w._commit()
+    w.show_hypothesis(a.id)                          # A shown in the Hypothesis tab
+    for how in ("double-click", "tab"):
+        w.tabs.setCurrentIndex(LIST_TAB)
+        w.table.select_row(_HypRow(hy.by_id(doc.notebook, b.id)))   # select B in the List
+        assert w.current_id == b.id
+        if how == "double-click":
+            w.table.rowActivated.emit(w.table.current_row())
+        else:
+            w.tabs.setCurrentIndex(HYPOTHESIS_TAB)
+        hb, ha = hy.by_id(doc.notebook, b.id), hy.by_id(doc.notebook, a.id)
+        assert (hb.summary, hb.formulation) == ("Plural is -a", "Plurals add a low -a."), how
+        assert (ha.summary, ha.formulation) == ("Tone spreads rightward", "H spreads one syllable to the right.")
+        assert w.summary.text() == "Plural is -a" and w.shown_id == b.id
+        w.show_hypothesis(a.id)
+    # an edit typed in the shown one still goes into it when another is opened from the List
+    w.summary.setText("Tone spreads leftward")
+    w.tabs.setCurrentIndex(LIST_TAB)
+    w.table.select_row(_HypRow(hy.by_id(doc.notebook, b.id)))
+    w.table.rowActivated.emit(w.table.current_row())
+    assert hy.by_id(doc.notebook, a.id).summary == "Tone spreads leftward"
+    assert hy.by_id(doc.notebook, b.id).summary == "Plural is -a"
