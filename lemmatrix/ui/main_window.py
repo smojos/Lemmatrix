@@ -1073,6 +1073,12 @@ class MainWindow(QMainWindow):
         ex.addSeparator()
         self._act(ex, "&Anonymous backup…", self.export_anonymous)
         f.addSeparator()
+        # Settings in File, as in Office, with the gear and Ctrl+, (Josh, 22 October; Edit before)
+        self.settings_action = self._act(f, "&Settings…", self.edit_settings, "Ctrl+,")
+        self.settings_action.setIcon(icon("gear", 16))
+        self.settings_action.setIconVisibleInMenu(True)
+        self.settings_action.setMenuRole(QAction.PreferencesRole)   # the Lemmatrix menu on a Mac
+        f.addSeparator()
         self._act(f, "E&xit", self.close, QKeySequence.Quit)
         e = mb.addMenu("&Edit")
         undo = self.doc.undo.createUndoAction(self, "Undo")
@@ -1088,8 +1094,6 @@ class MainWindow(QMainWindow):
         self._act(e, "&Tag structure…", lambda: self.edit_lists("tags"))
         e.addSeparator()
         self._act(e, "&Bulk edit…", self.open_bulk_edit, "Ctrl+Shift+B")   # Ctrl+E is edit mode (21 October)
-        e.addSeparator()
-        self._act(e, "&Settings…", self.edit_settings, QKeySequence.Preferences)
         t = mb.addMenu("&Tools")
         self._act(t, "Update all soundfile names", self.update_all_names)
         self._act(t, "Check for duplicate file names", self.check_duplicates)
@@ -2726,7 +2730,7 @@ class MainWindow(QMainWindow):
         if not exe or not praat.executable(exe).exists():
             QMessageBox.information(parent, "Open in Praat",
                                     "Lemmatrix doesn't know where Praat is yet. Please show it where "
-                                    "Praat is (you can change this later in Edit → Settings → Sound).")
+                                    "Praat is (you can change this later in File → Settings → Sound).")
             exe = self.ask_praat_path(parent)
             if not exe:
                 return

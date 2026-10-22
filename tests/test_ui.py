@@ -417,8 +417,8 @@ def test_settings_tabs_theme_and_pitch(win):
     assert theme.colour("pitch").name() == theme.DEFAULT_ACCENT
     menus = [a.text() for a in win.menuBar().actions()]
     assert "&Settings" not in menus
-    edit = next(a.menu() for a in win.menuBar().actions() if a.text() == "&Edit")
-    assert any("Settings" in a.text() for a in edit.actions())
+    file_menu = next(a.menu() for a in win.menuBar().actions() if a.text() == "&File")
+    assert any("Settings" in a.text() for a in file_menu.actions())     # in File since 22 October
 
 
 def test_last_view_is_restored(app, tmp_path, monkeypatch):

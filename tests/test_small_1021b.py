@@ -187,3 +187,14 @@ def test_bulk_replace_clear_fields(win):
     w.r_clear.click()
     assert w.r_find.text() == "" and w.r_repl.text() == ""
     w.close()
+
+
+# ---- Settings in the File menu (Josh, 22 October) ----------------------------
+
+def test_settings_is_in_the_file_menu(win):
+    menus = {m.title().replace("&", ""): m for m in (a.menu() for a in win.menuBar().actions()) if m}
+    texts = [a.text().replace("&", "") if not a.isSeparator() else "—" for a in menus["File"].actions()]
+    assert texts[-3:] == ["Settings…", "—", "Exit"] and texts[-4] == "—"
+    act = win.settings_action
+    assert act.shortcut().toString() == "Ctrl+," and not act.icon().isNull()
+    assert "Settings…" not in [a.text().replace("&", "") for a in menus["Edit"].actions()]

@@ -100,7 +100,7 @@ class TokenDialog(QDialog):
         self.pitch_play.setIconSize(QSize(22, 22))
         self.pitch_play.setAutoRaise(True)
         self.pitch_play.setToolTip("Play the pitch (Ctrl+Shift+Space); the sound is set in "
-                                   "Edit → Settings → Pitch")
+                                   "File → Settings → Pitch")
         self.pitch_play.clicked.connect(lambda *_: self._play_pitch())
         drawing = QHBoxLayout()                 # the drawing, with its play button beside it
         drawing.setContentsMargins(0, 0, 0, 0)
