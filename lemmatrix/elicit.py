@@ -35,7 +35,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 from . import elicit_prompts, filenames, layout, storage
-from .model import Database, Entry, Token, is_utterance, nfc
+from .model import UTTERANCES, Database, Entry, Token, is_utterance, nfc
 
 FORMAT = "lemmatrix-elicit-request"
 RESPONSE_FORMAT = "lemmatrix-elicit-response"
@@ -803,13 +803,14 @@ def plan(db: Database, st: Stored, numbers) -> Plan:
             continue
         date = recorded_date(st, n)
         if c.kind == NEW_UTTERANCE:
-            letter = "U"
+            cats = db.settings.categories(UTTERANCES)
+            letter = "U" if any(c.letter == "U" for c in cats) else (cats[0].letter if cats else "U")
             if letter not in next_u:
                 ref = db.suggest_utterance_reference(letter)
-                next_u[letter] = int(ref[len(letter):])
+                next_u[letter] = int(ref[len(db.settings.ref_prefix(letter)):])
             num = next_u[letter]
             next_u[letter] += 1
-            ref = f"{letter}{num:0{db.settings.ref_digits}d}"
+            ref = f"{db.settings.ref_prefix(letter)}{num:0{db.settings.ref_digits}d}"
             primary = c.translations.get(db.settings.primary_gloss) or next(iter(c.translations.values()), "")
             u = db.new_utterance(ref, utterance_label(primary), speaker, date)
             f = _translation_field(db)

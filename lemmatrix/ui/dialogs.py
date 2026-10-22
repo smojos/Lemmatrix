@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (QCheckBox, QColorDialog, QComboBox, QDialog, QDia
                                QPushButton, QSlider, QSpinBox, QTabWidget, QToolButton, QTreeWidget, QTreeWidgetItem,
                                QVBoxLayout, QWidget, QInputDialog)
 
-from ..model import (Database, Entry, Group, Tag, forbidden_in, nfc)
+from ..model import (SEQUENCE, Database, Entry, Group, Tag, forbidden_in, nfc)
 from . import spellui, theme
 from .widgets import ipa_font
 
@@ -131,7 +131,7 @@ class EntryDialog(QDialog):
         self.category = QComboBox()
         self.category.addItem("(manual)", "")
         for c in s.categories():                    # lemma categories (not the utterances')
-            self.category.addItem(f"{c.letter}  {c.name}", c.letter)
+            self.category.addItem(c.label, c.letter)
         self.ref = NoForbidden(entry.ref if entry else "")
         if entry:
             m = re.match(r"[A-Za-z]+", entry.ref)
@@ -145,6 +145,8 @@ class EntryDialog(QDialog):
             self.category.currentIndexChanged.connect(self._suggest)
         form.addRow("Category", self.category)
         form.addRow("Reference", self.ref)
+        if entry is None and s.ref_scheme == SEQUENCE:   # built on the CAWL or Swadesh: the next number
+            self.category.setCurrentIndex(1)
         self.fields: dict[tuple[str, str], QWidget] = {}
         others = []                                 # second languages: under Other languages (idea 19)
         self.origin_on = origin_shown(parent)

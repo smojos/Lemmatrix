@@ -362,6 +362,11 @@ class MainWindow(QMainWindow):
             t.timeout.connect(lambda e=edit, f=fn: f(e.text()))
             edit.textChanged.connect(lambda _, t=t: t.start())
             self._search_timers[name] = t
+        # `CAWL 345`, `SWADESH`… in the lemma list's search (idea 40): a filter like any search,
+        # and the one lemma found is selected, so the matrix follows
+        from .. import wordlists
+        self.lemmas.proxy.term_match = lambda row, term: wordlists.search_match(self.doc.db, row, term)
+        self._search_timers["lemma"].timeout.connect(self._select_wordlist_hit)
         self.lemmas.ctrl_click_pins = True
         self.lemmas.filtersChanged.connect(lambda: self.schedule_refresh())
         self.lemmas.rowActivated.connect(lambda e: self.edit_entry())
@@ -1163,6 +1168,7 @@ class MainWindow(QMainWindow):
         self._act(ex, "&Filtered database (current tab) as CSV…", lambda: self.export_csv(filtered=True))
         self._act(ex, "&Entire database as CSV…", lambda: self.export_csv(filtered=False))
         self._act(ex, "&Tag structure as CSV…", lambda: self.export_csv(filtered=False, tags=True))
+        self._act(ex, "&Wordlist (EACW, CAWL, Swadesh)…", self.export_wordlist)   # idea 40
         ex.addSeparator()
         # two archives (idea 44): data to share, never the notebook's ideas unless asked
         self._act(ex, "&Anonymous archive…", lambda: self.export_archive("anonymous"))
@@ -1197,6 +1203,7 @@ class MainWindow(QMainWindow):
         self._act(t, "Find missing or unlinked recordings…", self.find_missing_recordings)
         self._act(t, "Fill in recording dates from the soundfiles…", self.fill_recording_dates)
         self._act(t, "Check clipped utterances…", self.check_clipped)
+        self._act(t, "Link to wordlists…", self.link_wordlists)                 # idea 40
         t.addSeparator()
         self._act(t, "Check &spelling…", self.check_spelling, "F7")
         t.addSeparator()
@@ -1410,7 +1417,10 @@ class MainWindow(QMainWindow):
         db = self.doc.db
         s = db.settings
         edit = lambda row, text: None           # marks a column as editable in place
-        cols = [Column("ref", "Reference", lambda e: e.ref)]
+        from .. import wordlists
+        # the wordlists' numbers are hidden (idea 40): only in the Reference's hover (and the XML)
+        cols = [Column("ref", "Reference", lambda e: e.ref,
+                       tooltip=lambda e: wordlists.describe(db, e) or None)]
         from .dialogs import origin_shown
         shown = origin_shown(self)                # Settings → General: Origin and From (22 October)
         for f in s.entry_fields:
@@ -3883,6 +3893,26 @@ class MainWindow(QMainWindow):
 
     export_anonymous = export_archive             # the older name
 
+    def _select_wordlist_hit(self):
+        """A wordlist search (CAWL 345) that finds one lemma selects it."""
+        from .. import wordlists
+        from .searchmark import terms
+        if not any(wordlists.search_term(t) for t in terms(self.lemma_search.text())):
+            return
+        rows = self.lemmas.visible_rows()
+        if len(rows) == 1 and self.lemmas.current_row() is not rows[0]:
+            self.lemmas.select_row(rows[0])
+
+    def export_wordlist(self):
+        """File → Export → Wordlist…: the EACW, CAWL or Swadesh list of this database (idea 40)."""
+        from .wordlist_dialogs import WordlistExportDialog
+        WordlistExportDialog(self).exec()
+
+    def link_wordlists(self):
+        """Tools → Link to wordlists…: an existing database's base list and numbers (idea 40)."""
+        from .wordlist_dialogs import link_to_wordlists
+        link_to_wordlists(self)
+
     def export_csv(self, filtered: bool, tags: bool = False):
         from .. import export
         db = self.doc.db
@@ -3933,10 +3963,14 @@ class MainWindow(QMainWindow):
     def new_file(self):
         if not self._confirm_discard():
             return
+        from .wordlist_dialogs import ask_start_list
+        base = ask_start_list(self)               # EACW, CAWL, Swadesh or blank (idea 40)
+        if base is None:
+            return
         path = self._new_database_path("New database")
         if not path:
             return
-        db = new_database()
+        db = new_database(base)
         db.path = path
         layout.create_layout(path)
         self.load_database(db)

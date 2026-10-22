@@ -1,0 +1,295 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
+"""The comparative wordlists (IDEAS.md idea 40, 22 October 2026): the lists and their mapping,
+new databases built on each, format 9, the search, the export and Link to wordlists."""
+
+import os
+import re
+import shutil
+from pathlib import Path
+
+import pytest
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
+
+from lemmatrix import defaults, storage  # noqa: E402
+from lemmatrix import wordlists as wl  # noqa: E402
+from lemmatrix.model import SEQ, SEQUENCE, TEXTS, UTTERANCES  # noqa: E402
+
+SAMPLES = Path(__file__).resolve().parent / "data" / "sample"
+
+
+# ---- the lists ----------------------------------------------------------
+def test_the_lists_and_their_sizes():
+    assert len(wl.get(wl.EACW).items) == 2369
+    assert len(wl.get(wl.CAWL).items) == 1700
+    assert len(wl.get(wl.SWADESH).items) == 207
+    for lid in wl.LIST_IDS:
+        nums = [i.number for i in wl.get(lid).items]
+        assert len(nums) == len(set(nums)), lid
+    assert [i.number for i in wl.get(wl.CAWL).items] == [f"{n:04d}" for n in range(1, 1701)]
+    assert [i.number for i in wl.get(wl.SWADESH).items] == [str(n) for n in range(1, 208)]
+
+
+def test_the_eacw_as_josh_set_it():
+    eacw = wl.get(wl.EACW).by_number
+    assert "B001b" not in eacw and "V292b" not in eacw         # left out of the base (Josh)
+    assert eacw["C001b"].gloss == "mother"
+    assert eacw["C043"].gloss == "Ethnic group 1"
+    assert eacw["C043a"].gloss == "male ethnic group 1"
+    assert eacw["C058b"].gloss == "female ethnic group 16"
+    assert eacw["C042"].gloss == "white person"                 # C040–C042 stay
+    assert not any(re.search(r"\b(LXX|VXX|SP\d|RS\d)\b", i.gloss) for i in wl.get(wl.EACW).items)
+
+
+def test_every_mapped_number_exists():
+    eacw = wl.get(wl.EACW).by_number
+    cawl = wl.get(wl.CAWL).by_number
+    for lid in (wl.CAWL, wl.SWADESH):
+        for i in wl.get(lid).items:
+            assert all(e in eacw for e in i.eacw), (lid, i.number)
+            assert all(c in cawl for c in i.cawl), (lid, i.number)
+
+
+def test_the_mapping_both_ways():
+    assert wl.other_numbers(wl.EACW, "C001b") == {wl.CAWL: ["0345"], wl.SWADESH: ["42"]}
+    assert wl.other_numbers(wl.CAWL, "0345") == {wl.EACW: ["C001b"], wl.SWADESH: ["42"]}
+    assert wl.other_numbers(wl.SWADESH, "42") == {wl.EACW: ["C001b"], wl.CAWL: ["0345"]}
+    # one number on several lemmas: CAWL brother (elder/younger)
+    assert len(wl.mapped(wl.CAWL, "0346", wl.EACW)) > 1
+
+
+def test_numbers_as_typed():
+    assert wl.canon(wl.CAWL, "345") == "0345"
+    assert wl.canon(wl.SWADESH, "042") == "42"
+    assert wl.canon(wl.EACW, "c001B") == "C001b"
+    assert wl.canon(wl.CAWL, "9999") is None
+    assert wl.search_term("CAWL 345") == (wl.CAWL, "0345")
+    assert wl.search_term("swadesh") == (wl.SWADESH, None)
+    assert wl.search_term("cawl 9999")[0] == wl.CAWL        # a wordlist search that finds nothing
+    assert wl.search_term("mother") is None
+
+
+# ---- new databases --------------------------------------------------------
+def test_a_new_database_on_the_eacw():
+    db = defaults.new_database(wl.EACW)
+    assert db.metadata.wordlist_base == wl.EACW
+    assert len(db.entries) == 2369
+    e = db.entry_by_ref("C001b")
+    assert db.gloss(e) == "mother" and db.word_class(e) == "NOUN"
+    assert e.lists == {wl.CAWL: ["0345"], wl.SWADESH: ["42"]}
+    assert len(e.tokens) == 1 and not e.tokens[0].tags       # its citation token
+    assert db.settings.ref_scheme != SEQUENCE                  # the A–V categories stay
+    assert wl.numbers(db, e, wl.EACW) == ["C001b"]
+
+
+@pytest.mark.parametrize("base, first, after", [(wl.CAWL, "0001", "1701"), (wl.SWADESH, "001", "208")])
+def test_a_new_database_on_cawl_or_swadesh_has_no_categories(base, first, after):
+    db = defaults.new_database(base)
+    s = db.settings
+    assert s.ref_scheme == SEQUENCE and not s.ref_categories     # Josh: the reference system is removed
+    assert db.entries[0].ref == first
+    # utterances and texts take the next number, one sequence with the lemmas
+    for kind in (UTTERANCES, TEXTS):
+        cats = s.categories(kind)
+        assert [c.letter for c in cats] == [SEQ] and cats[0].label == "Next number"
+        assert db.suggest_utterance_reference(SEQ) == after
+    assert db.suggest_reference(SEQ) == after
+    assert s.category(first) is None and s.ref_prefix(SEQ) == ""
+
+
+def test_a_cawl_database_glosses_and_word_classes():
+    db = defaults.new_database(wl.CAWL)
+    e = db.entry_by_ref("0345")
+    assert e.lists == {wl.EACW: ["C001b"], wl.SWADESH: ["42"]}
+    assert db.gloss(e) == "mother"            # the EACW's gloss until SIL allows the CAWL's own
+    assert db.word_class(e) == "NOUN"
+    assert db.word_class(db.entry_by_ref("0140")) == "VERB"     # eat
+    assert all(not set(x.file_gloss) & set('/\\:*?"<>|') for x in db.entries)
+
+
+def test_format_9_round_trip(tmp_path):
+    db = defaults.new_database(wl.SWADESH)
+    p = tmp_path / "S.xml"
+    db.path = str(p)
+    storage.save(db, p, backup=False)
+    text = p.read_text(encoding="utf-8")
+    assert '<database format="9">' in text and '<wordlist base="SWADESH"' in text
+    assert re.search(r'<entry ref="042"[^>]* eacw="C001b" cawl="0345"', text)
+    assert '<references scheme="sequence" digits="3"' in text
+    back = storage.load(p)
+    assert back.metadata.wordlist_base == wl.SWADESH
+    assert back.entry_by_ref("042").lists == {wl.EACW: ["C001b"], wl.CAWL: ["0345"]}
+    assert not back.upgraded
+
+
+def test_a_format_8_database_opens_without_numbers(tmp_path):
+    p = tmp_path / "Old.xml"
+    shutil.copy2(SAMPLES / "Sample.xml", p)
+    text = re.sub(r'<database format="\d+">', '<database format="8">', p.read_text(encoding="utf-8"))
+    p.write_text(text, encoding="utf-8")
+    db = storage.load(p)
+    assert db.upgraded and not db.metadata.wordlist_base
+    assert not any(e.lists for e in db.entries)
+
+
+# ---- search, export, linking (no Qt) --------------------------------------
+def _eacw_db_with_forms():
+    db = defaults.new_database(wl.EACW)
+    for ref, form in (("C001b", "mar"), ("C001a", "baba"), ("A001", "gum")):
+        db.entry_by_ref(ref).set("Lemma", form)
+    return db
+
+
+def test_search_matches():
+    db = _eacw_db_with_forms()
+    e = db.entry_by_ref("C001b")
+    assert wl.search_match(db, e, "CAWL 345") is True
+    assert wl.search_match(db, e, "swadesh 42") is True
+    assert wl.search_match(db, e, "SWADESH") is True
+    assert wl.search_match(db, e, "eacw c001b") is True
+    assert wl.search_match(db, e, "CAWL 1") is False
+    assert wl.search_match(db, e, "mother") is None
+    assert wl.describe(db, e) == "EACW C001b · CAWL 0345 · Swadesh 42"
+
+
+def test_export_every_item_in_order_with_blanks():
+    db = _eacw_db_with_forms()
+    header, rows = wl.table(db, wl.SWADESH)
+    assert header == ["Swadesh", "Lemma", "Gloss"]
+    assert len(rows) == 207 and [r[0] for r in rows] == [str(n) for n in range(1, 208)]
+    assert rows[41] == ["42", "mar", "mother"]
+    assert rows[0][1] == ""                                  # I: no form yet, a blank row
+    text = wl.tsv(header, rows)
+    assert text.splitlines()[42] == "42\tmar\tmother"
+
+
+def test_gloss_matches_for_lemmas_of_ones_own():
+    """Josh's case: a database started from Swadesh, with lemmas of his own added later."""
+    db = defaults.new_database(wl.SWADESH)
+    e = db.new_entry("208", lemma="kʊɲ", gloss="Mother")       # his own, no numbers
+    db.entries.append(e)
+    db.entry_by_ref("042").set("Lemma", "mar")
+    m = wl.gloss_matches(db, wl.EACW)
+    assert ("C001b", e) not in m                   # 042 carries C001b already
+    db.entry_by_ref("042").lists = {}
+    m = wl.gloss_matches(db, wl.EACW)
+    assert ("C001b", e) in m
+    header, rows = wl.table(db, wl.EACW, [("C001b", e)])
+    row = next(r for r in rows if r[0] == "C001b")
+    assert row[1] == "kʊɲ"
+
+
+def test_link_plan_for_an_existing_eacw_database():
+    db = defaults.new_database("")
+    for ref, gloss in (("C001b", "mother"), ("D099", "not in the list really"), ("Z999", "x")):
+        db.entries.append(db.new_entry(ref, gloss=gloss))
+    plan = dict((e.ref, new) for e, new in wl.link_plan(db, wl.EACW))
+    assert plan["C001b"] == {wl.CAWL: ["0345"], wl.SWADESH: ["42"]}
+    assert "Z999" not in plan
+
+
+# ---- the windows ------------------------------------------------------------
+pytest.importorskip("PySide6")
+from PySide6.QtWidgets import QApplication, QMessageBox  # noqa: E402
+
+
+@pytest.fixture(scope="module")
+def app():
+    return QApplication.instance() or QApplication([])
+
+
+@pytest.fixture
+def win(app, tmp_path, monkeypatch):
+    from lemmatrix.ui import main_window
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Yes)
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: None)
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
+    db = _eacw_db_with_forms()
+    db.path = str(tmp_path / "W.xml")
+    storage.save(db, db.path, backup=False)
+    w = main_window.MainWindow()
+    w.load_database(storage.load(db.path))
+    yield w
+    w.doc.undo.setClean()
+    w.doc._settings_dirty = False
+    w.close()
+
+
+def _search(win, text):
+    win.lemma_search.setText(text)
+    win._search_timers["lemma"].timeout.emit()
+    return win.lemmas.visible_rows()
+
+
+def test_the_lemma_lists_search(win):
+    rows = _search(win, "CAWL 345")
+    assert [e.ref for e in rows] == ["C001b"]
+    assert win.lemmas.current_row() is rows[0]              # selected, so the matrix follows
+    assert len(_search(win, "SWADESH")) == sum(1 for e in win.doc.db.entries if e.lists.get(wl.SWADESH))
+    assert sorted(e.ref for e in _search(win, "SWADESH 42, CAWL 1")) == ["A001", "C001b"]
+    assert _search(win, "CAWL 9999") == []
+    assert [e.ref for e in _search(win, "mother")][0] == "C001b"    # plain searches as before
+    assert len(_search(win, "")) == 2369
+
+
+def test_the_reference_tooltip(win):
+    col = next(c for c in win._lemma_columns() if c.key == "ref")
+    assert col.tooltip(win.doc.db.entry_by_ref("C001b")) == "EACW C001b · CAWL 0345 · Swadesh 42"
+
+
+def test_export_dialog_remembers_ticked_matches(win, monkeypatch):
+    from PySide6.QtGui import QGuiApplication
+    from lemmatrix.ui.wordlist_dialogs import WordlistExportDialog
+    db = win.doc.db
+    own = db.new_entry("C900", lemma="nyaŋ", gloss="crocodile (big)")
+    db.entries.append(own)
+    d = WordlistExportDialog(win)
+    d.which.setCurrentIndex(d.which.findData(wl.SWADESH))
+    d.copy()
+    text = QGuiApplication.clipboard().text()
+    assert text.splitlines()[0] == "Swadesh\tLemma\tGloss" and "42\tmar\tmother" in text
+    # nothing for Swadesh to match here; the CAWL by its EACW glosses
+    d.which.setCurrentIndex(d.which.findData(wl.CAWL))
+    assert d.table.rowCount() == len(d.matches)
+
+
+def test_export_pdf(win, tmp_path):
+    from lemmatrix.ui.wordlist_dialogs import write_pdf
+    header, rows = wl.table(win.doc.db, wl.SWADESH)
+    p = tmp_path / "s.pdf"
+    write_pdf(str(p), win.doc.db, wl.SWADESH, header, rows)
+    assert p.read_bytes()[:4] == b"%PDF" and p.stat().st_size > 2000
+
+
+def test_link_to_wordlists_is_one_undo_step(app, tmp_path, monkeypatch):
+    from PySide6.QtWidgets import QInputDialog
+    from lemmatrix.ui import main_window, wordlist_dialogs
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Yes)
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
+    db = defaults.new_database("")
+    for ref, gloss in (("C001b", "mother"), ("A001", "body")):
+        db.entries.append(db.new_entry(ref, gloss=gloss))
+    db.path = str(tmp_path / "L.xml")
+    storage.save(db, db.path, backup=False)
+    w = main_window.MainWindow()
+    w.load_database(storage.load(db.path))
+    monkeypatch.setattr(QInputDialog, "getItem", lambda *a, **k: (a[3][0], True))
+    wordlist_dialogs.link_to_wordlists(w)
+    d = w.doc.db
+    assert d.metadata.wordlist_base == wl.EACW
+    assert d.entry_by_ref("C001b").lists == {wl.CAWL: ["0345"], wl.SWADESH: ["42"]}
+    w.doc.undo.undo()
+    assert not d.metadata.wordlist_base and not d.entry_by_ref("C001b").lists
+    w.doc.undo.setClean()
+    w.close()
+
+
+def test_start_list_dialog_hovers(app):
+    from lemmatrix.ui.wordlist_dialogs import StartListDialog
+    d = StartListDialog()
+    assert d.choice() == wl.EACW                                 # recommended
+    tips = {b.property("list"): b.toolTip() for b in d.group.buttons()}
+    assert tips[wl.EACW].startswith("Smolders, Joshua. 2026. Extended African Comparative Wordlist.")
+    assert "Snider" in tips[wl.CAWL] and "Swadesh" in tips[wl.SWADESH]

@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (QCheckBox, QCompleter, QDialog, QSplitter, QGroup
                                QVBoxLayout, QWidget, QFileDialog)
 
 from .. import spelling, audio, layout, matrix as mx, pitch as pitchmod, pull, storage
-from ..model import FORBIDDEN_CHARS, UTTERANCES, Token, Utterance, nfc
+from ..model import FORBIDDEN_CHARS, SEQUENCE, UTTERANCES, Token, Utterance, nfc
 from . import theme
 from .filter_dialogs import ConfigureColumnsDialog
 from .icons import icon, ink_icon, themed_icon
@@ -615,7 +615,7 @@ class TextsUtterancesWindow(QDialog):
             QMessageBox.information(self, title, "There are no utterance categories. Add one in Edit → "
                                     "Lists → Reference categories.")
             return ""
-        labels = [f"{c.letter}  {c.name}" for c in cats]
+        labels = [c.label for c in cats]
         start = next((i for i, c in enumerate(cats) if c.letter == current), 0)
         text, ok = QInputDialog.getItem(self, title, "Category:", labels, start, False)
         if not ok:
@@ -661,7 +661,8 @@ class TextsUtterancesWindow(QDialog):
             QMessageBox.warning(self, "Import", f"Couldn't make {folder}: {exc}")
             return []
         digits = self.db.settings.ref_digits
-        number = int(self.db.suggest_utterance_reference(letter)[len(letter):])
+        prefix = self.db.settings.ref_prefix(letter)
+        number = int(self.db.suggest_utterance_reference(letter)[len(prefix):])
         speaker, date = self.main.session_speaker(), self.main.session_date()
         items, renames, problems = [], [], []
         for w in wavs:
@@ -675,7 +676,7 @@ class TextsUtterancesWindow(QDialog):
                     items.append(t[0])
                     renames += t[1]
                 continue
-            ref = f"{letter}{number:0{digits}d}"
+            ref = f"{prefix}{number:0{digits}d}"
             u = self.db.new_utterance(ref, clean_label(w.stem), speaker, date)
             if choice[0] in ("one", "join"):
                 picked = [lines[choice[1]]] if choice[0] == "one" else lines
@@ -951,7 +952,8 @@ class TextsUtterancesWindow(QDialog):
                  ("Edit", "edit", self.edit, row is not None),
                  ("Play", "play", self.play, row is not None and bool(row.token.file)),
                  ("Play pitch", "play-pitch", self.play_pitch, bool(self._pitch(row))),
-                 ("Move to another category…", None, self.move_category, row is not None),
+                 ("Move to another category…", None, self.move_category,
+                  row is not None and self.db.settings.ref_scheme != SEQUENCE),
                  ("Delete", "delete", self.delete, row is not None)]
         if row is not None and row.source is not None:
             c = self.checks.get(row.id)

@@ -111,6 +111,22 @@ class BulkCommand(QUndoCommand):
         self.doc.changed.emit()
 
 
+class WordlistBaseCommand(QUndoCommand):
+    """The list a database's references are numbers of (Tools → Link to wordlists…, idea 40)."""
+
+    def __init__(self, doc: "Document", before: str, after: str):
+        super().__init__("Wordlist base")
+        self.doc, self.before, self.after = doc, before, after
+
+    def redo(self):
+        self.doc.db.metadata.wordlist_base = self.after
+        self.doc.changed.emit()
+
+    def undo(self):
+        self.doc.db.metadata.wordlist_base = self.before
+        self.doc.changed.emit()
+
+
 class AddManyCommand(QUndoCommand):
     """Several entries or utterances added at once (an import): one undo step.
 
@@ -374,6 +390,15 @@ class Document(QObject):
         return []
 
     # ---- recordings renamed since the last save ------------------------
+    def set_wordlist_base(self, base: str, pairs):
+        """Link to wordlists: the base list and the lemmas' other numbers, as one undo step."""
+        self.undo.beginMacro("Link to wordlists")
+        if self.db.metadata.wordlist_base != base:
+            self.undo.push(WordlistBaseCommand(self, self.db.metadata.wordlist_base, base))
+        self.apply_changes("Wordlist numbers", pairs, stamp=False)
+        self.undo.endMacro()
+        self.changed.emit()
+
     def _note_rename(self, old: Path, new: Path):
         original = self.renamed.pop(old, old)
         if original != new:

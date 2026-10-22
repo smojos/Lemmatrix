@@ -721,11 +721,19 @@ class ListsDialog(QDialog):
                    "sessions keep a place's code (or its name, if it has no code).", self._reset_locations)
 
         self.categories = CategoryEditor(db)
+        numbered = ""
+        if db.settings.ref_scheme == "sequence":          # built on the CAWL or Swadesh (idea 40)
+            from .. import wordlists
+            base = wordlists.base_of(db)
+            numbered = (f"This database is built on the {wordlists.NAMES.get(base, 'a wordlist')}: its "
+                        "references are the list's numbers, and new lemmas, utterances and texts take "
+                        "the next number, so it uses no categories.\n\n")
+            self.categories.setEnabled(False)
         self._page(REFS, "Reference categories", self.categories,
-                   "The letters references start with, and what each is for: lemmas, or utterances "
-                   "(one-off sentences and phrases, View → Texts and utterances). A letter in use stays "
-                   "as it is, since references are part of file names; its name can be changed.\n\n"
-                   + defaults.DIXON_NOTE, self._reset_categories)
+                   numbered + "The letters references start with, and what each is for: lemmas, or "
+                   "utterances (one-off sentences and phrases, View → Texts and utterances). A letter in "
+                   "use stays as it is, since references are part of file names; its name can be "
+                   "changed.\n\n" + defaults.DIXON_NOTE, self._reset_categories)
 
         self._heading("Field lists")
         self.field_lists = []
@@ -850,6 +858,8 @@ class ListsDialog(QDialog):
         return kept
 
     def _reset_categories(self):
+        if self.db.settings.ref_scheme == "sequence":      # numbered on: no categories to reset
+            return []
         cats, kept = resets.merge_categories(defaults.default_settings().ref_categories,
                                              self.categories.categories(), self.categories.used)
         self.categories.load(cats)

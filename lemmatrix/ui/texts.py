@@ -77,7 +77,7 @@ class TextDialog(QDialog):
         from .dialogs import NoForbidden
         self.category = QComboBox()
         for c in s.categories(TEXTS):
-            self.category.addItem(f"{c.letter}  {c.name}", c.letter)
+            self.category.addItem(c.label, c.letter)
         self.ref = NoForbidden(text.ref if text else "")
         if text:
             self.category.setEnabled(False)
@@ -1410,7 +1410,8 @@ class TextsPanel(QObject):
         folder.mkdir(parents=True, exist_ok=True)
         from .utterances import clean_label
         digits = s.ref_digits
-        number = int(db.suggest_utterance_reference(letter)[len(letter):])
+        prefix = s.ref_prefix(letter)            # "" in a database numbered on (no categories)
+        number = int(db.suggest_utterance_reference(letter)[len(prefix):])
         pad = max(0, s.clip_padding) / 1000.0
         try:
             length = audio.duration(wav)
@@ -1421,7 +1422,7 @@ class TextsPanel(QObject):
         items, renames, problems = [], [], []
         trans = s.token_field("translation")
         for ln in lines:
-            ref = f"{letter}{number:0{digits}d}"
+            ref = f"{prefix}{number:0{digits}d}"
             words = (ln.values.get(f"{trans.name}:{s.primary_gloss}", "") if trans else "") or \
                 next(iter(ln.values.values()), "")
             label = clean_label(" ".join(words.split()[:6]))

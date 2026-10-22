@@ -125,6 +125,15 @@ If something goes wrong, a message box shows the details, and they're also writt
   `Soundfiles/Texts`. The lines are read from the TextGrid with a tier mapping (Edit → Lists →
   Tier mapping; tx, ge, ft by default); a line can be played, played in context, opened in Praat
   with its TextGrid, or clipped as an utterance (its stretch of the recording and its text).
+- **Comparative wordlists:** **New database** starts empty or from one of three lists: the
+  **Extended African Comparative Wordlist** (EACW, 2,369 lemmas, recommended), the **SIL
+  Comparative African Wordlist** (CAWL, 1,700) or the **Swadesh list** (207). The list a database
+  starts from gives its references; every lemma also carries the other two lists' numbers,
+  hidden (they're in the database file and the Reference column's hover). Type `CAWL 345`,
+  `SWADESH 42` or just `SWADESH` in the lemma list's search to find them, and **File → Export →
+  Wordlist…** gives any of the three as a plain list (number, lemma, gloss) to the clipboard or a
+  PDF, every item in the list's order, matching lemmas of your own by their gloss. **Tools → Link
+  to wordlists…** links an existing database whose references are EACW numbers.
 - **Lemma list:** a filter menu on every column (Show all, Blanks, Non-blanks, Filter for… on
   open fields, Choose… on closed fields), Configure columns, quick search, add / edit /
   delete lemmas, references suggested from the category.
@@ -223,6 +232,7 @@ lemmatrix/            the program
   pitch.py            pitch notation
   audio.py            recording, playback and WAV metadata
   defaults.py         default fields, tags, lists, people, places and reference categories
+  wordlists/          the comparative wordlists (EACW, CAWL, Swadesh) and their mapping
   resets.py           Reset to defaults in Edit → Lists (keeps what is in use)
   tagdefs.py          descriptions of the default tags, with their sources
   ui/                 windows and dialogues (Qt for Python)
@@ -295,4 +305,15 @@ See also [CITATION.cff](CITATION.cff) (GitHub's "Cite this repository" button us
 
 - Dixon, R. M. W. 2010. *Basic Linguistic Theory*, Vol. 1: *Methodology*. Oxford: Oxford
   University Press. The default reference categories (A Human body … V Verbs) are inspired by
-  p. 296.
+  p. 296. They are the categories of the Extended African Comparative Wordlist.
+- Smolders, Joshua. 2026. *Extended African Comparative Wordlist.* The wordlist Lemmatrix's
+  reference categories come from, inspired by Dixon (2010), Snider & Roberts (2006) and Swadesh
+  (1952, 1955).
+- Snider, Keith & James Roberts. 2006. *SIL Comparative African Wordlist (SILCAWL).* SIL
+  Electronic Working Papers 2006-005. Dallas: SIL International. (First published in *Journal of
+  West African Languages* 31(2): 73–122.)
+- Swadesh, Morris. 1952. Lexico-statistic dating of prehistoric ethnic contacts. *Proceedings of
+  the American Philosophical Society* 96(4): 452–463.
+- Swadesh, Morris. 1955. Towards greater accuracy in lexicostatistic dating. *International
+  Journal of American Linguistics* 21(2): 121–137. Lemmatrix's Swadesh list is the 207-item list
+  combining his 100- and 200-word lists.

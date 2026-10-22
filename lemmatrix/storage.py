@@ -21,13 +21,15 @@ from .model import (LEMMAS, TEXTS, UTTERANCES, ClipSource, Database, Entry, Fiel
                     Location, Metadata, Person, RefCategory, Settings, Tag, TagStructure, Text, TierMapping,
                     TierRule, Token, Utterance, is_utterance, new_id, nfc, write_atomically, xml_safe)
 
-FORMAT_VERSION = "8"
+FORMAT_VERSION = "9"
+WORDLIST_ATTRS = {"EACW": "eacw", "CAWL": "cawl", "SWADESH": "swadesh"}   # format 9 (idea 40)
 # Until version 1.0 only the current format is read (Josh, 18 October 2026: his database is the
 # only one, so there is no compatibility code for older formats). When the format changes, a
 # provisional upgrade from the format before is written for his database and taken out again
 # once it has been saved in the new one.
-READABLE = ("5", "6", "7", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
-# 7: before researchers had the Identifiable? tick and both ticks were always written (upgrades below)
+READABLE = ("5", "6", "7", "8", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
+# 7: before researchers had the Identifiable? tick and both ticks were always written; 8: before the
+# comparative wordlists (format 9, 22 October: no base and no numbers yet, so nothing to change)
 BACKUPS_KEPT = 10
 
 
@@ -223,6 +225,8 @@ def _load_metadata(m) -> Metadata:
     md.participants = [_load_person(p) for p in m.findall("participant")]
     md.locations = [_load_location(x) for x in m.findall("location")]
     md.description = _text(m.find("description"))
+    if (x := m.find("wordlist")) is not None:     # format 9: the list the references are numbers of
+        md.wordlist_base = (x.get("base") or "").upper()
     return md
 
 
@@ -272,6 +276,9 @@ def load(path: str | os.PathLike) -> Database:
                   id=el.get("id", ""), from_lemmas=(el.get("from-lemmas") or "").split(),
                   from_languages=[nfc(x.strip()) for x in (el.get("from-languages") or "").split(";")
                                   if x.strip()])
+        for lid, attr in WORDLIST_ATTRS.items():     # format 9: the other wordlists' numbers
+            if el.get(attr):
+                e.lists[lid] = el.get(attr).split()
         _load_values(el, e, entry_multi)
         for tel in el.findall("token"):
             e.tokens.append(load_token(tel))
@@ -321,6 +328,7 @@ def load(path: str | os.PathLike) -> Database:
     if version in ("5", "6"):            # format 7 (21 October): the working state moves to the workspace
         db.workspace_from_file = True
     if version != FORMAT_VERSION:        # format 8 (22 October): researchers ticked Identifiable?, read
+                                         # above; format 9: wordlist numbers, none in an older file;
         db.upgraded = True               # above; quietly, so saving writes the new format
     if repaired:
         db.load_notes = list(db.load_notes) + [REPAIRED_NOTE]
@@ -467,6 +475,8 @@ def to_element(db: Database) -> ET.Element:
         location(m, loc)
     if md.description:
         ET.SubElement(m, "description").text = md.description
+    if md.wordlist_base:                          # format 9 (idea 40): EACW, CAWL or SWADESH
+        ET.SubElement(m, "wordlist", base=md.wordlist_base)
 
     s = db.settings
     st = ET.SubElement(root, "settings")
@@ -524,6 +534,9 @@ def to_element(db: Database) -> ET.Element:
             attrs["from-lemmas"] = " ".join(e.from_lemmas)
         if e.from_languages:
             attrs["from-languages"] = "; ".join(e.from_languages)
+        for lid, attr in WORDLIST_ATTRS.items():   # format 9 (idea 40): hidden, readable here
+            if e.lists.get(lid):
+                attrs[attr] = " ".join(e.lists[lid])
         el = ET.SubElement(root, "entry", attrs)
         _save_values(el, e, s.entry_fields, langs)
         for t in e.tokens:

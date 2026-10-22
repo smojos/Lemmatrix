@@ -31,5 +31,17 @@ from Arial letterforms, stored as outlines in a picture; no font is included.
 own, under the same licence as Lemmatrix; the pictures are placeholders drawn by
 `samples/make_elicit_test.py`.
 
+**The comparative wordlists** (`lemmatrix/wordlists/`; IDEAS.md idea 40) are data, not code, and
+not under the GPL:
+
+| List | Source | Terms |
+|---|---|---|
+| Extended African Comparative Wordlist (`eacw.tsv`) | Smolders, Joshua. 2026. *Extended African Comparative Wordlist.* (DOI to come) | © 2026 Joshua A. G. Smolders; its licence is set with its publication |
+| SIL Comparative African Wordlist (`cawl.tsv`) | Snider, Keith & James Roberts. 2006. SIL Electronic Working Papers 2006-005. | Only the item numbers, section numbers and the mapping are included; its glosses are to be added once SIL International grants permission |
+| Swadesh list, 207 items (`swadesh.tsv`) | Swadesh, Morris. 1952; 1955 (see the README's References) | the list of English glosses as commonly used |
+
+The mapping between the three lists (the `eacw` and `cawl` columns) was drafted for Lemmatrix in
+October 2026, from the lists' glosses, for Joshua A. G. Smolders to check.
+
 **Other programs.** Lemmatrix can open recordings in [Praat](https://www.praat.org) (by Paul
 Boersma and David Weenink), if it is installed; Praat isn't part of Lemmatrix.

@@ -105,7 +105,10 @@ INFLECTION_CLASSES = [("Nominal", ["I", "II"]), ("Verbal", ["I", "II"])]
 
 # Reference categories (lemmas): inspired by Dixon (2010: 296).
 DIXON_NOTE = ("The default categories are inspired by Dixon, R. M. W. 2010. Basic Linguistic Theory, "
-              "Vol. 1: Methodology, p. 296. Oxford: Oxford University Press.")
+              "Vol. 1: Methodology, p. 296. Oxford: Oxford University Press. They are the categories of "
+              "the Extended African Comparative Wordlist (Smolders 2026), which also draws on the SIL "
+              "Comparative African Wordlist (Snider, Keith & James Roberts. 2006. SIL Electronic Working "
+              "Papers 2006-005) and Swadesh's lists (Swadesh, Morris. 1952, 1955).")
 
 # People and places in a new database: placeholders, to be edited.
 RESEARCHERS = [("RS1", "Researcher 1"), ("RS2", "Researcher 2")]
@@ -229,5 +232,35 @@ def default_metadata() -> Metadata:
                     locations=default_locations())
 
 
-def new_database() -> Database:
-    return Database(metadata=default_metadata(), settings=default_settings())
+def new_database(base: str = "") -> Database:
+    """A new database, empty or built on a comparative wordlist (IDEAS.md idea 40, Josh, 22 October):
+    "EACW" (references C001b…, Lemmatrix's reference categories), "CAWL" or "SWADESH" (the list's
+    own numbers as references, 0345 or 042, with no categories: utterances and texts take the next
+    number). Every lemma gets the list's gloss and a word class, and the other lists' numbers."""
+    db = Database(metadata=default_metadata(), settings=default_settings())
+    if base:
+        fill_from_wordlist(db, base)
+    return db
+
+
+def fill_from_wordlist(db: Database, base: str):
+    from . import wordlists as wl
+    from .model import FORBIDDEN_CHARS, SEQUENCE
+    base = wl.list_id(base)
+    if not base:
+        return
+    db.metadata.wordlist_base = base
+    s = db.settings
+    if base != wl.EACW:                  # Josh: "the classificatory reference system is removed"
+        s.ref_scheme = SEQUENCE
+        s.ref_digits = wl.DIGITS[base]
+        s.ref_categories = []
+    classes = set(s.word_classes())
+    for item in wl.get(base).items:
+        gloss = wl.item_gloss(base, item)
+        wc = wl.word_class_for(base, item)
+        e = db.new_entry(wl.display(base, item.number), gloss=gloss,
+                         word_class=wc if wc in classes else "")
+        e.file_gloss = "".join(ch for ch in e.file_gloss if ch not in FORBIDDEN_CHARS).strip()
+        e.lists = wl.other_numbers(base, item.number)
+        db.entries.append(e)

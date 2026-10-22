@@ -382,12 +382,22 @@ class FieldDef:
 LEMMAS, UTTERANCES, TEXTS = "lemmas", "utterances", "texts"      # what a reference category is for
 
 
+SEQUENCE = "sequence"     # the reference scheme with no categories: references are numbers
+SEQ = "#"                 # the one category the sequence scheme offers (never written into a reference)
+SEQUENCE_NAMES = {"lemmas": "Next number", "utterances": "Next number", "texts": "Next number"}
+
+
 @dataclass
 class RefCategory:
     letter: str
     name: str
     numbering: str = "auto"      # auto or manual
     kind: str = LEMMAS           # lemmas, utterances (U, W, X, Y, Z by default) or texts (T, S)
+
+    @property
+    def label(self) -> str:
+        """How the category is offered in a list: "D  Mammals", or just "Next number"."""
+        return self.name if self.letter == SEQ else f"{self.letter}  {self.name}"
 
 
 @dataclass
@@ -474,10 +484,20 @@ class Settings:
         return None
 
     def categories(self, kind: str = LEMMAS) -> list[RefCategory]:
+        if self.ref_scheme == SEQUENCE:
+            # a database built on the CAWL or Swadesh (idea 40, Josh, 22 October): no categories;
+            # lemmas, utterances and texts all take the next number
+            return [RefCategory(SEQ, SEQUENCE_NAMES.get(kind, "Next number"), kind=kind)]
         return [c for c in self.ref_categories if c.kind == kind]
+
+    def ref_prefix(self, letter: str) -> str:
+        """The letters a category's references start with ("" for the next-number scheme)."""
+        return "" if letter == SEQ else letter
 
     def category(self, ref: str) -> RefCategory | None:
         """The category a reference belongs to, by its letters (W001 -> W)."""
+        if self.ref_scheme == SEQUENCE:
+            return None
         m = re.match(r"[A-Za-z]+", ref or "")
         if not m:
             return None
@@ -568,6 +588,7 @@ class Metadata:
     participants: list[Person] = field(default_factory=list)
     locations: list[Location] = field(default_factory=list)
     description: str = ""
+    wordlist_base: str = ""       # EACW, CAWL or SWADESH: the list the references are numbers of (format 9)
 
     def researcher(self, code: str) -> Person | None:
         return next((p for p in self.researchers if p.code == code), None)
@@ -650,6 +671,9 @@ class Entry:
     # (by id) and languages it was borrowed from (ISO 639-3 codes, or a name as typed)
     from_lemmas: list[str] = field(default_factory=list)
     from_languages: list[str] = field(default_factory=list)
+    # Comparative wordlists (idea 40, Josh, 22 October; format 9): the numbers of the lists other than
+    # the database's base, e.g. {"CAWL": ["0345"], "SWADESH": ["42"]}; hidden in the views
+    lists: dict[str, list[str]] = field(default_factory=dict)
 
     def get(self, name: str, lang: str | None = None) -> str:
         if name in self.multi:
@@ -860,6 +884,8 @@ class Database:
     def suggest_utterance_reference(self, letter: str) -> str:
         """Next free reference in an utterance or text category: W001, W002… and on past W999 to W1000."""
         digits = self.settings.ref_digits
+        if letter == SEQ:
+            return self._next_number()
         highest = 0
         for u in [*self.items(), *self.texts]:
             r = u.ref
@@ -910,12 +936,21 @@ class Database:
     def suggest_reference(self, letter: str) -> str:
         """Next free automatic reference in a category, e.g. D010. Never reuses gaps."""
         digits = self.settings.ref_digits
+        if letter == SEQ:
+            return self._next_number()
         highest = 0
         for e in self.entries:
             r = e.ref
             if r.startswith(letter) and r[len(letter):].isdigit() and len(r) - len(letter) == digits:
                 highest = max(highest, int(r[len(letter):]))
         return f"{letter}{highest + 1:0{digits}d}"
+
+    def _next_number(self) -> str:
+        """The next-number scheme (a database built on the CAWL or Swadesh): one sequence for
+        lemmas, utterances and texts, after the highest reference that is a number (1701 after the
+        CAWL's 1700)."""
+        highest = max((int(x.ref) for x in [*self.items(), *self.texts] if x.ref.isdigit()), default=0)
+        return f"{highest + 1:0{self.settings.ref_digits}d}"
 
     # ---- creating things ---------------------------------------------
     def new_entry(self, ref: str, lemma: str = "", gloss: str = "", word_class: str = "",

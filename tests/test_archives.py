@@ -79,7 +79,7 @@ def test_format_8_ticks_researchers_and_writes_both_ticks(tmp_path):
     assert not any(x.identifiable or x.audio_sharing for x in db.metadata.participants)
     storage.save(db, p, backup=False)
     saved = p.read_text(encoding="utf-8")
-    assert '<database format="8">' in saved
+    assert f'<database format="{storage.FORMAT_VERSION}">' in saved
     assert '<researcher code="RS1" name="Researcher 1" identifiable="yes" />' in saved
     assert '<participant code="SP1" name="Speaker 1" identifiable="no" audio-sharing="no" />' in saved
     again = storage.load(p)

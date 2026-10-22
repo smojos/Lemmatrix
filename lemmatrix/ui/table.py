@@ -23,7 +23,7 @@ from .. import filters as fl
 from ..model import ListItem
 from . import spellui, theme
 from .filter_dialogs import ChooseDialog, FilterForDialog
-from .searchmark import SearchDelegate, found, keep_colour, paint_cell
+from .searchmark import SearchDelegate, found, keep_colour, paint_cell, terms
 from .spellui import SpellDelegate
 from .widgets import FilterHeader, chips_width, draw_pitch, ipa_font, paint_chips, underscore_unit
 
@@ -140,6 +140,9 @@ class RowFilter(QSortFilterProxyModel):
         self.filters: dict[str, object] = {}       # column key -> filter
         self.pinned: str | None = None             # Ctrl+click: the id of the only row shown
         self.search = ""
+        # (row, search item) -> True/False when the item is a search of its own (the lemma list's
+        # `CAWL 345`, idea 40), or None to search the columns' text as usual
+        self.term_match: Callable | None = None
         self.setSortCaseSensitivity(Qt.CaseInsensitive)
         self.setSortRole(Qt.DisplayRole)
 
@@ -178,13 +181,25 @@ class RowFilter(QSortFilterProxyModel):
             elif not fl.matches(flt, col.get(row), col.unmarked):
                 return False
         if self.search:
+            items = terms(self.search)
+            if self.term_match is not None:
+                plain = []
+                for t in items:
+                    hit = self.term_match(row, t)
+                    if hit is None:
+                        plain.append(t)
+                    elif hit:
+                        return True
+                items = plain
             for col in m.columns:
+                if not items:
+                    break
                 if col.kind == "drawing":
                     continue
-                if found(fl.fold_diacritics(_text(col.get(row))).casefold(), self.search):
-                    break
-            else:
-                return False
+                hay = fl.fold_diacritics(_text(col.get(row))).casefold()
+                if any(t in hay for t in items):
+                    return True
+            return False
         return True
 
 

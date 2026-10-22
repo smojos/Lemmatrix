@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<database format="8">
+<database format="9">
   <metadata>
     <language code="TST">Testish</language>
     <variety code="CEN">Central</variety>
@@ -33,6 +33,15 @@
         <item name="QUANT" />
         <item name="ADJECTIVE" />
         <item name="ADVERB" />
+      </field>
+      <field name="Origin" role="origin" closed="yes">
+        <item name="root" />
+        <item name="complex">
+          <item name="compound" />
+          <item name="derived" />
+          <item name="reduplicated" />
+        </item>
+        <item name="loan" />
       </field>
       <field name="ToneClass" label="Tone Class" closed="yes">
         <item name="H" />
