@@ -321,13 +321,15 @@ class TokenDialog(QDialog):
         rl.addLayout(buttons, 3, 0, 2, 2)
         rec.setContextMenuPolicy(Qt.CustomContextMenu)
         rec.customContextMenuRequested.connect(lambda pos, rec=rec: self._recording_menu(rec.mapToGlobal(pos)))
-        self.meter = QProgressBar()
-        self.meter.setRange(0, 100)
-        self.meter.setTextVisible(False)
-        self.meter.setMaximumHeight(10)
-        self.meter.setToolTip("Recording level")
+        from .levelmeter import LevelMeter           # in dB, with zones and a peak (Josh, 22 October)
+        self.meter = LevelMeter()
         self.meter.setFixedWidth(220)
         rl.addWidget(self.meter, 5, 0, 1, 2)
+        self.level_note = QLabel()                    # after recording: clipped or very quiet
+        self.level_note.setWordWrap(True)
+        self.level_note.setStyleSheet(f"color: {theme.colour('error').name()};")
+        self.level_note.hide()
+        rl.addWidget(self.level_note, 6, 0, 1, 5)
         rl.setColumnStretch(2, 1)
         outer.addWidget(rec)
 
@@ -372,6 +374,8 @@ class TokenDialog(QDialog):
         sl = self.slot
         e = sl.entry
         s = self.db.settings
+        self.level_note.hide()                    # the level check belongs to the last recording
+        self.meter.reset()
         if sl.index is not None and sl.index < len(e.tokens):
             self.original = e.tokens[sl.index]
             self.token = self.original.copy()
@@ -1009,6 +1013,8 @@ class TokenDialog(QDialog):
             QMessageBox.warning(self, "Record", str(exc))
             return
         self.main.player.stop()
+        self.meter.reset()
+        self.level_note.hide()
         self.record_btn.setIcon(icon("stop", 40))
         self.record_btn.setToolTip("Stop recording (Ctrl+R)")
         self.timer.start()
@@ -1016,13 +1022,17 @@ class TokenDialog(QDialog):
     def _stop_recording(self):
         rec, self.recorder = self.recorder, None
         self.timer.stop()
-        self.meter.setValue(0)
+        self.meter.set_level(0.0)
         self.record_btn.setIcon(icon("record", 40))
         self.record_btn.setToolTip("Record (Ctrl+R)")
         samples = rec.stop()
         if len(samples) == 0:
             QMessageBox.warning(self, "Record", "Nothing was recorded. Check the microphone.")
             return
+        from . import levelmeter                     # clipped or very quiet: said, never changed
+        verdict, db = levelmeter.check(samples)
+        self.level_note.setText(levelmeter.message(verdict, db))
+        self.level_note.setVisible(bool(verdict))
         self._collect()
         t = self.token
         # Whoever is the session's speaker now (perhaps no one) is the token's speaker;
@@ -1151,9 +1161,7 @@ class TokenDialog(QDialog):
 
     def _update_meter(self):
         if self.recorder:
-            self.meter.setValue(int(min(1.0, self.recorder.level) * 100))
-            clip = self.recorder.level >= 0.99
-            self.meter.setStyleSheet("QProgressBar::chunk { background: %s; }" % (theme.colour("error").name() if clip else theme.colour("sound_ok").name()))
+            self.meter.set_level(self.recorder.level)
 
     def _play(self):
         if self.recorder:

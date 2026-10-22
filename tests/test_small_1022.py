@@ -127,3 +127,30 @@ def test_pinned_questions_and_todos(win, tmp_path):
     dlg.tree.setCurrentItem(dlg.tree.topLevelItem(0))
     dlg.toggle()                                                  # resolving unpins
     assert old.questions[0].resolved and not old.questions[0].pinned
+
+
+def test_level_check_never_changes_the_recording():
+    import numpy as np
+    from lemmatrix.ui import levelmeter as lm
+    loud = np.concatenate([np.zeros(100), np.ones(10), np.zeros(100)])
+    quiet = np.full(1000, 0.01)
+    fine = np.sin(np.linspace(0, 100, 4000)) * 0.5
+    assert lm.check(loud)[0] == "clipped"
+    assert lm.check(quiet)[0] == "quiet" and lm.check(quiet)[1] < lm.QUIET_DB
+    assert lm.check(fine)[0] == ""
+    before = fine.copy()
+    lm.check(fine)
+    assert np.array_equal(fine, before)
+    assert "Clipped" in lm.message("clipped", 0) and "quiet" in lm.message("quiet", -40)
+
+
+def test_level_meter_widget(app):
+    from lemmatrix.ui.levelmeter import LevelMeter
+    m = LevelMeter()
+    m.set_level(0.5)
+    assert not m.clipped and -7 < m.peak_db < -5
+    m.set_level(1.0)
+    assert m.clipped
+    m.grab()
+    m.reset()
+    assert not m.clipped
