@@ -259,7 +259,7 @@ def test_save_png_and_jpeg_into_the_whiteboard_folder(win):
     assert j.suffix == ".jpg" and j != p and not QImage(str(j)).isNull()
     w.set_blackboard(True)
     b = w.save("png")
-    assert _pixel(QImage(str(b)), 400, 600) == QColor(wb.BOARD[True])    # saved as it looks
+    assert _pixel(QImage(str(b)), 600, 400) == QColor(wb.BOARD[True])    # saved as it looks
     assert "Whiteboard" in [x[0] for x in win.FOLDERS if x] and layout.WHITEBOARD in win.MADE_ON_DEMAND
 
 

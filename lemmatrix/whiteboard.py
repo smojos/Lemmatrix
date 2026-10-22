@@ -9,7 +9,7 @@ Literally a cheap drawing tool, a bit of an Easter egg (Tools → Whiteboard, no
 - A **stroke** remembers which marker drew it, not a colour, so Blackboard redraws everything
   already there in the blackboard's colours (black → white, blue → cyan, red → pink,
   green → yellow). The eraser's strokes rub out where they pass.
-- The board is a **fixed sheet**, portrait A5 in shape (SHEET_W × SHEET_H on screen); saving and
+- The board is a **fixed sheet**, landscape A5 in shape (as Josh's mockup) (SHEET_W × SHEET_H on screen); saving and
   copying draw it at SAVE_SCALE, about 190 dpi on A5.
 - It is **kept until wiped**, like a real board: the strokes are in the database's workspace
   (`whiteboard`), so closing the window or Lemmatrix keeps the drawing.
@@ -25,8 +25,8 @@ import math
 from pathlib import Path
 
 FOLDER = "Whiteboard"                       # in the main folder (layout.py)
-SHEET_W, SHEET_H = 560, 792                 # the sheet on screen: portrait A5 (1 : √2)
-SAVE_SCALE = 2                              # saved and copied at 1120 × 1584 (about 190 dpi on A5)
+SHEET_W, SHEET_H = 792, 560                 # the sheet on screen: landscape A5 (√2 : 1), as Josh's mockup
+SAVE_SCALE = 2                              # saved and copied at 1584 × 1120 (about 190 dpi on A5)
 
 MARKERS = ("black", "red", "blue", "green")
 ERASER = "eraser"
