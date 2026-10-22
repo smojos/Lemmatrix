@@ -250,7 +250,7 @@ class MainWindow(QMainWindow):
         cv = QLineEdit()
         cv.setPlaceholderText("CV shape filter, e.g. (C)V(V)C(.CVC) — Stage 2")
         cv.setEnabled(False)
-        cv.setToolTip("Matches the Lemma field. Needs the analysis engine (Stage 2).")
+        cv.setToolTip("Matches the Lemma field. Arrives in version 2 (Analyze).")
         bl.addWidget(cv)
         bl.addStretch(1)
         self.tick_button = tool("I found a tick!", "tick", lambda: self.send_report("bug"),
@@ -1059,11 +1059,11 @@ class MainWindow(QMainWindow):
         f = mb.addMenu("&File")
         self._act(f, "&New database…", self.new_file, QKeySequence.New)
         self._act(f, "&Open…", self.open_file, QKeySequence.Open)
-        self._act(f, "Open a copy of the sample database", self.open_sample)
-        self._act(f, "Open a copy of the ɛλicit test database", self.open_elicit_test)
         f.addSeparator()
         self._act(f, "&Save", self.save, QKeySequence.Save)
         self._act(f, "&Rename database…", self.rename_database)
+        self.folder_menu = f.addMenu("Open &folder")        # the main folder and every subfolder (22 October)
+        self.folder_menu.aboutToShow.connect(self._fill_folder_menu)
         f.addSeparator()
         self._act(f, "&Full backup…", self.full_backup)
         ex = f.addMenu("&Export")
@@ -1094,6 +1094,8 @@ class MainWindow(QMainWindow):
         self._act(e, "&Tag structure…", lambda: self.edit_lists("tags"))
         e.addSeparator()
         self._act(e, "&Bulk edit…", self.open_bulk_edit, "Ctrl+Shift+B")   # Ctrl+E is edit mode (21 October)
+        e.addSeparator()
+        self._act(e, "&Write to notebook", self.write_notebook)   # the session panel's pencil (22 October)
         t = mb.addMenu("&Tools")
         self._act(t, "Update all soundfile names", self.update_all_names)
         self._act(t, "Check for duplicate file names", self.check_duplicates)
@@ -1103,27 +1105,29 @@ class MainWindow(QMainWindow):
         t.addSeparator()
         self._act(t, "Check &spelling…", self.check_spelling, "F7")
         t.addSeparator()
-        self._act(t, "Open the sound folder", self.open_sound_folder)
+        t.addMenu(self.elicit_menu)                    # the ɛλicit button's own menu (22 October)
+        self.elicit_menu.setTitle("ɛλicit")
         v = mb.addMenu("&View")
         self._act(v, "&Notebook", self.open_notebook, "Ctrl+B")
-        self._act(v, "&Questions", self.open_questions)
+        self._act(v, "&Questions", self.open_questions, "Ctrl+Shift+Q")
         self._act(v, "To &Do", self.open_todos, "Ctrl+Shift+T")
         self._act(v, "&Texts and utterances", lambda *_: self.open_utterances(), "Ctrl+U")
         self._act(v, "&XML viewer", lambda *_: self.open_xml_viewer())
         self._act(v, "&Cogitate (hypotheses)", lambda *_: self.open_cogitate())
         v.addSeparator()
+        self._build_matrix_menu(v.addMenu("&Matrix"))
         self._act(v, "Hide or show the option panels", self.toggle_panels)
-        self._act(v, "Swap rows and columns", lambda: self.switch_axes(self.tabs.currentIndex()), "Ctrl+T")
-        v.addSeparator()
         # the same keys as in the token dialogue
         self.play_action = self._act(None, "Play the selected token", self.play_selected, "Ctrl+Space")
         self.play_pitch_action = self._act(None, "Play the selected token's pitch", self.play_selected_pitch,
                                            "Ctrl+Shift+Space")
         self._act(None, "Open the selected token in Praat", self.open_selected_in_praat, "Ctrl+Alt+Space")
         self._act(None, "Record the selected token", self.record_selected, "Ctrl+R")
-        self._act(None, "Edit mode in the matrices", self.toggle_matrix_edit, "Ctrl+E")
         a = mb.addMenu("&Analyze")
-        x = a.addAction("Analysis tools arrive with the analysis engine (Stage 2)")
+        x = a.addAction("Analysis tools arrive in version 2 (Analyze)")
+        x.setEnabled(False)
+        c = mb.addMenu("&Compose")
+        x = c.addAction("Writing-up tools arrive in version 3 (Compose): LaTeX and Word export, papers")
         x.setEnabled(False)
         h = mb.addMenu("&Help")
         self.tick_action = self._act(h, "I found a tick!", lambda: self.send_report("bug"))
@@ -1131,7 +1135,152 @@ class MainWindow(QMainWindow):
         self.tick_action.setToolTip("Report a bug: an email to " + report.SUPPORT_EMAIL)
         self._act(h, "Request a feature", lambda: self.send_report("feature"))
         h.addSeparator()
+        self._act(h, "&Keyboard shortcuts…", self.show_shortcuts)
+        sm = h.addMenu("&Sample databases")                 # moved from File (22 October); a walkthrough later
+        self._act(sm, "Open a copy of the sample database", self.open_sample)
+        self._act(sm, "Open a copy of the ɛλicit test database", self.open_elicit_test)
+        h.addSeparator()
         self._act(h, "About Lemmatrix", self.about)
+
+    # ---- View → Matrix and File → Open folder (22 October) ---------------------------------
+    def _build_matrix_menu(self, m):
+        """The matrix options' buttons as menu items, for the tab shown (Lemma/Tag or Tag/Tag)."""
+        tab = lambda: self.tabs.currentIndex()                         # noqa: E731
+        items = [self._act(m, "Configure &cell…", lambda: self.configure_cell(tab())),
+                 self._act(m, "Configure &matrix…", lambda: self.configure_matrix(tab()))]
+        m.addSeparator()
+        items += [self._act(m, "&Save matrix…", lambda: self.save_matrix(tab())),
+                  self._act(m, "&Rename matrix…", lambda: self.rename_matrix(tab())),
+                  self._act(m, "&Delete matrix…", lambda: self.delete_saved_matrix(tab())),
+                  self._act(m, "C&lear matrix", lambda: self.clear_matrix(tab()))]
+        m.addSeparator()
+        self.matrix_edit_action = self._act(m, "&Edit mode", self.toggle_matrix_edit, "Ctrl+E")
+        self.matrix_edit_action.setCheckable(True)
+        items += [self.matrix_edit_action,
+                  self._act(m, "S&wap rows and columns", lambda: self.switch_axes(tab()), "Ctrl+T")]
+        m.addSeparator()
+        self._act(m, "Link snapshot to &hypothesis…", self.link_snapshot)   # every tab
+        self.matrix_menu_items = items
+
+        def update(*_):
+            on = tab() in (LEMMA_TAG, TAG_TAG)
+            for a in items:
+                a.setEnabled(on)
+            self.matrix_edit_action.setChecked(on and self._view(tab()).edit_mode)
+        m.aboutToShow.connect(update)
+        self.tabs.currentChanged.connect(update)       # so Ctrl+E and Ctrl+T work on the matrices only
+        update()
+
+    FOLDERS = (("Main folder", ()), None,
+               ("Soundfiles", (layout.SOUNDFILES,)),
+               ("Soundfiles › Tokens", (layout.SOUNDFILES, layout.TOKENS)),
+               ("Soundfiles › Utterances", (layout.SOUNDFILES, layout.UTTERANCES)),
+               ("Soundfiles › Texts", (layout.SOUNDFILES, layout.TEXTS)),
+               ("Soundfiles › _Deleted recordings", (layout.SOUNDFILES, layout.HELD)), None,
+               ("Backups", (layout.BACKUPS,)), ("Documentation", (layout.DOCUMENTATION,)),
+               ("Images", (layout.IMAGES,)), ("Elicit", ("Elicit",)), ("Exports", (layout.EXPORTS,)))
+    MADE_ON_DEMAND = {layout.HELD, layout.BACKUPS, "Elicit"}       # made by Lemmatrix when needed
+
+    def _fill_folder_menu(self):
+        m = self.folder_menu
+        m.clear()
+        path = self.doc.db.path
+        if not path:
+            a = m.addAction("Save the database first")
+            a.setEnabled(False)
+            return
+        main = layout.main_folder(path)
+        for item in self.FOLDERS:
+            if item is None:
+                m.addSeparator()
+                continue
+            label, parts = item
+            folder = main.joinpath(*parts)
+            a = m.addAction(label)
+            if parts and parts[-1] in self.MADE_ON_DEMAND and not folder.is_dir():
+                a.setEnabled(False)
+                a.setText(label + " (not made yet)")
+                continue
+            a.setToolTip(str(folder))
+            a.triggered.connect(lambda *_, folder=folder: self.open_folder(folder))
+
+    def open_folder(self, folder: Path):
+        """File → Open folder: a folder of the database's main folder in the file manager (made if missing)."""
+        folder.mkdir(parents=True, exist_ok=True)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
+
+    # ---- Help → Keyboard shortcuts (22 October) --------------------------------------------
+    OTHER_SHORTCUTS = (
+        ("All data and the matrices", (("Space, Ctrl+Space", "Play the selected token"),
+                                       ("Ctrl+Shift+Space", "Play its pitch"),
+                                       ("Ctrl+Alt+Space", "Open it in Praat"),
+                                       ("Ctrl+R", "Open it and record"), ("Enter", "Open the token dialogue"),
+                                       ("Delete", "Delete the selected token"),
+                                       ("Ctrl + mouse wheel, Ctrl+0", "Zoom a matrix, and back"),
+                                       ("Shift + mouse wheel", "Scroll sideways"),
+                                       ("Ctrl+click a lemma", "Show only that lemma"))),
+        ("Token and utterance dialogues", (("Ctrl+R", "Record / stop"), ("Ctrl+Space", "Play"),
+                                           ("Ctrl+Shift+Space", "Play the pitch"),
+                                           ("Alt+← / Alt+→", "Back / Next"),
+                                           ("→", "Accept the predicted translation"),
+                                           ("Ctrl+click a tag", "More than one tag in a group"))),
+        ("A text's lines", (("Ctrl+E", "Edit mode"), ("Ctrl+S", "Save this text's TextGrid"),
+                            ("Ctrl+Space, Space", "Play the line"), ("Ctrl+G", "Go to the bookmark"),
+                            ("Ctrl+Shift+Space", "Play the pitch scratchpad"),
+                            ("Tab, Shift+Tab, ↑, ↓", "Move between fields (edit mode)"),
+                            ("Ctrl + mouse wheel, Ctrl+0", "Zoom, and back"))),
+        ("Cogitate and the XML viewer", (("Alt+← / Alt+→", "Back / Next hypothesis"),
+                                         ("Ctrl+F", "XML viewer: the search"),
+                                         ("Enter, Shift+Enter, F3", "Next / previous match"))))
+
+    def shortcut_rows(self) -> list[tuple[str, list[tuple[str, str]]]]:
+        """Every shortcut: the menus' (read from the menus themselves), then the others."""
+        out = []
+        for top in self.menuBar().actions():
+            menu = top.menu()
+            if menu is None:
+                continue
+            rows = []
+
+            def walk(m, prefix):
+                for a in m.actions():
+                    if a.menu() is not None:
+                        walk(a.menu(), prefix + a.text().replace("&", "") + " › ")
+                    elif not a.isSeparator() and not a.shortcut().isEmpty():
+                        rows.append((a.shortcut().toString(QKeySequence.NativeText),
+                                     prefix + a.text().replace("&", "").split("\t")[0]))
+            walk(menu, top.text().replace("&", "") + " › ")
+            if rows:
+                out.append((top.text().replace("&", ""), rows))
+        out.append(("Main window", [(a.shortcut().toString(QKeySequence.NativeText), a.text())
+                                    for a in self.actions() if not a.shortcut().isEmpty()]))
+        return out + [(t, list(r)) for t, r in self.OTHER_SHORTCUTS]
+
+    def show_shortcuts(self):
+        from PySide6.QtWidgets import QDialog, QDialogButtonBox, QTreeWidget, QTreeWidgetItem, QVBoxLayout
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Keyboard shortcuts")
+        lay = QVBoxLayout(dlg)
+        tree = QTreeWidget()
+        tree.setHeaderLabels(["Keys", "Does"])
+        tree.setRootIsDecorated(False)
+        for title, rows in self.shortcut_rows():
+            head = QTreeWidgetItem([title, ""])
+            f = head.font(0)
+            f.setBold(True)
+            head.setFont(0, f)
+            head.setForeground(0, theme.accent())
+            head.setFlags(Qt.ItemIsEnabled)
+            tree.addTopLevelItem(head)
+            for keys, does in rows:
+                tree.addTopLevelItem(QTreeWidgetItem([keys, does]))
+        tree.resizeColumnToContents(0)
+        lay.addWidget(tree)
+        bb = QDialogButtonBox(QDialogButtonBox.Close)
+        bb.rejected.connect(dlg.reject)
+        lay.addWidget(bb)
+        dlg.resize(620, 620)
+        dlg.exec()
 
     def send_report(self, kind: str):
         """I found a tick! (kind "bug") or Request a feature: opens an email to the support address."""

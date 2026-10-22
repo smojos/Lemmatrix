@@ -198,3 +198,52 @@ def test_settings_is_in_the_file_menu(win):
     act = win.settings_action
     assert act.shortcut().toString() == "Ctrl+," and not act.icon().isNull()
     assert "Settings…" not in [a.text().replace("&", "") for a in menus["Edit"].actions()]
+
+
+# ---- the menus reviewed (Josh's TWEAK, 22 October) ----------------------------
+
+def _menus(win):
+    return {a.text().replace("&", ""): a.menu() for a in win.menuBar().actions() if a.menu()}
+
+
+def _texts(menu):
+    return ["—" if a.isSeparator() else a.text().replace("&", "") for a in menu.actions()]
+
+
+def test_menus_after_the_review(win):
+    from lemmatrix.ui.main_window import ALL_DATA, LEMMA_TAG
+    m = _menus(win)
+    assert list(m)[-3:] == ["Analyze", "Compose", "Help"]
+    assert "version 2" in _texts(m["Analyze"])[0] and "version 3" in _texts(m["Compose"])[0]
+    assert "Open folder" in _texts(m["File"]) and not any("sample" in t for t in _texts(m["File"]))
+    assert "Write to notebook" in _texts(m["Edit"])
+    assert "ɛλicit" in _texts(m["Tools"]) and "Open the sound folder" not in _texts(m["Tools"])
+    view = _texts(m["View"])
+    assert view[-1] != "—" and "Matrix" in view and "Swap rows and columns" not in view
+    help_ = _texts(m["Help"])
+    assert "Keyboard shortcuts…" in help_ and "Sample databases" in help_
+    q = next(a for a in m["View"].actions() if a.text().replace("&", "") == "Questions")
+    assert q.shortcut().toString() == "Ctrl+Shift+Q"
+    win.tabs.setCurrentIndex(ALL_DATA)
+    assert not win.matrix_edit_action.isEnabled()
+    win.tabs.setCurrentIndex(LEMMA_TAG)
+    assert win.matrix_edit_action.isEnabled() and win.matrix_edit_action.shortcut().toString() == "Ctrl+E"
+
+
+def test_open_folder_menu(win, monkeypatch):
+    opened = []
+    monkeypatch.setattr(win, "open_folder", lambda f: opened.append(f))
+    win._fill_folder_menu()
+    acts = [a for a in win.folder_menu.actions() if not a.isSeparator()]
+    labels = [a.text() for a in acts]
+    assert labels[0] == "Main folder" and "Soundfiles › Tokens" in labels and "Exports" in labels
+    acts[0].trigger()
+    from pathlib import Path
+    assert opened and opened[0] == Path(win.doc.db.path).parent
+
+
+def test_keyboard_shortcuts_list(win):
+    rows = dict(win.shortcut_rows())
+    flat = [d for r in rows.values() for _, d in r]
+    assert any("Settings" in d for d in flat) and any("Edit mode" in d for d in flat)
+    assert "A text's lines" in rows

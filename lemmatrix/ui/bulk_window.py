@@ -329,7 +329,7 @@ class BulkEditWindow(QDialog):
         self.ops = self._tabbar(["Replace", "Shortcuts", "Set value", "Copy", "Clear", "Predict", "Conditions"])
         self.ops.setTabEnabled(CONDITIONS, False)
         self.ops.setTabToolTip(CONDITIONS, "Syllable and environment conditions (e.g. y → j only before "
-                                           "a vowel) arrive with the analysis engine (Stage 2)")
+                                           "a vowel) arrive in version 2 (Analyze)")
         bl.addWidget(self.ops)
         body = QHBoxLayout()
         body.setSpacing(24)
@@ -340,7 +340,7 @@ class BulkEditWindow(QDialog):
         self.op_pages.addWidget(self._copy_page())
         self.op_pages.addWidget(self._clear_page())
         self.op_pages.addWidget(self._predict_page())
-        stage2 = QLabel("Conditions on syllables and environments arrive with the analysis engine (Stage 2).")
+        stage2 = QLabel("Conditions on syllables and environments arrive in version 2 (Analyze).")
         self.op_pages.addWidget(stage2)
         body.addWidget(self.op_pages, 3)
         body.addWidget(self._options(), 2)
@@ -817,7 +817,7 @@ class BulkEditWindow(QDialog):
             if not key:
                 raise bulk.BulkError("Predicted translations are only for an English translation field.")
             return bulk.FillPredicted(key)
-        raise bulk.BulkError("Conditions arrive with the analysis engine (Stage 2).")
+        raise bulk.BulkError("Conditions arrive in version 2 (Analyze).")
 
     def _make_plan(self, op) -> bulk.Plan:
         folder = storage.sound_folder(self.db)
