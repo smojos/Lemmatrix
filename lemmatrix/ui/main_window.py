@@ -950,17 +950,19 @@ class MainWindow(QMainWindow):
         return self.texts_btn
 
     def _scratch_panel(self) -> QWidget:
-        """The pitch scratchpad as in a text's lines (IDEAS.md idea 33), for every tab of the Matrix
-        (Josh, 22 October). Nothing is saved: it's empty each time Lemmatrix opens."""
-        from .scratchpad import PitchScratchpad
+        """The comparison area (Josh, 22 October): two pitch scratchpads, α and β, as under a text's
+        lines (IDEAS.md idea 33), for every tab of the Matrix, against Current Session. Nothing is
+        saved: they're empty each time Lemmatrix opens."""
+        from .scratchpad import ComparisonPads
         panel, pl = self._bar()
         s = self.doc.db.settings
-        self.scratchpad = PitchScratchpad(self, s.pitch_low, s.pitch_high,
-                                          "Pitch scratchpad: type a pitch trace to see and hear it (Enter or "
-                                          "the play button). Nothing is saved")
-        pl.addWidget(self.scratchpad)
+        self.comparison = ComparisonPads(self, s.pitch_low, s.pitch_high,
+                                         "Pitch scratchpad: type a pitch trace to see and hear it (Enter or "
+                                         "the play button). Nothing is saved")
+        self.scratchpad = self.comparison.alpha
+        pl.addWidget(self.comparison)
         pl.addStretch(1)
-        panel.setFixedWidth(240)
+        panel.setFixedWidth(280)
         return panel
 
     def _session_panel(self) -> QWidget:
@@ -1555,7 +1557,7 @@ class MainWindow(QMainWindow):
         for v in (self.lt_view, self.tt_view):
             v.set_database(db)
         symbols.set_current(self._symbols())      # Σymbols: this database's list
-        self.scratchpad.set_range(db.settings.pitch_low, db.settings.pitch_high)
+        self.comparison.set_range(db.settings.pitch_low, db.settings.pitch_high)
         for box, name in ((self.autoplay, "autoplay"), (self.only_data, "only_with_data")):
             box.blockSignals(True)                # each database has its own (in its workspace)
             box.setChecked(self.doc.ws.get_bool(name))
@@ -2268,6 +2270,7 @@ class MainWindow(QMainWindow):
     def _restyle(self):
         """Colours that follow the theme and accent (the data views stay black on white)."""
         self._notebook_icons()
+        self.comparison.restyle()
         self.theme_btn.setIcon(icon("lightbulb", 22, "#e8e8e8" if theme.dark() else "#1b1b1b"))
         self.theme_btn.setToolTip("Switch to the light theme" if theme.dark() else "Switch to the dark theme")
         a = theme.accent()
@@ -3469,7 +3472,7 @@ class MainWindow(QMainWindow):
             self.conventions_changed()
             self.doc.settings_changed()
             s = self.doc.db.settings
-            self.scratchpad.set_range(s.pitch_low, s.pitch_high)
+            self.comparison.set_range(s.pitch_low, s.pitch_high)
             if self.notebook_dialog is not None:  # its history ticks follow Settings
                 self.notebook_dialog._show_history_ticks()
             if names_changed:

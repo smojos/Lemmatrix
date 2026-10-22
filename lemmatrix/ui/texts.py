@@ -540,22 +540,31 @@ class TextsPanel(QObject):
         self.main._row(bl, self.line_search, self.next_field, self.next_empty_btn)
         self.count = QLabel()
         bl.addWidget(self.count)
-        bl.addWidget(self._scratchpad())
         bl.addStretch(1)
-        return bar
+        # the comparison area (two scratchpads, α and β), right-justified beside the bar (Josh, 22 October)
+        outer = QWidget()
+        ol = QHBoxLayout(outer)
+        ol.setContentsMargins(0, 0, 0, 0)
+        ol.addWidget(bar, 1)
+        cmp_panel, cl = self.main._bar()
+        cl.addWidget(self._scratchpad())
+        cl.addStretch(1)
+        cmp_panel.setFixedWidth(280)
+        ol.addWidget(cmp_panel)
+        return outer
 
     def _scratchpad(self) -> QWidget:
-        """The pitch scratchpad (IDEAS.md idea 33): a pitch trace typed here is drawn and played
-        (Ctrl+Shift+Space, anywhere in the lines), and saved nowhere: it goes when the window closes."""
-        from .scratchpad import PitchScratchpad
+        """The comparison area: two pitch scratchpads, α and β (IDEAS.md idea 33; Josh, 22 October).
+        A trace typed in one is drawn and played (Ctrl+Shift+Space anywhere in the lines plays α), and
+        saved nowhere: they go when the window closes."""
+        from .scratchpad import ComparisonPads
         s = self.db.settings
-        box = PitchScratchpad(self.main, s.pitch_low, s.pitch_high,
-                              "Pitch scratchpad: type a pitch trace to see and hear it (Ctrl+Shift+Space "
-                              "plays it from anywhere in the lines). Nothing is saved: it's cleared when "
-                              "the window is closed")
-        box.setMaximumWidth(420)
-        self.scratch, self.scratch_canvas = box.edit, box.canvas
-        return box
+        self.comparison = ComparisonPads(self.main, s.pitch_low, s.pitch_high,
+                                         "Pitch scratchpad: type a pitch trace to see and hear it (Ctrl+Shift+"
+                                         "Space plays α from anywhere in the lines). Nothing is saved: it's "
+                                         "cleared when the window is closed")
+        self.scratch, self.scratch_canvas = self.comparison.alpha.edit, self.comparison.alpha.canvas
+        return self.comparison
 
     def play_scratch(self):
         """Ctrl+Shift+Space in the lines: the scratchpad's trace, in the voice of Settings → Pitch."""
@@ -622,7 +631,7 @@ class TextsPanel(QObject):
 
     def settings_changed(self):
         s = self.db.settings
-        self.scratch_canvas.set_range(s.pitch_low, s.pitch_high)
+        self.comparison.set_range(s.pitch_low, s.pitch_high)
         self._setup_columns()
         self.refresh()
 
@@ -728,6 +737,8 @@ class TextsPanel(QObject):
                 b.setIcon(icon("clip", 20, theme.accent().name() + ";" + theme.colour("window_text").name()))
             elif b.property("icon_name") == "refresh-text":
                 b.setIcon(icon("refresh-text", 20, theme.colour("pitch").name()))
+        if hasattr(self, "comparison"):
+            self.comparison.restyle()
         self._save_icon()
 
     def refresh_text(self):

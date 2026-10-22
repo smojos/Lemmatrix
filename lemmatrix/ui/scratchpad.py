@@ -45,3 +45,41 @@ class PitchScratchpad(QWidget):
     def play(self):
         """The trace, in the voice and volume of Settings → Pitch."""
         self.main.play_pitch(self.edit.text())
+
+
+class ComparisonPads(QWidget):
+    """The comparison area (Josh, 22 October): two scratchpads, α on top and β under it, for asking
+    a speaker "is it A or B?". Each has its letter on its left, large, bold, in the theme colour."""
+
+    def __init__(self, main, low: int, high: int, tip: str, parent=None):
+        super().__init__(parent)
+        from PySide6.QtWidgets import QGridLayout, QLabel
+        grid = QGridLayout(self)
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setHorizontalSpacing(8)
+        grid.setVerticalSpacing(4)
+        self.pads, self.letters = [], []
+        for r, letter in enumerate(("α", "β")):
+            lbl = QLabel(letter)
+            f = lbl.font()
+            f.setBold(True)
+            f.setPointSizeF(f.pointSizeF() * 2.2)
+            lbl.setFont(f)
+            lbl.setAlignment(Qt.AlignCenter)
+            lbl.setToolTip(f"Comparison: pitch trace {letter}")
+            pad = PitchScratchpad(main, low, high, tip)
+            grid.addWidget(lbl, r, 0)
+            grid.addWidget(pad, r, 1)
+            self.letters.append(lbl)
+            self.pads.append(pad)
+        self.alpha, self.beta = self.pads
+        self.restyle()
+
+    def set_range(self, low: int, high: int):
+        for p in self.pads:
+            p.set_range(low, high)
+
+    def restyle(self):
+        from . import theme
+        for lbl in self.letters:
+            lbl.setStyleSheet(f"color: {theme.colour('pitch').name()};")   # the accent, lighter on dark

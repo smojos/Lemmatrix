@@ -36,6 +36,7 @@ from .token_dialog import Slot, TokenDialog
 from .widgets import FlowLayout, ipa_font, meaning
 
 TEXTS, UTTERANCES_TAB = 0, 1      # the tabs
+LOGO = 96                          # the Texts and utterances logo at the right of the options (22 October)
 
 
 def clean_label(text: str, limit: int = 60) -> str:
@@ -162,7 +163,22 @@ class TextsUtterancesWindow(QDialog):
         self.options = QStackedWidget()
         self.options.addWidget(self.texts.bar)
         self.options.addWidget(self._utterances_bar())
-        split.addWidget(self.options)
+        # Under both tabs: the options (with the comparison area on Texts, the utterance cell on
+        # Utterances), then a large Texts and utterances logo at the right edge (Josh, 22 October).
+        bottom = QWidget()
+        bot = QHBoxLayout(bottom)
+        bot.setContentsMargins(0, 0, 0, 0)
+        bot.addWidget(self.options, 1)
+        logo_panel, ll = self.main._bar()
+        self.logo = QLabel()
+        self.logo.setAlignment(Qt.AlignCenter)
+        self.logo.setToolTip("Texts and utterances")
+        ll.addStretch(1)
+        ll.addWidget(self.logo)
+        ll.addStretch(1)
+        logo_panel.setFixedWidth(LOGO + 24)
+        bot.addWidget(logo_panel)
+        split.addWidget(bottom)
         split.setSizes([600, 150])
         split.setCollapsible(0, False)
 
@@ -978,6 +994,7 @@ class TextsUtterancesWindow(QDialog):
     # ---- style and closing --------------------------------------------
     def _restyle(self):
         a = theme.accent()
+        self.logo.setPixmap(icon("texts-utterances", LOGO, theme.colour("pitch").name()).pixmap(LOGO, LOGO))
         self.title.setStyleSheet(f"color: {theme.colour('pitch').name()};")
         self.tabs.setStyleSheet("QTabBar::tab { padding: 6px 14px; font-weight: normal; } "
                                 f"QTabBar::tab:selected {{ background: {a.name()}; "

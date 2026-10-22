@@ -13,13 +13,18 @@ from test_ui import app, win  # noqa: E402,F401
 def test_pitch_scratchpad_in_the_main_window(win, monkeypatch):
     played = []
     monkeypatch.setattr(win, "play_pitch", lambda text: played.append(text))
-    sp = win.scratchpad
+    sp = win.comparison.alpha
+    assert win.scratchpad is sp and [l.text() for l in win.comparison.letters] == ["α", "β"]
+    win.comparison.beta.edit.setText("33")
+    win.comparison.beta.edit.returnPressed.emit()
+    assert played == ["33"]
+    played.clear()
     sp.edit.setText("55 3:3 21")
     assert sp.canvas.text == "55 3:3 21"
     sp.edit.returnPressed.emit()
     assert played == ["55 3:3 21"]
     order = [win.bottom_row.itemAt(i).widget() for i in range(win.bottom_row.count())]
-    assert order.index(sp.parentWidget()) + 1 == order.index(win.sess_panel)   # left of Current Session
+    assert order.index(win.comparison.parentWidget()) + 1 == order.index(win.sess_panel)   # left of Current Session
 
 
 def test_symbols_in_a_text_fields_menu(app):
@@ -60,3 +65,12 @@ def test_symbols_list_in_edit_lists(win, monkeypatch):
     assert dlg.symbol_list() == ["ʔ", "ŋ"]
     dlg._reset_symbols()
     assert dlg.symbol_list() == symbols.DEFAULT
+
+
+def test_texts_comparison_and_logo(win):
+    uw = win.open_utterances()
+    t = uw.texts
+    assert t.scratch is t.comparison.alpha.edit and t.comparison.beta.edit is not None
+    assert not uw.logo.pixmap().isNull()                      # the logo, under both tabs
+    assert uw.options.parentWidget() is uw.logo.parentWidget().parentWidget()
+    uw.close()
