@@ -12,7 +12,7 @@ The window stays open beside the main one; changes are saved with the database
 
 from __future__ import annotations
 
-from PySide6.QtCore import QDate, QRect, QSize, Qt, QTimer
+from PySide6.QtCore import QDate, QEvent, QRect, QSize, Qt, QTimer
 from PySide6.QtGui import QBrush, QColor, QFont, QFontMetrics, QTextCharFormat
 from PySide6.QtWidgets import (QAbstractItemView, QCalendarWidget, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
                                QGridLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget,
@@ -990,6 +990,9 @@ class ItemsDialog(QDialog):
         one, many = nbmod.name(kind, title=False), nbmod.name(kind, True, title=False)
         self.setWindowTitle("Questions" if kind == nbmod.QUESTION else "To Do")
         self.setWindowIcon(kind_icon(kind, 32))
+        # Not modal: the main window stays usable beside it, and it can be minimised (Josh, 22 October)
+        self.setModal(False)
+        self.setWindowFlag(Qt.WindowMinMaxButtonsHint, True)
         self.resize(980, 620)
         lay = QVBoxLayout(self)
         top = QHBoxLayout()
@@ -1051,6 +1054,23 @@ class ItemsDialog(QDialog):
 
     def _all(self):
         return self.main.doc.notebook.all_items(self.kind)
+
+    def refresh(self):
+        """Fill the list again from the notebook, keeping the selection (the notebook may have
+        changed while this window was open beside the main window)."""
+        cur = self._current()
+        self._fill(cur[1] if cur is not None else None)
+
+    def _notebook_follows(self):
+        """An open notebook window shows the change straight away (both can be open now)."""
+        nb = getattr(self.main, "notebook_dialog", None)
+        if nb is not None and nb.isVisible():
+            nb.reload()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() == QEvent.ActivationChange and self.isActiveWindow():
+            self.refresh()
 
     def _fill(self, select=None):
         which = self.show_which.currentData()
@@ -1130,6 +1150,7 @@ class ItemsDialog(QDialog):
         q.resolved = "" if q.resolved else today()
         self.main.doc.notebook_changed()
         self._fill(q)
+        self._notebook_follows()
 
     def edit(self):
         cur = self._current()
@@ -1143,6 +1164,7 @@ class ItemsDialog(QDialog):
             q.text, q.edited = text, today()
             self.main.doc.notebook_changed()
             self._fill(q)
+            self._notebook_follows()
 
     def convert(self):
         """Convert to To Do / Convert to question: it leaves this list for the other one."""

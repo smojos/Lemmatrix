@@ -137,6 +137,7 @@ class MainWindow(QMainWindow):
         self.layouts: dict = {}
         self.dialog_autoplay = False
         self.notebook_dialog = None               # the notebook window, once opened
+        self.items_dialogs = {}                   # View → Questions / To Do windows, once opened
         self.bulk_window = None                   # the bulk edit window, while it's open
         self.utterances_window = None             # View → Texts and utterances, while it's open
         self.xml_window = None                    # View → XML viewer, while it's open
@@ -1561,6 +1562,8 @@ class MainWindow(QMainWindow):
         self._report_missing()
         if self.notebook_dialog is not None:
             self.notebook_dialog.reload()
+        for dlg in self.items_dialogs.values():      # another database's notebook
+            dlg.refresh()
         if (db.workspace_from_file or db.upgraded) and not db.load_notes:   # quietly, saving writes the new format
             self.doc.settings_changed()
         if db.load_notes:                         # e.g. an older file upgraded to the current format
@@ -2154,18 +2157,29 @@ class MainWindow(QMainWindow):
 
     def open_questions(self):
         from .notebook_dialog import QuestionsDialog
-        dlg = QuestionsDialog(self)
-        dlg.exec()
-        if self.notebook_dialog is not None:
-            self.notebook_dialog.reload()
+        return self._open_items("questions", QuestionsDialog)
 
     def open_todos(self):
         """View → To Do: every to do in the notebook, as View → Questions (Josh, 21 October)."""
         from .notebook_dialog import TodoDialog
-        dlg = TodoDialog(self)
-        dlg.exec()
-        if self.notebook_dialog is not None:
-            self.notebook_dialog.reload()
+        return self._open_items("todo", TodoDialog)
+
+    def _open_items(self, key, cls):
+        """View → Questions / To Do: a window beside the main one, not modal, so the main window
+        stays usable while it is open; one of each, brought forward if already open (Josh, 22 October)."""
+        dlg = self.items_dialogs.get(key)
+        if dlg is None:
+            dlg = cls(self)
+            dlg.finished.connect(lambda *_: self.notebook_dialog is not None and self.notebook_dialog.reload())
+            self.items_dialogs[key] = dlg
+        else:
+            dlg.refresh()
+        if dlg.isMinimized():
+            dlg.showNormal()
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
+        return dlg
 
     def go_to(self, entry, index=None):
         """Show a lemma (and one of its tokens) from a notebook link; an utterance is shown in the
