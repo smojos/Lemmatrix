@@ -269,7 +269,9 @@ def load(path: str | os.PathLike) -> Database:
 
     for el in root.findall("entry"):
         e = Entry(ref=nfc(el.get("ref", "")), file_gloss=nfc(el.get("file-gloss", "")),
-                  id=el.get("id", ""))
+                  id=el.get("id", ""), from_lemmas=(el.get("from-lemmas") or "").split(),
+                  from_languages=[nfc(x.strip()) for x in (el.get("from-languages") or "").split(";")
+                                  if x.strip()])
         _load_values(el, e, entry_multi)
         for tel in el.findall("token"):
             e.tokens.append(load_token(tel))
@@ -304,6 +306,12 @@ def load(path: str | os.PathLike) -> Database:
     _unique_ids(db)
     from .defaults import ensure_core_fields
     restored = ensure_core_fields(db.settings)
+    from .model import NEW_ROLES
+    added = [f.title for f in db.settings.entry_fields if f.role in NEW_ROLES and f.title in restored]
+    restored = [t for t in restored if t not in added]
+    if added:                            # quietly (a status-bar note), so saving writes it
+        db.added_fields = added
+        db.upgraded = True
     if restored:
         db.load_notes = list(db.load_notes) + [
             f"Restored the field{'s' if len(restored) > 1 else ''} {', '.join(restored)}: other features "
@@ -512,6 +520,10 @@ def to_element(db: Database) -> ET.Element:
         if e.file_gloss:
             attrs["file-gloss"] = e.file_gloss
         attrs["id"] = e.id
+        if e.from_lemmas:                         # From (22 October): lemmas by id, languages by code
+            attrs["from-lemmas"] = " ".join(e.from_lemmas)
+        if e.from_languages:
+            attrs["from-languages"] = "; ".join(e.from_languages)
         el = ET.SubElement(root, "entry", attrs)
         _save_values(el, e, s.entry_fields, langs)
         for t in e.tokens:

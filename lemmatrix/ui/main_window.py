@@ -1411,7 +1411,11 @@ class MainWindow(QMainWindow):
         s = db.settings
         edit = lambda row, text: None           # marks a column as editable in place
         cols = [Column("ref", "Reference", lambda e: e.ref)]
+        from .dialogs import origin_shown
+        shown = origin_shown(self)                # Settings → General: Origin and From (22 October)
         for f in s.entry_fields:
+            if f.role == "origin" and not shown:
+                continue
             if f.multilingual:
                 for lang in s.gloss_languages:
                     cols.append(Column(f"{f.name}:{lang}", f"{f.title} ({lang})" if len(s.gloss_languages) > 1
@@ -1420,6 +1424,9 @@ class MainWindow(QMainWindow):
                 cols.append(Column(f.name, f.title, lambda e, n=f.name: e.get(n), closed=f.closed,
                                    tree=(lambda f=f: s.list_items(f)) if f.closed else None,
                                    ipa=f.role == "lemma", edit=edit))
+            if f.role == "origin":                # From, beside Origin: lemmas and languages
+                from .frombox import from_text
+                cols.append(Column("from", "From", lambda e: from_text(db, e), ipa=True))
         return cols
 
     def _default_lemma_keys(self) -> list[str]:
@@ -1649,6 +1656,10 @@ class MainWindow(QMainWindow):
         self.update_todo_badge()
         if (db.workspace_from_file or db.upgraded) and not db.load_notes:   # quietly, saving writes the new format
             self.doc.settings_changed()
+        if getattr(db, "added_fields", None):     # a new core field (Origin, 22 October): said quietly
+            self.statusBar().showMessage(
+                f"Added the new field {', '.join(db.added_fields)} (where a lemma comes from, with From). "
+                "It's empty; Settings → General can hide it.", 15000)
         if db.load_notes:                         # e.g. an older file upgraded to the current format
             notes, db.load_notes = db.load_notes, []
             self.doc.settings_changed()           # unsaved, so saving writes the new format
@@ -3532,6 +3543,7 @@ class MainWindow(QMainWindow):
             self._apply_autosave()
             theme.from_prefs(self.prefs)
             self._restyle()
+            self._setup_columns()                 # Origin and From shown or hidden
             self.all_table.model_.ipa.setPointSize(self.prefs.ipa_size)
             self.lemmas.model_.ipa.setPointSize(self.prefs.ipa_size)
             self.conventions_changed()

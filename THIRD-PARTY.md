@@ -16,6 +16,7 @@ first runs (`requirements.txt`), each under its own licence.
 | [praatio](https://pypi.org/project/praatio/) | reading and writing Praat TextGrids | MIT |
 | [Pillow](https://pypi.org/project/pillow/) | shrinking pictures for ɛλicit requests (GIFs keep their animation) | MIT-CMU (HPND) |
 | [soundfile](https://pypi.org/project/soundfile/) (with libsndfile) | reading ɛλicit's FLAC recordings | BSD-3-Clause (libsndfile: LGPL-2.1-or-later) |
+| [pycountry](https://pypi.org/project/pycountry/) (with the Debian iso-codes data) | the ISO 639-3 languages for a lemma's From | LGPL-2.1-only |
 | [pytest](https://pypi.org/project/pytest/) | the automated tests (development only) | MIT |
 
 **Fonts.** Lemmatrix uses Charis SIL for IPA when it is installed; no font is included. The

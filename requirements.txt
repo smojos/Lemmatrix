@@ -8,4 +8,5 @@ pyzipper>=0.3.6
 praatio>=6.2
 Pillow>=10
 soundfile>=0.12
+pycountry>=24
 pytest>=8

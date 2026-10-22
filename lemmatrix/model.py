@@ -340,8 +340,9 @@ class ListItem:
 
 
 # Fields other features depend on: they can be relabelled and moved, but not deleted (idea 9).
-CORE_ROLES = ("lemma", "gloss", "word-class", "phonetic", "phonemic", "morphemes", "pitch", "translation",
-              "comment", "title", "genre", "status")
+CORE_ROLES = ("lemma", "gloss", "word-class", "origin", "phonetic", "phonemic", "morphemes", "pitch",
+              "translation", "comment", "title", "genre", "status")
+NEW_ROLES = ("origin",)          # core fields added after databases existed: "added", not "restored"
 
 
 @dataclass
@@ -645,6 +646,10 @@ class Entry:
     tokens: list[Token] = field(default_factory=list)
     changed: dict[str, str] = field(default_factory=dict)  # comment field -> date it was last changed
     id: str = field(default_factory=new_id, compare=False)
+    # From (Josh, 22 October): what the lemma comes from, beside its Origin: lemmas it is built from
+    # (by id) and languages it was borrowed from (ISO 639-3 codes, or a name as typed)
+    from_lemmas: list[str] = field(default_factory=list)
+    from_languages: list[str] = field(default_factory=list)
 
     def get(self, name: str, lang: str | None = None) -> str:
         if name in self.multi:
@@ -761,6 +766,7 @@ class Database:
     texts: list[Text] = field(default_factory=list)
     path: str = ""                                    # where it was loaded from / saved to
     load_notes: list = field(default_factory=list, compare=False)   # e.g. what an upgrade changed
+    added_fields: list = field(default_factory=list, compare=False)   # new core fields added on opening
     # read from a format before 7, so the working state (saved matrices, rerecord flags, the
     # spelling list…) came from the database file: its workspace is to be made from it (idea 36)
     workspace_from_file: bool = field(default=False, compare=False)

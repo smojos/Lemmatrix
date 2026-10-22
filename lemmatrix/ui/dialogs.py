@@ -147,7 +147,12 @@ class EntryDialog(QDialog):
         form.addRow("Reference", self.ref)
         self.fields: dict[tuple[str, str], QWidget] = {}
         others = []                                 # second languages: under Other languages (idea 19)
+        self.origin_on = origin_shown(parent)
+        self.from_box = None
+        self.setMinimumWidth(480)
         for f in s.entry_fields:
+            if f.role == "origin" and not self.origin_on:
+                continue                            # Settings → General: Origin and From hidden
             if f.multilingual:
                 for lang in s.gloss_languages:
                     ed = NoForbidden() if (lang == s.primary_gloss and not entry) else QLineEdit()
@@ -171,6 +176,8 @@ class EntryDialog(QDialog):
                 cb.setCurrentText(entry.get(f.name) if entry else "")
                 form.addRow(f.title, cb)
                 self.fields[(f.name, "")] = cb
+                if f.role == "origin":
+                    self._add_from(form, db, entry, parent)
             else:
                 ed = QLineEdit(entry.get(f.name) if entry else "")
                 if f.role == "lemma":
@@ -212,6 +219,20 @@ class EntryDialog(QDialog):
             show(shown, remember=False)
         form.addRow(_buttons(self))
 
+    def _add_from(self, form, db, entry, parent):
+        """From, under Origin: lemmas and languages, as chips (Josh, 22 October)."""
+        from .frombox import FromBox
+        self.from_box = FromBox(db, entry, getattr(parent, "prefs", None))
+        form.addRow("From", self.from_box)
+        if entry is not None:
+            part = [x for x in db.entries if entry.id in x.from_lemmas]
+            if part:
+                lbl = QLabel("Part of: " + ", ".join(f"{x.ref} {db.lemma(x)}" for x in part))
+                lbl.setWordWrap(True)
+                lbl.setFont(ipa_font(12))
+                lbl.setToolTip("The lemmas built from this one (their From)")
+                form.addRow("", lbl)
+
     def _suggest(self):
         letter = self.category.currentData()
         cat = next((c for c in self.db.settings.ref_categories if c.letter == letter), None)
@@ -245,6 +266,8 @@ class EntryDialog(QDialog):
                 f.add_value(text.strip())
         if self.entry is not None:
             e.file_gloss = nfc(self.file_gloss.text().strip())
+        if self.from_box is not None:
+            e.from_lemmas, e.from_languages = self.from_box.lemmas(), self.from_box.languages()
 
     def new_entry(self, speaker: str, date: str) -> Entry:
         s = self.db.settings
@@ -447,6 +470,15 @@ class MetadataDialog(QDialog):
 # Preferences
 # ==========================================================================
 
+ORIGIN_KEY = "origin/shown"      # Settings → General: Origin and From shown (the workspace's)
+
+
+def origin_shown(main) -> bool:
+    """Whether Origin and From are shown for the open database (Settings → General)."""
+    ws = getattr(getattr(main, "doc", None), "workspace", None)
+    return ws.get_bool(ORIGIN_KEY, True) if ws is not None else True
+
+
 class PreferencesDialog(QDialog):
     def __init__(self, parent, db: Database, prefs):
         super().__init__(parent)
@@ -603,8 +635,14 @@ class PreferencesDialog(QDialog):
                            f"{'ɛλicit request made or received' if section == nbmod.ELICIT_HISTORY else 'change to a hypothesis'}"
                            ". Switching it off leaves what is written; nothing is written later for the days it was off.")
             self.history[section] = box
+        self.origin_on = QCheckBox("Show Origin and From")       # Josh, 22 October
+        self.origin_on.setChecked(ws.get_bool(ORIGIN_KEY, True) if ws is not None else True)
+        self.origin_on.setToolTip("Where a lemma comes from: the Origin field (root, complex, loan) and "
+                                  "From (the lemmas it's built from, the languages it was borrowed from). "
+                                  "Off hides them everywhere; what's filled in is kept.")
         page("General", [("This computer", [("Autosave every", self.autosave),
                                             ("Full backup folder", self.backups)]),
+                         ("Lemmas (this database)", [(None, self.origin_on)]),
                          ("Notebook (this database)", [(None, b) for b in self.history.values()]),
                          ("Warnings (this computer)", [(None, self.unusual), (None, self.spelling), (None, self.confirm)])])
         page("Sound", [
@@ -711,6 +749,7 @@ class PreferencesDialog(QDialog):
             from .. import notebook as nbmod
             for section, box in self.history.items():
                 doc.ws_set(nbmod.HISTORY_SETTINGS[section], box.isChecked())
+            doc.ws_set(ORIGIN_KEY, self.origin_on.isChecked())
         from . import conventions as conv
         conv.save(p, conv.Conventions(on=self.conv_on.isChecked(), brackets=self.conv_brackets.isChecked(),
                                       slashes=self.conv_slashes.isChecked(), small_caps=self.conv_caps.isChecked(),
