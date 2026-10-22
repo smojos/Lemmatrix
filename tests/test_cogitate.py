@@ -332,7 +332,7 @@ def test_the_anonymous_backup_covers_hypotheses(win):
     p.name = "Kuku Dabi"
     hy.make(doc.notebook, hy.Journal(doc.notebook), DAY, "Kuku Dabi says tone spreads", "Kuku says so")
     report = anonymise.Report()
-    _, book = anonymise.anonymise(doc.db, doc.notebook, anonymise.Options(), report)
+    _, book = anonymise.anonymise(doc.db, doc.notebook, anonymise.Options(notebook=True), report)
     assert "Kuku" not in book.hypotheses[-1].summary and p.code in book.hypotheses[-1].summary
 
 

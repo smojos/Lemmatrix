@@ -127,8 +127,10 @@ class ChipRow(QWidget):
         if self.kind == PARTICIPANTS:
             agreed = [w for w, ok in (("identifiable", p.identifiable), ("audio sharing", p.audio_sharing)) if ok]
             tip += "\nAgreed to: " + (", ".join(agreed) if agreed else "neither identification nor audio sharing")
-        elif p.email:
-            tip += "\n" + p.email
+        else:
+            if p.email:
+                tip += "\n" + p.email
+            tip += "\nIdentifiable" if p.identifiable else "\nNot identifiable (only the code in an Ethical archive)"
         return key, tip
 
     def _rebuild(self):

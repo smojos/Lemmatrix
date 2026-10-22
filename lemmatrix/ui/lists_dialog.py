@@ -61,8 +61,10 @@ def _note(text) -> QLabel:
 # --------------------------------------------------------------------------
 
 class PeopleEditor(QWidget):
-    """Researchers (code, name, email, description) or participants (code, name, the
-    Identifiable? and Audio sharing? ticks from their consent form, description, consent file)."""
+    """Researchers (code, name, Identifiable?, email, description) or participants (code, name,
+    the Identifiable? and Audio sharing? ticks from their consent form, description, consent
+    file). Identifiable? decides who is named in an Ethical archive (idea 44): ticked for a new
+    researcher, unticked for a new participant."""
 
     def __init__(self, db: Database, people: list[Person], consent: bool, used, parent=None):
         super().__init__(parent)
@@ -73,15 +75,21 @@ class PeopleEditor(QWidget):
             self.cols = ["code", "name", "identifiable", "audio", "description", "consent"]
             heads = ["Code", "Name", "Identifiable?", "Audio sharing?", "Description", "Consent file"]
         else:
-            self.cols = ["code", "name", "email", "description"]
-            heads = ["Code", "Name", "Email", "Description"]
+            self.cols = ["code", "name", "identifiable", "email", "description"]
+            heads = ["Code", "Name", "Identifiable?", "Email", "Description"]
         self.table = QTableWidget(0, len(self.cols))
         self.table.setHorizontalHeaderLabels(heads)
         if consent:
-            for key, tip in (("identifiable", "Agreed in the consent form to be identified by name"),
+            for key, tip in (("identifiable", "Agreed in the consent form to be identified by name: named "
+                                              "in an Ethical archive (File → Export); otherwise only the code"),
                              ("audio", "Agreed in the consent form that their recordings may be shared "
-                                       "(e.g. sent to another speaker in an ɛλicit request)")):
+                                       "(e.g. sent to another speaker in an ɛλicit request, or put in an "
+                                       "Ethical archive)")):
                 self.table.horizontalHeaderItem(self.col(key)).setToolTip(tip)
+        else:
+            self.table.horizontalHeaderItem(self.col("identifiable")).setToolTip(
+                "May be named (with email and description) in an Ethical archive (File → Export); "
+                "otherwise only the code. Ticked for a new researcher")
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -97,7 +105,8 @@ class PeopleEditor(QWidget):
         self.table.setColumnWidth(d, min(max(self.table.columnWidth(d), 160), 260))
         lay.addWidget(self.table, 1)
         row = QHBoxLayout()
-        row.addWidget(_tool("add", "Add a person", lambda: self._add_row(Person(""), edit=True)))
+        row.addWidget(_tool("add", "Add a person", lambda: self._add_row(
+            Person("") if consent else Person.researcher(""), edit=True)))
         row.addWidget(_tool("delete", "Remove the selected person", self._remove))
         row.addWidget(_tool("up", "Move up", lambda: self._shift(-1)))
         row.addWidget(_tool("down", "Move down", lambda: self._shift(1)))
@@ -232,9 +241,9 @@ class PeopleEditor(QWidget):
             if not code:
                 continue
             p = Person(code, self._text(r, 1), self._text(r, self.col("description")))
+            p.identifiable = self._ticked(r, "identifiable")
             if self.consent:
                 p.consent = self._text(r, self.col("consent"))
-                p.identifiable = self._ticked(r, "identifiable")
                 p.audio_sharing = self._ticked(r, "audio")
             else:
                 p.email = self._text(r, self.col("email"))
@@ -689,8 +698,9 @@ class ListsDialog(QDialog):
         self._page(RESEARCHERS, "Researchers", self.researchers,
                    "The researchers of the sessions. The code is what the notebook and the Current "
                    "Session show; renaming a code renames it in the notebook too. The email is where "
-                   "ɛλicit requests tell a researcher their recordings have come in (the anonymous "
-                   "backup always takes it out).",
+                   "ɛλicit requests tell a researcher their recordings have come in. Identifiable? "
+                   "(ticked for a new researcher) keeps the name, email and description in an Ethical "
+                   "archive; the Anonymous archive never names anyone.",
                    lambda: self._reset_people(self.researchers, defaults.default_researchers(),
                                               self._researcher_use))
         self.participants = PeopleEditor(db, md.participants, True, self._participant_use)
@@ -699,8 +709,9 @@ class ListsDialog(QDialog):
                    "in the tokens and the notebook too. The consent file documents their informed consent: "
                    "click it to open it (a file inside the database's folder is kept relative to it). "
                    "Tick Identifiable? and Audio sharing? only when the consent form explicitly agrees "
-                   "to them: ɛλicit warns before sending a recording whose speaker hasn't agreed to "
-                   "audio sharing.",
+                   "to them: an Ethical archive names only the identifiable participants and includes only "
+                   "the recordings of those who agreed to audio sharing, and ɛλicit warns before sending "
+                   "a recording whose speaker hasn't agreed to it.",
                    lambda: self._reset_people(self.participants, defaults.default_participants(),
                                               self._participant_use))
         self.locations = LocationEditor(md.locations, self._location_use)

@@ -1,48 +1,87 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders
-"""File → Export → Anonymous backup…: choose what goes, then write the copy (see anonymise.py)."""
+"""File → Export → Anonymous archive… and Ethical archive… (IDEAS.md idea 44): one dialogue,
+the archive chosen at the top with its own defaults, then the copy (see anonymise.py)."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 from PySide6.QtCore import QDate, QDir
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFormLayout, QLabel,
-                               QLineEdit, QMessageBox, QVBoxLayout)
+from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFormLayout,
+                               QHBoxLayout, QLabel, QLineEdit, QMessageBox, QRadioButton, QVBoxLayout, QWidget)
 
 from .. import anonymise
+from ..anonymise import ANONYMOUS, ETHICAL
 from . import theme
 from .dialogs import PathEdit
 
+INTRO = {
+    ANONYMOUS: "A copy in which nobody is named, for letting others see your setup. Every person's code is "
+               "renumbered (SP1, SP2… and RS1, RS2…) wherever it appears, names, descriptions, emails and "
+               "consent links all go, the language's and variety's names become their codes, and no "
+               "recordings go in. The database itself isn't changed.",
+    ETHICAL: "A copy of the data to share or deposit, as the consent forms allow. Participants and "
+             "researchers ticked Identifiable? (Edit → Lists) keep their names; everyone else is their "
+             "code only. Only the recordings of speakers who agreed to audio sharing go in. The database "
+             "itself isn't changed.",
+}
 
-class AnonymousExportDialog(QDialog):
-    def __init__(self, main):
+
+class ArchiveExportDialog(QDialog):
+    def __init__(self, main, kind: str = ETHICAL):
         super().__init__(main)
         self.main = main
         db = main.doc.db
-        self.setWindowTitle("Export anonymous backup")
-        self.resize(620, 420)
+        self.resize(660, 520)
         lay = QVBoxLayout(self)
-        intro = QLabel("A copy to share or deposit. Participants' names, descriptions and consent links are "
-                       "always taken out; their codes (SP1…) stay, since tokens, sessions and file names use "
-                       "them. The database itself isn't changed.")
-        intro.setWordWrap(True)
-        lay.addWidget(intro)
+
+        switch = QWidget()
+        sl = QHBoxLayout(switch)
+        sl.setContentsMargins(0, 0, 0, 0)
+        self.kinds = QButtonGroup(self)
+        self.kind_buttons = {}
+        for k in (ANONYMOUS, ETHICAL):
+            b = QRadioButton(anonymise.TITLES[k])
+            b.setStyleSheet(f"font-weight: bold; color: {theme.colour('pitch').name()};")   # the theme colour
+            self.kinds.addButton(b)
+            self.kind_buttons[k] = b
+            sl.addWidget(b)
+        sl.addStretch(1)
+        lay.addWidget(switch)
+
+        self.intro = QLabel()
+        self.intro.setWordWrap(True)
+        lay.addWidget(self.intro)
+        self.ai_note = QLabel(anonymise.AI_NOTE)
+        self.ai_note.setWordWrap(True)
+        self.ai_note.setStyleSheet("font-style: italic;")
+        lay.addWidget(self.ai_note)
+
         form = QFormLayout()
-        self.researchers = QCheckBox("Take out the researchers' names (and the owner's) too")
-        self.notebook = QCheckBox("Include the notebook")
-        self.notebook.setChecked(True)
-        self.names = QCheckBox("Replace participants' names written in comments and notebook notes "
-                               "with their codes")
-        self.names.setChecked(True)
-        self.recordings = QCheckBox("Include the recordings (voices are personal data too)")
+        self.hide_language = QCheckBox("Hide the language code too (it becomes LXX)")
+        self.hide_variety = QCheckBox("Hide the variety code too (it becomes VXX)")
+        for w in (self.hide_language, self.hide_variety):
+            w.setToolTip("A code can be looked up, so it gives the language or variety away. Hide it when "
+                         "naming the language or variety could identify its speakers; the archive is then much "
+                         "less useful for future work on the language.")
+        codes = QWidget()
+        cl = QVBoxLayout(codes)
+        cl.setContentsMargins(0, 0, 0, 0)
+        cl.addWidget(self.hide_language)
+        cl.addWidget(self.hide_variety)
+        self.codes_row = codes
+        self.notebook = QCheckBox("Include the notebook (notes, questions, To Dos and Cogitate's hypotheses)")
+        self.notebook.setToolTip(anonymise.PRIVATE_NOTE)
+        self.names = QCheckBox()
+        self.recordings = QCheckBox()
         self.places = QComboBox()
         self.places.addItem("Keep every place", 0)
         self.places.addItem("Keep only the top two levels (e.g. country and county)", 2)
         self.places.addItem("Keep only the top level (country)", 1)
         self.consent = QComboBox()
         self.consent.addItem("Leave them out", False)
-        self.consent.addItem("Add them as a password-protected zip", True)
+        self.consent.addItem("", True)
         self.password = QLineEdit()
         self.password.setEchoMode(QLineEdit.Password)
         self.password.setPlaceholderText("password")
@@ -52,12 +91,12 @@ class AnonymousExportDialog(QDialog):
         if not anonymise.zip_available():
             self.consent.model().item(1).setEnabled(False)
             self.consent.setToolTip("Needs the pyzipper package (installed with the next start of Lemmatrix)")
-        stem = Path(db.path).stem if db.path else "Database"
+        self.stem = Path(db.path).stem if db.path else "Database"
         from .. import layout                  # exports start in the database's Exports folder
-        base = layout.exports_folder(main.doc.db.path) if main.doc.db.path else Path.home() / "Documents"
-        start = base / f"{stem} anonymous {QDate.currentDate().toString('yyyy-MM-dd')}"
-        self.folder = PathEdit(QDir.toNativeSeparators(str(start)), True, "Export to folder")
-        form.addRow("People", self.researchers)
+        self.base = layout.exports_folder(db.path) if db.path else Path.home() / "Documents"
+        self.folder = PathEdit("", True, "Export to folder")
+        self.codes_label = QLabel("Language")
+        form.addRow(self.codes_label, codes)
         form.addRow("Notebook", self.notebook)
         form.addRow("Free text", self.names)
         form.addRow("Recordings", self.recordings)
@@ -67,8 +106,12 @@ class AnonymousExportDialog(QDialog):
         form.addRow("", self.password2)
         form.addRow("Folder", self.folder)
         lay.addLayout(form)
-        note = QLabel("Free text can still hold things that identify people (a name not on the participant "
-                      "list, a village). The report at the end lists every name replaced.")
+        self.private = QLabel(anonymise.PRIVATE_NOTE)
+        self.private.setWordWrap(True)
+        self.private.setStyleSheet(f"color: {theme.muted()};")
+        lay.addWidget(self.private)
+        note = QLabel("Free text can still hold things that identify people (a name not on the lists, a village). "
+                      "The report at the end lists every replacement.")
         note.setWordWrap(True)
         note.setStyleSheet(f"color: {theme.muted()};")
         lay.addWidget(note)
@@ -79,7 +122,55 @@ class AnonymousExportDialog(QDialog):
         buttons.rejected.connect(self.reject)
         lay.addWidget(buttons)
         self.consent.currentIndexChanged.connect(lambda *_: self._enable())
-        self.notebook.toggled.connect(lambda *_: self._enable())
+        self.kinds.buttonToggled.connect(lambda b, on: on and self.set_kind(self._kind_of(b)))
+        self.kind = ""
+        self.kind_buttons[kind].setChecked(True)
+        self.set_kind(kind)
+
+    def _kind_of(self, button) -> str:
+        return next(k for k, b in self.kind_buttons.items() if b is button)
+
+    def _default_folder(self, kind: str) -> str:
+        word = "anonymous" if kind == ANONYMOUS else "ethical"
+        return QDir.toNativeSeparators(str(self.base / f"{self.stem} {word} archive "
+                                                       f"{QDate.currentDate().toString('yyyy-MM-dd')}"))
+
+    def set_kind(self, kind: str):
+        """Switch to the other archive: its own defaults (Josh, 22 October)."""
+        if kind == self.kind:
+            return
+        old_default = self._default_folder(self.kind) if self.kind else ""
+        self.kind = kind
+        anon = kind == ANONYMOUS
+        defaults = anonymise.Options.for_kind(kind)
+        self.setWindowTitle(f"Export {anonymise.TITLES[kind].lower()}")
+        self.intro.setText(INTRO[kind])
+        self.ai_note.setVisible(anon)
+        self.codes_label.setVisible(anon)
+        self.codes_row.setVisible(anon)
+        for w in (self.hide_language, self.hide_variety):
+            w.setChecked(False)
+        self.notebook.setChecked(defaults.notebook)
+        self.names.setChecked(defaults.replace_names)
+        self.names.setText("Replace names and old codes in comments, translations, notes and TextGrids "
+                           "with the new codes" if anon else
+                           "Replace the names of people who aren't identifiable, in comments, translations, "
+                           "notes and TextGrids, with their codes")
+        if anon:
+            self.recordings.setChecked(False)
+            self.recordings.setEnabled(False)
+            self.recordings.setText("None in an anonymous archive (a voice undoes the anonymising)")
+        else:
+            self.recordings.setEnabled(True)
+            self.recordings.setChecked(defaults.recordings)
+            self.recordings.setText("Include the recordings of speakers who agreed to audio sharing")
+        self.places.setCurrentIndex(self.places.findData(defaults.place_levels))
+        self.consent.setItemText(1, "Add them, with the code key, as a password-protected zip" if anon
+                                 else "Add them as a password-protected zip")
+        self.consent.setToolTip("The key (old code → new code) is kept only inside this zip, never in the clear"
+                                if anon else "")
+        if not self.folder.text() or self.folder.text() == old_default:
+            self.folder.edit.setText(self._default_folder(kind))
         self._enable()
 
     def _enable(self):
@@ -88,11 +179,13 @@ class AnonymousExportDialog(QDialog):
             w.setEnabled(zipped)
 
     def options(self) -> anonymise.Options:
+        anon = self.kind == ANONYMOUS
         return anonymise.Options(
-            researchers=self.researchers.isChecked(), notebook=self.notebook.isChecked(),
-            replace_names=self.names.isChecked(), recordings=self.recordings.isChecked(),
-            place_levels=int(self.places.currentData()),
-            consent_password=self.password.text() if self.consent.currentData() else "")
+            kind=self.kind, notebook=self.notebook.isChecked(), replace_names=self.names.isChecked(),
+            recordings=self.recordings.isChecked() and not anon, place_levels=int(self.places.currentData()),
+            consent_password=self.password.text() if self.consent.currentData() else "",
+            hide_language_code=anon and self.hide_language.isChecked(),
+            hide_variety_code=anon and self.hide_variety.isChecked())
 
     def accept(self):
         if self.consent.currentData():
@@ -116,5 +209,8 @@ class AnonymousExportDialog(QDialog):
         except OSError as exc:
             QMessageBox.warning(self, "Export", f"Couldn't export: {exc}")
             return
-        QMessageBox.information(self, "Anonymous backup", anonymise.summary(report, self.options()))
+        QMessageBox.information(self, anonymise.TITLES[self.kind], anonymise.summary(report, self.options()))
         super().accept()
+
+
+AnonymousExportDialog = ArchiveExportDialog       # the older name

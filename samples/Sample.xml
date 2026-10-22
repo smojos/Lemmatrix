@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<database format="7">
+<database format="8">
   <metadata>
     <language code="LXX">Sample language</language>
     <variety code="VXX">Sample variety</variety>
     <name>Sample</name>
-    <researcher code="RS1" name="Researcher 1" />
-    <researcher code="RS2" name="Researcher 2" />
-    <participant code="SP1" name="Speaker 1" />
-    <participant code="SP2" name="Speaker 2" />
+    <researcher code="RS1" name="Researcher 1" identifiable="yes" />
+    <researcher code="RS2" name="Researcher 2" identifiable="yes" />
+    <participant code="SP1" name="Speaker 1" identifiable="no" audio-sharing="no" />
+    <participant code="SP2" name="Speaker 2" identifiable="no" audio-sharing="no" />
     <location name="Canada" code="CA">
       <location name="British Columbia" code="BC">
         <location name="Ucluelet" code="UCL-V" />

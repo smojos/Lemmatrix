@@ -151,7 +151,7 @@ def build(recordings: Path | None = None):
                       "ɛλicit. Built by samples/make_elicit_test.py; the recordings are Josh Smolders'.")
     md.participants = [Person("SP1", "Speaker 1", identifiable=True, audio_sharing=True),
                        Person("SP2", "Speaker 2", identifiable=False, audio_sharing=False)]
-    md.researchers = [Person("RS1", "Researcher 1", email="researcher@example.org")]
+    md.researchers = [Person.researcher("RS1", "Researcher 1", email="researcher@example.org")]
     s.gloss_languages = ["en", "da"]
     s.primary_gloss = "en"
     s.auto_update_names = True

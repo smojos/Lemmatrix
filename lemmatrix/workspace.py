@@ -11,7 +11,8 @@ on each computer.
 
 The file is XML, like the notebook. It is written as soon as something changes (the window
 does that a moment after), never marks the database unsaved, goes into Full backup and Backups,
-and is left out of the anonymous backup (it holds participant codes and no data).
+and is left out of both archives (it holds participant codes and no data: it is the researcher's
+working state, not archive data).
 
 Three parts of it live in the database's objects while it is open, so the rest of the program
 works with them as before: `settings.matrices`, `settings.play_cell_on_click`,
@@ -182,7 +183,7 @@ def save(ws: Workspace, db: Database, path: str | os.PathLike | None = None):
 
 
 def save_blank(path: str | os.PathLike):
-    """A workspace with nothing in it but the defaults (the anonymous backup's: none of the
+    """A workspace with nothing in it but the defaults (the archives': none of the
     working state goes with the data)."""
     root = ET.Element("workspace", format=FORMAT)
     ET.SubElement(root, "settings", {"play-cell-on-click": "no", "pitch-style": "contours"})

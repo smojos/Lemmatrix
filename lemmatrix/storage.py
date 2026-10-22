@@ -21,12 +21,13 @@ from .model import (LEMMAS, TEXTS, UTTERANCES, ClipSource, Database, Entry, Fiel
                     Location, Metadata, Person, RefCategory, Settings, Tag, TagStructure, Text, TierMapping,
                     TierRule, Token, Utterance, is_utterance, new_id, nfc, write_atomically, xml_safe)
 
-FORMAT_VERSION = "7"
+FORMAT_VERSION = "8"
 # Until version 1.0 only the current format is read (Josh, 18 October 2026: his database is the
 # only one, so there is no compatibility code for older formats). When the format changes, a
 # provisional upgrade from the format before is written for his database and taken out again
 # once it has been saved in the new one.
-READABLE = ("5", "6", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file (upgrades below)
+READABLE = ("5", "6", "7", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
+# 7: before researchers had the Identifiable? tick and both ticks were always written (upgrades below)
 BACKUPS_KEPT = 10
 
 
@@ -190,11 +191,16 @@ def _load_values(el, target, multilingual_names: set[str], skip=("token",)):
                 target.changed[child.tag] = child.get("changed")
 
 
-def _load_person(el) -> Person:
-    """<participant code="SP1" name="..." identifiable="yes" audio-sharing="yes">description</participant>;
-    researchers can have an email="..."."""
+def _load_person(el, researcher: bool = False) -> Person:
+    """<participant code="SP1" name="..." identifiable="no" audio-sharing="no">description</participant>;
+    researchers have identifiable= too, and can have an email="...". Since format 8 (22 October,
+    idea 44) the ticks are always written, yes or no; a tick that isn't there (an older file) is
+    the default: a researcher is identifiable, a participant isn't, and nobody has agreed to
+    audio sharing."""
+    ident = el.get("identifiable")
     return Person(nfc(el.get("code", "")), nfc(el.get("name", "")), _text(el), nfc(el.get("consent", "")),
-                  email=(el.get("email") or "").strip(), identifiable=el.get("identifiable") == "yes",
+                  email=(el.get("email") or "").strip(),
+                  identifiable=(ident == "yes") if ident is not None else researcher,
                   audio_sharing=el.get("audio-sharing") == "yes")
 
 
@@ -213,7 +219,7 @@ def _load_metadata(m) -> Metadata:
         md.variety_code, md.variety_name = nfc(x.get("code", "")), _text(x)
     md.name = _text(m.find("name"))
     md.author = _text(m.find("author"))
-    md.researchers = [_load_person(r) for r in m.findall("researcher")]
+    md.researchers = [_load_person(r, researcher=True) for r in m.findall("researcher")]
     md.participants = [_load_person(p) for p in m.findall("participant")]
     md.locations = [_load_location(x) for x in m.findall("location")]
     md.description = _text(m.find("description"))
@@ -306,6 +312,8 @@ def load(path: str | os.PathLike) -> Database:
         _upgrade_5_to_6(db)
     if version in ("5", "6"):            # format 7 (21 October): the working state moves to the workspace
         db.workspace_from_file = True
+    if version != FORMAT_VERSION:        # format 8 (22 October): researchers ticked Identifiable?, read
+        db.upgraded = True               # above; quietly, so saving writes the new format
     if repaired:
         db.load_notes = list(db.load_notes) + [REPAIRED_NOTE]
     return db
@@ -434,10 +442,9 @@ def to_element(db: Database) -> ET.Element:
                 a["consent"] = p.consent
             if p.email:
                 a["email"] = p.email
-            if p.identifiable:
-                a["identifiable"] = "yes"
-            if p.audio_sharing:
-                a["audio-sharing"] = "yes"
+            a["identifiable"] = "yes" if p.identifiable else "no"     # always written (format 8)
+            if tag == "participant":
+                a["audio-sharing"] = "yes" if p.audio_sharing else "no"
             ET.SubElement(m, tag, a).text = p.description or None
     def location(parent, loc: Location):
         a = {"name": loc.name}

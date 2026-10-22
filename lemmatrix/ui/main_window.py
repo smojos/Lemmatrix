@@ -1071,7 +1071,9 @@ class MainWindow(QMainWindow):
         self._act(ex, "&Entire database as CSV…", lambda: self.export_csv(filtered=False))
         self._act(ex, "&Tag structure as CSV…", lambda: self.export_csv(filtered=False, tags=True))
         ex.addSeparator()
-        self._act(ex, "&Anonymous backup…", self.export_anonymous)
+        # two archives (idea 44): data to share, never the notebook's ideas unless asked
+        self._act(ex, "&Anonymous archive…", lambda: self.export_archive("anonymous"))
+        self._act(ex, "Et&hical archive…", lambda: self.export_archive("ethical"))
         f.addSeparator()
         # Settings in File, as in Office, with the gear and Ctrl+, (Josh, 22 October; Edit before)
         self.settings_action = self._act(f, "&Settings…", self.edit_settings, "Ctrl+,")
@@ -1535,7 +1537,7 @@ class MainWindow(QMainWindow):
         self._report_missing()
         if self.notebook_dialog is not None:
             self.notebook_dialog.reload()
-        if db.workspace_from_file and not db.load_notes:   # format 6 → 7: quietly, saving writes format 7
+        if (db.workspace_from_file or db.upgraded) and not db.load_notes:   # quietly, saving writes the new format
             self.doc.settings_changed()
         if db.load_notes:                         # e.g. an older file upgraded to the current format
             notes, db.load_notes = db.load_notes, []
@@ -2063,9 +2065,10 @@ class MainWindow(QMainWindow):
         # people found in the notebook join the lists (Q8)
         md = self.doc.db.metadata
         researchers, participants = self.doc.notebook.people()
-        for codes, people in ((researchers, md.researchers), (participants, md.participants)):
+        for codes, people, make in ((researchers, md.researchers, Person.researcher),
+                                    (participants, md.participants, Person)):
             have = {p.code for p in people}
-            people += [Person(c) for c in codes if c not in have]
+            people += [make(c) for c in codes if c not in have]
 
     def _record_comments(self):
         """Bring the day's notebook session up to date with today's comments (on saving).
@@ -3725,10 +3728,13 @@ class MainWindow(QMainWindow):
         from .dates_dialog import RecordingDatesDialog
         RecordingDatesDialog(self).exec()
 
-    def export_anonymous(self):
-        """File → Export → Anonymous backup: a copy without the participants' personal details."""
-        from .export_dialog import AnonymousExportDialog
-        AnonymousExportDialog(self).exec()
+    def export_archive(self, kind: str = "ethical"):
+        """File → Export → Anonymous archive / Ethical archive (idea 44): a copy of the data to share,
+        with nobody named (anonymous) or only the people ticked Identifiable? (ethical)."""
+        from .export_dialog import ArchiveExportDialog
+        ArchiveExportDialog(self, kind).exec()
+
+    export_anonymous = export_archive             # the older name
 
     def export_csv(self, filtered: bool, tags: bool = False):
         from .. import export

@@ -36,14 +36,17 @@ def test_consent_ticks_and_email_are_saved(win, tmp_path):
     assert back.researchers[0].email == "rs@example.org"
 
 
-def test_unticked_people_write_nothing_new(win, tmp_path):
+def test_the_ticks_are_always_written_yes_or_no(win, tmp_path):
+    """Format 8 (idea 44): every researcher says identifiable= and every participant both ticks,
+    so the file reads the same without knowing the defaults; no email, no email=."""
     db = win.doc.db
     for p in db.metadata.participants + db.metadata.researchers:
         p.identifiable = p.audio_sharing = False
         p.email = ""
     storage.save(db, tmp_path / "Saved.xml")
     text = (tmp_path / "Saved.xml").read_text(encoding="utf-8")
-    assert "identifiable" not in text and "audio-sharing" not in text and "email=" not in text
+    assert 'identifiable="no" audio-sharing="no"' in text and "email=" not in text
+    assert 'identifiable="yes"' not in text
 
 
 def test_the_anonymous_backup_takes_out_emails_and_keeps_the_ticks(win):

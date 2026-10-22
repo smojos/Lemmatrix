@@ -38,7 +38,7 @@ def test_round_trip(tmp_path):
     text = (tmp_path / "Lex.workspace").read_text(encoding="utf-8")
     assert "<matrix name=\"Plurals\"" in text and f'<token id="{tok.id}">' in text and "<word>Pade</word>" in text
     xml = (tmp_path / "Lex.xml").read_text(encoding="utf-8")
-    assert 'format="7"' in xml
+    assert f'format="{storage.FORMAT_VERSION}"' in xml
     for gone in ("<matrix", "rerecord", "<spelling", "style=", "<display"):
         assert gone not in xml                                  # none of it in the database
     again = storage.load(db.path)
@@ -85,7 +85,7 @@ def test_an_older_database_moves_its_working_state_out_quietly(win, tmp_path):
     db.entries[0].tokens[0].rerecord = True
     assert win.save()
     xml = (tmp_path / "Sample.xml").read_text(encoding="utf-8")
-    assert 'format="7"' in xml and "rerecord" not in xml and "<matrix" not in xml
+    assert f'format="{storage.FORMAT_VERSION}"' in xml and "rerecord" not in xml and "<matrix" not in xml
     text = (tmp_path / "Sample.workspace").read_text(encoding="utf-8")
     assert 'name="Plurals"' in text and db.entries[0].tokens[0].id in text
     assert any(f.suffix == ".workspace" for f in (tmp_path / "Backups").iterdir())   # a copy on saving

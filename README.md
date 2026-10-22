@@ -12,6 +12,29 @@ tools such as FLEx, Praat, ELAN, Dekereke and Excel; no code from any of them is
 
 **Status:** first prototype (Stage 1, version 0.1).
 
+## Your data, and your own work
+
+Lemmatrix keeps two kinds of thing apart, and the difference runs through the whole program.
+
+- **The data** is what you collected and what describes it: lemmas and tokens with their
+  recordings, utterances, texts with their TextGrids, the fields, tags and lists that describe
+  them (your tone classes, word classes, reference categories), the metadata, and the consent
+  ticks that say how it may be shared. It lives in the database file and its soundfiles, and it
+  is what you archive and share: *ethically collected and shared*.
+- **Your own work** is what you make of the data: the notebook's notes, questions and To Dos,
+  your Cogitate hypotheses with the evidence for and against them, your workspace, and later the
+  results of the Analyze tools and the papers you Compose. These are your academic ideas and your
+  private property, not data for public sharing.
+
+Both are on screen together (that is the point), but they are stored apart. **File → Full
+backup** keeps everything, for you. **File → Export → Ethical archive** and **Anonymous
+archive** share the data only: the notebook stays out unless you tick it in, and the workspace
+goes blank. Others can look at your archived data and come to their own conclusions; they don't
+get to piggyback on your unpublished thoughts. The **Ethical archive** names only the people
+ticked *Identifiable?* and carries only the recordings of speakers who agreed to audio sharing,
+as their consent forms allow; the **Anonymous archive** names nobody at all (codes renumbered, no
+recordings), and is the one to use when you ask an AI for help with your data.
+
 © 2026 Joshua A. G. Smolders. Free software under the
 [GNU General Public License, version 3 or later](LICENSE) (GPL-3.0-or-later).
 
@@ -80,7 +103,9 @@ If something goes wrong, a message box shows the details, and they're also writt
 
   ```
   Main folder/
-  ├─ <database>.xml and <database>.notebook
+  ├─ <database>.xml           the data
+  ├─ <database>.notebook      your own work: notes, questions, To Dos, hypotheses
+  ├─ <database>.workspace     what you are working on: saved matrices, filters, the session
   ├─ Soundfiles/Tokens/       the tokens' recordings
   ├─ Backups/                 the automatic backups
   ├─ Documentation/           consent forms and other documentation
@@ -128,6 +153,7 @@ If something goes wrong, a message box shows the details, and they're also writt
   lemmas and tokens, the day's recordings, and questions (open or resolved). View → Notebook
   (Ctrl+B) or the notepad in the Current Session; the pencil writes the day's session.
   View → Questions lists every question. Add a note for a past day; no future days.
+  The notebook is your own: it goes into every Full backup but into no archive unless you choose.
 - **Current Session:** researcher, participant and location chips, the speaker (the first
   participant, until another is chosen), the date.
 - **Edit menu:** metadata (language, variety, author), Fields (lemma and token fields, open or
@@ -162,6 +188,12 @@ If something goes wrong, a message box shows the details, and they're also writt
 - **Export** (File → Export) as CSV: the filtered database (what the current tab shows: All
   data's rows and columns, or the matrix grid) or the entire database (one row per token with
   every lemma and token field). UTF-8, so Excel shows IPA correctly.
+- **Archives** (File → Export): the **Ethical archive** (the data as the consent forms allow:
+  identifiable people named, only recordings whose speaker agreed to audio sharing) and the
+  **Anonymous archive** (nobody named, every code renumbered, no recordings; for showing your
+  setup, or for AI). Both leave your notebook out by default and write a blank workspace; the
+  consent forms can travel in a password-protected zip. Researchers and participants have an
+  *Identifiable?* tick in Edit → Lists (ticked for a new researcher, not for a new participant).
 - **Undo and redo** for all changes to entries and tokens.
 
 ## Not in this version yet
@@ -183,6 +215,7 @@ lemmatrix/            the program
   storage.py          reading and writing the XML file, backups
   layout.py           the main folder's fixed layout, consent relinking, full backups
   notebook.py         the notebook: sessions, the record of comments, the .notebook file
+  anonymise.py        the Ethical and Anonymous archives: the data to share, without your own work
   filenames.py        building soundfile names from the pattern
   elicit.py           ɛλicit: requests, the recordings coming back, the review (elicit_prompts.py: the
                       web page's prompts in each language; elicit_art.py: Josh's ɛλicit drawings)

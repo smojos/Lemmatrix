@@ -302,7 +302,15 @@ def test_anonymous_backup_takes_utterance_recordings(win, tmp_path):
     uw = win.open_utterances()
     uw.import_files([str(_wav(tmp_path / "song.wav"))])
     win.save()
-    rep = anonymise.export(win.doc.db, win.doc.notebook, tmp_path / "anon", anonymise.Options(recordings=True))
+    db = win.doc.db
+    song = db.utterances[0].token
+    rep = anonymise.export(db, win.doc.notebook, tmp_path / "none", anonymise.Options(recordings=True))
+    assert not (tmp_path / "none" / "Soundfiles" / "Utterances").exists()   # nobody agreed to audio sharing
+    assert rep.withheld_recordings >= 1
+    for p in db.metadata.participants:               # the Ethical archive: only agreed audio sharing
+        p.audio_sharing = True
+    song.speaker = db.metadata.participants[0].code
+    rep = anonymise.export(db, win.doc.notebook, tmp_path / "anon", anonymise.Options(recordings=True))
     assert (tmp_path / "anon" / "Soundfiles" / "Utterances" / "LXX-VXX_W001_song.wav").exists()
     assert rep.recordings > 1
 

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<database format="7">
+<database format="8">
   <metadata>
     <language code="ITA">Italian</language>
     <variety code="STD">Standard Italian</variety>
     <name>Elicit Test</name>
-    <researcher code="RS1" name="Researcher 1" email="researcher@example.org" />
+    <researcher code="RS1" name="Researcher 1" email="researcher@example.org" identifiable="yes" />
     <participant code="SP1" name="Speaker 1" identifiable="yes" audio-sharing="yes" />
-    <participant code="SP2" name="Speaker 2" />
+    <participant code="SP2" name="Speaker 2" identifiable="no" audio-sharing="no" />
     <location name="Canada" code="CA">
       <location name="British Columbia" code="BC">
         <location name="Ucluelet" code="UCL-V" />
