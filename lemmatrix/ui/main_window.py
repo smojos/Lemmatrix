@@ -878,7 +878,7 @@ class MainWindow(QMainWindow):
             "Convert to hypothesis",
             lambda j: hy.make(book, j, date, summary=q.text, links=[link], db=self.doc.db))
         if not q.resolved:
-            q.resolved = today()
+            q.set_resolved(today())
         self.doc.notebook_changed()
         if self.notebook_dialog is not None and self.notebook_dialog.isVisible():
             self.notebook_dialog.reload()

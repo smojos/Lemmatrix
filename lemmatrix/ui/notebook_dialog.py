@@ -41,6 +41,15 @@ def kind_icon(kind: str, size: int = 18):
     return icon(KIND_ICON[kind], size)
 
 
+def pin_icon(size: int = 16):
+    """The pushpin of a pinned question or To Do, in the theme colour (lighter on dark)."""
+    return icon("pin", size, theme.colour("pitch").name())
+
+
+def pin_label(q) -> str:
+    return "Unpin" if q is not None and q.pinned else "Pin to the top"
+
+
 HYPOTHESIS_TIP = ("Convert to hypothesis: a new hypothesis whose summary is this question, linked to it as "
                   "Relevant; the question stays here, resolved, and Cogitate opens on the hypothesis")
 
@@ -794,6 +803,8 @@ class ItemsPanel(QWidget):
         self.hypothesis_btn = None
         if kind == nbmod.QUESTION:                    # Convert to hypothesis (Josh, 22 October)
             self.hypothesis_btn = qbutton("", HYPOTHESIS_TIP, self.to_hypothesis, ic=_cogitate_icon(30))
+        self.pin_btn = qbutton("", f"Pin the selected {one} to the top of the list (resolving it unpins it)",
+                               self.toggle_pin, ic=pin_icon(30))
         qb.addStretch(1)
         ql.addLayout(qb)
         self.tree = QTreeWidget()
@@ -827,9 +838,11 @@ class ItemsPanel(QWidget):
             return
         muted = QBrush(QColor(theme.muted()))
         lst = nbmod.items(s, self.kind)
-        for q in lst:
+        for q in [x for x in lst if x.pinned] + [x for x in lst if not x.pinned]:   # pinned on top
             it = QTreeWidgetItem([q.text, q.about, q.status, q.dated, q.resolved])
             it.setData(0, Qt.UserRole, q)
+            if q.pinned:
+                it.setIcon(0, pin_icon())
             it.setToolTip(0, q.text)
             link_look(it, 1, q)
             if not q.is_open:
@@ -851,9 +864,12 @@ class ItemsPanel(QWidget):
 
     def buttons(self):
         q = self.current()
-        for b in (self.delete_btn, self.edit_btn, self.resolve_btn, self.convert_btn) + \
+        for b in (self.delete_btn, self.edit_btn, self.resolve_btn, self.convert_btn, self.pin_btn) + \
                 ((self.hypothesis_btn,) if self.hypothesis_btn is not None else ()):
             b.setEnabled(q is not None)
+        self.pin_btn.setToolTip("Unpin the selected item" if q is not None and q.pinned else
+                                f"Pin the selected {nbmod.name(self.kind, title=False)} to the top of the "
+                                "list (resolving it unpins it)")
         one = nbmod.name(self.kind, title=False)
         self.resolve_btn.setToolTip(f"Mark the selected {one} as open again" if q and not q.is_open
                                     else f"Resolve the selected {one}")
@@ -877,6 +893,7 @@ class ItemsPanel(QWidget):
                 (f"Add a {one}…", icon("add", 16), self.add, self.session is not None),
                 (f"Edit {one}…", icon("edit", 16), self.edit, on),
                 ("Mark as open" if on and not q.is_open else "Resolve", icon("resolve", 16), self.toggle, on),
+                (pin_label(q), pin_icon(), self.toggle_pin, on),
                 (convert_label(self.kind), kind_icon(nbmod.other(self.kind), 16), self.convert, on),
                 *((("Convert to hypothesis", _cogitate_icon(), self.to_hypothesis, on),)
                   if self.kind == nbmod.QUESTION else ()),
@@ -888,6 +905,15 @@ class ItemsPanel(QWidget):
             a.setEnabled(enabled)
             a.triggered.connect(lambda *_, fn=fn: fn())
         m.exec(self.tree.viewport().mapToGlobal(pos))
+
+    def toggle_pin(self):
+        """Pin to the top / Unpin (Josh, 22 October)."""
+        q = self.current()
+        if q is None:
+            return
+        q.pinned = not q.pinned
+        self._changed()
+        self.fill(q)
 
     def to_hypothesis(self):
         """Convert to hypothesis: a new hypothesis from this question (the question stays, resolved)."""
@@ -947,7 +973,7 @@ class ItemsPanel(QWidget):
         q = self.current()
         if q is None:
             return
-        q.resolved = "" if q.resolved else today()
+        q.set_resolved("" if q.resolved else today())
         self._changed()
         self.fill(q)
 
@@ -1058,6 +1084,9 @@ class ItemsDialog(QDialog):
             self.hypothesis_btn = QPushButton(_cogitate_icon(18), "")
             self.hypothesis_btn.setToolTip(HYPOTHESIS_TIP)
             self.hypothesis_btn.clicked.connect(lambda *_: self.to_hypothesis())
+        self.pin_btn = QPushButton(pin_icon(18), "")
+        self.pin_btn.setToolTip(f"Pin the selected {one} to the top of the list (resolving it unpins it)")
+        self.pin_btn.clicked.connect(lambda *_: self.toggle_pin())
         self.open_btn = QPushButton(icon("notebook", 18, theme.accent().name()), "Open in notebook")
         self.open_btn.clicked.connect(lambda *_: self.open_day())
         self.token_btn = QPushButton("Go to token")
@@ -1067,8 +1096,8 @@ class ItemsDialog(QDialog):
         self.count.setStyleSheet(f"color: {theme.muted()};")
         close = QPushButton("Close")
         close.clicked.connect(self.accept)
-        for w in (self.resolve_btn, self.edit_btn, self.convert_btn, self.hypothesis_btn, self.open_btn,
-                  self.token_btn):
+        for w in (self.resolve_btn, self.edit_btn, self.pin_btn, self.convert_btn, self.hypothesis_btn,
+                  self.open_btn, self.token_btn):
             if w is not None:
                 row.addWidget(w)
         row.addWidget(self.count)
@@ -1110,6 +1139,8 @@ class ItemsDialog(QDialog):
                 continue
             it = QTreeWidgetItem([s.date, q.text, q.about, q.status, q.dated, q.resolved])
             it.setData(0, Qt.UserRole, (s, q))
+            if q.pinned:
+                it.setIcon(1, pin_icon())
             it.setToolTip(1, q.text)
             link_look(it, 2, q)
             if not q.is_open:
@@ -1131,9 +1162,13 @@ class ItemsDialog(QDialog):
 
     def _buttons(self):
         cur = self._current()
-        for b in (self.resolve_btn, self.edit_btn, self.convert_btn, self.open_btn, self.hypothesis_btn):
+        for b in (self.resolve_btn, self.edit_btn, self.convert_btn, self.open_btn, self.hypothesis_btn,
+                  self.pin_btn):
             if b is not None:
                 b.setEnabled(cur is not None)
+        self.pin_btn.setToolTip("Unpin the selected item" if cur is not None and cur[1].pinned else
+                                f"Pin the selected {nbmod.name(self.kind, title=False)} to the top of the "
+                                "list (resolving it unpins it)")
         self.resolve_btn.setText("Mark as open" if cur and not cur[1].is_open else "Resolve")
         self.token_btn.setEnabled(cur is not None and cur[1].link is not None)
 
@@ -1155,6 +1190,7 @@ class ItemsDialog(QDialog):
         for text, ic, fn, enabled in (
                 (f"Edit {nbmod.name(self.kind, title=False)}…", icon("edit", 16), self.edit, True),
                 ("Mark as open" if not q.is_open else "Resolve", icon("resolve", 16), self.toggle, True),
+                (pin_label(q), pin_icon(), self.toggle_pin, True),
                 (convert_label(self.kind), kind_icon(nbmod.other(self.kind), 16), self.convert, True),
                 *((("Convert to hypothesis", _cogitate_icon(), self.to_hypothesis, True),)
                   if self.kind == nbmod.QUESTION else ()),
@@ -1164,6 +1200,17 @@ class ItemsDialog(QDialog):
             a.setEnabled(enabled)
             a.triggered.connect(lambda *_, fn=fn: fn())
         m.exec(self.tree.viewport().mapToGlobal(pos))
+
+    def toggle_pin(self):
+        """Pin to the top / Unpin (Josh, 22 October)."""
+        cur = self._current()
+        if cur is None:
+            return
+        cur[1].pinned = not cur[1].pinned
+        self.main.doc.notebook_changed()
+        self._fill(cur[1])
+        if getattr(self.main, "notebook_dialog", None) is not None:
+            self.main.notebook_dialog.reload()
 
     def to_hypothesis(self):
         """Convert to hypothesis: a new hypothesis from the selected question (it stays, resolved)."""
@@ -1183,7 +1230,7 @@ class ItemsDialog(QDialog):
         if cur is None:
             return
         q = cur[1]
-        q.resolved = "" if q.resolved else today()
+        q.set_resolved("" if q.resolved else today())
         self.main.doc.notebook_changed()
         self._fill(q)
         self._notebook_follows()

@@ -102,3 +102,28 @@ def test_convert_question_to_hypothesis(win):
     assert h.id not in [x.id for x in win.doc.notebook.hypotheses]
     assert TodoDialog(win).hypothesis_btn is None                 # questions only
     w.close()
+
+
+def test_pinned_questions_and_todos(win, tmp_path):
+    from lemmatrix import notebook as nb
+    from lemmatrix.ui.notebook_dialog import QuestionsDialog
+    book = win.doc.notebook
+    old = book.add_session("2026-10-01")
+    new = book.add_session("2026-10-05")
+    old.questions = [nb.Question("old one", "2026-10-01")]
+    new.questions = [nb.Question("new one", "2026-10-05")]
+    assert [q.text for _, q in book.all_items(nb.QUESTION)] == ["new one", "old one"]
+    dlg = QuestionsDialog(win)
+    dlg.tree.setCurrentItem(dlg.tree.topLevelItem(1))           # old one
+    dlg.toggle_pin()
+    assert old.questions[0].pinned
+    assert dlg.tree.topLevelItem(0).text(1) == "old one"          # pinned on top
+    assert not dlg.tree.topLevelItem(0).icon(1).isNull()
+    path = tmp_path / "x.notebook"                                # saved and read back
+    nb.save(book, path)
+    assert 'pinned="yes"' in path.read_text(encoding="utf-8")
+    back = nb.load(path)
+    assert [q.text for _, q in back.all_items(nb.QUESTION)][0] == "old one"
+    dlg.tree.setCurrentItem(dlg.tree.topLevelItem(0))
+    dlg.toggle()                                                  # resolving unpins
+    assert old.questions[0].resolved and not old.questions[0].pinned

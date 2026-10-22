@@ -74,6 +74,13 @@ class Question:
     about: str = ""                   # how the link reads: "D011 sheep · SG"
     kind: str = QUESTION              # QUESTION or TODO (a To Do is a Question in the other list)
     id: str = ""                      # given when first linked to a hypothesis (format 3), kept after
+    pinned: bool = False              # kept at the top of its list (Josh, 22 October); resolving unpins
+
+    def set_resolved(self, day: str):
+        """Resolve it (a date) or open it again (""); resolving takes the pin off."""
+        self.resolved = day
+        if day:
+            self.pinned = False
 
     @property
     def is_todo(self) -> bool:
@@ -205,7 +212,9 @@ class Notebook:
         return self.all_items(TODO)
 
     def all_items(self, kind: str) -> list[tuple[Session, Question]]:
-        return [(s, q) for s in self.newest_first() for q in items(s, kind)]
+        """Every question (or To Do), newest day first, the pinned ones above the rest."""
+        every = [(s, q) for s in self.newest_first() for q in items(s, kind)]
+        return [x for x in every if x[1].pinned] + [x for x in every if not x[1].pinned]
 
     def people(self) -> tuple[list[str], list[str]]:
         """Every researcher and participant code that appears, in order of first appearance."""
@@ -619,7 +628,7 @@ def load(path: str | os.PathLike) -> Notebook:
                 items(s, kind).append(Question(_text(q), q.get("created", ""), q.get("edited", ""),
                                                q.get("resolved", ""), q.get("entry", ""), q.get("token", ""),
                                                nfc(q.get("ref", "")), nfc(q.get("about", "")), kind,
-                                               q.get("id", "")))
+                                               q.get("id", ""), q.get("pinned") == "yes"))
         s.texts = [x.get("id", "") for x in el.findall("text") if x.get("id")]
         s.hypotheses = [x.get("id", "") for x in el.findall("hypothesis") if x.get("id")]
         nb.sessions.append(s)
@@ -657,6 +666,8 @@ def to_string(nb: Notebook, database_name: str = "") -> str:
                 qa["edited"] = q.edited
             if q.resolved:
                 qa["resolved"] = q.resolved
+            if q.pinned:
+                qa["pinned"] = "yes"
             for key, val in (("entry", q.entry_id), ("token", q.token_id), ("ref", q.ref), ("about", q.about)):
                 if val:
                     qa[key] = val
