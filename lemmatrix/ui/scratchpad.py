@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
+"""The pitch scratchpad (IDEAS.md idea 33): a pitch drawing with a box under it. A trace typed
+there (the usual notation, e.g. 55 3:3 21) is drawn as it is typed and played with the button or
+Enter. Nothing is saved anywhere. Used under a text's lines and in the main window's bottom row."""
+
+from __future__ import annotations
+
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QHBoxLayout, QLineEdit, QVBoxLayout, QWidget
+
+from .widgets import PitchCanvas, ipa_font
+
+
+class PitchScratchpad(QWidget):
+    def __init__(self, main, low: int, high: int, tip: str, parent=None):
+        super().__init__(parent)
+        from .main_window import tool
+        from .token_dialog import PitchValidator
+        self.main = main
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(0, 2, 0, 0)
+        lay.setSpacing(2)
+        self.canvas = PitchCanvas(low=low, high=high, font=ipa_font(main.prefs.ipa_size + 3))
+        self.canvas.setToolTip("Pitch scratchpad: the trace typed below, drawn")
+        lay.addWidget(self.canvas)
+        row = QHBoxLayout()
+        row.setSpacing(4)
+        self.edit = QLineEdit()
+        self.edit.setPlaceholderText("pitch scratchpad, e.g. 55 3:3 21")
+        self.edit.setToolTip(tip)
+        self.edit.setValidator(PitchValidator(self.edit))
+        self.edit.setFont(ipa_font(main.prefs.ipa_size))
+        self.edit.textChanged.connect(self.canvas.set_pitch)
+        self.edit.returnPressed.connect(self.play)
+        play = tool("Play pitch scratchpad", "play-pitch", self.play, "Play the pitch scratchpad")
+        play.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        row.addWidget(self.edit, 1)
+        row.addWidget(play)
+        lay.addLayout(row)
+
+    def set_range(self, low: int, high: int):
+        self.canvas.set_range(low, high)
+
+    def play(self):
+        """The trace, in the voice and volume of Settings → Pitch."""
+        self.main.play_pitch(self.edit.text())

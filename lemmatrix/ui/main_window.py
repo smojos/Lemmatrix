@@ -326,7 +326,7 @@ class MainWindow(QMainWindow):
         right.addWidget(box)
 
         bottom = QWidget()
-        bot = QHBoxLayout(bottom)
+        bot = self.bottom_row = QHBoxLayout(bottom)
         bot.setContentsMargins(0, 0, 0, 0)
         self.options = QStackedWidget()
         self.options.addWidget(self._all_data_bar())
@@ -335,6 +335,7 @@ class MainWindow(QMainWindow):
         self.options.addWidget(self.lt_bar["widget"])
         self.options.addWidget(self.tt_bar["widget"])
         bot.addWidget(self.options, 1)
+        bot.addWidget(self._scratch_panel())      # the pitch scratchpad, left of Current Session (22 October)
         bot.addWidget(self._session_panel())      # as wide as its chips need (_fit_session)
         right.addWidget(bottom)
         right.setSizes([720, 150])
@@ -947,6 +948,20 @@ class MainWindow(QMainWindow):
         self.texts_btn.clicked.connect(lambda *_: self.open_utterances())
         return self.texts_btn
 
+    def _scratch_panel(self) -> QWidget:
+        """The pitch scratchpad as in a text's lines (IDEAS.md idea 33), for every tab of the Matrix
+        (Josh, 22 October). Nothing is saved: it's empty each time Lemmatrix opens."""
+        from .scratchpad import PitchScratchpad
+        panel, pl = self._bar()
+        s = self.doc.db.settings
+        self.scratchpad = PitchScratchpad(self, s.pitch_low, s.pitch_high,
+                                          "Pitch scratchpad: type a pitch trace to see and hear it (Enter or "
+                                          "the play button). Nothing is saved")
+        pl.addWidget(self.scratchpad)
+        pl.addStretch(1)
+        panel.setFixedWidth(240)
+        return panel
+
     def _session_panel(self) -> QWidget:
         panel, sl = self._bar()
 
@@ -1538,6 +1553,7 @@ class MainWindow(QMainWindow):
         self.configs.clear()
         for v in (self.lt_view, self.tt_view):
             v.set_database(db)
+        self.scratchpad.set_range(db.settings.pitch_low, db.settings.pitch_high)
         for box, name in ((self.autoplay, "autoplay"), (self.only_data, "only_with_data")):
             box.blockSignals(True)                # each database has its own (in its workspace)
             box.setChecked(self.doc.ws.get_bool(name))
@@ -3441,6 +3457,8 @@ class MainWindow(QMainWindow):
             self.lemmas.model_.ipa.setPointSize(self.prefs.ipa_size)
             self.conventions_changed()
             self.doc.settings_changed()
+            s = self.doc.db.settings
+            self.scratchpad.set_range(s.pitch_low, s.pitch_high)
             if self.notebook_dialog is not None:  # its history ticks follow Settings
                 self.notebook_dialog._show_history_ticks()
             if names_changed:

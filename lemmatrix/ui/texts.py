@@ -547,36 +547,14 @@ class TextsPanel(QObject):
     def _scratchpad(self) -> QWidget:
         """The pitch scratchpad (IDEAS.md idea 33): a pitch trace typed here is drawn and played
         (Ctrl+Shift+Space, anywhere in the lines), and saved nowhere: it goes when the window closes."""
-        from .token_dialog import PitchValidator
-        from .widgets import PitchCanvas
-        box = QWidget()
-        box.setMaximumWidth(420)
-        lay = QVBoxLayout(box)
-        lay.setContentsMargins(0, 2, 0, 0)
-        lay.setSpacing(2)
+        from .scratchpad import PitchScratchpad
         s = self.db.settings
-        self.scratch_canvas = PitchCanvas(low=s.pitch_low, high=s.pitch_high,
-                                          font=ipa_font(self.main.prefs.ipa_size + 3))
-        self.scratch_canvas.setToolTip("Pitch scratchpad: the trace typed below, drawn")
-        lay.addWidget(self.scratch_canvas)
-        row = QHBoxLayout()
-        row.setSpacing(4)
-        self.scratch = QLineEdit()
-        self.scratch.setPlaceholderText("pitch scratchpad, e.g. 55 3:3 21")
-        self.scratch.setToolTip("Pitch scratchpad: type a pitch trace to see and hear it (Ctrl+Shift+Space "
-                                "plays it from anywhere in the lines). Nothing is saved: it's cleared when "
-                                "the window is closed")
-        self.scratch.setValidator(PitchValidator(self.scratch))
-        self.scratch.setFont(ipa_font(self.main.prefs.ipa_size))
-        self.scratch.textChanged.connect(self.scratch_canvas.set_pitch)
-        self.scratch.returnPressed.connect(self.play_scratch)
-        from .main_window import tool
-        play = tool("Play pitch scratchpad", "play-pitch", self.play_scratch,
-                    "Play the pitch scratchpad (Ctrl+Shift+Space)")
-        play.setToolButtonStyle(Qt.ToolButtonIconOnly)
-        row.addWidget(self.scratch, 1)
-        row.addWidget(play)
-        lay.addLayout(row)
+        box = PitchScratchpad(self.main, s.pitch_low, s.pitch_high,
+                              "Pitch scratchpad: type a pitch trace to see and hear it (Ctrl+Shift+Space "
+                              "plays it from anywhere in the lines). Nothing is saved: it's cleared when "
+                              "the window is closed")
+        box.setMaximumWidth(420)
+        self.scratch, self.scratch_canvas = box.edit, box.canvas
         return box
 
     def play_scratch(self):
