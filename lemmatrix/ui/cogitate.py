@@ -63,6 +63,18 @@ def _stretch(table: FilterTable, key: str):
         h.setSectionResizeMode(i, QHeaderView.Stretch if c.key == key else QHeaderView.ResizeToContents)
 
 
+def _split(table: FilterTable, left: str, right: str, width: int = 260):
+    """Two columns share the room left: the border between them can be dragged (the left one is
+    resizable, the right one takes the rest); the others are as wide as their contents."""
+    h = table.horizontalHeader()
+    h.setStretchLastSection(False)
+    for i, c in enumerate(table.model_.columns):
+        h.setSectionResizeMode(i, QHeaderView.Interactive if c.key == left else
+                               QHeaderView.Stretch if c.key == right else QHeaderView.ResizeToContents)
+        if c.key == left:
+            h.resizeSection(i, width)
+
+
 def mark_label(mark: str) -> str:
     return hy.MARK_NAMES.get(mark, mark)
 
@@ -450,12 +462,12 @@ class CogitateWindow(QDialog):
             Column("item", "Item", lambda r: r.item, ipa=True,
                    tooltip=lambda r: hy.gone_text(r.link) if r.gone else "Double-click to go there",
                    color=lambda r: theme.colour("error") if r.gone else None),
+            Column("note", "Note", lambda r: r.link.note, edit=lambda r, t: None),   # before Mark (Josh, 22 October)
             Column("mark", "Mark", lambda r: mark_label(r.link.mark)),
-            Column("note", "Note", lambda r: r.link.note, edit=lambda r, t: None),
             Column("linked", "Linked", lambda r: r.link.linked),
         ]
         self.links.set_columns(lcols, [c.key for c in lcols])
-        _stretch(self.links, "item")
+        _split(self.links, "item", "note")
         self.links.model_.edited.connect(self._note_edited)
         self.links.rowActivated.connect(lambda r: self.open(r))
         self.links.deleteRequested.connect(self.unlink)

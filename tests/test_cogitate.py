@@ -334,3 +334,15 @@ def test_the_anonymous_backup_covers_hypotheses(win):
     report = anonymise.Report()
     _, book = anonymise.anonymise(doc.db, doc.notebook, anonymise.Options(), report)
     assert "Kuku" not in book.hypotheses[-1].summary and p.code in book.hypotheses[-1].summary
+
+
+def test_links_note_before_mark_and_the_item_note_border_drags(win):
+    """Josh, 22 October: Note sits before Mark, and the border between Item and Note can be dragged."""
+    from PySide6.QtWidgets import QHeaderView
+    from lemmatrix.ui.cogitate import CogitateWindow
+    w = CogitateWindow(win)
+    keys = w.links.visible_keys()
+    assert keys.index("item") + 1 == keys.index("note") and keys.index("note") + 1 == keys.index("mark")
+    h = w.links.horizontalHeader()
+    assert h.sectionResizeMode(keys.index("item")) == QHeaderView.Interactive
+    assert h.sectionResizeMode(keys.index("note")) == QHeaderView.Stretch
