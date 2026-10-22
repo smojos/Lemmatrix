@@ -902,7 +902,44 @@ class MainWindow(QMainWindow):
         b.setCursor(Qt.PointingHandCursor)
         b.setToolTip("To Do: every to do in the notebook (Ctrl+Shift+T)")
         b.clicked.connect(lambda *_: self.open_todos())
+        # The badge: the number of open to dos, top right, in the theme colour (Josh, 22 October)
+        self.todo_badge = QLabel(b)
+        self.todo_badge.setAlignment(Qt.AlignCenter)
+        self.todo_badge.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.todo_badge.hide()
+        b.installEventFilter(self)
         return b
+
+    def open_todo_count(self) -> int:
+        book = getattr(self.doc, "notebook", None)
+        return 0 if book is None else sum(1 for _, q in book.all_items(nbmod.TODO) if q.is_open)
+
+    def update_todo_badge(self):
+        """The To Do button's badge: just the number of open to dos; none when there are none."""
+        badge = getattr(self, "todo_badge", None)
+        if badge is None:
+            return
+        n = self.open_todo_count()
+        if n == 0:
+            badge.hide()
+            return
+        badge.setText(str(n) if n < 100 else "99+")
+        f = badge.font()
+        f.setBold(True)
+        f.setPixelSize(11)
+        badge.setFont(f)
+        h = 17
+        w = max(h, badge.fontMetrics().horizontalAdvance(badge.text()) + 8)
+        badge.setFixedSize(w, h)
+        badge.setStyleSheet(f"background: {theme.colour('pitch').name()}; color: white; "
+                            f"border-radius: {h // 2}px; padding: 0px;")
+        self._place_todo_badge()
+        badge.show()
+        badge.raise_()
+
+    def _place_todo_badge(self):
+        b, badge = self.todo_btn, self.todo_badge
+        badge.move(max(0, b.width() - badge.width() - 1), 1)
 
     def xml_target(self):
         """Where the XML viewer opens: the selected token (All data or a matrix cell), else the lemma
@@ -1063,6 +1100,8 @@ class MainWindow(QMainWindow):
     def eventFilter(self, obj, event):
         if obj is getattr(self, "right_split", None) and event.type() == QEvent.Resize:
             self._fit_session()
+        if obj is getattr(self, "todo_btn", None) and event.type() == QEvent.Resize:
+            self._place_todo_badge()
         return super().eventFilter(obj, event)
 
     def _build_menus(self):
@@ -1584,6 +1623,7 @@ class MainWindow(QMainWindow):
             self.notebook_dialog.reload()
         for dlg in self.items_dialogs.values():      # another database's notebook
             dlg.refresh()
+        self.update_todo_badge()
         if (db.workspace_from_file or db.upgraded) and not db.load_notes:   # quietly, saving writes the new format
             self.doc.settings_changed()
         if db.load_notes:                         # e.g. an older file upgraded to the current format
@@ -2044,6 +2084,7 @@ class MainWindow(QMainWindow):
         self.xml_btn.setIcon(icon("xml-viewer", self.TEXTS_ICON, theme.colour("pitch").name()))
         self.questions_btn.setIcon(icon("questions", self.TEXTS_ICON, theme.colour("pitch").name()))
         self.todo_btn.setIcon(icon("todo", self.TEXTS_ICON, theme.colour("pitch").name()))
+        self.update_todo_badge()
         self.cogitate_btn.setIcon(icon("cogitate", self.TEXTS_ICON, theme.colour("pitch").name()))
         if self.cogitate_window is not None:
             self.cogitate_window._restyle()
@@ -2232,6 +2273,7 @@ class MainWindow(QMainWindow):
     def _dirty_changed(self, dirty: bool):
         self._update_title()
         self._save_icon()
+        self.update_todo_badge()             # the notebook marks itself changed this way
 
     def _fix_status_bar(self):
         """The status bar is there from the start, at the height a message needs, so a message

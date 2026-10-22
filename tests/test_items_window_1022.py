@@ -30,3 +30,19 @@ def test_questions_and_to_do_are_not_modal(win):
     todo.close()
     for d in win.items_dialogs.values():
         d.close()
+
+
+def test_to_do_button_badge_counts_open_to_dos(win):
+    from lemmatrix import notebook as nb
+    s = win.doc.notebook.add_session("2026-10-03")
+    s.todos = [nb.Question("one", "2026-10-03", kind=nb.TODO),
+               nb.Question("two", "2026-10-03", kind=nb.TODO),
+               nb.Question("done", "2026-10-03", "", "2026-10-04", kind=nb.TODO)]
+    win.doc.notebook_changed()
+    assert win.todo_badge.isVisibleTo(win) and win.todo_badge.text() == "2"
+    s.todos[0].resolved = "2026-10-05"
+    win.doc.notebook_changed()
+    assert win.todo_badge.text() == "1"
+    s.todos[1].resolved = "2026-10-05"
+    win.doc.notebook_changed()
+    assert not win.todo_badge.isVisibleTo(win)               # none open: no badge
