@@ -48,6 +48,7 @@ from .matrix_dialogs import ConfigureCellDialog, ConfigureMatrixDialog, ask_matr
 from .matrix_view import MatrixView
 from .prefs import Prefs
 from . import spellui
+from . import symbols
 from .spellui import SpellDelegate
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, ListEditDelegate, SuggestionDelegate
 from .token_dialog import Slot, TokenDialog
@@ -1553,6 +1554,7 @@ class MainWindow(QMainWindow):
         self.configs.clear()
         for v in (self.lt_view, self.tt_view):
             v.set_database(db)
+        symbols.set_current(self._symbols())      # Σymbols: this database's list
         self.scratchpad.set_range(db.settings.pitch_low, db.settings.pitch_high)
         for box, name in ((self.autoplay, "autoplay"), (self.only_data, "only_with_data")):
             box.blockSignals(True)                # each database has its own (in its workspace)
@@ -3345,14 +3347,23 @@ class MainWindow(QMainWindow):
     def edit_tags(self):
         self.edit_lists("tags")
 
+    def _symbols(self) -> list[str]:
+        """The Σymbols list (Edit → Lists → Symbols): the workspace's, or the defaults."""
+        v = self.doc.ws.get("symbols", None)
+        return [s for s in v if isinstance(s, str)] if isinstance(v, list) else list(symbols.DEFAULT)
+
     def edit_lists(self, start: str | None = None):
         """Edit → Lists: people, places, field lists and the tag structure, in one dialogue."""
         from .lists_dialog import ListsDialog
-        dlg = ListsDialog(self, self.doc.db, self.doc.notebook, start if isinstance(start, str) else None)
+        dlg = ListsDialog(self, self.doc.db, self.doc.notebook, start if isinstance(start, str) else None,
+                          symbols=self._symbols())
         if not dlg.exec():
             return
         db = self.doc.db
         renames = dlg.apply()
+        if dlg.symbol_list() != self._symbols():   # Σymbols: kept in the workspace
+            self.doc.ws_set("symbols", dlg.symbol_list())
+            symbols.set_current(dlg.symbol_list())
         speakers = renames[chips.PARTICIPANTS]
         if speakers:                              # the tokens' speakers follow renamed codes
             for _, t in db.all_tokens():          # utterances' too

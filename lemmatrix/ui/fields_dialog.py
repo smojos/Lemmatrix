@@ -36,7 +36,7 @@ def _tool(name, tip, fn):
 class ListEditor(QWidget):
     """Edit a closed field's (hierarchical) list."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, flat: bool = False):
         super().__init__(parent)
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -47,7 +47,8 @@ class ListEditor(QWidget):
         sub = QToolButton()
         sub.setText("Add sub-item")
         sub.clicked.connect(self._add_sub)
-        head.addWidget(sub)
+        if not flat:                              # a flat list (Symbols) has no sub-items
+            head.addWidget(sub)
         head.addWidget(_tool("delete", "Remove the selected item", self._remove))
         head.addWidget(_tool("up", "Move up", lambda: self._shift(-1)))
         head.addWidget(_tool("down", "Move down", lambda: self._shift(1)))

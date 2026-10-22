@@ -20,3 +20,43 @@ def test_pitch_scratchpad_in_the_main_window(win, monkeypatch):
     assert played == ["55 3:3 21"]
     order = [win.bottom_row.itemAt(i).widget() for i in range(win.bottom_row.count())]
     assert order.index(sp.parentWidget()) + 1 == order.index(win.sess_panel)   # left of Current Session
+
+
+def test_symbols_in_a_text_fields_menu(app):
+    from PySide6.QtWidgets import QApplication, QLineEdit, QPlainTextEdit
+    from lemmatrix.ui import symbols
+    f = symbols.install(QApplication.instance())
+    try:
+        symbols.set_current(symbols.DEFAULT)
+        for ed in (QLineEdit(), QPlainTextEdit()):
+            menu = ed.createStandardContextMenu()
+            menu.show()
+            QApplication.processEvents()
+            first = menu.actions()[0]
+            assert first.text() == "Σymbols"
+            menu.close()
+            g = symbols.open_grid(ed)
+            assert (g.table.columnCount(), g.table.rowCount()) == (4, 3)     # 10 symbols: 4 across, 3 down
+            assert g.table.item(0, 2).text() == "∅"
+            g.table.cellDoubleClicked.emit(0, 2)
+            assert (ed.text() if isinstance(ed, QLineEdit) else ed.toPlainText()) == "∅"
+            assert not g.isVisible()
+        ro = QLineEdit()
+        ro.setReadOnly(True)
+        menu = ro.createStandardContextMenu()
+        menu.show()
+        QApplication.processEvents()
+        assert all(a.text() != "Σymbols" for a in menu.actions())     # not in read-only fields
+        menu.close()
+    finally:
+        QApplication.instance().removeEventFilter(f)
+
+
+def test_symbols_list_in_edit_lists(win, monkeypatch):
+    from lemmatrix.ui import symbols
+    from lemmatrix.ui.lists_dialog import ListsDialog
+    assert win._symbols() == symbols.DEFAULT
+    dlg = ListsDialog(win, win.doc.db, win.doc.notebook, symbols=["ʔ", "ŋ"])
+    assert dlg.symbol_list() == ["ʔ", "ŋ"]
+    dlg._reset_symbols()
+    assert dlg.symbol_list() == symbols.DEFAULT

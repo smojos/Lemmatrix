@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QDialogBut
                                QPlainTextEdit, QSplitter, QStackedWidget, QTableWidget, QTableWidgetItem,
                                QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
-from ..model import (LEMMAS, TEXTS, UTTERANCES, Database, Location, Person, RefCategory, TierMapping, TierRule,
+from ..model import (LEMMAS, TEXTS, UTTERANCES, Database, ListItem, Location, Person, RefCategory, TierMapping, TierRule,
                      forbidden_in, nfc)
 from .. import defaults, resets
 from . import theme
@@ -32,6 +32,7 @@ from .fields_dialog import ListEditor
 from .icons import icon
 
 TAGS = "tags"
+SYMBOLS = "symbols"                           # Σymbols in the right-click menus (kept in the workspace)
 CONFIDENCE = "confidence"                     # Cogitate's confidence levels (kept in the notebook)
 ORIGINAL = Qt.UserRole + 7                    # a row's code when the dialogue opened
 
@@ -677,7 +678,7 @@ def _one_line(text: str, n: int = 80) -> str:
 # --------------------------------------------------------------------------
 
 class ListsDialog(QDialog):
-    def __init__(self, parent, db: Database, notebook, start: str | None = None):
+    def __init__(self, parent, db: Database, notebook, start: str | None = None, symbols=None):
         super().__init__(parent)
         self.db, self.notebook = db, notebook
         self.setWindowTitle("Lists")
@@ -762,6 +763,15 @@ class ListsDialog(QDialog):
                    "The confidence levels a hypothesis can have (View → Cogitate), in order. They are kept "
                    "with the hypotheses, in the notebook. Renaming a level renames it in the hypotheses.",
                    self._reset_confidence)
+
+        self._heading("Typing")
+        from . import symbols as symmod
+        self.symbols = ListEditor(flat=True)
+        self.symbols.set_items([ListItem(s) for s in (symbols if symbols is not None else symmod.DEFAULT)])
+        self._page(SYMBOLS, "Symbols", self.symbols,
+                   "Symbols that are hard to type, offered by Σymbols at the top of every text field's "
+                   "right-click menu (double-click one to put it in). One symbol per line; kept in the "
+                   "database's workspace.", self._reset_symbols)
 
         self._heading("Tags")
         self.tags = TagStructureDialog(
@@ -874,6 +884,21 @@ class ListsDialog(QDialog):
         self.confidence.set_items(items)
         self.confidence.changed()
         return kept
+
+    def _reset_symbols(self):
+        from . import symbols as symmod
+        self.symbols.set_items([ListItem(s) for s in symmod.DEFAULT])
+        self.symbols.changed()
+        return []
+
+    def symbol_list(self) -> list[str]:
+        out = []
+        for it in self.symbols.items():
+            for n in it.walk():
+                s = n.name.strip()
+                if s and s not in out:
+                    out.append(s)
+        return out
 
     def _reset_tiers(self):
         self.tier_editor.load(defaults.tier_mapping())
