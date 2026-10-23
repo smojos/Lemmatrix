@@ -287,10 +287,13 @@ shaped how I work and what I wanted Lemmatrix to be.
 
 The countless linguists who built into me over the years and helped me to learn this craft, 
 and from whom I gleaned ideas, sometimes without knowing it at the time.
-They include, but are not limited to (in alphabetical order): Adam Werle, Ahmed Sosal, Andreas Joswig, Anne-Christie Hellenthal, Bert Remijsen, Bruce Wiebe, Chuck Murphey, Colleen Ahland, Don Killian, Doris Payne, Giorgia Zantei, Helen Eaton, Jamon Pelkey, Jeroen van Ravenhorst, Jim Roberts, Justin Goldberg, Kent Rasmussen, Klaus-Christian Küspert, Love Lee, Manuel Otero, Michael Ahland, Mirella Blum, Sean Smith, Steve Nicolle, Theis Greve, Thomas Blecke, Tim Stirtz, Virginia Beavon-Ham.
+They include, but are not limited to (in alphabetical order): Adam Werle, Ahmed Sosal, Andreas Joswig, Anne-Christie Hellenthal, Bert Remijsen, Bruce Wiebe, Chuck Murphey, Colleen Ahland, Don Killian, Doris Payne, Giorgia Zantei, Helen Eaton, Jamon Pelkey, Jeroen van Ravenhorst, Jim Roberts, Justin Goldberg, Kent Rasmussen, Klaus-Christian Küspert, Love Lee, Manuel Otero, Michael Ahland, Mirella Blum, Nate Bremer, Sean Smith, Steve Nicolle, Theis Greve, Thomas Blecke, Tim Stirtz, Virginia Beavon-Ham.
 
 The **Opo** people, for years of fieldwork in a real language that gave me a linguist's
 intuition.
+
+My non-linguist friends and colleagues, who fill my life with purpose, support and meaning.
+They include (in alphabetical order, by first name): Adam Yates, Baruach Goaner, Chris Wilson, Enguday Abebew, Girma Degefew, Jared Phillips, Jeremy Johnson, Jonny Shaw, Josh Bourget, Josh Rigby, Kura Lul, Mark Dueck, Otapa Luk, Rob Bustin, Tola Dec.
 
 The many people who supported my work in **SIL** for years and years, who believed in me,
 and who gave me the means to live and work in Ethiopia.
