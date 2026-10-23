@@ -680,6 +680,22 @@ class Entry:
     # the database's base, e.g. {"CAWL": ["0345"], "SWADESH": ["42"]}; hidden in the views
     lists: dict[str, list[str]] = field(default_factory=dict)
 
+    def add_token(self, t: "Token"):
+        """A new token at its place (Josh, 23 October: tokens can be a bit hodgepodge, but the
+        citation form always comes first): a citation token (no tags) after the citation tokens at
+        the start, any other at the end."""
+        if t.is_citation:
+            k = 0
+            while k < len(self.tokens) and self.tokens[k].is_citation:
+                k += 1
+            self.tokens.insert(k, t)
+        else:
+            self.tokens.append(t)
+
+    def citation_token(self) -> "Token | None":
+        """The lemma's citation token (no tags), else its first token."""
+        return next((t for t in self.tokens if t.is_citation), self.tokens[0] if self.tokens else None)
+
     def get(self, name: str, lang: str | None = None) -> str:
         if name in self.multi:
             d = self.multi[name]

@@ -374,3 +374,26 @@ def test_the_wordlist_pdf_names_the_language_and_researcher(app, tmp_path):
     raw = (tmp_path / "t.pdf").read_bytes()
     assert raw.count(b"/Type /Page\n") + raw.count(b"/Type /Page\r") + raw.count(b"/Type /Page ") > 1 \
         or raw.count(b"/Type /Page") > 2                       # more than one page: readable type
+
+
+def test_a_citation_token_always_comes_first():
+    from lemmatrix.model import Entry, Token
+    e = Entry(ref="A001")
+    e.add_token(Token(tags=["Plural"]))
+    e.add_token(Token())
+    e.add_token(Token(tags=["Singular"]))
+    e.add_token(Token())
+    assert [t.tags for t in e.tokens] == [[], [], ["Plural"], ["Singular"]]
+    assert e.citation_token() is e.tokens[0]
+
+
+def test_the_export_falls_back_to_the_citation_tokens_phonetic():
+    db = defaults.new_database(wl.SWADESH)
+    s = db.settings
+    e = db.entries[0]
+    assert wl.export_form(db, e) == ""
+    e.tokens[0].set(s.token_field("phonetic").name, "ʔàbɔ̀")
+    assert wl.export_form(db, e) == "ʔàbɔ̀"
+    assert wl.table(db, wl.SWADESH)[1][0][1] == "ʔàbɔ̀"
+    e.set(s.entry_field("lemma").name, "abo")
+    assert wl.export_form(db, e) == "abo"

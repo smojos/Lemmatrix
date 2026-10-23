@@ -844,8 +844,8 @@ class TokenDialog(QDialog):
             renames, self._renames = self._renames, []
 
             def add(en, token=token, more=new_tokens):
-                en.tokens.append(token)
-                en.tokens.extend(more)
+                for x in (token, *more):
+                    en.add_token(x)
             n = 1 + len(new_tokens)
             self.doc.edit_entry(e, add, f"Add {n} tokens to {e.ref}" if n > 1 else f"Add token to {e.ref}",
                                 renames=renames)

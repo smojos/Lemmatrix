@@ -150,7 +150,7 @@ def changes(db: Database, p: Plan, folder: Path, add_examples: bool) -> tuple[li
             m.clash = ""
         if m.replaces is not None:
             replaced.append(m.replaces)
-        after_target.tokens.append(t)
+        after_target.add_token(t)
         if t.file and db.settings.auto_update_names and not m.clash:
             new = db.expected_filename(after_target, t)
             src, dst = folder / t.file, folder / new

@@ -687,6 +687,22 @@ def gloss_matches(db, lid: str) -> list[tuple[str, object]]:
     return out
 
 
+def export_form(db, entry) -> str:
+    """A lemma's form in a wordlist export: its Lemma field, else its citation token's Phonetic
+    (Josh, 23 October), else its citation token's Phonemic."""
+    form = db.lemma(entry)
+    if form:
+        return form
+    t = entry.citation_token()
+    if t is None:
+        return ""
+    for role in ("phonetic", "phonemic"):
+        f = db.settings.token_field(role)
+        if f is not None and t.get(f.name):
+            return t.get(f.name)
+    return ""
+
+
 def table(db, lid: str, extra=()) -> tuple[list[str], list[list[str]]]:
     """The export's header and rows: number, lemma, gloss. `extra` adds (number, lemma) pairs (the
     ticked gloss matches) before they are stored. Several lemmas on one number are joined with ; ."""
@@ -697,7 +713,7 @@ def table(db, lid: str, extra=()) -> tuple[list[str], list[list[str]]]:
     out = []
     for r in rows(db, lid):
         es = r.entries + [e for e in add.get(r.number, []) if e not in r.entries]
-        out.append([r.number, "; ".join(db.lemma(e) for e in es if db.lemma(e)), r.gloss])
+        out.append([r.number, "; ".join(f for f in (export_form(db, e) for e in es) if f), r.gloss])
     return header, out
 
 
