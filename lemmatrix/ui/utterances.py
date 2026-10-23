@@ -234,7 +234,9 @@ class TextsUtterancesWindow(QDialog):
                        tool("Edit", "edit", self.edit, "Edit the selected utterance (Enter)"),
                        tool("Play", "play", self.play, "Play the selected utterance (Ctrl+Space)"),
                        tool("Configure columns", "gear-columns", self.configure_columns),
-                       tool("Clear all filters", "reset-filters", self.clear_filters))
+                       tool("Clear all filters", "reset-filters", self.clear_filters),
+                       tool("XML viewer", "xml-viewer", self.show_in_xml,
+                            "Show the selected utterance in the XML viewer"))
         self.search = QLineEdit()
         self.search.setPlaceholderText("quick search of the visible columns")
         self.search.setClearButtonEnabled(True)
@@ -923,6 +925,11 @@ class TextsUtterancesWindow(QDialog):
                 QMessageBox.warning(self, "Delete utterance", f"Couldn't move {t.file} aside: {exc}. The "
                                     "utterance is deleted; its recording stays in Soundfiles\\Utterances.")
         self.doc.delete_entry(u, renames=renames)
+
+    def show_in_xml(self):
+        """The XML viewer at the selected utterance (Josh, 23 October), else as from the main window."""
+        u = self.table.current_row()
+        self.main.open_xml_viewer(("utterance", u.id) if u is not None and u.id else None)
 
     def _pitch(self, u) -> str:
         f = self.db.settings.token_field("pitch")

@@ -109,3 +109,23 @@ def test_collapsible_elements(win):
     t.collapse_all(False)
     assert all(doc.findBlockByNumber(i).isVisible() for i in range(len(lines)))
     w.close()
+
+
+def test_xml_button_in_utterances_and_texts(win, tmp_path):
+    """Josh, 23 October: an XML button in Texts and utterances' options panels, at the selected item."""
+    import shutil
+    from pathlib import Path
+    from lemmatrix import storage
+    src = Path(__file__).resolve().parent.parent / "samples" / "Elicit test"
+    shutil.copytree(src, tmp_path / "e")
+    win.load_database(storage.load(next((tmp_path / "e").glob("*.xml"))))
+    win.open_utterances()
+    u = win.utterances_window
+    utt = win.doc.db.utterances[0]
+    u.table.select_row(utt)
+    u.show_in_xml()
+    w = win.xml_window
+    line = w.shown_text.split("\n")[w.target_line]
+    assert line.strip().startswith("<utterance") and utt.id in line
+    w.close()
+    u.close()

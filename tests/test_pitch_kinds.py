@@ -144,7 +144,7 @@ def test_converting_from_edit_metadata_is_one_undo_step(win, monkeypatch):
     assert pk.kind(db) == pk.INTONATIONAL and win.doc.dirty
     assert not pitchview.has(pitchview.TOKENS) and pitchview.has(pitchview.UTTERANCES)
     assert "drawing" not in [c.key for c in win.all_table.model_.columns]
-    assert win.comparison.alpha.isHidden() and win.comparison.hidden_note.text() == "no pitch"
+    assert win.comparison.alpha.isHidden() and win.comparison.hidden_note.isHidden()   # no reminder (Josh)
     win.doc.undo.undo()
     assert pk.kind(db) == pk.TONAL and pitchview.has(pitchview.TOKENS)
     assert "drawing" in [c.key for c in win.all_table.model_.columns]
@@ -197,6 +197,11 @@ def test_the_new_database_window(win):
         dlg = NewDatabaseDialog(win, win.prefs)
         assert dlg.you_code.text() == "JS"                            # remembered on this computer
         assert dlg.pitch_kind.currentData() == pk.TONAL                # the default
+        comp = dlg.lang_name.completer()                             # suggestions as it is typed
+        comp.setCompletionPrefix("Hau")
+        assert comp.completionCount() > 0 and "Hausa · hau" in [
+            comp.completionModel().index(i, 0).data() for i in range(comp.completionCount())]
+        assert "Hausa" in dlg.lang_name.placeholderText() and dlg.var_name.placeholderText() == "optional"
         dlg._language_chosen("Burun · bdi")
         assert dlg.lang_name.text() == "Burun" and dlg.lang_code.text() == "BDI"
         dlg.pitch_kind.setCurrentIndex(dlg.pitch_kind.findData(pk.INTONATIONAL))

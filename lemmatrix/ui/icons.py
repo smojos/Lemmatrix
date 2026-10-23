@@ -612,7 +612,7 @@ def ink_icon(name: str, size: int = 22) -> QIcon:
 
 
 THEMED = {"reset-filters", "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token",
-          "lemma-token", "text-token", "tick", "refresh-text", "camera"}   # follow the theme: redrawn on a change
+          "lemma-token", "text-token", "tick", "refresh-text", "camera", "xml-viewer"}   # follow the theme: redrawn on a change
 
 
 def themed_icon(name: str, size: int = 22) -> QIcon:

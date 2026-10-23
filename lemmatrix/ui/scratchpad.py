@@ -110,7 +110,9 @@ class ComparisonPads(QWidget):
             "File → Settings → Pitch)" if kind_has else
             "This database's pitch kind has no pitch scratchpads (Edit → Metadata → Pitch kind)")
         self.hidden_note.setContextMenuPolicy(Qt.CustomContextMenu if kind_has else Qt.NoContextMenu)
-        self.hidden_note.setVisible(not on)
+        # no reminder where the kind has no pitch at all (Josh, 23 October: an annoying reminder to
+        # non-tonal researchers that they don't have what they need): α and β alone
+        self.hidden_note.setVisible(not on and kind_has)
 
     def note_menu(self):
         """The right-click menu of the pitch hidden line: Unhide pitch."""

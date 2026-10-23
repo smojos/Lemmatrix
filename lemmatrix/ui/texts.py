@@ -483,7 +483,9 @@ class TextsPanel(QObject):
                              tool("Delete", "delete", self.delete, "Delete the selected text (Delete)"),
                              tool("Edit", "edit", self.edit, "Edit the selected text (Enter)"),
                              tool("Configure columns", "gear-columns", self.configure_columns),
-                             tool("Clear all filters", "reset-filters", self.clear_filters))
+                             tool("Clear all filters", "reset-filters", self.clear_filters),
+                             tool("XML viewer", "xml-viewer", self.show_in_xml,
+                                  "Show the selected text's record in the XML viewer"))
         self.search = QLineEdit()
         self.search.setPlaceholderText("quick search of the texts' visible columns")
         self.search.setClearButtonEnabled(True)
@@ -632,6 +634,11 @@ class TextsPanel(QObject):
         self._lines_for = None
         self._show_lines()
         self._update_count()
+
+    def show_in_xml(self):
+        """The XML viewer at the selected text's record (Josh, 23 October)."""
+        t = self.current()
+        self.main.open_xml_viewer(("text", t.id) if t is not None and t.id else None)
 
     def settings_changed(self):
         s = self.db.settings

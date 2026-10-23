@@ -92,7 +92,7 @@ class TokenRow:
 INK_ICONS = THEMED                 # drawn in the theme's colours, so they follow the theme
 ICON_ONLY = {"add", "delete", "edit", "play", "reset-filters",   # obvious, shared actions: the name is in the tooltip
              "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token", "lemma-token", "tick",
-             "camera"}
+             "camera", "xml-viewer"}
 
 
 class _ElicitChecked(QObject):
@@ -104,9 +104,10 @@ def tool(text: str, icon_name: str | None, fn, tip: str = "") -> QToolButton:
     b = QToolButton()
     b.setText(text)
     if icon_name:
+        size = 28 if icon_name == "xml-viewer" else 20   # Josh's χμλ has room round it: a little larger
         b.setProperty("icon_name", icon_name)
-        b.setIcon(themed_icon(icon_name, 20))
-        b.setIconSize(icon_size(icon_name, 20))
+        b.setIcon(themed_icon(icon_name, size))
+        b.setIconSize(icon_size(icon_name, size))
         b.setToolButtonStyle(Qt.ToolButtonIconOnly if icon_name in ICON_ONLY else Qt.ToolButtonTextBesideIcon)
     b.setToolTip(tip or text)
     b.setAutoRaise(True)
@@ -997,14 +998,15 @@ class MainWindow(QMainWindow):
         w.activateWindow()
         return w
 
-    def open_xml_viewer(self):
-        """View → XML viewer: the database file, read-only, at the selected token or lemma."""
+    def open_xml_viewer(self, target=None):
+        """View → XML viewer: the database file, read-only, at the selected token or lemma, or at
+        target: ("utterance" or "text", id), from Texts and utterances' options panel."""
         from .xml_viewer import XmlViewerWindow
         if self.xml_window is None:
             self.xml_window = XmlViewerWindow(self)
         w = self.xml_window
         w.refresh(keep_place=False)
-        w.go_to(self.xml_target())
+        w.go_to(target or self.xml_target())
         w.show()
         w.raise_()
         w.activateWindow()
@@ -2169,7 +2171,7 @@ class MainWindow(QMainWindow):
         for w in QApplication.topLevelWidgets():         # icons in the theme's colours follow it, every window
             for b in w.findChildren(QToolButton):
                 if b.property("icon_name") in INK_ICONS:
-                    b.setIcon(themed_icon(b.property("icon_name"), 20))
+                    b.setIcon(themed_icon(b.property("icon_name"), b.iconSize().height() or 20))
         for v in (self.lt_view, self.tt_view):           # the accent, lighter on dark
             v.switch.setIcon(icon("switch-plain" if theme.dark() else "switch", 22,   # no white edge on dark
                                   theme.colour("pitch").name()))
