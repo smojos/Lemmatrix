@@ -204,7 +204,8 @@ class NewDatabaseDialog(QDialog):
     # ---- the result ----------------------------------------------------------------------
     def choices(self, copy: bool = True) -> newdb.Choices:
         return newdb.Choices(
-            base=self.lists.choice(), language_name=self.lang_name.text(), language_code=self.lang_code.text(),
+            base=self.lists.choice(), items=self.lists.version()[0], region=self.lists.version()[1],
+            language_name=self.lang_name.text(), language_code=self.lang_code.text(),
             variety_name=self.var_name.text(), variety_code=self.var_code.text(),
             kind=self.pitch_kind.currentData(), name=self.db_name.text(),
             gloss_languages=self.glosses.text().split(),

@@ -111,6 +111,39 @@ class BulkCommand(QUndoCommand):
         self.doc.changed.emit()
 
 
+class EntriesCommand(QUndoCommand):
+    """The lemmas changed, added, removed or put in another order at once, with recordings and
+    pictures renamed: one undo step (Insert EACW items…, Convert references from a table…; Josh, 23
+    October). Applied once already when pushed."""
+
+    def __init__(self, doc: "Document", label: str, order_before, order_after, changes=(), renames=()):
+        super().__init__(label)
+        self.doc = doc
+        self.before_order, self.after_order = list(order_before), list(order_after)
+        self.changes = list(changes)          # (entry, before snapshot, after snapshot)
+        self.renames = list(renames)
+        self._skip = True
+
+    def redo(self):
+        if self._skip:
+            self._skip = False
+            return
+        for old, new in self.renames:
+            self.doc.move_file(old, new)
+        for entry, _, after in self.changes:
+            _restore(entry, after)
+        self.doc.db.entries[:] = self.after_order
+        self.doc.changed.emit()
+
+    def undo(self):
+        for old, new in reversed(self.renames):
+            self.doc.move_file(new, old)
+        for entry, before, _ in self.changes:
+            _restore(entry, before)
+        self.doc.db.entries[:] = self.before_order
+        self.doc.changed.emit()
+
+
 class WordlistBaseCommand(QUndoCommand):
     """The list a database's references are numbers of (Tools → Link to wordlists…, idea 40)."""
 
@@ -443,6 +476,46 @@ class Document(QObject):
         if changes or done:
             self.undo.push(BulkCommand(self, label, changes, done))
             self.changed.emit()
+        return []
+
+    def restructure(self, label: str, order, pairs=(), renames=()) -> list[str]:
+        """The lemmas in a new order (new ones added, some left out), some of them changed, and
+        recordings or pictures renamed, as one undo step. pairs: (entry, the changed copy); renames:
+        (old, new) paths in the order to rename them (through temporary names where they swap). The
+        files are renamed first; if one can't be, those already renamed go back and nothing changes.
+        Returns the problems (empty when it worked)."""
+        done = []
+        for old, new in renames:
+            old, new = Path(old), Path(new)
+            problem = ""
+            if not old.exists():
+                problem = f"{old.name} isn't there"
+            elif new.exists() and not storage.same_file(old, new):
+                problem = f"{new.name} already exists"
+            else:
+                try:
+                    old.rename(new)
+                except OSError as exc:
+                    problem = f"{old.name}: {exc}"
+            if problem:
+                for o, n in reversed(done):
+                    try:
+                        n.rename(o)
+                    except OSError:
+                        pass
+                return [problem]
+            done.append((old, new))
+        before_order = list(self.db.entries)
+        changes = []
+        for entry, after in pairs:
+            before = entry.copy()
+            _restore(entry, after)
+            changes.append((entry, before, entry.copy()))
+        self.db.entries[:] = list(order)
+        for old, new in done:
+            self._note_rename(old, new)
+        self.undo.push(EntriesCommand(self, label, before_order, order, changes, done))
+        self.changed.emit()
         return []
 
     # ---- recordings renamed since the last save ------------------------

@@ -135,14 +135,19 @@ ever closes by itself with no message, `lemmatrix-crash.log` in this folder says
   Tier mapping; tx, ge, ft by default); a line can be played, played in context, opened in Praat
   with its TextGrid, or clipped as an utterance (its stretch of the recording and its text).
 - **Comparative wordlists:** **New database** starts empty or from one of three lists: the
-  **Extended African Comparative Wordlist** (EACW, 2,369 lemmas, recommended), the **SIL
-  Comparative African Wordlist** (CAWL, 1,700) or the **Swadesh list** (207). The list a database
-  starts from gives its references; every lemma also carries the other two lists' numbers,
-  hidden (they're in the database file and the Reference column's hover). Type `CAWL 345`,
-  `SWADESH 42` or just `SWADESH` in the lemma list's search to find them, and **File → Export →
-  Wordlist…** gives any of the three as a plain list (number, lemma, gloss) to the clipboard or a
-  PDF, every item in the list's order, matching lemmas of your own by their gloss. **Tools → Link
-  to wordlists…** links an existing database whose references are EACW numbers.
+  **Extended African Comparative Wordlist** (EACW, recommended: 2,556 items, 2,281 of them in its
+  published list), the **SIL Comparative African Wordlist** (CAWL, 1,700) or the **Swadesh list**
+  (207). The EACW comes as its base list or expanded with its hidden items, and global, for all of
+  Africa or for one region (North, West, East, South, Central); its lemmas get the list's
+  Clarification and Taxon, and its hidden items stay within reach (hover over a reference to see
+  them, right-click → Insert EACW items… to add them). The list a database starts from gives its
+  references; every lemma also carries the other two lists' numbers, hidden (they're in the
+  database file and the Reference column's hover). Type `CAWL 345`, `SWADESH 42` or just `SWADESH`
+  in the lemma list's search to find them, and **File → Export → Wordlist…** gives any of the three
+  as a plain list (number, lemma, gloss) to the clipboard or a PDF, every item in the list's order,
+  matching lemmas of your own by their gloss. **Tools → Link to wordlists…** links an existing
+  database whose references are EACW numbers, and **Tools → Convert references from a table…**
+  renumbers a database from a conversion map of your own.
 - **Lemma list:** a filter menu on every column (Show all, Blanks, Non-blanks, Filter for… on
   open fields, Choose… on closed fields), Configure columns, quick search, add / edit /
   delete lemmas, references suggested from the category.

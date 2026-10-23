@@ -37,7 +37,7 @@ def test_an_older_database_opens_as_tonal_and_saves_format_10(tmp_path):
     assert pk.kind(db) == pk.TONAL and db.upgraded
     storage.save(db, db.path, backup=False)
     text = (tmp_path / "Sample.xml").read_text(encoding="utf-8")
-    assert '<database format="10">' in text
+    assert f'<database format="{storage.FORMAT_VERSION}">' in text    # 10 then; 11 since the EACW's version
     head = text[:text.index("<researcher")]       # near the top, right after the language
     assert '<typology>' in head and '<feature id="tone" value="tonal" />' in head
     assert head.index("<variety") < head.index("<typology>")

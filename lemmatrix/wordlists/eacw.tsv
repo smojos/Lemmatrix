@@ -1,2370 +1,2557 @@
-ref	gloss	word_class
-A001	body	NOUN
-A002	skin	NOUN
-A003	hair	NOUN
-A004	bone	NOUN
-A005	muscle	NOUN
-A006	tendon	NOUN
-A007	blood	NOUN
-A008	vein	NOUN
-A009	head	NOUN
-A010	pate	NOUN
-A011	skull	NOUN
-A012	brain	NOUN
-A013	forehead	NOUN
-A014	face	NOUN
-A015	eye	NOUN
-A016	pupil	NOUN
-A017	iris	NOUN
-A018	eyebrow	NOUN
-A019	eyelid	NOUN
-A020	eyelash	NOUN
-A021	tear	NOUN
-A022	ear	NOUN
-A023	ear canal	NOUN
-A024	earlobe	NOUN
-A025	earwax	NOUN
-A026	nose	NOUN
-A027	nostril	NOUN
-A028	nose bridge	NOUN
-A029	mucus	NOUN
-A030	upper cheek	NOUN
-A031	lower cheek	NOUN
-A032	mouth	NOUN
-A033	breath	NOUN
-A034	lip	NOUN
-A035	gum	NOUN
-A036	tooth	NOUN
-A037	molar	NOUN
-A038	canine	NOUN
-A039	incisor	NOUN
-A040	bicuspid	NOUN
-A041	diastema	NOUN
-A042	tongue	NOUN
-A043	frenulum	NOUN
-A044	palate	NOUN
-A045	uvula	NOUN
-A046	tonsil	NOUN
-A047	saliva	NOUN
-A048	jaw	NOUN
-A049	jawbone	NOUN
-A050	chin	NOUN
-A051	moustache	NOUN
-A052	beard	NOUN
-A053	neck	NOUN
-A054	nape of neck	NOUN
-A055	neckbone	NOUN
-A056	throat	NOUN
-A057	trachea	NOUN
-A058	adams apple	NOUN
-A059	shoulder	NOUN
-A060	armpit	NOUN
-A061	shoulder joint	NOUN
-A062	scapula	NOUN
-A063	chest	NOUN
-A064	clavicle	NOUN
-A065	ribcage	NOUN
-A066	breastbone	NOUN
-A067	heart	NOUN
-A068	lung	NOUN
-A069	breast	NOUN
-A070	nipple	NOUN
-A071	breastmilk	NOUN
-A072	side	NOUN
-A073	rib	NOUN
-A074	abdomen	NOUN
-A075	navel	NOUN
-A076	innards	NOUN
-A077	liver	NOUN
-A078	pancreas	NOUN
-A079	gallbladder	NOUN
-A080	stomach	NOUN
-A081	bile	NOUN
-A082	spleen	NOUN
-A083	large intestine	NOUN
-A084	small intestine	NOUN
-A085	kidney	NOUN
-A086	bladder	NOUN
-A087	uterus	NOUN
-A088	umbilical cord	NOUN
-A089	back	NOUN
-A090	upper back	NOUN
-A091	lower back	NOUN
-A092	spine	NOUN
-A093	arm	NOUN
-A094	arm bone	NOUN
-A095	elbow	NOUN
-A096	outer elbow	NOUN
-A097	inner elbow	NOUN
-A098	forearm	NOUN
-A099	hand	NOUN
-A100	palm	NOUN
-A101	finger	NOUN
-A102	fingerbone	NOUN
-A103	thumb	NOUN
-A104	index finger	NOUN
-A105	middle finger	NOUN
-A106	ring finger	NOUN
-A107	pinky finger	NOUN
-A108	knuckle	NOUN
-A109	fingernail	NOUN
-A110	fist	NOUN
-A111	wrist	NOUN
-A112	hip	NOUN
-A113	hipbone	NOUN
-A114	waist	NOUN
-A115	buttock	NOUN
-A116	tailbone	NOUN
-A117	anus	NOUN
-A118	feces	NOUN
-A119	penis	NOUN
-A120	foreskin	NOUN
-A121	scrotum	NOUN
-A122	testicle	NOUN
-A123	urine	NOUN
-A124	semen	NOUN
-A125	vagina	NOUN
-A126	clitoris	NOUN
-A127	leg	NOUN
-A128	femur	NOUN
-A129	quadriceps	NOUN
-A130	inner thigh	NOUN
-A131	hamstrings	NOUN
-A132	knee	NOUN
-A133	outer knee	NOUN
-A134	inner knee	NOUN
-A135	shin	NOUN
-A136	tibia	NOUN
-A137	calf	NOUN
-A138	achilles tendon	NOUN
-A139	foot	NOUN
-A140	ankle	NOUN
-A141	malleolus	NOUN
-A142	heel	NOUN
-A143	ball of foot	NOUN
-A144	toe	NOUN
-A145	big toe	NOUN
-A146	pinky toe	NOUN
-A147	sole of foot	NOUN
-B001	person	NOUN
-B002	man	NOUN
-B003	woman	NOUN
-B004	adult	NOUN
-B005	child	NOUN
-B006	baby	NOUN
-B007	fetus	NOUN
-B008	boy	NOUN
-B009	girl	NOUN
-B010	elder	NOUN
-B010a	male elder	NOUN
-B010b	female elder	NOUN
-B011	peer	NOUN
-B011a	male peer	NOUN
-B011b	female peer	NOUN
-B012	firstborn child	NOUN
-B012a	male firstborn child	NOUN
-B012b	female firstborn child	NOUN
-B013	twin	NOUN
-B013a	male twin	NOUN
-B013b	female twin	NOUN
-B014	firstborn twin	NOUN
-B014a	male firstborn twin	NOUN
-B014b	female firstborn twin	NOUN
-B015	secondborn twin	NOUN
-B015a	male secondborn twin	NOUN
-B015b	female secondborn twin	NOUN
-B016	aftertwin	NOUN
-B016a	male aftertwin	NOUN
-B016b	female aftertwin	NOUN
-B017	midwife	NOUN
-B018	youth	NOUN
-B018a	male youth	NOUN
-B018b	female youth	NOUN
-B019	chief	NOUN
-B019a	male chief	NOUN
-B019b	female chief	NOUN
-B020	monarch	NOUN
-B020a	king	NOUN
-B020b	queen	NOUN
-B021	worker	NOUN
-B021a	male worker	NOUN
-B021b	female worker	NOUN
-B022	master	NOUN
-B022a	male master	NOUN
-B022b	female master	NOUN
-B023	servant	NOUN
-B023a	male servant	NOUN
-B023b	female servant	NOUN
-B024	hunter	NOUN
-B024a	male hunter	NOUN
-B024b	female hunter	NOUN
-B025	shepherd	NOUN
-B025a	male shepherd	NOUN
-B025b	female shepherd	NOUN
-B026	fisher	NOUN
-B026a	male fisher	NOUN
-B026b	female fisher	NOUN
-B027	farmer	NOUN
-B027a	male farmer	NOUN
-B027b	female farmer	NOUN
-B028	metalsmith	NOUN
-B028a	male metalsmith	NOUN
-B028b	female metalsmith	NOUN
-B029	tailor	NOUN
-B029a	male tailor	NOUN
-B029b	female tailor	NOUN
-B030	potter	NOUN
-B030a	male potter	NOUN
-B030b	female potter	NOUN
-B031	weaver	NOUN
-B031a	male weaver	NOUN
-B031b	female weaver	NOUN
-B032	butcher	NOUN
-B032a	male butcher	NOUN
-B032b	female butcher	NOUN
-B033	trader	NOUN
-B033a	male trader	NOUN
-B033b	female trader	NOUN
-B034	braider	NOUN
-B034a	male braider	NOUN
-B034b	female braider	NOUN
-B035	cook	NOUN
-B035a	male cook	NOUN
-B035b	female cook	NOUN
-B036	warrior	NOUN
-B036a	male warrior	NOUN
-B036b	female warrior	NOUN
-B037	captive	NOUN
-B037a	male captive	NOUN
-B037b	female captive	NOUN
-B038	guide	NOUN
-B038a	male guide	NOUN
-B038b	female guide	NOUN
-B039	traveler	NOUN
-B039a	male traveler	NOUN
-B039b	female traveler	NOUN
-B040	messenger	NOUN
-B040a	male messenger	NOUN
-B040b	female messenger	NOUN
-B041	healer	NOUN
-B041a	male healer	NOUN
-B041b	female healer	NOUN
-B042	spiritist	NOUN
-B042a	male spiritist	NOUN
-B042b	female spiritist	NOUN
-B043	priest	NOUN
-B043a	male priest	NOUN
-B043b	female priest	NOUN
-B044	beggar	NOUN
-B044a	male beggar	NOUN
-B044b	female beggar	NOUN
-B045	prostitute	NOUN
-B045a	male prostitute	NOUN
-B045b	female prostitute	NOUN
-B046	person of village	NOUN
-B046a	male person of village	NOUN
-B046b	female person of village	NOUN
-B047	bush dweller	NOUN
-B047a	male bush dweller	NOUN
-B047b	female bush dweller	NOUN
-B048	rich person	NOUN
-B048a	male rich person	NOUN
-B048b	female rich person	NOUN
-B049	poor person	NOUN
-B049a	male poor person	NOUN
-B049b	female poor person	NOUN
-B050	infertile person	NOUN
-B050a	impotent man	NOUN
-B050b	barren woman	NOUN
-B051	blind person	NOUN
-B051a	male blind person	NOUN
-B051b	female blind person	NOUN
-B052	deaf person	NOUN
-B052a	male deaf person	NOUN
-B052b	female deaf person	NOUN
-B053	hunchback	NOUN
-B053a	male hunchback	NOUN
-B053b	female hunchback	NOUN
-B054	cripple	NOUN
-B054a	male cripple	NOUN
-B054b	female cripple	NOUN
-B055	dwarf	NOUN
-B055a	male dwarf	NOUN
-B055b	female dwarf	NOUN
-B056	giant	NOUN
-B056a	male giant	NOUN
-B056b	female giant	NOUN
-B057	fool	NOUN
-B057a	male fool	NOUN
-B057b	female fool	NOUN
-B058	senile person	NOUN
-B058a	male senile person	NOUN
-B058b	female senile person	NOUN
-B059	insane person	NOUN
-B059a	male insane person	NOUN
-B059b	female insane person	NOUN
-B060	coward	NOUN
-B060a	male coward	NOUN
-B060b	female coward	NOUN
-B061	thief	NOUN
-B061a	male thief	NOUN
-B061b	female thief	NOUN
-B062	widow (non gendered)	NOUN
-B062a	widower (male)	NOUN
-B062b	widow (female)	NOUN
-B063	orphan	NOUN
-B063a	male orphan	NOUN
-B063b	female orphan	NOUN
-C001	parent	NOUN
-C001a	father	NOUN
-C001b	mother	NOUN
-C002	sibling	NOUN
-C002a	brother	NOUN
-C002b	sister	NOUN
-C003	older sibling	NOUN
-C003a	older brother	NOUN
-C003b	older sister	NOUN
-C004	younger sibling	NOUN
-C004a	younger brother	NOUN
-C004b	younger sister	NOUN
-C005	spouse	NOUN
-C005a	husband	NOUN
-C005b	wife	NOUN
-C006	co-spouse	NOUN
-C006a	co-husband	NOUN
-C006b	co-wife	NOUN
-C007	person being married	NOUN
-C007a	groom	NOUN
-C007b	bride	NOUN
-C008	betrothed	NOUN
-C008a	fiancé	NOUN
-C008b	fiancée	NOUN
-C009	descendant	NOUN
-C009a	male descendant	NOUN
-C009b	female descendant	NOUN
-C010	bastard	NOUN
-C010a	male bastard	NOUN
-C010b	female bastard	NOUN
-C011	child (offspring)	NOUN
-C011a	son	NOUN
-C011b	daughter	NOUN
-C012	grandchild	NOUN
-C012a	grandson	NOUN
-C012b	granddaughter	NOUN
-C013	ancestor	NOUN
-C013a	male ancestor	NOUN
-C013b	female ancestor	NOUN
-C014	paternal grandparent	NOUN
-C014a	paternal grandfather	NOUN
-C014b	paternal grandmother	NOUN
-C015	paternal great grandparent	NOUN
-C015a	paternal great grandfather	NOUN
-C015b	paternal great grandmother	NOUN
-C016	paternal pibling	NOUN
-C016a	paternal uncle	NOUN
-C016b	paternal aunt	NOUN
-C017	paternal cousin	NOUN
-C017a	male paternal cousin	NOUN
-C017b	female paternal cousin	NOUN
-C018	maternal grandparent	NOUN
-C018a	maternal grandfather	NOUN
-C018b	maternal grandmother	NOUN
-C019	maternal great grandparent	NOUN
-C019a	maternal great grandfather	NOUN
-C019b	maternal great grandmother	NOUN
-C020	maternal pibling	NOUN
-C020a	maternal uncle	NOUN
-C020b	maternal aunt	NOUN
-C021	maternal cousin	NOUN
-C021a	male maternal cousin	NOUN
-C021b	female maternal cousin	NOUN
-C022	marital parent-in-law	NOUN
-C022a	marital father-in-law	NOUN
-C022b	marital mother-in-law	NOUN
-C023	marital sibling-in-law	NOUN
-C023a	marital brother-in-law	NOUN
-C023b	marital sister-in-law	NOUN
-C024	marital nibling	NOUN
-C024a	marital nephew	NOUN
-C024b	marital niece	NOUN
-C025	uxorial parent-in-law	NOUN
-C025a	uxorial father-in-law	NOUN
-C025b	uxorial mother-in-law	NOUN
-C026	uxorial sibling-in-law	NOUN
-C026a	uxorial brother-in-law	NOUN
-C026b	uxorial sister-in-law	NOUN
-C027	uxorial nibling	NOUN
-C027a	uxorial nephew	NOUN
-C027b	uxorial niece	NOUN
-C028	relative	NOUN
-C028a	male relative	NOUN
-C028b	female relative	NOUN
-C029	family	NOUN
-C030	clan	NOUN
-C031	nation	NOUN
-C032	friend	NOUN
-C032a	male friend	NOUN
-C032b	female friend	NOUN
-C033	namesake	NOUN
-C033a	male namesake	NOUN
-C033b	female namesake	NOUN
-C034	acquaintance	NOUN
-C034a	male acquaintance	NOUN
-C034b	female acquaintance	NOUN
-C035	guest	NOUN
-C035a	male guest	NOUN
-C035b	female guest	NOUN
-C036	host	NOUN
-C036a	male host	NOUN
-C036b	female host	NOUN
-C037	stranger	NOUN
-C037a	male stranger	NOUN
-C037b	female stranger	NOUN
-C038	enemy	NOUN
-C038a	male enemy	NOUN
-C038b	female enemy	NOUN
-C039	foreigner	NOUN
-C039a	male foreigner	NOUN
-C039b	female foreigner	NOUN
-C040	black person	NOUN
-C040a	male black person	NOUN
-C040b	female black person	NOUN
-C041	red person	NOUN
-C041a	male red person	NOUN
-C041b	female red person	NOUN
-C042	white person	NOUN
-C042a	male white person	NOUN
-C042b	female white person	NOUN
-C043	Ethnic group 1	NOUN
-C043a	male ethnic group 1	NOUN
-C043b	female ethnic group 1	NOUN
-C044	Ethnic group 2	NOUN
-C044a	male ethnic group 2	NOUN
-C044b	female ethnic group 2	NOUN
-C045	Ethnic group 3	NOUN
-C045a	male ethnic group 3	NOUN
-C045b	female ethnic group 3	NOUN
-C046	Ethnic group 4	NOUN
-C046a	male ethnic group 4	NOUN
-C046b	female ethnic group 4	NOUN
-C047	Ethnic group 5	NOUN
-C047a	male ethnic group 5	NOUN
-C047b	female ethnic group 5	NOUN
-C048	Ethnic group 6	NOUN
-C048a	male ethnic group 6	NOUN
-C048b	female ethnic group 6	NOUN
-C049	Ethnic group 7	NOUN
-C049a	male ethnic group 7	NOUN
-C049b	female ethnic group 7	NOUN
-C050	Ethnic group 8	NOUN
-C050a	male ethnic group 8	NOUN
-C050b	female ethnic group 8	NOUN
-C051	Ethnic group 9	NOUN
-C051a	male ethnic group 9	NOUN
-C051b	female ethnic group 9	NOUN
-C052	Ethnic group 10	NOUN
-C052a	male ethnic group 10	NOUN
-C052b	female ethnic group 10	NOUN
-C053	Ethnic group 11	NOUN
-C053a	male ethnic group 11	NOUN
-C053b	female ethnic group 11	NOUN
-C054	Ethnic group 12	NOUN
-C054a	male ethnic group 12	NOUN
-C054b	female ethnic group 12	NOUN
-C055	Ethnic group 13	NOUN
-C055a	male ethnic group 13	NOUN
-C055b	female ethnic group 13	NOUN
-C056	Ethnic group 14	NOUN
-C056a	male ethnic group 14	NOUN
-C056b	female ethnic group 14	NOUN
-C057	Ethnic group 15	NOUN
-C057a	male ethnic group 15	NOUN
-C057b	female ethnic group 15	NOUN
-C058	Ethnic group 16	NOUN
-C058a	male ethnic group 16	NOUN
-C058b	female ethnic group 16	NOUN
-D001	animal	NOUN
-D002	domestic animal	NOUN
-D003	wild animal	NOUN
-D004	flesh	NOUN
-D005	fat	NOUN
-D006	bone marrow	NOUN
-D007	lard	NOUN
-D008	herd	NOUN
-D009	goat	NOUN
-D009a	billy goat	NOUN
-D009b	she-goat	NOUN
-D009c	kid	NOUN
-D010	goat beard	NOUN
-D011	sheep	NOUN
-D011a	ram	NOUN
-D011b	ewe	NOUN
-D011c	lamb	NOUN
-D012	wool	NOUN
-D013	cattle	NOUN
-D013a	bull	NOUN
-D013b	cow	NOUN
-D013c	calf (of cow)	NOUN
-D014	steer	NOUN
-D015	heifer	NOUN
-D016	dewlap	NOUN
-D017	dung	NOUN
-D018	horn	NOUN
-D019	tail	NOUN
-D020	hide	NOUN
-D021	fur	NOUN
-D022	hump	NOUN
-D023	hoof	NOUN
-D024	udder	NOUN
-D025	teats	NOUN
-D026	milk	NOUN
-D027	butter	NOUN
-D028	yoghurt	NOUN
-D029	horse	NOUN
-D029a	stallion	NOUN
-D029b	mare	NOUN
-D029c	colt	NOUN
-D030	horse mane	NOUN
-D031	donkey	NOUN
-D031a	male donkey	NOUN
-D031b	female donkey	NOUN
-D031c	young donkey	NOUN
-D032	camel	NOUN
-D032a	male camel	NOUN
-D032b	female camel	NOUN
-D032c	young camel	NOUN
-D033	camel hump	NOUN
-D034	dog	NOUN
-D034a	male dog	NOUN
-D034b	female dog	NOUN
-D034c	puppy	NOUN
-D035	cat	NOUN
-D035a	male cat	NOUN
-D035b	female cat	NOUN
-D035c	kitten	NOUN
-D036	pig	NOUN
-D037	warthog	NOUN
-D038	bushpig	NOUN
-D039	aardvark	NOUN
-D040	anteater	NOUN
-D041	pangolin	NOUN
-D042	monkey (generic)	NOUN
-D043	baboon	NOUN
-D044	grivet monkey	NOUN
-D045	blue monkey	NOUN
-D046	patas monkey	NOUN
-D047	guereza	NOUN
-D048	bushbaby	NOUN
-D049	antelope (generic)	NOUN
-D050	buffalo	NOUN
-D051	wildebeest	NOUN
-D052	oribi	NOUN
-D053	kudu	NOUN
-D054	zebra	NOUN
-D055	gazelle	NOUN
-D056	white-eared kob	NOUN
-D057	lechwe	NOUN
-D058	tiang	NOUN
-D059	sitatunga	NOUN
-D060	reedbuck	NOUN
-D061	bushbuck	NOUN
-D062	waterbuck	NOUN
-D063	hartebeest	NOUN
-D064	eland	NOUN
-D065	roan	NOUN
-D066	oryx	NOUN
-D067	duiker	NOUN
-D068	dikdik	NOUN
-D069	elephant	NOUN
-D070	elephant trunk	NOUN
-D071	elephant tusk	NOUN
-D072	hippo	NOUN
-D073	rhino	NOUN
-D074	rhino horn	NOUN
-D075	giraffe	NOUN
-D076	spotted hyena	NOUN
-D077	striped hyena	NOUN
-D078	wilddog	NOUN
-D079	jackal	NOUN
-D080	fox	NOUN
-D081	civet cat	NOUN
-D082	honey badger	NOUN
-D083	egyptian mongoose	NOUN
-D084	dwarf mongoose	NOUN
-D085	porcupine	NOUN
-D086	tree squirrel	NOUN
-D087	ground squirrel	NOUN
-D088	mouse	NOUN
-D089	rat	NOUN
-D090	cane rat	NOUN
-D091	palm rat	NOUN
-D092	shrew	NOUN
-D093	mole	NOUN
-D094	hare	NOUN
-D095	hyrax	NOUN
-D096	wild cat (generic)	NOUN
-D097	lion	NOUN
-D098	lion mane	NOUN
-D099	lion claw	NOUN
-D100	leopard	NOUN
-D101	cheetah	NOUN
-D102	caracal	NOUN
-D103	serval	NOUN
-D104	genet	NOUN
-D105	bat	NOUN
-D106	fruit bat	NOUN
-D107	mammal (sp)	NOUN
-D108	mammal (sp)	NOUN
-D109	mammal (sp)	NOUN
-D110	mammal (sp)	NOUN
-D111	mammal (sp)	NOUN
-D112	mammal (sp)	NOUN
-D113	mammal (sp)	NOUN
-D114	mammal (sp)	NOUN
-D115	mammal (sp)	NOUN
-D116	mammal (sp)	NOUN
-E001	bird	NOUN
-E002	chicken	NOUN
-E002a	rooster	NOUN
-E002b	hen	NOUN
-E002c	chick	NOUN
-E003	naked-necked chicken	NOUN
-E004	beak	NOUN
-E005	claw	NOUN
-E006	wing	NOUN
-E007	feather	NOUN
-E008	comb (of rooster)	NOUN
-E009	crest (of bird)	NOUN
-E010	crop (of bird)	NOUN
-E011	gizzard	NOUN
-E012	egg	NOUN
-E013	eggshell	NOUN
-E014	egg white	NOUN
-E015	yolk	NOUN
-E016	nest	NOUN
-E017	flock	NOUN
-E018	ostrich	NOUN
-E019	whistling duck	NOUN
-E020	egyptian goose	NOUN
-E021	guineafowl	NOUN
-E022	francolin	NOUN
-E023	flamingo	NOUN
-E024	speckled pigeon	NOUN
-E025	vinaceous dove	NOUN
-E026	black-billed dove	NOUN
-E027	namaqua dove	NOUN
-E028	green pigeon	NOUN
-E029	bustard	NOUN
-E030	coucal	NOUN
-E031	klaas cuckoo	NOUN
-E032	dideric cuckoo	NOUN
-E033	african cuckoo	NOUN
-E034	nightjar	NOUN
-E035	palm swift	NOUN
-E036	swift	NOUN
-E037	black crake	NOUN
-E038	black-crowned crane	NOUN
-E039	thick-knee	NOUN
-E040	stilt	NOUN
-E041	avocet	NOUN
-E042	spur-winged lapwing	NOUN
-E043	jacana	NOUN
-E044	snipe	NOUN
-E045	sandpiper	NOUN
-E046	gull	NOUN
-E047	yellow-billed stork	NOUN
-E048	openbill stork	NOUN
-E049	abdim stork	NOUN
-E050	saddle-billed stork	NOUN
-E051	marabou stork	NOUN
-E052	pelican	NOUN
-E053	shoebill	NOUN
-E054	hamerkop	NOUN
-E055	squacco heron	NOUN
-E056	striated heron	NOUN
-E057	cattle egret	NOUN
-E058	black-headed heron	NOUN
-E059	goliath heron	NOUN
-E060	great egret	NOUN
-E061	sacred ibis	NOUN
-E062	hadada ibis	NOUN
-E063	spoonbill	NOUN
-E064	osprey	NOUN
-E065	hooded vulture	NOUN
-E066	white-backed vulture	NOUN
-E067	snake eagle	NOUN
-E068	bataleur	NOUN
-E069	black kite	NOUN
-E070	fish eagle	NOUN
-E071	long crested eagle	NOUN
-E072	scops owl	NOUN
-E073	greyish eagle owl	NOUN
-E074	mousebird	NOUN
-E075	eurasian hoopoe	NOUN
-E076	green woodhoopoe	NOUN
-E077	ground hornbill	NOUN
-E078	grey hornbill	NOUN
-E079	silvery-cheeked hornbill	NOUN
-E080	malachite kingfisher	NOUN
-E081	woodland kingfisher	NOUN
-E082	grey-headed kingfisher	NOUN
-E083	striped kingfisher	NOUN
-E084	giant kingfisher	NOUN
-E085	pied kingfisher	NOUN
-E086	little bee-eater	NOUN
-E087	green bee-eater	NOUN
-E088	carmine bee-eater	NOUN
-E089	abyssinian roller	NOUN
-E090	black-billed barbet	NOUN
-E091	double-toothed barbet	NOUN
-E092	honeyguide	NOUN
-E093	woodpecker	NOUN
-E094	kestrel	NOUN
-E095	parrot	NOUN
-E096	batis	NOUN
-E097	gonolek	NOUN
-E098	tchagra	NOUN
-E099	drongo	NOUN
-E100	paradise flycatcher	NOUN
-E101	shrike	NOUN
-E102	pied crow	NOUN
-E103	fan-tailed raven	NOUN
-E104	flappet lark	NOUN
-E105	crombec	NOUN
-E106	red-pate cisticola	NOUN
-E107	tawny prinia	NOUN
-E108	barn swallow	NOUN
-E109	bulbul	NOUN
-E110	white-eye	NOUN
-E111	babbler	NOUN
-E112	oxpecker	NOUN
-E113	lesser blue-eared starling	NOUN
-E114	ruppels starling	NOUN
-E115	abyssinian thrush	NOUN
-E116	spotted flycatcher	NOUN
-E117	robin-chat	NOUN
-E118	scarlet-chested sunbird	NOUN
-E119	variable sunbird	NOUN
-E120	grosbeak weaver	NOUN
-E121	village weaver	NOUN
-E122	red-billed quelea	NOUN
-E123	northern red bishop	NOUN
-E124	firefinch	NOUN
-E125	red-cheeked cordonbleau	NOUN
-E126	bronze manikin	NOUN
-E127	pin-tailed whydah	NOUN
-E128	sparrow	NOUN
-E129	wagtail	NOUN
-E130	yellow-fronted canary	NOUN
-E131	bird (sp)	NOUN
-E132	bird (sp)	NOUN
-E133	bird (sp)	NOUN
-E134	bird (sp)	NOUN
-E135	bird (sp)	NOUN
-E136	bird (sp)	NOUN
-E137	bird (sp)	NOUN
-E138	bird (sp)	NOUN
-E139	bird (sp)	NOUN
-E140	bird (sp)	NOUN
-F001	fish	NOUN
-F002	catfish	NOUN
-F003	lungfish	NOUN
-F004	eel	NOUN
-F005	fish skin	NOUN
-F006	fish scale	NOUN
-F007	dorsal fin	NOUN
-F008	adipose fin	NOUN
-F009	caudal fin	NOUN
-F010	pectoral fin	NOUN
-F011	fish spine	NOUN
-F012	outer gill	NOUN
-F013	inner gill	NOUN
-F014	barbel	NOUN
-F015	fish stomach	NOUN
-F016	swim bladder	NOUN
-F017	fish ovary	NOUN
-F018	Nile perch	NOUN
-F019	tilapia	NOUN
-F020	tigerfish	NOUN
-F021	elephant-snout fish	NOUN
-F022	Nile bichir	NOUN
-F023	electric catfish	NOUN
-F024	fish (sp)	NOUN
-F025	fish (sp)	NOUN
-F026	fish (sp)	NOUN
-F027	fish (sp)	NOUN
-F028	fish (sp)	NOUN
-F029	fish (sp)	NOUN
-F030	fish (sp)	NOUN
-F031	fish (sp)	NOUN
-F032	fish (sp)	NOUN
-F033	fish (sp)	NOUN
-G001	snake	NOUN
-G002	fang	NOUN
-G003	venom	NOUN
-G004	scale (of snake)	NOUN
-G005	egg (of reptile)	NOUN
-G006	rufous beaked snake	NOUN
-G007	sand snake	NOUN
-G008	viper	NOUN
-G009	cobra	NOUN
-G010	puff adder	NOUN
-G011	rhinoceros viper	NOUN
-G012	python	NOUN
-G013	crocodile	NOUN
-G014	monitor	NOUN
-G015	agama	NOUN
-G016	skink	NOUN
-G017	gecko	NOUN
-G018	chameleon	NOUN
-G019	tortoise	NOUN
-G020	turtle	NOUN
-G021	terrapin	NOUN
-G022	shell (of turtle)	NOUN
-G023	tree frog	NOUN
-G024	bullfrog	NOUN
-G025	toad	NOUN
-G026	tadpole	NOUN
-G027	spawn	NOUN
-G028	vocal sac	NOUN
-G029	reptile amphib (sp)	NOUN
-G030	reptile amphib (sp)	NOUN
-G031	reptile amphib (sp)	NOUN
-G032	reptile amphib (sp)	NOUN
-G033	reptile amphib (sp)	NOUN
-G034	reptile amphib (sp)	NOUN
-G035	reptile amphib (sp)	NOUN
-G036	reptile amphib (sp)	NOUN
-G037	reptile amphib (sp)	NOUN
-G038	reptile amphib (sp)	NOUN
-H001	insect	NOUN
-H002	antenna	NOUN
-H003	bee	NOUN
-H004	queen bee	NOUN
-H005	swarm	NOUN
-H006	beehive	NOUN
-H007	beeswax	NOUN
-H008	honey	NOUN
-H009	honeycomb	NOUN
-H010	stinger	NOUN
-H011	hornet	NOUN
-H012	black jacket	NOUN
-H013	wasp	NOUN
-H014	ant	NOUN
-H015	driver ant	NOUN
-H016	flying ant	NOUN
-H017	termite	NOUN
-H018	termite mound	NOUN
-H019	fly	NOUN
-H020	fruit fly	NOUN
-H021	horsefly	NOUN
-H022	tsetse fly	NOUN
-H023	mosquito	NOUN
-H024	maggot	NOUN
-H025	grasshopper	NOUN
-H026	locust	NOUN
-H027	cricket	NOUN
-H028	praying mantis	NOUN
-H029	cockroach	NOUN
-H030	june beetle	NOUN
-H031	dung beetle	NOUN
-H032	shell (of beetle)	NOUN
-H033	butterfly	NOUN
-H034	moth	NOUN
-H035	caterpillar	NOUN
-H036	cocoon	NOUN
-H037	dragonfly	NOUN
-H038	firefly	NOUN
-H039	flea	NOUN
-H040	louse	NOUN
-H041	bedbug	NOUN
-H042	tick	NOUN
-H043	poultry mite	NOUN
-H044	jigger	NOUN
-H045	leech	NOUN
-H046	mealworm	NOUN
-H047	earthworm	NOUN
-H048	spider	NOUN
-H049	spider web	NOUN
-H050	tarantula	NOUN
-H051	scorpion	NOUN
-H052	centipede	NOUN
-H053	millipede	NOUN
-H054	snail	NOUN
-H055	tree snail	NOUN
-H056	ground snail	NOUN
-H057	aquatic snail	NOUN
-H058	shell (of snail)	NOUN
-H059	crab	NOUN
-H060	shrimp	NOUN
-H061	clam	NOUN
-H062	mussel	NOUN
-H063	insect (sp)	NOUN
-H064	insect (sp)	NOUN
-H065	insect (sp)	NOUN
-H066	insect (sp)	NOUN
-H067	insect (sp)	NOUN
-H068	insect (sp)	NOUN
-H069	insect (sp)	NOUN
-H070	insect (sp)	NOUN
-H071	insect (sp)	NOUN
-H072	insect (sp)	NOUN
-H073	insect (sp)	NOUN
-H074	insect (sp)	NOUN
-I001	spirit (greater)	NOUN
-I002	spirit (lower)	NOUN
-I003	spirit (evil)	NOUN
-I004	soul (human)	NOUN
-I005	ghost	NOUN
-I006	heaven	NOUN
-I007	underworld	NOUN
-I008	shrine	NOUN
-I009	altar	NOUN
-I010	sacrifice	NOUN
-I011	libation	NOUN
-I012	seance	NOUN
-I013	rainmaking ceremony	NOUN
-I014	blessing	NOUN
-I015	curse	NOUN
-I016	luck	NOUN
-I017	prophecy	NOUN
-I018	vision	NOUN
-I019	dream	NOUN
-I020	omen	NOUN
-I021	taboo	NOUN
-I022	charm	NOUN
-I023	lots	NOUN
-I024	evil eye	NOUN
-I025	witchcraft	NOUN
-I026	medicine	NOUN
-I027	healing ceremony	NOUN
-I028	sickness	NOUN
-I029	pain	NOUN
-I030	fever (not malaria)	NOUN
-I031	sweat	NOUN
-I032	cold (sickness)	NOUN
-I033	cough	NOUN
-I034	hiccough	NOUN
-I035	phlegm	NOUN
-I036	headache	NOUN
-I037	stomachache	NOUN
-I038	vomit	NOUN
-I039	diarrhea	NOUN
-I040	itch	NOUN
-I041	rash	NOUN
-I042	malaria (fever)	NOUN
-I043	leprosy	NOUN
-I044	elephantiasis	NOUN
-I045	ringworm	NOUN
-I046	goiter	NOUN
-I047	intestinal worm	NOUN
-I048	insanity	NOUN
-I049	wound	NOUN
-I050	burn	NOUN
-I051	welt	NOUN
-I052	bruise	NOUN
-I053	scar	NOUN
-I054	blemish	NOUN
-I055	pimple	NOUN
-I056	abscess	NOUN
-I057	swelling	NOUN
-I058	pus	NOUN
-I059	ulcer	NOUN
-I060	hump (of hunchback)	NOUN
-I061	blight	NOUN
-I062	life	NOUN
-I063	birth	NOUN
-I064	birth pains	NOUN
-I065	naming ceremony	NOUN
-I066	circumcision	NOUN
-I067	maturation	NOUN
-I068	rite of passage (male)	NOUN
-I069	rite of passage (female)	NOUN
-I070	menstrual period	NOUN
-I071	death	NOUN
-I072	miscarriage	NOUN
-I073	corpse	NOUN
-I074	grave	NOUN
-I075	funeral	NOUN
-I076	meeting	NOUN
-I077	wedding	NOUN
-I078	brideprice	NOUN
-I079	law	NOUN
-I080	custom	NOUN
-I081	judgment ceremony	NOUN
-J001	tree	NOUN
-J002	trunk (of tree)	NOUN
-J003	branch (of tree)	NOUN
-J004	twig	NOUN
-J005	bark (of tree)	NOUN
-J006	stump	NOUN
-J007	root	NOUN
-J008	sap	NOUN
-J009	leaf	NOUN
-J010	bud	NOUN
-J011	shoot (new plant)	NOUN
-J012	flower	NOUN
-J013	thorn	NOUN
-J014	fruit	NOUN
-J015	seed	NOUN
-J016	pit (of fruit)	NOUN
-J017	skin (of fruit)	NOUN
-J018	juice	NOUN
-J019	bush	NOUN
-J020	neem tree	NOUN
-J021	ebony tree	NOUN
-J022	mahogany tree	NOUN
-J023	teak tree	NOUN
-J024	kapok tree	NOUN
-J025	sausage tree	NOUN
-J026	thorn tree	NOUN
-J027	white thorn tree	NOUN
-J028	gardenia tree	NOUN
-J029	fan palm	NOUN
-J030	oil palm	NOUN
-J031	palm nut	NOUN
-J032	palm branch, frond	NOUN
-J033	midrib of palm-frond	NOUN
-J034	palm needle	NOUN
-J035	date	NOUN
-J035a	date palm	NOUN
-J035b	date fruit	NOUN
-J036	fig	NOUN
-J036a	fig tree	NOUN
-J036b	fig fruit	NOUN
-J037	tamarind	NOUN
-J037a	tamarind tree	NOUN
-J037b	tamarind fruit	NOUN
-J038	baobab	NOUN
-J038a	baobab tree	NOUN
-J038b	baobab fruit	NOUN
-J039	shea	NOUN
-J039a	shea tree	NOUN
-J039b	shea nut	NOUN
-J040	lemon	NOUN
-J040a	lemon tree	NOUN
-J040b	lemon fruit	NOUN
-J041	orange	NOUN
-J041a	orange tree	NOUN
-J041b	orange fruit	NOUN
-J042	grapefruit	NOUN
-J042a	grapefruit tree	NOUN
-J042b	grapefruit fruit	NOUN
-J043	mango	NOUN
-J043a	mango tree	NOUN
-J043b	mango fruit	NOUN
-J044	guava	NOUN
-J044a	guava tree	NOUN
-J044b	guava fruit	NOUN
-J045	papaya	NOUN
-J045a	papaya tree	NOUN
-J045b	papaya fruit	NOUN
-J046	avocado	NOUN
-J046a	avocado tree	NOUN
-J046b	avocado fruit	NOUN
-J047	banana	NOUN
-J047a	banana plant	NOUN
-J047b	banana fruit	NOUN
-J048	bunch (of bananas)	NOUN
-J049	dwarf banana	NOUN
-J049a	dwarf banana plant	NOUN
-J049b	dwarf banana fruit	NOUN
-J050	pineapple	NOUN
-J050a	pineapple plant	NOUN
-J050b	pineapple fruit	NOUN
-J051	pumpkin	NOUN
-J052	watermelon	NOUN
-J053	vine	NOUN
-J054	tendril	NOUN
-J055	sorghum	NOUN
-J056	red sorghum	NOUN
-J057	white sorghum	NOUN
-J058	maize	NOUN
-J059	stalk (of maize)	NOUN
-J060	cob (of maize)	NOUN
-J061	kernel (of maize)	NOUN
-J062	husk (of maize)	NOUN
-J063	hair (of maize)	NOUN
-J064	flowering corn head	NOUN
-J065	chaff	NOUN
-J066	rice	NOUN
-J067	sugar cane	NOUN
-J068	sesame seed	NOUN
-J069	cotton	NOUN
-J070	bean	NOUN
-J071	peanut	NOUN
-J072	shell (of peanut)	NOUN
-J073	tuber	NOUN
-J074	potato	NOUN
-J075	cassava	NOUN
-J076	yam	NOUN
-J077	sweet potato	NOUN
-J078	onion	NOUN
-J079	garlic	NOUN
-J080	tomato	NOUN
-J081	carrot	NOUN
-J082	okra	NOUN
-J083	egg-plant	NOUN
-J084	green pepper	NOUN
-J085	hot pepper	NOUN
-J086	mushroom	NOUN
-J087	ginger	NOUN
-J088	cinnamon	NOUN
-J089	coriander	NOUN
-J090	tobacco	NOUN
-J091	cannabis	NOUN
-J092	coffee	NOUN
-J093	grass	NOUN
-J094	blade of grass	NOUN
-J095	weed	NOUN
-J096	reed	NOUN
-J097	papyrus	NOUN
-J098	water lily	NOUN
-J099	lowland bamboo	NOUN
-J100	highland bamboo	NOUN
-J101	food	NOUN
-J102	oil	NOUN
-J103	traditional bread	NOUN
-J104	journey bread	NOUN
-J105	crust	NOUN
-J106	flour	NOUN
-J107	salt	NOUN
-J108	soup	NOUN
-J109	porridge	NOUN
-J110	breakfast	NOUN
-J111	evening meal	NOUN
-J112	leftovers	NOUN
-J113	mould	NOUN
-J114	yeast	NOUN
-J115	beer dough	NOUN
-J116	grain beer	NOUN
-J117	grain liquor	NOUN
-J118	honey wine	NOUN
-J119	tree (sp)	NOUN
-J120	tree (sp)	NOUN
-J121	tree (sp)	NOUN
-J122	tree (sp)	NOUN
-J123	tree (sp)	NOUN
-J124	tree (sp)	NOUN
-J125	tree (sp)	NOUN
-J126	tree (sp)	NOUN
-J127	tree (sp)	NOUN
-J128	grass (sp)	NOUN
-J129	grass (sp)	NOUN
-J130	grass (sp)	NOUN
-J131	grass (sp)	NOUN
-J132	grass (sp)	NOUN
-J133	grass (sp)	NOUN
-J134	grass (sp)	NOUN
-J135	grass (sp)	NOUN
-J136	grass (sp)	NOUN
-J137	grass (sp)	NOUN
-J138	grass (sp)	NOUN
-K001	thing	NOUN
-K002	house	NOUN
-K003	compound	NOUN
-K004	wall	NOUN
-K005	mud block	NOUN
-K006	plaster	NOUN
-K007	whitewash	NOUN
-K008	floor	NOUN
-K009	ceiling	NOUN
-K010	roof	NOUN
-K011	roof cap	NOUN
-K012	thatch	NOUN
-K013	upright rafter	NOUN
-K014	horizontal rafter	NOUN
-K015	forked support beam	NOUN
-K016	crossbeam	NOUN
-K017	door	NOUN
-K018	doorway	NOUN
-K019	window	NOUN
-K020	ladder	NOUN
-K021	lean-to	NOUN
-K022	tent	NOUN
-K023	platform	NOUN
-K024	drying rack	NOUN
-K025	granary	NOUN
-K026	cattle pen	NOUN
-K027	cattle camp	NOUN
-K028	fence	NOUN
-K029	fence (see-thru)	NOUN
-K030	stake	NOUN
-K031	well	NOUN
-K032	bathing place	NOUN
-K033	toilet	NOUN
-K034	garbage dump	NOUN
-K035	garbage	NOUN
-K036	garden	NOUN
-K037	farm field	NOUN
-K038	village	NOUN
-K039	camp	NOUN
-K040	market	NOUN
-K041	territory	NOUN
-K042	path	NOUN
-K043	fork (in path)	NOUN
-K044	crossroads	NOUN
-K045	bridge	NOUN
-K046	journey	NOUN
-K047	car	NOUN
-K048	bed	NOUN
-K049	mat	NOUN
-K050	pillow	NOUN
-K051	mosquito net	NOUN
-K052	stool	NOUN
-K053	wickerwork	NOUN
-K054	lamp	NOUN
-K055	candle	NOUN
-K056	fan	NOUN
-K057	bell	NOUN
-K058	broom	NOUN
-K059	duster	NOUN
-K060	fireplace	NOUN
-K061	firewood	NOUN
-K062	firebrand	NOUN
-K063	fire sticks	NOUN
-K064	fire stoker	NOUN
-K065	charcoal	NOUN
-K066	pottery	NOUN
-K067	pot (for water)	NOUN
-K068	stewing pot	NOUN
-K069	metal pot	NOUN
-K070	metal kettle	NOUN
-K071	coffee pot	NOUN
-K072	jug	NOUN
-K073	bottle	NOUN
-K074	bottle stopper	NOUN
-K075	gourd	NOUN
-K075a	bowl	NOUN
-K075b	bowl for bread	NOUN
-K075c	bowl for stew	NOUN
-K076	bowlring	NOUN
-K077	plate	NOUN
-K078	dish	NOUN
-K079	cup	NOUN
-K080	pottery shard	NOUN
-K081	spoon	NOUN
-K082	ladle	NOUN
-K083	beer filter	NOUN
-K084	handle	NOUN
-K085	woven basket	NOUN
-K086	bucket	NOUN
-K087	box	NOUN
-K088	hide sack	NOUN
-K089	nylon sack	NOUN
-K090	cooking stone	NOUN
-K091	grinding stone	NOUN
-K091a	upper grinding stone	NOUN
-K091b	lower grinding stone	NOUN
-K092	mortar	NOUN
-K093	pestle	NOUN
-K094	stirring paddle	NOUN
-K095	winnowing basket	NOUN
-K096	threshing fork	NOUN
-K097	threshing floor	NOUN
-K098	digging tool	NOUN
-K099	little hoe	NOUN
-K100	big hoe	NOUN
-K101	sickle	NOUN
-K102	machete	NOUN
-K103	axe	NOUN
-K104	pickaxe	NOUN
-K105	hammer	NOUN
-K106	anvil	NOUN
-K107	potter kiln	NOUN
-K108	saw	NOUN
-K109	chisel	NOUN
-K110	nail	NOUN
-K111	knife	NOUN
-K112	needle	NOUN
-K113	cloth patch	NOUN
-K114	rag	NOUN
-K115	pocket	NOUN
-K116	leather	NOUN
-K117	rope	NOUN
-K118	string	NOUN
-K119	strap	NOUN
-K120	knot	NOUN
-K121	noose	NOUN
-K122	slipknot	NOUN
-K123	chain	NOUN
-K124	bundle (of sticks)	NOUN
-K125	heap (of grain)	NOUN
-K126	headpad	NOUN
-K127	burden	NOUN
-K128	cane	NOUN
-K129	switch	NOUN
-K130	hunting trip	NOUN
-K131	hunting field	NOUN
-K132	bow (for hunting)	NOUN
-K133	arrow	NOUN
-K134	arrowhead	NOUN
-K135	quiver (of arrows)	NOUN
-K136	throwing stick	NOUN
-K137	cudgel	NOUN
-K138	hunting net	NOUN
-K139	trap	NOUN
-K140	bait	NOUN
-K141	footprint	NOUN
-K142	fishing spear	NOUN
-K143	harpoon	NOUN
-K144	fishhook	NOUN
-K145	fishing line	NOUN
-K146	fishing net	NOUN
-K147	fish trap	NOUN
-K148	fish dam	NOUN
-K149	boat	NOUN
-K150	ambatch raft	NOUN
-K151	paddle	NOUN
-K152	sword	NOUN
-K153	sheath	NOUN
-K154	gun	NOUN
-K155	shield	NOUN
-K156	whip	NOUN
-K157	war	NOUN
-K158	peace	NOUN
-K159	army	NOUN
-K160	belongings	NOUN
-K161	money	NOUN
-K162	gift	NOUN
-K163	debt	NOUN
-K164	tax	NOUN
-K165	inheritance	NOUN
-K166	clothing	NOUN
-K167	dress	NOUN
-K168	shirt	NOUN
-K169	trousers	NOUN
-K170	robe (man)	NOUN
-K171	loincloth	NOUN
-K171a	loincloth for males	NOUN
-K171b	loincloth for females	NOUN
-K172	belt	NOUN
-K173	shell belt	NOUN
-K174	baby sling	NOUN
-K175	hat	NOUN
-K176	shoe	NOUN
-K177	bead	NOUN
-K178	bracelet	NOUN
-K179	necklace	NOUN
-K180	ankle ring	NOUN
-K181	finger ring	NOUN
-K182	earring	NOUN
-K183	lip disk	NOUN
-K184	facial scar	NOUN
-K185	soap	NOUN
-K186	razor	NOUN
-K187	comb	NOUN
-K188	toothbrush	NOUN
-K189	toothpick	NOUN
-K190	music	NOUN
-K191	song	NOUN
-K192	dance	NOUN
-K193	drum	NOUN
-K194	big drum	NOUN
-K195	small drum	NOUN
-K196	ground drum	NOUN
-K197	pan pipe	NOUN
-K198	single note flute	NOUN
-K199	musical horn	NOUN
-K200	war horn	NOUN
-K201	lyre	NOUN
-K202	fiddle	NOUN
-K203	rattle (musical)	NOUN
-K204	clave	NOUN
-K205	whistle	NOUN
-K206	mask	NOUN
-K207	tobacco pipe	NOUN
-K208	pipe-stem	NOUN
-K209	bong	NOUN
-K210	bong downstem	NOUN
-K211	bong cap	NOUN
-K212	bong straw	NOUN
-K213	toy ring	NOUN
-K214	ball	NOUN
-K215	mancala	NOUN
-L001	sky	NOUN
-L002	sun	NOUN
-L003	hour	NOUN
-L004	day	NOUN
-L005	moon	NOUN
-L006	month	NOUN
-L007	full moon	NOUN
-L008	new moon	NOUN
-L009	eclipse	NOUN
-L010	star	NOUN
-L011	morning star	NOUN
-L012	Pleiades	NOUN
-L013	shooting star	NOUN
-L014	year	NOUN
-L015	dawn	NOUN
-L016	sunrise	NOUN
-L017	morning	NOUN
-L018	noon	NOUN
-L019	daytime	NOUN
-L020	afternoon	NOUN
-L021	sunset	NOUN
-L022	dusk	NOUN
-L023	night	NOUN
-L024	midnight	NOUN
-L025	time	NOUN
-L026	season	NOUN
-L027	rainy season	NOUN
-L028	dry season	NOUN
-L029	harvest season	NOUN
-L030	wind	NOUN
-L031	windstorm	NOUN
-L032	whirlwind	NOUN
-L033	storm	NOUN
-L034	cloud	NOUN
-L035	fog	NOUN
-L036	haze (dust)	NOUN
-L037	rain	NOUN
-L038	first rains	NOUN
-L039	drizzle	NOUN
-L040	thunder	NOUN
-L041	lightning	NOUN
-L042	rainbow	NOUN
-L043	hail	NOUN
-L044	dew	NOUN
-L045	flood	NOUN
-L046	drought	NOUN
-L047	heat	NOUN
-L048	coldness	NOUN
-L049	light	NOUN
-L050	sunshine	NOUN
-L051	moonlight	NOUN
-L052	shade	NOUN
-L053	shadow	NOUN
-L054	reflection	NOUN
-L055	darkness	NOUN
-L056	fire	NOUN
-L057	flame	NOUN
-L058	spark	NOUN
-L059	smoke	NOUN
-L060	ash	NOUN
-L061	bush fire	NOUN
-L062	burnt grassland	NOUN
-L063	water	NOUN
-L064	river	NOUN
-L065	tributary	NOUN
-L066	current (river)	NOUN
-L067	stream	NOUN
-L068	dry stream	NOUN
-L069	waterfall	NOUN
-L070	spring	NOUN
-L071	riverbank	NOUN
-L072	ford	NOUN
-L073	sandbank	NOUN
-L074	island	NOUN
-L075	lake	NOUN
-L076	pool	NOUN
-L077	puddle	NOUN
-L078	water hole	NOUN
-L079	swamp	NOUN
-L080	wave	NOUN
-L081	bubble	NOUN
-L082	foam	NOUN
-L083	slime (organic)	NOUN
-L084	world	NOUN
-L085	place	NOUN
-L086	ground	NOUN
-L087	soil	NOUN
-L088	fertile soil	NOUN
-L089	clay	NOUN
-L090	mud	NOUN
-L091	mud cracks	NOUN
-L092	sand	NOUN
-L093	gravel	NOUN
-L094	dust	NOUN
-L095	stone	NOUN
-L096	rock	NOUN
-L097	gold	NOUN
-L098	iron	NOUN
-L099	rocky place	NOUN
-L100	mountain	NOUN
-L101	mountaintop	NOUN
-L102	hill	NOUN
-L103	cliff	NOUN
-L104	valley	NOUN
-L105	ditch	NOUN
-L106	pit	NOUN
-L107	hole	NOUN
-L108	sinkhole	NOUN
-L109	crevice	NOUN
-L110	cave	NOUN
-L111	floodplain	NOUN
-L112	high ground	NOUN
-L113	grassland	NOUN
-L114	forest	NOUN
-L115	wilderness	NOUN
-L116	desert	NOUN
-M001	language	NOUN
-M002	voice	NOUN
-M003	noise	NOUN
-M004	name	NOUN
-M005	word	NOUN
-M006	meaning	NOUN
-M007	story	NOUN
-M008	proverb	NOUN
-M009	riddle	NOUN
-M010	news	NOUN
-M011	secret	NOUN
-M012	thought	NOUN
-M013	truth	NOUN
-M014	lie	NOUN
-M015	error	NOUN
-M016	oath	NOUN
-M017	knowledge	NOUN
-M018	wisdom	NOUN
-M019	danger	NOUN
-M020	problem	NOUN
-M021	silence	NOUN
-M022	echo	NOUN
-N001	up	NOUN
-N002	down	
-N003	above	
-N004	under	
-N005	uphill	
-N006	downhill	
-N007	upriver	
-N008	downriver	
-N009	east	
-N010	west	
-N011	north	
-N012	south	
-N013	forward	
-N014	backward	
-N015	right	
-N016	left	
-N017	afore	
-N018	behind	
-N019	beside	
-N020	inside	
-N021	outside	
-N022	between	
-N023	towards	
-N024	away from	
-N025	with	
-N026	ereyesterday	
-N027	yesterday	
-N028	today	
-N029	tomorrow	
-N030	overmorrow	
-N031	past	
-N032	previously	
-N033	now	
-N034	later	
-N035	future	
-O001	yes	
-O002	no	
-O003	first	QUANT
-O004	second	QUANT
-O005	third	QUANT
-O006	all	QUANT
-O007	many	QUANT
-O008	some	QUANT
-O009	none	QUANT
-O010	both	QUANT
-O011	half	QUANT
-P001	be big	ADJECTIVE
-P001a	size	NOUN
-P002	be small	ADJECTIVE
-P003	be tall	ADJECTIVE
-P004	be short	ADJECTIVE
-P005	be high	ADJECTIVE
-P006	be low	ADJECTIVE
-P007	be deep	ADJECTIVE
-P008	be shallow	ADJECTIVE
-P009	be wide	ADJECTIVE
-P010	be narrow	ADJECTIVE
-P011	be heavy	ADJECTIVE
-P011a	weight	NOUN
-P012	be lightweight	ADJECTIVE
-P013	be many	ADJECTIVE
-P014	be few	ADJECTIVE
-P015	be enough	ADJECTIVE
-P016	be used up	ADJECTIVE
-P017	be scarce	ADJECTIVE
-P018	be equal	ADJECTIVE
-P019	be greater	ADJECTIVE
-P020	be comparable	ADJECTIVE
-P021	be identical	ADJECTIVE
-P022	be different	ADJECTIVE
-P023	be various	ADJECTIVE
-P024	be flat	ADJECTIVE
-P025	be round	ADJECTIVE
-P026	be straight	ADJECTIVE
-P027	be crooked	ADJECTIVE
-P028	be hollow	ADJECTIVE
-P029	be hard	ADJECTIVE
-P030	be soft	ADJECTIVE
-P031	be tender	ADJECTIVE
-P032	be sharp	ADJECTIVE
-P033	be blunt	ADJECTIVE
-P034	be rough	ADJECTIVE
-P035	be smooth	ADJECTIVE
-P036	be slippery	ADJECTIVE
-P037	be sticky	ADJECTIVE
-P038	be open	ADJECTIVE
-P039	be closed	ADJECTIVE
-P040	be tight	ADJECTIVE
-P041	be loose	ADJECTIVE
-P042	be full	ADJECTIVE
-P043	be empty	ADJECTIVE
-P044	be torn	ADJECTIVE
-P045	be new	ADJECTIVE
-P046	be old (not new)	ADJECTIVE
-P047	be tattered	ADJECTIVE
-P048	be clean	ADJECTIVE
-P049	be dirty	ADJECTIVE
-P050	be wet	ADJECTIVE
-P051	be dry	ADJECTIVE
-P052	be hot (objects)	ADJECTIVE
-P053	be cold (objects)	ADJECTIVE
-P054	be ripe	ADJECTIVE
-P055	be unripe	ADJECTIVE
-P056	be rotten	ADJECTIVE
-P057	be shrivelled	ADJECTIVE
-P058	be fertile (land)	ADJECTIVE
-P059	be infertile (land)	ADJECTIVE
-P060	colour	NOUN
-P061	be red	ADJECTIVE
-P061a	red thing	NOUN
-P061b	very red	ADVERB
-P062	be black	ADJECTIVE
-P062a	black thing	NOUN
-P062b	very black	ADVERB
-P063	be white	ADJECTIVE
-P063a	white thing	NOUN
-P063b	very white	ADVERB
-P064	be green	ADJECTIVE
-P064a	green thing	NOUN
-P064b	very green	ADVERB
-P065	be spotted	ADJECTIVE
-P065a	very spotted	ADVERB
-P066	be solid coloured	ADJECTIVE
-P067	be piebald	ADJECTIVE
-P068	be savory	ADJECTIVE
-P069	be sweet	ADJECTIVE
-P070	be sour	ADJECTIVE
-P071	be bitter	ADJECTIVE
-P072	be salty	ADJECTIVE
-P073	smell bad	ADJECTIVE
-P073a	odour	NOUN
-P074	smell good	ADJECTIVE
-P074a	aroma	NOUN
-P075	be fast	ADJECTIVE
-P076	be slow	ADJECTIVE
-P077	be hot (person)	ADJECTIVE
-P078	be hungry	ADJECTIVE
-P078a	hunger	NOUN
-P079	be thirsty	ADJECTIVE
-P079a	thirst	NOUN
-P080	be sated	ADJECTIVE
-P081	be tired	ADJECTIVE
-P081a	tiredness	NOUN
-P082	be sleepy	ADJECTIVE
-P082a	sleepiness	NOUN
-P083	be awake	ADJECTIVE
-P084	be drunk	ADJECTIVE
-P085	be dizzy	ADJECTIVE
-P086	be naked	ADJECTIVE
-P087	be healthy	ADJECTIVE
-P087a	health	NOUN
-P088	be sick	ADJECTIVE
-P089	be ill	ADJECTIVE
-P090	be strong	ADJECTIVE
-P090a	strength	NOUN
-P091	be muscular	ADJECTIVE
-P092	be weak	ADJECTIVE
-P092a	weakness	NOUN
-P093	be fat	ADJECTIVE
-P094	be skinny	ADJECTIVE
-P095	be emaciated	ADJECTIVE
-P096	be lame	ADJECTIVE
-P097	be blind	ADJECTIVE
-P097a	blindness	NOUN
-P098	be myopic	ADJECTIVE
-P099	be mute	ADJECTIVE
-P100	be bald	ADJECTIVE
-P101	be impotent	ADJECTIVE
-P102	be alive	ADJECTIVE
-P103	be dead	ADJECTIVE
-P104	be young	ADJECTIVE
-P105	be old (not young)	ADJECTIVE
-P106	be happy	ADJECTIVE
-P106a	happiness	NOUN
-P107	be sad	ADJECTIVE
-P107a	sadness	NOUN
-P108	be angry	ADJECTIVE
-P108a	anger	NOUN
-P109	be afraid	ADJECTIVE
-P109a	fear	NOUN
-P110	be proud	ADJECTIVE
-P110a	pride	NOUN
-P111	be jealous	ADJECTIVE
-P111a	jealousy	NOUN
-P112	be shy	ADJECTIVE
-P113	be bored	ADJECTIVE
-P114	be restless	ADJECTIVE
-P115	be eager	ADJECTIVE
-P116	be curious	ADJECTIVE
-P117	be alone	ADJECTIVE
-P118	be brave	ADJECTIVE
-P118a	bravery	NOUN
-P119	be kind	ADJECTIVE
-P119a	kindness	NOUN
-P120	be generous	ADJECTIVE
-P121	be selfish	ADJECTIVE
-P122	be honest	ADJECTIVE
-P123	be corrupt	ADJECTIVE
-P124	be wicked	ADJECTIVE
-P125	be fierce	ADJECTIVE
-P126	be lazy	ADJECTIVE
-P126a	laziness	NOUN
-P127	be patient	ADJECTIVE
-P127a	patience	NOUN
-P128	be impatient	ADJECTIVE
-P129	be stubborn	ADJECTIVE
-P129a	stubbornness	NOUN
-P130	be wise	ADJECTIVE
-P131	be intelligent	ADJECTIVE
-P132	be foolish	ADJECTIVE
-P132a	foolishness	NOUN
-P133	be confused	ADJECTIVE
-P134	be ignorant	ADJECTIVE
-P135	be skilled	ADJECTIVE
-P136	be able	ADJECTIVE
-P136a	ability	NOUN
-P137	be eloquent	ADJECTIVE
-P138	be silent	ADJECTIVE
-P139	be good	ADJECTIVE
-P140	be bad	ADJECTIVE
-P141	be correct	ADJECTIVE
-P142	be wrong	ADJECTIVE
-P143	be guilty	ADJECTIVE
-P144	be innocent	ADJECTIVE
-P145	be beautiful	ADJECTIVE
-P146	be ugly	ADJECTIVE
-P147	be important	ADJECTIVE
-P148	be amusing	ADJECTIVE
-P149	be easy	ADJECTIVE
-P150	be difficult	ADJECTIVE
-P151	be rich	ADJECTIVE
-P152	be poor	ADJECTIVE
-P153	be expensive	ADJECTIVE
-P154	be inexpensive	ADJECTIVE
-P155	be lost	ADJECTIVE
-P156	be absent	ADJECTIVE
-P157	be near here	ADJECTIVE
-P158	be near there	ADJECTIVE
-P159	be far	ADJECTIVE
-Q001	one	QUANT
-Q002	two	QUANT
-Q003	three	QUANT
-Q004	four	QUANT
-Q005	five	QUANT
-Q006	six	QUANT
-Q007	seven	QUANT
-Q008	eight	QUANT
-Q009	nine	QUANT
-Q010	ten	QUANT
-Q011	eleven	QUANT
-Q012	twelve	QUANT
-Q013	thirteen	QUANT
-Q014	fourteen	QUANT
-Q015	fifteen	QUANT
-Q016	sixteen	QUANT
-Q017	seventeen	QUANT
-Q018	eighteen	QUANT
-Q019	nineteen	QUANT
-Q020	twenty	QUANT
-Q021	twenty-one	QUANT
-Q022	twenty-two	QUANT
-Q023	twenty-three	QUANT
-Q024	twenty-four	QUANT
-Q030	thirty	QUANT
-Q035	thirty-five	QUANT
-Q036	thirty-six	QUANT
-Q040	forty	QUANT
-Q047	forty-seven	QUANT
-Q048	forty-eight	QUANT
-Q050	fifty	QUANT
-Q059	fifty-nine	QUANT
-Q060	sixty	QUANT
-Q070	seventy	QUANT
-Q080	eighty	QUANT
-Q090	ninety	QUANT
-Q100	one-hundred	QUANT
-Q200	two-hundred	QUANT
-Q300	three-hundred	QUANT
-Q400	four-hundred	QUANT
-Q500	five-hundred	QUANT
-Q600	six-hundred	QUANT
-Q700	seven-hundred	QUANT
-Q800	eight-hundred	QUANT
-Q900	nine-hundred	QUANT
-Q1000	one-thousand	QUANT
-Q2000	two-thousand	QUANT
-Q1736	one-thousand seven-hundred thirty-six	QUANT
-R1SG	I	PRONOUN
-R1DU	we two	PRONOUN
-R1PLIN	we (and you)	PRONOUN
-R1PLEX	we (not you)	PRONOUN
-R2SGM	you (male)	PRONOUN
-R2SGF	you (female)	PRONOUN
-R2DU	you two	PRONOUN
-R2PL	you (plural)	PRONOUN
-R3SGM	he	PRONOUN
-R3SGF	she	PRONOUN
-R3PL	they	PRONOUN
-V001	to be	VERB
-V002	to exist	VERB
-V003	to exist apart	VERB
-V004	to not exist	VERB
-V005	to become	VERB
-V006	to have	VERB
-V007	to lack	VERB
-V008	to go	VERB
-V009	to come	VERB
-V010	to arrive	VERB
-V011	to approach	VERB
-V012	to enter	VERB
-V013	to exit	VERB
-V014	to leave	VERB
-V015	to return	VERB
-V016	to pass by	VERB
-V017	to go round	VERB
-V018	to ascend	VERB
-V019	to descend	VERB
-V020	to fall down	VERB
-V021	to arise	VERB
-V022	to cross (water)	VERB
-V023	to cross (land)	VERB
-V024	to move	VERB
-V025	to travel	VERB
-V026	to migrate	VERB
-V027	to wander	VERB
-V028	to disappear	VERB
-V029	to walk	VERB
-V030	to step	VERB
-V031	to run	VERB
-V032	to flee	VERB
-V033	to hurry	VERB
-V034	to stumble	VERB
-V035	to limp	VERB
-V036	to crawl	VERB
-V037	to jump	VERB
-V038	to turn round	VERB
-V039	to swing	VERB
-V040	to slide	VERB
-V041	to roll	VERB
-V042	to swim on	VERB
-V043	to swim in	VERB
-V044	to dive	VERB
-V045	to float	VERB
-V046	to sink	VERB
-V047	to drown	VERB
-V048	to fly	VERB
-V049	to soar	VERB
-V050	to perch	VERB
-V051	to paddle	VERB
-V052	to bale out (canoe)	VERB
-V053	to capsize	VERB
-V054	to ride	VERB
-V055	to dwell	VERB
-V056	to stay	VERB
-V057	to rest	VERB
-V058	to sit	VERB
-V059	to stand	VERB
-V060	to kneel	VERB
-V061	to squat	VERB
-V062	to straddle	VERB
-V063	to lean against	VERB
-V064	to lie down	VERB
-V065	to bend down	VERB
-V066	to bow (greeting)	VERB
-V067	to breathe	VERB
-V068	to pant	VERB
-V069	to yawn	VERB
-V070	to blink	VERB
-V071	to wink	VERB
-V072	to snore	VERB
-V073	to sniff	VERB
-V074	to blow nose	VERB
-V075	to blow (with mouth)	VERB
-V076	to spit	VERB
-V077	to cough	VERB
-V078	to belch	VERB
-V079	to sneeze	VERB
-V080	to groan (with pain)	VERB
-V081	to grunt (from effort)	VERB
-V082	to beat (heart)	VERB
-V083	to throb (sore)	VERB
-V084	to urinate	VERB
-V085	to defecate	VERB
-V086	to break wind, fart	VERB
-V087	to shiver	VERB
-V088	to perspire	VERB
-V089	to bleed	VERB
-V090	to coagulate (blood)	VERB
-V091	to faint	VERB
-V092	to vomit	VERB
-V093	to sleep	VERB
-V094	to wake up	VERB
-V095	to become pregnant	VERB
-V096	to give birth	VERB
-V097	to be born	VERB
-V098	to grow up	VERB
-V099	to become old	VERB
-V100	to die	VERB
-V101	to survive	VERB
-V102	to be hurt	VERB
-V103	to cause hurt	VERB
-V104	to be healed	VERB
-V105	to cause healing	VERB
-V106	to revive	VERB
-V107	to bark (dog)	VERB
-V108	to growl	VERB
-V109	to bare (the teeth)	VERB
-V110	to ruminate (cow)	VERB
-V111	to peck	VERB
-V112	to lay (eggs)	VERB
-V113	to incubate	VERB
-V114	to hatch	VERB
-V115	to cackle	VERB
-V116	to crow (rooster)	VERB
-V117	to flap (wings)	VERB
-V118	to slither	VERB
-V119	to hiss	VERB
-V120	to sting (scorpion)	VERB
-V121	to grow	VERB
-V122	to sprout	VERB
-V123	to ripen	VERB
-V124	to wither	VERB
-V125	to evaporate	VERB
-V126	to flow	VERB
-V127	to drip	VERB
-V128	to leak	VERB
-V129	to burst	VERB
-V130	to swell	VERB
-V131	to spread (fire)	VERB
-V132	to shine	VERB
-V133	to fade	VERB
-V134	to become bright	VERB
-V135	to become dark	VERB
-V136	to become dry	VERB
-V137	to burn	VERB
-V138	to smolder	VERB
-V139	to melt	VERB
-V140	to singe	VERB
-V141	to rustle (leaves)	VERB
-V142	to squeak	VERB
-V143	to blow (of wind)	VERB
-V144	to blow down	VERB
-V145	to blow away	VERB
-V146	to see	VERB
-V146a	sight	NOUN
-V147	to look	VERB
-V148	to notice	VERB
-V149	to hear	VERB
-V150	to listen	VERB
-V151	to smell	VERB
-V152	to taste	VERB
-V153	to feel	VERB
-V154	to touch	VERB
-V155	to recognize	VERB
-V156	to eat	VERB
-V156a	meal	NOUN
-V157	to eat (flesh)	VERB
-V158	to chew	VERB
-V159	to crunch	VERB
-V160	to gnaw	VERB
-V161	to bite	VERB
-V162	to lick	VERB
-V163	to suck	VERB
-V164	to swallow	VERB
-V165	to choke	VERB
-V166	to drink	VERB
-V166a	beverage	NOUN
-V167	to sip	VERB
-V168	to hit	VERB
-V169	to beat	VERB
-V170	to slap (face)	VERB
-V171	to clap (hands)	VERB
-V172	to kick	VERB
-V173	to stamp (with foot)	VERB
-V174	to trample	VERB
-V175	to bump into	VERB
-V176	to knock down	VERB
-V177	to push	VERB
-V178	to press	VERB
-V179	to pull	VERB
-V180	to drag	VERB
-V181	to rub	VERB
-V182	to scrape	VERB
-V183	to scratch	VERB
-V184	to shake	VERB
-V185	to crush	VERB
-V186	to stab	VERB
-V187	to prick	VERB
-V188	to pierce (ears)	VERB
-V189	to wound	VERB
-V190	to kill	VERB
-V191	to extract tooth	VERB
-V192	to hold (in arms)	VERB
-V193	to hold (in hand)	VERB
-V194	to take away	VERB
-V195	to put down	VERB
-V196	to pick up	VERB
-V197	to drop	VERB
-V198	to raise	VERB
-V199	to lower	VERB
-V200	to throw to	VERB
-V201	to throw away	VERB
-V202	to carry	VERB
-V203	to carry (on head)	VERB
-V204	to carry (on shoulder)	VERB
-V205	to carry (on back)	VERB
-V206	to load	VERB
-V207	to unload	VERB
-V208	to bring	VERB
-V209	to give	VERB
-V210	to lend	VERB
-V211	to borrow	VERB
-V212	to offer	VERB
-V213	to accept	VERB
-V214	to reject	VERB
-V215	to obtain	VERB
-V216	to give back	VERB
-V217	to keep	VERB
-V218	to store up	VERB
-V219	to hide	VERB
-V220	to lose	VERB
-V221	to seek	VERB
-V222	to find	VERB
-V223	to leave behind	VERB
-V224	to guard	VERB
-V225	to cut	VERB
-V226	to notch a tree to produce fruit	VERB
-V227	to cut down (tree)	VERB
-V228	to chop	VERB
-V229	to split	VERB
-V230	to saw	VERB
-V231	to hollow out (log)	VERB
-V232	to snap	VERB
-V233	to tear	VERB
-V234	to strip off (bark)	VERB
-V235	to bend (branch)	VERB
-V236	to twist	VERB
-V237	to fold	VERB
-V238	to coil (rope)	VERB
-V239	to stretch (hide)	VERB
-V240	to spread out	VERB
-V241	to hang	VERB
-V242	to turn something	VERB
-V243	to open	VERB
-V244	to shut	VERB
-V245	to cover	VERB
-V246	to uncover	VERB
-V247	to stop up	VERB
-V248	to wrap	VERB
-V249	to unwrap	VERB
-V250	to pack in	VERB
-V251	to fill	VERB
-V252	to take out (from container)	VERB
-V253	to pour	VERB
-V254	to spill	VERB
-V255	to put on (clothing)	VERB
-V256	to take off (clothing)	VERB
-V257	to bathe	VERB
-V258	to wash (clothes)	VERB
-V259	to wipe	VERB
-V260	to cut (hair)	VERB
-V261	to shave	VERB
-V262	to braid (hair)	VERB
-V263	to apply (ointment)	VERB
-V264	to decorate	VERB
-V265	to prepare (food)	VERB
-V266	to cut open (fruit)	VERB
-V267	to slice	VERB
-V268	to peel	VERB
-V269	to mix	VERB
-V270	to stir	VERB
-V271	to strain (food)	VERB
-V272	to pound	VERB
-V273	to pulverise	VERB
-V274	to grind (first pass)	VERB
-V275	to grind (second pass)	VERB
-V276	to grind (third pass)	VERB
-V277	to knead	VERB
-V278	to shape (bread)	VERB
-V279	to pluck (feathers)	VERB
-V280	to cook	VERB
-V281	to boil	VERB
-V282	to simmer	VERB
-V283	to stew	VERB
-V284	to roast	VERB
-V285	to fry	VERB
-V286	to bake (in ashes)	VERB
-V287	to smoke (meat)	VERB
-V288	to ferment	VERB
-V289	to spoil (of food)	VERB
-V290	to do	VERB
-V290a	work	NOUN
-V291	to make	VERB
-V291a	creation	NOUN
-V292	to build	VERB
-V293	to repair	VERB
-V294	to replace	VERB
-V295	to mould (pottery)	VERB
-V296	to sew	VERB
-V297	to weave	VERB
-V298	to thread	VERB
-V299	to tie	VERB
-V300	to untie	VERB
-V301	to bind (rope)	VERB
-V302	to tighten	VERB
-V303	to loosen	VERB
-V304	to fence in	VERB
-V305	to mark out	VERB
-V306	to dig	VERB
-V307	to draw water	VERB
-V308	to fetch (firewood)	VERB
-V309	to sweep	VERB
-V310	to polish	VERB
-V311	to ring (bell)	VERB
-V312	to carve	VERB
-V313	to draw (picture)	VERB
-V314	to till	VERB
-V315	to clear (land)	VERB
-V316	to sow (seed)	VERB
-V317	to scatter (seed)	VERB
-V318	to plant (saplings)	VERB
-V319	to transplant	VERB
-V320	to weed	VERB
-V321	to hoe	VERB
-V322	to harvest	VERB
-V323	to dig up (yams)	VERB
-V324	to pluck (fruit)	VERB
-V325	to collect (honey)	VERB
-V326	to thresh	VERB
-V327	to winnow	VERB
-V328	to shell (groundnuts)	VERB
-V329	to husk (corn)	VERB
-V330	to graze	VERB
-V331	to feed (animals)	VERB
-V332	to tether	VERB
-V333	to milk (cows, goats)	VERB
-V334	to castrate	VERB
-V335	to domesticate, tame	VERB
-V336	to slaughter	VERB
-V337	to skin (animal)	VERB
-V338	to hunt	VERB
-V339	to stalk	VERB
-V340	to chase	VERB
-V341	to set (trap)	VERB
-V342	to trap	VERB
-V343	to catch	VERB
-V344	to evade	VERB
-V345	to escape	VERB
-V346	to shoot	VERB
-V347	to fish	VERB
-V348	to change	VERB
-V349	to destroy	VERB
-V350	to release	VERB
-V351	to make able	VERB
-V352	to enlarge	VERB
-V353	to diminish	VERB
-V354	to lengthen	VERB
-V355	to shorten	VERB
-V356	to widen	VERB
-V357	to deepen	VERB
-V358	to flatten	VERB
-V359	to straighten	VERB
-V360	to sharpen	VERB
-V361	to make smooth	VERB
-V362	to harden	VERB
-V363	to soften	VERB
-V364	to dry out (clothes)	VERB
-V365	to sprinkle	VERB
-V366	to plaster	VERB
-V367	to dip	VERB
-V368	to soak	VERB
-V369	to wring out	VERB
-V370	to light (fire)	VERB
-V371	to quench (fire)	VERB
-V372	to fan (fire)	VERB
-V373	to add	VERB
-V374	to subtract	VERB
-V375	to reduce	VERB
-V376	to join together	VERB
-V377	to accumulate	VERB
-V378	to gather	VERB
-V379	to divide	VERB
-V380	to scatter (people)	VERB
-V381	to surround	VERB
-V382	to sing	VERB
-V383	to hum	VERB
-V384	to whistle	VERB
-V385	to dance	VERB
-V386	to play (child)	VERB
-V387	to play (stringed instrument)	VERB
-V388	to play (wind instrument)	VERB
-V389	to barter	VERB
-V390	to buy	VERB
-V391	to sell	VERB
-V392	to haggle	VERB
-V393	to pay	VERB
-V394	to hire	VERB
-V395	to beg	VERB
-V396	to inherit	VERB
-V397	to steal	VERB
-V398	to think	VERB
-V399	to believe	VERB
-V400	to know	VERB
-V401	to doubt	VERB
-V402	to hope	VERB
-V403	to learn	VERB
-V404	to teach	VERB
-V405	to show	VERB
-V406	to remember	VERB
-V407	to forget	VERB
-V408	to decide	VERB
-V409	to choose	VERB
-V410	to hesitate	VERB
-V411	to want	VERB
-V412	to need	VERB
-V413	to try	VERB
-V414	to succeed	VERB
-V415	to fail	VERB
-V416	to pretend	VERB
-V417	to evaluate	VERB
-V418	to solve	VERB
-V419	to count	VERB
-V420	to arrange	VERB
-V421	to laugh	VERB
-V422	to smile	VERB
-V423	to rejoice	VERB
-V424	to cry	VERB
-V425	to ululate	VERB
-V426	to cause fear	VERB
-V427	to startle	VERB
-V428	to soothe (child)	VERB
-V429	to love	VERB
-V430	to hate	VERB
-V431	to despise	VERB
-V432	to admire	VERB
-V433	to respect	VERB
-V434	to honour	VERB
-V435	to suffer	VERB
-V436	to struggle	VERB
-V437	to say	VERB
-V438	to speak	VERB
-V439	to tell	VERB
-V440	to whisper	VERB
-V441	to yell	VERB
-V442	to chat	VERB
-V443	to mumble	VERB
-V444	to stutter	VERB
-V445	to greet (meeting)	VERB
-V446	to greet (parting)	VERB
-V447	to call (name)	VERB
-V448	to announce	VERB
-V449	to explain	VERB
-V450	to advise	VERB
-V451	to gossip	VERB
-V452	to ask	VERB
-V452a	question	NOUN
-V453	to entreat	VERB
-V454	to reply	VERB
-V455	to thank	VERB
-V456	to swear	VERB
-V457	to insult	VERB
-V458	to slander	VERB
-V459	to threaten	VERB
-V460	to argue	VERB
-V461	to grumble	VERB
-V462	to contradict	VERB
-V463	to accuse	VERB
-V464	to deny	VERB
-V465	to admit	VERB
-V466	to agree with	VERB
-V467	to persuade	VERB
-V468	to praise	VERB
-V469	to congratulate	VERB
-V470	to boast	VERB
-V471	to lie	VERB
-V472	to meet	VERB
-V473	to accompany	VERB
-V474	to be together	VERB
-V475	to gather together	VERB
-V476	to invite	VERB
-V477	to abandon	VERB
-V478	to avoid	VERB
-V479	to drive away	VERB
-V480	to resemble	VERB
-V481	to imitate	VERB
-V482	to befit	VERB
-V483	to wave (in greeting)	VERB
-V484	to indicate (with finger)	VERB
-V485	to hug	VERB
-V486	to caress	VERB
-V487	to kiss	VERB
-V488	to have sex (humans)	VERB
-V489	to copulate (animals)	VERB
-V490	to nurse	VERB
-V491	to tickle	VERB
-V492	to spank	VERB
-V493	to help	VERB
-V494	to protect	VERB
-V495	to look after	VERB
-V496	to bring up (child)	VERB
-V497	to rule over	VERB
-V498	to give command	VERB
-V499	to send	VERB
-V500	to serve	VERB
-V501	to guide	VERB
-V502	to follow	VERB
-V503	to obey	VERB
-V504	to please	VERB
-V505	to annoy	VERB
-V506	to deceive	VERB
-V507	to quarrel	VERB
-V508	to fight	VERB
-V509	to take revenge	VERB
-V510	to intercede	VERB
-V511	to compromise	VERB
-V512	to make quiet	VERB
-V513	to punish	VERB
-V514	to defeat	VERB
-V515	to be defeated	VERB
-V516	to plunder	VERB
-V517	to spy on	VERB
-V518	to rape	VERB
-V519	to pray	VERB
-V520	to prophesy	VERB
-V521	to cast (spell)	VERB
-V522	to curse	VERB
-V523	to poison (a person)	VERB
-V524	to protect by charm	VERB
-V525	to exorcise	VERB
-V526	to sacrifice	VERB
-V527	to pour libation	VERB
-V528	to bury	VERB
-V529	to condole	VERB
-V530	to marry	VERB
-V531	to be betrothed	VERB
-V532	to divorce	VERB
-V533	to obstruct	VERB
-V534	to prevent	VERB
-V535	to forbid	VERB
-V536	to allow	VERB
-V537	to abstain	VERB
-V538	to start	VERB
-V539	to continue	VERB
-V540	to stop	VERB
-V541	to wait	VERB
-V542	to wait for	VERB
-V543	to spend time	VERB
-V544	to finish	VERB
+ref	gloss	word_class	default	sub	clarification	taxon
+A001	body	NOUN	yes			
+A002	skin	NOUN	yes			
+A002b	wrinkle	NOUN	yes			
+A003	hair	NOUN	yes			
+A003b	body hair	NOUN	yes			
+A003c	tuft	NOUN	yes			
+A004	bone	NOUN	yes			
+A004b	skeleton	NOUN	yes			
+A005	muscle	NOUN	yes			
+A006	tendon	NOUN	yes			
+A007	blood	NOUN	yes			
+A008	vein	NOUN	yes			
+A009	head	NOUN	yes			
+A009b	top	NOUN	no		upper part or surface of something	
+A010	pate	NOUN	yes		top of the head, crown	
+A011	skull	NOUN	yes			
+A012	brain	NOUN	yes			
+A013	forehead	NOUN	yes			
+A014	face	NOUN	yes			
+A014b	front	NOUN	no		front part of something	
+A015	eye	NOUN	yes			
+A016	pupil	NOUN	yes			
+A017	iris	NOUN	yes			
+A018	eyebrow	NOUN	yes			
+A019	eyelid	NOUN	yes			
+A020	eyelash	NOUN	yes			
+A021	tear	NOUN	yes			
+A022	ear	NOUN	yes			
+A023	ear canal	NOUN	yes			
+A024	earlobe	NOUN	yes			
+A025	earwax	NOUN	yes			
+A026	nose	NOUN	yes			
+A027	nostril	NOUN	yes			
+A028	nose bridge	NOUN	yes			
+A029	snot	NOUN	yes			
+A030	cheek	NOUN	yes			
+A030a	upper cheek	NOUN	yes	E		
+A030b	lower cheek	NOUN	yes	E		
+A031	mouth	NOUN	yes			
+A031b	tip	NOUN	no		pointed end of something	
+A032	breath	NOUN	yes			
+A033	lip	NOUN	yes			
+A034	gum	NOUN	yes			
+A035	tooth	NOUN	yes			
+A035b	edge	NOUN	no			
+A036	molar	NOUN	yes			
+A037	canine	NOUN	yes			
+A038	incisor	NOUN	yes			
+A038b	lower incisor	NOUN	yes	E		
+A039	bicuspid	NOUN	yes		premolar tooth (between the canine and the molars)	
+A040	diastema	NOUN	yes		gap between the front teeth	
+A041	tongue	NOUN	yes			
+A042	frenulum	NOUN	yes		fold of skin under the tongue	
+A043	palate	NOUN	yes			
+A044	uvula	NOUN	yes			
+A045	tonsil	NOUN	yes			
+A046	saliva	NOUN	yes			
+A047	jaw	NOUN	yes			
+A048	jawbone	NOUN	yes			
+A049	chin	NOUN	yes			
+A050	moustache	NOUN	yes			
+A051	beard	NOUN	yes			
+A052	neck	NOUN	yes			
+A053	nape of neck	NOUN	yes			
+A054	neckbone	NOUN	yes			
+A055	throat	NOUN	yes			
+A056	trachea	NOUN	yes			
+A057	adams apple	NOUN	yes			
+A058	shoulder	NOUN	yes			
+A059	armpit	NOUN	yes			
+A060	shoulder joint	NOUN	yes			
+A061	scapula	NOUN	yes			
+A062	chest	NOUN	yes			
+A063	clavicle	NOUN	yes			
+A064	ribcage	NOUN	yes			
+A065	breastbone	NOUN	yes			
+A066	heart	NOUN	yes			
+A067	lung	NOUN	yes			
+A068	breast	NOUN	yes			
+A069	nipple	NOUN	yes			
+A070	breastmilk	NOUN	yes			
+A071	side	NOUN	yes			
+A071b	side of object	NOUN	no			
+A072	rib	NOUN	yes			
+A073	abdomen	NOUN	yes			
+A073b	middle	NOUN	no			
+A074	navel	NOUN	yes			
+A075	innards	NOUN	yes			
+A076	liver	NOUN	yes			
+A077	pancreas	NOUN	yes			
+A078	gallbladder	NOUN	yes			
+A079	stomach	NOUN	yes			
+A080	bile	NOUN	yes			
+A081	spleen	NOUN	yes			
+A082	intestines	NOUN	yes			
+A082a	large intestine	NOUN	yes			
+A082b	small intestine	NOUN	yes			
+A083	kidney	NOUN	yes			
+A084	bladder	NOUN	yes			
+A085	uterus	NOUN	yes			
+A086	umbilical cord	NOUN	yes			
+A087	back	NOUN	yes			
+A087b	back of object	NOUN	no			
+A088	upper back	NOUN	yes			
+A089	lower back	NOUN	yes			
+A090	spine	NOUN	yes			
+A091	arm	NOUN	yes			
+A091a	upper arm	NOUN	yes			
+A091b	forearm	NOUN	yes			
+A092	arm bone	NOUN	yes			
+A093	elbow	NOUN	yes			
+A093a	outer elbow	NOUN	yes			
+A093b	inner elbow	NOUN	yes			
+A094	hand	NOUN	yes			
+A095	palm	NOUN	yes			
+A096	finger	NOUN	yes			
+A097	fingerbone	NOUN	yes			
+A098	thumb	NOUN	yes			
+A099	index finger	NOUN	yes			
+A100	middle finger	NOUN	yes			
+A101	ring finger	NOUN	yes			
+A102	pinky finger	NOUN	yes		little finger	
+A103	knuckle	NOUN	yes			
+A104	fingernail	NOUN	yes			
+A105	fist	NOUN	yes			
+A106	wrist	NOUN	yes			
+A107	hip	NOUN	yes			
+A108	hipbone	NOUN	yes			
+A109	waist	NOUN	yes			
+A110	buttock	NOUN	yes			
+A110b	bottom	NOUN	no		lower part or underside of something, not buttocks	
+A111	tailbone	NOUN	yes			
+A112	anus	NOUN	yes			
+A113	feces	NOUN	yes			
+A114	penis	NOUN	yes			
+A115	foreskin	NOUN	yes			
+A116	scrotum	NOUN	yes			
+A117	testicle	NOUN	yes			
+A118	urine	NOUN	yes			
+A119	semen	NOUN	yes			
+A120	vagina	NOUN	yes			
+A121	clitoris	NOUN	yes			
+A122	leg	NOUN	yes			
+A123	femur	NOUN	yes			
+A124	thigh	NOUN	yes			
+A124a	quadriceps	NOUN	yes			
+A124b	inner thigh	NOUN	yes			
+A124c	hamstrings	NOUN	yes			
+A125	knee	NOUN	yes			
+A125a	outer knee	NOUN	yes			
+A125b	inner knee	NOUN	yes			
+A126	shin	NOUN	yes		front of the lower leg	
+A127	tibia	NOUN	yes		shinbone	
+A128	calf	NOUN	yes			
+A129	achilles tendon	NOUN	yes			
+A130	foot	NOUN	yes			
+A131	ankle	NOUN	yes			
+A132	malleolus	NOUN	yes		ankle bone (the knob on each side of the ankle)	
+A133	heel	NOUN	yes			
+A134	ball of foot	NOUN	yes			
+A135	toe	NOUN	yes			
+A136	big toe	NOUN	yes			
+A137	pinky toe	NOUN	yes		little toe	
+A138	sole of foot	NOUN	yes			
+B001	person	NOUN	yes			
+B001f	woman	NOUN	yes			
+B001m	man	NOUN	yes			
+B002	adult	NOUN	yes			
+B002f	female adult	NOUN	no			
+B002m	male adult	NOUN	no			
+B003	virgin	NOUN	yes			
+B003f	female virgin	NOUN	no			
+B003m	male virgin	NOUN	no			
+B004	child	NOUN	yes		young person, not necessarily an individual's offspring	
+B004f	girl	NOUN	yes			
+B004m	boy	NOUN	yes			
+B005	baby	NOUN	yes			
+B006	fetus	NOUN	yes			
+B007	elder	NOUN	yes		older person of standing in the community	
+B007f	female elder	NOUN	no			
+B007m	male elder	NOUN	no			
+B008	peer	NOUN	yes		age-mate, member of the same age set	
+B008f	female peer	NOUN	no			
+B008m	male peer	NOUN	no			
+B009	firstborn child	NOUN	yes			
+B009f	female firstborn child	NOUN	no			
+B009m	male firstborn child	NOUN	no			
+B010	twin	NOUN	yes			
+B010f	female twin	NOUN	no			
+B010m	male twin	NOUN	no			
+B011	firstborn twin	NOUN	yes	A		
+B011f	female firstborn twin	NOUN	no	A		
+B011m	male firstborn twin	NOUN	no	A		
+B012	secondborn twin	NOUN	yes	A		
+B012f	female secondborn twin	NOUN	no	A		
+B012m	male secondborn twin	NOUN	no	A		
+B013	aftertwin	NOUN	yes	A	child born after twins	
+B013f	female aftertwin	NOUN	no	A		
+B013m	male aftertwin	NOUN	no	A		
+B014	midwife	NOUN	yes			
+B015	youth	NOUN	yes			
+B015f	female youth	NOUN	no			
+B015m	male youth	NOUN	no			
+B016	chief	NOUN	yes			
+B016f	female chief	NOUN	no			
+B016m	male chief	NOUN	no			
+B017	monarch	NOUN	no			
+B017f	queen	NOUN	yes			
+B017m	king	NOUN	yes			
+B018	worker	NOUN	yes			
+B018f	female worker	NOUN	no			
+B018m	male worker	NOUN	no			
+B019	master	NOUN	yes		one who has servants	
+B019f	female master	NOUN	no			
+B019m	male master	NOUN	no			
+B020	owner	NOUN	yes			
+B020f	female owner	NOUN	no			
+B020m	male owner	NOUN	no			
+B021	servant	NOUN	yes			
+B021f	female servant	NOUN	no			
+B021m	male servant	NOUN	no			
+B022	hunter	NOUN	yes			
+B022f	female hunter	NOUN	no			
+B022m	male hunter	NOUN	no			
+B023	shepherd	NOUN	yes		herder of any livestock, not only sheep	
+B023f	female shepherd	NOUN	no			
+B023m	male shepherd	NOUN	no			
+B024	fisher	NOUN	yes			
+B024f	female fisher	NOUN	no			
+B024m	male fisher	NOUN	no			
+B025	farmer	NOUN	yes			
+B025f	female farmer	NOUN	no			
+B025m	male farmer	NOUN	no			
+B026	metalsmith	NOUN	yes			
+B026f	female metalsmith	NOUN	no			
+B026m	male metalsmith	NOUN	no			
+B027	tailor	NOUN	yes			
+B027f	female tailor	NOUN	no			
+B027m	male tailor	NOUN	no			
+B028	potter	NOUN	yes			
+B028f	female potter	NOUN	no			
+B028m	male potter	NOUN	no			
+B029	weaver	NOUN	yes			
+B029f	female weaver	NOUN	no			
+B029m	male weaver	NOUN	no			
+B030	butcher	NOUN	yes			
+B030f	female butcher	NOUN	no			
+B030m	male butcher	NOUN	no			
+B031	trader	NOUN	yes			
+B031f	female trader	NOUN	no			
+B031m	male trader	NOUN	no			
+B032	cook	NOUN	yes			
+B032f	female cook	NOUN	no			
+B032m	male cook	NOUN	no			
+B033	warrior	NOUN	no			
+B033f	female warrior	NOUN	no			
+B033m	male warrior	NOUN	yes			
+B034	captive	NOUN	yes			
+B034f	female captive	NOUN	no			
+B034m	male captive	NOUN	no			
+B035	slave	NOUN	yes			
+B035f	female slave	NOUN	no			
+B035m	male slave	NOUN	no			
+B036	guide	NOUN	yes			
+B036f	female guide	NOUN	no			
+B036m	male guide	NOUN	no			
+B037	traveler	NOUN	yes			
+B037f	female traveler	NOUN	no			
+B037m	male traveler	NOUN	no			
+B038	messenger	NOUN	yes			
+B038f	female messenger	NOUN	no			
+B038m	male messenger	NOUN	no			
+B039	healer	NOUN	yes			
+B039f	female healer	NOUN	no			
+B039m	male healer	NOUN	no			
+B040	spiritist	NOUN	yes		spirit medium, diviner	
+B040f	female spiritist	NOUN	no			
+B040m	male spiritist	NOUN	no			
+B041	mage	NOUN	no			
+B041f	witch	NOUN	yes			
+B041m	warlock	NOUN	yes		sorcerer	
+B042	priest	NOUN	no			
+B042f	female priest	NOUN	no			
+B042m	male priest	NOUN	yes			
+B043	beggar	NOUN	yes			
+B043f	female beggar	NOUN	no			
+B043m	male beggar	NOUN	no			
+B044	prostitute	NOUN	yes			
+B044f	female prostitute	NOUN	no			
+B044m	male prostitute	NOUN	no			
+B045	person of village	NOUN	yes		villager	
+B045f	female person of village	NOUN	no			
+B045m	male person of village	NOUN	no			
+B046	bush dweller	NOUN	yes		person living in the bush, outside villages	
+B046f	female bush dweller	NOUN	no			
+B046m	male bush dweller	NOUN	no			
+B047	rich person	NOUN	yes			
+B047f	female rich person	NOUN	no			
+B047m	male rich person	NOUN	no			
+B048	poor person	NOUN	yes			
+B048f	female poor person	NOUN	no			
+B048m	male poor person	NOUN	no			
+B049	infertile person	NOUN	no			
+B049f	barren woman	NOUN	yes			
+B049m	impotent man	NOUN	yes			
+B050	blind person	NOUN	yes			
+B050f	female blind person	NOUN	no			
+B050m	male blind person	NOUN	no			
+B051	deaf person	NOUN	yes			
+B051f	female deaf person	NOUN	no			
+B051m	male deaf person	NOUN	no			
+B052	hunchback	NOUN	yes			
+B052f	female hunchback	NOUN	no			
+B052m	male hunchback	NOUN	no			
+B053	cripple	NOUN	yes			
+B053f	female cripple	NOUN	no			
+B053m	male cripple	NOUN	no			
+B054	dwarf	NOUN	yes			
+B054f	female dwarf	NOUN	no			
+B054m	male dwarf	NOUN	no			
+B055	giant	NOUN	yes			
+B055f	female giant	NOUN	no			
+B055m	male giant	NOUN	no			
+B056	fool	NOUN	yes			
+B056f	female fool	NOUN	no			
+B056m	male fool	NOUN	no			
+B057	senile person	NOUN	yes			
+B057f	female senile person	NOUN	no			
+B057m	male senile person	NOUN	no			
+B058	insane person	NOUN	yes			
+B058f	female insane person	NOUN	no			
+B058m	male insane person	NOUN	no			
+B059	coward	NOUN	yes			
+B059f	female coward	NOUN	no			
+B059m	male coward	NOUN	no			
+B060	thief	NOUN	yes			
+B060f	female thief	NOUN	no			
+B060m	male thief	NOUN	no			
+B061	widow (non gendered)	NOUN	no		widowed person of either sex	
+B061f	widow (female)	NOUN	yes			
+B061m	widower (male)	NOUN	yes			
+B062	orphan	NOUN	yes			
+B062f	female orphan	NOUN	no			
+B062m	male orphan	NOUN	no			
+C001	parent	NOUN	yes			
+C001f	mother	NOUN	yes			
+C001m	father	NOUN	yes			
+C002	sibling	NOUN	yes			
+C002f	sister	NOUN	yes			
+C002m	brother	NOUN	yes			
+C003	older sibling	NOUN	no			
+C003f	older sister	NOUN	yes			
+C003m	older brother	NOUN	yes			
+C004	younger sibling	NOUN	no			
+C004f	younger sister	NOUN	yes			
+C004m	younger brother	NOUN	yes			
+C005	spouse	NOUN	no			
+C005f	wife	NOUN	yes			
+C005m	husband	NOUN	yes			
+C006	co-spouse	NOUN	no			
+C006f	co-wife	NOUN	yes			
+C006m	co-husband	NOUN	yes		fellow husband of the same wife	
+C007	marryee	NOUN	no		neologism, bride or groom	
+C007f	bride	NOUN	yes			
+C007m	groom	NOUN	yes			
+C008	betrothed	NOUN	no		engaged person	
+C008f	fiancee	NOUN	yes		fiancée: accent removed (accents are unfriendly for file names)	
+C008m	fiance	NOUN	yes		fiancé: accent removed (accents are unfriendly for file names)	
+C009	child (offspring)	NOUN	yes			
+C009f	daughter	NOUN	yes			
+C009m	son	NOUN	yes			
+C010	grandchild	NOUN	yes			
+C010f	granddaughter	NOUN	yes			
+C010m	grandson	NOUN	yes			
+C011	ancestor	NOUN	yes			
+C011f	female ancestor	NOUN	no			
+C011m	male ancestor	NOUN	no			
+C012	paternal grandparent	NOUN	yes			
+C012f	paternal grandmother	NOUN	yes			
+C012m	paternal grandfather	NOUN	yes			
+C013	paternal great grandparent	NOUN	yes			
+C013f	paternal great grandmother	NOUN	yes			
+C013m	paternal great grandfather	NOUN	yes			
+C014	paternal pibling	NOUN	no		father's sibling, aunt or uncle	
+C014f	paternal aunt	NOUN	yes			
+C014m	paternal uncle	NOUN	yes			
+C015	paternal cousin	NOUN	yes			
+C015f	female paternal cousin	NOUN	no			
+C015m	male paternal cousin	NOUN	no			
+C016	maternal grandparent	NOUN	yes			
+C016f	maternal grandmother	NOUN	yes			
+C016m	maternal grandfather	NOUN	yes			
+C017	maternal great grandparent	NOUN	yes			
+C017f	maternal great grandmother	NOUN	yes			
+C017m	maternal great grandfather	NOUN	yes			
+C018	maternal pibling	NOUN	no		mother's sibling, aunt or uncle	
+C018f	maternal aunt	NOUN	yes			
+C018m	maternal uncle	NOUN	yes			
+C019	maternal cousin	NOUN	yes			
+C019f	female maternal cousin	NOUN	no			
+C019m	male maternal cousin	NOUN	no			
+C020	marital parent-in-law	NOUN	yes		husband's parent	
+C020f	marital mother-in-law	NOUN	yes		husband's mother	
+C020m	marital father-in-law	NOUN	yes		husband's father	
+C021	marital sibling-in-law	NOUN	yes		husband's sibling	
+C021f	marital sister-in-law	NOUN	yes		husband's sister	
+C021m	marital brother-in-law	NOUN	yes		husband's brother	
+C022	marital nibling	NOUN	no		husband's sibling's child	
+C022f	marital niece	NOUN	yes		husband's sibling's daughter	
+C022m	marital nephew	NOUN	yes		husband's sibling's son	
+C023	uxorial parent-in-law	NOUN	yes		wife's parent	
+C023f	uxorial mother-in-law	NOUN	yes		wife's mother	
+C023m	uxorial father-in-law	NOUN	yes		wife's father	
+C024	uxorial sibling-in-law	NOUN	yes		wife's sibling	
+C024f	uxorial sister-in-law	NOUN	yes		wife's sister	
+C024m	uxorial brother-in-law	NOUN	yes		wife's brother	
+C025	uxorial nibling	NOUN	no		wife's sibling's child	
+C025f	uxorial niece	NOUN	yes		wife's sibling's daughter	
+C025m	uxorial nephew	NOUN	yes		wife's sibling's son	
+C026	child-in-law	NOUN	no			
+C026f	daughter-in-law	NOUN	yes			
+C026m	son-in-law	NOUN	yes			
+C027	descendant	NOUN	yes			
+C027f	female descendant	NOUN	no			
+C027m	male descendant	NOUN	no			
+C028	bastard	NOUN	yes		illegitimate child	
+C028f	female bastard	NOUN	no			
+C028m	male bastard	NOUN	no			
+C029	relative	NOUN	yes			
+C029f	female relative	NOUN	no			
+C029m	male relative	NOUN	no			
+C030	family	NOUN	yes			
+C031	clan	NOUN	yes			
+C032	nation	NOUN	yes		a people, ethnic group, not a state	
+C033	crowd	NOUN	yes			
+C034	friend	NOUN	yes			
+C034f	female friend	NOUN	no			
+C034m	male friend	NOUN	no			
+C035	namesake	NOUN	yes			
+C035f	female namesake	NOUN	no			
+C035m	male namesake	NOUN	no			
+C036	acquaintance	NOUN	yes			
+C036f	female acquaintance	NOUN	no			
+C036m	male acquaintance	NOUN	no			
+C037	neighbour	NOUN	yes			
+C037f	female neighbour	NOUN	no			
+C037m	male neighbour	NOUN	no			
+C038	guest	NOUN	yes			
+C038f	female guest	NOUN	no			
+C038m	male guest	NOUN	no			
+C039	host	NOUN	yes			
+C039f	female host	NOUN	no			
+C039m	male host	NOUN	no			
+C040	stranger	NOUN	yes			
+C040f	female stranger	NOUN	no			
+C040m	male stranger	NOUN	no			
+C041	enemy	NOUN	yes			
+C041f	female enemy	NOUN	no			
+C041m	male enemy	NOUN	no			
+C042	foreigner	NOUN	yes			
+C042f	female foreigner	NOUN	no			
+C042m	male foreigner	NOUN	no			
+C043	black person	NOUN	yes			
+C043f	female black person	NOUN	no			
+C043m	male black person	NOUN	no			
+C044	red person	NOUN	yes	E	light-skinned person, described as red	
+C044f	female red person	NOUN	no	E		
+C044m	male red person	NOUN	no	E		
+C045	white person	NOUN	yes			
+C045f	female white person	NOUN	no			
+C045m	male white person	NOUN	no			
+D001	animal	NOUN	yes			Animalia
+D002	domestic animal	NOUN	yes			
+D003	wild animal	NOUN	yes			
+D004	flesh	NOUN	yes			
+D004b	dried meat	NOUN	yes		sun-dried strips of meat, jerky	
+D005	fat	NOUN	yes			
+D006	bone marrow	NOUN	yes			
+D007	lard	NOUN	yes		rendered animal fat	
+D008	herd	NOUN	yes			
+D009	goat	NOUN	yes			Capra hircus (Bovidae)
+D009b	kid	NOUN	yes		young goat	Capra hircus (Bovidae)
+D009f	she-goat	NOUN	yes			Capra hircus (Bovidae)
+D009m	billy goat	NOUN	yes			Capra hircus (Bovidae)
+D010	goat beard	NOUN	yes			
+D011	sheep	NOUN	yes			Ovis aries (Bovidae)
+D011b	lamb	NOUN	yes			Ovis aries (Bovidae)
+D011f	ewe	NOUN	yes			Ovis aries (Bovidae)
+D011m	ram	NOUN	yes			Ovis aries (Bovidae)
+D012	fur	NOUN	yes			
+D013	wool	NOUN	yes			
+D014	cattle	NOUN	yes			Bos taurus (Bovidae)
+D014b	calf (of cow)	NOUN	yes			Bos taurus (Bovidae)
+D014f	cow	NOUN	yes			Bos taurus (Bovidae)
+D014m	bull	NOUN	yes			Bos taurus (Bovidae)
+D015	steer	NOUN	yes		castrated bull, bullock	Bos taurus (Bovidae)
+D016	heifer	NOUN	yes		young cow that has not calved	Bos taurus (Bovidae)
+D017	dewlap	NOUN	yes		loose skin hanging from the throat of cattle	
+D018	dung	NOUN	yes			
+D019	horn	NOUN	yes			
+D020	tail	NOUN	yes			
+D021	hide	NOUN	yes		skin of an animal	
+D022	hump	NOUN	yes		hump of cattle, zebu hump	
+D023	hoof	NOUN	yes			
+D024	udder	NOUN	yes			
+D025	teats	NOUN	yes			
+D026	milk	NOUN	yes			
+D027	butter	NOUN	yes			
+D028	yoghurt	NOUN	yes		soured or curdled milk	
+D029	horse	NOUN	yes			Equus ferus caballus (Equidae)
+D029b	colt	NOUN	yes		young horse, foal	Equus ferus caballus (Equidae)
+D029f	mare	NOUN	yes			Equus ferus caballus (Equidae)
+D029m	stallion	NOUN	yes			Equus ferus caballus (Equidae)
+D030	horse mane	NOUN	yes			
+D031	donkey	NOUN	yes			Equus africanus asinus (Equidae)
+D031b	young donkey	NOUN	yes			Equus africanus asinus (Equidae)
+D031f	female donkey	NOUN	no			Equus africanus asinus (Equidae)
+D031m	male donkey	NOUN	no			Equus africanus asinus (Equidae)
+D032	camel	NOUN	yes			Camelus dromedarius (Camelidae)
+D032b	young camel	NOUN	yes			Camelus dromedarius (Camelidae)
+D032f	female camel	NOUN	no			Camelus dromedarius (Camelidae)
+D032m	male camel	NOUN	no			Camelus dromedarius (Camelidae)
+D033	camel hump	NOUN	yes			
+D034	dog	NOUN	yes			Canis familiaris (Canidae)
+D034b	puppy	NOUN	yes			Canis familiaris (Canidae)
+D034f	female dog	NOUN	no			Canis familiaris (Canidae)
+D034m	male dog	NOUN	no			Canis familiaris (Canidae)
+D035	cat	NOUN	yes			Felis catus (Felidae)
+D035b	kitten	NOUN	yes			Felis catus (Felidae)
+D035f	female cat	NOUN	no			Felis catus (Felidae)
+D035m	male cat	NOUN	no			Felis catus (Felidae)
+D036	pig	NOUN	yes			Sus domesticus (Suidae)
+D036b	piglet	NOUN	no			Sus domesticus (Suidae)
+D036f	sow	NOUN	no		female pig	Sus domesticus (Suidae)
+D036m	boar	NOUN	no		male pig	Sus domesticus (Suidae)
+D037	warthog	NOUN	yes	E W S C		Phacochoerus (Suidae)
+D038	bushpig	NOUN	yes	E W S C	wild forest pig, Potamochoerus	Potamochoerus (Suidae)
+D039	aardvark	NOUN	yes	E W S C		Orycteropus afer (Orycteropodidae)
+D040	anteater	NOUN	yes	E W S C		Orycteropus afer (Orycteropodidae)
+D041	pangolin	NOUN	yes			Manidae
+D042	monkey (generic)	NOUN	yes			Cercopithecidae
+D043	baboon	NOUN	yes			Papio (Cercopithecidae)
+D044	grivet monkey	NOUN	yes	E	Ethiopian green monkey, Chlorocebus aethiops	Chlorocebus aethiops (Cercopithecidae)
+D045	blue monkey	NOUN	yes	E S C	forest guenon, Cercopithecus mitis	Cercopithecus mitis (Cercopithecidae)
+D046	patas monkey	NOUN	yes	E W C	red ground-dwelling savanna monkey	Erythrocebus (Cercopithecidae)
+D047	guereza	NOUN	yes	E W C	black-and-white colobus monkey	Colobus guereza (Cercopithecidae)
+D048	bushbaby	NOUN	yes	E W S C	galago	Galagidae
+D049	antelope (generic)	NOUN	yes			Bovidae (part)
+D050	buffalo	NOUN	yes	E W S C	African or Cape buffalo	Syncerus caffer (Bovidae)
+D051	wildebeest	NOUN	yes	E S	gnu	Connochaetes (Bovidae)
+D052	oribi	NOUN	yes	E W S C	small grassland antelope	Ourebia ourebi (Bovidae)
+D053	kudu	NOUN	yes	E S C		Tragelaphus strepsiceros, T. imberbis (Bovidae)
+D054	zebra	NOUN	yes	E S C		Equus subg. Hippotigris (Equidae)
+D055	gazelle	NOUN	yes			Gazella, Eudorcas, Nanger (tribe Antilopini) (Bovidae)
+D056	springbok	NOUN	yes	S		Antidorcas marsupialis (Bovidae)
+D057	impala	NOUN	yes	E S		Aepyceros melampus (Bovidae)
+D058	white-eared kob	NOUN	yes	E	kob antelope of South Sudan and Gambella	Kobus kob leucotis (Bovidae)
+D059	lechwe	NOUN	yes	E S C	swamp antelope, Kobus leche	Kobus leche, K. megaceros (Bovidae)
+D060	tiang	NOUN	yes	E W S C	topi, korrigum or tsessebe antelope, Damaliscus	Damaliscus lunatus (Bovidae)
+D061	sitatunga	NOUN	yes	E W S C	swamp antelope, Tragelaphus spekii	Tragelaphus spekii (Bovidae)
+D062	reedbuck	NOUN	yes	E W S C		Redunca (Bovidae)
+D063	bushbuck	NOUN	yes	E W S C		Tragelaphus scriptus (incl. T. sylvaticus) (Bovidae)
+D064	waterbuck	NOUN	yes	E W S C		Kobus ellipsiprymnus (Bovidae)
+D065	hartebeest	NOUN	yes	E W S C		Alcelaphus buselaphus (Bovidae)
+D066	eland	NOUN	yes	E W S C		Taurotragus (Bovidae)
+D067	roan	NOUN	yes	E W S C	roan antelope	Hippotragus equinus (Bovidae)
+D068	oryx	NOUN	yes			Oryx (Bovidae)
+D069	barbary sheep	NOUN	yes	N	aoudad, wild sheep of Saharan mountains	Ammotragus lervia (Bovidae)
+D070	duiker	NOUN	yes	E W S C		Cephalophini (Bovidae)
+D071	dikdik	NOUN	yes	E S	dik-dik, tiny antelope	Madoqua (Bovidae)
+D072	elephant	NOUN	yes			Elephantidae
+D073	elephant trunk	NOUN	yes			
+D074	elephant tusk	NOUN	yes			
+D075	hippo	NOUN	yes	E W S C		Hippopotamus amphibius (Hippopotamidae)
+D076	rhino	NOUN	yes			Rhinocerotidae
+D077	rhino horn	NOUN	yes			
+D078	giraffe	NOUN	yes	E W S C		Giraffa (Giraffidae)
+D079	spotted hyena	NOUN	yes	E W S C		Crocuta crocuta (Hyaenidae)
+D080	striped hyena	NOUN	yes			Hyaena hyaena (Hyaenidae)
+D081	wilddog	NOUN	yes	E W S C	African wild dog, painted dog	Lycaon pictus (Canidae)
+D082	jackal	NOUN	yes			Lupulella, Canis (part) (Canidae)
+D083	fox	NOUN	yes			Vulpes (Canidae)
+D083b	fennec	NOUN	yes	N	small Saharan desert fox	Vulpes zerda (Canidae)
+D084	civet cat	NOUN	yes	E W S C		Civettictis civetta (Viverridae)
+D085	honey badger	NOUN	yes		ratel	Mellivora capensis (Mustelidae)
+D086	egyptian mongoose	NOUN	yes		large grey mongoose, ichneumon	Herpestes ichneumon (Herpestidae)
+D087	dwarf mongoose	NOUN	yes	E S		Helogale parvula (Herpestidae)
+D088	meerkat	NOUN	yes	S	suricate	Suricata suricatta (Herpestidae)
+D089	porcupine	NOUN	yes			Hystricidae
+D090	tree squirrel	NOUN	yes			Sciuridae (part)
+D091	ground squirrel	NOUN	yes			Sciuridae (part)
+D092	mouse	NOUN	yes			Muroidea (part) (Muridae (mainly))
+D093	rat	NOUN	yes			Muroidea (part) (Muridae (mainly))
+D094	cane rat	NOUN	yes	E W S C	grasscutter, Thryonomys	Thryonomys (Thryonomyidae)
+D095	palm rat	NOUN	yes	E W N C		Euxerus erythropus (Sciuridae)
+D096	shrew	NOUN	yes			Soricidae
+D097	mole	NOUN	yes		burrowing animal; in Africa a mole-rat or golden mole	Bathyergidae, Spalacidae (part), Chrysochloridae (Bathyergidae, Spalacidae, Chrysochloridae)
+D098	hare	NOUN	yes			Lepus (Leporidae)
+D099	springhare	NOUN	yes	E S	hopping burrowing rodent, Pedetes	Pedetes (Pedetidae)
+D100	hyrax	NOUN	yes		dassie, rock rabbit	Procaviidae
+D101	wild cat (generic)	NOUN	yes		any wild feline	Felidae (part)
+D102	lion	NOUN	yes			Panthera leo (Felidae)
+D103	lion mane	NOUN	yes			
+D104	lion claw	NOUN	yes			
+D105	leopard	NOUN	yes			Panthera pardus (Felidae)
+D106	cheetah	NOUN	yes			Acinonyx jubatus (Felidae)
+D107	caracal	NOUN	yes		lynx-like desert cat	Caracal caracal (Felidae)
+D108	serval	NOUN	yes	A	long-legged spotted wild cat	Leptailurus serval (Felidae)
+D109	genet	NOUN	yes		spotted cat-like carnivore related to civets	Genetta (Viverridae)
+D110	bat	NOUN	yes			Chiroptera
+D111	fruit bat	NOUN	yes			Pteropodidae
+E001	bird	NOUN	yes			Aves
+E002	chicken	NOUN	yes			Gallus gallus domesticus (Phasianidae)
+E002b	chick	NOUN	yes			Gallus gallus domesticus (Phasianidae)
+E002f	hen	NOUN	yes			Gallus gallus domesticus (Phasianidae)
+E002m	rooster	NOUN	yes			Gallus gallus domesticus (Phasianidae)
+E003	naked-necked chicken	NOUN	yes			Gallus gallus domesticus (Phasianidae)
+E004	turkey	NOUN	yes			Meleagris gallopavo (Phasianidae)
+E005	beak	NOUN	yes			
+E006	claw	NOUN	yes			
+E007	wing	NOUN	yes			
+E008	feather	NOUN	yes			
+E009	comb (of rooster)	NOUN	yes			
+E010	crest (of bird)	NOUN	yes			
+E011	crop (of bird)	NOUN	yes		throat pouch storing food	
+E012	gizzard	NOUN	yes			
+E013	egg	NOUN	yes			
+E014	eggshell	NOUN	yes			
+E015	egg white	NOUN	yes			
+E016	yolk	NOUN	yes			
+E017	nest	NOUN	yes			
+E018	flock	NOUN	yes		flock of birds	
+E019	ostrich	NOUN	yes	A		Struthio (Struthionidae)
+E019b	ostrich eggshell	NOUN	yes	S		
+E020	whistling duck	NOUN	yes		tree duck, Dendrocygna	Dendrocygna (Anatidae)
+E021	egyptian goose	NOUN	yes	A		Alopochen aegyptiaca (Anatidae)
+E022	guineafowl	NOUN	yes	A		Numididae
+E023	francolin	NOUN	yes		African partridge, spurfowl	Phasianidae (part)
+E024	flamingo	NOUN	yes			Phoenicopteridae
+E025	speckled pigeon	NOUN	yes	E W S C		Columba guinea (Columbidae)
+E026	vinaceous dove	NOUN	yes	E W C		Streptopelia vinacea (Columbidae)
+E027	black-billed dove	NOUN	yes	E W C	black-billed wood dove	Turtur abyssinicus (Columbidae)
+E028	namaqua dove	NOUN	yes	E W S C		Oena capensis (Columbidae)
+E029	green pigeon	NOUN	yes			Treron (Columbidae)
+E030	bustard	NOUN	yes			Otididae
+E031	coucal	NOUN	yes		large ground-dwelling cuckoo	Centropus (Cuculidae)
+E032	klaas cuckoo	NOUN	yes	E W S C		Chrysococcyx klaas (Cuculidae)
+E033	dideric cuckoo	NOUN	yes	E W S C		Chrysococcyx caprius (Cuculidae)
+E034	african cuckoo	NOUN	yes	E W S C		Cuculus gularis (Cuculidae)
+E035	nightjar	NOUN	yes			Caprimulgidae
+E036	palm swift	NOUN	yes			Cypsiurus (Apodidae)
+E037	swift	NOUN	yes			Apodidae
+E038	black crake	NOUN	yes	E W S C	small black marsh rail	Zapornia flavirostra (Rallidae)
+E039	black-crowned crane	NOUN	yes	E W C		Balearica pavonina (Gruidae)
+E040	thick-knee	NOUN	yes		stone-curlew, dikkop	Burhinidae
+E041	stilt	NOUN	yes		long-legged wading bird	Himantopus (Recurvirostridae)
+E042	avocet	NOUN	yes		wader with an upturned bill	Recurvirostra (Recurvirostridae)
+E043	spur-winged lapwing	NOUN	yes	E W N C		Vanellus spinosus (Charadriidae)
+E044	jacana	NOUN	yes		lily-trotter	Jacanidae
+E045	snipe	NOUN	yes			Gallinago (Scolopacidae)
+E046	sandpiper	NOUN	yes			Scolopacidae (part)
+E047	gull	NOUN	yes			Larinae (Laridae)
+E048	yellow-billed stork	NOUN	yes	E W S C		Mycteria ibis (Ciconiidae)
+E049	openbill stork	NOUN	yes			Anastomus (Ciconiidae)
+E050	abdim stork	NOUN	yes	E W S C	Abdim's or white-bellied stork	Ciconia abdimii (Ciconiidae)
+E051	saddle-billed stork	NOUN	yes	E W S C		Ephippiorhynchus senegalensis (Ciconiidae)
+E052	marabou stork	NOUN	yes	E W S C		Leptoptilos crumenifer (Ciconiidae)
+E053	pelican	NOUN	yes			Pelecanus (Pelecanidae)
+E054	shoebill	NOUN	yes	E S C	whale-headed stork	Balaeniceps rex (Balaenicipitidae)
+E055	hamerkop	NOUN	yes	E W S C	hammerhead stork	Scopus umbretta (Scopidae)
+E056	squacco heron	NOUN	yes		small buff heron	Ardeola ralloides (Ardeidae)
+E057	striated heron	NOUN	yes		green-backed heron, small dark heron	Butorides atricapilla (Ardeidae)
+E058	cattle egret	NOUN	yes			Ardea ibis (Ardeidae)
+E059	black-headed heron	NOUN	yes	E W S C		Ardea melanocephala (Ardeidae)
+E060	goliath heron	NOUN	yes	E W S C		Ardea goliath (Ardeidae)
+E061	great egret	NOUN	yes			Ardea alba (Ardeidae)
+E062	sacred ibis	NOUN	yes	E W S C		Threskiornis aethiopicus (Threskiornithidae)
+E063	hadada ibis	NOUN	yes	E W S C		Bostrychia hagedash (Threskiornithidae)
+E064	spoonbill	NOUN	yes			Platalea (Threskiornithidae)
+E065	osprey	NOUN	yes			Pandion haliaetus (Pandionidae)
+E066	hooded vulture	NOUN	yes	E W S C		Necrosyrtes monachus (Accipitridae)
+E067	white-backed vulture	NOUN	yes	E W S C		Gyps africanus (Accipitridae)
+E068	snake eagle	NOUN	yes			Circaetus (Accipitridae)
+E069	bataleur	NOUN	yes	E W S C	bateleur eagle	Terathopius ecaudatus (Accipitridae)
+E070	black kite	NOUN	yes			Milvus migrans (Accipitridae)
+E071	fish eagle	NOUN	yes	E W S C		Icthyophaga vocifer (Accipitridae)
+E072	long crested eagle	NOUN	yes	E W S C		Lophaetus occipitalis (Accipitridae)
+E073	scops owl	NOUN	yes			Otus (Strigidae)
+E074	greyish eagle owl	NOUN	yes	E W C		Bubo cinerascens (Strigidae)
+E075	mousebird	NOUN	yes	E W S C	long-tailed fruit-eating bird, Colius	Coliidae
+E076	eurasian hoopoe	NOUN	yes			Upupa epops (Upupidae)
+E077	green woodhoopoe	NOUN	yes	E W S C		Phoeniculus purpureus (Phoeniculidae)
+E078	ground hornbill	NOUN	yes	E W S C		Bucorvus (Bucerotidae)
+E079	grey hornbill	NOUN	yes	E W S C		Lophoceros nasutus (Bucerotidae)
+E080	silvery-cheeked hornbill	NOUN	yes	E S		Bycanistes brevis (Bucerotidae)
+E081	malachite kingfisher	NOUN	yes	E W S C		Corythornis cristatus (Alcedinidae)
+E082	woodland kingfisher	NOUN	yes	E W S C		Halcyon senegalensis (Alcedinidae)
+E083	grey-headed kingfisher	NOUN	yes	E W S C		Halcyon leucocephala (Alcedinidae)
+E084	striped kingfisher	NOUN	yes	E W S C		Halcyon chelicuti (Alcedinidae)
+E085	giant kingfisher	NOUN	yes	E W S C		Megaceryle maxima (Alcedinidae)
+E086	pied kingfisher	NOUN	yes			Ceryle rudis (Alcedinidae)
+E087	little bee-eater	NOUN	yes	E W S C		Merops pusillus (Meropidae)
+E088	green bee-eater	NOUN	yes	E W N C		Merops viridissimus (Meropidae)
+E089	carmine bee-eater	NOUN	yes	E W S C		Merops nubicus + Merops nubicoides (Meropidae)
+E090	abyssinian roller	NOUN	yes	E W C		Coracias abyssinicus (Coraciidae)
+E091	black-billed barbet	NOUN	yes	E C		Lybius guifsobalito (Lybiidae)
+E092	double-toothed barbet	NOUN	yes	E W S C		Pogonornis bidentatus (Lybiidae)
+E093	honeyguide	NOUN	yes	E W S C	bird that leads people to bee nests	Indicator indicator (Indicatoridae)
+E094	woodpecker	NOUN	yes			Picidae
+E095	kestrel	NOUN	yes			Falco (part: kestrels) (Falconidae)
+E096	parrot	NOUN	yes			Psittaciformes
+E097	batis	NOUN	yes	E W S C	small black-and-white flycatcher	Batis (Platysteiridae)
+E098	gonolek	NOUN	yes	E W S C	red-and-black bush-shrike	Laniarius (part) (Malaconotidae)
+E099	tchagra	NOUN	yes	A	brown bush-shrike	Tchagra (Malaconotidae)
+E100	drongo	NOUN	yes		black fork-tailed bird	Dicrurus (Dicruridae)
+E101	paradise flycatcher	NOUN	yes			Terpsiphone (Monarchidae)
+E102	shrike	NOUN	yes			Laniidae
+E103	pied crow	NOUN	yes	E W S C		Corvus albus (Corvidae)
+E104	fan-tailed raven	NOUN	yes			Corvus rhipidurus (Corvidae)
+E105	flappet lark	NOUN	yes	E W S C	savanna lark that claps its wings in flight	Amirafra rufocinnamomea (Alaudidae)
+E106	crombec	NOUN	yes	E W S C	tiny short-tailed warbler	Sylvietta (Macrosphenidae)
+E107	red-pate cisticola	NOUN	yes	E W C	small grass warbler	Cisticola ruficeps (Cisticolidae)
+E108	tawny prinia	NOUN	yes	E W S C	tawny-flanked prinia, small warbler	Prinia subflava (Cisticolidae)
+E109	barn swallow	NOUN	yes			Hirundo rustica (Hirundinidae)
+E110	bulbul	NOUN	yes	A	common brown garden songbird, Pycnonotus	Pycnonotus barbatus (Pycnonotidae)
+E111	white-eye	NOUN	yes		small green bird with a white eye-ring	Zosterops (Zosteropidae)
+E112	babbler	NOUN	yes	E W S C	noisy brown social songbird, Turdoides	Turdoides (Leiothrichidae)
+E113	oxpecker	NOUN	yes	E W S C	tickbird that rides on cattle	Buphagus (Buphagidae)
+E114	lesser blue-eared starling	NOUN	yes	E W S C		Lamprotornis chloropterus (Sturnidae)
+E115	ruppels starling	NOUN	yes	E C	Ruppell's glossy starling	Lamprotornis purpuroptera (Sturnidae)
+E116	abyssinian thrush	NOUN	yes	E S C		Turdus abyssinicus (Turdidae)
+E117	spotted flycatcher	NOUN	yes			Muscicapa striata (Muscicapidae)
+E118	robin-chat	NOUN	yes	E W S C		Cossypha (Muscicapidae)
+E119	scarlet-chested sunbird	NOUN	yes	E W S C		Chalcomitra senegalensis (Nectariniidae)
+E120	variable sunbird	NOUN	yes	E W S C		Cinnyris venustus (Nectariniidae)
+E121	grosbeak weaver	NOUN	yes	E W S C		Amblyospiza albifrons (Ploceidae)
+E122	village weaver	NOUN	yes	E W S C		Ploceus cucullatus (Ploceidae)
+E123	red-billed quelea	NOUN	yes	E W S C	small seed-eating weaver of huge flocks	Quelea quelea (Ploceidae)
+E124	northern red bishop	NOUN	yes	E W C	red-and-black weaverbird	Euplectes franciscanus (Ploceidae)
+E125	firefinch	NOUN	yes	E W S C	small red waxbill, Lagonosticta	Lagonosticta (Estrildidae)
+E126	red-cheeked cordonbleau	NOUN	yes	E W S C	small blue waxbill	Uraeginthus bengalus (Estrildidae)
+E127	bronze manikin	NOUN	yes	E W S C	small black-and-white finch, mannikin	Spermestes cucullata (Estrildidae)
+E128	pin-tailed whydah	NOUN	yes	E W S C	finch whose male has a very long tail	Vidua macroura (Viduidae)
+E129	sparrow	NOUN	yes			Passer (Passeridae)
+E130	wagtail	NOUN	yes			Motacilla (Motacillidae)
+E131	yellow-fronted canary	NOUN	yes	E W S C		Crithagra mozambica (Fringillidae)
+F001	fish	NOUN	yes			Pisces (paraphyletic: Agnatha, Chondrichthyes, Osteichthyes)
+F002	catfish	NOUN	yes			Siluriformes
+F003	lungfish	NOUN	yes	A	Protopterus, mudfish that survives the dry season in the mud	Protopterus (Protopteridae)
+F004	eel	NOUN	yes			Anguilliformes
+F005	fish skin	NOUN	yes			
+F006	fish scale	NOUN	yes			
+F007	dorsal fin	NOUN	yes		fin on the back	
+F008	adipose fin	NOUN	yes		small fleshy fin behind the dorsal fin	
+F009	caudal fin	NOUN	yes		tail fin	
+F010	pectoral fin	NOUN	yes		side fin just behind the gills	
+F011	fish spine	NOUN	yes		backbone or bones of a fish	
+F012	outer gill	NOUN	yes		gill cover, operculum	
+F013	inner gill	NOUN	yes		the gills proper, under the gill cover	
+F014	barbel	NOUN	yes		whisker of a catfish	
+F015	fish stomach	NOUN	yes			
+F016	swim bladder	NOUN	yes			
+F017	fish ovary	NOUN	yes		roe, egg mass inside a fish	
+F018	Nile perch	NOUN	yes	E W N C		Lates niloticus (Latidae)
+F019	tilapia	NOUN	yes			Tilapiine cichlids (tribes Oreochromini, Coptodonini, Tilapiini etc.) (Cichlidae)
+F020	tigerfish	NOUN	yes	A	Hydrocynus, toothed predatory river fish	Hydrocynus (Alestidae)
+F021	elephant-snout fish	NOUN	yes	A	mormyrid, fish with a long trunk-like snout	Mormyridae
+F022	Nile bichir	NOUN	yes	A	Polypterus, primitive eel-like fish with a row of dorsal finlets	Polypterus (Polypteridae)
+F023	electric catfish	NOUN	yes	A		Malapterurus (Malapteruridae)
+G001	snake	NOUN	yes			Serpentes
+G002	fang	NOUN	yes			
+G003	venom	NOUN	yes			
+G004	scale (of snake)	NOUN	yes			
+G005	egg (of reptile)	NOUN	yes			
+G006	rufous beaked snake	NOUN	yes	E S	Rhamphiophis rostratus, snake with a hooked snout	Rhamphiophis rostratus (Psammophiidae)
+G007	sand snake	NOUN	yes		Psammophis, slender fast-moving snake	Psammophis (Psammophiidae)
+G008	viper	NOUN	yes			Viperidae
+G009	cobra	NOUN	yes			Naja (Elapidae)
+G010	green mamba	NOUN	yes	E W S C		Dendroaspis angusticeps, D. viridis, D. jamesoni (green mambas) (Elapidae)
+G011	puff adder	NOUN	yes	A		Bitis arietans (Viperidae)
+G012	rhinoceros viper	NOUN	yes	E W S C	Bitis nasicornis, forest viper with horns on the nose	Bitis nasicornis (Viperidae)
+G013	horned viper	NOUN	yes		Cerastes, desert viper with horns over the eyes	Cerastes (Viperidae)
+G014	python	NOUN	yes			Python (Pythonidae)
+G015	crocodile	NOUN	yes			Crocodylidae
+G016	lizard	NOUN	yes		any lizard, generic term	Lacertilia (paraphyletic; Squamata minus snakes and amphisbaenians)
+G017	monitor	NOUN	yes		monitor lizard	Varanus (Varanidae)
+G018	agama	NOUN	yes	A	agama lizard, e.g. red-headed rock agama	Agama (Agamidae)
+G019	skink	NOUN	yes		smooth shiny-scaled lizard	Scincidae
+G020	gecko	NOUN	yes			Gekkota
+G021	chameleon	NOUN	yes			Chamaeleonidae
+G022	tortoise	NOUN	yes			Testudinidae
+G023	turtle	NOUN	yes		large water turtle, e.g. soft-shelled turtle or sea turtle	Testudines (part: softshells and sea turtles) (Trionychidae; Cheloniidae)
+G024	terrapin	NOUN	yes	E W S C	small freshwater side-necked turtle, e.g. Pelusios	Pelomedusidae
+G025	shell (of turtle)	NOUN	yes			
+G026	tree frog	NOUN	yes			Anura (part: arboreal frogs) (Hyperoliidae; Arthroleptidae (Leptopelis); Rhacophoridae; Hylidae)
+G027	bullfrog	NOUN	yes		large frog, e.g. African bullfrog Pyxicephalus	Pyxicephalus; Hoplobatrachus occipitalis (large edible bullfrogs) (Pyxicephalidae; Dicroglossidae)
+G028	toad	NOUN	yes			Bufonidae
+G029	tadpole	NOUN	yes			Anura
+G030	spawn	NOUN	yes		frog spawn, frog eggs in jelly	
+G031	vocal sac	NOUN	yes		throat pouch a frog inflates when calling	
+H001	insect	NOUN	yes			Insecta
+H002	antenna	NOUN	yes		feeler of an insect	
+H003	bee	NOUN	yes			Anthophila (Hymenoptera)
+H004	queen bee	NOUN	yes			Apis mellifera (Apidae)
+H005	swarm	NOUN	yes		swarm of bees	Apis mellifera (Apidae)
+H006	beehive	NOUN	yes			
+H007	beeswax	NOUN	yes			
+H008	honey	NOUN	yes			
+H009	honeycomb	NOUN	yes			
+H010	stinger	NOUN	yes			
+H011	hornet	NOUN	yes		large stinging wasp	Vespa (Vespidae)
+H012	black jacket	NOUN	yes		black and white Vespula wasp, North American name	Vespula consobrina (Vespidae)
+H013	wasp	NOUN	yes			Apocrita (part) (Hymenoptera)
+H014	ant	NOUN	yes			Formicidae
+H015	driver ant	NOUN	yes		army ant, Dorylus	Dorylus (Formicidae)
+H016	flying ant	NOUN	yes		winged termite or ant at swarming time, often eaten	Termitoidae; Formicidae (alates) (Blattodea; Hymenoptera)
+H017	termite	NOUN	yes			Termitoidae (Blattodea)
+H018	termite mound	NOUN	yes			
+H019	fly	NOUN	yes			Diptera
+H020	fruit fly	NOUN	yes			Drosophila (Drosophilidae)
+H021	horsefly	NOUN	yes			Tabanidae
+H022	tsetse fly	NOUN	yes	E W S C		Glossina (Glossinidae)
+H023	mosquito	NOUN	yes			Culicidae
+H024	maggot	NOUN	yes			Diptera (larva)
+H025	grasshopper	NOUN	yes			Caelifera (Orthoptera)
+H026	locust	NOUN	yes			Acrididae (part)
+H027	cricket	NOUN	yes			Gryllidae
+H028	praying mantis	NOUN	yes			Mantodea
+H029	cockroach	NOUN	yes			Blattodea (part)
+H030	june beetle	NOUN	yes		chafer, brown scarab beetle that flies at night	Melolonthinae (Scarabaeidae)
+H031	dung beetle	NOUN	yes			Scarabaeinae (Scarabaeidae)
+H032	shell (of beetle)	NOUN	yes		wing case, elytra	
+H033	butterfly	NOUN	yes			Papilionoidea (Lepidoptera)
+H034	moth	NOUN	yes			Lepidoptera (part)
+H035	caterpillar	NOUN	yes			Lepidoptera (larva)
+H036	mopane worm	NOUN	yes	S	edible caterpillar of the mopane tree	Gonimbrasia belina (Saturniidae)
+H037	cocoon	NOUN	yes			
+H038	dragonfly	NOUN	yes			Anisoptera (Odonata)
+H039	firefly	NOUN	yes			Lampyridae
+H040	flea	NOUN	yes			Siphonaptera
+H041	louse	NOUN	yes			Phthiraptera (Psocodea)
+H042	bedbug	NOUN	yes			Cimex (Cimicidae)
+H043	tick	NOUN	yes			Ixodida
+H044	poultry mite	NOUN	yes		tiny blood-sucking mite of chickens	Dermanyssus gallinae (Dermanyssidae)
+H045	jigger	NOUN	yes		chigoe, sand flea that burrows into the toes	Tunga penetrans (Tungidae)
+H046	leech	NOUN	yes			Hirudinea
+H047	mealworm	NOUN	yes		beetle larva that infests stored grain or flour	Tenebrio molitor (Tenebrionidae)
+H048	earthworm	NOUN	yes			Opisthopora
+H049	spider	NOUN	yes			Araneae
+H050	spider web	NOUN	yes			
+H051	tarantula	NOUN	yes		baboon spider, large hairy ground spider	Theraphosidae
+H052	scorpion	NOUN	yes			Scorpiones
+H053	centipede	NOUN	yes			Chilopoda
+H054	millipede	NOUN	yes			Diplopoda
+H055	snail	NOUN	yes			Gastropoda (part)
+H056	tree snail	NOUN	yes			Gastropoda (part)
+H057	ground snail	NOUN	yes		land snail, e.g. giant African land snail	Stylommatophora (part)
+H058	aquatic snail	NOUN	yes			Gastropoda (part)
+H059	shell (of snail)	NOUN	yes			
+H060	crab	NOUN	yes			Brachyura (Decapoda)
+H061	shrimp	NOUN	yes			Decapoda (part)
+H062	clam	NOUN	yes			Bivalvia (part)
+H063	mussel	NOUN	yes			Bivalvia (part)
+I001	spirit (greater)	NOUN	yes		God, the supreme being	
+I002	spirit (lower)	NOUN	yes		lesser god or spirit	
+I003	spirit (evil)	NOUN	yes			
+I004	soul (human)	NOUN	yes			
+I005	ghost	NOUN	yes			
+I005b	spirit of the dead	NOUN	yes		invisible spirit of a dead person, not a visible ghost	
+I006	heaven	NOUN	yes			
+I007	underworld	NOUN	yes			
+I008	shrine	NOUN	yes			
+I009	altar	NOUN	yes			
+I010	sacrifice	NOUN	yes			
+I011	libation	NOUN	yes			
+I012	seance	NOUN	yes		session to contact spirits or the dead	
+I013	rainmaking ceremony	NOUN	yes	A		
+I014	blessing	NOUN	yes			
+I015	curse	NOUN	yes			
+I016	luck	NOUN	yes			
+I017	prophecy	NOUN	yes			
+I018	vision	NOUN	yes		supernatural vision, not eyesight	
+I019	dream	NOUN	yes			
+I020	omen	NOUN	yes			
+I021	taboo	NOUN	yes			
+I022	charm	NOUN	yes		amulet	
+I023	lots	NOUN	yes		lots cast for divination	
+I024	evil eye	NOUN	yes	E N		
+I025	witchcraft	NOUN	yes			
+I026	medicine	NOUN	yes			
+I027	poison	NOUN	yes			
+I028	healing ceremony	NOUN	yes			
+I029	sickness	NOUN	yes			
+I030	pain	NOUN	yes			
+I031	fever (not malaria)	NOUN	yes			
+I032	sweat	NOUN	yes			
+I033	cold (sickness)	NOUN	yes		common cold	
+I034	cough	NOUN	yes			
+I035	hiccough	NOUN	yes		hiccup	
+I036	phlegm	NOUN	yes			
+I037	headache	NOUN	yes			
+I038	stomachache	NOUN	yes			
+I039	vomit	NOUN	yes			
+I040	diarrhea	NOUN	yes			
+I041	itch	NOUN	yes			
+I042	rash	NOUN	yes			
+I043	malaria (fever)	NOUN	yes			
+I044	leprosy	NOUN	yes			
+I045	elephantiasis	NOUN	yes		massive swelling of the legs	
+I046	ringworm	NOUN	yes		fungal skin infection, not a worm	
+I047	goiter	NOUN	yes		swollen thyroid in the neck	
+I048	intestinal worm	NOUN	yes			
+I049	insanity	NOUN	yes			
+I050	wound	NOUN	yes			
+I051	burn	NOUN	yes			
+I052	welt	NOUN	yes		raised mark on the skin from a blow	
+I053	bruise	NOUN	yes			
+I054	scar	NOUN	yes			
+I055	blemish	NOUN	yes			
+I056	pimple	NOUN	yes			
+I057	abscess	NOUN	yes			
+I058	swelling	NOUN	yes			
+I058b	tumour	NOUN	yes			
+I058c	bump	NOUN	yes		protuberance, raised lump (noun)	
+I059	umbilical hernia	NOUN	yes		protruding navel (an outie)	
+I060	pus	NOUN	yes			
+I061	ulcer	NOUN	yes		open sore on the skin	
+I062	hump (of hunchback)	NOUN	yes			
+I063	blight	NOUN	yes		plant disease	
+I064	cattle plague	NOUN	yes	E S	rinderpest	
+I065	life	NOUN	yes			
+I066	birth	NOUN	yes			
+I067	birth pains	NOUN	yes			
+I068	naming ceremony	NOUN	yes			
+I069	circumcision	NOUN	no			
+I069f	excision	NOUN	no	E W N	female circumcision	
+I069m	male circumcision	NOUN	no			
+I070	maturation	NOUN	yes		puberty, coming of age	
+I071	rite of passage (male)	NOUN	yes		initiation of boys	
+I072	rite of passage (female)	NOUN	yes		initiation of girls	
+I073	menstrual period	NOUN	yes			
+I074	death	NOUN	yes			
+I075	miscarriage	NOUN	yes			
+I076	corpse	NOUN	yes			
+I077	grave	NOUN	yes			
+I077b	cemetery	NOUN	yes			
+I078	funeral	NOUN	yes			
+I079	meeting place	NOUN	yes		where people meet, e.g. under a tree	
+I080	feast	NOUN	yes		festive meal or festival	
+I081	wedding	NOUN	yes			
+I082	brideprice	NOUN	yes		bridewealth paid to the bride's family	
+I083	law	NOUN	yes			
+I084	custom	NOUN	yes			
+I085	judgment ceremony	NOUN	yes		customary trial or court hearing	
+J001	tree	NOUN	yes			
+J001b	wood	NOUN	no		wood as a material	
+J002	trunk (of tree)	NOUN	yes			
+J002b	log	NOUN	no			
+J003	branch (of tree)	NOUN	yes			
+J004	twig	NOUN	yes			
+J005	bark (of tree)	NOUN	yes			
+J006	stump	NOUN	yes			
+J007	splinter	NOUN	yes			
+J008	root	NOUN	yes			
+J009	knot (in wood)	NOUN	yes			
+J010	sap	NOUN	yes			
+J010b	rubber	NOUN	yes		latex from trees	
+J011	leaf	NOUN	yes			
+J012	bud	NOUN	yes			
+J013	shoot (new plant)	NOUN	yes			
+J014	flower	NOUN	yes			
+J015	thorn	NOUN	yes			
+J016	fruit	NOUN	yes			
+J017	seed	NOUN	yes			
+J018	pit (of fruit)	NOUN	yes		fruit stone	
+J019	skin (of fruit)	NOUN	yes			
+J020	juice	NOUN	yes			
+J021	bush	NOUN	yes		shrub, not the wild country	
+J022	neem	NOUN	no		Azadirachta indica	Azadirachta indica (Meliaceae)
+J022a	neem tree	NOUN	yes		Azadirachta indica	Azadirachta indica (Meliaceae)
+J023	ebony	NOUN	no			Diospyros (Ebenaceae)
+J023a	ebony tree	NOUN	yes			Diospyros (Ebenaceae)
+J023b	ebony fruit	NOUN	yes			Diospyros (Ebenaceae)
+J024	mahogany	NOUN	no	E W S C		Khaya (Meliaceae)
+J024a	mahogany tree	NOUN	yes	E W S C		Khaya (Meliaceae)
+J025	teak	NOUN	no			Tectona grandis (Lamiaceae)
+J025a	teak tree	NOUN	yes			Tectona grandis (Lamiaceae)
+J026	kapok	NOUN	no		silk-cotton tree, Ceiba	Ceiba pentandra (Malvaceae)
+J026a	kapok tree	NOUN	yes		silk-cotton tree, Ceiba	Ceiba pentandra (Malvaceae)
+J026b	kapok pod	NOUN	yes			Ceiba pentandra (Malvaceae)
+J027	kigelia	NOUN	no	E W S C	Kigelia africana	Kigelia africana (Bignoniaceae)
+J027a	sausage tree	NOUN	yes	E W S C	Kigelia africana	Kigelia africana (Bignoniaceae)
+J027b	sausage tree fruit	NOUN	yes	E W S C		Kigelia africana (Bignoniaceae)
+J028	thorn tree	NOUN	yes		acacia	Vachellia, Senegalia (Acacia s.l.) (Fabaceae)
+J029	faidherbia	NOUN	no	A	probably Faidherbia albida, winter thorn	Faidherbia albida (Fabaceae)
+J029a	white thorn tree	NOUN	yes	A	probably Faidherbia albida, winter thorn	Faidherbia albida (Fabaceae)
+J029b	white thorn pod	NOUN	yes	A		Faidherbia albida (Fabaceae)
+J030	mopane	NOUN	no	S	Colophospermum mopane	Colophospermum mopane (Fabaceae)
+J030a	mopane tree	NOUN	yes	S	Colophospermum mopane	Colophospermum mopane (Fabaceae)
+J031	candelabra euphorbia	NOUN	no	E S	tree euphorbia	Euphorbia (tree-form species) (Euphorbiaceae)
+J031a	candelabra tree	NOUN	yes	E S	tree euphorbia	Euphorbia (tree-form species) (Euphorbiaceae)
+J032	gardenia	NOUN	no	E W S C	savanna gardenia, Gardenia ternifolia or erubescens	Gardenia (G. ternifolia, G. erubescens) (Rubiaceae)
+J032a	gardenia tree	NOUN	yes	E W S C	savanna gardenia, Gardenia ternifolia or erubescens	Gardenia (G. ternifolia, G. erubescens) (Rubiaceae)
+J032b	gardenia fruit	NOUN	yes	E W S C		Gardenia (G. ternifolia, G. erubescens) (Rubiaceae)
+J033	fan palm	NOUN	no	A	Borassus or doum palm	Borasseae (Borassus aethiopum, Hyphaene) (Arecaceae)
+J033a	fan palm tree	NOUN	yes	A	Borassus or doum palm	Borasseae (Borassus aethiopum, Hyphaene) (Arecaceae)
+J033b	fan palm fruit	NOUN	yes	A		Borasseae (Borassus aethiopum, Hyphaene) (Arecaceae)
+J034	oil palm	NOUN	no			Elaeis guineensis (Arecaceae)
+J034a	oil palm tree	NOUN	yes			Elaeis guineensis (Arecaceae)
+J034b	palm nut	NOUN	yes		fruit of the oil palm	Elaeis guineensis (Arecaceae)
+J035	cola	NOUN	no	W C	Cola, kola	Cola (C. nitida, C. acuminata) (Malvaceae)
+J035a	cola tree	NOUN	yes	W C		Cola (C. nitida, C. acuminata) (Malvaceae)
+J035b	cola nut	NOUN	yes	W C	kola nut	Cola (C. nitida, C. acuminata) (Malvaceae)
+J036	frond	NOUN	yes			
+J037	midrib of palm-frond	NOUN	yes		central stem of a palm leaf	
+J038	palm needle	NOUN	yes		leaflet of a palm frond	
+J039	raffia palm	NOUN	no	E W S C		Raphia (Arecaceae)
+J039a	raffia palm tree	NOUN	yes	E W S C		Raphia (Arecaceae)
+J040	coconut	NOUN	no			Cocos nucifera (Arecaceae)
+J040a	coconut palm	NOUN	yes			Cocos nucifera (Arecaceae)
+J040b	coconut fruit	NOUN	yes			Cocos nucifera (Arecaceae)
+J041	date	NOUN	no			Phoenix dactylifera (Arecaceae)
+J041a	date palm	NOUN	yes			Phoenix dactylifera (Arecaceae)
+J041b	date fruit	NOUN	yes			Phoenix dactylifera (Arecaceae)
+J042	fig	NOUN	no			Ficus (Moraceae)
+J042a	fig tree	NOUN	yes			Ficus (Moraceae)
+J042b	fig fruit	NOUN	yes			Ficus (Moraceae)
+J043	olive	NOUN	no			Olea europaea (Oleaceae)
+J043a	olive tree	NOUN	yes			Olea europaea (Oleaceae)
+J043b	olive fruit	NOUN	yes			Olea europaea (Oleaceae)
+J044	tamarind	NOUN	no			Tamarindus indica (Fabaceae)
+J044a	tamarind tree	NOUN	yes			Tamarindus indica (Fabaceae)
+J044b	tamarind fruit	NOUN	yes			Tamarindus indica (Fabaceae)
+J045	baobab	NOUN	no	E W S C		Adansonia digitata (Malvaceae)
+J045a	baobab tree	NOUN	yes	E W S C		Adansonia digitata (Malvaceae)
+J045b	baobab fruit	NOUN	yes	E W S C		Adansonia digitata (Malvaceae)
+J046	marula	NOUN	no	E W S C	Sclerocarya birrea	Sclerocarya birrea (Anacardiaceae)
+J046a	marula tree	NOUN	yes	E W S C		Sclerocarya birrea (Anacardiaceae)
+J046b	marula fruit	NOUN	yes	E W S C		Sclerocarya birrea (Anacardiaceae)
+J047	shea	NOUN	no	E W C		Vitellaria paradoxa (Sapotaceae)
+J047a	shea tree	NOUN	yes	E W C		Vitellaria paradoxa (Sapotaceae)
+J047b	shea nut	NOUN	yes	E W C		Vitellaria paradoxa (Sapotaceae)
+J047c	shea butter	NOUN	yes	E W C		Vitellaria paradoxa (Sapotaceae)
+J048	lemon	NOUN	no			Citrus × limon (Rutaceae)
+J048a	lemon tree	NOUN	yes			Citrus × limon (Rutaceae)
+J048b	lemon fruit	NOUN	yes			Citrus × limon (Rutaceae)
+J049	orange	NOUN	no			Citrus × sinensis (Rutaceae)
+J049a	orange tree	NOUN	yes			Citrus × sinensis (Rutaceae)
+J049b	orange fruit	NOUN	yes			Citrus × sinensis (Rutaceae)
+J050	grapefruit	NOUN	no			Citrus × paradisi (Rutaceae)
+J050a	grapefruit tree	NOUN	yes			Citrus × paradisi (Rutaceae)
+J050b	grapefruit fruit	NOUN	yes			Citrus × paradisi (Rutaceae)
+J051	mango	NOUN	no			Mangifera indica (Anacardiaceae)
+J051a	mango tree	NOUN	yes			Mangifera indica (Anacardiaceae)
+J051b	mango fruit	NOUN	yes			Mangifera indica (Anacardiaceae)
+J052	guava	NOUN	no			Psidium guajava (Myrtaceae)
+J052a	guava tree	NOUN	yes			Psidium guajava (Myrtaceae)
+J052b	guava fruit	NOUN	yes			Psidium guajava (Myrtaceae)
+J053	papaya	NOUN	no			Carica papaya (Caricaceae)
+J053a	papaya tree	NOUN	yes			Carica papaya (Caricaceae)
+J053b	papaya fruit	NOUN	yes			Carica papaya (Caricaceae)
+J054	avocado	NOUN	no			Persea americana (Lauraceae)
+J054a	avocado tree	NOUN	yes			Persea americana (Lauraceae)
+J054b	avocado fruit	NOUN	yes			Persea americana (Lauraceae)
+J055	banana	NOUN	no		sweet banana, not plantain	Musa (Musaceae)
+J055a	banana plant	NOUN	yes			Musa (Musaceae)
+J055b	banana fruit	NOUN	yes			Musa (Musaceae)
+J056	bunch (of bananas)	NOUN	yes			Musa (Musaceae)
+J057	dwarf banana	NOUN	no			Musa acuminata (Musaceae)
+J057a	dwarf banana plant	NOUN	yes			Musa acuminata (Musaceae)
+J057b	dwarf banana fruit	NOUN	yes			Musa acuminata (Musaceae)
+J058	plantain	NOUN	no		cooking banana	Musa × paradisiaca (Musaceae)
+J058a	plantain plant	NOUN	yes			Musa × paradisiaca (Musaceae)
+J058b	plantain fruit	NOUN	yes			Musa × paradisiaca (Musaceae)
+J059	enset	NOUN	yes	E S C	false banana, Ensete ventricosum	Ensete ventricosum (Musaceae)
+J060	pineapple	NOUN	no			Ananas comosus (Bromeliaceae)
+J060a	pineapple plant	NOUN	yes			Ananas comosus (Bromeliaceae)
+J060b	pineapple fruit	NOUN	yes			Ananas comosus (Bromeliaceae)
+J061	pumpkin	NOUN	yes			Cucurbita (Cucurbitaceae)
+J062	watermelon	NOUN	yes			Citrullus lanatus (Cucurbitaceae)
+J063	vine	NOUN	yes		climbing plant, liana	
+J064	tendril	NOUN	yes			
+J065	sorghum	NOUN	yes			Sorghum bicolor (Poaceae)
+J066	red sorghum	NOUN	yes			Sorghum bicolor (Poaceae)
+J067	white sorghum	NOUN	yes			Sorghum bicolor (Poaceae)
+J068	millet	NOUN	yes		any small-grained millet: pearl (Pennisetum), finger (Eleusine) or other	Cenchrus americanus, Eleusine coracana and other millets (Poaceae)
+J069	fonio	NOUN	yes	W	Digitaria exilis	Digitaria exilis (Poaceae)
+J070	teff	NOUN	yes	E	Eragrostis tef, the grain of injera	Eragrostis tef (Poaceae)
+J071	wheat	NOUN	yes			Triticum (Poaceae)
+J072	barley	NOUN	yes			Hordeum vulgare (Poaceae)
+J073	maize	NOUN	yes			Zea mays (Poaceae)
+J073b	stalk (of maize)	NOUN	yes			Zea mays (Poaceae)
+J073c	cob (of maize)	NOUN	yes			Zea mays (Poaceae)
+J073d	kernel (of maize)	NOUN	yes			Zea mays (Poaceae)
+J073e	husk (of maize)	NOUN	yes			Zea mays (Poaceae)
+J073g	hair (of maize)	NOUN	yes		corn silk	Zea mays (Poaceae)
+J073h	tassel	NOUN	yes		flowering head (of maize)	Zea mays (Poaceae)
+J074	chaff	NOUN	yes			
+J075	rice	NOUN	yes			Oryza sativa (Poaceae)
+J076	sugar cane	NOUN	yes			Saccharum officinarum (Poaceae)
+J077	sesame seed	NOUN	yes			Sesamum indicum (Pedaliaceae)
+J078	cotton	NOUN	yes			Gossypium (Malvaceae)
+J079	bean	NOUN	yes			Phaseolus vulgaris (Fabaceae)
+J080	peanut	NOUN	yes			Arachis hypogaea (Fabaceae)
+J081	shell (of peanut)	NOUN	yes			Arachis hypogaea (Fabaceae)
+J082	tuber	NOUN	yes			
+J083	potato	NOUN	yes			Solanum tuberosum (Solanaceae)
+J084	cassava	NOUN	yes			Manihot esculenta (Euphorbiaceae)
+J085	yam	NOUN	yes			Dioscorea (Dioscoreaceae)
+J086	cocoyam	NOUN	yes		taro or tannia	Colocasia esculenta, Xanthosoma sagittifolium (Araceae)
+J087	sweet potato	NOUN	yes			Ipomoea batatas (Convolvulaceae)
+J088	onion	NOUN	yes			Allium cepa (Amaryllidaceae)
+J089	garlic	NOUN	yes			Allium sativum (Amaryllidaceae)
+J090	tomato	NOUN	yes			Solanum lycopersicum (Solanaceae)
+J091	carrot	NOUN	yes			Daucus carota (Apiaceae)
+J092	okra	NOUN	yes			Abelmoschus esculentus (Malvaceae)
+J093	egg-plant	NOUN	yes		aubergine	Solanum melongena (Solanaceae)
+J094	green pepper	NOUN	yes		sweet pepper, capsicum	Capsicum annuum (Solanaceae)
+J095	hot pepper	NOUN	yes			Capsicum (Solanaceae)
+J096	mushroom	NOUN	yes			
+J097	ginger	NOUN	yes			Zingiber officinale (Zingiberaceae)
+J098	cinnamon	NOUN	yes			Cinnamomum (Lauraceae)
+J099	coriander	NOUN	yes			Coriandrum sativum (Apiaceae)
+J100	tobacco	NOUN	yes			Nicotiana tabacum (Solanaceae)
+J101	cannabis	NOUN	yes			Cannabis sativa (Cannabaceae)
+J102	coffee	NOUN	yes			Coffea (Rubiaceae)
+J103	tea	NOUN	yes			Camellia sinensis (Theaceae)
+J104	grass	NOUN	yes			
+J105	blade of grass	NOUN	yes			
+J106	weed	NOUN	yes			
+J107	reed	NOUN	yes			Phragmites (Poaceae)
+J108	papyrus	NOUN	yes	A		Cyperus papyrus (Cyperaceae)
+J109	water lily	NOUN	yes			Nymphaea (Nymphaeaceae)
+J110	lowland bamboo	NOUN	yes	E W S C	Oxytenanthera abyssinica	Oxytenanthera abyssinica (Poaceae)
+J111	highland bamboo	NOUN	yes	E S C	Yushania alpina	Oldeania alpina (Poaceae)
+J112	food	NOUN	yes			
+J113	oil	NOUN	yes			
+J114	traditional bread	NOUN	yes		local staple bread, e.g. injera	
+J115	journey bread	NOUN	yes	E	food for a journey, provisions	
+J116	crust	NOUN	yes			
+J117	flour	NOUN	yes			
+J118	salt	NOUN	yes			
+J119	soup	NOUN	yes			
+J120	porridge	NOUN	yes			
+J121	couscous	NOUN	yes	W N		
+J122	breakfast	NOUN	yes			
+J123	evening meal	NOUN	yes			
+J124	leftovers	NOUN	yes			
+J125	mould	NOUN	yes			
+J126	yeast	NOUN	yes			
+J127	beer dough	NOUN	yes	E	fermented dough or mash for brewing	
+J128	grain beer	NOUN	yes			
+J129	grain liquor	NOUN	yes		distilled spirit, e.g. araqe	
+J130	honey wine	NOUN	yes		mead, e.g. tej	
+J131	palm wine	NOUN	yes			
+K001	thing	NOUN	yes			
+K002	house	NOUN	yes			
+K002b	hut	NOUN	yes			
+K002c	room	NOUN	yes			
+K002d	bedroom	NOUN	yes			
+K002e	kitchen	NOUN	yes			
+K003	compound	NOUN	yes		homestead, enclosed group of houses of a family	
+K003b	courtyard	NOUN	yes		open space inside the compound	
+K003c	entrance hut	NOUN	yes	W	entrance hall or hut of a compound	
+K004	wall	NOUN	yes			
+K005	mud block	NOUN	yes		sun-dried mud brick	
+K006	plaster	NOUN	yes		mud or lime coating on a wall	
+K007	whitewash	NOUN	yes			
+K007b	paint	NOUN	yes			
+K008	floor	NOUN	yes			
+K009	ceiling	NOUN	yes			
+K010	roof	NOUN	yes			
+K011	roof cap	NOUN	yes		cap on the apex of a conical thatched roof	
+K012	thatch	NOUN	yes			
+K013	upright rafter	NOUN	yes		roof pole sloping up to the apex	
+K014	horizontal rafter	NOUN	yes		horizontal pole or ring tying the rafters	
+K015	forked support beam	NOUN	yes		forked post holding up a beam	
+K016	crossbeam	NOUN	yes			
+K017	plank	NOUN	yes			
+K018	door	NOUN	yes			
+K019	doorway	NOUN	yes			
+K020	window	NOUN	yes			
+K021	ladder	NOUN	yes			
+K022	lean-to	NOUN	yes		shelter with a one-sided sloping roof	
+K023	tent	NOUN	yes			
+K024	platform	NOUN	yes		raised platform of poles, for sitting or storage	
+K025	drying rack	NOUN	yes			
+K026	granary	NOUN	yes			
+K027	cattle pen	NOUN	yes			
+K028	cattle camp	NOUN	yes	E	seasonal camp where herders keep their cattle	
+K029	fence	NOUN	yes			
+K030	fence (see-thru)	NOUN	yes		open lattice fence one can see through	
+K031	stake	NOUN	yes		pointed post driven into the ground	
+K032	well	NOUN	yes			
+K033	bathing place	NOUN	yes			
+K034	toilet	NOUN	yes			
+K035	garbage dump	NOUN	yes			
+K036	garbage	NOUN	yes			
+K037	garden	NOUN	yes			
+K038	farm field	NOUN	yes			
+K038b	field boundary	NOUN	yes			
+K039	village	NOUN	yes			
+K039b	town	NOUN	yes		town or city	
+K039c	city	NOUN	yes			
+K040	camp	NOUN	yes			
+K041	market	NOUN	yes			
+K042	territory	NOUN	yes		land or country of a people	
+K042b	border	NOUN	yes		frontier of a country or ethnic area	
+K043	path	NOUN	yes			
+K044	fork (in path)	NOUN	yes			
+K045	crossroads	NOUN	yes			
+K046	bridge	NOUN	yes			
+K047	journey	NOUN	yes			
+K048	car	NOUN	yes			
+K049	bed	NOUN	yes			
+K050	mat	NOUN	yes			
+K051	pillow	NOUN	yes			
+K052	mosquito net	NOUN	yes			
+K053	stool	NOUN	yes			
+K053b	chair	NOUN	yes			
+K054	wickerwork	NOUN	yes			
+K055	lamp	NOUN	yes			
+K056	candle	NOUN	yes			
+K057	fan	NOUN	yes		hand fan	
+K058	bell	NOUN	yes			
+K059	broom	NOUN	yes			
+K060	duster	NOUN	yes		cloth or brush for removing dust	
+K061	fireplace	NOUN	yes		hearth, place of the cooking fire	
+K062	firewood	NOUN	yes			
+K063	firebrand	NOUN	yes		burning stick taken from a fire	
+K064	fire sticks	NOUN	yes		sticks twirled or rubbed together to make fire	
+K065	fire stoker	NOUN	yes		stick for poking and tending a fire	
+K066	charcoal	NOUN	yes			
+K067	pottery	NOUN	yes			
+K068	pot (for water)	NOUN	yes			
+K069	stewing pot	NOUN	yes			
+K070	metal pot	NOUN	yes			
+K071	metal kettle	NOUN	yes			
+K072	coffee pot	NOUN	yes	E N	clay coffee pot (jebena)	
+K073	jug	NOUN	yes			
+K074	bottle	NOUN	yes			
+K075	bottle stopper	NOUN	yes			
+K076	gourd	NOUN	yes		calabash used as a container	
+K076a	bowl	NOUN	yes			
+K076b	bowl for bread	NOUN	yes	E	serving bowl for bread or injera	
+K076c	bowl for stew	NOUN	yes	E	bowl for stew or sauce, e.g. wat	
+K077	bowlring	NOUN	yes		ring stand for a round-bottomed pot	
+K078	plate	NOUN	yes			
+K079	dish	NOUN	yes			
+K080	cup	NOUN	yes			
+K081	pottery shard	NOUN	yes			
+K082	spoon	NOUN	yes			
+K083	ladle	NOUN	yes			
+K084	beer filter	NOUN	yes	A	strainer for sorghum or millet beer	
+K085	handle	NOUN	yes			
+K086	woven basket	NOUN	yes			
+K087	bucket	NOUN	yes			
+K088	box	NOUN	yes			
+K089	hide sack	NOUN	yes			
+K089b	waterskin	NOUN	yes	E N	goatskin or sheepskin water bag	
+K090	nylon sack	NOUN	yes		woven plastic sack	
+K091	cooking stone	NOUN	yes		hearthstone supporting a pot over the fire	
+K092	grinding stone	NOUN	yes			
+K092a	upper grinding stone	NOUN	yes			
+K092b	lower grinding stone	NOUN	yes			
+K093	mortar	NOUN	yes		pounding mortar for grain	
+K094	pestle	NOUN	yes			
+K095	stirring paddle	NOUN	yes			
+K096	winnowing basket	NOUN	yes			
+K097	threshing fork	NOUN	yes			
+K098	threshing floor	NOUN	yes			
+K099	digging tool	NOUN	yes		digging stick or similar tool	
+K100	little hoe	NOUN	yes			
+K101	big hoe	NOUN	yes			
+K102	plough	NOUN	yes	E N S		
+K103	yoke	NOUN	yes	E N S		
+K104	sickle	NOUN	yes			
+K105	machete	NOUN	yes			
+K106	axe	NOUN	yes			
+K107	pickaxe	NOUN	yes			
+K108	hammer	NOUN	yes			
+K109	anvil	NOUN	yes			
+K110	forge	NOUN	yes		smithy, blacksmith workshop	
+K111	bellows	NOUN	yes			
+K112	potter kiln	NOUN	yes			
+K113	saw	NOUN	yes			
+K114	chisel	NOUN	yes			
+K115	nail	NOUN	yes		metal nail for fastening	
+K116	knife	NOUN	yes			
+K117	needle	NOUN	yes			
+K118	cloth patch	NOUN	yes			
+K119	rag	NOUN	yes			
+K120	pocket	NOUN	yes			
+K121	leather	NOUN	yes			
+K122	rope	NOUN	yes			
+K123	string	NOUN	yes			
+K123b	thread	NOUN	yes		sewing thread	
+K124	strap	NOUN	yes			
+K125	knot	NOUN	yes		knot tied in rope or string	
+K125b	noose	NOUN	no			
+K125c	slipknot	NOUN	no			
+K126	chain	NOUN	yes			
+K127	bundle (of sticks)	NOUN	yes			
+K128	heap (of grain)	NOUN	yes			
+K129	headpad	NOUN	yes		ring of cloth or grass for carrying loads on the head	
+K130	burden	NOUN	yes			
+K131	cane	NOUN	yes		walking stick	
+K132	switch	NOUN	yes		thin flexible stick for beating	
+K133	hunting trip	NOUN	yes			
+K134	hunting field	NOUN	yes		hunting ground	
+K135	bow (for hunting)	NOUN	yes			
+K136	arrow	NOUN	yes			
+K136b	arrow poison	NOUN	yes			
+K137	arrowhead	NOUN	yes			
+K138	quiver (of arrows)	NOUN	yes			
+K139	spear	NOUN	yes			
+K140	throwing stick	NOUN	yes			
+K141	cudgel	NOUN	yes		short heavy club	
+K142	hunting net	NOUN	yes			
+K143	trap	NOUN	yes			
+K143b	birdlime	NOUN	yes		sticky substance smeared on branches to catch birds	
+K144	bait	NOUN	yes			
+K145	footprint	NOUN	yes			
+K145b	animal track	NOUN	yes			
+K146	fishing spear	NOUN	yes			
+K146b	harpoon	NOUN	no			
+K147	fishhook	NOUN	yes			
+K148	fishing line	NOUN	yes			
+K149	fishing net	NOUN	yes			
+K150	fish trap	NOUN	yes		weir across a stream for catching fish	
+K151	fish dam	NOUN	yes			
+K152	boat	NOUN	yes			
+K153	ambatch raft	NOUN	yes	E	raft of ambatch (Aeschynomene) pith wood	
+K154	paddle	NOUN	yes			
+K155	sword	NOUN	yes			
+K156	sheath	NOUN	yes			
+K157	gun	NOUN	yes			
+K158	shield	NOUN	yes			
+K159	whip	NOUN	yes			
+K160	war	NOUN	yes			
+K160b	cattle raid	NOUN	yes	E S		
+K161	peace	NOUN	yes			
+K162	army	NOUN	yes			
+K163	belongings	NOUN	yes			
+K164	money	NOUN	yes			
+K164b	cowrie shell	NOUN	yes	E W		
+K164c	price	NOUN	yes			
+K165	gift	NOUN	yes			
+K166	debt	NOUN	yes			
+K167	tax	NOUN	yes			
+K168	inheritance	NOUN	yes			
+K169	clothing	NOUN	yes			
+K169b	cloth	NOUN	yes		fabric, woven material	
+K169c	hem	NOUN	yes			
+K170	dress	NOUN	yes		woman's one-piece garment	
+K171	shirt	NOUN	yes			
+K172	trousers	NOUN	yes			
+K173	robe (man)	NOUN	yes		man's long gown, e.g. boubou or jalabiya	
+K174	skin cloak	NOUN	yes	E S	cloak of tanned hide, kaross	
+K175	loincloth	NOUN	yes			
+K175a	loincloth for males	NOUN	yes			
+K175b	loincloth for females	NOUN	yes			
+K176	belt	NOUN	yes			
+K177	shell belt	NOUN	yes	A	belt decorated with cowrie shells	
+K178	baby sling	NOUN	yes			
+K179	hat	NOUN	yes			
+K179b	turban	NOUN	yes	E W N		
+K180	face veil	NOUN	yes	E W N		
+K181	shoe	NOUN	yes			
+K182	bead	NOUN	yes			
+K183	bracelet	NOUN	yes			
+K184	necklace	NOUN	yes			
+K185	ankle ring	NOUN	yes			
+K186	finger ring	NOUN	yes			
+K187	earring	NOUN	yes			
+K188	lip disk	NOUN	yes	A	lip plate or plug (labret)	
+K189	facial scar	NOUN	yes	A	decorative scarification on the face	
+K190	henna	NOUN	yes	E W N		
+K191	soap	NOUN	yes			
+K192	razor	NOUN	yes			
+K193	comb	NOUN	yes			
+K194	toothbrush	NOUN	yes		chewing stick or toothbrush	
+K195	toothpick	NOUN	yes			
+K196	music	NOUN	yes			
+K197	song	NOUN	yes			
+K198	dance	NOUN	yes			
+K199	drum	NOUN	yes			
+K199b	talking drum	NOUN	yes	W		
+K199c	hourglass drum	NOUN	yes	W		
+K200	big drum	NOUN	yes			
+K201	small drum	NOUN	yes			
+K202	ground drum	NOUN	yes		drum made over a pit in the ground	
+K203	pan pipe	NOUN	yes			
+K204	single note flute	NOUN	yes			
+K205	musical horn	NOUN	yes			
+K205b	shell trumpet	NOUN	yes		conch or other shell blown as a horn	
+K206	war horn	NOUN	yes			
+K207	lyre	NOUN	yes	E		
+K208	fiddle	NOUN	yes			
+K209	xylophone	NOUN	yes	W	balafon, gourd-resonated xylophone	
+K210	rattle (musical)	NOUN	yes			
+K211	clave	NOUN	yes		pair of sticks struck together	
+K212	whistle	NOUN	yes			
+K213	mask	NOUN	yes			
+K214	tobacco pipe	NOUN	yes			
+K215	pipe-stem	NOUN	yes			
+K216	bong	NOUN	yes	E	water pipe for smoking tobacco	
+K216a	bong downstem	NOUN	yes	E	tube from the bowl down into the water	
+K216b	bong cap	NOUN	yes	E	bowl on top holding the tobacco	
+K216c	bong straw	NOUN	yes	E	tube for drawing the smoke	
+K217	toy ring	NOUN	yes		a rolling hoop, pushed along with a stick	
+K218	ball	NOUN	yes			
+K219	mancala	NOUN	yes	A	pit-and-pebble board game (gebeta, bao, oware)	
+L001	sky	NOUN	yes			
+L002	sun	NOUN	yes			
+L003	hour	NOUN	yes			
+L004	day	NOUN	yes		24-hour day	
+L005	moon	NOUN	yes			
+L006	month	NOUN	yes			
+L007	full moon	NOUN	yes			
+L008	new moon	NOUN	yes			
+L009	eclipse	NOUN	no		of sun or moon	
+L009a	solar eclipse	NOUN	yes			
+L009b	lunar eclipse	NOUN	yes			
+L010	star	NOUN	yes			
+L010b	morning star	NOUN	yes		Venus seen before sunrise	
+L010c	Pleiades	NOUN	yes		star cluster, Seven Sisters	
+L010d	Big Dipper	NOUN	yes		the Plough, seven bright stars of Ursa Major	
+L010e	Orion	NOUN	yes		constellation, especially the three stars of its belt	
+L010g	shooting star	NOUN	yes			
+L011	year	NOUN	yes			
+L012	dawn	NOUN	yes			
+L013	sunrise	NOUN	yes			
+L014	morning	NOUN	yes			
+L015	noon	NOUN	yes			
+L016	daytime	NOUN	yes			
+L017	afternoon	NOUN	yes			
+L018	sunset	NOUN	yes			
+L019	dusk	NOUN	yes			
+L020	night	NOUN	yes			
+L021	midnight	NOUN	yes			
+L022	time	NOUN	yes		time in general, not an occasion	
+L023	season	NOUN	yes			
+L024	rainy season	NOUN	yes			
+L025	dry season	NOUN	yes			
+L026	winter	NOUN	yes	S	cold season of the year	
+L027	harvest season	NOUN	yes			
+L028	wind	NOUN	yes			
+L028b	harmattan	NOUN	yes	W N	dry dusty northeast wind of the West African dry season	
+L029	air	NOUN	yes		air that is breathed, not wind	
+L030	windstorm	NOUN	yes		strong wind without rain	
+L030b	sandstorm	NOUN	yes	E N	desert dust storm, haboob	
+L031	whirlwind	NOUN	yes		dust devil	
+L032	storm	NOUN	yes		thunderstorm, rainstorm	
+L033	cloud	NOUN	yes			
+L034	fog	NOUN	yes			
+L035	haze (dust)	NOUN	yes			
+L036	rain	NOUN	yes			
+L037	first rains	NOUN	yes			
+L038	drizzle	NOUN	yes			
+L039	thunder	NOUN	yes			
+L040	lightning	NOUN	yes			
+L041	rainbow	NOUN	yes			
+L042	hail	NOUN	yes			
+L042b	snow	NOUN	yes	E N S		
+L042c	ice	NOUN	yes	E N S		
+L043	dew	NOUN	yes			
+L043b	frost	NOUN	yes	E N S	hoarfrost, frozen dew	
+L044	flood	NOUN	yes			
+L045	drought	NOUN	yes			
+L046	heat	NOUN	yes		hot weather	
+L047	coldness	NOUN	yes		cold weather	
+L048	light	NOUN	yes			
+L049	sunshine	NOUN	yes			
+L050	moonlight	NOUN	yes			
+L051	shade	NOUN	yes		shaded place out of the sun	
+L052	shadow	NOUN	yes		shadow cast by an object	
+L053	reflection	NOUN	yes		mirror image, as in water	
+L054	darkness	NOUN	yes			
+L055	fire	NOUN	yes			
+L056	flame	NOUN	yes			
+L057	spark	NOUN	yes			
+L058	smoke	NOUN	yes			
+L059	ash	NOUN	yes			
+L060	bush fire	NOUN	yes			
+L061	burnt grassland	NOUN	yes			
+L062	water	NOUN	yes			
+L063	river	NOUN	yes			
+L064	tributary	NOUN	yes			
+L065	current (river)	NOUN	yes			
+L066	stream	NOUN	yes			
+L067	dry stream	NOUN	yes		dry riverbed, wadi	
+L068	waterfall	NOUN	yes			
+L069	spring	NOUN	yes		water source from the ground	
+L070	riverbank	NOUN	yes			
+L071	ford	NOUN	yes		shallow river crossing	
+L072	sandbank	NOUN	yes			
+L073	island	NOUN	yes			
+L074	lake	NOUN	yes			
+L075	sea	NOUN	yes		sea or ocean	
+L076	beach	NOUN	yes		shore of sea or lake	
+L077	pool	NOUN	yes		pond, standing water	
+L078	puddle	NOUN	yes			
+L079	water hole	NOUN	yes			
+L080	swamp	NOUN	yes			
+L081	wave	NOUN	yes			
+L082	bubble	NOUN	yes			
+L083	foam	NOUN	yes			
+L084	slime (organic)	NOUN	yes			
+L085	world	NOUN	yes			
+L086	place	NOUN	yes			
+L087	ground	NOUN	yes			
+L088	soil	NOUN	yes			
+L089	fertile soil	NOUN	yes			
+L090	clay	NOUN	yes			
+L090b	lump	NOUN	yes		lump or clod of clay or mud	
+L091	mud	NOUN	yes			
+L092	mud cracks	NOUN	yes			
+L093	sand	NOUN	yes			
+L093b	sand dune	NOUN	yes	N S		
+L094	gravel	NOUN	yes			
+L095	dust	NOUN	yes			
+L096	stone	NOUN	yes		small stone	
+L097	rock	NOUN	yes		large rock, boulder	
+L098	gold	NOUN	yes			
+L099	iron	NOUN	yes			
+L099b	rust	NOUN	yes			
+L100	silver	NOUN	yes			
+L101	copper	NOUN	yes			
+L102	rocky place	NOUN	yes			
+L103	mountain	NOUN	yes			
+L104	mountaintop	NOUN	yes			
+L105	hill	NOUN	yes			
+L106	cliff	NOUN	yes			
+L107	valley	NOUN	yes			
+L108	ditch	NOUN	yes			
+L109	pit	NOUN	yes			
+L110	hole	NOUN	yes			
+L110b	den	NOUN	yes		animal den, lair or burrow	
+L111	sinkhole	NOUN	yes		natural collapse hole in the ground	
+L112	crevice	NOUN	yes			
+L113	cave	NOUN	yes			
+L114	floodplain	NOUN	yes		seasonally flooded land beside a river	
+L115	high ground	NOUN	yes		raised land above flood level, dry-season settlement	
+L116	grassland	NOUN	yes			
+L117	forest	NOUN	yes			
+L117b	clearing	NOUN	yes		open place in forest or bush	
+L118	wilderness	NOUN	yes		the bush, uninhabited land	
+L119	desert	NOUN	yes			
+L119b	oasis	NOUN	yes	N		
+L120	salt flat	NOUN	yes	E N S	salt pan, sebkha, chott	
+M001	language	NOUN	yes			
+M002	voice	NOUN	yes			
+M003	noise	NOUN	yes			
+M004	name	NOUN	yes			
+M004b	reputation	NOUN	yes			
+M005	word	NOUN	yes			
+M006	meaning	NOUN	yes			
+M007	story	NOUN	yes			
+M008	proverb	NOUN	yes			
+M009	riddle	NOUN	yes			
+M010	news	NOUN	yes			
+M010b	announcement	NOUN	yes			
+M010c	report	NOUN	yes		account of events	
+M011	secret	NOUN	yes			
+M012	thought	NOUN	yes			
+M013	plan	NOUN	yes			
+M014	truth	NOUN	yes			
+M015	lie	NOUN	yes		falsehood	
+M016	error	NOUN	yes			
+M017	vow	NOUN	no			
+M017a	oath	NOUN	yes			
+M017b	promise	NOUN	yes			
+M018	knowledge	NOUN	yes			
+M018b	wisdom	NOUN	yes			
+M019	danger	NOUN	yes			
+M020	problem	NOUN	yes			
+M020b	hardship	NOUN	yes		distress, suffering	
+M020c	obstacle	NOUN	yes		stumbling block, obstruction	
+M021	silence	NOUN	yes			
+M022	echo	NOUN	yes			
+N001	up	ADVERB	yes			
+N002	down	ADVERB	yes			
+N003	above	ADVERB	yes			
+N004	under	ADVERB	yes			
+N005	uphill	ADVERB	yes			
+N006	downhill	ADVERB	yes			
+N007	upriver	ADVERB	yes			
+N008	downriver	ADVERB	yes			
+N009	east	NOUN	yes			
+N010	west	NOUN	yes			
+N011	north	NOUN	yes			
+N012	south	NOUN	yes			
+N013	forward	ADVERB	yes			
+N014	backward	ADVERB	yes			
+N015	right	ADVERB	yes		right-hand side or direction	
+N016	left	ADVERB	yes		left-hand side or direction	
+N017	afore	PREP	yes		in front of, spatial	
+N018	behind	PREP	yes			
+N019	beside	PREP	yes			
+N020	inside	PREP	yes			
+N021	outside	PREP	yes			
+N022	between	PREP	yes			
+N023	towards	PREP	yes			
+N024	away from	PREP	yes			
+N025	with	PREP	yes			
+N026	at	PREP	yes		general locative, at a place	
+N027	ereyesterday	NOUN	yes		day before yesterday	
+N028	yesterday	NOUN	yes			
+N029	today	NOUN	yes			
+N030	tomorrow	NOUN	yes			
+N031	overmorrow	NOUN	yes		day after tomorrow	
+N032	past	NOUN	yes		time before now (noun)	
+N033	previously	NOUN	yes			
+N034	now	NOUN	yes			
+N035	later	NOUN	yes			
+N036	future	NOUN	yes			
+N037	early	ADVERB	yes			
+N038	late	ADVERB	yes		not on time	
+N039	again	ADVERB	yes			
+N040	sometimes	ADVERB	yes			
+N041	often	ADVERB	yes			
+N042	usually	ADVERB	yes			
+N043	always	ADVERB	yes			
+N044	never	ADVERB	yes			
+O001	yes	INTERJ	yes			
+O002	no	INTERJ	yes		negative answer, opposite of yes	
+O003	not	NEG	no		negator	
+O004	and	CONJ	yes			
+O005	if	CONJ	yes			
+O006	because	CONJ	yes			
+O007	perhaps	ADVERB	yes			
+O008	really	ADVERB	yes		truly	
+O009	all	QUANT	yes			
+O009b	whole	QUANT	yes		entire	
+O009c	everybody	QUANT	yes			
+O009d	everything	QUANT	yes			
+O009e	everywhere	ADVERB	yes			
+O010	many	QUANT	yes			
+O011	some	QUANT	yes			
+O011b	someone	PRONOUN	no			
+O011c	something	PRONOUN	no			
+O012	none	QUANT	yes			
+O013	both	QUANT	yes			
+O014	half	QUANT	yes			
+O014b	piece	NOUN	yes			
+O015	only	ADVERB	yes			
+P001	be big	ADJECTIVE	yes			
+P001b	size	NOUN	yes			
+P002	be small	ADJECTIVE	yes			
+P003	be tall	ADJECTIVE	yes			
+P004	be short	ADJECTIVE	yes			
+P005	be high	ADJECTIVE	yes			
+P006	be low	ADJECTIVE	yes			
+P007	be deep	ADJECTIVE	yes			
+P008	be shallow	ADJECTIVE	yes			
+P009	be wide	ADJECTIVE	yes			
+P010	be narrow	ADJECTIVE	yes			
+P011	be thin	ADJECTIVE	yes		not thick (of objects)	
+P012	be heavy	ADJECTIVE	yes			
+P012b	weight	NOUN	yes			
+P013	be lightweight	ADJECTIVE	yes			
+P014	be many	ADJECTIVE	yes			
+P014b	be abundant	ADJECTIVE	yes			
+P015	be few	ADJECTIVE	yes			
+P016	be enough	ADJECTIVE	yes			
+P017	be used up	ADJECTIVE	yes			
+P018	be scarce	ADJECTIVE	yes			
+P019	be equal	ADJECTIVE	yes			
+P020	be greater	ADJECTIVE	yes		be more than, exceed (comparative)	
+P021	be comparable	ADJECTIVE	yes		be similar, alike	
+P022	be identical	ADJECTIVE	yes			
+P023	be different	ADJECTIVE	yes			
+P023b	other	QUANT	yes			
+P024	be last	ADJECTIVE	yes			
+P024b	last	QUANT	yes		final, opposite of first	
+P025	be various	ADJECTIVE	yes		be of several kinds, assorted	
+P026	be flat	ADJECTIVE	yes			
+P027	be round	ADJECTIVE	yes			
+P028	be straight	ADJECTIVE	yes			
+P029	be crooked	ADJECTIVE	yes			
+P030	be hollow	ADJECTIVE	yes			
+P031	be hard	ADJECTIVE	yes			
+P032	be soft	ADJECTIVE	yes			
+P033	be tender	ADJECTIVE	yes		soft to chew (meat, young leaves)	
+P034	be sharp	ADJECTIVE	yes		having a cutting edge (as a knife)	
+P035	be blunt	ADJECTIVE	yes			
+P036	be rough	ADJECTIVE	yes			
+P037	be smooth	ADJECTIVE	yes			
+P038	be slippery	ADJECTIVE	yes			
+P039	be sticky	ADJECTIVE	yes			
+P040	be open	ADJECTIVE	yes			
+P041	be closed	ADJECTIVE	yes			
+P042	be tight	ADJECTIVE	yes			
+P043	be loose	ADJECTIVE	yes			
+P044	be full	ADJECTIVE	yes			
+P045	be empty	ADJECTIVE	yes			
+P046	be torn	ADJECTIVE	yes			
+P047	be new	ADJECTIVE	yes			
+P048	be old (not new)	ADJECTIVE	yes			
+P049	be tattered	ADJECTIVE	yes		worn to rags (of cloth)	
+P050	be ruined	ADJECTIVE	yes		damaged, spoiled (not of food)	
+P051	be clean	ADJECTIVE	yes			
+P052	be dirty	ADJECTIVE	yes			
+P053	be wet	ADJECTIVE	yes			
+P054	be dry	ADJECTIVE	yes			
+P055	be hot (objects)	ADJECTIVE	yes			
+P056	be cold (objects)	ADJECTIVE	yes			
+P057	be ripe	ADJECTIVE	yes			
+P058	be unripe	ADJECTIVE	yes			
+P059	be rotten	ADJECTIVE	yes			
+P060	be shrivelled	ADJECTIVE	yes			
+P061	be fertile (land)	ADJECTIVE	yes			
+P062	be infertile (land)	ADJECTIVE	yes			
+P063	colour	NOUN	yes			
+P064	be red	ADJECTIVE	yes			
+P064a	red thing	NOUN	yes			
+P064b	very (red)	ADVERB	yes	E	intensified form, often an ideophone	
+P065	be black	ADJECTIVE	yes			
+P065a	black thing	NOUN	yes			
+P065b	very (black)	ADVERB	yes	E	intensified form, often an ideophone	
+P065c	be dark coloured	ADJECTIVE	yes		of a dark shade, any hue	
+P066	be white	ADJECTIVE	yes			
+P066a	white thing	NOUN	yes			
+P066b	very (white)	ADVERB	yes	E	intensified form, often an ideophone	
+P066c	be light coloured	ADJECTIVE	yes		of a pale shade, any hue	
+P067	be green	ADJECTIVE	yes			
+P067a	green thing	NOUN	yes			
+P067b	very (green)	ADVERB	yes	E	intensified form, often an ideophone	
+P068	be yellow	ADJECTIVE	yes			
+P069	be blue	ADJECTIVE	yes			
+P070	be brown	ADJECTIVE	yes			
+P071	be spotted	ADJECTIVE	yes			
+P071b	very (spotted)	ADVERB	yes	E	intensified form, often an ideophone	
+P072	be solid coloured	ADJECTIVE	yes	E	of one colour, without markings (of hides)	
+P073	be piebald	ADJECTIVE	yes	E	patched black and white (of animals)	
+P074	be savory	ADJECTIVE	yes		tasty, delicious	
+P075	be sweet	ADJECTIVE	yes			
+P076	be sour	ADJECTIVE	yes			
+P077	be bitter	ADJECTIVE	yes			
+P078	be salty	ADJECTIVE	yes			
+P079	smell bad	ADJECTIVE	yes			
+P079b	odour	NOUN	yes		a bad smell	
+P080	smell good	ADJECTIVE	yes			
+P080b	aroma	NOUN	yes			
+P081	be fast	ADJECTIVE	yes			
+P081b	speed	NOUN	yes			
+P082	be slow	ADJECTIVE	yes			
+P083	be hot (person)	ADJECTIVE	yes			
+P084	be hungry	ADJECTIVE	yes			
+P084b	hunger	NOUN	yes			
+P085	be thirsty	ADJECTIVE	yes			
+P085b	thirst	NOUN	yes			
+P086	be sated	ADJECTIVE	yes		full after eating	
+P087	be tired	ADJECTIVE	yes			
+P087b	tiredness	NOUN	yes			
+P088	be sleepy	ADJECTIVE	yes			
+P088b	sleepiness	NOUN	yes			
+P089	be awake	ADJECTIVE	yes			
+P090	be drunk	ADJECTIVE	yes			
+P091	be dizzy	ADJECTIVE	yes			
+P092	be naked	ADJECTIVE	yes			
+P093	be healthy	ADJECTIVE	yes			
+P093b	health	NOUN	yes			
+P094	be sick	ADJECTIVE	yes			
+P095	be ill	ADJECTIVE	yes			
+P096	be strong	ADJECTIVE	yes			
+P096b	strength	NOUN	yes			
+P096c	be powerful	ADJECTIVE	no		great, mighty	
+P096d	glory	NOUN	no		splendour	
+P097	be muscular	ADJECTIVE	yes			
+P098	be weak	ADJECTIVE	yes			
+P098b	weakness	NOUN	yes			
+P099	be fat	ADJECTIVE	yes			
+P100	be skinny	ADJECTIVE	yes			
+P101	be emaciated	ADJECTIVE	yes		extremely thin, wasted	
+P102	be lame	ADJECTIVE	yes		crippled, walking with a limp	
+P103	be blind	ADJECTIVE	yes			
+P103b	blindness	NOUN	yes			
+P104	be myopic	ADJECTIVE	yes		short-sighted	
+P105	be mute	ADJECTIVE	yes			
+P106	be bald	ADJECTIVE	yes			
+P107	be impotent	ADJECTIVE	yes		unable to have sex (of a man)	
+P108	be alive	ADJECTIVE	yes			
+P109	be dead	ADJECTIVE	yes			
+P110	be young	ADJECTIVE	yes			
+P111	be old (not young)	ADJECTIVE	yes			
+P112	be happy	ADJECTIVE	yes			
+P112b	happiness	NOUN	yes			
+P113	be sad	ADJECTIVE	yes			
+P113b	sadness	NOUN	yes			
+P114	be angry	ADJECTIVE	yes			
+P114b	anger	NOUN	yes			
+P115	be afraid	ADJECTIVE	yes			
+P115b	fear	NOUN	yes			
+P116	be proud	ADJECTIVE	yes			
+P116b	pride	NOUN	yes			
+P117	be jealous	ADJECTIVE	yes			
+P117b	jealousy	NOUN	yes			
+P118	be shy	ADJECTIVE	yes			
+P118b	shame	NOUN	yes			
+P119	be bored	ADJECTIVE	yes			
+P120	be restless	ADJECTIVE	yes			
+P121	be eager	ADJECTIVE	yes			
+P122	be curious	ADJECTIVE	yes		inquisitive, eager to know	
+P123	be alone	ADJECTIVE	yes			
+P124	be brave	ADJECTIVE	yes			
+P124b	bravery	NOUN	yes			
+P125	be kind	ADJECTIVE	yes			
+P125b	kindness	NOUN	yes			
+P125c	pity	NOUN	yes		compassion	
+P126	be generous	ADJECTIVE	yes			
+P127	be selfish	ADJECTIVE	yes			
+P128	be honest	ADJECTIVE	yes			
+P129	be just	ADJECTIVE	no		fair, righteous	
+P129b	justice	NOUN	no			
+P130	be corrupt	ADJECTIVE	yes			
+P131	be wicked	ADJECTIVE	yes			
+P132	be fierce	ADJECTIVE	yes			
+P133	be lazy	ADJECTIVE	yes			
+P133b	laziness	NOUN	yes			
+P134	be patient	ADJECTIVE	yes			
+P134b	patience	NOUN	yes			
+P135	be impatient	ADJECTIVE	yes			
+P136	be stubborn	ADJECTIVE	yes			
+P136b	stubbornness	NOUN	yes			
+P137	be wise	ADJECTIVE	yes			
+P138	be intelligent	ADJECTIVE	yes			
+P139	be foolish	ADJECTIVE	yes			
+P139b	foolishness	NOUN	yes			
+P140	be confused	ADJECTIVE	yes			
+P141	be ignorant	ADJECTIVE	yes		lacking knowledge, unaware	
+P142	be skilled	ADJECTIVE	yes			
+P143	be able	ADJECTIVE	yes			
+P143b	ability	NOUN	yes			
+P144	be eloquent	ADJECTIVE	yes			
+P145	be silent	ADJECTIVE	yes			
+P146	be good	ADJECTIVE	yes			
+P146b	be perfect	ADJECTIVE	no			
+P146c	properly	ADVERB	no		well, in a good way (adverb)	
+P146d	perfection	NOUN	no			
+P147	be bad	ADJECTIVE	yes			
+P147b	badly	ADVERB	no		poorly, in a bad way (adverb)	
+P148	be correct	ADJECTIVE	yes			
+P149	be wrong	ADJECTIVE	yes			
+P150	be guilty	ADJECTIVE	yes			
+P151	be innocent	ADJECTIVE	yes			
+P152	be beautiful	ADJECTIVE	yes			
+P153	be ugly	ADJECTIVE	yes			
+P154	be important	ADJECTIVE	yes			
+P155	be amusing	ADJECTIVE	yes			
+P156	be easy	ADJECTIVE	yes			
+P157	be difficult	ADJECTIVE	yes			
+P158	be rich	ADJECTIVE	yes			
+P159	be poor	ADJECTIVE	yes			
+P160	be expensive	ADJECTIVE	yes			
+P161	be inexpensive	ADJECTIVE	yes			
+P162	be lost	ADJECTIVE	yes			
+P163	be absent	ADJECTIVE	yes			
+P164	be near here	ADJECTIVE	yes		near the speaker	
+P165	be near there	ADJECTIVE	yes		near a place away from the speaker	
+P166	be far	ADJECTIVE	yes			
+Q001	one	QUANT	yes			
+Q001b	first	QUANT	yes			
+Q001c	once	ADVERB	yes		one time, not formerly	
+Q002	two	QUANT	yes			
+Q002b	second	QUANT	no		ordinal, not the unit of time	
+Q003	three	QUANT	yes			
+Q003b	third	QUANT	no			
+Q004	four	QUANT	yes			
+Q005	five	QUANT	yes			
+Q006	six	QUANT	yes			
+Q007	seven	QUANT	yes			
+Q008	eight	QUANT	yes			
+Q009	nine	QUANT	yes			
+Q010	ten	QUANT	yes			
+Q011	eleven	QUANT	yes			
+Q012	twelve	QUANT	yes			
+Q013	thirteen	QUANT	yes			
+Q014	fourteen	QUANT	yes			
+Q015	fifteen	QUANT	yes			
+Q016	sixteen	QUANT	yes			
+Q017	seventeen	QUANT	yes			
+Q018	eighteen	QUANT	yes			
+Q019	nineteen	QUANT	yes			
+Q020	twenty	QUANT	yes			
+Q021	twenty-one	QUANT	yes			
+Q022	twenty-two	QUANT	yes			
+Q023	twenty-three	QUANT	yes			
+Q024	twenty-four	QUANT	yes			
+Q030	thirty	QUANT	yes			
+Q035	thirty-five	QUANT	yes			
+Q036	thirty-six	QUANT	yes			
+Q040	forty	QUANT	yes			
+Q047	forty-seven	QUANT	yes			
+Q048	forty-eight	QUANT	yes			
+Q050	fifty	QUANT	yes			
+Q059	fifty-nine	QUANT	yes			
+Q060	sixty	QUANT	yes			
+Q070	seventy	QUANT	yes			
+Q080	eighty	QUANT	yes			
+Q090	ninety	QUANT	yes			
+Q100	one-hundred	QUANT	yes			
+Q200	two-hundred	QUANT	yes			
+Q300	three-hundred	QUANT	yes			
+Q400	four-hundred	QUANT	yes			
+Q500	five-hundred	QUANT	yes			
+Q600	six-hundred	QUANT	yes			
+Q700	seven-hundred	QUANT	yes			
+Q800	eight-hundred	QUANT	yes			
+Q900	nine-hundred	QUANT	yes			
+Q1000	one-thousand	QUANT	yes			
+Q2000	two-thousand	QUANT	yes			
+Q1736	one-thousand seven-hundred thirty-six	QUANT	yes			
+R1SG	I	PRONOUN	yes			
+R1DU	we two	PRONOUN	no			
+R1DUIN	we two (you and I)	PRONOUN	no		dual inclusive	
+R1DUEX	we two (not you)	PRONOUN	no		dual exclusive	
+R1PC	we (few)	PRONOUN	no		paucal	
+R1PL	we	PRONOUN	yes			
+R1PLIN	we (and you)	PRONOUN	no			
+R1PLEX	we (not you)	PRONOUN	no			
+R2SG	you	PRONOUN	yes			
+R2SGM	you (male)	PRONOUN	no			
+R2SGF	you (female)	PRONOUN	no			
+R2SGR	you (respect form)	PRONOUN	no		polite or honorific you, e.g. Amharic antu	
+R2DU	you (two)	PRONOUN	no			
+R2PC	you (few)	PRONOUN	no		paucal	
+R2PL	you (plural)	PRONOUN	yes			
+R2PLM	you (plural male)	PRONOUN	no			
+R2PLF	you (plural female)	PRONOUN	no			
+R3SG	(s)he	PRONOUN	no			
+R3SGM	he	PRONOUN	yes			
+R3SGF	she	PRONOUN	yes			
+R3SGN	it	PRONOUN	yes		neuter or non-human	
+R3SGR	(s)he (respect form)	PRONOUN	no		polite or honorific he or she, e.g. Amharic essachew	
+R3SGLOG	(s)he (logophoric)	PRONOUN	no		refers back to the reported speaker, e.g. Ewe ye	
+R3DU	they two	PRONOUN	no		dual	
+R3PC	they (few)	PRONOUN	no		paucal	
+R3PL	they	PRONOUN	yes			
+R3PLM	they (male)	PRONOUN	no			
+R3PLF	they (female)	PRONOUN	no			
+R3PLN	they (neuter)	PRONOUN	no		neuter or non-human	
+R3PLLOG	they (logophoric)	PRONOUN	no		refer back to the reported speakers	
+R1SGPOSS	my	PRONOUN	no		independent possessive	
+R2SGPOSS	your (singular)	PRONOUN	no			
+R3SGPOSS	his or her	PRONOUN	no			
+R1PLPOSS	our	PRONOUN	no			
+R2PLPOSS	your (plural)	PRONOUN	no			
+R3PLPOSS	their	PRONOUN	no			
+RREFL	self	PRONOUN	yes		reflexive	
+RRECP	each other	PRONOUN	no		reciprocal	
+RLOCDPRX	here	DEM	yes			
+RLOCD2SG	there (near you)	DEM	no		near the addressee	
+RLOCDMED	there (nearby)	DEM	no		medial distance: between near and far	
+RLOCDDST	there	DEM	yes			
+RLOCDREM	yonder (out of sight)	DEM	no		remote: far away or out of sight	
+R3SGDPRX	this	DEM	yes			
+R3SGD2SG	that (near you)	DEM	no		near the addressee	
+R3SGDMED	that (nearby)	DEM	no		medial distance: between near and far	
+R3SGDDST	that	DEM	yes			
+R3PLDPRX	these	DEM	no			
+R3PLD2SG	those (near you)	DEM	no		near the addressee	
+R3PLDMED	those (nearby)	DEM	no		medial distance: between near and far	
+R3PLDDST	those	DEM	no			
+RQ3SG	who	INTERROG	yes			
+RQ3PL	who (plural)	INTERROG	no			
+RQ3SGN	what	INTERROG	yes		neuter or non-human	
+RQ3PLN	what (plural)	INTERROG	no		neuter or non-human	
+RQ3SGREL	which	INTERROG	yes		which one	
+RQ3PLREL	which (plural)	INTERROG	no			
+RQ3SGPOSS	whose	INTERROG	no			
+RQLOC	where	INTERROG	yes			
+RQTIM	when	INTERROG	yes			
+RQRSN	why	INTERROG	yes			
+RQMAN	how	INTERROG	yes			
+RQQNT	how many	INTERROG	yes			
+V001	to be	VERB	yes		copula, as in X is Y	
+V002	to exist	VERB	yes			
+V003	to exist apart	VERB	yes			
+V004	to not exist	VERB	yes			
+V005	to become	VERB	yes			
+V006	to have	VERB	yes			
+V007	to lack	VERB	yes			
+V008	to go	VERB	yes			
+V009	to come	VERB	yes			
+V010	to arrive	VERB	yes			
+V011	to approach	VERB	yes			
+V012	to enter	VERB	yes			
+V013	to exit	VERB	yes			
+V014	to leave	VERB	yes			
+V015	to return	VERB	yes			
+V016	to pass by	VERB	yes			
+V017	to go round	VERB	yes		go around something, detour	
+V018	to ascend	VERB	yes			
+V019	to descend	VERB	yes			
+V020	to fall down	VERB	yes			
+V021	to arise	VERB	yes		get up, rise	
+V022	to cross (water)	VERB	yes			
+V023	to cross (land)	VERB	yes			
+V024	to move	VERB	yes			
+V024b	movement	NOUN	yes			
+V025	to travel	VERB	yes			
+V026	to migrate	VERB	yes			
+V027	to wander	VERB	yes			
+V028	to disappear	VERB	yes			
+V029	to walk	VERB	yes			
+V030	to step	VERB	yes			
+V031	to run	VERB	yes			
+V032	to flee	VERB	yes			
+V033	to hurry	VERB	yes			
+V034	to stumble	VERB	yes			
+V035	to limp	VERB	yes			
+V036	to crawl	VERB	yes			
+V037	to jump	VERB	yes			
+V038	to turn round	VERB	yes			
+V039	to swing	VERB	yes			
+V040	to slide	VERB	yes			
+V041	to roll	VERB	yes			
+V042	to swim on	VERB	yes			
+V043	to swim in	VERB	yes			
+V044	to dive	VERB	yes			
+V045	to float	VERB	yes			
+V046	to sink	VERB	yes			
+V047	to drown	VERB	yes			
+V048	to fly	VERB	yes			
+V049	to soar	VERB	yes			
+V050	to perch	VERB	yes			
+V050b	to alight	VERB	yes		land, of a bird	
+V051	to paddle	VERB	yes			
+V052	to bale out (canoe)	VERB	yes		scoop water out of a canoe	
+V053	to capsize	VERB	yes			
+V054	to ride	VERB	yes			
+V055	to steer	VERB	yes		guide a canoe, vehicle or animal; drive	
+V056	to dwell	VERB	yes			
+V057	to stay	VERB	yes			
+V058	to rest	VERB	yes			
+V059	to sit	VERB	yes			
+V060	to stand	VERB	yes			
+V061	to kneel	VERB	yes			
+V062	to squat	VERB	yes			
+V063	to straddle	VERB	yes			
+V064	to lean against	VERB	yes			
+V065	to lie down	VERB	yes			
+V066	to bend down	VERB	yes			
+V067	to bow (greeting)	VERB	yes			
+V068	to breathe	VERB	yes			
+V069	to pant	VERB	yes			
+V070	to yawn	VERB	yes			
+V071	to blink	VERB	yes			
+V072	to wink	VERB	yes			
+V073	to snore	VERB	yes			
+V074	to sniff	VERB	yes			
+V075	to blow nose	VERB	yes			
+V076	to blow (with mouth)	VERB	yes			
+V077	to spit	VERB	yes			
+V078	to cough	VERB	yes			
+V079	to belch	VERB	yes			
+V080	to sneeze	VERB	yes			
+V081	to groan (with pain)	VERB	yes			
+V082	to grunt (from effort)	VERB	yes			
+V083	to beat (heart)	VERB	yes			
+V084	to throb (sore)	VERB	yes		pulse with pain	
+V085	to urinate	VERB	yes			
+V086	to defecate	VERB	yes			
+V087	to fart	VERB	yes			
+V088	to shiver	VERB	yes			
+V089	to perspire	VERB	yes		sweat	
+V090	to bleed	VERB	yes			
+V091	to coagulate (blood)	VERB	yes		clot	
+V092	to faint	VERB	yes			
+V093	to vomit	VERB	yes			
+V094	to sleep	VERB	yes			
+V095	to wake up	VERB	yes			
+V096	to become pregnant	VERB	yes			
+V097	to give birth	VERB	yes			
+V098	to be born	VERB	yes			
+V099	to grow up	VERB	yes			
+V100	to become old	VERB	yes			
+V101	to die	VERB	yes			
+V102	to survive	VERB	yes			
+V103	to be hurt	VERB	yes		get injured	
+V104	to cause hurt	VERB	yes			
+V105	to be healed	VERB	yes			
+V106	to cause healing	VERB	yes			
+V107	to revive	VERB	yes			
+V108	to bark (dog)	VERB	yes			
+V109	to growl	VERB	yes			
+V110	to bare (the teeth)	VERB	yes			
+V111	to ruminate (cow)	VERB	yes		chew the cud	
+V112	to peck	VERB	yes			
+V113	to lay (eggs)	VERB	yes			
+V114	to incubate	VERB	yes		sit on eggs	
+V115	to hatch	VERB	yes			
+V116	to cackle	VERB	yes		cluck, as a hen	
+V117	to crow (rooster)	VERB	yes			
+V118	to flap (wings)	VERB	yes			
+V119	to slither	VERB	yes			
+V120	to hiss	VERB	yes			
+V121	to sting (scorpion)	VERB	yes			
+V122	to grow	VERB	yes		grow, of plants	
+V123	to sprout	VERB	yes			
+V124	to ripen	VERB	yes			
+V125	to wither	VERB	yes			
+V126	to evaporate	VERB	yes			
+V127	to flow	VERB	yes			
+V128	to drip	VERB	yes			
+V129	to leak	VERB	yes			
+V130	to burst	VERB	yes			
+V131	to swell	VERB	yes			
+V132	to spread (fire)	VERB	yes			
+V133	to shine	VERB	yes			
+V134	to fade	VERB	yes		lose brightness or colour	
+V135	to become bright	VERB	yes			
+V136	to become dark	VERB	yes			
+V137	to become dry	VERB	yes			
+V138	to burn	VERB	yes			
+V139	to smolder	VERB	yes			
+V140	to melt	VERB	yes			
+V141	to freeze	VERB	yes	E N S	turn to ice	
+V142	to singe	VERB	yes			
+V143	to rustle (leaves)	VERB	yes			
+V144	to squeak	VERB	yes			
+V145	to blow (of wind)	VERB	yes			
+V146	to blow down	VERB	yes			
+V147	to blow away	VERB	yes			
+V148	to see	VERB	yes			
+V148b	sight	NOUN	yes		sense of seeing	
+V149	to look	VERB	yes			
+V150	to notice	VERB	yes			
+V151	to hear	VERB	yes			
+V152	to listen	VERB	yes			
+V153	to smell	VERB	yes			
+V154	to taste	VERB	yes			
+V154b	taste	NOUN	yes		flavour (noun)	
+V155	to feel	VERB	yes		perceive a sensation, not by touching	
+V156	to touch	VERB	yes			
+V157	to recognize	VERB	yes			
+V158	to eat	VERB	yes			
+V158b	meal	NOUN	yes			
+V159	to eat (flesh)	VERB	yes		eat meat	
+V160	to chew	VERB	yes			
+V161	to crunch	VERB	yes			
+V162	to gnaw	VERB	yes			
+V163	to bite	VERB	yes			
+V164	to lick	VERB	yes			
+V165	to suck	VERB	yes			
+V166	to swallow	VERB	yes			
+V167	to choke	VERB	yes			
+V168	to drink	VERB	yes			
+V168b	beverage	NOUN	yes			
+V169	to sip	VERB	yes			
+V170	to hit	VERB	yes			
+V171	to beat	VERB	yes			
+V172	to slap (face)	VERB	yes			
+V173	to clap (hands)	VERB	yes			
+V174	to kick	VERB	yes			
+V175	to stamp (with foot)	VERB	yes			
+V176	to trample	VERB	yes			
+V177	to bump into	VERB	yes			
+V178	to knock down	VERB	yes			
+V179	to push	VERB	yes			
+V180	to press	VERB	yes			
+V181	to pull	VERB	yes			
+V182	to drag	VERB	yes			
+V183	to rub	VERB	yes			
+V184	to scrape	VERB	yes			
+V185	to scratch	VERB	yes			
+V186	to shake	VERB	yes			
+V187	to crush	VERB	yes			
+V188	to stab	VERB	yes			
+V189	to prick	VERB	yes			
+V190	to pierce (ears)	VERB	yes			
+V191	to wound	VERB	yes			
+V192	to kill	VERB	yes			
+V193	to extract tooth	VERB	yes	E	remove the lower incisors as a custom	
+V194	to hold (in arms)	VERB	yes			
+V195	to hold (in hand)	VERB	yes			
+V196	to take	VERB	yes			
+V197	to seize	VERB	yes		snatch, grab by force	
+V198	to take away	VERB	yes			
+V199	to put down	VERB	yes			
+V200	to pick up	VERB	yes			
+V201	to drop	VERB	yes			
+V202	to raise	VERB	yes			
+V203	to lower	VERB	yes			
+V204	to throw to	VERB	yes			
+V205	to throw away	VERB	yes			
+V206	to carry	VERB	yes			
+V207	to carry (on head)	VERB	yes			
+V208	to carry (on shoulder)	VERB	yes			
+V209	to carry (on back)	VERB	yes			
+V210	to load	VERB	yes			
+V211	to unload	VERB	yes			
+V212	to bring	VERB	yes			
+V213	to give	VERB	yes			
+V214	to lend	VERB	yes			
+V215	to borrow	VERB	yes			
+V216	to offer	VERB	yes			
+V217	to accept	VERB	yes			
+V218	to reject	VERB	yes			
+V219	to obtain	VERB	yes			
+V220	to give back	VERB	yes			
+V221	to keep	VERB	yes			
+V222	to store up	VERB	yes			
+V223	to hide	VERB	yes		hide something	
+V224	to lose	VERB	yes			
+V225	to seek	VERB	yes			
+V226	to find	VERB	yes			
+V227	to leave behind	VERB	yes			
+V228	to guard	VERB	yes			
+V229	to cut	VERB	yes			
+V230	to notch a tree to produce fruit	VERB	yes	E		
+V231	to cut down (tree)	VERB	yes			
+V232	to chop	VERB	yes			
+V233	to split	VERB	yes			
+V234	to saw	VERB	yes			
+V235	to hollow out (log)	VERB	yes			
+V236	to snap	VERB	yes			
+V237	to tear	VERB	yes			
+V238	to strip off (bark)	VERB	yes			
+V239	to bend (branch)	VERB	yes			
+V239b	bend	NOUN	no		a curve (noun)	
+V240	to twist	VERB	yes			
+V241	to fold	VERB	yes			
+V242	to coil (rope)	VERB	yes			
+V243	to stretch (hide)	VERB	yes		stretch an animal skin	
+V244	to spread out	VERB	yes			
+V245	to hang	VERB	yes			
+V246	to turn something	VERB	yes			
+V247	to open	VERB	yes			
+V248	to shut	VERB	yes			
+V249	to cover	VERB	yes			
+V250	to uncover	VERB	yes			
+V251	to stop up	VERB	yes		plug or block an opening	
+V252	to wrap	VERB	yes			
+V253	to unwrap	VERB	yes			
+V254	to pack in	VERB	yes			
+V255	to fill	VERB	yes			
+V256	to take out (from container)	VERB	yes			
+V257	to pour	VERB	yes			
+V258	to spill	VERB	yes			
+V259	to put on (clothing)	VERB	yes			
+V260	to take off (clothing)	VERB	yes			
+V261	to bathe	VERB	yes			
+V262	to wash (clothes)	VERB	yes			
+V263	to wipe	VERB	yes			
+V264	to cut (hair)	VERB	yes			
+V265	to shave	VERB	yes			
+V266	to braid (hair)	VERB	yes			
+V267	to apply (ointment)	VERB	yes			
+V268	to decorate	VERB	yes			
+V269	to prepare (food)	VERB	yes			
+V270	to cut open (fruit)	VERB	yes			
+V271	to slice	VERB	yes			
+V272	to peel	VERB	yes			
+V273	to mix	VERB	yes			
+V274	to stir	VERB	yes			
+V275	to strain (food)	VERB	yes			
+V276	to pound	VERB	yes			
+V277	to pulverise	VERB	yes			
+V278	to grind (first pass)	VERB	yes	A	first, coarse grinding on a grinding stone	
+V279	to grind (second pass)	VERB	yes	A	second, finer grinding	
+V280	to grind (third pass)	VERB	yes	A	third, finest grinding	
+V281	to knead	VERB	yes			
+V282	to shape (bread)	VERB	yes			
+V283	to pluck (feathers)	VERB	yes			
+V284	to cook	VERB	yes			
+V285	to boil	VERB	yes			
+V286	to simmer	VERB	yes			
+V287	to stew	VERB	yes			
+V288	to roast	VERB	yes			
+V289	to fry	VERB	yes			
+V290	to bake (in ashes)	VERB	yes			
+V291	to smoke (meat)	VERB	yes			
+V292	to ferment	VERB	yes			
+V293	to spoil (of food)	VERB	yes			
+V294	to do	VERB	yes			
+V294b	work	NOUN	yes			
+V295	to make	VERB	yes			
+V295b	creation	NOUN	yes			
+V296	to build	VERB	yes			
+V297	to repair	VERB	yes			
+V298	to replace	VERB	yes			
+V299	to mould (pottery)	VERB	yes		shape clay into pots	
+V300	to sew	VERB	yes			
+V301	to weave	VERB	yes			
+V302	to thread	VERB	yes		string beads	
+V303	to tie	VERB	yes			
+V304	to untie	VERB	yes			
+V305	to bind (rope)	VERB	yes			
+V306	to tighten	VERB	yes			
+V307	to loosen	VERB	yes			
+V308	to fence in	VERB	yes			
+V309	to mark out	VERB	yes		peg out a plot on the ground	
+V310	to dig	VERB	yes			
+V311	to draw water	VERB	yes		fetch water from a well or river	
+V312	to fetch (firewood)	VERB	yes			
+V313	to sweep	VERB	yes			
+V314	to polish	VERB	yes			
+V315	to ring (bell)	VERB	yes			
+V316	to carve	VERB	yes			
+V317	to draw (picture)	VERB	yes			
+V318	to till	VERB	yes		break up and turn the soil by hand	
+V318b	to plough	VERB	yes	E N S	till with an animal-drawn plough	
+V319	to clear (land)	VERB	yes			
+V320	to sow (seed)	VERB	yes			
+V321	to scatter (seed)	VERB	yes			
+V322	to plant (saplings)	VERB	yes			
+V323	to transplant	VERB	yes			
+V324	to weed	VERB	yes			
+V325	to hoe	VERB	yes			
+V326	to harvest	VERB	yes			
+V327	to dig up (yams)	VERB	yes			
+V328	to pluck (fruit)	VERB	yes			
+V329	to collect (honey)	VERB	yes			
+V330	to thresh	VERB	yes		beat grain to separate it from the stalks	
+V331	to winnow	VERB	yes		toss grain so the wind removes the chaff	
+V332	to shell (groundnuts)	VERB	yes			
+V333	to husk (corn)	VERB	yes		strip the leaves off a maize cob	
+V334	to graze	VERB	yes		take livestock to pasture	
+V335	to feed (animals)	VERB	yes			
+V336	to tether	VERB	yes			
+V337	to milk	VERB	yes			
+V338	to castrate	VERB	yes			
+V339	to domesticate	VERB	yes			
+V340	to slaughter	VERB	yes			
+V341	to skin (animal)	VERB	yes			
+V342	to hunt	VERB	yes			
+V343	to stalk	VERB	yes			
+V344	to chase	VERB	yes			
+V345	to set (trap)	VERB	yes			
+V346	to trap	VERB	yes			
+V347	to catch	VERB	yes			
+V348	to evade	VERB	yes			
+V349	to escape	VERB	yes			
+V350	to shoot	VERB	yes			
+V351	to fish	VERB	yes			
+V352	to change	VERB	yes			
+V353	to destroy	VERB	yes			
+V354	to release	VERB	yes			
+V355	to make able	VERB	yes			
+V356	to enlarge	VERB	yes			
+V356b	to increase	VERB	yes		intransitive: become more or bigger	
+V357	to diminish	VERB	yes			
+V357b	to decrease	VERB	yes		intransitive: become less or smaller	
+V358	to lengthen	VERB	yes			
+V359	to shorten	VERB	yes			
+V360	to widen	VERB	yes			
+V361	to deepen	VERB	yes			
+V362	to flatten	VERB	yes			
+V363	to straighten	VERB	yes			
+V364	to sharpen	VERB	yes			
+V365	to make smooth	VERB	yes			
+V366	to harden	VERB	yes			
+V367	to soften	VERB	yes			
+V368	to dry out (clothes)	VERB	yes			
+V369	to sprinkle	VERB	yes			
+V370	to plaster	VERB	yes		coat walls or floors with mud or dung	
+V371	to dip	VERB	yes			
+V372	to soak	VERB	yes			
+V373	to wring out	VERB	yes			
+V374	to light (fire)	VERB	yes			
+V375	to quench (fire)	VERB	yes			
+V376	to fan (fire)	VERB	yes			
+V377	to add	VERB	yes			
+V378	to subtract	VERB	yes			
+V379	to reduce	VERB	yes			
+V380	to join together	VERB	yes			
+V381	to accumulate	VERB	yes			
+V381b	to heap up	VERB	yes		pile up into a heap	
+V382	to gather	VERB	yes		collect things together	
+V383	to divide	VERB	yes			
+V384	to scatter (people)	VERB	yes			
+V385	to surround	VERB	yes			
+V386	to sing	VERB	yes			
+V387	to hum	VERB	yes			
+V388	to whistle	VERB	yes			
+V389	to dance	VERB	yes			
+V390	to play (child)	VERB	yes			
+V391	to play (stringed instrument)	VERB	yes			
+V392	to play (wind instrument)	VERB	yes			
+V393	to barter	VERB	yes			
+V394	to buy	VERB	yes			
+V395	to sell	VERB	yes			
+V396	to haggle	VERB	yes			
+V397	to pay	VERB	yes			
+V397b	payment	NOUN	yes			
+V398	to hire	VERB	yes			
+V399	to beg	VERB	yes			
+V400	to inherit	VERB	yes			
+V401	to steal	VERB	yes			
+V402	to think	VERB	yes			
+V403	to believe	VERB	yes			
+V404	to know	VERB	yes			
+V405	to doubt	VERB	yes			
+V406	to hope	VERB	yes			
+V407	to learn	VERB	yes			
+V408	to teach	VERB	yes			
+V409	to show	VERB	yes			
+V410	to remember	VERB	yes			
+V411	to forget	VERB	yes			
+V412	to decide	VERB	yes			
+V413	to choose	VERB	yes			
+V414	to hesitate	VERB	yes			
+V415	to want	VERB	yes			
+V416	to need	VERB	yes			
+V417	to try	VERB	yes			
+V418	to succeed	VERB	yes			
+V419	to fail	VERB	yes			
+V420	to pretend	VERB	yes			
+V421	to evaluate	VERB	yes			
+V422	to solve	VERB	yes			
+V423	to count	VERB	yes			
+V424	to arrange	VERB	yes		put in order	
+V425	to laugh	VERB	yes			
+V426	to smile	VERB	yes			
+V427	to rejoice	VERB	yes			
+V428	to cry	VERB	yes		with tears	
+V429	to mourn	VERB	yes		wailing and weeping for the dead	
+V429b	mourning	NOUN	yes			
+V430	to ululate	VERB	yes		high trilling cry made with the tongue	
+V431	to cause fear	VERB	yes			
+V432	to startle	VERB	yes			
+V433	to soothe (child)	VERB	yes			
+V433b	to calm down	VERB	yes		intransitive or reflexive: calm oneself	
+V434	to love	VERB	yes			
+V435	to hate	VERB	yes			
+V436	to despise	VERB	yes			
+V437	to admire	VERB	yes			
+V438	to respect	VERB	yes			
+V438b	reverence	NOUN	yes		awe, especially toward God	
+V439	to honour	VERB	yes			
+V440	to suffer	VERB	yes			
+V441	to struggle	VERB	yes			
+V442	to say	VERB	yes			
+V443	to speak	VERB	yes			
+V443b	speech	NOUN	yes		a formal address, discourse	
+V444	to tell	VERB	yes			
+V445	to whisper	VERB	yes			
+V446	to yell	VERB	yes			
+V447	to chat	VERB	yes			
+V448	to mumble	VERB	yes			
+V449	to stutter	VERB	yes			
+V450	to greet (meeting)	VERB	yes			
+V451	to greet (parting)	VERB	yes		say goodbye	
+V452	to call (name)	VERB	yes		call out to someone, summon	
+V453	to announce	VERB	yes			
+V454	to explain	VERB	yes			
+V455	to advise	VERB	yes			
+V456	to gossip	VERB	yes			
+V457	to ask	VERB	yes		ask a question	
+V457b	question	NOUN	yes			
+V458	to entreat	VERB	yes		plead, implore	
+V458b	request	NOUN	yes			
+V459	to reply	VERB	yes			
+V460	to thank	VERB	yes			
+V461	to swear	VERB	yes		take an oath	
+V462	to insult	VERB	yes			
+V462b	insult	NOUN	yes			
+V463	to slander	VERB	yes			
+V464	to threaten	VERB	yes			
+V465	to argue	VERB	yes			
+V465b	argument	NOUN	yes		dispute, quarrel	
+V466	to grumble	VERB	yes			
+V467	to contradict	VERB	yes			
+V468	to accuse	VERB	yes			
+V469	to deny	VERB	yes			
+V470	to admit	VERB	yes		confess to a wrong	
+V471	to agree with	VERB	yes			
+V471b	agreement	NOUN	yes			
+V472	to persuade	VERB	yes			
+V473	to praise	VERB	yes			
+V473b	praise	NOUN	yes			
+V474	to congratulate	VERB	yes			
+V475	to boast	VERB	yes			
+V476	to lie	VERB	yes		tell a lie, not lie down	
+V477	to meet	VERB	yes			
+V477b	meeting	NOUN	yes			
+V478	to accompany	VERB	yes			
+V479	to be together	VERB	yes			
+V480	to gather together	VERB	yes		assemble, of people	
+V481	to invite	VERB	yes			
+V482	to abandon	VERB	yes			
+V483	to avoid	VERB	yes			
+V484	to drive away	VERB	yes			
+V485	to resemble	VERB	yes			
+V486	to imitate	VERB	yes			
+V487	to befit	VERB	yes		suit, be proper for	
+V488	to wave (in greeting)	VERB	yes			
+V489	to indicate (with finger)	VERB	yes			
+V490	to hug	VERB	yes			
+V491	to caress	VERB	yes			
+V492	to kiss	VERB	yes			
+V493	to have sex (humans)	VERB	yes			
+V494	to copulate (animals)	VERB	yes			
+V495	to nurse	VERB	yes		breastfeed a baby	
+V496	to tickle	VERB	yes			
+V497	to spank	VERB	yes			
+V498	to help	VERB	yes			
+V499	to protect	VERB	yes			
+V500	to look after	VERB	yes			
+V501	to bring up (child)	VERB	yes			
+V502	to rule over	VERB	yes			
+V503	to give command	VERB	yes			
+V503b	command	NOUN	yes		an order	
+V504	to send	VERB	yes			
+V505	to serve	VERB	yes		work for someone, be a servant	
+V506	to guide	VERB	yes			
+V507	to follow	VERB	yes			
+V508	to obey	VERB	yes			
+V509	to please	VERB	yes			
+V510	to annoy	VERB	yes			
+V511	to deceive	VERB	yes			
+V512	to quarrel	VERB	yes			
+V513	to fight	VERB	yes			
+V514	to take revenge	VERB	yes			
+V515	to intercede	VERB	yes		mediate on behalf of another	
+V516	to compromise	VERB	yes			
+V517	to make quiet	VERB	yes			
+V518	to punish	VERB	yes			
+V518b	punishment	NOUN	yes		penalty	
+V519	to defeat	VERB	yes			
+V520	to be defeated	VERB	yes			
+V521	to plunder	VERB	yes			
+V522	to spy on	VERB	yes			
+V523	to rape	VERB	yes			
+V524	to pray	VERB	yes			
+V525	to prophesy	VERB	yes			
+V526	to cast (spell)	VERB	yes			
+V527	to curse	VERB	yes			
+V528	to poison (a person)	VERB	yes			
+V529	to protect by charm	VERB	yes			
+V530	to exorcise	VERB	yes			
+V531	to sacrifice	VERB	yes			
+V532	to pour libation	VERB	yes		pour a drink offering to spirits or ancestors	
+V533	to bury	VERB	yes			
+V534	to condole	VERB	yes		comfort the bereaved	
+V535	to marry	VERB	yes			
+V535b	marriage	NOUN	yes		the married state, not the wedding	
+V536	to be betrothed	VERB	yes		be engaged to marry	
+V537	to divorce	VERB	yes			
+V538	to obstruct	VERB	yes			
+V539	to prevent	VERB	yes			
+V540	to forbid	VERB	yes			
+V541	to allow	VERB	yes			
+V542	to abstain	VERB	yes			
+V543	to start	VERB	yes			
+V543b	beginning	NOUN	yes			
+V544	to continue	VERB	yes			
+V545	to stop	VERB	yes			
+V546	to wait	VERB	yes			
+V547	to wait for	VERB	yes			
+V548	to spend time	VERB	yes			
+V549	to finish	VERB	yes			
+V549b	end	NOUN	yes		conclusion of an event or period, not a tip	

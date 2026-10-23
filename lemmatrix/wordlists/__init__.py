@@ -7,11 +7,14 @@ Extended African Comparative Wordlist (EACW, Josh's own), the SIL Comparative Af
 The lists live here, in Lemmatrix, never in a database (Josh: "that must be stored in Lemmatrix
 not in the XML database"). A database built on one of them has that list's numbers as its
 references (its *base*); the other lists' numbers are stored on each lemma, readable in the XML
-and shown nowhere else (`<entry ref="C001b" cawl="0345" swadesh="42">`). They are data: they
+and shown nowhere else (`<entry ref="C001f" cawl="0345" swadesh="42">`). They are data: they
 describe the lemmas, so they go into the archives too.
 
 The data files beside this module (tab-separated, UTF-8, one header line):
-- `eacw.tsv`: ref, gloss, word class (the list's own order);
+- `eacw.tsv`: ref, gloss, word class, default (yes: the published list; no: a hidden item, a
+  recommended variant a researcher can add), sub (blank: everyone; A: all of Africa; N W E S C: only
+  those regions), clarification (the gloss's plain meaning) and taxon (with its family), in the
+  list's own order (the final list of 23 October 2026: 2,556 items);
 - `cawl.tsv`: number, domain, word class, the EACW items it maps to, and its English and French
   glosses when SIL's permission allows them to be shipped (until then the columns are empty);
 - `swadesh.tsv`: number, gloss, word class, the EACW items and CAWL numbers it maps to.
@@ -58,13 +61,47 @@ DIGITS = {CAWL: 4, SWADESH: 3}       # references in a database built on the lis
 
 @dataclass
 class Item:
-    number: str                       # the list's own form: C001b, 0345, 42
+    number: str                       # the list's own form: C001f, 0345, 42
     gloss: str = ""                   # English ("" for the CAWL until its glosses can be shipped)
     word_class: str = ""
     domain: str = ""                  # the CAWL's section number (1.1.1)
     french: str = ""
     eacw: list[str] = field(default_factory=list)     # the EACW items it maps to (CAWL, Swadesh)
     cawl: list[str] = field(default_factory=list)     # the CAWL numbers it maps to (Swadesh)
+    default: bool = True              # EACW: in the published list (False: a hidden item)
+    sub: list[str] = field(default_factory=list)      # EACW: the regions it is for ([] everyone, A, N W E S C)
+    clarification: str = ""           # EACW: the gloss's plain meaning
+    taxon: str = ""                   # EACW: animals and plants, with the family (Capra hircus (Bovidae))
+
+
+# ---- the EACW's versions (Josh, 23 October 2026) --------------------------
+# New database → EACW: the base list (its default items) or the expanded list (the hidden items
+# too), and global (only the items for everyone), Africa (every region) or one region.
+BASE, EXPANDED = "base", "expanded"
+GLOBAL, AFRICA = "global", "africa"
+REGIONS = {"N": "North", "W": "West", "E": "East", "S": "South", "C": "Central"}   # Josh's order: N W E S C
+REGION_NAMES = {GLOBAL: "Global", AFRICA: "Africa", **REGIONS}
+ITEM_NAMES = {BASE: "Base", EXPANDED: "Expanded"}
+
+
+def in_version(item: Item, items: str = EXPANDED, region: str = AFRICA) -> bool:
+    """Whether an EACW item is in a version of the list: base (default items only) or expanded;
+    global (blank sub code), Africa (all) or a region (blank, A, or that region's letter)."""
+    if items == BASE and not item.default:
+        return False
+    if region == GLOBAL:
+        return not item.sub
+    if region in REGIONS:
+        return not item.sub or "A" in item.sub or region in item.sub
+    return True
+
+
+def version_items(items: str = EXPANDED, region: str = AFRICA) -> list[Item]:
+    return [i for i in get(EACW).items if in_version(i, items, region)]
+
+
+def version_name(items: str, region: str) -> str:
+    return f"{ITEM_NAMES.get(items, items)}, {REGION_NAMES.get(region, region)}"
 
 
 @dataclass
@@ -102,7 +139,9 @@ def _split(text) -> list[str]:
 @lru_cache(maxsize=None)
 def get(list_id: str) -> WordList:
     if list_id == EACW:
-        items = [Item(r["ref"], r["gloss"], r["word_class"]) for r in _read("eacw.tsv")]
+        items = [Item(r["ref"], r["gloss"], r["word_class"], default=(r.get("default") or "yes") != "no",
+                      sub=_split(r.get("sub")), clarification=r.get("clarification") or "",
+                      taxon=r.get("taxon") or "") for r in _read("eacw.tsv")]
     elif list_id == CAWL:
         items = [Item(r["number"], r.get("gloss") or "", r["word_class"], r["domain"],
                       r.get("french") or "", _split(r["eacw"])) for r in _read("cawl.tsv")]
@@ -123,7 +162,7 @@ def list_id(name: str) -> str | None:
 
 
 def canon(lid: str, text: str) -> str | None:
-    """A number as the list writes it: `c001b` → C001b, `345` → 0345, `042` → 42. None if the list
+    """A number as the list writes it: `c001F` → C001f, `345` → 0345, `042` → 42. None if the list
     has no such item."""
     t = (text or "").strip()
     if not t:
@@ -195,12 +234,50 @@ def _order(lid: str, numbers) -> list[str]:
     return sorted(set(numbers), key=lambda n: pos.get(n, 10 ** 9))
 
 
+_FAMILY = re.compile(r"([A-PV]\d{3})([a-z]?)")
+
+
+def family(number: str) -> list[Item]:
+    """The EACW items that share an item's number (B033, B033f, B033m; J073, J073b…), in list order."""
+    m = _FAMILY.fullmatch(number or "")
+    if not m:
+        return []
+    stem = m.group(1)
+    return [i for i in get(EACW).items if i.number[:4] == stem and _FAMILY.fullmatch(i.number)]
+
+
+def _gender_family(number: str) -> list[str]:
+    """An item, its female and male (Xf, Xm) and their generic (X), when the family has f or m."""
+    m = _FAMILY.fullmatch(number or "")
+    if not m or m.group(2) not in ("", "f", "m"):
+        return []
+    stem = m.group(1)
+    have = get(EACW).by_number
+    members = [n for n in (stem, stem + "f", stem + "m") if n in have]
+    return members if any(n != stem for n in members) else []
+
+
 def other_numbers(base: str, number: str) -> dict[str, list[str]]:
-    """The other lists' numbers for item `number` of the base list, as stored on a lemma."""
+    """The other lists' numbers for item `number` of the base list, as stored on a lemma.
+
+    A hidden EACW item with no number of a list takes the numbers of its gendered family's
+    published members (Josh, 23 October: B033f female warrior, if added, goes with B033m male
+    warrior's CAWL 0406), or of its other members if those have none. A published item keeps
+    only its own (C001 parent is not CAWL mother)."""
     out = {}
+    eacw = get(EACW).by_number
     for lid in LIST_IDS:
         if lid != base:
             nums = _order(lid, mapped(base, number, lid))
+            if not nums and base == EACW and number in eacw and not eacw[number].default:
+                fam = [n for n in _gender_family(number) if n != number]
+                got = []
+                for group in ([n for n in fam if eacw[n].default], fam):
+                    for n in group:
+                        got += [x for x in mapped(EACW, n, lid) if x not in got]
+                    if got:
+                        break
+                nums = _order(lid, got)
             if nums:
                 out[lid] = nums
     return out
@@ -226,7 +303,7 @@ def numbers(db, entry, lid: str) -> list[str]:
 
 
 def describe(db, entry) -> str:
-    """'EACW C001b · CAWL 0345 · Swadesh 42' for the lemma's Reference tooltip ('' if none)."""
+    """'EACW C001f · CAWL 0345 · Swadesh 42' for the lemma's Reference tooltip ('' if none)."""
     parts = []
     for lid in LIST_IDS:
         nums = numbers(db, entry, lid)
@@ -252,13 +329,190 @@ def search_term(term: str) -> tuple[str, str | None] | None:
 
 
 def search_match(db, entry, term: str) -> bool | None:
-    """Whether a lemma matches a wordlist search item; None when the item isn't one."""
+    """Whether a lemma matches a wordlist search item; None when the item isn't one. A taxon
+    matches too, shown as a column or not (Josh, 23 October: a genus finds every item of that
+    genus; a family every item of that family), and then the columns aren't searched."""
     st = search_term(term)
     if st is None:
+        f = db.settings.entry_field(TAXON)
+        if f is not None and len(term.strip()) >= 3:
+            hay = unicodedata.normalize("NFD", entry.get(f.name)).casefold()
+            hay = "".join(ch for ch in hay if not unicodedata.combining(ch))
+            if term.strip().casefold() in hay:
+                return True
         return None
     lid, num = st
     nums = numbers(db, entry, lid)
     return bool(nums) if num is None else num in nums
+
+
+# ---- an EACW database: its fields, and the hidden items within reach ------
+# (Josh, 23 October 2026: "hidden items stay within reach": a peek in the Reference's hover, a
+# clashing reference warns, a matching gloss offers the reference; f and m are reserved)
+CLARIFICATION, TAXON = "clarification", "taxon"      # the roles of the two lemma fields
+LETTERS = "abcdeghijklnopqrstuvwxyz"                 # sub-letters in order: f and m are reserved
+
+
+def is_eacw(db) -> bool:
+    return base_of(db) == EACW
+
+
+def ensure_fields(db) -> list[str]:
+    """An EACW database's Clarification and Taxon lemma fields (Josh, 23 October: lemma fields,
+    editable, so a species a researcher adds has its own taxon), after the others. Returns the
+    titles of the fields added."""
+    from ..model import FieldDef
+    s, added = db.settings, []
+    for role, name in ((CLARIFICATION, "Clarification"), (TAXON, "Taxon")):
+        if s.entry_field(role) is None:
+            s.entry_fields.append(FieldDef(name, role=role))
+            added.append(name)
+    return added
+
+
+def ensure_word_classes(db) -> list[str]:
+    """The EACW's word classes the database's Word Class list lacks (DEM, CONJ…), added at its
+    end. Returns those added."""
+    f = db.settings.entry_field("word-class")
+    if f is None:
+        return []
+    have, added = set(f.all_values()), []
+    for i in get(EACW).items:
+        if i.word_class and i.word_class not in have:
+            f.add_value(i.word_class)
+            have.add(i.word_class)
+            added.append(i.word_class)
+    return added
+
+
+def item_for(db, entry) -> Item | None:
+    """The EACW item a lemma is: its reference in an EACW database, else its stored EACW number."""
+    n = canon(EACW, entry.ref) if is_eacw(db) else (entry.lists.get(EACW) or [None])[0]
+    return get(EACW).by_number.get(n) if n else None
+
+
+def fill_item(db, entry, item: Item, overwrite: bool = False):
+    """A lemma made from (or made into) an EACW item: its gloss, word class, Clarification and
+    Taxon where empty (all of them with overwrite), and the other lists' numbers."""
+    s = db.settings
+    for role, value, lang in (("gloss", item.gloss, s.primary_gloss), ("word-class", item.word_class, None),
+                              (CLARIFICATION, item.clarification, None), (TAXON, item.taxon, None)):
+        f = s.entry_field(role)
+        if f is None or not value:
+            continue
+        if role == "word-class" and value not in s.word_classes():
+            continue
+        current = entry.get(f.name, lang) if f.multilingual else entry.get(f.name)
+        if overwrite or not current:
+            entry.set(f.name, value, lang if f.multilingual else None, f.multilingual)
+    if not entry.file_gloss and item.gloss:
+        entry.file_gloss = "".join(ch for ch in item.gloss if ch not in _forbidden())
+    if is_eacw(db):
+        entry.lists = {k: v for k, v in entry.lists.items() if k == EACW}
+        entry.lists.update(other_numbers(EACW, item.number))
+
+
+def _forbidden() -> str:
+    from ..model import FORBIDDEN_CHARS
+    return FORBIDDEN_CHARS
+
+
+def missing(db) -> list[Item]:
+    """The EACW items an EACW database doesn't have (by reference), in list order."""
+    if not is_eacw(db):
+        return []
+    have = {canon(EACW, e.ref) for e in db.entries}
+    return [i for i in get(EACW).items if i.number not in have]
+
+
+def missing_family(db, entry) -> list[Item]:
+    """The items of a lemma's family (the same number) the database doesn't have: the peek."""
+    if not is_eacw(db):
+        return []
+    have = {canon(EACW, e.ref) for e in db.entries}
+    return [i for i in family(canon(EACW, entry.ref) or "") if i.number not in have]
+
+
+def unused_item(db, ref: str) -> Item | None:
+    """The EACW item a reference is, when the database doesn't have it yet (a clash with a hidden
+    item, for the lemma dialogue's warning)."""
+    if not is_eacw(db):
+        return None
+    n = canon(EACW, ref)
+    if not n or any(canon(EACW, e.ref) == n for e in db.entries):
+        return None
+    return get(EACW).by_number[n]
+
+
+def gloss_items(db, gloss: str) -> list[Item]:
+    """EACW items the database doesn't have whose gloss is this one (whole, or one of the
+    item's alternatives): a new lemma with that gloss is offered the item's reference."""
+    key = norm_gloss(gloss)
+    if not key or not is_eacw(db):
+        return []
+    return [i for i in missing(db) if key in gloss_keys(i.gloss)]
+
+
+def reserved(ref: str) -> tuple[str, str] | None:
+    """(the item's number, f or m) when a reference ends in f or m after a number (C123f), which
+    mean female and male only (Josh, 23 October); None otherwise."""
+    m = re.fullmatch(r"([A-Z]+\d+)([fm])", ref or "")
+    return (m.group(1), m.group(2)) if m else None
+
+
+def next_letter(db, stem: str) -> str:
+    """The next free sub-letter of an item, skipping f and m: C123b, C123c… C123g."""
+    taken = {e.ref for e in db.items()} | ({i.number for i in get(EACW).items} if is_eacw(db) else set())
+    for ch in LETTERS[1:]:
+        if stem + ch not in taken:
+            return stem + ch
+    return stem + "z"
+
+
+def peek(db, entry) -> str:
+    """The Reference's hover in an EACW database: the numbers, the Clarification and Taxon, and the
+    items of the same number not in the database (hidden or not inserted)."""
+    lines = []
+    if (d := describe(db, entry)):
+        lines.append(d)
+    s = db.settings
+    for role, label in ((CLARIFICATION, "Clarification"), (TAXON, "Taxon")):
+        f = s.entry_field(role)
+        if f is not None and entry.get(f.name):
+            lines.append(f"{label}: {entry.get(f.name)}")
+    near = missing_family(db, entry)
+    if near:
+        lines.append("Not in this database (Insert EACW items… adds them):")
+        lines += [f"   {i.number}  {i.gloss}" + ("" if i.default else "  (hidden)") for i in near]
+    return "\n".join(lines)
+
+
+def insert_position(entries, number: str) -> int:
+    """Where a new lemma for an EACW item goes among the lemmas: after the lemma of the nearest
+    item before it in the list (at the start if none)."""
+    pos = {i.number: k for k, i in enumerate(get(EACW).items)}
+    me = pos.get(number, 10 ** 9)
+    best, at = -1, 0
+    for k, e in enumerate(entries):
+        p = pos.get(canon(EACW, e.ref) or "", None)
+        if p is not None and best < p < me:
+            best, at = p, k + 1
+    return at
+
+
+def eacw_order(entries) -> list:
+    """Lemmas in the EACW's order; a lemma whose reference isn't an item stays after the one it
+    follows now."""
+    pos = {i.number: k for k, i in enumerate(get(EACW).items)}
+    keyed, last = [], -1.0
+    for k, e in enumerate(entries):
+        p = pos.get(canon(EACW, e.ref) or "")
+        if p is not None:
+            last = float(p)
+            keyed.append((last, 0, k, e))
+        else:
+            keyed.append((last, 1, k, e))
+    return [e for *_, e in sorted(keyed, key=lambda x: x[:3])]
 
 
 # ---- glosses -----------------------------------------------------------
@@ -392,4 +646,20 @@ def link_plan(db, base: str) -> list[tuple[object, dict[str, list[str]]]]:
         old = {k: v for k, v in e.lists.items() if k != base and v}
         if new != old:
             out.append((e, new))
+    return out
+
+
+def field_plan(db) -> list[tuple[object, dict[str, str]]]:
+    """For Link to wordlists… on the EACW: (lemma, {field name: value}) for each lemma whose empty
+    Clarification or Taxon the list can fill (a value the researcher typed is never replaced)."""
+    s, out = db.settings, []
+    fields = [(f, role) for role in (CLARIFICATION, TAXON) if (f := s.entry_field(role)) is not None]
+    for e in db.entries:
+        n = canon(EACW, e.ref)
+        item = get(EACW).by_number.get(n) if n else None
+        if item is None:
+            continue
+        vals = {f.name: getattr(item, role) for f, role in fields if getattr(item, role) and not e.get(f.name)}
+        if vals:
+            out.append((e, vals))
     return out

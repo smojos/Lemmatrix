@@ -589,6 +589,8 @@ class Metadata:
     locations: list[Location] = field(default_factory=list)
     description: str = ""
     wordlist_base: str = ""       # EACW, CAWL or SWADESH: the list the references are numbers of (format 9)
+    wordlist_items: str = ""      # EACW: base (its default items) or expanded (format 11)
+    wordlist_region: str = ""     # EACW: global, africa, or a region N W E S C (format 11)
     # typological features (format 10; IDEAS.md ideas 9 and 56): data about the language, read near
     # the top of the file by people and machines. "tone": tonal, intonational or unspecified
     typology: dict[str, str] = field(default_factory=lambda: {"tone": "tonal"})
@@ -942,8 +944,11 @@ class Database:
         if letter == SEQ:
             return self._next_number()
         highest = 0
-        for e in self.entries:
-            r = e.ref
+        refs = [e.ref for e in self.entries]
+        if self.metadata.wordlist_base == "EACW":   # never a number the EACW has, hidden items included
+            from . import wordlists
+            refs += [i.number for i in wordlists.get(wordlists.EACW).items]
+        for r in refs:
             if r.startswith(letter) and r[len(letter):].isdigit() and len(r) - len(letter) == digits:
                 highest = max(highest, int(r[len(letter):]))
         return f"{letter}{highest + 1:0{digits}d}"

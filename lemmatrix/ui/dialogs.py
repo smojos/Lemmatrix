@@ -256,7 +256,79 @@ class EntryDialog(QDialog):
         if self.entry is None and self.db.ref_taken(ref):
             QMessageBox.warning(self, "Entry", f"The reference {ref} is already used.")
             return
+        if self.entry is None and not self._wordlist_checks(ref):
+            return
         super().accept()
+
+    # ---- the EACW's reserved letters and hidden items (Josh, 23 October) -------------
+    def _gloss_edit(self):
+        g = self.db.settings.entry_field("gloss")
+        return self.fields.get((g.name, self.db.settings.primary_gloss)) if g is not None else None
+
+    def _ask(self, title: str, text: str, buttons) -> int:
+        """A question with buttons of its own; returns the index of the one clicked (-1: closed)."""
+        box = QMessageBox(self)
+        box.setWindowTitle(title)
+        box.setText(text)
+        made = [box.addButton(b, role) for b, role in buttons]
+        box.exec()
+        return made.index(box.clickedButton()) if box.clickedButton() in made else -1
+
+    def _wordlist_checks(self, ref: str) -> bool:
+        """Before a new lemma is made: f and m are reserved for the female and male of an item;
+        a reference that is an EACW item the database doesn't have yet says so (and can become that
+        item); a gloss that is such an item's is offered its reference. False: back to the dialogue."""
+        from .. import wordlists as wl
+        db = self.db
+        gloss_ed = self._gloss_edit()
+        gloss = gloss_ed.text().strip() if gloss_ed is not None else ""
+        r = wl.reserved(ref)
+        if r and db.settings.ref_scheme != SEQUENCE and ref not in wl.get(wl.EACW).by_number:
+            stem, letter = r
+            parent = db.entry_by_ref(stem)
+            item = wl.get(wl.EACW).by_number.get(stem)
+            pgloss = db.gloss(parent) if parent is not None else (item.gloss if item else "")
+            other = wl.next_letter(db, stem)
+            sex = "female" if letter == "f" else "male"
+            k = self._ask("f and m", f"{letter} after a reference is reserved for the {sex} of its item. "
+                          f"Is this the {sex} of {stem}{' ' + pgloss if pgloss else ''}?",
+                          [(f"Yes, keep {ref}", QMessageBox.AcceptRole), (f"Use {other}", QMessageBox.ActionRole),
+                           ("Cancel", QMessageBox.RejectRole)])
+            if k == 1:
+                ref = other
+                self.ref.setText(ref)
+            elif k != 0:
+                return False
+        item = wl.unused_item(db, ref)
+        if item is not None:
+            same = not gloss or wl.norm_gloss(gloss) in wl.gloss_keys(item.gloss)
+            if not same:
+                k = self._ask("EACW item", f"{ref} is an item of the Extended African Comparative Wordlist "
+                              f"that this database doesn't have yet: {item.gloss}"
+                              f"{'' if item.default else ' (hidden in the published list)'}. A lemma under its "
+                              "reference takes its CAWL and Swadesh numbers.",
+                              [(f"Make it {item.gloss}", QMessageBox.AcceptRole),
+                               ("Keep my gloss", QMessageBox.ActionRole),
+                               ("Change the reference", QMessageBox.RejectRole)])
+                if k == 0 and gloss_ed is not None:
+                    gloss_ed.setText(item.gloss)
+                elif k != 1:
+                    return False
+            return True
+        hits = [i for i in wl.gloss_items(db, gloss) if i.number != ref and not db.ref_taken(i.number)]
+        if hits:
+            i = hits[0]
+            k = self._ask("EACW item", f"“{gloss}” is the Extended African Comparative Wordlist's item "
+                          f"{i.number}{'' if i.default else ' (hidden in the published list)'}, which this "
+                          "database doesn't have yet. Use its reference, so the lemma keeps the list's "
+                          "correspondences?",
+                          [(f"Use {i.number}", QMessageBox.AcceptRole), (f"Keep {ref}", QMessageBox.ActionRole),
+                           ("Cancel", QMessageBox.RejectRole)])
+            if k == 0:
+                self.ref.setText(i.number)
+            elif k != 1:
+                return False
+        return True
 
     def apply(self, e: Entry):
         """Write the dialogue's values into an entry."""
@@ -279,6 +351,9 @@ class EntryDialog(QDialog):
         e = self.db.new_entry(self.ref.text().strip(), gloss=gloss, speaker=speaker, date=date)
         self.apply(e)
         e.file_gloss = nfc(gloss)
+        from .. import wordlists as wl                # an EACW item: its fields and correspondences
+        if wl.is_eacw(self.db) and (n := wl.canon(wl.EACW, e.ref)):
+            wl.fill_item(self.db, e, wl.get(wl.EACW).by_number[n])
         return e
 
 

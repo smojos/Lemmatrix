@@ -245,18 +245,20 @@ def default_metadata() -> Metadata:
                     locations=default_locations())
 
 
-def new_database(base: str = "") -> Database:
+def new_database(base: str = "", items: str = "", region: str = "") -> Database:
     """A new database, empty or built on a comparative wordlist (IDEAS.md idea 40, Josh, 22 October):
-    "EACW" (references C001b…, Lemmatrix's reference categories), "CAWL" or "SWADESH" (the list's
+    "EACW" (references C001f…, Lemmatrix's reference categories), "CAWL" or "SWADESH" (the list's
     own numbers as references, 0345 or 042, with no categories: utterances and texts take the next
-    number). Every lemma gets the list's gloss and a word class, and the other lists' numbers."""
+    number). Every lemma gets the list's gloss and a word class, and the other lists' numbers.
+    The EACW comes in versions (Josh, 23 October): items base (its default items) or expanded (its
+    hidden items too), and region global, africa or one region (N W E S C)."""
     db = Database(metadata=default_metadata(), settings=default_settings())
     if base:
-        fill_from_wordlist(db, base)
+        fill_from_wordlist(db, base, items, region)
     return db
 
 
-def fill_from_wordlist(db: Database, base: str):
+def fill_from_wordlist(db: Database, base: str, items: str = "", region: str = ""):
     from . import wordlists as wl
     from .model import FORBIDDEN_CHARS, SEQUENCE
     base = wl.list_id(base)
@@ -268,12 +270,24 @@ def fill_from_wordlist(db: Database, base: str):
         s.ref_scheme = SEQUENCE
         s.ref_digits = wl.DIGITS[base]
         s.ref_categories = []
+        chosen = wl.get(base).items
+    else:                                # the version chosen, the Clarification and Taxon fields,
+        items = items or wl.BASE         # and the list's word classes (DEM, CONJ…)
+        region = region or wl.AFRICA
+        db.metadata.wordlist_items, db.metadata.wordlist_region = items, region
+        chosen = wl.version_items(items, region)
+        wl.ensure_fields(db)
+        wl.ensure_word_classes(db)
     classes = set(s.word_classes())
-    for item in wl.get(base).items:
+    for item in chosen:
         gloss = wl.item_gloss(base, item)
         wc = wl.word_class_for(base, item)
         e = db.new_entry(wl.display(base, item.number), gloss=gloss,
                          word_class=wc if wc in classes else "")
         e.file_gloss = "".join(ch for ch in e.file_gloss if ch not in FORBIDDEN_CHARS).strip()
         e.lists = wl.other_numbers(base, item.number)
+        if base == wl.EACW:
+            for role in (wl.CLARIFICATION, wl.TAXON):
+                if (value := getattr(item, role)) and (f := s.entry_field(role)) is not None:
+                    e.set(f.name, value)
         db.entries.append(e)

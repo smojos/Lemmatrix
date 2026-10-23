@@ -42,7 +42,7 @@ def about_text() -> str:
             "lemminflect, pyspellchecker, pyzipper, praatio, Pillow and soundfile, each under its own licence "
             "(THIRD-PARTY.md).</small>")
 from ..defaults import new_database
-from .. import bulk, notebook as nbmod, predict, report, spelling
+from .. import bulk, notebook as nbmod, predict, report, spelling, wordlists
 from ..model import Database, Entry, ListItem, Person, forbidden_in, today
 from . import chiprow as chips
 from .dialogs import EntryDialog, MetadataDialog, PreferencesDialog
@@ -1214,6 +1214,8 @@ class MainWindow(QMainWindow):
         self._act(t, "Fill in recording dates from the soundfiles…", self.fill_recording_dates)
         self._act(t, "Check clipped utterances…", self.check_clipped)
         self._act(t, "Link to wordlists…", self.link_wordlists)                 # idea 40
+        self._act(t, "Insert EACW items…", lambda *_: self.insert_eacw_items())  # idea 40, 23 October
+        self._act(t, "Convert references from a table…", self.convert_references)
         t.addSeparator()
         self._act(t, "Check &spelling…", self.check_spelling, "F7")
         t.addSeparator()
@@ -1439,8 +1441,8 @@ class MainWindow(QMainWindow):
         edit = lambda row, text: None           # marks a column as editable in place
         from .. import wordlists
         # the wordlists' numbers are hidden (idea 40): only in the Reference's hover (and the XML)
-        cols = [Column("ref", "Reference", lambda e: e.ref,
-                       tooltip=lambda e: wordlists.describe(db, e) or None)]
+        cols = [Column("ref", "Reference", lambda e: e.ref,          # with the peek (23 October)
+                       tooltip=lambda e: wordlists.peek(db, e) or None)]
         from .dialogs import origin_shown
         shown = origin_shown(self)                # Settings → General: Stem type and From
         for f in s.entry_fields:
@@ -3180,7 +3182,9 @@ class MainWindow(QMainWindow):
             self.lemmas.select_row(row)
         self._menu([*self._spelling_items(self.lemmas, pos, row), ("Add lemma", "add", self.add_entry), ("Delete lemma", "delete", self.delete_entry),
                     ("Edit lemma", "edit", self.edit_entry),
-                    ("Create token for this lemma", "lemma-token", self.add_token_to_lemma, row is not None), None,
+                    ("Create token for this lemma", "lemma-token", self.add_token_to_lemma, row is not None),
+                    *([("Insert EACW items…", "add", lambda: self.insert_eacw_items(row))]
+                      if wordlists.is_eacw(self.doc.db) else []), None,
                     ("Configure columns", "gear-columns", self.configure_lemma_columns),
                     ("Clear all filters", "reset-filters", self._clear_lemma_filters)], pos)
 
@@ -3442,10 +3446,14 @@ class MainWindow(QMainWindow):
 
     # ============================================================= entries
     def add_entry(self):
+        from .. import wordlists
         dlg = EntryDialog(self, self.doc.db)
         if dlg.exec():
             e = dlg.new_entry(self.session_speaker(), self.session_date())
-            self.doc.add_entry(e)
+            db = self.doc.db                      # an EACW item goes where the list has it (23 October)
+            at = wordlists.insert_position(db.entries, e.ref) \
+                if wordlists.is_eacw(db) and wordlists.canon(wordlists.EACW, e.ref) else None
+            self.doc.add_entry(e, at)
             self.lemmas.set_rows(self.doc.db.entries)
             self.lemmas.select_row(e)
 
@@ -4073,6 +4081,17 @@ class MainWindow(QMainWindow):
         """File → Export → Wordlist…: the EACW, CAWL or Swadesh list of this database (idea 40)."""
         from .wordlist_dialogs import WordlistExportDialog
         WordlistExportDialog(self).exec()
+
+    def insert_eacw_items(self, near=None):
+        """Insert EACW items… (Josh, 23 October): the list's items this database doesn't have, those
+        beside a lemma first (its hidden letters)."""
+        from .wordlist_dialogs import insert_eacw_items
+        insert_eacw_items(self, near)
+
+    def convert_references(self):
+        """Tools → Convert references from a table… (Josh, 23 October): a conversion map."""
+        from .convert_dialog import ConvertReferencesDialog
+        ConvertReferencesDialog(self).exec()
 
     def link_wordlists(self):
         """Tools → Link to wordlists…: an existing database's base list and numbers (idea 40)."""

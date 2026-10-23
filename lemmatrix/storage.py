@@ -21,16 +21,18 @@ from .model import (LEMMAS, TEXTS, UTTERANCES, ClipSource, Database, Entry, Fiel
                     Location, Metadata, Person, RefCategory, Settings, Tag, TagStructure, Text, TierMapping,
                     TierRule, Token, Utterance, is_utterance, new_id, nfc, write_atomically, xml_safe)
 
-FORMAT_VERSION = "10"
+FORMAT_VERSION = "11"
 WORDLIST_ATTRS = {"EACW": "eacw", "CAWL": "cawl", "SWADESH": "swadesh"}   # format 9 (idea 40)
 # Until version 1.0 only the current format is read (Josh, 18 October 2026: his database is the
 # only one, so there is no compatibility code for older formats). When the format changes, a
 # provisional upgrade from the format before is written for his database and taken out again
 # once it has been saved in the new one.
-READABLE = ("5", "6", "7", "8", "9", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
+READABLE = ("5", "6", "7", "8", "9", "10", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
 # 7: before researchers had the Identifiable? tick and both ticks were always written; 8: before the
 # comparative wordlists (format 9, 22 October: no base and no numbers yet, so nothing to change);
-# 9: before the <typology> block (format 10, 23 October: an older file is tonal, as every database was)
+# 9: before the <typology> block (format 10, 23 October: an older file is tonal, as every database was);
+# 10: before the EACW's version on <wordlist> (format 11, 23 October: items and region, none in an
+# older file, so nothing to change)
 BACKUPS_KEPT = 10
 
 
@@ -233,6 +235,8 @@ def _load_metadata(m) -> Metadata:
     md.description = _text(m.find("description"))
     if (x := m.find("wordlist")) is not None:     # format 9: the list the references are numbers of
         md.wordlist_base = (x.get("base") or "").upper()
+        md.wordlist_items = (x.get("items") or "").strip()      # format 11: base or expanded
+        md.wordlist_region = (x.get("region") or "").strip()    # format 11: global, africa, N W E S C
     return md
 
 
@@ -514,7 +518,12 @@ def to_element(db: Database) -> ET.Element:
     if md.description:
         ET.SubElement(m, "description").text = md.description
     if md.wordlist_base:                          # format 9 (idea 40): EACW, CAWL or SWADESH
-        ET.SubElement(m, "wordlist", base=md.wordlist_base)
+        a = {"base": md.wordlist_base}
+        if md.wordlist_items:                     # format 11: the EACW's version (Josh, 23 October)
+            a["items"] = md.wordlist_items
+        if md.wordlist_region:
+            a["region"] = md.wordlist_region
+        ET.SubElement(m, "wordlist", a)
 
     s = db.settings
     st = ET.SubElement(root, "settings")

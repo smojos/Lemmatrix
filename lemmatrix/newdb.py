@@ -24,6 +24,8 @@ PATTERNS = [
 @dataclass
 class Choices:
     base: str = ""                         # the wordlist (EACW, CAWL, SWADESH) or "" for blank
+    items: str = "base"                    # the EACW: base (default items) or expanded (hidden too)
+    region: str = "africa"                 # the EACW: global, africa, or one region (N W E S C)
     language_name: str = ""
     language_code: str = ""
     variety_name: str = ""
@@ -76,7 +78,7 @@ def make(ch: Choices) -> Database:
             md.researchers.append(me)
         md.author = you["name"] or you["code"]
     if ch.base:
-        defaults.fill_from_wordlist(db, ch.base)
+        defaults.fill_from_wordlist(db, ch.base, ch.items, ch.region)
     pitchkind.convert(db, ch.kind)            # its fields follow the kind (a new database has no data)
     return db
 

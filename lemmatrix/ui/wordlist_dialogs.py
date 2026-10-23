@@ -33,18 +33,29 @@ def citation_tip(lid: str) -> str:
 # --------------------------------------------------------------------------
 # New database: which list to start from
 # --------------------------------------------------------------------------
+WHY_EACW = ("Why the EACW? Its references mean something: the letter is the domain (D mammals, F fish, "
+            "Q numbers), f and m are female and male, and you can add a, b, c… varieties under any item "
+            "without losing the comparison. Ambiguous glosses come with a plain-English clarification, "
+            "animals and plants with their taxon, and it comes in regional versions (East, West, North, "
+            "South and Central Africa). Uncommon items are hidden but within reach, and every item is "
+            "linked to the SIL Comparative African Wordlist and the Swadesh list, so your data can be "
+            "exported as either.")
+
+
 class WordlistChoice(QWidget):
     """Blank, EACW (recommended), CAWL or Swadesh, each with its citation in the hover: the
-    wordlist section of File → New database (ui/new_database.py)."""
+    wordlist section of File → New database (ui/new_database.py). The EACW comes in versions (Josh,
+    23 October): Base (its default items) or Expanded (its hidden items too), and Global, Africa or
+    one region; the ⓘ beside it says why to choose it."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        from . import theme
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         self.group = QButtonGroup(self)
         choices = [
-            (wl.EACW, f"{wl.NAMES[wl.EACW]} (recommended): {len(wl.get(wl.EACW).items):,} lemmas, "
-                      "with Lemmatrix's reference categories (C001b)"),
+            (wl.EACW, f"{wl.NAMES[wl.EACW]} (recommended), with Lemmatrix's reference categories (C001f)"),
             (wl.CAWL, f"{wl.NAMES[wl.CAWL]}: {len(wl.get(wl.CAWL).items):,} lemmas, numbered 0001–1700, "
                       "no categories"),
             (wl.SWADESH, f"{wl.NAMES[wl.SWADESH]}: {len(wl.get(wl.SWADESH).items)} lemmas, numbered "
@@ -57,9 +68,21 @@ class WordlistChoice(QWidget):
             if lid:
                 b.setToolTip(citation_tip(lid))
             self.group.addButton(b)
-            lay.addWidget(b)
             if lid == wl.EACW:
+                row = QHBoxLayout()
+                row.setContentsMargins(0, 0, 0, 0)
+                row.addWidget(b)
+                info = QLabel("ⓘ")
+                info.setToolTip(WHY_EACW)
+                info.setStyleSheet(f"color: {theme.muted()};")
+                row.addWidget(info)
+                row.addStretch(1)
+                lay.addLayout(row)
                 b.setChecked(True)
+                lay.addWidget(self._version_row())
+            else:
+                lay.addWidget(b)
+        self.group.buttonToggled.connect(lambda *_: self._update())
         if not wl.get(wl.CAWL).has_glosses:
             note = QLabel("The CAWL's own glosses come with SIL's permission; until then its lemmas take "
                           "the Extended African Comparative Wordlist's gloss where the two match.")
@@ -70,6 +93,50 @@ class WordlistChoice(QWidget):
                       "searched (CAWL 345) and exported as any of them.")
         note.setWordWrap(True)
         lay.addWidget(note)
+        self._update()
+
+    def _version_row(self) -> QWidget:
+        """Items (Base, Expanded) and Region (Global, Africa, North… Central), with the count."""
+        w = QWidget()
+        h = QHBoxLayout(w)
+        h.setContentsMargins(24, 0, 0, 0)
+        self.items = QComboBox()
+        self.items.addItem("Base: the published list", wl.BASE)
+        self.items.addItem("Expanded: with the hidden items", wl.EXPANDED)
+        self.items.setToolTip("Base: the published list's default items. Expanded: every item, the "
+                              "hidden ones too (the recommended variants: female and male forms, "
+                              "plurals, rarer contrasts). A hidden item can always be inserted later "
+                              "(right-click a lemma → Insert EACW items…).")
+        self.region = QComboBox()
+        for key in (wl.GLOBAL, wl.AFRICA, *wl.REGIONS):
+            self.region.addItem(wl.REGION_NAMES[key], key)
+        self.region.setCurrentIndex(self.region.findData(wl.AFRICA))
+        self.region.setToolTip("Global: only the items for everyone (no African sub code). Africa: every "
+                               "region's items. North, West, East, South or Central: the items for "
+                               "everyone, for all of Africa, and for that region.")
+        self.count = QLabel()
+        self.count.setStyleSheet("color: grey;")
+        h.addWidget(QLabel("Items"))
+        h.addWidget(self.items)
+        h.addSpacing(12)
+        h.addWidget(QLabel("Region"))
+        h.addWidget(self.region)
+        h.addSpacing(12)
+        h.addWidget(self.count)
+        h.addStretch(1)
+        self.items.currentIndexChanged.connect(self._update)
+        self.region.currentIndexChanged.connect(self._update)
+        self.version_row = w
+        return w
+
+    def _update(self, *_):
+        n = len(wl.version_items(*self.version()))
+        self.count.setText(f"{n:,} lemmas")
+        self.version_row.setEnabled(self.choice() == wl.EACW)
+
+    def version(self) -> tuple[str, str]:
+        """The EACW's version chosen: (items, region)."""
+        return self.items.currentData(), self.region.currentData()
 
     def choice(self) -> str:
         b = self.group.checkedButton()
@@ -305,13 +372,183 @@ def link_to_wordlists(win):
     if not plan and current == base:
         QMessageBox.information(win, "Link to wordlists", msg.split(". ")[0] + ", and they are linked already.")
         return
+    if base == wl.EACW:
+        msg += (" They also get the list's Clarification and Taxon where theirs are empty (two lemma "
+                "fields, added if the database doesn't have them), and the list's word classes join the "
+                "Word Class list.")
     if QMessageBox.question(win, "Link to wordlists", msg + "\n\nLink them?") != QMessageBox.Yes:
         return
-    pairs = []
+    if base == wl.EACW and (wl.ensure_fields(db) + wl.ensure_word_classes(db)):
+        win.doc.settings_changed()
+        win._setup_columns()
+    changed = {}
     for e, new in plan:
-        after = e.copy()
+        after = changed.setdefault(id(e), (e, e.copy()))[1]
         after.lists = {k: v for k, v in after.lists.items() if k == base}
         after.lists.update(new)
-        pairs.append((e, after))
-    win.doc.set_wordlist_base(base, pairs)
-    win.statusBar().showMessage(f"Linked {len(plan):,} lemmas to the wordlists.", 8000)
+    if base == wl.EACW:
+        for e, vals in wl.field_plan(db):
+            after = changed.setdefault(id(e), (e, e.copy()))[1]
+            for name, value in vals.items():
+                after.set(name, value)
+    win.doc.set_wordlist_base(base, list(changed.values()))
+    win.statusBar().showMessage(f"Linked {len(changed):,} lemmas to the wordlists.", 8000)
+
+
+# --------------------------------------------------------------------------
+# Insert EACW items… (Josh, 23 October: a hidden item can always be inserted later)
+# --------------------------------------------------------------------------
+class InsertItemsDialog(QDialog):
+    """The EACW items an EACW database doesn't have, to tick and insert: those beside a lemma (its
+    hidden letters) or any, by version (Base, Expanded) and region, with a search. Each goes in
+    after the lemma of the item before it in the list; one undo step."""
+
+    def __init__(self, win, near=None):
+        super().__init__(win)
+        from PySide6.QtWidgets import QCheckBox, QLineEdit
+        self.win, self.db, self.near = win, win.doc.db, near
+        self.setWindowTitle("Insert EACW items")
+        self.resize(820, 600)
+        lay = QVBoxLayout(self)
+        intro = QLabel("Items of the Extended African Comparative Wordlist that this database doesn't have "
+                       "yet. Grey ones are hidden in the published list (recommended variants). Each "
+                       "lemma gets the list's gloss, word class, Clarification and Taxon, and its CAWL "
+                       "and Swadesh numbers.")
+        intro.setWordWrap(True)
+        lay.addWidget(intro)
+        row = QHBoxLayout()
+        self.only_near = QCheckBox(f"Only beside {near.ref}" if near is not None else "")
+        self.only_near.setVisible(near is not None)
+        self.only_near.setChecked(near is not None)
+        self.items = QComboBox()
+        self.items.addItem("Expanded: hidden items too", wl.EXPANDED)
+        self.items.addItem("Base: published items only", wl.BASE)
+        self.region = QComboBox()
+        for key in (wl.GLOBAL, wl.AFRICA, *wl.REGIONS):
+            self.region.addItem(wl.REGION_NAMES[key], key)
+        self.region.setCurrentIndex(max(0, self.region.findData(self.db.metadata.wordlist_region or wl.AFRICA)))
+        self.search = QLineEdit()
+        self.search.setPlaceholderText("Search references and glosses")
+        self.search.setClearButtonEnabled(True)
+        for w in (self.only_near, QLabel("Items"), self.items, QLabel("Region"), self.region, self.search):
+            row.addWidget(w)
+        lay.addLayout(row)
+        self.table = QTableWidget(0, 5)
+        self.table.setHorizontalHeaderLabels(["", "Reference", "Gloss", "Sub", "Clarification"])
+        self.table.verticalHeader().hide()
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch)
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        lay.addWidget(self.table, 1)
+        bar = QHBoxLayout()
+        tick_all, untick = QPushButton("Tick all shown"), QPushButton("Untick all")
+        tick_all.clicked.connect(lambda: self._tick_all(True))
+        untick.clicked.connect(lambda: self._tick_all(False))
+        bar.addWidget(tick_all)
+        bar.addWidget(untick)
+        bar.addStretch(1)
+        self.insert_btn = QPushButton("Insert")
+        self.insert_btn.setDefault(True)
+        self.insert_btn.clicked.connect(self.accept)
+        cancel = QPushButton("Cancel")
+        cancel.clicked.connect(self.reject)
+        bar.addWidget(self.insert_btn)
+        bar.addWidget(cancel)
+        lay.addLayout(bar)
+        self.ticked: set[str] = set()
+        self.shown: list = []
+        for sig in (self.only_near.toggled, self.items.currentIndexChanged, self.region.currentIndexChanged,
+                    self.search.textChanged):
+            sig.connect(lambda *_: self._fill())
+        self.table.itemChanged.connect(self._ticked_changed)
+        if near is not None:                       # what is beside the lemma starts ticked
+            self.ticked = {i.number for i in wl.missing_family(self.db, near)}
+        self._fill()
+
+    def candidates(self) -> list:
+        items, region = self.items.currentData(), self.region.currentData()
+        pool = wl.missing_family(self.db, self.near) if self.only_near.isChecked() and self.near is not None \
+            else wl.missing(self.db)
+        q = self.search.text().strip().casefold()
+        return [i for i in pool if wl.in_version(i, items, region)
+                and (not q or q in i.number.casefold() or q in i.gloss.casefold())]
+
+    def _fill(self):
+        from PySide6.QtGui import QColor
+        self.table.blockSignals(True)
+        self.shown = self.candidates()
+        self.table.setRowCount(len(self.shown))
+        grey = QColor("#8c8c8c")
+        for r, i in enumerate(self.shown):
+            tick = QTableWidgetItem()
+            tick.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+            tick.setCheckState(Qt.Checked if i.number in self.ticked else Qt.Unchecked)
+            self.table.setItem(r, 0, tick)
+            for c, text in enumerate((i.number, i.gloss, " ".join(i.sub), i.clarification), start=1):
+                it = QTableWidgetItem(text)
+                if not i.default:
+                    it.setForeground(grey)
+                    it.setToolTip("Hidden in the published list")
+                self.table.setItem(r, c, it)
+        self.table.resizeColumnsToContents()
+        self.table.blockSignals(False)
+        self._count()
+
+    def _ticked_changed(self, it):
+        if it.column() != 0:
+            return
+        n = self.shown[it.row()].number
+        (self.ticked.add if it.checkState() == Qt.Checked else self.ticked.discard)(n)
+        self._count()
+
+    def _tick_all(self, on: bool):
+        for i in self.shown:
+            (self.ticked.add if on else self.ticked.discard)(i.number)
+        self._fill()
+
+    def _count(self):
+        n = len(self.ticked)
+        self.insert_btn.setText(f"Insert {n:,}" if n else "Insert")
+        self.insert_btn.setEnabled(bool(n))
+
+    def chosen(self) -> list:
+        return [i for i in wl.get(wl.EACW).items if i.number in self.ticked]
+
+
+def insert_items(win, items) -> list:
+    """New lemmas for EACW items, each after the lemma of the item before it; one undo step.
+    Returns the new lemmas."""
+    db = win.doc.db
+    order = list(db.entries)
+    classes = set(db.settings.word_classes())
+    made = []
+    for item in items:
+        e = db.new_entry(item.number, gloss=item.gloss,
+                         word_class=item.word_class if item.word_class in classes else "",
+                         speaker=win.session_speaker(), date=win.session_date())
+        wl.fill_item(db, e, item)
+        order.insert(wl.insert_position(order, item.number), e)
+        made.append(e)
+    if made:
+        win.doc.restructure(f"Insert {len(made)} EACW item{'s' if len(made) != 1 else ''}", order)
+    return made
+
+
+def insert_eacw_items(win, near=None):
+    """Right-click a lemma → Insert EACW items… (or Tools): pick and insert."""
+    db = win.doc.db
+    if not wl.is_eacw(db):
+        QMessageBox.information(win, "Insert EACW items",
+                                "This database isn't built on the Extended African Comparative Wordlist "
+                                "(Tools → Link to wordlists… sets that).")
+        return
+    if not wl.missing(db):
+        QMessageBox.information(win, "Insert EACW items", "This database has every item of the list.")
+        return
+    d = InsertItemsDialog(win, near)
+    if d.exec() != QDialog.Accepted:
+        return
+    made = insert_items(win, d.chosen())
+    win.lemmas.set_rows(db.entries)
+    if made:
+        win.lemmas.select_row(made[0])
+        win.statusBar().showMessage(f"Inserted {len(made):,} EACW item(s).", 8000)

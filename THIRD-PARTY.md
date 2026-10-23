@@ -41,7 +41,9 @@ not under the AGPL:
 | Swadesh list, 207 items (`swadesh.tsv`) | Swadesh, Morris. 1952; 1955 (see the README's References) | the list of English glosses as commonly used |
 
 The mapping between the three lists (the `eacw` and `cawl` columns) was drafted for Lemmatrix in
-October 2026, from the lists' glosses, for Joshua A. G. Smolders to check.
+October 2026 from the lists' glosses; its EACW links were reviewed by Joshua A. G. Smolders and
+graded and checked in the list's final audit (23 October 2026). The EACW's taxa and regional sub
+codes were checked against Wikipedia's articles (facts only; no text is copied from them).
 
 **Other programs.** Lemmatrix can open recordings in [Praat](https://www.praat.org) (by Paul
 Boersma and David Weenink), if it is installed; Praat isn't part of Lemmatrix.
