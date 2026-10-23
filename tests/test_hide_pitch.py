@@ -191,10 +191,11 @@ def test_comparison_area_keeps_alpha_and_beta(win):
     assert not c.alpha.isHidden() and c.hidden_note.isHidden()
     _hide(win)
     assert c.alpha.isHidden() and c.beta.isHidden()
-    assert not c.hidden_note.isHidden() and c.hidden_note.text() == "Pitch hidden (Settings → Pitch)"
+    assert not c.hidden_note.isHidden() and c.hidden_note.text() == "pitch hidden"
+    assert c.hidden_note.font().italic()
     assert all(not lbl.isHidden() for lbl in c.letters)          # α and β stay at the left edge
-    win.set_pitch_shown(True)
-    assert not c.alpha.isHidden() and c.hidden_note.isHidden()
+    next(x for x in c.note_menu().actions() if x.text() == "Unhide pitch").trigger()   # right-click
+    assert pitchview.shown() and not c.alpha.isHidden() and c.hidden_note.isHidden()
 
 
 def test_settings_tick(win):

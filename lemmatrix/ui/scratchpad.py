@@ -74,10 +74,17 @@ class ComparisonPads(QWidget):
             self.pads.append(pad)
         self.alpha, self.beta = self.pads
         # the pitch system hidden (idea 9): the pads go, α and β stay at the area's left edge
-        # (Compare V and Compare C will join them there, idea 46); until then a faint line says why
-        self.hidden_note = QLabel("Pitch hidden (Settings → Pitch)")
-        self.hidden_note.setToolTip("The pitch scratchpads are hidden with the pitch system: "
-                                    "File → Settings → Pitch → Show the pitch system, or View → Show pitch system")
+        # (Compare V and Compare C will join them there, idea 46); until then a faint line says why,
+        # in italics and intentionally lowercase (Josh, 23 October); right-click it to unhide
+        self.main = main
+        self.hidden_note = QLabel("pitch hidden")
+        f = self.hidden_note.font()
+        f.setItalic(True)
+        self.hidden_note.setFont(f)
+        self.hidden_note.setToolTip("The pitch system is hidden. Right-click to unhide it "
+                                    "(or View → Show pitch system, or File → Settings → Pitch)")
+        self.hidden_note.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.hidden_note.customContextMenuRequested.connect(self._note_menu)
         grid.addWidget(self.hidden_note, 0, 1, 2, 1, Qt.AlignLeft | Qt.AlignVCenter)
         grid.setColumnStretch(1, 1)
         self.restyle()
@@ -96,6 +103,17 @@ class ComparisonPads(QWidget):
         for p in self.pads:
             p.setVisible(on)
         self.hidden_note.setVisible(not on)
+
+    def note_menu(self):
+        """The right-click menu of the pitch hidden line: Unhide pitch."""
+        from PySide6.QtWidgets import QMenu
+        m = QMenu(self)
+        a = m.addAction("Unhide pitch")
+        a.triggered.connect(lambda *_: self.main.set_pitch_shown(True))
+        return m
+
+    def _note_menu(self, pos):
+        self.note_menu().exec(self.hidden_note.mapToGlobal(pos))
 
     def restyle(self):
         from . import theme

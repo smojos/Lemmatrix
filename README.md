@@ -51,6 +51,8 @@ own: the program icon and the splash screen are his drawings, and the icons in t
 are drawn in code from his designs and drafts. See [AUTHORS](AUTHORS), and
 [DESIGN.md](DESIGN.md) for how the program works and why.
 
+In the author's words: *“One of the main goals of this program is to make the UI extremely versatile and user friendly, for those linguists who are a little more on the artistic end of the spectrum like myself.”*
+
 (A note on spelling: these documents write *soundfile* and *soundfiles* as one word. That's
 deliberate, part of the author's personal campaign to make it a compound, like *filename*.)
 
