@@ -87,3 +87,35 @@ def test_welcome_box_recent_databases(app, tmp_path):
     b.click()
     assert (dlg.choice, dlg.path) == ("recent", str(db))
     assert WelcomeDialog(None, [], sample_exists=False).sample.isEnabled() is False
+
+
+def test_welcome_first_start_then_the_most_recent_database(win, tmp_path):
+    """Josh, 23 October: the welcome window the first time, then the most recent database until
+    the setting is changed (Settings → General, or the tick in the window)."""
+    from lemmatrix.__main__ import start_path, welcome_box
+    p = win.prefs
+    old_mode, old_last = p.welcome_mode, p.last_file
+    try:
+        p.welcome_mode, p.last_file = "", str(tmp_path / "Main.xml")
+        assert start_path([], p) == ""                        # the first start: the welcome window
+        dlg = welcome_box(win)
+        assert not dlg.every_start.isChecked()
+        p.show_welcome = dlg.every_start.isChecked()          # what start-up does after the window
+        assert p.welcome_mode == "never" and start_path([], p) == str(tmp_path / "Main.xml")
+        p.show_welcome = True                                 # ticked in Settings → General
+        assert start_path([], p) == "" and welcome_box(win).every_start.isChecked()
+        assert start_path(["other.xml"], p) == "other.xml"    # a file given always wins
+    finally:
+        p.welcome_mode, p.last_file = old_mode, old_last
+
+
+def test_settings_has_the_welcome_tick(win):
+    from lemmatrix.ui.dialogs import PreferencesDialog
+    old = win.prefs.welcome_mode
+    try:
+        win.prefs.welcome_mode = ""
+        dlg = PreferencesDialog(win, win.doc.db, win.prefs)
+        assert dlg.welcome.text() == "Show the welcome window at every start"
+        assert not dlg.welcome.isChecked()
+    finally:
+        win.prefs.welcome_mode = old

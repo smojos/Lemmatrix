@@ -143,6 +143,25 @@ class Prefs:
     @splash_seconds.setter
     def splash_seconds(self, v): self.q.setValue("display/splash_seconds", float(v))
 
+    @property
+    def welcome_mode(self) -> str:
+        """The welcome window at start-up (Josh, 23 October): "" until it has been shown once
+        (the first start), then "never" (the most recent database opens straight away); "always"
+        once ticked in Settings → General or in the window itself."""
+        v = self._get("start/welcome", "", str)
+        return v if v in ("", "always", "never") else ""
+
+    @welcome_mode.setter
+    def welcome_mode(self, v): self.q.setValue("start/welcome", v if v in ("", "always", "never") else "never")
+
+    @property
+    def show_welcome(self) -> bool:
+        """Settings → General → Show the welcome window at every start (ticked: "always")."""
+        return self.welcome_mode == "always"
+
+    @show_welcome.setter
+    def show_welcome(self, on: bool): self.welcome_mode = "always" if on else "never"
+
     # display
     @property
     def ipa_size(self) -> int:

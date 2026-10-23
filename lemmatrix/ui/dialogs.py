@@ -666,6 +666,11 @@ class PreferencesDialog(QDialog):
         self.splash.setValue(prefs.splash_seconds)
         self.splash.setToolTip("How long the splash screen stays when Lemmatrix starts, at least "
                                "(it stays while the database opens either way). Click it to close it sooner.")
+        self.welcome = QCheckBox("Show the welcome window at every start")
+        self.welcome.setChecked(prefs.show_welcome)
+        self.welcome.setToolTip("Unticked, Lemmatrix opens the database you opened most recently "
+                                "(the welcome window still shows when it can't find one). It is shown "
+                                "by itself the very first time.")
         self.ipa = QSpinBox()
         self.ipa.setRange(8, 30)
         self.ipa.setValue(prefs.ipa_size)
@@ -745,7 +750,8 @@ class PreferencesDialog(QDialog):
                                   "From (the lemmas it's built from, the languages it was borrowed from). "
                                   "Off hides them everywhere; what's filled in is kept.")
         page("General", [("This computer", [("Autosave every", self.autosave),
-                                            ("Full backup folder", self.backups)]),
+                                            ("Full backup folder", self.backups),
+                                            (None, self.welcome)]),
                          ("Lemmas (this database)", [(None, self.origin_on)]),
                          ("Notebook (this database)", [(None, b) for b in self.history.values()]),
                          ("Warnings (this computer)", [(None, self.unusual), (None, self.spelling), (None, self.confirm)])])
@@ -874,6 +880,8 @@ class PreferencesDialog(QDialog):
         p.autosave_minutes = self.autosave.value()
         p.ipa_size = self.ipa.value()
         p.splash_seconds = self.splash.value()
+        if self.welcome.isChecked() != p.show_welcome:      # unchanged leaves the first start alone
+            p.show_welcome = self.welcome.isChecked()
         p.theme = self.theme.currentData()
         p.accent = self.accent.colour()
         p.praat_path = self.praat.text().strip()

@@ -10,7 +10,7 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import (QDialog, QFrame, QHBoxLayout, QLabel, QPushButton, QSizePolicy,
+from PySide6.QtWidgets import (QCheckBox, QDialog, QFrame, QHBoxLayout, QLabel, QPushButton, QSizePolicy,
                                QVBoxLayout)
 
 from . import theme
@@ -64,7 +64,8 @@ class RecentButton(QPushButton):
 
 
 class WelcomeDialog(QDialog):
-    def __init__(self, parent=None, recent: list[dict] | None = None, sample_exists: bool = True):
+    def __init__(self, parent=None, recent: list[dict] | None = None, sample_exists: bool = True,
+                 show_every_start: bool = False):
         super().__init__(parent)
         self.setWindowTitle("Welcome to Lemmatrix")
         self.setWindowIcon(app_icon())
@@ -150,6 +151,12 @@ class WelcomeDialog(QDialog):
             lay.addLayout(rows)
 
         bottom = QHBoxLayout()
+        self.every_start = QCheckBox("Show this at every start")
+        self.every_start.setChecked(show_every_start)
+        self.every_start.setToolTip("Unticked, Lemmatrix opens your most recent database straight "
+                                    "away. Also in Settings → General.")
+        self.every_start.setStyleSheet(f"color: {muted};")
+        bottom.addWidget(self.every_start)
         bottom.addStretch(1)
         self.close_button = QPushButton("Close")
         self.close_button.clicked.connect(self.reject)

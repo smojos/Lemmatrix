@@ -86,7 +86,7 @@ def main() -> int:
     from .ui import splash as splashmod
     splash = splashmod.show(app)                        # until the database is open (a dialogue closes it)
     win = MainWindow()
-    path = sys.argv[1] if len(sys.argv) > 1 else win.prefs.last_file
+    path = start_path(sys.argv[1:], win.prefs)
     win.show()
     if splash is not None:
         splash.raise_()
@@ -96,6 +96,7 @@ def main() -> int:
     if not win.doc.db.path:
         dlg = welcome_box(win)
         dlg.exec()
+        win.prefs.show_welcome = dlg.every_start.isChecked()   # after the first start: "never" unless ticked
         if dlg.choice == "sample":
             win.open_sample()
         elif dlg.choice == "open":
@@ -107,6 +108,14 @@ def main() -> int:
     return app.exec()
 
 
+def start_path(args: list[str], prefs) -> str:
+    """The database to open at start-up: one given on the command line; otherwise the most recent,
+    unless the welcome window comes first, on the very first start and, when ticked, on every
+    start (Josh, 23 October)."""
+    if args:
+        return args[0]
+    return "" if prefs.welcome_mode in ("", "always") else prefs.last_file
+
 def welcome_box(win):
     """The welcome window (ui/welcome.py): Josh's question first, with Yes (a copy of the sample)
     as the default (IDEAS.md idea 52, 23 October); the three databases opened most recently on
@@ -114,7 +123,7 @@ def welcome_box(win):
     from .ui.main_window import SAMPLE
     from .ui.welcome import WelcomeDialog
     recent = [r for r in win.prefs.recent if Path(r["path"]).exists()][:3]
-    return WelcomeDialog(win, recent, SAMPLE.exists())
+    return WelcomeDialog(win, recent, SAMPLE.exists(), win.prefs.show_welcome)
 
 if __name__ == "__main__":
     sys.exit(main())
