@@ -340,9 +340,9 @@ class ListItem:
 
 
 # Fields other features depend on: they can be relabelled and moved, but not deleted (idea 9).
-CORE_ROLES = ("lemma", "gloss", "word-class", "origin", "phonetic", "phonemic", "morphemes", "pitch",
+CORE_ROLES = ("lemma", "gloss", "word-class", "stem-type", "phonetic", "phonemic", "morphemes", "pitch",
               "translation", "comment", "title", "genre", "status")
-NEW_ROLES = ("origin",)          # core fields added after databases existed: "added", not "restored"
+NEW_ROLES = ("stem-type",)          # core fields added after databases existed: "added", not "restored"
 
 
 @dataclass
@@ -667,7 +667,7 @@ class Entry:
     tokens: list[Token] = field(default_factory=list)
     changed: dict[str, str] = field(default_factory=dict)  # comment field -> date it was last changed
     id: str = field(default_factory=new_id, compare=False)
-    # From (Josh, 22 October): what the lemma comes from, beside its Origin: lemmas it is built from
+    # From (Josh, 22 October): what the lemma comes from, beside its Stem type: lemmas it is built from
     # (by id) and languages it was borrowed from (ISO 639-3 codes, or a name as typed)
     from_lemmas: list[str] = field(default_factory=list)
     from_languages: list[str] = field(default_factory=list)
@@ -963,6 +963,8 @@ class Database:
             e.set(f.name, gloss, s.primary_gloss)
         if (f := s.entry_field("word-class")) and word_class:
             e.set(f.name, word_class)
+        if (f := s.entry_field("stem-type")) and "simple" in f.all_values():
+            e.set(f.name, "simple")                       # Stem type starts as simple (Josh, 23 October)
         e.tokens.append(Token(speaker=speaker, collected=date))   # citation token
         return e
 

@@ -156,19 +156,40 @@ def test_level_meter_widget(app):
     assert not m.clipped
 
 
-def test_origin_is_a_core_field_and_added_quietly(tmp_path):
+def test_stem_type_is_a_core_field_and_added_quietly(tmp_path):
     from lemmatrix import defaults, storage
     db = defaults.new_database()
-    f = db.settings.entry_field("origin")
-    assert f is not None and f.builtin and f.closed
-    assert f.all_values() == ["root", "complex", "compound", "derived", "reduplicated", "loan"]
-    db.settings.entry_fields = [x for x in db.settings.entry_fields if x.role != "origin"]   # an older database
+    f = db.settings.entry_field("stem-type")
+    assert f is not None and f.builtin and f.closed and f.title == "Stem type"
+    assert f.all_values() == ["simple", "complex", "loan"]
+    assert db.new_entry("A001").get(f.name) == "simple"            # a new lemma starts as simple
+    db.settings.entry_fields = [x for x in db.settings.entry_fields if x.role != "stem-type"]   # an older database
     p = tmp_path / "old.xml"
     db.path = str(p)
     storage.save(db, p)
     back = storage.load(p)
-    assert back.settings.entry_field("origin") is not None and back.added_fields == ["Origin"]
-    assert not any("Origin" in n for n in back.load_notes)       # no box: a status-bar note
+    assert back.settings.entry_field("stem-type") is not None and back.added_fields == ["Stem type"]
+    assert not any("Stem type" in n for n in back.load_notes)    # no box: a status-bar note
+
+
+def test_origin_saved_yesterday_becomes_stem_type(tmp_path):
+    from lemmatrix import defaults, storage
+    from lemmatrix.model import FieldDef, ListItem
+    db = defaults.new_database()
+    db.settings.entry_fields = [x for x in db.settings.entry_fields if x.role != "stem-type"]
+    db.settings.entry_fields.insert(3, FieldDef("Origin", role="origin", closed=True, items=[
+        ListItem("root"), ListItem("complex", [ListItem("compound"), ListItem("derived"),
+                                               ListItem("reduplicated")]), ListItem("loan")]))
+    e = db.new_entry("A001")
+    e.values["Origin"] = "compound"
+    db.entries.append(e)
+    p = tmp_path / "o.xml"
+    db.path = str(p)
+    storage.save(db, p)
+    back = storage.load(p)
+    f = back.settings.entry_field("stem-type")
+    assert f.name == "StemType" and f.title == "Stem type" and f.all_values() == ["simple", "complex", "loan"]
+    assert back.entries[0].get("StemType") == "complex" and back.added_fields == []
 
 
 def test_from_round_trip(tmp_path):
@@ -176,10 +197,10 @@ def test_from_round_trip(tmp_path):
     db = defaults.new_database()
     a = db.new_entry("A001", gloss="goat")
     b = db.new_entry("A002", gloss="goat's house")
-    b.set("Origin", "compound")
+    b.set("StemType", "complex")
     b.from_lemmas = [a.id]
     c = db.new_entry("A003", gloss="book")
-    c.set("Origin", "loan")
+    c.set("StemType", "loan")
     c.from_languages = ["arb", "Proto-Nilotic"]
     db.entries += [a, b, c]
     p = tmp_path / "d.xml"
@@ -189,7 +210,7 @@ def test_from_round_trip(tmp_path):
     assert f'from-lemmas="{a.id}"' in text and 'from-languages="arb; Proto-Nilotic"' in text
     back = storage.load(p)
     bb, cc = back.entry_by_ref("A002"), back.entry_by_ref("A003")
-    assert bb.from_lemmas == [a.id] and bb.get("Origin") == "compound"
+    assert bb.from_lemmas == [a.id] and bb.get("StemType") == "complex"
     assert cc.from_languages == ["arb", "Proto-Nilotic"]
 
 
@@ -214,10 +235,10 @@ def test_from_box_in_the_lemma_dialogue_and_the_switch(win):
     from PySide6.QtWidgets import QLabel
     assert any(w.text().startswith("Part of:") for w in EntryDialog(win, db, root).findChildren(QLabel))
     keys = [c.key for c in win._lemma_columns()]
-    assert "from" in keys and "Origin" in keys
+    assert "from" in keys and "StemType" in keys
     win.doc.ws_set(ORIGIN_KEY, False)                              # Settings → General: hidden
     assert EntryDialog(win, db, other).from_box is None
     keys = [c.key for c in win._lemma_columns()]
-    assert "from" not in keys and "Origin" not in keys
+    assert "from" not in keys and "StemType" not in keys
     assert other.from_lemmas == [root.id]                          # kept
     win.doc.ws_set(ORIGIN_KEY, True)

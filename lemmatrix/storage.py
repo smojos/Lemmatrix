@@ -240,6 +240,32 @@ def _unique_ids(db: Database):
             seen.add(obj.id)
 
 
+
+def _origin_to_stem_type(db: Database):
+    """Origin (22 October) became Stem type the next morning (Josh, 23 October): its role, its
+    name and label if unchanged, the lemmas' values under the new name, and the first default list
+    (root; complex › …; loan) replaced by the new one (simple, complex, loan). Provisional, for a
+    database saved in between."""
+    for f in db.settings.entry_fields:
+        if f.role != "origin":
+            continue
+        f.role = "stem-type"
+        if f.name == "Origin":
+            f.name, f.label = "StemType", ("Stem type" if f.label in ("", "Origin") else f.label)
+            for e in db.entries:
+                if "Origin" in e.values:
+                    e.values["StemType"] = e.values.pop("Origin")
+        old = [(i.name, [c.name for c in i.children]) for i in f.items]
+        if old == [("root", []), ("complex", ["compound", "derived", "reduplicated"]), ("loan", [])]:
+            from .defaults import stem_types
+            f.items = stem_types()
+            for e in db.entries:
+                if e.values.get(f.name) == "root":
+                    e.values[f.name] = "simple"
+                elif e.values.get(f.name) in ("compound", "derived", "reduplicated"):
+                    e.values[f.name] = "complex"
+        db.upgraded = True
+
 def load(path: str | os.PathLike) -> Database:
     path = str(path)
     repaired = False
@@ -311,6 +337,7 @@ def load(path: str | os.PathLike) -> Database:
                         t.changed[child.tag] = child.get("changed")
             db.texts.append(t)
     _unique_ids(db)
+    _origin_to_stem_type(db)
     from .defaults import ensure_core_fields
     restored = ensure_core_fields(db.settings)
     from .model import NEW_ROLES

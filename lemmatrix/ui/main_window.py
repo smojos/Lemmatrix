@@ -417,9 +417,8 @@ class MainWindow(QMainWindow):
         cv = QLineEdit()
         cv.setPlaceholderText("CV shape filter (Phonetic) — Stage 2")
         cv.setEnabled(False)
-        row = self._row(bl, self.all_search, cv, stretch=False)
-        row.setStretch(0, 2)
-        row.setStretch(1, 1)
+        bl.addWidget(self.all_search)             # the CV shape filter under the search (Josh, 23 October)
+        bl.addWidget(cv)
         bl.addStretch(1)
         return bar
 
@@ -1422,9 +1421,9 @@ class MainWindow(QMainWindow):
         cols = [Column("ref", "Reference", lambda e: e.ref,
                        tooltip=lambda e: wordlists.describe(db, e) or None)]
         from .dialogs import origin_shown
-        shown = origin_shown(self)                # Settings → General: Origin and From (22 October)
+        shown = origin_shown(self)                # Settings → General: Stem type and From
         for f in s.entry_fields:
-            if f.role == "origin" and not shown:
+            if f.role == "stem-type" and not shown:
                 continue
             if f.multilingual:
                 for lang in s.gloss_languages:
@@ -1434,7 +1433,7 @@ class MainWindow(QMainWindow):
                 cols.append(Column(f.name, f.title, lambda e, n=f.name: e.get(n), closed=f.closed,
                                    tree=(lambda f=f: s.list_items(f)) if f.closed else None,
                                    ipa=f.role == "lemma", edit=edit))
-            if f.role == "origin":                # From, beside Origin: lemmas and languages
+            if f.role == "stem-type":             # From, beside Stem type: lemmas and languages
                 from .frombox import from_text
                 cols.append(Column("from", "From", lambda e: from_text(db, e), ipa=True))
         return cols
@@ -1666,7 +1665,7 @@ class MainWindow(QMainWindow):
         self.update_todo_badge()
         if (db.workspace_from_file or db.upgraded) and not db.load_notes:   # quietly, saving writes the new format
             self.doc.settings_changed()
-        if getattr(db, "added_fields", None):     # a new core field (Origin, 22 October): said quietly
+        if getattr(db, "added_fields", None):     # a new core field (Stem type, 22 October): said quietly
             self.statusBar().showMessage(
                 f"Added the new field {', '.join(db.added_fields)} (where a lemma comes from, with From). "
                 "It's empty; Settings → General can hide it.", 15000)
@@ -3553,7 +3552,7 @@ class MainWindow(QMainWindow):
             self._apply_autosave()
             theme.from_prefs(self.prefs)
             self._restyle()
-            self._setup_columns()                 # Origin and From shown or hidden
+            self._setup_columns()                 # Stem type and From shown or hidden
             self.all_table.model_.ipa.setPointSize(self.prefs.ipa_size)
             self.lemmas.model_.ipa.setPointSize(self.prefs.ipa_size)
             self.conventions_changed()

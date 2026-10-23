@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders
-"""From (Josh, 22 October): beside a lemma's Origin, what it comes from, as chips: the lemmas it
+"""From (Josh, 22 October): beside a lemma's Stem type, what it comes from, as chips: the lemmas it
 is built from (complex lemmas) and the languages it was borrowed from (loans), in one box. The
 search finds lemmas by reference, form or gloss and the world's languages by name or ISO 639-3
 code (lemmatrix/languages.py); text that matches nothing is kept as a language name, for a

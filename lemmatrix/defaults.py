@@ -162,10 +162,12 @@ def tier_mapping() -> TierMapping:
                               TierRule("ft", "Translation", "en"), TierRule("mb", "")])
 
 
-def origins() -> list[ListItem]:
-    """Origin's list (Josh, 22 October): root; complex › compound, derived, reduplicated; loan."""
-    return [ListItem("root"), ListItem("complex", [ListItem("compound"), ListItem("derived"),
-                                                   ListItem("reduplicated")]), ListItem("loan")]
+STEM_TYPE_DEFAULT = "simple"     # what a new lemma's Stem type starts as (Josh, 23 October)
+
+
+def stem_types() -> list[ListItem]:
+    """Stem type's list (Josh, 23 October): simple, complex, loan, flat; users can nest it."""
+    return [ListItem("simple"), ListItem("complex"), ListItem("loan")]
 
 
 def default_settings() -> Settings:
@@ -175,7 +177,7 @@ def default_settings() -> Settings:
         FieldDef("Gloss", role="gloss"),
         FieldDef("WordClass", "Word Class", role="word-class", closed=True,
                  items=[ListItem(n) for n in WORD_CLASSES]),
-        FieldDef("Origin", role="origin", closed=True, items=origins()),    # 22 October
+        FieldDef("StemType", "Stem type", role="stem-type", closed=True, items=stem_types()),   # 22–23 October
         FieldDef("ToneClass", "Tone Class", closed=True, items=tone_classes()),
         FieldDef("InflectionClass", "Inflection Class", closed=True, items=inflection_classes()),
         FieldDef("Comment", role="comment"),
@@ -219,7 +221,7 @@ def ensure_core_fields(s: Settings) -> list[str]:
                 hit = next((f for f in have if f.name == d.name and not f.role), None)
             if hit is not None:                         # the field is there, without its role
                 hit.role = d.role
-                if d.role in ("word-class", "origin"):
+                if d.role in ("word-class", "stem-type"):
                     hit.closed = True
                 continue
             have.insert(min(pos, len(have)), d)

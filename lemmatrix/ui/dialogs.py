@@ -153,8 +153,8 @@ class EntryDialog(QDialog):
         self.from_box = None
         self.setMinimumWidth(480)
         for f in s.entry_fields:
-            if f.role == "origin" and not self.origin_on:
-                continue                            # Settings → General: Origin and From hidden
+            if f.role == "stem-type" and not self.origin_on:
+                continue                            # Settings → General: Stem type and From hidden
             if f.multilingual:
                 for lang in s.gloss_languages:
                     ed = NoForbidden() if (lang == s.primary_gloss and not entry) else QLineEdit()
@@ -175,10 +175,11 @@ class EntryDialog(QDialog):
                 cb.addItems(listed)
                 extra = sorted({e.get(f.name) for e in db.entries if e.get(f.name)} - set(listed))
                 cb.addItems(extra)
-                cb.setCurrentText(entry.get(f.name) if entry else "")
+                cb.setCurrentText(entry.get(f.name) if entry else
+                                  ("simple" if f.role == "stem-type" and "simple" in listed else ""))
                 form.addRow(f.title, cb)
                 self.fields[(f.name, "")] = cb
-                if f.role == "origin":
+                if f.role == "stem-type":
                     self._add_from(form, db, entry, parent)
             else:
                 ed = QLineEdit(entry.get(f.name) if entry else "")
@@ -222,7 +223,7 @@ class EntryDialog(QDialog):
         form.addRow(_buttons(self))
 
     def _add_from(self, form, db, entry, parent):
-        """From, under Origin: lemmas and languages, as chips (Josh, 22 October)."""
+        """From, under Stem type: lemmas and languages, as chips (Josh, 22 October)."""
         from .frombox import FromBox
         self.from_box = FromBox(db, entry, getattr(parent, "prefs", None))
         form.addRow("From", self.from_box)
@@ -472,11 +473,11 @@ class MetadataDialog(QDialog):
 # Preferences
 # ==========================================================================
 
-ORIGIN_KEY = "origin/shown"      # Settings → General: Origin and From shown (the workspace's)
+ORIGIN_KEY = "origin/shown"      # Settings → General: Stem type and From shown (the workspace's)
 
 
 def origin_shown(main) -> bool:
-    """Whether Origin and From are shown for the open database (Settings → General)."""
+    """Whether Stem type and From are shown for the open database (Settings → General)."""
     ws = getattr(getattr(main, "doc", None), "workspace", None)
     return ws.get_bool(ORIGIN_KEY, True) if ws is not None else True
 
@@ -637,9 +638,9 @@ class PreferencesDialog(QDialog):
                            f"{'ɛλicit request made or received' if section == nbmod.ELICIT_HISTORY else 'change to a hypothesis'}"
                            ". Switching it off leaves what is written; nothing is written later for the days it was off.")
             self.history[section] = box
-        self.origin_on = QCheckBox("Show Origin and From")       # Josh, 22 October
+        self.origin_on = QCheckBox("Show Stem type and From")       # Josh, 22 October
         self.origin_on.setChecked(ws.get_bool(ORIGIN_KEY, True) if ws is not None else True)
-        self.origin_on.setToolTip("Where a lemma comes from: the Origin field (root, complex, loan) and "
+        self.origin_on.setToolTip("Where a lemma comes from: the Stem type field (simple, complex, loan) and "
                                   "From (the lemmas it's built from, the languages it was borrowed from). "
                                   "Off hides them everywhere; what's filled in is kept.")
         page("General", [("This computer", [("Autosave every", self.autosave),
