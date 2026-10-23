@@ -68,3 +68,33 @@ class FoldedText:
                 out.append((start, end))
             at = j + len(q)
         return out
+
+
+_OPEN = re.compile(r"<([\w:.-]+)\b")
+
+
+def fold_ranges(text: str) -> dict[int, int]:
+    """{first line: last line} (0-based) of every element that spans more than one line, so the
+    viewer can collapse it (Josh, 23 October: collapsible groupings with a little plus sign). The
+    text is as `storage.to_string` writes it: each element starts a line, and a closing tag that
+    isn't on its opening line is a line of its own."""
+    out: dict[int, int] = {}
+    stack: list[tuple[str, int]] = []
+    for i, line in enumerate(text.split("\n")):
+        s = line.strip()
+        if s.startswith("</"):
+            name = s[2:].split(">")[0].strip()
+            while stack:
+                n, at = stack.pop()
+                if n == name:
+                    if i > at:
+                        out[at] = i
+                    break
+            continue
+        if not s.startswith("<") or s.startswith(("<?", "<!")) or s.endswith("/>"):
+            continue
+        m = _OPEN.match(s)
+        if m is None or f"</{m.group(1)}>" in s:
+            continue                              # a one-line element: <Pitch>55</Pitch>
+        stack.append((m.group(1), i))
+    return out

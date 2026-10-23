@@ -79,9 +79,36 @@ class _LineNumbers(QWidget):
     def paintEvent(self, event):
         self.editor.paint_numbers(self, event)
 
+    def mousePressEvent(self, event):
+        """A click on a ⊞ / ⊟ in the margin collapses or expands that element (Josh, 23 October)."""
+        if event.button() == Qt.LeftButton and event.position().x() <= self.editor.FOLD_W + 2:
+            line = self.editor.line_at(round(event.position().y()))
+            if line is not None and line in self.editor.folds:
+                self.editor.toggle(line)
+                return
+        super().mousePressEvent(event)
+
+    def contextMenuEvent(self, event):
+        """Right-click the margin: Collapse all, Expand all."""
+        from PySide6.QtWidgets import QMenu
+        m = QMenu(self)
+        m.addAction("Collapse all").triggered.connect(lambda *_: self.editor.collapse_all(True))
+        m.addAction("Expand all").triggered.connect(lambda *_: self.editor.collapse_all(False))
+        m.exec(event.globalPos())
+
+    def mouseMoveEvent(self, event):
+        line = self.editor.line_at(round(event.position().y()))
+        on = event.position().x() <= self.editor.FOLD_W + 2 and line in self.editor.folds
+        self.setCursor(Qt.PointingHandCursor if on else Qt.ArrowCursor)
+        self.setToolTip(("Expand" if line in self.editor.collapsed else "Collapse")
+                        + " (right-click: Collapse all, Expand all)" if on else "")
+
 
 class XmlText(QPlainTextEdit):
-    """Read-only text with line numbers at the left."""
+    """Read-only text with line numbers at the left, and a ⊟ beside every element that spans
+    more than one line: a click collapses it to its first line (⊞ expands it again)."""
+
+    FOLD_W = 14                       # the room for the fold markers, left of the numbers
 
     def __init__(self):
         super().__init__()
@@ -90,13 +117,70 @@ class XmlText(QPlainTextEdit):
         self.setFont(_mono_font())
         self.setTextInteractionFlags(Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard)
         self.numbers = _LineNumbers(self)
+        self.numbers.setMouseTracking(True)
+        self.folds: dict[int, int] = {}          # first line -> last line of each foldable element
+        self.collapsed: set[int] = set()
         self.blockCountChanged.connect(lambda *_: self.setViewportMargins(self.number_width(), 0, 0, 0))
         self.updateRequest.connect(self._update_numbers)
         self.setViewportMargins(self.number_width(), 0, 0, 0)
 
     def number_width(self) -> int:
         digits = len(str(max(1, self.blockCount())))
-        return 14 + self.fontMetrics().horizontalAdvance("9") * digits
+        return self.FOLD_W + 14 + self.fontMetrics().horizontalAdvance("9") * digits
+
+    # ---- folding (Josh, 23 October) ------------------------------------------------
+    def set_folds(self, folds: dict[int, int], collapsed=()):
+        """New text's foldable elements; collapsed: first lines to start collapsed."""
+        self.folds = dict(folds)
+        self.collapsed = {line for line in collapsed if line in self.folds}
+        self._apply_folds()
+
+    def line_at(self, y: int) -> int | None:
+        block = self.firstVisibleBlock()
+        top = round(self.blockBoundingGeometry(block).translated(self.contentOffset()).top())
+        while block.isValid():
+            if block.isVisible():
+                h = round(self.blockBoundingRect(block).height())
+                if top <= y < top + h:
+                    return block.blockNumber()
+                top += h
+            block = block.next()
+        return None
+
+    def toggle(self, line: int):
+        if line in self.collapsed:
+            self.collapsed.discard(line)
+        else:
+            self.collapsed.add(line)
+        self._apply_folds()
+
+    def reveal(self, line: int):
+        """Expand whatever hides `line` (a search match, the selected token)."""
+        hiding = [a for a in self.collapsed if a < line <= self.folds[a]]
+        if hiding:
+            self.collapsed.difference_update(hiding)
+            self._apply_folds()
+
+    def collapse_all(self, collapse: bool = True):
+        """Every element collapsed but the outermost (<database>), so its parts show one line each:
+        the metadata, the settings, each entry; or every element expanded."""
+        root = min(self.folds, default=None)
+        self.collapsed = {a for a in self.folds if a != root} if collapse else set()
+        self._apply_folds()
+
+    def _apply_folds(self):
+        doc = self.document()
+        hidden = set()
+        for a in self.collapsed:
+            hidden.update(range(a + 1, self.folds[a] + 1))
+        block = doc.firstBlock()
+        while block.isValid():
+            block.setVisible(block.blockNumber() not in hidden)
+            block = block.next()
+        doc.markContentsDirty(0, doc.characterCount())
+        self.viewport().update()
+        self.numbers.update()
+        self.updateGeometry()
 
     def _update_numbers(self, rect, dy):
         if dy:
@@ -119,8 +203,19 @@ class XmlText(QPlainTextEdit):
         h = self.fontMetrics().height()
         while block.isValid() and top <= event.rect().bottom():
             if block.isVisible():
-                p.drawText(0, top, widget.width() - 6, h, Qt.AlignRight, str(block.blockNumber() + 1))
-            top += round(self.blockBoundingRect(block).height())
+                n = block.blockNumber()
+                p.setPen(QColor(theme.muted()))
+                p.drawText(0, top, widget.width() - 6, h, Qt.AlignRight, str(n + 1))
+                if n in self.folds:                # ⊟ expanded, ⊞ collapsed, in the theme colour
+                    side = min(9, h - 4)
+                    box = QRect(3, top + (h - side) // 2, side, side)
+                    p.setPen(theme.colour("pitch"))
+                    p.drawRect(box)
+                    mid = box.center()
+                    p.drawLine(box.left() + 2, mid.y(), box.right() - 2, mid.y())
+                    if n in self.collapsed:
+                        p.drawLine(mid.x(), box.top() + 2, mid.x(), box.bottom() - 2)
+                top += round(self.blockBoundingRect(block).height())
             block = block.next()
         p.end()
 
@@ -196,10 +291,15 @@ class XmlViewerWindow(QDialog):
         bar = self.text.verticalScrollBar()
         hbar = self.text.horizontalScrollBar()
         v, h = bar.value(), hbar.value()
+        old_lines = self.shown_text.split("\n")
+        keep = [a for a in self.text.collapsed if a < len(old_lines)]
         self.shown_text = text
         self.folded = None
         self.target_line = None                  # its line may have moved
         self.text.setPlainText(text)
+        lines = text.split("\n")                 # collapsed elements stay so where their line is the same
+        self.text.set_folds(xmlview.fold_ranges(text),
+                            [a for a in keep if a < len(lines) and lines[a] == old_lines[a]])
         if keep_place:
             bar.setValue(v)
             hbar.setValue(h)
@@ -213,6 +313,8 @@ class XmlViewerWindow(QDialog):
         if selected is not None:
             line = xmlview.line_of(self.shown_text, *selected)
         self.target_line = line
+        if line is not None:
+            self.text.reveal(line)
         block = self.text.document().findBlockByNumber(line or 0)
         cur = QTextCursor(block)
         self.text.setTextCursor(cur)
@@ -288,6 +390,7 @@ class XmlViewerWindow(QDialog):
             self.count.setText(f"{self.current + 1} / {len(self.matches)}")
         if move and 0 <= self.current < len(self.matches):
             s, e = self.matches[self.current]
+            self.text.reveal(self.shown_text.count("\n", 0, s))   # a match inside a collapsed element
             cur = self.text.textCursor()
             cur.setPosition(s)
             cur.setPosition(e, QTextCursor.KeepAnchor)

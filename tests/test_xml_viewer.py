@@ -81,3 +81,31 @@ def test_unsaved_changes_show_on_coming_back(win):
     assert w.shown_text[s:e2] == "zqxv"
     w.close()
     QApplication.processEvents()
+
+
+def test_collapsible_elements(win):
+    """Josh, 23 October: collapsible groupings, with a little plus sign."""
+    from lemmatrix import xmlview
+    w = win.open_xml_viewer()
+    t = w.text
+    lines = w.shown_text.split("\n")
+    meta = next(i for i, x in enumerate(lines) if x.strip() == "<metadata>")
+    end = t.folds[meta]
+    assert lines[end].strip() == "</metadata>"
+    assert xmlview.fold_ranges("<a>\n  <b>1</b>\n  <c/>\n</a>") == {0: 3}
+    t.toggle(meta)
+    doc = t.document()
+    assert not doc.findBlockByNumber(meta + 1).isVisible() and doc.findBlockByNumber(end + 1).isVisible()
+    assert doc.findBlockByNumber(meta).isVisible()
+    t.reveal(meta + 2)                                    # a search match inside: expanded
+    assert doc.findBlockByNumber(meta + 1).isVisible() and meta not in t.collapsed
+    t.collapse_all()                                      # everything but <database> itself
+    assert doc.findBlockByNumber(meta).isVisible() and not doc.findBlockByNumber(meta + 1).isVisible()
+    w.search.setText("goat")
+    w.run_search()
+    w.next_match()
+    s, _ = w.matches[w.current]
+    assert doc.findBlock(s).isVisible()
+    t.collapse_all(False)
+    assert all(doc.findBlockByNumber(i).isVisible() for i in range(len(lines)))
+    w.close()
