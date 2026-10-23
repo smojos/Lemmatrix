@@ -483,7 +483,7 @@ class CategoryEditor(QWidget):
         """How many lemmas and utterances have references in this category."""
         if not letter:
             return 0
-        return sum(1 for item in self.db.items() if item.ref.startswith(letter))   # QQ01 is a Q
+        return sum(1 for item in self.db.items() if item.ref.startswith(letter))   # references start with their category's letter
 
     def load(self, categories: list[RefCategory]):
         """Show these categories instead (Reset to defaults)."""
@@ -570,7 +570,7 @@ class CategoryEditor(QWidget):
                 return f"Two categories have the letter {c.letter}."
             seen.add(c.letter)
         letters = sorted(seen, key=len, reverse=True)
-        for a in letters:                         # QQ would read as Q followed by Q…
+        for a in letters:                         # WX would read as W followed by X…
             for b in letters:
                 if a != b and a.startswith(b):
                     return f"{a} starts with {b}, so their references couldn't be told apart."

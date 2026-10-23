@@ -46906,7 +46906,7 @@
       <Translation lang="en">ten (final)</Translation>
     </token>
   </entry>
-  <entry ref="QQ01" file-gloss="many" id="d4028d0c40">
+  <entry ref="O009" file-gloss="many" id="d4028d0c40">
     <Lemma>jʌd͡zɛŋ</Lemma>
     <Gloss lang="en">many</Gloss>
     <WordClass>QUANT</WordClass>
@@ -46952,7 +46952,7 @@
       <Translation lang="en">many (final)</Translation>
     </token>
   </entry>
-  <entry ref="QQ02" file-gloss="few" id="dc65324792">
+  <entry ref="O010" file-gloss="few" id="dc65324792">
     <Lemma>kʼooɲ</Lemma>
     <Gloss lang="en">few</Gloss>
     <WordClass>QUANT</WordClass>
@@ -46999,7 +46999,7 @@
       <Translation lang="en">few (final)</Translation>
     </token>
   </entry>
-  <entry ref="QQ03" file-gloss="all" id="cae1872469">
+  <entry ref="O011" file-gloss="all" id="cae1872469">
     <Lemma>miilən</Lemma>
     <Gloss lang="en">all</Gloss>
     <WordClass>QUANT</WordClass>
@@ -47044,7 +47044,7 @@
       <Translation lang="en">all (final)</Translation>
     </token>
   </entry>
-  <entry ref="QQ04" file-gloss="some" id="6a76bee949">
+  <entry ref="O012" file-gloss="some" id="6a76bee949">
     <Lemma>cʼʌsem</Lemma>
     <Gloss lang="en">some</Gloss>
     <WordClass>QUANT</WordClass>

@@ -400,7 +400,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 | N | Space, direction, time | auto |
 | O | Other | auto |
 | P | Property concepts | auto |
-| Q | Quantifiers | manual: Q### where the digits are the actual number; additional quantifiers are QQ## |
+| Q | Quantifiers | manual: Q + the number itself (Q005 *five*, Q1736 *one thousand seven hundred thirty-six*); the non-numerical quantifiers (*all*, *many*, *some*, *none*, *both*) are in O |
 | R | Pronouns | manual: R + gloss code, e.g. R1PLIN = first person plural inclusive |
 | V | Verbs | auto |
 
@@ -539,7 +539,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 *Agreed 18 October (IDEAS.md idea 7) and built the same day as its stage 2.* The window and dialogue are `ui/utterances.py`.
 
 - **An utterance is a token without a lemma:** one reference, one token (one transcription, one recording), with the usual token fields (Morphemes included), tags, speaker, date and file, an optional **file label** (like a lemma's `file-gloss`, but editable at any time) and **links to lemmas** (by id). Related utterances are found by searching tags or comments. In the model, `Utterance` is an `Entry` with exactly one token, kept in `db.utterances`, so undo, comments, the notebook and backups treat it like an entry.
-- **Categories:** the reference's letter is the category. U (Unorganised) and W, X, Y, Z (named "Own category W"… until renamed) are in the reference categories list, marked as for utterances. **Edit → Lists → Reference categories** edits the whole list (letter, name, for lemmas or utterances, automatic or by hand); a letter in use can't change, be removed or switch between lemmas and utterances, and no letter may start another (QQ and Q). The lemma dialogue offers lemma categories only. References go past 999 (W1000 follows W999) with nothing renamed. **Move to another category…** (right-click) gives the next free reference there and renames the recording, after asking.
+- **Categories:** the reference's letter is the category. U (Unorganised) and W, X, Y, Z (named "Own category W"… until renamed) are in the reference categories list, marked as for utterances. **Edit → Lists → Reference categories** edits the whole list (letter, name, for lemmas or utterances, automatic or by hand); a letter in use can't change, be removed or switch between lemmas and utterances, and no letter may start another (W and WX, say: WX01 couldn't be told from a W reference). The lemma dialogue offers lemma categories only. References go past 999 (W1000 follows W999) with nothing renamed. **Move to another category…** (right-click) gives the next free reference there and renames the recording, after asking.
 - **File names** have a pattern of their own (Settings → Sound → Utterance file names, default `{language}-{variety}_{reference}_{label}`; it needs `{reference}`) and no tags: `LXX-VXX_W001_lion_house.wav`, in `Soundfiles/Utterances`. Changing the label renames the recording (when names update automatically), with undo; Update all soundfile names covers utterances too.
 - **Three ways to make one:**
   - **Add:** pick the category; the utterance dialogue opens on a new utterance, which is added when it's saved with anything in it (or recorded).

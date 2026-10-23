@@ -71,8 +71,8 @@ PRONOUNS = [("R1SG", "I"), ("R2SG", "you (sg)"), ("R3SG", "he or she"), ("R1PLIN
             ("R1PLEX", "we (excl)"), ("R2PL", "you (pl)"), ("R3PL", "they"), ("R1SGPOSS", "my"),
             ("R2SGPOSS", "your"), ("R3SGPOSS", "his or her")]
 QUANTIFIERS = [("Q001", "one"), ("Q002", "two"), ("Q003", "three"), ("Q004", "four"),
-               ("Q005", "five"), ("Q010", "ten"), ("QQ01", "many"), ("QQ02", "few"),
-               ("QQ03", "all"), ("QQ04", "some")]
+               ("Q005", "five"), ("Q010", "ten")]               # Q + the number itself
+OTHER_QUANTIFIERS = "many few all some".split()                 # non-numerical quantifiers are in O
 
 # ----------------------------------------------------- invented phonology
 # The sample language's inventory (see make_sample.py); forms are random, not real words.
@@ -289,6 +289,8 @@ def main(out: Path):
         simple(ref, g, "PRONOUN")
     for ref, g in QUANTIFIERS:
         simple(ref, g, "QUANT")
+    for g in OTHER_QUANTIFIERS:
+        simple(db.suggest_reference("O"), g, "QUANT")
 
     n_entries = len(db.entries)
     assert n_entries == 300, n_entries
