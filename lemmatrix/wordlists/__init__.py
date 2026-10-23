@@ -313,20 +313,26 @@ def describe(db, entry) -> str:
     return " · ".join(parts)
 
 
-_TERM = re.compile(r"^(eacw|cawl|swadesh)(?:\s+(\S+))?$", re.IGNORECASE)
+_TERM = re.compile(r"^(-)?\s*(eacw|cawl|swadesh)(?:\s+(\S+))?$", re.IGNORECASE)
+_SMOLDER = ("josh", "joshua")                 # Josh, 23 October: his name finds V139 *to smolder*
 
 
-def search_term(term: str) -> tuple[str, str | None] | None:
-    """A quick search's item read as a wordlist search: `CAWL 345` → (CAWL, '0345'), `swadesh` →
-    (SWADESH, None). A number the list doesn't have still counts as a wordlist search (it finds
-    nothing), so `CAWL 9999` doesn't fall back to searching the text. None for anything else."""
-    m = _TERM.match((term or "").strip())
+def search_term(term: str) -> tuple[str, str | None, bool] | None:
+    """A quick search's item read as a wordlist search: `CAWL 345` → (CAWL, '0345', False),
+    `swadesh` → (SWADESH, None, False); a leading minus is everything but (`-CAWL` → the lemmas
+    with no CAWL number; Josh, 23 October). A number the list doesn't have still counts as a
+    wordlist search (it finds nothing), so `CAWL 9999` doesn't fall back to searching the text.
+    `Josh` or `Joshua` → (EACW, 'V139', False). None for anything else."""
+    t = (term or "").strip()
+    if t.casefold() in _SMOLDER:
+        return EACW, "V139", False
+    m = _TERM.match(t)
     if not m:
         return None
-    lid = m.group(1).upper()
-    if m.group(2) is None:
-        return lid, None
-    return lid, canon(lid, m.group(2)) or "\0"
+    lid, minus = m.group(2).upper(), bool(m.group(1))
+    if m.group(3) is None:
+        return lid, None, minus
+    return lid, canon(lid, m.group(3)) or "\0", minus
 
 
 def search_match(db, entry, term: str) -> bool | None:
@@ -342,9 +348,10 @@ def search_match(db, entry, term: str) -> bool | None:
             if term.strip().casefold() in hay:
                 return True
         return None
-    lid, num = st
+    lid, num, minus = st
     nums = numbers(db, entry, lid)
-    return bool(nums) if num is None else num in nums
+    hit = bool(nums) if num is None else num in nums
+    return hit != minus
 
 
 # ---- an EACW database: its fields, and the hidden items within reach ------

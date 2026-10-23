@@ -344,3 +344,13 @@ def test_a_new_lemma_of_ones_own_goes_to_its_place(win, monkeypatch):
     win.add_entry()
     refs = [x.ref for x in db.entries]
     assert refs[refs.index("B001") + 1] == "B001b"
+
+
+def test_minus_and_the_smolder_search(win):
+    db = win.doc.db
+    swadesh = [e for e in db.entries if wl.search_match(db, e, "SWADESH")]
+    others = [e for e in db.entries if wl.search_match(db, e, "-swadesh")]
+    assert swadesh and others and len(swadesh) + len(others) == len(db.entries)
+    assert not [e for e in db.entries if wl.search_match(db, e, "-EACW")]
+    assert [e.ref for e in db.entries if wl.search_match(db, e, "Joshua")] == ["V139"]
+    assert [e.ref for e in db.entries if wl.search_match(db, e, "josh")] == ["V139"]

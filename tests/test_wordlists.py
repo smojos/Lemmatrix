@@ -95,8 +95,11 @@ def test_numbers_as_typed():
     assert wl.canon(wl.SWADESH, "042") == "42"
     assert wl.canon(wl.EACW, "c001F") == "C001f"
     assert wl.canon(wl.CAWL, "9999") is None
-    assert wl.search_term("CAWL 345") == (wl.CAWL, "0345")
-    assert wl.search_term("swadesh") == (wl.SWADESH, None)
+    assert wl.search_term("CAWL 345") == (wl.CAWL, "0345", False)
+    assert wl.search_term("swadesh") == (wl.SWADESH, None, False)
+    assert wl.search_term("-Swadesh") == (wl.SWADESH, None, True)
+    assert wl.search_term("- EACW") == (wl.EACW, None, True)
+    assert wl.search_term("Joshua") == wl.search_term("josh") == (wl.EACW, "V139", False)
     assert wl.search_term("cawl 9999")[0] == wl.CAWL        # a wordlist search that finds nothing
     assert wl.search_term("mother") is None
 
