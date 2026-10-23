@@ -829,6 +829,12 @@ class ListsDialog(QDialog):
         self.pages.addWidget(page)
         it = QListWidgetItem("   " + title)
         it.setData(Qt.UserRole, self.pages.count() - 1)
+        if key == TAGS:                           # obviously important: bold, in the theme colour (Josh, 23 October)
+            f = QFont(self.index.font())
+            f.setBold(True)
+            it.setFont(f)
+            it.setForeground(theme.colour("pitch"))
+            head.setStyleSheet(f"color: {theme.colour('pitch').name()};")
         self.index.addItem(it)
         self.keys[key] = self.index.count() - 1
 

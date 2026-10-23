@@ -172,3 +172,14 @@ def test_licence_files_and_about():
             assert "SPDX-License-Identifier: LicenseRef-Lemmatrix-Artwork" in head, f
         else:
             assert "SPDX-License-Identifier: AGPL-3.0-or-later" in head and "NOTICE.md" in head, f
+
+
+def test_tag_structure_stands_out_in_edit_lists(win):
+    """Josh, 23 October: Tag structure bold and in the theme colour in Edit → Lists' index."""
+    from lemmatrix.ui import theme
+    from lemmatrix.ui.lists_dialog import TAGS, ListsDialog
+    dlg = ListsDialog(win, win.doc.db, win.doc.notebook)
+    it = dlg.index.item(dlg.keys[TAGS])
+    assert it.font().bold() and it.foreground().color() == theme.colour("pitch")
+    other = next(dlg.index.item(i) for k, i in dlg.keys.items() if k != TAGS)
+    assert not other.font().bold()
