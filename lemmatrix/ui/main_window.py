@@ -1219,6 +1219,11 @@ class MainWindow(QMainWindow):
         self._act(v, "&Cogitate (hypotheses)", lambda *_: self.open_cogitate())
         v.addSeparator()
         self._build_matrix_menu(v.addMenu("&Matrix"))
+        # Settings → Pitch → Show the pitch system, here too (idea 9; no shortcut)
+        self.pitch_view_action = self._act(v, "Show &pitch system", lambda *_: self.set_pitch_shown(
+            self.pitch_view_action.isChecked()))
+        self.pitch_view_action.setCheckable(True)
+        self.pitch_view_action.setChecked(True)
         self._act(v, "Hide or show the option panels", self.toggle_panels)
         # the same keys as in the token dialogue
         self.play_action = self._act(None, "Play the selected token", self.play_selected, "Ctrl+Space")
@@ -1363,7 +1368,12 @@ class MainWindow(QMainWindow):
                 out.append((top.text().replace("&", ""), rows))
         out.append(("Main window", [(a.shortcut().toString(QKeySequence.NativeText), a.text())
                                     for a in self.actions() if not a.shortcut().isEmpty()]))
-        return out + [(t, list(r)) for t, r in self.OTHER_SHORTCUTS]
+        out += [(t, list(r)) for t, r in self.OTHER_SHORTCUTS]
+        from .. import pitchview                  # the pitch system hidden: its keys do nothing (idea 9)
+        if not pitchview.shown():
+            out = [(t, [(k, d) for k, d in rows if "Ctrl+Shift+Space" not in k
+                        and "pitch" not in d.lower()]) for t, rows in out]
+        return out
 
     def show_shortcuts(self):
         from PySide6.QtWidgets import QDialog, QDialogButtonBox, QTreeWidget, QTreeWidgetItem, QVBoxLayout
@@ -1515,7 +1525,8 @@ class MainWindow(QMainWindow):
                                       + ("\nOnline only: needs internet to play" if r.token.file in self.cloud_files
                                          else ""))),
         ]
-        return cols
+        from .. import pitchview                  # Show the pitch system off: no pitch columns (idea 9)
+        return pitchview.columns(cols, s, pitchview.TOKENS)
 
     def _group_item(self, g):
         return ListItem(g.name, [ListItem(t.name) for t in g.tags] + [self._group_item(x) for x in g.groups])
@@ -1582,7 +1593,10 @@ class MainWindow(QMainWindow):
         cols = self._all_columns()
         dlg = ConfigureColumnsDialog(self, [(c.key, c.title) for c in cols], self.all_table.visible_keys())
         if dlg.exec():
-            self.doc.ws_set("columns/alldata", dlg.chosen())
+            from .. import pitchview              # pitch hidden: its columns kept where they were
+            self.doc.ws_set("columns/alldata", pitchview.keep_hidden(
+                self.doc.ws.get_list("columns/alldata") or self._default_all_keys(), dlg.chosen(),
+                self.doc.db.settings, pitchview.TOKENS))
             self._setup_columns()
             self.refresh()
 
@@ -1636,6 +1650,7 @@ class MainWindow(QMainWindow):
             v.set_database(db)
         symbols.set_current(self._symbols())      # Σymbols: this database's list
         self.comparison.set_range(db.settings.pitch_low, db.settings.pitch_high)
+        self._sync_pitch_view()                   # this database's Show the pitch system (idea 9)
         for box, name in ((self.autoplay, "autoplay"), (self.only_data, "only_with_data")):
             box.blockSignals(True)                # each database has its own (in its workspace)
             box.setChecked(self.doc.ws.get_bool(name))
@@ -2631,7 +2646,8 @@ class MainWindow(QMainWindow):
             lay = lay.transposed()
         self.layouts[tab] = lay
         view.aligned = self.aligned_set()
-        view.set_layout(lay, cfg.cell)
+        from .. import pitchview                  # pitch hidden: no drawing or Pitch line (idea 9)
+        view.set_layout(lay, pitchview.visible(cfg.cell, db.settings, pitchview.TOKENS))
 
     def _update_counts(self):
         shown = self.all_table.proxy.rowCount()
@@ -2991,6 +3007,9 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Play pitch", str(exc))
 
     def play_selected_pitch(self):
+        from .. import pitchview
+        if not pitchview.shown(pitchview.TOKENS):
+            return                                # Ctrl+Shift+Space does nothing with pitch hidden (idea 9)
         sel = self.selected_token()
         if sel is None:
             self.statusBar().showMessage("Select a token first.", 3000)
@@ -3049,8 +3068,10 @@ class MainWindow(QMainWindow):
         tok = sel[0].tokens[sel[1]] if sel else None
         has_sound = tok is not None and self.sound_path(tok) is not None
         has_pitch = tok is not None and bool(pitchmod_parse(tok.get("Pitch")))
+        from .. import pitchview
         return [("Play\tCtrl+Space", "play", self.play_selected, has_sound),
-                ("Play pitch\tCtrl+Shift+Space", "play-pitch", self.play_selected_pitch, has_pitch),
+                *([("Play pitch\tCtrl+Shift+Space", "play-pitch", self.play_selected_pitch, has_pitch)]
+                  if pitchview.shown(pitchview.TOKENS) else []),
                 ("Open in Praat\tCtrl+Alt+Space", "praat", self.open_selected_in_praat, has_sound)]
 
     # ---- context menus -------------------------------------------------
@@ -3294,7 +3315,9 @@ class MainWindow(QMainWindow):
         """Raise pitch and Lower pitch for the selected token: Bulk edit's shortcut, for one token."""
         sel = self.selected_token()
         f = self._pitch_field()
-        if not show or sel is None or f is None or not sel[0].tokens[sel[1]].get(f.name).strip():
+        from .. import pitchview
+        if (not show or sel is None or f is None or not pitchview.shown(pitchview.TOKENS)
+                or not sel[0].tokens[sel[1]].get(f.name).strip()):
             return []
         text = sel[0].tokens[sel[1]].get(f.name)
         s = self.doc.db.settings
@@ -3537,6 +3560,29 @@ class MainWindow(QMainWindow):
                 return
         self._maybe_update_names()
 
+    # ---- Show the pitch system (IDEAS.md idea 9; DESIGN.md 3.5) ------------------------------
+    def set_pitch_shown(self, on: bool):
+        """Show or hide the pitch system for the open database (its workspace): the Pitch field,
+        the drawing, pitch playback and the scratchpads, everywhere. The data is never touched."""
+        self.doc.set_pitch_shown(on)              # the other windows follow settingsChanged
+        self.pitch_view_changed()
+
+    def pitch_view_changed(self):
+        """Every view of the main window follows Show the pitch system as it is now."""
+        self._sync_pitch_view()
+        self._setup_columns()
+        self.refresh()                            # no status message: the comparison area says it (Josh)
+
+    def _sync_pitch_view(self):
+        from .. import pitchview
+        a = getattr(self, "pitch_view_action", None)
+        if a is not None:
+            a.blockSignals(True)
+            a.setChecked(pitchview.shown())
+            a.blockSignals(False)
+        if hasattr(self, "comparison"):
+            self.comparison.show_pitch()
+
     def toggle_theme(self):
         """The lightbulb: light theme to dark, or dark to light (the same as Settings → Display → Theme)."""
         self.prefs.theme = "light" if theme.dark() else "dark"
@@ -3552,6 +3598,7 @@ class MainWindow(QMainWindow):
             self._apply_autosave()
             theme.from_prefs(self.prefs)
             self._restyle()
+            self._sync_pitch_view()               # Show the pitch system (Settings → Pitch)
             self._setup_columns()                 # Stem type and From shown or hidden
             self.all_table.model_.ipa.setPointSize(self.prefs.ipa_size)
             self.lemmas.model_.ipa.setPointSize(self.prefs.ipa_size)
@@ -3845,8 +3892,10 @@ class MainWindow(QMainWindow):
         if lay is None or not (lay.rows and lay.cols):
             return [], []
         defaults = mx.default_names(db)
-        fields = [f for f in cfg.cell if f != "drawing"]
-        if "drawing" in cfg.cell and not any(db.settings.token_field(f) and
+        from .. import pitchview                  # the export follows what's shown (idea 9)
+        shown_cell = pitchview.visible(cfg.cell, db.settings, pitchview.TOKENS)
+        fields = [f for f in shown_cell if f != "drawing"]
+        if "drawing" in shown_cell and not any(db.settings.token_field(f) and
                                              db.settings.token_field(f).role == "pitch" for f in fields):
             pitch = next((f.name for f in db.settings.token_fields if f.role == "pitch"), None)
             if pitch:

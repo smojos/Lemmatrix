@@ -260,6 +260,8 @@ class Document(QObject):
         self.undo.cleanChanged.connect(self._clean_changed)
         from .. import workspace as wsmod
         self.workspace = wsmod.Workspace()      # the working state, beside the database (idea 36)
+        from .. import pitchview
+        pitchview.load(self.workspace)          # a blank workspace: the pitch system shown
         self._ws_written = None                 # (path, text) as last written, so nothing is written twice
         self._ws_timer = QTimer(self)
         self._ws_timer.setSingleShot(True)
@@ -540,6 +542,19 @@ class Document(QObject):
         if self.workspace.dirty:
             self._ws_timer.start()
 
+    def set_pitch_shown(self, on: bool):
+        """Show or hide the pitch system (Settings → Pitch, View → Show pitch system; idea 9): a view
+        setting in the workspace, so the database stays as saved or unsaved as it was, with no undo
+        step. Every window listening to settingsChanged shows or hides its pitch."""
+        from .. import pitchview
+        if pitchview.shown() == on and self.workspace.get(pitchview.KEY, True) == on:
+            return
+        pitchview.store(self.workspace, on)
+        if self.workspace.dirty:
+            self._ws_timer.start()
+        self.settingsChanged.emit()
+        self.changed.emit()
+
     def workspace_changed(self):
         """Something of the workspace's kept in the database's objects changed (a saved matrix,
         the spelling list…): written a moment later; the database stays as saved or unsaved as it was."""
@@ -570,8 +585,10 @@ class Document(QObject):
     def set_workspace(self, ws, written: bool):
         """The workspace that goes with the database just opened (written: as it is on disk)."""
         from .. import workspace as wsmod
+        from .. import pitchview
         self._ws_timer.stop()
         self.workspace = ws
+        pitchview.load(ws)                      # its Show the pitch system (idea 9)
         self._ws_written = ((str(wsmod.path_for(self.db.path)), wsmod.to_string(ws, self.db))
                             if written and self.db.path else None)
 

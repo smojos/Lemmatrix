@@ -678,11 +678,24 @@ class PreferencesDialog(QDialog):
                          ("Display conventions: matrix cells, text lines, the utterance cell (this computer)",
                           [(None, self.conv_on), (None, self.conv_brackets), (None, self.conv_slashes),
                            (None, self.conv_caps), ("Translations in", self.conv_quotes)])])
-        page("Pitch", [("This database", [("Lowest pitch digit", self.low),
+        from .. import pitchview                     # Show the pitch system (idea 9; this database's workspace)
+        self.pitch_on = QCheckBox("Show the pitch system")
+        self.pitch_on.setChecked(pitchview.shown())
+        self.pitch_on.setToolTip("The Pitch field, the pitch drawing, pitch playback (Ctrl+Shift+Space), "
+                                 "Raise and Lower pitch, Bulk edit's Pitch shortcut and the pitch scratchpads. "
+                                 "Off hides them everywhere, to declutter: the data is kept exactly as it is "
+                                 "(tone fields such as Tone Class stay), and everything comes back as it was "
+                                 "when it is ticked again. Also View → Show pitch system.")
+        page("Pitch", [("Show (this database)", [(None, self.pitch_on)]),
+                       ("This database", [("Lowest pitch digit", self.low),
                                           ("Highest pitch digit", self.high)]),
                        ("This computer", [("Pitch playback", voice_row),
                                           ("Playback volume", volume_row)])])
         lay.addWidget(_buttons(self))
+        under = (self.low, self.high, self.voice, listen, self.volume, vol_label)
+        self.pitch_on.toggled.connect(lambda on: [w.setEnabled(on) for w in under])
+        for w in under:                           # greyed under the tick while it is off
+            w.setEnabled(self.pitch_on.isChecked())
 
     def _listen(self):
         from .. import audio, pitchsound
@@ -753,6 +766,7 @@ class PreferencesDialog(QDialog):
             for section, box in self.history.items():
                 doc.ws_set(nbmod.HISTORY_SETTINGS[section], box.isChecked())
             doc.ws_set(ORIGIN_KEY, self.origin_on.isChecked())
+            doc.set_pitch_shown(self.pitch_on.isChecked())   # a view setting: never marks it unsaved
         from . import conventions as conv
         conv.save(p, conv.Conventions(on=self.conv_on.isChecked(), brackets=self.conv_brackets.isChecked(),
                                       slashes=self.conv_slashes.isChecked(), small_caps=self.conv_caps.isChecked(),

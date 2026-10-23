@@ -449,7 +449,8 @@ class TextsUtterancesWindow(QDialog):
                    color=lambda u: theme.colour("error") if self._flagged(u) else None,
                    tooltip=self._source_tooltip),
         ]
-        return cols
+        from .. import pitchview                  # Show the pitch system off: no pitch columns (idea 9)
+        return pitchview.columns(cols, s, pitchview.UTTERANCES)
 
     # ---- clipped utterances (Pull) ---------------------------------------
     def _flagged(self, u) -> bool:
@@ -555,7 +556,10 @@ class TextsUtterancesWindow(QDialog):
         cols = self._columns()
         dlg = ConfigureColumnsDialog(self, [(c.key, c.title) for c in cols], self.table.visible_keys())
         if dlg.exec():
-            self.doc.ws_set("columns/utterances", dlg.chosen())
+            from .. import pitchview              # pitch hidden: its columns kept where they were
+            self.doc.ws_set("columns/utterances", pitchview.keep_hidden(
+                self.doc.ws.get_list("columns/utterances") or self._default_keys(), dlg.chosen(),
+                self.db.settings, pitchview.UTTERANCES))
             self._setup_columns()
             self.refresh()
 
@@ -927,11 +931,13 @@ class TextsUtterancesWindow(QDialog):
     def play_pitch(self):
         """Play the selected utterance's pitch in the voice chosen in Settings → Pitch; on the Texts
         tab, the lines' pitch scratchpad (IDEAS.md idea 33)."""
+        from .. import pitchview                  # the pitch system hidden: nothing to play (idea 9)
         if self.tabs.currentIndex() == TEXTS:
-            self.texts.play_scratch()
+            if pitchview.shown(pitchview.SCRATCHPADS):
+                self.texts.play_scratch()
             return
         u = self.table.current_row()
-        if u is None:
+        if u is None or not pitchview.shown(pitchview.UTTERANCES):
             return
         self.main.play_pitch(self._pitch(u))
 
@@ -945,13 +951,15 @@ class TextsUtterancesWindow(QDialog):
             QMessageBox.warning(self, "Play", str(exc))
 
     def _menu(self, row, pos):
+        from .. import pitchview
         if row is not None:
             self.table.select_row(row)
         m = QMenu(self)
         items = [("Add", "add", self.add, True), ("Import…", None, self.import_dialog, True),
                  ("Edit", "edit", self.edit, row is not None),
                  ("Play", "play", self.play, row is not None and bool(row.token.file)),
-                 ("Play pitch", "play-pitch", self.play_pitch, bool(self._pitch(row))),
+                 *([("Play pitch", "play-pitch", self.play_pitch, bool(self._pitch(row)))]
+                   if pitchview.shown(pitchview.UTTERANCES) else []),
                  ("Move to another category…", None, self.move_category,
                   row is not None and self.db.settings.ref_scheme != SEQUENCE),
                  ("Delete", "delete", self.delete, row is not None)]
@@ -1086,6 +1094,7 @@ class UtteranceDialog(TokenDialog):
     the token fields and recording as for tokens; the utterance-only tag groups and the groups
     with no "usual for" hint first; a Lemmas box; Back and Next through the Utterances grid."""
     MULTI_TOKENS = False      # one utterance at a time
+    PITCH_PART = "utterances"
 
     def __init__(self, main, slots: list[Slot], index: int, parent=None):
         self.lemma_ids: list[str] = []

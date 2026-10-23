@@ -1,0 +1,105 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders
+"""Hiding the pitch system (IDEAS.md idea 9; DESIGN.md section 3.5).
+
+Settings → Pitch → **Show the pitch system** (and View → Show pitch system) hides everything to do
+with the pitch trace data: the Pitch field, the pitch drawing, pitch playback, Raise and Lower pitch,
+Bulk edit's Pitch shortcut, the pitch-looking-text warning and the pitch scratchpads. It never hides
+tone data (Tone Class and the like), and it **never changes the data**: Pitch stays in the file as it
+is, and every configuration (columns, cells, views) keeps its pitch lines, which come back exactly
+as they were when pitch is shown again (Josh, 23 October: *preserve and protect the data*).
+
+It is a view setting of the open database, kept in its workspace (``pitch/shown``), so it never
+marks the database unsaved and is not an undo step.
+
+Underneath, the system is in three parts, so a database of another kind (an intonational language:
+pitch on utterances only, no scratchpads; to be designed) can switch on only some of them. For now
+the one tick switches all three. No Qt here.
+"""
+from __future__ import annotations
+
+KEY = "pitch/shown"            # the workspace's value (absent: shown)
+
+TOKENS = "tokens"              # lemma tokens: All data, the matrices, the token dialogue
+UTTERANCES = "utterances"      # utterances (and a text's lines): their grid, dialogue and cells
+SCRATCHPADS = "scratchpads"    # the pitch scratchpads of the comparison areas (α and β)
+PARTS = (TOKENS, UTTERANCES, SCRATCHPADS)
+
+DRAWING = "drawing"            # the key of the pitch drawing in columns and cell views
+
+_shown = {p: True for p in PARTS}   # the open database's, set from its workspace by the document
+
+
+def load(ws) -> None:
+    """Take the open database's setting from its workspace (None: shown)."""
+    on = True if ws is None else ws.get_bool(KEY, True)
+    for p in PARTS:
+        _shown[p] = on
+
+
+def store(ws, on: bool) -> None:
+    """Show (True) or hide (False) the pitch system: written into the workspace and taken at once.
+    Shown is the default, so it is written only when hidden."""
+    if ws is not None:
+        ws.set(KEY, None if on else False)
+    for p in PARTS:
+        _shown[p] = on
+
+
+def shown(part: str | None = None) -> bool:
+    """Whether the pitch system (or one part of it) is shown for the open database."""
+    if part is None:
+        return all(_shown.values())
+    return _shown.get(part, True)
+
+
+def hidden(part: str | None = None) -> bool:
+    return not shown(part)
+
+
+def pitch_names(settings) -> set[str]:
+    """The names of the token fields that hold pitch (role pitch)."""
+    return {f.name for f in settings.token_fields if f.role == "pitch"}
+
+
+def is_pitch_key(key: str, settings) -> bool:
+    """Whether a column or cell-line key is the pitch's: the drawing, or the Pitch field
+    (as a column key ``f:Pitch`` or a cell key ``Pitch``)."""
+    if key == DRAWING:
+        return True
+    name = key[2:] if key.startswith("f:") else key
+    return name.partition(":")[0] in pitch_names(settings)
+
+
+def visible(keys, settings, part: str = TOKENS) -> list[str]:
+    """The keys to show: the pitch's left out while the part is hidden."""
+    keys = list(keys)
+    if shown(part):
+        return keys
+    return [k for k in keys if not is_pitch_key(k, settings)]
+
+
+def keep_hidden(saved, chosen, settings, part: str = TOKENS) -> list[str]:
+    """What to store when a configuration is chosen with pitch hidden: the chosen keys, with the
+    pitch keys of the saved configuration put back where they were (after the same key they
+    followed), so showing pitch again brings them back as they were. With pitch shown, the chosen
+    keys as they are."""
+    chosen = list(chosen)
+    if shown(part):
+        return chosen
+    saved = list(saved)
+    out = [k for k in chosen if not is_pitch_key(k, settings)]
+    for i, k in enumerate(saved):
+        if not is_pitch_key(k, settings) or k in out:
+            continue
+        before = next((saved[j] for j in range(i - 1, -1, -1) if saved[j] in out), None)
+        out.insert(0 if before is None else out.index(before) + 1, k)
+    return out
+
+
+def columns(cols, settings, part: str = TOKENS) -> list:
+    """A grid's columns (objects with a ``key``), the pitch's left out while the part is hidden:
+    so Configure columns doesn't offer them either."""
+    if shown(part):
+        return list(cols)
+    return [c for c in cols if not is_pitch_key(c.key, settings)]

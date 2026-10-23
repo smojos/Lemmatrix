@@ -617,7 +617,7 @@ class TierEditor(QWidget):
         self.table.insertRow(r)
         self.table.setItem(r, 0, QTableWidgetItem(rule.tier))
         combo = QComboBox()
-        choices = field_choices(self.db)
+        choices = field_choices(self.db, (rule.field, rule.lang))   # an existing Pitch rule kept (idea 9)
         for label, f, lang in choices:
             combo.addItem(label, (f, lang))
         i = next((k for k, (_, f, lang) in enumerate(choices) if (f, lang) == (rule.field, rule.lang)), 0)

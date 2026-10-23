@@ -47,8 +47,11 @@ class ConfigureCellDialog(QDialog):
     """Which lines a matrix cell shows, in what order, and which line up word by word (idea 2:
     the text lines' glossing rules; the Line up ticks are one setting for every cell view)."""
 
-    def __init__(self, parent, db: Database, cell: list[str], aligned: set | None = None):
+    def __init__(self, parent, db: Database, cell: list[str], aligned: set | None = None,
+                 part: str = "tokens"):
         super().__init__(parent)
+        from .. import pitchview
+        self._db, self._cell, self._part = db, list(cell), part   # pitch hidden: kept, not offered (idea 9)
         from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
         self.setWindowTitle("Configure cell")
         self.setWindowIcon(icon("gear"))
@@ -65,7 +68,8 @@ class ConfigureCellDialog(QDialog):
         self.list.setDragDropMode(QAbstractItemView.InternalMove)
         self.list.setSelectionMode(QAbstractItemView.SingleSelection)
         aligned = set(aligned or ())
-        options = mx.cell_options(db)
+        options = [(k, t) for k, t in mx.cell_options(db)
+                   if k in pitchview.visible([k], db.settings, part)]
         titles = dict(options)
         order = cell_order(cell, [k for k, _ in options])
         for k in order:
@@ -86,7 +90,8 @@ class ConfigureCellDialog(QDialog):
             it = self.list.topLevelItem(i)
             if it.checkState(0) == Qt.Checked:
                 out.append(it.data(0, Qt.UserRole))
-        return out
+        from .. import pitchview                  # the pitch's lines kept where they were while hidden
+        return pitchview.keep_hidden(self._cell, out, self._db.settings, self._part)
 
     def aligned(self) -> dict[str, bool]:
         """Each line's Line up tick (key -> ticked), to merge into the shared setting."""

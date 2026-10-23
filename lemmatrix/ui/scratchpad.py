@@ -73,13 +73,32 @@ class ComparisonPads(QWidget):
             self.letters.append(lbl)
             self.pads.append(pad)
         self.alpha, self.beta = self.pads
+        # the pitch system hidden (idea 9): the pads go, α and β stay at the area's left edge
+        # (Compare V and Compare C will join them there, idea 46); until then a faint line says why
+        self.hidden_note = QLabel("Pitch hidden (Settings → Pitch)")
+        self.hidden_note.setToolTip("The pitch scratchpads are hidden with the pitch system: "
+                                    "File → Settings → Pitch → Show the pitch system, or View → Show pitch system")
+        grid.addWidget(self.hidden_note, 0, 1, 2, 1, Qt.AlignLeft | Qt.AlignVCenter)
+        grid.setColumnStretch(1, 1)
         self.restyle()
+        self.show_pitch()
 
     def set_range(self, low: int, high: int):
         for p in self.pads:
             p.set_range(low, high)
 
+    def show_pitch(self, on: bool | None = None):
+        """Show the pitch scratchpads, or hide them (the pitch system hidden); None: as the open
+        database's Show the pitch system says."""
+        from .. import pitchview
+        if on is None:
+            on = pitchview.shown(pitchview.SCRATCHPADS)
+        for p in self.pads:
+            p.setVisible(on)
+        self.hidden_note.setVisible(not on)
+
     def restyle(self):
         from . import theme
+        self.hidden_note.setStyleSheet(f"color: {theme.colour('disabled').name()};")
         for lbl in self.letters:
             lbl.setStyleSheet(f"color: {theme.colour('pitch').name()};")   # the accent, lighter on dark

@@ -78,8 +78,17 @@ class TokenDialog(QDialog):
         self._load()
 
     # ------------------------------------------------------------------ UI
+    PITCH_PART = "tokens"      # which part of the pitch system this dialogue shows (pitchview, idea 9)
+
+    def pitch_shown(self) -> bool:
+        """Settings → Pitch → Show the pitch system: off hides the drawing, its play button, the
+        Pitch field and pitch playback here; the token's Pitch is kept as it is."""
+        from .. import pitchview
+        return pitchview.shown(self.PITCH_PART)
+
     def _build(self):
         s = self.db.settings
+        pitch_on = self.pitch_shown()
         outer = QVBoxLayout(self)
         self.header = QLabel()
         self.header.setFont(ipa_font(15))
@@ -106,13 +115,18 @@ class TokenDialog(QDialog):
         drawing.setContentsMargins(0, 0, 0, 0)
         drawing.addWidget(self.canvas, 1)
         drawing.addWidget(self.pitch_play, 0, Qt.AlignVCenter)
-        left.addWidget(QLabel("Pitch\nRendering"), 1, 0, Qt.AlignVCenter)
+        self.drawing_label = QLabel("Pitch\nRendering")
+        left.addWidget(self.drawing_label, 1, 0, Qt.AlignVCenter)
         left.addLayout(drawing, 1, 1)
+        for w in (self.drawing_label, self.canvas, self.pitch_play):
+            w.setVisible(pitch_on)               # hidden with the pitch system (idea 9)
         self.edits: dict[str, QLineEdit] = {}
         self.translation: QLineEdit | None = None      # the English translation: gets suggestions
         self.comment: QLineEdit | None = None          # the first comment field: Push to question
         row = 2
         for f in s.token_fields:
+            if f.role == "pitch" and not pitch_on:
+                continue                          # not edited here: the token keeps its Pitch as it is
             ed = QLineEdit()
             if f.role in ("phonetic", "phonemic"):
                 ed.setFont(ipa_font(self.main.prefs.ipa_size + 3))
@@ -163,6 +177,7 @@ class TokenDialog(QDialog):
         self.pitch_note = QLabel()
         self.pitch_note.setStyleSheet(f"color: {theme.colour('warning').name()};")
         left.addWidget(self.pitch_note, row, 1)
+        self.pitch_note.setVisible(pitch_on)
         row += 1
         # Cogitate: a 48 px button with Josh's icon (Link to hypothesis…; Josh, 22 October: it
         # replaced the words), then "In hypotheses: H3 (evidence)…"
@@ -745,6 +760,8 @@ class TokenDialog(QDialog):
         """Phonetic or Phonemic holding only digits and colons asks whether it was meant for
         Pitch (Josh, 21 October), with Move it to Pitch. False: back to the dialogue."""
         s = self.db.settings
+        if not self.pitch_shown():
+            return True                           # no warning while the pitch system is hidden (idea 9)
         pitch_ed = next((ed for n, ed in self.edits.items() if s.token_field(n).role == "pitch"), None)
         for name, ed in self.edits.items():
             f = s.token_field(name)
@@ -1175,7 +1192,7 @@ class TokenDialog(QDialog):
             QMessageBox.warning(self, "Play", str(exc))
 
     def _play_pitch(self):
-        if self.recorder:
+        if self.recorder or not self.pitch_shown():
             return
         self.main.play_pitch(self.canvas.text)
 

@@ -40,12 +40,16 @@ def clock(t: float) -> str:
     return f"{int(m)}:{s:05.2f}"
 
 
-def field_choices(db) -> list[tuple[str, str, str]]:
+def field_choices(db, keep: tuple | None = None) -> list[tuple[str, str, str]]:
     """(label, field, lang) for what a tier can fill in: Ignore, then every token field (a
-    multilingual one once per gloss language)."""
+    multilingual one once per gloss language). With the pitch system hidden (idea 9) Pitch isn't
+    offered for new rules, but a rule that already fills it keeps it (keep: its (field, lang))."""
+    from .. import pitchview
     s = db.settings
     out = [("Ignore", "", ""), ("Speaker (code)", SPEAKER_FIELD, "")]
     for f in s.token_fields:
+        if f.role == "pitch" and not pitchview.shown() and (keep is None or keep[0] != f.name):
+            continue
         if f.multilingual:
             for lang in s.gloss_languages:
                 out.append((f"{f.title} ({lang})", f.name, lang))
@@ -267,7 +271,6 @@ class TextDialog(QDialog):
             self.lines_note.setText(f"<span style='color:{theme.colour('error').name()}'>{exc}</span>")
             return
         m = self._mapping()
-        choices = field_choices(self.db)
         seen = set()
         for info in infos:
             base = tier_base(info.name)[0]
@@ -287,6 +290,7 @@ class TextDialog(QDialog):
             n.setFlags(n.flags() & ~Qt.ItemIsEditable)
             self.tiers.setItem(r, 1, n)
             combo = QComboBox()
+            choices = field_choices(self.db, (rule.field, rule.lang) if rule is not None else None)
             for label, f, lang in choices:
                 combo.addItem(label, (f, lang))
             if rule is not None:
@@ -632,6 +636,7 @@ class TextsPanel(QObject):
     def settings_changed(self):
         s = self.db.settings
         self.comparison.set_range(s.pitch_low, s.pitch_high)
+        self.comparison.show_pitch()              # Show the pitch system (idea 9)
         self._setup_columns()
         self.refresh()
 

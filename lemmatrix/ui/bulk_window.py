@@ -414,6 +414,25 @@ class BulkEditWindow(QDialog):
         self.r_field.currentIndexChanged.connect(lambda *_: self._sync_options())
         return w
 
+    def _fill_shortcuts(self):
+        """The shortcuts offered: the Pitch shortcut not while the pitch system is hidden (idea 9)."""
+        from .. import pitchview
+        current = self.s_which.currentData()
+        self.s_which.blockSignals(True)
+        self.s_which.clear()
+        for sc in bulk.SHORTCUTS:
+            if "pitch" in sc.roles and not pitchview.shown(pitchview.TOKENS):
+                continue
+            self.s_which.addItem(sc.name, sc.key)
+        self.s_which.setCurrentIndex(max(0, self.s_which.findData(current)))
+        self.s_which.blockSignals(False)
+
+    def _targets(self) -> list:
+        """The fields Bulk edit offers at this level: Pitch not while the pitch system is hidden."""
+        from .. import pitchview
+        return [t for t in bulk.targets(self.db, self.level)
+                if t.role != "pitch" or pitchview.shown(pitchview.TOKENS)]
+
     def clear_replace_fields(self):
         self.r_find.clear()
         self.r_repl.clear()
@@ -422,8 +441,7 @@ class BulkEditWindow(QDialog):
     def _shortcut_page(self) -> QWidget:
         w, form = self._form()
         self.s_which = QComboBox()
-        for sc in bulk.SHORTCUTS:
-            self.s_which.addItem(sc.name, sc.key)
+        self._fill_shortcuts()
         self.s_dir = QComboBox()
         self.s_field = QComboBox()
         self.s_note = QLabel()
@@ -607,7 +625,10 @@ class BulkEditWindow(QDialog):
         current = [k for k in self.tables[level].visible_keys() if k != TICK]
         dlg = ConfigureColumnsDialog(self, [(c.key, c.title) for c in cols], current)
         if dlg.exec():
-            self.main.doc.ws_set(f"columns/bulk-{level}", dlg.chosen())
+            from .. import pitchview              # pitch hidden: its columns kept where they were
+            self.main.doc.ws_set(f"columns/bulk-{level}", pitchview.keep_hidden(
+                self.main.doc.ws.get_list(f"columns/bulk-{level}"), dlg.chosen(), self.db.settings,
+                pitchview.TOKENS))
             self._set_columns(level, dlg.chosen())
             self._fill_rows()
 
@@ -699,7 +720,7 @@ class BulkEditWindow(QDialog):
 
     def _level_changed(self, i: int):
         self.pages.setCurrentIndex(i)
-        ts = bulk.targets(self.db, self.level)
+        ts = self._targets()
         text = [t for t in ts if t.text]
         self._fill_combo(self.r_field, text)
         self._fill_combo(self.v_field, ts)
@@ -726,7 +747,7 @@ class BulkEditWindow(QDialog):
         for d in sc.directions:
             self.s_dir.addItem(d.label, d.key)
         self.s_dir.blockSignals(False)
-        fields = [t for t in bulk.targets(self.db, self.level) if t.role in sc.roles]
+        fields = [t for t in self._targets() if t.role in sc.roles]
         self._fill_combo(self.s_field, fields)
         if not fields:
             self.s_field.addItem(f"(no {' or '.join(sorted(set(sc.roles)))} field here)", "")
@@ -976,6 +997,7 @@ class BulkEditWindow(QDialog):
         if self._applying:
             return
         self._setup_columns()
+        self._fill_shortcuts()                    # Pitch's shortcut follows Show the pitch system
         self._level_changed(self.levels.currentIndex())
 
     def _restyle(self):
