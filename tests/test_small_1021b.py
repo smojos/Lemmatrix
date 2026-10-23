@@ -250,10 +250,11 @@ def test_keyboard_shortcuts_list(win):
 
 
 def test_josh_questions_and_todo_icons_1022(app):
-    """Josh's new ? (no grey oval, smaller) and To Do (three ✓ beside grey lines), 22 October."""
+    """Josh's ? (23 October: a grey ring round a teal ?, replacing 22 October's) and To Do
+    (three ✓ beside grey lines, 22 October)."""
     from lemmatrix.ui import icons
     q = icons.QUESTIONS_FILE.read_text(encoding="utf-8")
-    assert "#b3b3b3" not in q.lower()                      # the grey inside is gone
+    assert "<text" not in q and q.count("<path") == 2      # the ring and the ?, as outlines
     t = icons.TODO_FILE.read_text(encoding="utf-8")
     assert "<text" not in t and t.count("<path") == 3     # the ticks are outlines, no font needed
     for name in ("questions", "todo"):
