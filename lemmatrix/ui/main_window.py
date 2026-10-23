@@ -1165,6 +1165,8 @@ class MainWindow(QMainWindow):
         f = mb.addMenu("&File")
         self._act(f, "&New database…", self.new_file, QKeySequence.New)
         self._act(f, "&Open…", self.open_file, QKeySequence.Open)
+        self.recent_menu = f.addMenu("Open &recent")       # idea 51 (Josh, 23 October)
+        self.recent_menu.aboutToShow.connect(self._fill_recent_menu)
         f.addSeparator()
         self._act(f, "&Save", self.save, QKeySequence.Save)
         self._act(f, "&Rename database…", self.rename_database)
@@ -1673,6 +1675,7 @@ class MainWindow(QMainWindow):
         self.lemma_search.clear()
         self.all_search.clear()
         self._fill_session()
+        self._note_recent()                       # File → Open recent (idea 51)
         self.tabs.blockSignals(True)
         self.tabs.setCurrentIndex(ALL_DATA)
         self.tabs.blockSignals(False)
@@ -2078,10 +2081,43 @@ class MainWindow(QMainWindow):
             self._fill_speakers()
         self._remember_session()
 
-    def _fill_db_title(self):
-        md = self.doc.db.metadata
+    @staticmethod
+    def title_of(db) -> str:
+        """Language - Variety - Database name, as at the top of the window."""
+        md = db.metadata
         parts = [md.language_name or md.language_code, md.variety_name or md.variety_code, md.name]
-        self.db_title.setText(" - ".join(p for p in parts if p) or "Unnamed database")
+        return " - ".join(p for p in parts if p) or "Unnamed database"
+
+    def _fill_db_title(self):
+        self.db_title.setText(self.title_of(self.doc.db))
+
+    # ---- File → Open recent (IDEAS.md idea 51; Josh, 23 October) ------------------------------
+    def _fill_recent_menu(self):
+        """The 10 databases opened most recently on this computer, the most recent first; one that
+        isn't there any more is greyed, "(not found)"; Clear recent at the bottom."""
+        m = self.recent_menu
+        m.clear()
+        items = self.prefs.recent
+        for r in items:
+            title = r.get("title") or Path(r["path"]).stem
+            here = Path(r["path"]).exists()
+            a = m.addAction(title if here else f"{title} (not found)")
+            a.setToolTip(QDir.toNativeSeparators(r["path"]))
+            a.setEnabled(here)
+            if self.doc.db.path and Path(self.doc.db.path).resolve() == Path(r["path"]).resolve():
+                a.setCheckable(True)
+                a.setChecked(True)               # the one open now
+            a.triggered.connect(lambda *_, p=r["path"]: self.open_file(p))
+        if not items:
+            m.addAction("No recent databases").setEnabled(False)
+            return
+        m.addSeparator()
+        m.addAction("Clear recent").triggered.connect(lambda *_: setattr(self.prefs, "recent", []))
+        m.setToolTipsVisible(True)
+
+    def _note_recent(self):
+        if self.doc.db.path:
+            self.prefs.add_recent(self.doc.db.path, self.title_of(self.doc.db))
 
     def speaker_choices(self) -> list[str]:
         """Who can be the speaker: the session's participants (all participants if none are picked)."""
@@ -4188,6 +4224,7 @@ class MainWindow(QMainWindow):
             return False
         self.prefs.last_file = self.doc.db.path
         self._fill_db_title()
+        self._note_recent()                       # its title may have changed
         self._remember_session()                  # the panel as it is (not rebuilt: no flicker)
         where = QDir.toNativeSeparators(str(storage.backup_folder(self.doc.db.path)))
         self.statusBar().showMessage(f"Saved. The previous version is in {where}.", 5000)

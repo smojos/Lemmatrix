@@ -281,6 +281,33 @@ class Prefs:
         last = self.last_file
         if last and os.path.normcase(os.path.abspath(last)) == os.path.normcase(os.path.abspath(old)):
             self.last_file = new
+        self.recent = [dict(r, path=new) if _same(r["path"], old) else r for r in self.recent]
+
+    # ---- File → Open recent (IDEAS.md idea 51; Josh, 23 October) -----------------------------
+    RECENT_KEPT = 10
+
+    @property
+    def recent(self) -> list[dict]:
+        """The databases opened lately on this computer, most recently opened first: each
+        {"path": …, "title": "Language - Variety - Name"}."""
+        import json
+        try:
+            v = json.loads(self.q.value("files/recent", "") or "[]")
+        except (ValueError, TypeError):
+            return []
+        return [r for r in v if isinstance(r, dict) and r.get("path")][:self.RECENT_KEPT]
+
+    @recent.setter
+    def recent(self, items: list[dict]):
+        import json
+        self.q.setValue("files/recent", json.dumps(list(items)[:self.RECENT_KEPT], ensure_ascii=False))
+
+    def add_recent(self, path: str, title: str = ""):
+        """`path` opened (or saved) just now: to the top of the list, once."""
+        if not path:
+            return
+        path = os.path.abspath(path)
+        self.recent = [{"path": path, "title": title}] + [r for r in self.recent if not _same(r["path"], path)]
 
     def get_bytes(self, key: str):
         return self.q.value(key)
@@ -299,3 +326,8 @@ class Prefs:
 
     @last_file.setter
     def last_file(self, v): self.q.setValue("files/last", v)
+
+
+def _same(a: str, b: str) -> bool:
+    """Two paths to the same file (capitals ignored where the system ignores them)."""
+    return os.path.normcase(os.path.abspath(a)) == os.path.normcase(os.path.abspath(b))

@@ -242,3 +242,33 @@ def test_from_box_in_the_lemma_dialogue_and_the_switch(win):
     assert "from" not in keys and "StemType" not in keys
     assert other.from_lemmas == [root.id]                          # kept
     win.doc.ws_set(ORIGIN_KEY, True)
+
+
+def test_open_recent(win, tmp_path):
+    """File → Open recent (idea 51; Josh, 23 October): 10, the most recently opened first, greyed
+    when not found, Clear recent."""
+    import shutil
+    from lemmatrix import storage
+    win.prefs.recent = []
+    paths = []
+    for n in range(12):
+        d = tmp_path / f"db{n}"
+        d.mkdir()
+        shutil.copy2(win.doc.db.path, d / f"D{n}.xml")
+        paths.append(str(d / f"D{n}.xml"))
+        win.load_database(storage.load(paths[-1]))
+    rec = win.prefs.recent
+    assert len(rec) == 10 and rec[0]["path"].endswith("D11.xml") and rec[-1]["path"].endswith("D2.xml")
+    assert rec[0]["title"] == win.title_of(win.doc.db)
+    win.load_database(storage.load(paths[5]))                       # opened again: to the top, once
+    rec = win.prefs.recent
+    assert rec[0]["path"].endswith("D5.xml") and sum(r["path"].endswith("D5.xml") for r in rec) == 1
+    import os
+    os.remove(paths[11])
+    win._fill_recent_menu()
+    acts = [a for a in win.recent_menu.actions() if not a.isSeparator()]
+    gone = next(a for a in acts if a.toolTip().endswith("D11.xml"))
+    assert not gone.isEnabled() and "(not found)" in gone.text()
+    assert acts[0].isChecked()                                        # the one open now
+    acts[-1].trigger()                                                # Clear recent
+    assert win.prefs.recent == []

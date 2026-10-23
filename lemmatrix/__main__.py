@@ -100,6 +100,15 @@ def main() -> int:
         sample = box.addButton("Open a copy of the sample", QMessageBox.AcceptRole)
         opened = box.addButton("Open a database…", QMessageBox.ActionRole)
         new = box.addButton("New database…", QMessageBox.ActionRole)
+        # the three databases opened most recently on this computer (idea 51; Josh, 23 October)
+        recent = {}
+        for r in [r for r in win.prefs.recent if Path(r["path"]).exists()][:3]:
+            b = box.addButton(r.get("title") or Path(r["path"]).stem, QMessageBox.ActionRole)
+            b.setToolTip(r["path"])
+            recent[b] = r["path"]
+        if recent:
+            box.setText("Open a database to start (or one of those you opened recently), or try a copy "
+                        "of the sample database.")
         box.addButton("Close", QMessageBox.RejectRole)
         if not SAMPLE.exists():
             sample.setEnabled(False)
@@ -110,6 +119,8 @@ def main() -> int:
             win.open_file()
         elif box.clickedButton() is new:
             win.new_file()
+        elif box.clickedButton() in recent:
+            win.open_file(recent[box.clickedButton()])
     return app.exec()
 
 
