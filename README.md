@@ -340,7 +340,8 @@ Smolders, Joshua A. G. 2026. *Lemmatrix* (version 0.2.0). Zenodo.
 https://doi.org/10.5281/zenodo.23512411
 
 This DOI always points to the latest version. Each version also has its own DOI on Zenodo,
-listed on the record's page, for citing the exact one you used.
+listed on the record's page, for citing the exact one you used (0.2.0:
+[10.5281/zenodo.23606293](https://doi.org/10.5281/zenodo.23606293)).
 
 See also [CITATION.cff](CITATION.cff) (GitHub's "Cite this repository" button uses it).
 
