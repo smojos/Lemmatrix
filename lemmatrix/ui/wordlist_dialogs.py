@@ -321,8 +321,9 @@ def pdf_html(db, lid: str, header, data) -> str:
             f"<p>{esc(title)}<br/>{_dt.date.today().isoformat()}</p>"
             f"<p style='font-size:8pt; color:#555'>{esc(wl.CITATIONS[lid])}{doi}</p>"
             "<table border='0' cellspacing='0' cellpadding='3' width='100%'>"
-            "<tr>" + "".join(f"<th align='left'>{esc(h)}</th>" for h in header) + "</tr>"
-            f"{rows}</table>")
+            "<thead><tr>" + "".join(f"<th align='left' width='{w}'>{esc(h)}</th>"
+                                    for h, w in zip(header, ("12%", "44%", "44%"))) + "</tr></thead>"
+            f"<tbody>{rows}</tbody></table>")
 
 
 def write_pdf(path: str, db, lid: str, header, data):
@@ -332,11 +333,16 @@ def write_pdf(path: str, db, lid: str, header, data):
     w.setPageMargins(QMarginsF(15, 15, 15, 15), QPageLayout.Millimeter)
     w.setTitle(f"{wl.NAMES[lid]}: {Path(db.path).stem if db.path else ''}")
     w.setCreator("Lemmatrix")
+    # The page laid out at 96 dpi, the resolution the text's point sizes assume (Josh, 23 October:
+    # at QPdfWriter's own 1200 dpi the whole list came out on one page in type too small to read)
+    w.setResolution(96)
     doc = QTextDocument()
+    doc.documentLayout().setPaintDevice(w)
     doc.setDefaultStyleSheet("td, th { font-family: 'Charis SIL', 'Doulos SIL', serif; font-size: 10pt; }"
                              "th { border-bottom: 1px solid #888; }")
     doc.setHtml(pdf_html(db, lid, header, data))
-    doc.setPageSize(QSizeF(w.width(), w.height()))
+    rect = w.pageLayout().paintRectPixels(w.resolution())
+    doc.setPageSize(QSizeF(rect.width(), rect.height()))
     doc.print_(w)
     if not Path(path).exists():
         raise OSError("the file wasn't written")
