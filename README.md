@@ -43,6 +43,10 @@ recordings), and is the one to use when you ask an AI for help with your data.
 Get it from its official homes: this repository, or Zenodo
 ([10.5281/zenodo.23512411](https://doi.org/10.5281/zenodo.23512411)).
 
+**Order is the computer's job.** In other programs I had to rename soundfiles by hand, or open up the XML in Notepad++ to reorder examples by hand, so my OCD wasn't triggered knowing they were underlyingly out of order. Linguists should not have to waste time and energy bringing order to their data when computers can do it for them.
+Lemmatrix names your soundfiles from your data and renames them when it changes, and keeps your
+lemmas in order for you.
+
 ## About
 
 Lemmatrix is an independent, personal open-source project by Joshua A. G. Smolders,
