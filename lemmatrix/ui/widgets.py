@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QPoint, QPointF, QRect, QRectF, QSize, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QFontDatabase, QPainter, QPalette, QPen, QPolygonF
+from PySide6.QtGui import QColor, QFont, QFontDatabase, QPainter, QPen, QPolygonF
 from PySide6.QtWidgets import (QHeaderView, QLayout, QSizePolicy, QWidget)
 
 from .. import pitch as pitchmod
@@ -151,13 +151,8 @@ class PitchCanvas(QWidget):
 
     def paintEvent(self, event):
         p = QPainter(self)
-        # A field of its own, like the text boxes around it (Josh, 23 October): the boxes' white
-        # (their dark grey on the dark theme) inside the same thin frame, so it never looks like
-        # the background.
-        p.fillRect(self.rect(), theme.colour("base"))
-        p.setPen(QPen(self.palette().color(QPalette.Mid), 1))
-        p.setBrush(Qt.NoBrush)
-        p.drawRect(QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5))
+        # No box of its own (Josh, 23 October): the drawing isn't editable, so it sits on the
+        # window's background rather than a text box's white.
         r = QRectF(self.rect()).adjusted(10, self.PAD - 2, -10, -(self.PAD - 2))
         draw_pitch(p, r, self.text, self.low, self.high, width=2.6, unit=self.unit)
 
