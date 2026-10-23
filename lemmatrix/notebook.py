@@ -368,6 +368,21 @@ def refresh_comments(db: Database, session: Session) -> bool:
     return False
 
 
+def empty_days(nb, db: Database, before: str) -> list[Session]:
+    """Days before `before` with only people and places in them (Josh, 23 October: Write to notebook
+    pressed, then nothing done that day): no notes, comments, questions, To Dos, texts or
+    hypotheses, and no recordings or texts dated that day."""
+    out = []
+    for s in nb.sessions:
+        if s.date >= before or s.notes.strip() or s.comments or s.questions or s.todos or s.texts \
+                or s.hypotheses:
+            continue
+        if recordings(db, s.date) or any(t.date == s.date for t in db.texts):
+            continue
+        out.append(s)
+    return out
+
+
 def recordings(db: Database, date: str) -> list[tuple[Entry, int]]:
     """Tokens (and utterances) with a recording collected on a day: (entry or utterance, token index)."""
     return [(e, i) for e in db.items() for i, t in enumerate(e.tokens) if t.collected == date and t.file]

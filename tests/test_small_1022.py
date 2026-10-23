@@ -272,3 +272,31 @@ def test_open_recent(win, tmp_path):
     assert acts[0].isChecked()                                        # the one open now
     acts[-1].trigger()                                                # Clear recent
     assert win.prefs.recent == []
+
+
+def test_empty_notebook_days_are_offered_on_a_new_day(win, monkeypatch):
+    from PySide6.QtWidgets import QMessageBox
+    from lemmatrix import notebook as nb
+    book = win.doc.notebook
+    empty = book.add_session("2026-10-01")
+    empty.researchers, empty.participants = ["RS1"], ["SP1"]
+    used = book.add_session("2026-10-02")
+    used.researchers, used.notes = ["RS1"], "elicited plurals"
+    assert nb.empty_days(book, win.doc.db, "2026-10-23") == [empty]
+    asked = []
+
+    def exec_(box):
+        asked.append(box.text())
+        box.clickedButton = lambda: next(b for b in box.buttons() if b.text() == "Clear them")
+    monkeypatch.setattr(QMessageBox, "exec", exec_)
+    monkeypatch.setattr("lemmatrix.ui.main_window.today", lambda: "2026-10-23")
+    win.doc.db.path = win.doc.db.path or "x.xml"
+    win._session_last_day = "2026-10-22"
+    win._offer_empty_days()
+    assert asked and "2026-10-01" in asked[0]
+    assert book.session("2026-10-01") is None and book.session("2026-10-02") is not None
+    asked.clear()
+    win._session_last_day = "2026-10-23"                           # the same day: nothing asked
+    book.add_session("2026-10-03")
+    win._offer_empty_days()
+    assert not asked

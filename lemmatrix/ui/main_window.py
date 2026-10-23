@@ -1819,6 +1819,7 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(
                 f"Consent forms found in Documentation and relinked: {', '.join(relinked)}.", 10000)
         self._remind_new_day()
+        self._offer_empty_days()
         self._remind_full_backup()
         self._remind_elicit()
 
@@ -2050,6 +2051,38 @@ class MainWindow(QMainWindow):
         if self.doc.db.path:                      # an empty panel is remembered too (in the workspace)
             self.doc.ws_set("session", self.session_keys())
             self.doc.ws_set("session/day", today())
+
+    def _offer_empty_days(self):
+        """On a new day (Josh, 23 October): notebook days with nothing in them but people and
+        places (Write to notebook pressed, then nothing done) are offered to be cleared."""
+        last = getattr(self, "_session_last_day", "")
+        if not self.doc.db.path or not last or last >= today():
+            return
+        days = nbmod.empty_days(self.doc.notebook, self.doc.db, today())
+        if not days:
+            return
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Question)
+        box.setWindowTitle("Empty notebook days")
+        n = len(days)
+        box.setText(f"{n} day{'s' if n != 1 else ''} in the notebook {'have' if n != 1 else 'has'} nothing in "
+                    "{} but people and places: {}.".format("them" if n != 1 else "it",
+                                                         ", ".join(s.date for s in days[:8]) +
+                                                         (f" and {n - 8} more" if n > 8 else "")))
+        box.setInformativeText("Write to notebook was pressed on those days, but no notes, comments, "
+                               "questions, To Dos, recordings or texts followed. Clear them?")
+        clear = box.addButton("Clear them", QMessageBox.DestructiveRole)
+        box.addButton("Keep them", QMessageBox.RejectRole)
+        box.setDefaultButton(clear)
+        box.exec()
+        if box.clickedButton() is not clear:
+            return
+        for s in days:
+            self.doc.notebook.remove(s)
+        self.doc.notebook_changed()
+        if self.notebook_dialog is not None:
+            self.notebook_dialog.reload()
+        self.statusBar().showMessage(f"Cleared {n} empty notebook day{'s' if n != 1 else ''}.", 6000)
 
     def _remind_new_day(self):
         """On opening on a new day (Josh, 21 October): the Current Session still has the people and
