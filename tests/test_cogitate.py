@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Cogitate (IDEAS.md idea 35, Josh, 21 October): hypotheses at the end of the notebook, linked to
 tokens, utterances, text lines, snapshots, questions, comments and other hypotheses as Evidence,
 Counterevidence or Relevant; log lines in the day's notes; snapshots from the camera."""

@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Cogitate: hypotheses, kept at the end of the notebook (IDEAS.md idea 35, designed with Josh on
 21 October 2026). Plain Python, no Qt; the window is ui/cogitate.py.
 

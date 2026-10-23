@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Building soundfile names from the customisable pattern.
 
 The default pattern is

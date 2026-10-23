@@ -1,6 +1,6 @@
 @echo off
-@REM SPDX-License-Identifier: GPL-3.0-or-later
-@REM Copyright (c) 2026 Joshua A. G. Smolders
+@REM SPDX-License-Identifier: AGPL-3.0-or-later
+@REM Copyright (c) 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 rem Starts Lemmatrix on Windows. The first run sets up its own Python 3.13
 rem environment in the .venv folder, which takes a few minutes.
 setlocal

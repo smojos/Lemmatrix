@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The recording level meter and the level check after recording (Josh, 22 October).
 
 Lemmatrix never changes a recording's level: no gain, no normalising, no limiting. It only shows

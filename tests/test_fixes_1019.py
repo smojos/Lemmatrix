@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """19 October fixes: Edit in the lines' menu, Ctrl+Space with IPA keyboards, search marks."""
 
 import os

@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The cell views, 21 October evening: the utterance cell (IDEAS.md idea 22), lined-up fields in
 the matrix cells (idea 2), the display conventions (idea 26), New lemma… in Create token
 (idea 31) and lines where only other tiers have text."""

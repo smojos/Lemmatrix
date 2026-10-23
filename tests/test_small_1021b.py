@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Small features, 21 October night (Josh's triage): a lone pitch digit as an extra-short trace,
 Sentence-ify, Clear fields in Bulk edit's Replace, the recording source in the token dialogue,
 the pitch-looking text warning, saved matrices in a hierarchy, the To Do button and shortcut,

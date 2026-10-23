@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Google Drive for ɛλicit (IDEAS.md idea 19, stage 2), with nothing but the standard library.
 
 Signing in is the installed-app flow: the browser opens Google's sign-in page, which sends the

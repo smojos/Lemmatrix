@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Josh's debug list of 20 October: no jolt on saving, pitch drawings cut off with an ellipsis in
 narrow columns, Bulk edit opening inside the screen and keeping its size."""
 

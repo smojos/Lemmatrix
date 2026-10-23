@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Σymbols (Josh, 22 October): at the top of every ordinary text field's right-click menu (the one
 with Undo, Redo, Cut, Copy, Paste…), a Σymbols item opens a small square grid of symbols that are
 hard to type; double-clicking one puts it in at the cursor and closes the grid.

@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The pitch scratchpad (IDEAS.md idea 33): a pitch drawing with a box under it. A trace typed
 there (the usual notation, e.g. 55 3:3 21) is drawn as it is typed and played with the button or
 Enter. Nothing is saved anywhere. Used under a text's lines and in the main window's bottom row."""

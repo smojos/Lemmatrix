@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The workspace file (IDEAS.md idea 36, 21 October): the database's working state beside it.
 
 The database keeps what describes the data or is needed to read it; the workspace keeps what

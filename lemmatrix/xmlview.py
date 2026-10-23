@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The XML viewer's workings (IDEAS.md idea 23, 21 October 2026): no Qt here.
 
 The viewer shows the database as `storage.to_string` writes it (what Save would write now, unsaved

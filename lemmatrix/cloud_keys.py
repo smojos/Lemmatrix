@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Lemmatrix's own Google Cloud project, for ɛλicit through Google Drive (IDEAS.md idea 19, stage 2).
 
 These are public on purpose. A desktop app's OAuth "client secret" can't be kept secret (anyone

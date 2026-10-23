@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright © 2026 Joshua A. G. Smolders
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 //
 // A small FLAC encoder for ɛλicit (IDEAS.md idea 19): mono, 16-bit, lossless, no library.
 // Written from the FLAC format specification (RFC 9639). Each block of 4096 samples is coded as

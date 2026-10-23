@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """ɛλicit (IDEAS.md idea 19, stage 1, 20 October 2026): remote elicitation through a web page.
 
 A **request** is a list of cards for one speaker. Lemmatrix writes it as a zip (request.json,

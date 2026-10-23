@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The defaults of a new database (20 October 2026) and Reset to defaults in Edit → Lists."""
 
 import shutil
@@ -151,11 +151,19 @@ def test_licence_files_and_about():
     import lemmatrix
     from lemmatrix.ui.main_window import about_text
     root = Path(__file__).resolve().parent.parent
-    assert "GNU GENERAL PUBLIC LICENSE" in (root / "LICENSE").read_text(encoding="utf-8")[:200]
+    assert "GNU AFFERO GENERAL PUBLIC LICENSE" in (root / "LICENSE").read_text(encoding="utf-8")[:200]
+    assert "Based on Lemmatrix by Joshua A. G. Smolders" in (root / "NOTICE.md").read_text(encoding="utf-8")
+    assert "All rights reserved" in (root / "ARTWORK.md").read_text(encoding="utf-8")
     assert "Joshua A. G. Smolders" in (root / "AUTHORS").read_text(encoding="utf-8")
-    assert "GPL-3.0-or-later" in (root / "CITATION.cff").read_text(encoding="utf-8")
+    assert "license: AGPL-3.0-or-later" in (root / "CITATION.cff").read_text(encoding="utf-8")
     text = about_text()
     assert lemmatrix.__version__ in text and "Joshua A. G. Smolders" in text and "no warranty" in text
-    assert "version 3" in text and lemmatrix.SOURCE_URL in text
+    assert "version 3" in text and "Affero" in text and lemmatrix.SOURCE_URL in text
+    assert "NOTICE.md" in text and "ARTWORK.md" in text and lemmatrix.CONCEPT_DOI in text
+    artwork = {root / "lemmatrix" / "ui" / "icons.py", root / "lemmatrix" / "ui" / "whiteboard_art.py"}
     for f in (root / "lemmatrix").rglob("*.py"):           # every source file says its licence
-        assert "SPDX-License-Identifier: GPL-3.0-or-later" in f.read_text(encoding="utf-8")[:200], f
+        head = f.read_text(encoding="utf-8")[:250]
+        if f in artwork:                                    # Josh's artwork, all rights reserved (ARTWORK.md)
+            assert "SPDX-License-Identifier: LicenseRef-Lemmatrix-Artwork" in head, f
+        else:
+            assert "SPDX-License-Identifier: AGPL-3.0-or-later" in head and "NOTICE.md" in head, f

@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The two archives: copies of the data to share or deposit (IDEAS.md idea 44, 22 October 2026).
 
 Lemmatrix keeps two kinds of thing apart. The **database** is the archivable data: what was

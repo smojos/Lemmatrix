@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Marking what a search bar found, in the grids' cells and a text's lines (19 October).
 
 The searches match with diacritics and capitals ignored (filters.fold_diacritics), so the

@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The text lines, 21 October: the Clip icon in the dark theme, Save TextGrid (Ctrl+S), the
 lines' zoom (Ctrl + mouse wheel), Create token from a line (IDEAS.md idea 31), the pitch
 scratchpad (idea 33) and the Comment box's font and editor."""

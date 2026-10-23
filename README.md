@@ -4,13 +4,13 @@
 
 *Human readable, machine processable, ethically collected and shared linguistic data.*
 
-Lemmatrix is a free, open-source program for phonological and grammatical analysis and
+Lemmatrix™ is a free, open-source program for phonological and grammatical analysis and
 linguistic documentation, for any language. It keeps lemmas with their tokens
 (transcriptions, pitch, tags and one recording each), shows them as paradigm matrices, and
 holds utterances and texts with their Praat TextGrids, all in readable XML. It is inspired by
 tools such as FLEx, Praat, ELAN, Dekereke and Excel; no code from any of them is used.
 
-**Status:** first prototype (Stage 1, version 0.1).
+**Status:** prototype (Stage 1, version 0.2).
 
 ## Your data, and your own work
 
@@ -36,7 +36,12 @@ as their consent forms allow; the **Anonymous archive** names nobody at all (cod
 recordings), and is the one to use when you ask an AI for help with your data.
 
 © 2026 Joshua A. G. Smolders. Free software under the
-[GNU General Public License, version 3 or later](LICENSE) (GPL-3.0-or-later).
+[GNU Affero General Public License, version 3 or later](LICENSE) (AGPL-3.0-or-later), with
+[additional terms](NOTICE.md); the artwork is [all rights reserved](ARTWORK.md).
+
+**Free, always.** Lemmatrix is free to download and use, at no charge, and it always will be.
+Get it from its official homes: this repository, or Zenodo
+([10.5281/zenodo.23512411](https://doi.org/10.5281/zenodo.23512411)).
 
 ## About
 
@@ -245,7 +250,9 @@ docs/elicit/          ɛλicit's web page (GitHub Pages), where speakers record
 tests/                automated tests (tests/data: the prototype's sample, used by the feature tests)
 tools/screenshots.py  renders the windows to PNG files, for checking layouts
 tools/make_elicit_web.py  the web page's favicon, logo and home-screen icons
-LICENSE               the GNU General Public License, version 3
+LICENSE               the GNU Affero General Public License, version 3
+NOTICE.md             the additional terms: the author's credit, marked changes, the name
+ARTWORK.md            the icons, splash screen and ɛλicit drawings: all rights reserved
 AUTHORS, CITATION.cff who made Lemmatrix and how to cite it
 THIRD-PARTY.md        the libraries Lemmatrix uses, with their licences
 ```
@@ -288,16 +295,30 @@ everything I do. And our four children.
 ## Licence
 
 Lemmatrix is free software: you can redistribute it and/or modify it under the terms of the
-GNU General Public License as published by the Free Software Foundation, either version 3 of
-the License, or (at your option) any later version. It is distributed in the hope that it
+GNU Affero General Public License as published by the Free Software Foundation, either version
+3 of the License, or (at your option) any later version. It is distributed in the hope that it
 will be useful, but **without any warranty**; without even the implied warranty of
 merchantability or fitness for a particular purpose. See [LICENSE](LICENSE) for the details.
+(Versions 0.1.0 to 0.1.2 were released under the GNU General Public License, version 3 or later.)
+
+**Additional terms** ([NOTICE.md](NOTICE.md), under the licence's section 7): any copy or
+modified version keeps the line *Based on Lemmatrix by Joshua A. G. Smolders
+(https://doi.org/10.5281/zenodo.23512411)* in its About screen and README; a modified version
+says that it has been changed; and it takes a name of its own.
+
+**The artwork is not under the AGPL.** The icons, the splash screen and the ɛλicit drawings are
+© Joshua A. G. Smolders, all rights reserved ([ARTWORK.md](ARTWORK.md)). Lemmatrix may be shared
+as it is, artwork included; anyone who distributes a modified version must make their own icons
+and splash screen for everything.
+
+**The name.** Lemmatrix™ and ɛλicit™ are trademarks of Joshua A. G. Smolders. Modified versions
+must use a different name.
 
 The libraries Lemmatrix uses keep their own licences: see [THIRD-PARTY.md](THIRD-PARTY.md).
 
 ## Citing Lemmatrix
 
-Smolders, Joshua A. G. 2026. *Lemmatrix* (version 0.1.2). Zenodo.
+Smolders, Joshua A. G. 2026. *Lemmatrix* (version 0.2.0). Zenodo.
 https://doi.org/10.5281/zenodo.23512411
 
 This DOI always points to the latest version. Each version also has its own on Zenodo

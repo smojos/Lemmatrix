@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """ɛλicit, stage 1 (IDEAS.md idea 19): requests, the speaker's recordings coming back, and the
 review, on the Italian test database (samples/Elicit test)."""
 

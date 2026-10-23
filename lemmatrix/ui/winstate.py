@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Remember a window's size and place, and its splitters, as they are adjusted (Josh, 20 October).
 
 Saved a moment after each move, resize or splitter drag (and when the window hides), so the

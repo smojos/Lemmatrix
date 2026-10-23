@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The ɛλicit web page's prompts, in English and the built-in second languages (IDEAS.md idea 19).
 
 A request carries its prompts in English and in its second language (if one is built in), so the

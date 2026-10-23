@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Shift + mouse wheel scrolls sideways, everywhere that scrolls (Josh, 20 October).
 
 Qt on its own uses Shift + wheel for page-sized steps (and Alt + wheel for sideways), so one

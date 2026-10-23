@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Predictive translation: suggesting a token's English translation from the others (no Qt here).
 
 If father with the tags SG, 2POSS is translated "your father", then mother with the same tags

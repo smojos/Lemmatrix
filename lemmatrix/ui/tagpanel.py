@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Tag chips grouped by group, one tag per group (token dialogue and Configure matrix).
 
 With `multi` on (Configure matrix), Ctrl+click picks a further tag in the same group

@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """View → Questions and View → To Do stay open beside the main window (Josh, 22 October): not modal,
 minimisable, one of each, and they follow changes made in the notebook meanwhile."""
 

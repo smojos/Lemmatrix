@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The world's languages for a lemma's From (Josh, 22 October): every ISO 639-3 code (about 7,900;
 the codes Ethnologue uses), from the `pycountry` package, searchable by name or code, the most
 widely spoken first. A language the standard lacks (a proto-language, a dialect) is kept as typed.

@@ -9,5 +9,11 @@ Author
 The code is written with an AI coding assistant (Claude, by Anthropic) under the
 author's direction, from his design and specification.
 
-Lemmatrix is free software under the GNU General Public License, version 3 or later
-(GPL-3.0-or-later); see LICENSE. The libraries it uses are listed in THIRD-PARTY.md.
+Since version 0.2.0 (23 October 2026), the assistant's commits are recorded under the name
+smojos-claude (.mailmap gives the earlier ones that name too).
+
+Lemmatrix is free software under the GNU Affero General Public License, version 3 or later
+(AGPL-3.0-or-later; see LICENSE), with the additional terms in NOTICE.md. Its artwork (the icons,
+the splash screen and the ɛλicit drawings) is all rights reserved: see ARTWORK.md. Lemmatrix™ and
+ɛλicit™ are trademarks of Joshua A. G. Smolders. The libraries it uses are listed in
+THIRD-PARTY.md.

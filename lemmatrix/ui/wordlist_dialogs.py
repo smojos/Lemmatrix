@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The comparative wordlists' windows (IDEAS.md idea 40, Josh, 22 October 2026): choosing a list for
 a new database, File → Export → Wordlist… (to the clipboard or a PDF) and Tools → Link to
 wordlists…. The lists themselves are `lemmatrix/wordlists`."""

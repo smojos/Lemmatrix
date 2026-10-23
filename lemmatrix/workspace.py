@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The workspace file: a database's working state, beside it (IDEAS.md idea 36, 21 October 2026).
 
 Lemmatrix's goal is human readable, machine processable, ethically collected and shared

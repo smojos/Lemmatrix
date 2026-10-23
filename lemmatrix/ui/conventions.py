@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Display conventions in the cell views (IDEAS.md idea 26, 21 October 2026).
 
 How the matrix cells, a text's lines and the utterance cell show their fields: Phonetic in

@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Hiding the pitch system (IDEAS.md idea 9; DESIGN.md section 3.5).
 
 Settings → Pitch → **Show the pitch system** (and View → Show pitch system) hides everything to do

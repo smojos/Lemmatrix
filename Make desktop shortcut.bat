@@ -1,6 +1,6 @@
 @echo off
-@REM SPDX-License-Identifier: GPL-3.0-or-later
-@REM Copyright (c) 2026 Joshua A. G. Smolders
+@REM SPDX-License-Identifier: AGPL-3.0-or-later
+@REM Copyright (c) 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 rem Puts a Lemmatrix shortcut, with its icon, on the desktop and in the Start menu.
 rem The shortcut starts Lemmatrix without a console window.
 setlocal

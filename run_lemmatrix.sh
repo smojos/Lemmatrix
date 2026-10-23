@@ -1,6 +1,6 @@
 #!/bin/sh
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 # Starts Lemmatrix on Mac or Linux. The first run sets up a Python environment in .venv.
 cd "$(dirname "$0")" || exit 1
 PY=${PYTHON:-python3.13}

@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Cogitate (IDEAS.md idea 35, Josh, 21 October 2026): the window of hypotheses, and the picker that
 links things to them. The hypotheses themselves are hypotheses.py; they live in the notebook.
 

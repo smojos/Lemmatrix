@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Interlinear alignment (Josh, 19 October), following the LaTeX glossing packages (gb4e,
 expex): in an aligned field, spaces separate the units that line up, braces group several
 words into one unit ({big dog}), and {} is an empty unit (an unglossed word). No Qt here."""

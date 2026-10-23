@@ -1,6 +1,6 @@
 # Third-party software
 
-Lemmatrix is © 2026 Joshua A. G. Smolders and licensed under GPL-3.0-or-later (see `LICENSE`).
+Lemmatrix is © 2026 Joshua A. G. Smolders and licensed under AGPL-3.0-or-later (see `LICENSE`); its artwork is not (see `ARTWORK.md`).
 It doesn't include any of the libraries below: they are installed from PyPI when Lemmatrix
 first runs (`requirements.txt`), each under its own licence.
 
@@ -32,7 +32,7 @@ own, under the same licence as Lemmatrix; the pictures are placeholders drawn by
 `samples/make_elicit_test.py`.
 
 **The comparative wordlists** (`lemmatrix/wordlists/`; IDEAS.md idea 40) are data, not code, and
-not under the GPL:
+not under the AGPL:
 
 | List | Source | Terms |
 |---|---|---|

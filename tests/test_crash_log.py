@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """A crash inside Qt closes Lemmatrix with no message box; lemmatrix-crash.log keeps where it was
 (Josh, 23 October: it closed silently while opening the sample database)."""
 

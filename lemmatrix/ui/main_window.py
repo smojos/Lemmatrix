@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The main window: lemma list on the left, the Matrix on the right."""
 
 from __future__ import annotations
@@ -21,15 +21,21 @@ from . import theme
 
 def about_text() -> str:
     """Help → About Lemmatrix: version, copyright, licence, source and libraries."""
-    from .. import COPYRIGHT, SOURCE_URL, SUPPORT_EMAIL
+    from .. import CONCEPT_DOI, COPYRIGHT, SOURCE_URL, SUPPORT_EMAIL
     return (f"<b>Lemmatrix</b> {__version__}<br>"
             "Phonological and grammatical analysis and linguistic documentation, for any language. "
             "Prototype (Stage 1).<br><br>"
-            f"{COPYRIGHT}<br><br>"
-            "Lemmatrix is free software: you can redistribute it and/or modify it under the terms of "
-            "the GNU General Public License as published by the Free Software Foundation, either "
-            "version 3 of the License, or (at your option) any later version. It comes with "
-            "<b>no warranty</b>, to the extent permitted by law.<br><br>"
+            f"{COPYRIGHT}<br>"
+            "Lemmatrix, its idea and its design are the work of Joshua A. G. Smolders. "
+            f'Cite it as <a href="https://doi.org/{CONCEPT_DOI}">doi:{CONCEPT_DOI}</a>.<br><br>'
+            "Lemmatrix is free software, free of charge, always: you can redistribute it and/or modify "
+            "it under the terms of the GNU Affero General Public License as published by the Free "
+            "Software Foundation, either version 3 of the License, or (at your option) any later "
+            "version, with the additional terms in NOTICE.md (keep the author's credit, mark changes, "
+            "use another name). It comes with <b>no warranty</b>, to the extent permitted by law.<br><br>"
+            "The icons, the splash screen and the ɛλicit drawings are the author's artwork, "
+            "all rights reserved (ARTWORK.md). Lemmatrix™ and ɛλicit™ are trademarks of "
+            "Joshua A. G. Smolders.<br><br>"
             f'Source code: <a href="{SOURCE_URL}">{SOURCE_URL.removeprefix("https://")}</a><br>'
             f'Support, bugs and suggestions: <a href="mailto:{SUPPORT_EMAIL}">{SUPPORT_EMAIL}</a><br><br>'
             "<small>Built with Qt for Python (PySide6, LGPL-3.0), NumPy, sounddevice, SoundCard, "

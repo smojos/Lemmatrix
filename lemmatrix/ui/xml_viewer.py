@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The XML viewer (IDEAS.md idea 23, built 21 October 2026): the database file, read-only.
 
 Opened from Josh's χμλ button, between ɛλicit and Texts and utterances (or View → XML viewer). It

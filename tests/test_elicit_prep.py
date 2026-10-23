@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """What ɛλicit (IDEAS.md idea 19) needs from the rest of the program, built first (20 October):
 second languages hidden by default, translations in them on tokens, the participants' consent
 ticks and researchers' emails, and the Images folder."""

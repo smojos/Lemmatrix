@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Picking a lemma: for Move token to another lemma (IDEAS.md idea 11; the moving is in move.py)
 and for Create token from a text's line (idea 31)."""
 

@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The comparative wordlists (IDEAS.md idea 40, 22 October 2026): the lists and their mapping,
 new databases built on each, format 9, the search, the export and Link to wordlists."""
 

@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """To Do (Josh, 21 October): a list parallel to Questions, Push to To Do (the orange flag), View →
 To Do, the notebook's To Do tab, and Convert to To Do / Convert to question."""
 

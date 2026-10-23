@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The comparative wordlists (IDEAS.md idea 40, designed with Josh 22 October 2026): the
 Extended African Comparative Wordlist (EACW, Josh's own), the SIL Comparative African Wordlist
 (CAWL; Snider & Roberts 2006) and the Swadesh list (207 items).
@@ -15,7 +15,7 @@ The data files beside this module (tab-separated, UTF-8, one header line):
 - `cawl.tsv`: number, domain, word class, the EACW items it maps to, and its English and French
   glosses when SIL's permission allows them to be shipped (until then the columns are empty);
 - `swadesh.tsv`: number, gloss, word class, the EACW items and CAWL numbers it maps to.
-The data files are not under the GPL: see `THIRD-PARTY.md` and `CITATIONS` below.
+The data files are not under the AGPL: see `THIRD-PARTY.md` and `CITATIONS` below.
 
 No Qt here.
 """
