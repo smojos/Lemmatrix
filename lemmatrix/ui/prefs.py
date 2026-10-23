@@ -63,6 +63,17 @@ class Prefs:
     def get_bool(self, key: str, default: bool = False) -> bool:
         return self._get(key, default, bool)
 
+    @property
+    def you(self) -> dict:
+        """The researcher using this computer (Josh, 23 October): name, code and email, filled into
+        File → New database from the last new database, and kept by the new-day reset."""
+        return {k: str(self.q.value(f"you/{k}", "") or "") for k in ("name", "code", "email")}
+
+    @you.setter
+    def you(self, v: dict):
+        for k in ("name", "code", "email"):
+            self.q.setValue(f"you/{k}", (v or {}).get(k, ""))
+
     def get_value(self, key: str):
         return self.q.value(key)
 

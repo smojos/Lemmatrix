@@ -303,6 +303,8 @@ def hum(pitch_text: str) -> np.ndarray:
 class Builder:
     def __init__(self):
         self.db = db = new_database()
+        from lemmatrix.defaults import easter_egg_locations   # Ucluelet and Pade: kept here (Josh)
+        db.metadata.locations = easter_egg_locations()
         md = db.metadata
         md.language_code, md.language_name = "LXX", "Sample language"
         md.variety_code, md.variety_name = "VXX", "Sample variety"

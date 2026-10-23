@@ -12,9 +12,9 @@ as they were when pitch is shown again (Josh, 23 October: *preserve and protect 
 It is a view setting of the open database, kept in its workspace (``pitch/shown``), so it never
 marks the database unsaved and is not an undo step.
 
-Underneath, the system is in three parts, so a database of another kind (an intonational language:
-pitch on utterances only, no scratchpads; to be designed) can switch on only some of them. For now
-the one tick switches all three. No Qt here.
+Underneath, the system is in three parts. The database's **pitch kind** (``pitchkind``: tonal,
+intonational, unspecified) says which parts it has at all; the tick hides the parts it has. No Qt
+here.
 """
 from __future__ import annotations
 
@@ -27,30 +27,49 @@ PARTS = (TOKENS, UTTERANCES, SCRATCHPADS)
 
 DRAWING = "drawing"            # the key of the pitch drawing in columns and cell views
 
-_shown = {p: True for p in PARTS}   # the open database's, set from its workspace by the document
+_tick = True                   # Show the pitch system: the open database's, from its workspace
+_parts = set(PARTS)            # the parts its pitch kind has (pitchkind.PARTS; tonal: all three)
 
 
 def load(ws) -> None:
-    """Take the open database's setting from its workspace (None: shown)."""
-    on = True if ws is None else ws.get_bool(KEY, True)
-    for p in PARTS:
-        _shown[p] = on
+    """Take the open database's tick from its workspace (None: shown)."""
+    global _tick
+    _tick = True if ws is None else ws.get_bool(KEY, True)
+
+
+def set_kind(kind: str) -> None:
+    """Take the open database's pitch kind (tonal, intonational, unspecified; idea 9): which parts
+    of the pitch system it has at all."""
+    from .pitchkind import PARTS as KIND_PARTS, DEFAULT
+    global _parts
+    _parts = set(KIND_PARTS.get(kind, KIND_PARTS[DEFAULT]))
 
 
 def store(ws, on: bool) -> None:
     """Show (True) or hide (False) the pitch system: written into the workspace and taken at once.
     Shown is the default, so it is written only when hidden."""
+    global _tick
     if ws is not None:
         ws.set(KEY, None if on else False)
-    for p in PARTS:
-        _shown[p] = on
+    _tick = on
+
+
+def tick() -> bool:
+    """Settings → Pitch → Show the pitch system, as ticked."""
+    return _tick
+
+
+def has(part: str | None = None) -> bool:
+    """Whether the database's pitch kind has this part of the pitch system (any part: None)."""
+    return bool(_parts) if part is None else part in _parts
 
 
 def shown(part: str | None = None) -> bool:
-    """Whether the pitch system (or one part of it) is shown for the open database."""
+    """Whether a part of the pitch system is shown: the kind has it and the tick is on. With no
+    part, whether any of it is shown."""
     if part is None:
-        return all(_shown.values())
-    return _shown.get(part, True)
+        return _tick and bool(_parts)
+    return _tick and part in _parts
 
 
 def hidden(part: str | None = None) -> bool:

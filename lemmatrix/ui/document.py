@@ -127,6 +127,58 @@ class WordlistBaseCommand(QUndoCommand):
         self.doc.changed.emit()
 
 
+class PitchKindCommand(QUndoCommand):
+    """Converting the pitch kind (idea 9): the kind, the fields added or removed, and any data
+    deleted, as one undo step. Applied already when pushed."""
+
+    def __init__(self, doc: "Document", label: str, before, after):
+        super().__init__(label)
+        self.doc, self.before, self.after = doc, before, after
+        self._skip = True
+
+    @staticmethod
+    def capture(db):
+        """What converting can change: the kind, the field lists, the range, and every Pitch and
+        Tone Class value (a few thousand short strings at most)."""
+        from .. import pitchkind
+        values = []
+        names = {f.name for f in db.settings.token_fields if f.role == "pitch"} | {"Pitch"}
+        tc = pitchkind.tone_class_field(db)
+        for e in list(db.entries) + list(db.utterances):
+            for t in e.tokens:
+                for n in names:
+                    if n in t.values:
+                        values.append((t, n, t.values[n]))
+            for n in ({tc.name} if tc else set()) | {"ToneClass"}:
+                if n in e.values:
+                    values.append((e, n, e.values[n]))
+        s = db.settings
+        return (dict(db.metadata.typology), list(s.entry_fields), list(s.token_fields),
+                s.pitch_low, s.pitch_high, values)
+
+    def _put(self, state):
+        db = self.doc.db
+        typology, entry_fields, token_fields, low, high, values = state
+        db.metadata.typology = dict(typology)
+        db.settings.entry_fields[:] = entry_fields
+        db.settings.token_fields[:] = token_fields
+        db.settings.pitch_low, db.settings.pitch_high = low, high
+        for obj, name, _ in self.before[5] + self.after[5]:
+            obj.values.pop(name, None)
+        for obj, name, value in values:
+            obj.values[name] = value
+        self.doc.pitch_kind_changed()
+
+    def redo(self):
+        if self._skip:
+            self._skip = False
+            return
+        self._put(self.after)
+
+    def undo(self):
+        self._put(self.before)
+
+
 class AddManyCommand(QUndoCommand):
     """Several entries or utterances added at once (an import): one undo step.
 
@@ -244,6 +296,7 @@ class Document(QObject):
     hypothesesChanged = Signal()  # Cogitate: a hypothesis made, edited, linked… (or undone)
     linesChanged = Signal(str)    # a text's lines changed (its id)
     settingsChanged = Signal()    # metadata or settings changed
+    pitchKindChanged = Signal()   # the pitch kind converted (or undone): idea 9
     dirtyChanged = Signal(bool)
 
     def __init__(self, db: Database):
@@ -262,6 +315,7 @@ class Document(QObject):
         self.workspace = wsmod.Workspace()      # the working state, beside the database (idea 36)
         from .. import pitchview
         pitchview.load(self.workspace)          # a blank workspace: the pitch system shown
+        pitchview.set_kind("tonal")
         self._ws_written = None                 # (path, text) as last written, so nothing is written twice
         self._ws_timer = QTimer(self)
         self._ws_timer.setSingleShot(True)
@@ -542,12 +596,33 @@ class Document(QObject):
         if self.workspace.dirty:
             self._ws_timer.start()
 
+    def convert_pitch_kind(self, new: str, delete=frozenset()) -> list[str]:
+        """Make the database the new pitch kind (idea 9), deleting only the data ticked for it:
+        one undo step. Returns what was done, in words."""
+        from .. import pitchkind
+        before = PitchKindCommand.capture(self.db)
+        done = pitchkind.convert(self.db, new, delete)
+        after = PitchKindCommand.capture(self.db)
+        self.undo.push(PitchKindCommand(self, f"Pitch kind: {pitchkind.LABELS[new]}", before, after))
+        self.pitch_kind_changed()
+        return done
+
+    def pitch_kind_changed(self):
+        """The pitch kind (or its fields) changed: every view follows, and it is an unsaved change."""
+        from .. import pitchkind, pitchview
+        pitchview.set_kind(pitchkind.kind(self.db))
+        self._settings_dirty = True
+        self.dirtyChanged.emit(True)
+        self.settingsChanged.emit()
+        self.pitchKindChanged.emit()
+        self.changed.emit()
+
     def set_pitch_shown(self, on: bool):
         """Show or hide the pitch system (Settings → Pitch, View → Show pitch system; idea 9): a view
         setting in the workspace, so the database stays as saved or unsaved as it was, with no undo
         step. Every window listening to settingsChanged shows or hides its pitch."""
         from .. import pitchview
-        if pitchview.shown() == on and self.workspace.get(pitchview.KEY, True) == on:
+        if pitchview.tick() == on and self.workspace.get(pitchview.KEY, True) == on:
             return
         pitchview.store(self.workspace, on)
         if self.workspace.dirty:
@@ -589,6 +664,8 @@ class Document(QObject):
         self._ws_timer.stop()
         self.workspace = ws
         pitchview.load(ws)                      # its Show the pitch system (idea 9)
+        from .. import pitchkind
+        pitchview.set_kind(pitchkind.kind(self.db))   # and its pitch kind (data: the typology)
         self._ws_written = ((str(wsmod.path_for(self.db.path)), wsmod.to_string(ws, self.db))
                             if written and self.db.path else None)
 

@@ -362,6 +362,29 @@ class RenameDatabaseDialog(QDialog):
         ok_btn.setEnabled(changed)
 
 
+def pitch_kind_row(kind: str):
+    """The Pitch kind choice (idea 9): Tonal, Intonational, Unspecified, with the (i) hover saying
+    the database can be converted at any time. Returns (combo, row widget)."""
+    from .. import pitchkind
+    combo = QComboBox()
+    for k in pitchkind.KINDS:
+        combo.addItem(pitchkind.LABELS[k], k)
+        combo.setItemData(combo.count() - 1, pitchkind.TIPS[k], Qt.ToolTipRole)
+    combo.setCurrentIndex(max(0, combo.findData(kind)))
+    combo.setToolTip("Whether the language is tonal: what pitch the database has (a fact about the "
+                     "language, kept as typology in the database)")
+    info = QLabel("ⓘ")
+    info.setToolTip(pitchkind.CONVERT_NOTE)
+    info.setStyleSheet(f"color: {theme.muted()};")
+    w = QWidget()
+    h = QHBoxLayout(w)
+    h.setContentsMargins(0, 0, 0, 0)
+    h.addWidget(combo)
+    h.addWidget(info)
+    h.addStretch(1)
+    return combo, w
+
+
 class MetadataDialog(QDialog):
     """Language, variety, the database's name, author, description and gloss languages.
 
@@ -391,6 +414,9 @@ class MetadataDialog(QDialog):
         form.addRow("Language name", self.lang_name)
         form.addRow("Variety code", self.var_code)
         form.addRow("Variety name", self.var_name)
+        from .. import pitchkind
+        self.pitch_kind, row = pitch_kind_row(pitchkind.kind(db))   # idea 9; converted by the main window
+        form.addRow("Pitch kind", row)
         form.addRow("Database name", self.db_name)
         form.addRow("Author / owner", self.author)
         form.addRow("Description", self.description)
@@ -680,13 +706,23 @@ class PreferencesDialog(QDialog):
                            (None, self.conv_caps), ("Translations in", self.conv_quotes)])])
         from .. import pitchview                     # Show the pitch system (idea 9; this database's workspace)
         self.pitch_on = QCheckBox("Show the pitch system")
-        self.pitch_on.setChecked(pitchview.shown())
+        self.pitch_on.setChecked(pitchview.tick())
         self.pitch_on.setToolTip("The Pitch field, the pitch drawing, pitch playback (Ctrl+Shift+Space), "
                                  "Raise and Lower pitch, Bulk edit's Pitch shortcut and the pitch scratchpads. "
                                  "Off hides them everywhere, to declutter: the data is kept exactly as it is "
                                  "(tone fields such as Tone Class stay), and everything comes back as it was "
                                  "when it is ticked again. Also View → Show pitch system.")
-        page("Pitch", [("Show (this database)", [(None, self.pitch_on)]),
+        from .. import pitchkind
+        kind = pitchkind.kind(db)                    # the database's pitch kind (idea 9)
+        self.kind_note = QLabel(f"Pitch kind: {pitchkind.LABELS[kind]}. {pitchkind.TIPS[kind]}.")
+        self.kind_note.setWordWrap(True)
+        self.kind_note.setToolTip(pitchkind.CONVERT_NOTE)
+        self.kind_btn = QPushButton("Change the pitch kind…")
+        self.kind_btn.setToolTip("Edit → Metadata → Pitch kind. " + pitchkind.CONVERT_NOTE)
+        self.kind_btn.clicked.connect(lambda *_: self._change_kind())
+        self.change_kind_requested = False
+        page("Pitch", [("Pitch kind (this database)", [(None, self.kind_note), (None, self.kind_btn)]),
+                       ("Show (this database)", [(None, self.pitch_on)]),
                        ("This database", [("Lowest pitch digit", self.low),
                                           ("Highest pitch digit", self.high)]),
                        ("This computer", [("Pitch playback", voice_row),
@@ -696,6 +732,15 @@ class PreferencesDialog(QDialog):
         self.pitch_on.toggled.connect(lambda on: [w.setEnabled(on) for w in under])
         for w in under:                           # greyed under the tick while it is off
             w.setEnabled(self.pitch_on.isChecked())
+        if not pitchkind.has_pitch_field(kind):   # unspecified: no pitch at all, only Change…
+            self.pitch_on.setEnabled(False)
+            for w in under:
+                w.setEnabled(False)
+
+    def _change_kind(self):
+        """Change the pitch kind…: closes Settings (its changes kept) and opens Edit → Metadata."""
+        self.change_kind_requested = True
+        self.accept()
 
     def _listen(self):
         from .. import audio, pitchsound

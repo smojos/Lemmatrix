@@ -102,6 +102,14 @@ class ComparisonPads(QWidget):
             on = pitchview.shown(pitchview.SCRATCHPADS)
         for p in self.pads:
             p.setVisible(on)
+        # the pitch kind has no scratchpads (intonational, unspecified): "no pitch", nothing to unhide
+        kind_has = pitchview.has(pitchview.SCRATCHPADS)
+        self.hidden_note.setText("pitch hidden" if kind_has else "no pitch")
+        self.hidden_note.setToolTip(
+            "The pitch system is hidden. Right-click to unhide it (or View → Show pitch system, or "
+            "File → Settings → Pitch)" if kind_has else
+            "This database's pitch kind has no pitch scratchpads (Edit → Metadata → Pitch kind)")
+        self.hidden_note.setContextMenuPolicy(Qt.CustomContextMenu if kind_has else Qt.NoContextMenu)
         self.hidden_note.setVisible(not on)
 
     def note_menu(self):

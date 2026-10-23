@@ -21,15 +21,16 @@ from .model import (LEMMAS, TEXTS, UTTERANCES, ClipSource, Database, Entry, Fiel
                     Location, Metadata, Person, RefCategory, Settings, Tag, TagStructure, Text, TierMapping,
                     TierRule, Token, Utterance, is_utterance, new_id, nfc, write_atomically, xml_safe)
 
-FORMAT_VERSION = "9"
+FORMAT_VERSION = "10"
 WORDLIST_ATTRS = {"EACW": "eacw", "CAWL": "cawl", "SWADESH": "swadesh"}   # format 9 (idea 40)
 # Until version 1.0 only the current format is read (Josh, 18 October 2026: his database is the
 # only one, so there is no compatibility code for older formats). When the format changes, a
 # provisional upgrade from the format before is written for his database and taken out again
 # once it has been saved in the new one.
-READABLE = ("5", "6", "7", "8", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
+READABLE = ("5", "6", "7", "8", "9", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
 # 7: before researchers had the Identifiable? tick and both ticks were always written; 8: before the
-# comparative wordlists (format 9, 22 October: no base and no numbers yet, so nothing to change)
+# comparative wordlists (format 9, 22 October: no base and no numbers yet, so nothing to change);
+# 9: before the <typology> block (format 10, 23 October: an older file is tonal, as every database was)
 BACKUPS_KEPT = 10
 
 
@@ -219,6 +220,11 @@ def _load_metadata(m) -> Metadata:
         md.language_code, md.language_name = nfc(x.get("code", "")), _text(x)
     if (x := m.find("variety")) is not None:
         md.variety_code, md.variety_name = nfc(x.get("code", "")), _text(x)
+    md.typology = {"tone": "tonal"}             # format 10; an older database is tonal (Josh, 23 October)
+    if (t := m.find("typology")) is not None:
+        for f in t.findall("feature"):
+            if f.get("id"):
+                md.typology[f.get("id")] = (f.get("value") or "").strip()
     md.name = _text(m.find("name"))
     md.author = _text(m.find("author"))
     md.researchers = [_load_person(r, researcher=True) for r in m.findall("researcher")]
@@ -339,7 +345,8 @@ def load(path: str | os.PathLike) -> Database:
     _unique_ids(db)
     _origin_to_stem_type(db)
     from .defaults import ensure_core_fields
-    restored = ensure_core_fields(db.settings)
+    restored = ensure_core_fields(db.settings, skip_roles=() if md.typology.get("tone") != "unspecified"
+                                  else ("pitch",))       # an unspecified database has no Pitch (idea 9)
     from .model import NEW_ROLES
     added = [f.title for f in db.settings.entry_fields if f.role in NEW_ROLES and f.title in restored]
     restored = [t for t in restored if t not in added]
@@ -474,6 +481,10 @@ def to_element(db: Database) -> ET.Element:
         ET.SubElement(m, "language", code=md.language_code).text = md.language_name or None
     if md.variety_code or md.variety_name:
         ET.SubElement(m, "variety", code=md.variety_code).text = md.variety_name or None
+    # format 10 (ideas 9 and 56): typological features, right after the language, always written
+    ty = ET.SubElement(m, "typology")
+    for fid, value in (md.typology or {"tone": "tonal"}).items():
+        ET.SubElement(ty, "feature", id=fid, value=value)
     if md.name:
         ET.SubElement(m, "name").text = md.name
     if md.author:
@@ -535,7 +546,8 @@ def to_element(db: Database) -> ET.Element:
                                  "auto-update-names": _yes(s.auto_update_names)})
     # how to read the pitch digits; the display style, saved matrices and the spelling list are
     # working state, kept in the workspace file since format 7 (workspace.py)
-    ET.SubElement(st, "pitch", {"display-range": f"{s.pitch_low}-{s.pitch_high}"})
+    if db.metadata.typology.get("tone") != "unspecified":   # an unspecified database has no pitch (idea 9)
+        ET.SubElement(st, "pitch", {"display-range": f"{s.pitch_low}-{s.pitch_high}"})
     for extra in s.extra:
         st.append(extra)
 

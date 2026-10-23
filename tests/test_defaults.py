@@ -57,9 +57,14 @@ def test_lists_people_and_places():
     assert [(i.name, [c.name for c in i.children]) for i in infl] == [("Nominal", ["I", "II"]), ("Verbal", ["I", "II"])]
     assert [p.code for p in md.researchers] == ["RS1", "RS2"]
     assert [p.code for p in md.participants] == ["SP1", "SP2"]
-    assert md.location_path("UCL-V") == "Canada › British Columbia › Ucluelet"
-    assert md.location_path("PADE") == "Ethiopia › Gambella Regional State › Pade"
-    assert "not a known location" in md.location("PADE").description.lower()
+    # generic since 23 October (Josh): country › region › town, twice; Ucluelet and Pade only in the samples
+    assert md.location_path("L1T") == "L1 › L1 Region › L1 Town"
+    assert md.location_path("L2T") == "L2 › L2 Region › L2 Town"
+    assert [md.location(k).description for k in ("L1", "L1R", "L1T")] == ["country", "region", "town"]
+    assert md.location("UCL-V") is None
+    eggs = defaults.easter_egg_locations()
+    assert eggs[0].children[0].children[0].name == "Ucluelet"
+    assert "not a known location" in eggs[1].children[0].children[0].description.lower()
     assert "Dixon" in defaults.DIXON_NOTE and "296" in defaults.DIXON_NOTE
 
 
@@ -96,9 +101,9 @@ def test_reset_places_keeps_those_in_use_with_their_parents():
            Location("Canada", "CA", children=[Location("Yukon", "YT")])]
     out, kept = resets.merge_locations(defaults.default_locations(), cur, lambda k: k in {"V1", "YT"})
     tops = [x.key for x in out]
-    assert tops == ["CA", "ET", "SU"]
+    assert tops == ["L1", "L2", "SU", "CA"]                               # generic since 23 October
     assert [c.key for c in out[2].children] == ["V1"]                     # V2 isn't in use
-    assert [c.key for c in out[0].children] == ["BC", "YT"]               # merged into Canada
+    assert [c.key for c in out[3].children] == ["YT"]                     # Canada kept for Yukon
     assert sorted(kept) == ["V1", "YT"]
 
 
@@ -131,7 +136,7 @@ def test_reset_buttons_in_the_lists_dialogue(win, monkeypatch):
                                                          dlg._participant_use))
     assert [p.code for p in dlg.participants.people()][:2] == ["SP1", "SP2"]
     dlg._reset("Locations", dlg._reset_locations)
-    assert [x.key for x in dlg.locations.locations()][:2] == ["CA", "ET"]
+    assert [x.key for x in dlg.locations.locations()][:2] == ["L1", "L2"]
     tone = next(f for f, _ in dlg.field_lists if f.name == "ToneClass")
     ed = dict((f.name, e) for f, e in dlg.field_lists)["ToneClass"]
     dlg._reset_field(tone, ed)

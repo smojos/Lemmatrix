@@ -168,6 +168,7 @@ class MainWindow(QMainWindow):
         self._restore_window()
         self.doc.work_date = self.work_date
         self.doc.changed.connect(self._doc_changed)
+        self.doc.pitchKindChanged.connect(self.pitch_view_changed)   # converted, or undone (idea 9)
         self.doc.dirtyChanged.connect(self._dirty_changed)
         self.autosave = QTimer(self)
         self.autosave.timeout.connect(self._autosave)
@@ -2058,14 +2059,20 @@ class MainWindow(QMainWindow):
         box.setWindowTitle("Current Session")
         box.setText(f"It's a new day. The Current Session was last used on {last}.")
         names = "  ·  ".join(", ".join(v) for v in self.session_keys().values() if v)
-        box.setInformativeText(f"Keep its people and places ({names}) for today, or reset it?")
+        box.setInformativeText(f"Keep its people and places ({names}) for today, or reset it? "
+                               "Reset keeps the researcher; the participants and places go.")
         keep = box.addButton("Keep", QMessageBox.AcceptRole)
         box.addButton("Reset", QMessageBox.DestructiveRole)
         box.setDefaultButton(keep)
         box.exec()
         if box.clickedButton() is not keep:
-            for row in self.sess_rows.values():
-                row.set_keys([])
+            # Reset keeps the researcher (Josh, 23 October): you, as this computer knows you (File →
+            # New database), or the panel's researchers if it doesn't; participants and places go
+            me = self.prefs.you.get("code", "")
+            have = list(self.sess_rows[chips.RESEARCHERS].keys)
+            keep_researchers = [c for c in have if c == me] if me and me in have else have
+            for kind, row in self.sess_rows.items():
+                row.set_keys(keep_researchers if kind == chips.RESEARCHERS else [])
             self._fill_speakers()
         self._remember_session()
 
@@ -3443,15 +3450,46 @@ class MainWindow(QMainWindow):
         self.doc.delete_entry(e)
 
     # ============================================================ settings
-    def edit_metadata(self):
+    def edit_metadata(self, focus: str = ""):
+        from .. import pitchkind
         dlg = MetadataDialog(self, self.doc.db)
+        if focus == "pitch kind":
+            dlg.pitch_kind.setFocus()
         if dlg.exec():
             dlg.apply()
+            new = dlg.pitch_kind.currentData()
+            if new != pitchkind.kind(self.doc.db):
+                self.convert_pitch_kind(new)      # its own undo step (idea 9)
             self.doc.settings_changed()
             self._fill_session()
             self._fill_db_title()
             self._setup_columns()
             self._maybe_update_names()
+
+    def convert_pitch_kind(self, new: str) -> bool:
+        """Convert the database's pitch kind (idea 9). Data the new kind doesn't show is kept hidden
+        unless ticked for deleting (after the full-backup question); one undo step."""
+        from .. import pitchkind
+        from .pitchkind_dialog import BACKUP_FIRST, CANCEL, DELETE, ConvertDialog, ask_backup
+        db = self.doc.db
+        holding = pitchkind.holdings(db, new)
+        delete = set()
+        if holding:
+            dlg = ConvertDialog(self, db, new, holding)
+            dlg.exec()
+            if dlg.answer == CANCEL:
+                return False
+            if dlg.answer == DELETE:
+                b = ask_backup(self)
+                if b == CANCEL:
+                    return False
+                if b == BACKUP_FIRST and not self.full_backup():
+                    return False                  # the backup didn't happen: nothing deleted
+                delete = dlg.ticked()
+        done = self.doc.convert_pitch_kind(new, delete)
+        self.statusBar().showMessage(f"Pitch kind: {pitchkind.LABELS[new]}"
+                                     + (". " + "; ".join(done) if done else "") + ".", 8000)
+        return True
 
     def edit_fields(self):
         dlg = FieldsDialog(self, self.doc.db)
@@ -3584,7 +3622,8 @@ class MainWindow(QMainWindow):
         a = getattr(self, "pitch_view_action", None)
         if a is not None:
             a.blockSignals(True)
-            a.setChecked(pitchview.shown())
+            a.setChecked(pitchview.tick())
+            a.setEnabled(pitchview.has())          # an unspecified database has no pitch to show
             a.blockSignals(False)
         if hasattr(self, "comparison"):
             self.comparison.show_pitch()
@@ -3616,6 +3655,8 @@ class MainWindow(QMainWindow):
                 self.notebook_dialog._show_history_ticks()
             if names_changed:
                 self._maybe_update_names()
+            if dlg.change_kind_requested:         # Settings → Pitch → Change the pitch kind…
+                self.edit_metadata(focus="pitch kind")
 
     def _maybe_update_names(self):
         db = self.doc.db
@@ -4017,18 +4058,18 @@ class MainWindow(QMainWindow):
     def new_file(self):
         if not self._confirm_discard():
             return
-        from .wordlist_dialogs import ask_start_list
-        base = ask_start_list(self)               # EACW, CAWL, Swadesh or blank (idea 40)
-        if base is None:
+        from .. import newdb
+        from .new_database import NewDatabaseDialog
+        dlg = NewDatabaseDialog(self, self.prefs)  # one window (idea 9, Josh, 23 October)
+        if not dlg.exec():
             return
         path = self._new_database_path("New database")
         if not path:
             return
-        db = new_database(base)
+        db = newdb.make(dlg.choices())
         db.path = path
         layout.create_layout(path)
         self.load_database(db)
-        self.edit_metadata()
         self.save()
 
     def _new_database_path(self, title: str) -> str:

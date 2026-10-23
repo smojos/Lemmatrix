@@ -125,6 +125,16 @@ def default_participants() -> list[Person]:
 
 
 def default_locations() -> list[Location]:
+    """Generic placeholder places (Josh, 23 October: "it is good to see the structure, but keep it
+    generic"): two countries, each with a region and a town, to rename. Ucluelet and Pade stay only
+    in the sample and test databases, as Easter eggs (easter_egg_locations)."""
+    return [Location(f"L{n}", f"L{n}", "country", children=[
+                Location(f"L{n} Region", f"L{n}R", "region", children=[Location(f"L{n} Town", f"L{n}T", "town")])])
+            for n in (1, 2)]
+
+
+def easter_egg_locations() -> list[Location]:
+    """The places new databases had until 23 October: kept in the sample and test databases."""
     return [Location("Canada", "CA", children=[
                 Location("British Columbia", "BC", children=[Location("Ucluelet", "UCL-V")])]),
             Location("Ethiopia", "ET", children=[
@@ -200,11 +210,12 @@ def default_settings() -> Settings:
     return s
 
 
-def ensure_core_fields(s: Settings) -> list[str]:
+def ensure_core_fields(s: Settings, skip_roles: tuple = ()) -> list[str]:
     """Give every list its core fields (CORE_ROLES), which can't be deleted. A Comment field
     without a role (older files) gets it quietly; a core field that's missing (deleted before it
     was protected) comes back, empty, where it is in a new database. Returns the restored
-    fields' titles."""
+    fields' titles. skip_roles: core roles this database doesn't have (Pitch in a database whose
+    pitch kind is unspecified, idea 9)."""
     defaults = default_settings()
     restored = []
     for attr in ("entry_fields", "token_fields", "text_fields"):
@@ -212,7 +223,7 @@ def ensure_core_fields(s: Settings) -> list[str]:
         if attr == "text_fields" and not have:
             continue                                    # (a database without texts' fields yet)
         for pos, d in enumerate(want):
-            if any(f.role == d.role for f in have):
+            if any(f.role == d.role for f in have) or d.role in skip_roles:
                 continue
             if d.role == "comment":
                 plain = [f for f in have if f.is_comment and not f.role]

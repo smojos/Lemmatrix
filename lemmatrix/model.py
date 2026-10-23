@@ -589,6 +589,9 @@ class Metadata:
     locations: list[Location] = field(default_factory=list)
     description: str = ""
     wordlist_base: str = ""       # EACW, CAWL or SWADESH: the list the references are numbers of (format 9)
+    # typological features (format 10; IDEAS.md ideas 9 and 56): data about the language, read near
+    # the top of the file by people and machines. "tone": tonal, intonational or unspecified
+    typology: dict[str, str] = field(default_factory=lambda: {"tone": "tonal"})
 
     def researcher(self, code: str) -> Person | None:
         return next((p for p in self.researchers if p.code == code), None)

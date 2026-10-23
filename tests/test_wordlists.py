@@ -115,7 +115,7 @@ def test_format_9_round_trip(tmp_path):
     db.path = str(p)
     storage.save(db, p, backup=False)
     text = p.read_text(encoding="utf-8")
-    assert '<database format="9">' in text and '<wordlist base="SWADESH"' in text
+    assert f'<database format="{storage.FORMAT_VERSION}">' in text and '<wordlist base="SWADESH"' in text
     assert re.search(r'<entry ref="042"[^>]* eacw="C001b" cawl="0345"', text)
     assert '<references scheme="sequence" digits="3"' in text
     back = storage.load(p)

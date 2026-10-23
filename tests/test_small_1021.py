@@ -137,7 +137,7 @@ def test_new_day_asks_to_keep_or_reset_the_session(app, monkeypatch):
     assert asked and w.sess_rows[chips.RESEARCHERS].keys == ["RS1"]
     monkeypatch.setattr(QMessageBox, "exec", answer("Reset"))
     w._remind_new_day()
-    assert w.sess_rows[chips.RESEARCHERS].keys == []
+    assert w.sess_rows[chips.RESEARCHERS].keys == ["RS1"]          # Reset keeps the researcher (23 October)
     asked.clear()
     w._session_last_day = "2026-10-21"            # the same day: nothing asked
     w.sess_rows[chips.RESEARCHERS].set_keys(["RS1"])

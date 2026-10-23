@@ -14,7 +14,7 @@ from PySide6.QtCore import QMarginsF, QSizeF, Qt
 from PySide6.QtGui import QGuiApplication, QPageLayout, QPageSize, QPdfWriter, QTextDocument
 from PySide6.QtWidgets import (QButtonGroup, QComboBox, QDialog, QDialogButtonBox, QFileDialog,
                                QHBoxLayout, QHeaderView, QLabel, QMessageBox, QPushButton, QRadioButton,
-                               QTableWidget, QTableWidgetItem, QVBoxLayout)
+                               QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
 from .. import layout
 from .. import wordlists as wl
@@ -33,14 +33,14 @@ def citation_tip(lid: str) -> str:
 # --------------------------------------------------------------------------
 # New database: which list to start from
 # --------------------------------------------------------------------------
-class StartListDialog(QDialog):
-    """Blank, EACW (recommended), CAWL or Swadesh, each with its citation in the hover."""
+class WordlistChoice(QWidget):
+    """Blank, EACW (recommended), CAWL or Swadesh, each with its citation in the hover: the
+    wordlist section of File → New database (ui/new_database.py)."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("New database")
         lay = QVBoxLayout(self)
-        lay.addWidget(QLabel("Start the new database with:"))
+        lay.setContentsMargins(0, 0, 0, 0)
         self.group = QButtonGroup(self)
         choices = [
             (wl.EACW, f"{wl.NAMES[wl.EACW]} (recommended): {len(wl.get(wl.EACW).items):,} lemmas, "
@@ -66,16 +66,34 @@ class StartListDialog(QDialog):
             note.setWordWrap(True)
             note.setStyleSheet("color: grey;")
             lay.addWidget(note)
-        lay.addWidget(QLabel("Every lemma also carries the other two lists' numbers, so the database "
-                             "can be searched (CAWL 345) and exported as any of them."))
+        note = QLabel("Every lemma also carries the other two lists' numbers, so the database can be "
+                      "searched (CAWL 345) and exported as any of them.")
+        note.setWordWrap(True)
+        lay.addWidget(note)
+
+    def choice(self) -> str:
+        b = self.group.checkedButton()
+        return b.property("list") if b is not None else BLANK
+
+
+class StartListDialog(QDialog):
+    """The wordlist choice on its own (kept for callers that ask only that)."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("New database")
+        lay = QVBoxLayout(self)
+        lay.addWidget(QLabel("Start the new database with:"))
+        self.lists = WordlistChoice(self)
+        self.group = self.lists.group
+        lay.addWidget(self.lists)
         bb = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         bb.accepted.connect(self.accept)
         bb.rejected.connect(self.reject)
         lay.addWidget(bb)
 
     def choice(self) -> str:
-        b = self.group.checkedButton()
-        return b.property("list") if b is not None else BLANK
+        return self.lists.choice()
 
 
 def ask_start_list(parent) -> str | None:

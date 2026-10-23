@@ -159,6 +159,8 @@ def join(*parts):
 
 def main(out: Path):
     db = new_database()
+    from lemmatrix.defaults import easter_egg_locations   # Ucluelet and Pade: kept here (Josh)
+    db.metadata.locations = easter_egg_locations()
     md = db.metadata
     md.language_code, md.language_name = "TST", "Testish"
     md.variety_code, md.variety_name = "CEN", "Central"
