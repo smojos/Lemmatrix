@@ -36,6 +36,21 @@ def _install_error_handler():
             pass
 
     sys.excepthook = hook
+    _install_crash_log(log)
+
+
+def _install_crash_log(log: Path):
+    """A crash inside Qt itself closes Lemmatrix silently, with no message box (Josh, 23 October:
+    it closed while opening the sample database). faulthandler writes where Python was at that
+    moment into lemmatrix-crash.log beside the error log, so it can be traced. The file is started
+    afresh on each run, so it only ever holds the last run: empty after a run that ended normally."""
+    import faulthandler
+    try:
+        fh = open(log.with_name("lemmatrix-crash.log"), "w", encoding="utf-8")
+        faulthandler.enable(file=fh, all_threads=True)
+        _install_crash_log.file = fh          # kept open for faulthandler while Lemmatrix runs
+    except OSError:
+        pass
 
 
 def main() -> int:

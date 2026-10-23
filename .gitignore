@@ -181,6 +181,7 @@ cython_debug/
 .cursorindexingignore
 # Lemmatrix
 lemmatrix-errors.log
+lemmatrix-crash.log
 Backups/
 *.saving
 *.part

@@ -95,7 +95,9 @@ as changed; discard that change to get the original back.
 To run the automated tests, double-click **`Run tests.bat`** (after the first run).
 
 If something goes wrong, a message box shows the details, and they're also written to
-`lemmatrix-errors.log` in this folder. Include it when you report a problem.
+`lemmatrix-errors.log` in this folder. Include it when you report a problem. If Lemmatrix
+ever closes by itself with no message, `lemmatrix-crash.log` in this folder says where it was
+(it holds only the last run, so send it before starting Lemmatrix again).
 
 ## What works in this version
 

@@ -831,6 +831,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 
 ### 5.7 Saving and safety
 
+- **Errors:** an unexpected error shows a message box and is added to `lemmatrix-errors.log` beside the program. **A crash inside Qt itself** closes Lemmatrix with no box (Josh, 23 October, opening the sample database with pitch hidden; not reproduced): since 23 October `faulthandler` writes where it was into `lemmatrix-crash.log` beside it, started afresh on each run, so it holds only the last one (empty after a normal run).
 - **Undo and redo** are always available.
 - **Timed autosave**, every 5 minutes by default (on since 18 October; Settings → General changes it, 0 turns it off).
 - **Backup copies:** on each save, the previous version goes into the Backups folder next to the database (the notebook's too). Kept (Josh, 18 October): the **10 most recent**, and spread out in time: the newest of each of the last seven days (so yesterday's and the day before's, and one that becomes a week old), the newest of each week before that up to five weeks (so one becomes a month old), and the newest at least a month old: about 22 at most.
