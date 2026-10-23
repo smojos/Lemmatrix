@@ -552,3 +552,55 @@ def insert_eacw_items(win, near=None):
     if made:
         win.lemmas.select_row(made[0])
         win.statusBar().showMessage(f"Inserted {len(made):,} EACW item(s).", 8000)
+
+
+# --------------------------------------------------------------------------
+# Tools → Check reference order… (Josh, 23 October)
+# --------------------------------------------------------------------------
+def check_reference_order(win):
+    """The lemmas that aren't where the EACW's order puts them, with an offer to move them; one
+    undo step. The order: the list's items at their places, the researcher's own references inside
+    their item's family (B001b after B001), other references at the end of their section (C + ISO
+    code after the last C item)."""
+    db = win.doc.db
+    title = "Check reference order"
+    if not wl.is_eacw(db):
+        QMessageBox.information(win, title, "This database isn't built on the Extended African Comparative "
+                                "Wordlist (Tools → Link to wordlists… sets that).")
+        return
+    order, moving = wl.out_of_place(db.entries)
+    if not moving:
+        QMessageBox.information(win, title, f"All {len(db.entries):,} lemmas are in the list's order.")
+        return
+    before = {id(e): (db.entries[k - 1].ref if k else "(the start)") for k, e in enumerate(db.entries)}
+    after = {id(e): (order[k - 1].ref if k else "(the start)") for k, e in enumerate(order)}
+    d = QDialog(win)
+    d.setWindowTitle(title)
+    d.resize(640, 520)
+    lay = QVBoxLayout(d)
+    note = QLabel(f"{len(moving):,} of the {len(db.entries):,} lemmas aren't in the list's order. Your own "
+                  "references go inside their item's family (B001b after B001) and other references "
+                  "at the end of their section (an ethnic group's C + ISO code after the last C item).")
+    note.setWordWrap(True)
+    lay.addWidget(note)
+    table = QTableWidget(len(moving), 4)
+    table.setHorizontalHeaderLabels(["Lemma", "Gloss", "Now after", "Goes after"])
+    table.verticalHeader().hide()
+    table.setEditTriggers(QTableWidget.NoEditTriggers)
+    for r, e in enumerate(moving):
+        for c, v in enumerate((e.ref, db.gloss(e), before[id(e)], after[id(e)])):
+            table.setItem(r, c, QTableWidgetItem(v))
+    table.resizeColumnsToContents()
+    lay.addWidget(table, 1)
+    buttons = QDialogButtonBox()
+    move = buttons.addButton(f"Move {len(moving):,}", QDialogButtonBox.AcceptRole)
+    buttons.addButton("Close", QDialogButtonBox.RejectRole)
+    buttons.accepted.connect(d.accept)
+    buttons.rejected.connect(d.reject)
+    move.setDefault(True)
+    lay.addWidget(buttons)
+    if d.exec() != QDialog.Accepted:
+        return
+    win.doc.restructure(f"Move {len(moving):,} lemmas into the list's order", order)
+    win.lemmas.set_rows(db.entries)
+    win.statusBar().showMessage(f"Moved {len(moving):,} lemmas into the list's order.", 8000)

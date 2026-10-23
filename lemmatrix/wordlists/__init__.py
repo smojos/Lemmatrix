@@ -25,6 +25,7 @@ No Qt here.
 
 from __future__ import annotations
 
+import bisect
 import csv
 import re
 import unicodedata
@@ -487,32 +488,98 @@ def peek(db, entry) -> str:
     return "\n".join(lines)
 
 
-def insert_position(entries, number: str) -> int:
-    """Where a new lemma for an EACW item goes among the lemmas: after the lemma of the nearest
-    item before it in the list (at the start if none)."""
-    pos = {i.number: k for k, i in enumerate(get(EACW).items)}
-    me = pos.get(number, 10 ** 9)
-    best, at = -1, 0
+_STEM = re.compile(r"^([A-Z]\d{3,4})([a-z]*)$")
+
+
+def _places():
+    """The EACW's items by position, by family (A030 → [(position, ""), (…, "a"), …]) and the last
+    position of each section letter."""
+    items = get(EACW).items
+    pos = {i.number: k for k, i in enumerate(items)}
+    families: dict[str, list[tuple[int, str]]] = {}
+    section_end: dict[str, int] = {}
+    for k, i in enumerate(items):
+        m = _STEM.match(i.number)
+        if m:
+            families.setdefault(m.group(1), []).append((k, m.group(2)))
+        section_end[i.number[:1]] = k
+    return pos, families, section_end
+
+
+def place(ref: str, places=None) -> tuple | None:
+    """Where a reference sorts in the EACW's order (Josh, 23 October): an item at its place; a
+    reference of the researcher's own under an item's number (B001b, A002c) inside that family in
+    alphabetical order of its letters, as the list orders its families (B001, B001b, B001f, B001m);
+    any other reference with a section's letter (an ethnic group's C + ISO code, RC3) at the end of
+    that section, alphabetically. None if it has no place (no section letter)."""
+    pos, families, section_end = places or _places()
+    item = canon(EACW, ref)
+    if item is not None:
+        return (pos[item], 0, "")
+    t = (ref or "").strip()
+    m = _STEM.match(t)
+    if m and m.group(1) in families:
+        fam, mine = families[m.group(1)], m.group(2)
+        before = [k for k, letters in fam if letters < mine]
+        return (max(before), 1, mine) if before else (fam[0][0] - 0.5, 1, mine)
+    if t[:1] in section_end:
+        return (section_end[t[:1]], 2, t)
+    return None
+
+
+def insert_position(entries, ref: str) -> int | None:
+    """Where a new lemma goes among the lemmas of an EACW database: after the last lemma that sorts
+    before it in the list's order (at the start if none). None if its reference has no place."""
+    places = _places()
+    me = place(ref, places)
+    if me is None:
+        return None
+    at = 0
     for k, e in enumerate(entries):
-        p = pos.get(canon(EACW, e.ref) or "", None)
-        if p is not None and best < p < me:
-            best, at = p, k + 1
+        p = place(e.ref, places)
+        if p is not None and p <= me:
+            at = k + 1
     return at
 
 
 def eacw_order(entries) -> list:
-    """Lemmas in the EACW's order; a lemma whose reference isn't an item stays after the one it
-    follows now."""
-    pos = {i.number: k for k, i in enumerate(get(EACW).items)}
-    keyed, last = [], -1.0
+    """Lemmas in the EACW's order (`place`); a lemma whose reference has no place stays after the
+    one it follows now."""
+    places = _places()
+    keyed, last = [], (-1.0, -1, "")
     for k, e in enumerate(entries):
-        p = pos.get(canon(EACW, e.ref) or "")
+        p = place(e.ref, places)
         if p is not None:
-            last = float(p)
-            keyed.append((last, 0, k, e))
+            last = p
+            keyed.append((p, 0, k, e))
         else:
             keyed.append((last, 1, k, e))
     return [e for *_, e in sorted(keyed, key=lambda x: x[:3])]
+
+
+def out_of_place(entries) -> tuple[list, list]:
+    """Tools → Check reference order (Josh, 23 October): the lemmas in the EACW's order, and the
+    fewest lemmas that have to move to get there (the rest, the longest run already in order, stay
+    put)."""
+    entries = list(entries)
+    order = eacw_order(entries)
+    rank = {id(e): k for k, e in enumerate(order)}
+    seq = [rank[id(e)] for e in entries]
+    # the longest increasing run of ranks (patience sorting), kept; everything else moves
+    tails, tails_at, back = [], [], [-1] * len(seq)
+    for k, r in enumerate(seq):
+        j = bisect.bisect_left(tails, r)
+        back[k] = tails_at[j - 1] if j else -1
+        if j == len(tails):
+            tails.append(r)
+            tails_at.append(k)
+        else:
+            tails[j], tails_at[j] = r, k
+    keep, k = set(), (tails_at[-1] if tails_at else -1)
+    while k >= 0:
+        keep.add(id(entries[k]))
+        k = back[k]
+    return order, [e for e in order if id(e) not in keep]
 
 
 # ---- glosses -----------------------------------------------------------

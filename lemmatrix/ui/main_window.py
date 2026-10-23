@@ -1216,6 +1216,7 @@ class MainWindow(QMainWindow):
         self._act(t, "Link to wordlists…", self.link_wordlists)                 # idea 40
         self._act(t, "Insert EACW items…", lambda *_: self.insert_eacw_items())  # idea 40, 23 October
         self._act(t, "Convert references from a table…", self.convert_references)
+        self._act(t, "Check reference order…", self.check_reference_order)     # 23 October
         t.addSeparator()
         self._act(t, "Check &spelling…", self.check_spelling, "F7")
         t.addSeparator()
@@ -3446,14 +3447,10 @@ class MainWindow(QMainWindow):
 
     # ============================================================= entries
     def add_entry(self):
-        from .. import wordlists
         dlg = EntryDialog(self, self.doc.db)
         if dlg.exec():
             e = dlg.new_entry(self.session_speaker(), self.session_date())
-            db = self.doc.db                      # an EACW item goes where the list has it (23 October)
-            at = wordlists.insert_position(db.entries, e.ref) \
-                if wordlists.is_eacw(db) and wordlists.canon(wordlists.EACW, e.ref) else None
-            self.doc.add_entry(e, at)
+            self.doc.add_entry(e, self._entry_place(e))
             self.lemmas.set_rows(self.doc.db.entries)
             self.lemmas.select_row(e)
 
@@ -3477,9 +3474,15 @@ class MainWindow(QMainWindow):
         e = dlg.new_entry(self.session_speaker(), self.session_date())
         if e.tokens and f is not None:
             e.tokens[0].set(field, words, (lang or s.primary_gloss) if f.multilingual else None, f.multilingual)
-        self.doc.add_entry(e)
+        self.doc.add_entry(e, self._entry_place(e))
         self.lemmas.set_rows(db.entries)
         return e
+
+    def _entry_place(self, e) -> int | None:
+        """Where a new lemma goes: in an EACW database at its place in the list's order, items and
+        the researcher's own references alike (Josh, 23 October); otherwise at the end."""
+        db = self.doc.db
+        return wordlists.insert_position(db.entries, e.ref) if wordlists.is_eacw(db) else None
 
     def edit_entry(self):
         e = self.lemmas.current_row()
@@ -4092,6 +4095,11 @@ class MainWindow(QMainWindow):
         """Tools → Convert references from a table… (Josh, 23 October): a conversion map."""
         from .convert_dialog import ConvertReferencesDialog
         ConvertReferencesDialog(self).exec()
+
+    def check_reference_order(self):
+        """Tools → Check reference order… (Josh, 23 October): lemmas out of the EACW's order."""
+        from .wordlist_dialogs import check_reference_order
+        check_reference_order(self)
 
     def link_wordlists(self):
         """Tools → Link to wordlists…: an existing database's base list and numbers (idea 40)."""

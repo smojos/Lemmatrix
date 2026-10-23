@@ -294,3 +294,53 @@ def test_nothing_about_any_one_database_in_the_code():
         if f.is_file():
             text = f.read_text(encoding="utf-8", errors="ignore")
             assert not re.search(r"\bBurun\b", text, re.IGNORECASE) or f.name in ("languages.py",), f
+
+
+class _E:
+    def __init__(self, ref):
+        self.ref = ref
+
+
+def test_ones_own_references_have_a_place():
+    """Josh, 23 October: B001b inside B001's family, an ethnic group after the last C item."""
+    refs = ["V549", "CORMm", "B001m", "CORM", "B001", "V296b", "C045f", "B001b", "CORMf", "C045",
+            "V296", "B001f", "C045m", "D001", "V297", "Z001"]
+    order = [e.ref for e in wl.eacw_order([_E(r) for r in refs])]
+    assert order[:4] == ["B001", "B001b", "B001f", "B001m"]
+    assert order.index("C045m") + 1 == order.index("CORM") < order.index("CORMf") < order.index("CORMm") \
+        < order.index("D001")
+    assert order.index("V296") + 1 == order.index("V296b") == order.index("V297") - 1
+    assert order[order.index("V297") + 1] == "Z001"  # no section of the list: stays after what it follows
+    ents = [_E(r) for r in order]
+    assert order[wl.insert_position(ents, "B001c") - 1] == "B001b"
+    assert order[wl.insert_position(ents, "CAPD") - 1] == "C045m"
+    assert wl.insert_position(ents, "123") is None
+
+
+def test_check_reference_order_moves_the_fewest(win, monkeypatch):
+    from lemmatrix.ui import wordlist_dialogs as wd
+    db = win.doc.db
+    first = db.entries[0]
+    mine = db.new_entry("B001b", gloss="mine")
+    db.entries.remove(first)
+    db.entries += [first, mine]                     # A001 and B001b at the end
+    order, moving = wl.out_of_place(db.entries)
+    assert {e.ref for e in moving} == {first.ref, "B001b"}
+    monkeypatch.setattr(QDialog, "exec", lambda self: QDialog.Accepted)
+    wd.check_reference_order(win)
+    refs = [e.ref for e in db.entries]
+    assert refs[0] == first.ref and refs[refs.index("B001") + 1] == "B001b"
+    assert not wl.out_of_place(db.entries)[1]
+    win.doc.undo.undo()
+    assert db.entries[-1] is mine
+
+
+def test_a_new_lemma_of_ones_own_goes_to_its_place(win, monkeypatch):
+    from lemmatrix.ui import dialogs
+    db = win.doc.db
+    e = db.new_entry("B001b", gloss="mine")
+    monkeypatch.setattr(dialogs.EntryDialog, "exec", lambda self: True)
+    monkeypatch.setattr(dialogs.EntryDialog, "new_entry", lambda self, *a: e)
+    win.add_entry()
+    refs = [x.ref for x in db.entries]
+    assert refs[refs.index("B001") + 1] == "B001b"

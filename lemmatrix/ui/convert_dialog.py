@@ -45,7 +45,8 @@ class ConvertReferencesDialog(QDialog):
         lay.addWidget(self.table, 1)
         self.reorder = QCheckBox("Put the lemmas in the order of the Extended African Comparative Wordlist")
         self.reorder.setToolTip("Lemmas whose references are items of the list go in the list's order; "
-                                "your own stay after the lemma they follow now.")
+                                "your own go inside their item's family (B001b after B001), and other references "
+                                "at the end of their section (C + ISO code after the last C item).")
         self.reorder.setChecked(wl.is_eacw(self.db))
         lay.addWidget(self.reorder)
         bar = QHBoxLayout()
