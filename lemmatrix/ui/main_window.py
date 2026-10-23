@@ -1207,18 +1207,20 @@ class MainWindow(QMainWindow):
         self._act(e, "&Bulk edit…", self.open_bulk_edit, "Ctrl+Shift+B")   # Ctrl+E is edit mode (21 October)
         e.addSeparator()
         self._act(e, "&Write to notebook", self.write_notebook)   # the session panel's pencil (22 October)
-        t = mb.addMenu("&Tools")
-        self._act(t, "Update all soundfile names", self.update_all_names)
+        t = mb.addMenu("&Tools")                       # grouped (Josh, 23 October): audits first
+        t.addSection("Audits")                          # look first, change only when confirmed
         self._act(t, "Check for duplicate file names", self.check_duplicates)
         self._act(t, "Find missing or unlinked recordings…", self.find_missing_recordings)
-        self._act(t, "Fill in recording dates from the soundfiles…", self.fill_recording_dates)
         self._act(t, "Check clipped utterances…", self.check_clipped)
+        self._act(t, "Check reference order…", self.check_reference_order)     # 23 October
+        self._act(t, "Check &spelling…", self.check_spelling, "F7")
+        t.addSection("Soundfiles")
+        self._act(t, "Update all soundfile names", self.update_all_names)
+        self._act(t, "Fill in recording dates from the soundfiles…", self.fill_recording_dates)
+        t.addSection("Wordlists")
         self._act(t, "Link to wordlists…", self.link_wordlists)                 # idea 40
         self._act(t, "Insert EACW items…", lambda *_: self.insert_eacw_items())  # idea 40, 23 October
         self._act(t, "Convert references from a table…", self.convert_references)
-        self._act(t, "Check reference order…", self.check_reference_order)     # 23 October
-        t.addSeparator()
-        self._act(t, "Check &spelling…", self.check_spelling, "F7")
         t.addSeparator()
         t.addMenu(self.elicit_menu)                    # the ɛλicit button's own menu (22 October)
         self.elicit_menu.setTitle("ɛλicit")
