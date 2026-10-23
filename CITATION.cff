@@ -12,14 +12,12 @@ authors:
   - family-names: Smolders
     given-names: Joshua A. G.
 version: 0.2.0
+date-released: 2026-10-23
 doi: 10.5281/zenodo.23512411
 identifiers:
   - type: doi
     value: 10.5281/zenodo.23512411
     description: "Concept DOI: all versions of Lemmatrix (always resolves to the latest)"
-  - type: doi
-    value: 10.5281/zenodo.23512412
-    description: "Version 0.1.1"
 license: AGPL-3.0-or-later
 repository-code: "https://github.com/smojos/Lemmatrix"
 keywords:

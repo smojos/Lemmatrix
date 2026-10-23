@@ -94,24 +94,7 @@ def main() -> int:
         win.open_file(path)                 # warns if it's open on another computer
     splashmod.finish(app, splash, win, win.prefs.splash_seconds)
     if not win.doc.db.path:
-        box = QMessageBox(win)
-        box.setWindowTitle("Welcome to Lemmatrix")
-        box.setText("Open a database to start, or try a copy of the sample database.")
-        sample = box.addButton("Open a copy of the sample", QMessageBox.AcceptRole)
-        opened = box.addButton("Open a database…", QMessageBox.ActionRole)
-        new = box.addButton("New database…", QMessageBox.ActionRole)
-        # the three databases opened most recently on this computer (idea 51; Josh, 23 October)
-        recent = {}
-        for r in [r for r in win.prefs.recent if Path(r["path"]).exists()][:3]:
-            b = box.addButton(r.get("title") or Path(r["path"]).stem, QMessageBox.ActionRole)
-            b.setToolTip(r["path"])
-            recent[b] = r["path"]
-        if recent:
-            box.setText("Open a database to start (or one of those you opened recently), or try a copy "
-                        "of the sample database.")
-        box.addButton("Close", QMessageBox.RejectRole)
-        if not SAMPLE.exists():
-            sample.setEnabled(False)
+        box, sample, opened, new, recent = welcome_box(win)
         box.exec()
         if box.clickedButton() is sample:
             win.open_sample()
@@ -122,6 +105,36 @@ def main() -> int:
         elif box.clickedButton() in recent:
             win.open_file(recent[box.clickedButton()])
     return app.exec()
+
+
+def welcome_box(win):
+    """The box shown when no database is open at start-up (so also on the very first start).
+    Josh's question comes first, with Yes (a copy of the sample) as the default (IDEAS.md idea 52,
+    23 October); his own databases, a new one and the recent ones stay within reach."""
+    from PySide6.QtWidgets import QMessageBox
+    from .ui.main_window import SAMPLE
+    box = QMessageBox(win)
+    box.setWindowTitle("Welcome to Lemmatrix")
+    box.setText("Would you like to load the sample database to see its capabilities?")
+    box.setInformativeText("Or open a database of your own, or start a new one.")
+    sample = box.addButton("Yes, load the sample", QMessageBox.AcceptRole)
+    opened = box.addButton("Open a database…", QMessageBox.ActionRole)
+    new = box.addButton("New database…", QMessageBox.ActionRole)
+    # the three databases opened most recently on this computer (idea 51; Josh, 23 October)
+    recent = {}
+    for r in [r for r in win.prefs.recent if Path(r["path"]).exists()][:3]:
+        b = box.addButton(r.get("title") or Path(r["path"]).stem, QMessageBox.ActionRole)
+        b.setToolTip(r["path"])
+        recent[b] = r["path"]
+    if recent:
+        box.setInformativeText("Or open a database of your own (one you opened recently, below), or "
+                               "start a new one.")
+    box.addButton("Close", QMessageBox.RejectRole)
+    if SAMPLE.exists():
+        box.setDefaultButton(sample)
+    else:
+        sample.setEnabled(False)
+    return box, sample, opened, new, recent
 
 
 if __name__ == "__main__":

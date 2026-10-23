@@ -1952,16 +1952,16 @@ R3PLPOSS	their	PRONOUN	no
 RREFL	self	PRONOUN	yes		reflexive	
 RRECP	each other	PRONOUN	no		reciprocal	
 RLOCDPRX	here	DEM	yes			
-RLOCD2SG	there (near you)	DEM	no		near the addressee	
+RLOCDADR	there (near you)	DEM	no		near the addressee	
 RLOCDMED	there (nearby)	DEM	no		medial distance: between near and far	
 RLOCDDST	there	DEM	yes			
 RLOCDREM	yonder (out of sight)	DEM	no		remote: far away or out of sight	
 R3SGDPRX	this	DEM	yes			
-R3SGD2SG	that (near you)	DEM	no		near the addressee	
+R3SGDADR	that (near you)	DEM	no		near the addressee	
 R3SGDMED	that (nearby)	DEM	no		medial distance: between near and far	
 R3SGDDST	that	DEM	yes			
 R3PLDPRX	these	DEM	no			
-R3PLD2SG	those (near you)	DEM	no		near the addressee	
+R3PLDADR	those (near you)	DEM	no		near the addressee	
 R3PLDMED	those (nearby)	DEM	no		medial distance: between near and far	
 R3PLDDST	those	DEM	no			
 RQ3SG	who	INTERROG	yes			

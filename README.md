@@ -323,6 +323,12 @@ says that it has been changed; and it takes a name of its own.
 as it is, artwork included; anyone who distributes a modified version must make their own icons
 and splash screen for everything.
 
+**The Extended African Comparative Wordlist is CC BY 4.0.** The EACW that new databases can
+start from (`lemmatrix/wordlists/eacw.tsv`, with its links to the SIL Comparative African
+Wordlist and the Swadesh list) is data, not code: © Joshua A. G. Smolders, under the Creative
+Commons Attribution 4.0 licence, so anyone may reuse it, in other wordlists and compilations too,
+with credit ([LICENSE-EACW.md](lemmatrix/wordlists/LICENSE-EACW.md)).
+
 **The name.** Lemmatrix™ and ɛλicit™ are trademarks of Joshua A. G. Smolders. Modified versions
 must use a different name.
 
@@ -333,8 +339,8 @@ The libraries Lemmatrix uses keep their own licences: see [THIRD-PARTY.md](THIRD
 Smolders, Joshua A. G. 2026. *Lemmatrix* (version 0.2.0). Zenodo.
 https://doi.org/10.5281/zenodo.23512411
 
-This DOI always points to the latest version. Each version also has its own on Zenodo
-(0.1.1: [10.5281/zenodo.23512412](https://doi.org/10.5281/zenodo.23512412)), for citing the exact one you used.
+This DOI always points to the latest version. Each version also has its own DOI on Zenodo,
+listed on the record's page, for citing the exact one you used.
 
 See also [CITATION.cff](CITATION.cff) (GitHub's "Cite this repository" button uses it).
 
@@ -343,7 +349,7 @@ See also [CITATION.cff](CITATION.cff) (GitHub's "Cite this repository" button us
 - Dixon, R. M. W. 2010. *Basic Linguistic Theory*, Vol. 1: *Methodology*. Oxford: Oxford
   University Press. The default reference categories (A Human body … V Verbs) are inspired by
   p. 296. They are the categories of the Extended African Comparative Wordlist.
-- Smolders, Joshua. 2026. *Extended African Comparative Wordlist.* The wordlist Lemmatrix's
+- Smolders, Joshua. 2026. *The Extended African Comparative Wordlist: A lexical organization system for field linguists.* The wordlist Lemmatrix's
   reference categories come from, inspired by Dixon (2010), Snider & Roberts (2006) and Swadesh
   (1952, 1955).
 - Snider, Keith & James Roberts. 2006. *SIL Comparative African Wordlist (SILCAWL).* SIL

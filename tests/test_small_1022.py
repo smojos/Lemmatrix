@@ -274,7 +274,7 @@ def test_open_recent(win, tmp_path):
     assert win.prefs.recent == []
 
 
-def test_empty_notebook_days_are_offered_on_a_new_day(win, monkeypatch):
+def test_empty_notebook_days_are_offered_on_a_new_day(win, monkeypatch, tmp_path):
     from PySide6.QtWidgets import QMessageBox
     from lemmatrix import notebook as nb
     book = win.doc.notebook
@@ -290,7 +290,7 @@ def test_empty_notebook_days_are_offered_on_a_new_day(win, monkeypatch):
         box.clickedButton = lambda: next(b for b in box.buttons() if b.text() == "Clear them")
     monkeypatch.setattr(QMessageBox, "exec", exec_)
     monkeypatch.setattr("lemmatrix.ui.main_window.today", lambda: "2026-10-23")
-    win.doc.db.path = win.doc.db.path or "x.xml"
+    win.doc.db.path = win.doc.db.path or str(tmp_path / "x.xml")   # never the working folder
     win._session_last_day = "2026-10-22"
     win._offer_empty_days()
     assert asked and "2026-10-01" in asked[0]

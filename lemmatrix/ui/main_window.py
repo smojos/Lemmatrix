@@ -23,8 +23,10 @@ def about_text() -> str:
     """Help → About Lemmatrix: version, copyright, licence, source and libraries."""
     from .. import CONCEPT_DOI, COPYRIGHT, SOURCE_URL, SUPPORT_EMAIL
     return (f"<b>Lemmatrix</b> {__version__}<br>"
+            "<i>Human readable, machine processable, ethically collected and shared linguistic data.</i>"
+            "<br><br>"
             "Phonological and grammatical analysis and linguistic documentation, for any language. "
-            "Prototype (Stage 1).<br><br>"
+            "Prototype (v0).<br><br>"
             f"{COPYRIGHT}<br>"
             "Lemmatrix, its idea and its design are the work of Joshua A. G. Smolders. "
             f'Cite it as <a href="https://doi.org/{CONCEPT_DOI}">doi:{CONCEPT_DOI}</a>.<br><br>'
@@ -34,12 +36,14 @@ def about_text() -> str:
             "version, with the additional terms in NOTICE.md (keep the author's credit, mark changes, "
             "use another name). It comes with <b>no warranty</b>, to the extent permitted by law.<br><br>"
             "The icons, the splash screen and the ɛλicit drawings are the author's artwork, "
-            "all rights reserved (ARTWORK.md). Lemmatrix™ and ɛλicit™ are trademarks of "
+            "all rights reserved (ARTWORK.md). The Extended African Comparative Wordlist is the "
+            "author's data under CC BY 4.0 (lemmatrix/wordlists/LICENSE-EACW.md). "
+            "Lemmatrix™ and ɛλicit™ are trademarks of "
             "Joshua A. G. Smolders.<br><br>"
             f'Source code: <a href="{SOURCE_URL}">{SOURCE_URL.removeprefix("https://")}</a><br>'
             f'Support, bugs and suggestions: <a href="mailto:{SUPPORT_EMAIL}">{SUPPORT_EMAIL}</a><br><br>'
             "<small>Built with Qt for Python (PySide6, LGPL-3.0), NumPy, sounddevice, SoundCard, "
-            "lemminflect, pyspellchecker, pyzipper, praatio, Pillow and soundfile, each under its own licence "
+            "lemminflect, pyspellchecker, pyzipper, praatio, Pillow, soundfile and pycountry, each under its own licence "
             "(THIRD-PARTY.md).</small>")
 from ..defaults import new_database
 from .. import bulk, notebook as nbmod, predict, report, spelling, wordlists

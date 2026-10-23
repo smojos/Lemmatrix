@@ -1,0 +1,23 @@
+{
+  "title": "Lemmatrix",
+  "upload_type": "software",
+  "version": "0.2.0",
+  "publication_date": "2026-10-23",
+  "creators": [
+    {
+      "name": "Smolders, Joshua A. G."
+    }
+  ],
+  "description": "<p>A program for phonological and grammatical analysis and linguistic documentation, for any language: lemmas with their tagged tokens (transcriptions, pitch and one recording each), paradigm matrices, utterances and texts, stored as readable XML.</p><p><em>Human readable, machine processable, ethically collected and shared linguistic data.</em></p>",
+  "access_right": "open",
+  "license": "agpl-3.0-or-later",
+  "keywords": [
+    "linguistics",
+    "phonology",
+    "fieldwork",
+    "language documentation",
+    "tone",
+    "comparative wordlist"
+  ],
+  "notes": "The code is under AGPL-3.0-or-later, with the additional terms in NOTICE.md (AGPL section 7). Not under the AGPL: the artwork (icons, splash screen and ɛλicit drawings) is © Joshua A. G. Smolders, all rights reserved (ARTWORK.md); the Extended African Comparative Wordlist (lemmatrix/wordlists/eacw.tsv, with its links to the other lists) is © Joshua A. G. Smolders under CC BY 4.0 (lemmatrix/wordlists/LICENSE-EACW.md); the SIL Comparative African Wordlist is included as item and section numbers only (THIRD-PARTY.md). Lemmatrix and ɛλicit are trademarks of Joshua A. G. Smolders."
+}

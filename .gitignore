@@ -189,3 +189,6 @@ screenshots/
 
 # Lemmatrix marks a database as open with this file
 *.lemmatrix-lock
+
+# A workspace a test or a run left in the repository's own folder (never wanted here)
+/*.workspace

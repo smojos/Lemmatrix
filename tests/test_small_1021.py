@@ -114,13 +114,13 @@ def test_questions_button_opens_questions(app, monkeypatch):
     w.close()
 
 
-def test_new_day_asks_to_keep_or_reset_the_session(app, monkeypatch):
+def test_new_day_asks_to_keep_or_reset_the_session(app, monkeypatch, tmp_path):
     from PySide6.QtWidgets import QMessageBox
     from lemmatrix.model import Person
     from lemmatrix.ui import chiprow as chips
     from lemmatrix.ui.main_window import MainWindow
     w = MainWindow()
-    w.doc.db.path = "x.xml"                       # as if opened from a file
+    w.doc.db.path = str(tmp_path / "x.xml")       # as if opened from a file (never the working folder)
     w.doc.db.metadata.researchers.append(Person("RS1"))
     w.sess_rows[chips.RESEARCHERS].set_keys(["RS1"])
     asked = []

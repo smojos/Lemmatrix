@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<workspace format="1" database="x.xml">
-  <settings play-cell-on-click="no" pitch-style="contours" />
-  <state>
-    <value name="session">{"locations": [], "participants": [], "researchers": ["RS1"]}</value>
-    <value name="session/day">"2026-10-21"</value>
-    <value name="session/speaker">""</value>
-  </state>
-</workspace>
