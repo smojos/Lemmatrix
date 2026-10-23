@@ -68,10 +68,22 @@ def test_slogan_in_about():
 def test_welcome_box_asks_josh_question(win):
     from lemmatrix.__main__ import welcome_box
     from lemmatrix.ui.main_window import SAMPLE
-    box, sample, opened, new, recent = welcome_box(win)
-    assert box.text() == "Would you like to load the sample database to see its capabilities?"
-    assert sample.text().startswith("Yes")
-    if SAMPLE.exists():
-        assert box.defaultButton() is sample and sample.isEnabled()
-    labels = [b.text() for b in box.buttons()]
-    assert "Open a database…" in labels and "New database…" in labels and "Close" in labels
+    dlg = welcome_box(win)
+    assert dlg.question.text() == "Would you like to load the sample database to see its capabilities?"
+    assert dlg.sample.text().startswith("Yes") and dlg.sample.isDefault()
+    assert dlg.sample.isEnabled() == SAMPLE.exists()
+    assert dlg.opened.text() == "Open a database…" and dlg.new.text() == "New database…"
+    dlg.sample.click()
+    assert dlg.choice == "sample"
+
+
+def test_welcome_box_recent_databases(app, tmp_path):
+    from lemmatrix.ui.welcome import WelcomeDialog
+    db = tmp_path / "Main.xml"
+    dlg = WelcomeDialog(None, [{"path": str(db), "title": "Burun - Maghaja - Main Database"}])
+    (b, path), = dlg.recent.items()
+    assert b.name == "Main Database" and b.description() == "Burun · Maghaja"
+    assert b.toolTip() == str(db)
+    b.click()
+    assert (dlg.choice, dlg.path) == ("recent", str(db))
+    assert WelcomeDialog(None, [], sample_exists=False).sample.isEnabled() is False

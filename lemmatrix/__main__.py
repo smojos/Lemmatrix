@@ -94,48 +94,27 @@ def main() -> int:
         win.open_file(path)                 # warns if it's open on another computer
     splashmod.finish(app, splash, win, win.prefs.splash_seconds)
     if not win.doc.db.path:
-        box, sample, opened, new, recent = welcome_box(win)
-        box.exec()
-        if box.clickedButton() is sample:
+        dlg = welcome_box(win)
+        dlg.exec()
+        if dlg.choice == "sample":
             win.open_sample()
-        elif box.clickedButton() is opened:
+        elif dlg.choice == "open":
             win.open_file()
-        elif box.clickedButton() is new:
+        elif dlg.choice == "new":
             win.new_file()
-        elif box.clickedButton() in recent:
-            win.open_file(recent[box.clickedButton()])
+        elif dlg.choice == "recent":
+            win.open_file(dlg.path)
     return app.exec()
 
 
 def welcome_box(win):
-    """The box shown when no database is open at start-up (so also on the very first start).
-    Josh's question comes first, with Yes (a copy of the sample) as the default (IDEAS.md idea 52,
-    23 October); his own databases, a new one and the recent ones stay within reach."""
-    from PySide6.QtWidgets import QMessageBox
+    """The welcome window (ui/welcome.py): Josh's question first, with Yes (a copy of the sample)
+    as the default (IDEAS.md idea 52, 23 October); the three databases opened most recently on
+    this computer under it (idea 51)."""
     from .ui.main_window import SAMPLE
-    box = QMessageBox(win)
-    box.setWindowTitle("Welcome to Lemmatrix")
-    box.setText("Would you like to load the sample database to see its capabilities?")
-    box.setInformativeText("Or open a database of your own, or start a new one.")
-    sample = box.addButton("Yes, load the sample", QMessageBox.AcceptRole)
-    opened = box.addButton("Open a database…", QMessageBox.ActionRole)
-    new = box.addButton("New database…", QMessageBox.ActionRole)
-    # the three databases opened most recently on this computer (idea 51; Josh, 23 October)
-    recent = {}
-    for r in [r for r in win.prefs.recent if Path(r["path"]).exists()][:3]:
-        b = box.addButton(r.get("title") or Path(r["path"]).stem, QMessageBox.ActionRole)
-        b.setToolTip(r["path"])
-        recent[b] = r["path"]
-    if recent:
-        box.setInformativeText("Or open a database of your own (one you opened recently, below), or "
-                               "start a new one.")
-    box.addButton("Close", QMessageBox.RejectRole)
-    if SAMPLE.exists():
-        box.setDefaultButton(sample)
-    else:
-        sample.setEnabled(False)
-    return box, sample, opened, new, recent
-
+    from .ui.welcome import WelcomeDialog
+    recent = [r for r in win.prefs.recent if Path(r["path"]).exists()][:3]
+    return WelcomeDialog(win, recent, SAMPLE.exists())
 
 if __name__ == "__main__":
     sys.exit(main())
