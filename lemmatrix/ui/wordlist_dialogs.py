@@ -408,6 +408,22 @@ def link_to_wordlists(win):
         QMessageBox.information(win, "Link to wordlists",
                                 f"None of this database's references is an item of the {wl.NAMES[base]}.")
         return
+    compared, wrong = wl.gloss_mismatches(db, base)
+    if wrong and len(wrong) >= 3 and len(wrong) * 3 >= compared:   # a third or more: probably not its numbers
+        sample = "; ".join(f"{e.ref} {db.gloss(e, 'en') or db.gloss(e)} ≠ {wl.item_gloss(base, i)}"
+                           for e, i in wrong[:5])
+        box = QMessageBox(QMessageBox.Warning, "Link to wordlists",
+                          f"{len(wrong):,} of the {compared:,} lemmas' glosses don't match the "
+                          f"{wl.NAMES[base]}'s items ({sample}{'…' if len(wrong) > 5 else ''}).\n\n"
+                          f"Are these references really numbers of the {wl.NAMES[base]}? Linking gives "
+                          "each lemma the numbers of the item with its reference, whatever its gloss.",
+                          parent=win)
+        go = box.addButton("Link anyway", QMessageBox.AcceptRole)
+        box.addButton(QMessageBox.Cancel)
+        box.setDefaultButton(QMessageBox.Cancel)
+        box.exec()
+        if box.clickedButton() is not go:
+            return
     plan = wl.link_plan(db, base)
     others = [x for x in wl.LIST_IDS if x != base]
     msg = (f"{known:,} of the {len(db.entries):,} lemmas have references in the {wl.NAMES[base]}. "

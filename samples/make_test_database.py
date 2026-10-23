@@ -33,6 +33,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
 from lemmatrix import pitch, storage, workspace  # noqa: E402
+from lemmatrix import wordlists as wl  # noqa: E402
 from lemmatrix.defaults import new_database  # noqa: E402
 from lemmatrix.model import Participant  # noqa: E402
 
@@ -203,12 +204,20 @@ def main(out: Path):
         db.entries.append(e)
         return e
 
+    # Built on the EACW (Josh, 23 October): each lemma takes the item its gloss names, or the next own
+    # reference in its section where the list has none; linked and put in the list's order at the end
+    db.metadata.wordlist_base = wl.EACW
+    taken = {r for r, _ in PRONOUNS + QUANTIFIERS}
+
+    def item_ref(gloss, letter, verb=None):
+        return wl.sample_reference(db, gloss, letter, taken, verb)
+
     # ---- nouns -----------------------------------------------------------
     for letter, words in NOUNS.items():
         for gloss in words.split():
             s, n = fresh_stem()
             tn = tone(n)
-            e = entry(db.suggest_reference(letter), s, gloss, "NOUN", rng.choice(["LH", "HL", "L", "H"]))
+            e = entry(item_ref(gloss, letter, False), s, gloss, "NOUN", rng.choice(["LH", "HL", "L", "H"]))
             if rng.random() < 0.15:
                 e.set("InflectionClass", rng.choice(["I", "II", "III"]))
             add(e, [], s, " ".join(tn), gloss)
@@ -231,7 +240,7 @@ def main(out: Path):
     def verb(gloss, transitive):
         s, n = fresh_stem()
         tn = " ".join(tone(n))
-        e = entry(db.suggest_reference("V"), s, gloss, "VERB", rng.choice(["H", "L", "HL"]))
+        e = entry(item_ref(gloss, "V", True), s, gloss, "VERB", rng.choice(["H", "L", "HL"]))
         add(e, [], s, tn, gloss)
         role = "A" if transitive else "S"
         for p, (sp, st, sg) in SUBJ.items():
@@ -282,16 +291,17 @@ def main(out: Path):
         add(e, ["utterance-final"], s, tn, gloss + " (final)")
 
     for g in ADJECTIVES:
-        simple(db.suggest_reference("P"), g, "ADJECTIVE")
+        simple(item_ref(g, "P", False), g, "ADJECTIVE")
     for g in ADVERBS:
-        simple(db.suggest_reference("N"), g, "ADVERB")
+        simple(item_ref(g, "N", False), g, "ADVERB")
     for ref, g in PRONOUNS:
         simple(ref, g, "PRONOUN")
     for ref, g in QUANTIFIERS:
         simple(ref, g, "QUANT")
     for g in OTHER_QUANTIFIERS:
-        simple(db.suggest_reference("O"), g, "QUANT")
+        simple(item_ref(g, "O", False), g, "QUANT")
 
+    wl.link_as_eacw(db)
     n_entries = len(db.entries)
     assert n_entries == 300, n_entries
     db.path = str(out)

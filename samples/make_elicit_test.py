@@ -12,14 +12,14 @@ again. The pictures are simple placeholders drawn here.
 It is for trying out ɛλicit (IDEAS.md idea 19): each lemma's Comment says how to ask for it,
 so that one request covers every kind of card:
 
-  new, citation token, with a picture         gatto 'cat' (D001)
-  new, citation token, no picture             pane 'bread' (J002)
-  new, tagged token, with a picture           gatti 'cats' (D001, Plural)
-  new, tagged token, no picture               torte 'cakes' (J003, Plural)
-  new, a verb with an animated GIF            dormire 'to sleep' (V001)
-  new, tagged token with no Translation       libri (K002, Plural): the warning
-  rerecord of a token                         acqua 'water' (J001)
-  rerecord, speaker without audio sharing     sole 'sun' (L001, SP2): the ethics warning
+  new, citation token, with a picture         gatto 'cat' (D035)
+  new, citation token, no picture             pane 'bread' (J114)
+  new, tagged token, with a picture           gatti 'cats' (D035, Plural)
+  new, tagged token, no picture               torte 'cakes' (J114b, Plural)
+  new, a verb with an animated GIF            dormire 'to sleep' (V094)
+  new, tagged token with no Translation       libri (K220, Plural): the warning
+  rerecord of a token                         acqua 'water' (L062)
+  rerecord, speaker without audio sharing     sole 'sun' (L002, SP2): the ethics warning
   rerecord of an utterance                    il gatto dorme (U001)
   new, an utterance without a recording       il cane mangia (U003)
   new utterances, typed in the request        e.g. 'The sun is hot.' / 'Solen er varm.'
@@ -37,6 +37,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
 from lemmatrix import layout, storage, workspace  # noqa: E402
+from lemmatrix import wordlists as wl  # noqa: E402
 from lemmatrix.defaults import new_database  # noqa: E402
 from lemmatrix.model import Person  # noqa: E402
 
@@ -52,28 +53,28 @@ NOT = "ɛλicit test: not to ask for"
 # ref, lemma, gloss en, gloss da, word class, phonemic, comment,
 #   [(tags, phonemic, translation en, translation da, recording, speaker, comment)]
 LEMMAS = [
-    ("D001", "gatto", "cat", "kat", "NOUN", "ˈɡatto", ASK_NEW_IMAGE,
+    ("D035", "gatto", "cat", "kat", "NOUN", "ˈɡatto", ASK_NEW_IMAGE,
      [(["Plural"], "ˈɡatti", "cats", "katte", "", "", ASK_NEW_IMAGE)]),
-    ("D002", "cane", "dog", "hund", "NOUN", "ˈkane", NOT, []),
-    ("J001", "acqua", "water", "vand", "NOUN", "ˈakkwa", ASK_RE, []),
-    ("J002", "pane", "bread", "brød", "NOUN", "ˈpane", ASK_NEW, []),
-    ("J003", "torta", "cake", "kage", "NOUN", "ˈtorta", NOT,
+    ("D034", "cane", "dog", "hund", "NOUN", "ˈkane", NOT, []),
+    ("L062", "acqua", "water", "vand", "NOUN", "ˈakkwa", ASK_RE, []),
+    ("J114", "pane", "bread", "brød", "NOUN", "ˈpane", ASK_NEW, []),
+    ("J114b", "torta", "cake", "kage", "NOUN", "ˈtorta", NOT,
      [(["Plural"], "ˈtorte", "cakes", "kager", "", "", ASK_NEW)]),
-    ("K001", "casa", "house", "hus", "NOUN", "ˈkaza", NOT,
+    ("K002", "casa", "house", "hus", "NOUN", "ˈkaza", NOT,
      [(["Plural"], "ˈkaze", "houses", "huse", "", "", NOT)]),
-    ("K002", "libro", "book", "bog", "NOUN", "ˈlibro", NOT,
+    ("K220", "libro", "book", "bog", "NOUN", "ˈlibro", NOT,
      [(["Plural"], "ˈlibri", "", "", "", "", "ɛλicit test: ask for this (new recording; no Translation, "
                                              "so Lemmatrix warns)")]),
-    ("L001", "sole", "sun", "sol", "NOUN", "ˈsole",
+    ("L002", "sole", "sun", "sol", "NOUN", "ˈsole",
      "ɛλicit test: ask for this (rerecord; SP2 hasn't agreed to audio sharing, so Lemmatrix warns)", []),
-    ("V001", "dormire", "to sleep", "at sove", "VERB", "dorˈmire", ASK_NEW_IMAGE + " (an animated GIF)", []),
-    ("V002", "mangiare", "to eat", "at spise", "VERB", "manˈdʒare", NOT, []),
+    ("V094", "dormire", "to sleep", "at sove", "VERB", "dorˈmire", ASK_NEW_IMAGE + " (an animated GIF)", []),
+    ("V158", "mangiare", "to eat", "at spise", "VERB", "manˈdʒare", NOT, []),
     ("P001", "grande", "big", "stor", "ADJECTIVE", "ˈɡrande", NOT, []),
-    ("Q001", "due", "two", "to", "QUANT", "ˈdue", NOT, []),
+    ("Q002", "due", "two", "to", "QUANT", "ˈdue", NOT, []),
 ]
 # The citation tokens recorded, and by whom.
-RECORDED = {"J001": ("acqua", "SP1"), "J003": ("torta", "SP1"), "K001": ("casa", "SP1"),
-            "K002": ("libro", "SP1"), "L001": ("sole", "SP2")}
+RECORDED = {"L062": ("acqua", "SP1"), "J114b": ("torta", "SP1"), "K002": ("casa", "SP1"),
+            "K220": ("libro", "SP1"), "L002": ("sole", "SP2")}
 
 # ref, label, phonemic, translation en, da, recording, comment
 UTTERANCES = [
@@ -116,12 +117,12 @@ def make_images(folder: Path):
     folder.mkdir(parents=True, exist_ok=True)
     im = Image.new("RGB", (600, 600), "#e8f4f3")
     _cat(ImageDraw.Draw(im), 300, 330, 180, "#e08a2c")
-    im.save(folder / "D001.png")
+    im.save(folder / "D035.png")
     im = Image.new("RGB", (600, 600), "#e8f4f3")
     d = ImageDraw.Draw(im)
     _cat(d, 170, 360, 120, "#e08a2c")
     _cat(d, 430, 330, 135, "#6b6b6b")
-    im.save(folder / "D001_PL.png")
+    im.save(folder / "D035_PL.png")
     try:
         font = ImageFont.load_default(size=70)
     except TypeError:
@@ -136,7 +137,7 @@ def make_images(folder: Path):
         for j in range(k):
             d.text((380 + j * 55, 240 - j * 60), "z" if j < 2 else "Z", fill="white", font=font)
         frames.append(fr)
-    frames[0].save(folder / "V001.gif", save_all=True, append_images=frames[1:], duration=500, loop=0)
+    frames[0].save(folder / "V094.gif", save_all=True, append_images=frames[1:], duration=500, loop=0)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -208,6 +209,11 @@ def build(recordings: Path | None = None):
             t.set("Comment", t_note)
             e.tokens.append(t)
         db.entries.append(e)
+    # The references are the EACW's (Josh, 23 October: the first build numbered them D001, D002… in
+    # order, so Link to wordlists gave *cat* the numbers of *animal*); cake (J114b, under bread) and
+    # book (K220, after the list's last K) are the database's own. Linked as Tools → Link to
+    # wordlists… would, and in the list's order.
+    wl.link_as_eacw(db)
     for ref, label, phon, en, da, rec, note in UTTERANCES:
         u = db.new_utterance(ref, label)
         t = u.token

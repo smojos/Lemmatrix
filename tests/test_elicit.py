@@ -34,10 +34,10 @@ def _items(db):
 
     def tok(ref, i=0):
         return E[ref].tokens[i]
-    return [el.Item(el.NEW, E["D001"], tok("D001")), el.Item(el.NEW, E["D001"], tok("D001", 1)),
-            el.Item(el.NEW, E["J002"], tok("J002")), el.Item(el.NEW, E["J003"], tok("J003", 1)),
-            el.Item(el.NEW, E["K002"], tok("K002", 1)), el.Item(el.NEW, E["V001"], tok("V001")),
-            el.Item(el.RERECORD, E["J001"], tok("J001")), el.Item(el.RERECORD, E["L001"], tok("L001")),
+    return [el.Item(el.NEW, E["D035"], tok("D035")), el.Item(el.NEW, E["D035"], tok("D035", 1)),
+            el.Item(el.NEW, E["J114"], tok("J114")), el.Item(el.NEW, E["J114b"], tok("J114b", 1)),
+            el.Item(el.NEW, E["K220"], tok("K220", 1)), el.Item(el.NEW, E["V094"], tok("V094")),
+            el.Item(el.RERECORD, E["L062"], tok("L062")), el.Item(el.RERECORD, E["L002"], tok("L002")),
             el.Item(el.RERECORD, U["U001"], U["U001"].token), el.Item(el.NEW, U["U003"], U["U003"].token),
             el.Item(el.NEW_UTTERANCE, translations={"en": "The sun is hot.", "da": "Solen er varm."})]
 
@@ -71,14 +71,14 @@ def test_the_test_database_has_every_case(db):
     assert db.settings.gloss_languages == ["en", "da"]
     assert len(db.entries) == 12 and len(db.utterances) == 3
     recorded = [e.ref for e, t in db.all_tokens() if t.file]
-    assert sorted(recorded) == ["J001", "J003", "K001", "K002", "L001", "U001", "U002"]
+    assert sorted(recorded) == ["J114b", "K002", "K220", "L002", "L062", "U001", "U002"]
     for e, t in db.all_tokens():
         if t.file:
             assert (storage.folder_for(db, e) / t.file).exists()
     sp2 = db.metadata.participant("SP2")
     assert sp2 is not None and not sp2.audio_sharing and db.metadata.participant("SP1").audio_sharing
     images = sorted(p.name for p in (TEST_DB.parent / "Images").iterdir())
-    assert images == ["D001.png", "D001_PL.png", "V001.gif"]
+    assert images == ["D035.png", "D035_PL.png", "V094.gif"]
 
 
 # ---- prompts and artwork -------------------------------------------------------------
@@ -221,18 +221,18 @@ def test_the_request_dialog(win, monkeypatch):
     from PySide6.QtWidgets import QMessageBox
     from lemmatrix.ui import elicit_dialogs as ed
     db = win.doc.db
-    gatto = db.entry_by_ref("D001")
+    gatto = db.entry_by_ref("D035")
     dlg = ed.RequestDialog(win, [gatto.tokens[0].id])
     assert dlg.l2.currentData() == "da" and dlg.speaker.currentData() == "SP1"
     assert [i.token.id for i in dlg.items()] == [gatto.tokens[0].id]
     for r in dlg.model.rows:                                          # a soundfile means rerecord
         assert r.kind == (el.RERECORD if r.recorded else el.NEW)
-    acqua = next(r for r in dlg.model.rows if r.entry.ref == "J001")
+    acqua = next(r for r in dlg.model.rows if r.entry.ref == "L062")
     acqua.ticked = True
     dlg._add_new_row({"en": "I read a book.", "da": "Jeg læser en bog."})
     dlg.l2_name.setText("italiensk")
     kinds = [(i.kind, i.entry.ref if i.entry else "") for i in dlg.items()]
-    assert kinds == [(el.NEW, "D001"), (el.RERECORD, "J001"), (el.NEW_UTTERANCE, "")]
+    assert kinds == [(el.NEW, "D035"), (el.RERECORD, "L062"), (el.NEW_UTTERANCE, "")]
     monkeypatch.setattr(QMessageBox, "exec", lambda self: None)
     monkeypatch.setattr(QMessageBox, "clickedButton", lambda self: self.buttons()[0])
     monkeypatch.setattr(ed.SentDialog, "exec", lambda self: None)
@@ -260,7 +260,7 @@ def test_everything_shows_and_right_click_ticks(win, monkeypatch):
     data, the matrices, Utterances) ticks a token for it, and the ticks are kept until a request is made."""
     from lemmatrix.ui import elicit_dialogs as ed
     db = win.doc.db
-    gatto, pane = db.entry_by_ref("D001"), db.entry_by_ref("J002")
+    gatto, pane = db.entry_by_ref("D035"), db.entry_by_ref("J114")
     text, _, fn, on = win.elicit_menu_item(gatto.tokens[0])
     assert text == "Add to ɛλicit request" and on
     fn()
@@ -271,7 +271,7 @@ def test_everything_shows_and_right_click_ticks(win, monkeypatch):
     assert dlg.proxy.rowCount() == len(dlg.model.rows) == sum(1 for _ in db.all_tokens())
     dlg.search.setText("pane")
     assert dlg.proxy.rowCount() == 1
-    assert {i.entry.ref for i in dlg.items()} == {"D001", "U001"}
+    assert {i.entry.ref for i in dlg.items()} == {"D035", "U001"}
     row = next(r for r in dlg.model.rows if r.entry is pane)
     row.ticked = True
     dlg.reject()                                                    # closed: the ticks are kept
@@ -294,7 +294,7 @@ def test_review_puts_recordings_in_and_undo_takes_them_out(win, tmp_path):
     st = el.receive(db, _response(el.stored_requests(db.path)[0], tmp_path / "r.zip", skip={3}))
     win.refresh_elicit_icon()
     assert "10 recordings waiting" in win.elicit_btn.toolTip() and win.elicit_review.isVisible()
-    acqua = db.entry_by_ref("J001")
+    acqua = db.entry_by_ref("L062")
     old_name = acqua.tokens[0].file
     old_size = (storage.sound_folder(db) / old_name).stat().st_size
     n_utts = len(db.utterances)
@@ -304,13 +304,13 @@ def test_review_puts_recordings_in_and_undo_takes_them_out(win, tmp_path):
     dlg.decide(el.REJECTED)
     dlg.approve_all()
     dlg.accept()
-    gatto = db.entry_by_ref("D001")
+    gatto = db.entry_by_ref("D035")
     t = gatto.tokens[0]
-    assert t.file == "ITA-STD_D001_cat.wav" and t.speaker == "SP1" and t.collected == "2026-10-21"
+    assert t.file == "ITA-STD_D035_cat.wav" and t.speaker == "SP1" and t.collected == "2026-10-21"
     assert (storage.sound_folder(db) / t.file).exists()
-    assert db.entry_by_ref("J001").tokens[0].file == old_name       # the rerecord: the same name, the new sound
+    assert db.entry_by_ref("L062").tokens[0].file == old_name       # the rerecord: the same name, the new sound
     assert (storage.sound_folder(db) / old_name).stat().st_size != old_size
-    assert not db.entry_by_ref("K002").tokens[1].file                # rejected
+    assert not db.entry_by_ref("K220").tokens[1].file                # rejected
     assert len(db.utterances) == n_utts + 1
     new_u = db.utterances[-1]
     assert new_u.ref == "U004" and new_u.label == "The sun is hot"
@@ -325,15 +325,15 @@ def test_review_puts_recordings_in_and_undo_takes_them_out(win, tmp_path):
     assert el.waiting(db, st) == [] and st.review["5"]["decision"] == el.REJECTED
     assert "remote elicitation" in win.elicit_btn.toolTip()
     win.doc.undo.undo()                                              # one undo step takes it all out
-    assert not db.entry_by_ref("D001").tokens[0].file and len(db.utterances) == n_utts
+    assert not db.entry_by_ref("D035").tokens[0].file and len(db.utterances) == n_utts
     assert (storage.sound_folder(db) / old_name).stat().st_size == old_size
-    assert not (storage.sound_folder(db) / "ITA-STD_D001_cat.wav").exists()
+    assert not (storage.sound_folder(db) / "ITA-STD_D035_cat.wav").exists()
     assert len(el.waiting(db, st)) == 9                              # waiting again (libri stays rejected)
     win.doc.undo.redo()
-    assert db.entry_by_ref("D001").tokens[0].file == "ITA-STD_D001_cat.wav" and len(db.utterances) == n_utts + 1
+    assert db.entry_by_ref("D035").tokens[0].file == "ITA-STD_D035_cat.wav" and len(db.utterances) == n_utts + 1
     assert el.waiting(db, st) == []
     again = el.items_again(db, st, dlg._again_numbers())
-    assert [(i.kind, i.entry.ref) for i in again] == [(el.NEW, "J002"), (el.NEW, "K002")]
+    assert [(i.kind, i.entry.ref) for i in again] == [(el.NEW, "J114"), (el.NEW, "K220")]
 
 
 def test_undecided_recordings_wait_for_later(win, tmp_path):
@@ -585,7 +585,7 @@ def test_the_drive_client_speaks_googles_api():
             return R(200, b"{}", {"Location": "https://upload.example/s1"})
         return R(200, json.dumps({"id": "x1", "files": []}).encode())
     d = gdrive.Drive({"access_token": "A", "refresh_token": "R", "expires_at": time.time() + 999}, opener=opener)
-    assert d.upload_link("01_D001.wav", "audio/wav", "F") == "https://upload.example/s1"
+    assert d.upload_link("01_D035.wav", "audio/wav", "F") == "https://upload.example/s1"
     method, url, headers, body = calls[-1]
     assert method == "POST" and headers["Authorization"] == "Bearer A" and headers["Origin"] == gdrive.PAGE_ORIGIN
     assert headers["X-upload-content-type"] == "audio/wav" and json.loads(body)["parents"] == ["F"]
@@ -724,7 +724,7 @@ def test_the_request_is_remembered_until_reset(win, monkeypatch):
     from PySide6.QtWidgets import QMessageBox
     from lemmatrix.ui import elicit_dialogs as ed
     db = win.doc.db
-    gatto = db.entry_by_ref("D001")
+    gatto = db.entry_by_ref("D035")
     dlg = ed.RequestDialog(win, [gatto.tokens[0].id], draft=win.elicit_draft)
     dlg.l2.setCurrentIndex(dlg.l2.findData(""))                       # no second language
     dlg.repeat.setChecked(False)

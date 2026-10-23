@@ -31,8 +31,11 @@ def _sample(tmp_path):
 
 def test_an_older_database_opens_as_tonal_and_saves_format_10(tmp_path):
     from pathlib import Path
-    shutil.copy2(Path(__file__).resolve().parent.parent / "samples" / "Sample.xml", tmp_path / "Sample.xml")
-    assert '<database format="9">' in (tmp_path / "Sample.xml").read_text(encoding="utf-8")
+    import re
+    text = (Path(__file__).resolve().parent.parent / "samples" / "Sample.xml").read_text(encoding="utf-8")
+    text = re.sub(r'<database format="\d+">', '<database format="9">', text)      # the sample as format 9 wrote
+    text = re.sub(r"\s*<typology>.*?</typology>", "", text, flags=re.S)        # it: no typology yet
+    (tmp_path / "Sample.xml").write_text(text, encoding="utf-8")
     db = storage.load(tmp_path / "Sample.xml")    # format 9, like Josh's Burun database
     assert pk.kind(db) == pk.TONAL and db.upgraded
     storage.save(db, db.path, backup=False)

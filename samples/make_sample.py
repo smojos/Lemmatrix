@@ -44,6 +44,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
 from lemmatrix import audio, matrix as mx, pitch, storage, workspace  # noqa: E402
+from lemmatrix import wordlists as wl  # noqa: E402
 from lemmatrix.defaults import new_database  # noqa: E402
 
 RATE = 11025
@@ -316,6 +317,13 @@ class Builder:
         self.folder = HERE / "Soundfiles" / "Tokens"
         db.path = str(HERE / "Sample.xml")
         self.nouns = {g: f for _, g, f in NOUNS}
+        # Built on the EACW (Josh, 23 October: the samples too, to try its tools on): each lemma takes
+        # the item its gloss names, or the next own reference in its section where the list has none
+        md.wordlist_base = wl.EACW
+        self.taken: set[str] = set()
+
+    def ref(self, gloss, letter, verb=None):
+        return wl.sample_reference(self.db, gloss, letter, self.taken, verb)
 
     def token(self, e, tags, form, morphemes, translation, record):
         t = self.db.new_token(e, tags, speaker=SPEAKER, date=DATE) if tags else e.tokens[0]
@@ -342,7 +350,7 @@ class Builder:
         return e
 
     def noun(self, letter, gloss, form):
-        e = self.entry(self.db.suggest_reference(letter), form, gloss, "NOUN")
+        e = self.entry(self.ref(gloss, letter, False), form, gloss, "NOUN")
         e.set("InflectionClass", inflection_class(form))
         rec = gloss in RECORDED_IN_FULL
         pl = suffix(form, "à", "nà")
@@ -362,7 +370,7 @@ class Builder:
                            f"{poss} {eng}", rec)
 
     def verb(self, gloss, root, past, obj):
-        e = self.entry(self.db.suggest_reference("V"), root, gloss, "VERB")
+        e = self.entry(self.ref(gloss, "V", True), root, gloss, "VERB")
         e.set("InflectionClass", inflection_class(root))
         rec = gloss in RECORDED_IN_FULL
         self.token(e, [], root, gloss, f"to {gloss}", True)
@@ -388,7 +396,7 @@ class Builder:
                 self.token(e, [tense, f"{person}.A", "NP.O"], f"{form} {o}", f"{morph} {obj}", tr, rec)
 
     def simple(self, letter, gloss, form, wc, ref=None, morphemes=None):
-        e = self.entry(ref or self.db.suggest_reference(letter), form, gloss, wc, classes=False)
+        e = self.entry(ref or self.ref(gloss, letter, False), form, gloss, wc, classes=False)
         self.token(e, [], form, morphemes or gloss, gloss, True)
         return e
 
@@ -418,13 +426,14 @@ class Builder:
         for v in VERBS:
             self.verb(*v)
         for i, (person, form, eng, _) in enumerate(PRONOUNS):
-            self.simple("R", eng, form, "PRONOUN", ref=f"R{i + 1:03d}")
+            self.simple("R", eng, form, "PRONOUN", ref=f"R{person}")
         for i, (gloss, form, morphemes) in enumerate(NUMBERS):
-            self.simple("Q", gloss, form, "QUANT", ref=f"Q{i + 1:03d}", morphemes=morphemes)
+            self.simple("Q", gloss, form, "QUANT", ref=f"Q{i + 1:03d}", morphemes=morphemes)   # Q + the number
         for gloss, form in ADJECTIVES:
             self.simple("P", gloss, form, "ADJECTIVE")
         for gloss, form in ADVERBS:
             self.simple("N", gloss, form, "ADVERB")
+        wl.link_as_eacw(self.db)
         self.matrices()
         storage.save(self.db, HERE / "Sample.xml", backup=False)
         workspace.save(workspace.Workspace(), self.db)        # the saved matrices are in its workspace

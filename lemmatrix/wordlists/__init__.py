@@ -611,6 +611,88 @@ def gloss_keys(text: str) -> set[str]:
     return keys
 
 
+def glosses_agree(a: str, b: str) -> bool:
+    """Whether two glosses could name the same thing: a shared gloss or alternative, or one inside
+    the other as whole words (*bread*, *traditional bread*)."""
+    ka, kb = gloss_keys(a), gloss_keys(b)
+    if ka & kb:
+        return True
+    words = lambda k: [f" {x} " for x in k]
+    na, nb = f" {norm_gloss(a)} ", f" {norm_gloss(b)} "
+    return any(x in nb for x in words(ka)) or any(x in na for x in words(kb))
+
+
+def link_as_eacw(db, items: str = BASE, region: str = AFRICA):
+    """Make a database built in code an EACW database, as Tools → Link to wordlists… would (the
+    samples): the base and version, the Clarification and Taxon fields and the word classes, the
+    other lists' numbers and the fields' values, and the lemmas in the list's order. No undo."""
+    md = db.metadata
+    md.wordlist_base, md.wordlist_items, md.wordlist_region = EACW, items, region
+    ensure_fields(db)
+    ensure_word_classes(db)
+    for e, numbers in link_plan(db, EACW):
+        e.lists = {k: v for k, v in e.lists.items() if k == EACW}
+        e.lists.update(numbers)
+    for e, vals in field_plan(db):
+        for name, value in vals.items():
+            e.set(name, value)
+    db.entries[:] = eacw_order(db.entries)
+
+
+def sample_reference(db, gloss: str, letter: str, taken: set, verb: bool | None = None) -> str:
+    """A sample lemma's reference: the EACW item its gloss names (in its section first, then any),
+    else the database's next own reference in that section. Adds it to `taken`."""
+    ref = (eacw_for_gloss(gloss, letter, taken, verb) or eacw_for_gloss(gloss, "", taken, verb)
+           or db.suggest_reference(letter))
+    taken.add(ref)
+    return ref
+
+
+def eacw_for_gloss(gloss: str, letter: str = "", taken=(), verb: bool | None = None) -> str | None:
+    """The EACW item a gloss names, for building a database from glosses (the samples): an item
+    whose gloss or one of its alternatives is the same (a leading "to " or "be " ignored), in the
+    section `letter` when given; published items first, then the whole gloss before an
+    alternative, then list order; `verb` True or False keeps to verbs or to everything else. None
+    if there is none (or all are `taken`)."""
+    want = norm_gloss(gloss)
+    if not want:
+        return None
+    best = None
+    for k, i in enumerate(get(EACW).items):
+        if i.number in taken or (letter and not i.number.startswith(letter)):
+            continue
+        if verb is not None and (i.word_class == "VERB") != verb:
+            continue
+        whole = norm_gloss(i.gloss) == want
+        if not whole and want not in gloss_keys(i.gloss):
+            continue
+        key = (not i.default, not whole, k)
+        if best is None or key < best[0]:
+            best = (key, i.number)
+    return best[1] if best else None
+
+
+def gloss_mismatches(db, base: str) -> tuple[int, list[tuple[object, Item]]]:
+    """For Link to wordlists… (Josh, 23 October: a database whose references weren't the list's
+    numbers got the wrong items' numbers): how many lemmas with a reference in the list and a gloss
+    can be compared, and those whose gloss doesn't agree with their item's."""
+    wl = get(base)
+    compared, out = 0, []
+    for e in db.entries:
+        n = canon(base, e.ref)
+        gloss = db.gloss(e, "en") or db.gloss(e)
+        if not n or not gloss:
+            continue
+        item = wl.by_number[n]
+        theirs = item_gloss(base, item)
+        if not theirs:
+            continue
+        compared += 1
+        if not glosses_agree(gloss, theirs):
+            out.append((e, item))
+    return compared, out
+
+
 def item_gloss(lid: str, item: Item) -> str:
     """The list's own gloss; for the CAWL without its glosses, the EACW's for its first match."""
     if item.gloss:

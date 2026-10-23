@@ -397,3 +397,34 @@ def test_the_export_falls_back_to_the_citation_tokens_phonetic():
     assert wl.table(db, wl.SWADESH)[1][0][1] == "ʔàbɔ̀"
     e.set(s.entry_field("lemma").name, "abo")
     assert wl.export_form(db, e) == "abo"
+
+
+def test_link_warns_when_the_glosses_dont_match(app, tmp_path, monkeypatch):
+    """Josh, 23 October: the ɛλicit test database's D001 was *cat*, and linking gave it *animal*'s numbers."""
+    from lemmatrix.ui import wordlist_dialogs as wd
+    db = defaults.new_database()
+    for ref, gloss in (("D001", "cat"), ("D002", "dog"), ("J001", "water"), ("K001", "house"), ("A009", "head")):
+        db.entries.append(db.new_entry(ref, gloss=gloss))
+    compared, wrong = wl.gloss_mismatches(db, wl.EACW)
+    assert compared == 5 and [e.ref for e, _ in wrong] == ["D001", "D002", "J001", "K001"]
+    assert wl.glosses_agree("bread", "traditional bread") and wl.glosses_agree("big", "be big")
+    w = _window(tmp_path, db)
+    from PySide6.QtWidgets import QInputDialog
+    monkeypatch.setattr(QInputDialog, "getItem", lambda *a, **k: (a[3][0], True))
+    shown = []
+    monkeypatch.setattr(QMessageBox, "exec", lambda self: shown.append(self.text()) or 0)
+    wd.link_to_wordlists(w)                          # Cancel: nothing linked
+    assert shown and "4 of the 5" in shown[0] and not wl.is_eacw(w.doc.db)
+    w.doc.undo.setClean()
+    w.close()
+
+
+def test_the_samples_are_built_on_the_eacw():
+    from pathlib import Path
+    root = Path(__file__).resolve().parent.parent / "samples"
+    for f in (root / "Sample.xml", root / "Test-300.xml", root / "Elicit test" / "ITA-STD_Elicit_Test.xml"):
+        db = storage.load(f)
+        assert wl.is_eacw(db), f
+        assert not wl.gloss_mismatches(db, wl.EACW)[1], f
+        assert not wl.out_of_place(db.entries)[1], f
+    assert wl.eacw_for_gloss("cat") == "D035" and wl.eacw_for_gloss("eat", "V", verb=True) == "V158"
