@@ -310,15 +310,51 @@ class WordlistExportDialog(QDialog):
         self.win.statusBar().showMessage(f"Saved {Path(path).name}.", 6000)
 
 
+def pdf_researcher(db) -> tuple[str, str]:
+    """The researcher a wordlist PDF names: the database's owner (Edit → Metadata), else its first
+    researcher; and their email where the researchers' list has one."""
+    md = db.metadata
+    owner = (md.author or "").strip()
+    people = [p for p in md.researchers if p.name or p.code]
+    match = next((p for p in people if owner and owner.casefold() in (p.name.casefold(), p.code.casefold())),
+                 None)
+    if match is None and not owner and people:
+        match = people[0]
+    name = owner if owner and (match is None or owner.casefold() != match.code.casefold()) else \
+        (match.name or match.code if match else "")
+    return name, (match.email if match else "")
+
+
+def pdf_details(db, lid: str) -> list[str]:
+    """The lines under a wordlist PDF's title (Josh, 23 October: basic metadata of the researcher
+    and the language code): the language and variety with their codes, the database, the
+    researcher, the list's version for the EACW, and the date."""
+    md = db.metadata
+    def named(name, code):
+        return f"{name} [{code}]" if name and code and name != code else (name or code)
+    lines = []
+    lang = named(md.language_name, md.language_code)
+    if lang:
+        lines.append(f"Language: {lang}" + (f" · variety: {named(md.variety_name, md.variety_code)}"
+                                            if md.variety_name or md.variety_code else ""))
+    if md.name:
+        lines.append(f"Database: {md.name}")
+    name, email = pdf_researcher(db)
+    if name or email:
+        lines.append("Researcher: " + " ".join(x for x in (name, f"<{email}>" if email else "") if x))
+    if lid == wl.EACW and md.wordlist_items:
+        lines.append(f"EACW version: {wl.version_name(md.wordlist_items, md.wordlist_region)}")
+    lines.append(f"Exported: {_dt.date.today().isoformat()}")
+    return lines
+
+
 def pdf_html(db, lid: str, header, data) -> str:
     md = db.metadata
-    title = " - ".join(x for x in (md.language_name or md.language_code, md.variety_name or md.variety_code,
-                                   md.name) if x)
     esc = html.escape
     rows = "".join("<tr>" + "".join(f"<td>{esc(str(c))}</td>" for c in r) + "</tr>" for r in data)
     doi = f"<br/>DOI: {esc(wl.DOIS[lid])}" if wl.DOIS.get(lid) else ""
     return (f"<h2>{esc(wl.NAMES[lid])}</h2>"
-            f"<p>{esc(title)}<br/>{_dt.date.today().isoformat()}</p>"
+            f"<p>{'<br/>'.join(esc(x) for x in pdf_details(db, lid))}</p>"
             f"<p style='font-size:8pt; color:#555'>{esc(wl.CITATIONS[lid])}{doi}</p>"
             "<table border='0' cellspacing='0' cellpadding='3' width='100%'>"
             "<thead><tr>" + "".join(f"<th align='left' width='{w}'>{esc(h)}</th>"
@@ -333,6 +369,9 @@ def write_pdf(path: str, db, lid: str, header, data):
     w.setPageMargins(QMarginsF(15, 15, 15, 15), QPageLayout.Millimeter)
     w.setTitle(f"{wl.NAMES[lid]}: {Path(db.path).stem if db.path else ''}")
     w.setCreator("Lemmatrix")
+    name, _ = pdf_researcher(db)
+    if name:
+        w.setAuthor(name)
     # The page laid out at 96 dpi, the resolution the text's point sizes assume (Josh, 23 October:
     # at QPdfWriter's own 1200 dpi the whole list came out on one page in type too small to read)
     w.setResolution(96)

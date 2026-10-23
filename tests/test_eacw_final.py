@@ -354,3 +354,23 @@ def test_minus_and_the_smolder_search(win):
     assert not [e for e in db.entries if wl.search_match(db, e, "-EACW")]
     assert [e.ref for e in db.entries if wl.search_match(db, e, "Joshua")] == ["V139"]
     assert [e.ref for e in db.entries if wl.search_match(db, e, "josh")] == ["V139"]
+
+
+def test_the_wordlist_pdf_names_the_language_and_researcher(app, tmp_path):
+    from lemmatrix.model import Person
+    from lemmatrix.ui.wordlist_dialogs import pdf_details, write_pdf
+    db = defaults.new_database(wl.EACW)
+    md = db.metadata
+    md.language_name, md.language_code, md.variety_code = "Sample language", "LXX", "VXX"
+    md.researchers = [Person.researcher("RS1", "Researcher One", email="rs1@example.org")]
+    lines = pdf_details(db, wl.EACW)
+    assert lines[0] == "Language: Sample language [LXX] · variety: VXX"
+    assert "Researcher: Researcher One <rs1@example.org>" in lines
+    assert any(x.startswith("EACW version: ") for x in lines)
+    assert not any(x.startswith("EACW version") for x in pdf_details(db, wl.SWADESH))
+    db.path = str(tmp_path / "T.xml")
+    header, data = wl.table(db, wl.SWADESH)
+    write_pdf(str(tmp_path / "t.pdf"), db, wl.SWADESH, header, data)
+    raw = (tmp_path / "t.pdf").read_bytes()
+    assert raw.count(b"/Type /Page\n") + raw.count(b"/Type /Page\r") + raw.count(b"/Type /Page ") > 1 \
+        or raw.count(b"/Type /Page") > 2                       # more than one page: readable type
