@@ -462,10 +462,19 @@ class FilterTable(QTableView):
             QToolTip.showText(QCursor.pos(), text, self.viewport(), self.visualRect(idx))
 
     # ---- setup -----------------------------------------------------------
-    def set_columns(self, all_columns: list[Column], visible: list[str]):
+    def set_columns(self, all_columns: list[Column], visible: list[str]) -> bool:
+        """The columns shown. Columns that stay keep the widths they had (Josh, 24 October: closing
+        Edit → Metadata reset All data's widths); True if any width was kept."""
         keep = {k: v for k, v in self.proxy.filters.items() if any(c.key == k for c in all_columns)}
+        hh = self.horizontalHeader()
+        widths = {c.key: hh.sectionSize(i) for i, c in enumerate(self.model_.columns)}
         self.model_.set_columns(all_columns, visible)
         self.proxy.filters = keep
+        kept = False
+        for i, c in enumerate(self.model_.columns):
+            if c.key in widths:
+                hh.resizeSection(i, widths[c.key])
+                kept = True
         self._refresh_header()
         for d in self._delegates:
             d.deleteLater()
@@ -473,6 +482,7 @@ class FilterTable(QTableView):
         for i, c in enumerate(self.model_.columns):
             self.setItemDelegateForColumn(i, None)
         self.proxy.refilter()
+        return kept
 
     def set_delegate(self, key: str, delegate):
         for i, c in enumerate(self.model_.columns):

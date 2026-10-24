@@ -65,3 +65,15 @@ def test_ctrl_alt_space_opens_the_line_in_praat(win, monkeypatch):
     keys["Ctrl+Alt+Space"].activated.emit()
     assert got == ["line"]
     w.close()
+
+
+def test_column_widths_survive_the_columns_being_set_again(win):
+    """Closing Edit → Metadata (which sets the columns again) kept resetting All data's widths."""
+    win.refresh()
+    hh = win.all_table.horizontalHeader()
+    lh = win.lemmas.horizontalHeader()
+    hh.resizeSection(1, 333)
+    lh.resizeSection(0, 222)
+    win._setup_columns()
+    win.refresh()
+    assert hh.sectionSize(1) == 333 and lh.sectionSize(0) == 222

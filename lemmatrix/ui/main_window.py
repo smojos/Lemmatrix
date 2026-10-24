@@ -1594,14 +1594,14 @@ class MainWindow(QMainWindow):
         cols = self._lemma_columns()
         saved = self.doc.ws.get_list("columns/lemma")
         keys = [k for k in saved if any(c.key == k for c in cols)] or self._default_lemma_keys()
-        self.lemmas.set_columns(cols, keys)
+        if not self.lemmas.set_columns(cols, keys):       # widths kept when the columns stay
+            self.lemmas.resizeColumnsToContents()
         self._closed_editors(self.lemmas)
         self._spell_delegates()
-        self.lemmas.resizeColumnsToContents()
         cols = self._all_columns()
         saved = self.doc.ws.get_list("columns/alldata")
         keys = [k for k in saved if any(c.key == k for c in cols)] or self._default_all_keys()
-        self.all_table.set_columns(cols, keys)
+        kept = self.all_table.set_columns(cols, keys)
         defaults = mx.default_names(db)
         self.all_table.set_delegate("tags", ChipsDelegate(
             lambda r: mx.chips(db, mx.marked(r.token.tags, defaults), r.entry)
@@ -1616,7 +1616,8 @@ class MainWindow(QMainWindow):
         if db.settings.primary_gloss == spelling.LANG:
             self.all_table.set_delegate("gloss", SpellDelegate(self.speller, self.all_table))
         self._closed_editors(self.all_table)
-        self._all_sized = False
+        if not kept:                              # sized to the data once; afterwards the widths stay
+            self._all_sized = False
 
     def _closed_editors(self, table):
         """Closed fields edited in place get a drop-down of their list."""
