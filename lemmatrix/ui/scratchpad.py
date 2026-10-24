@@ -1,8 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The pitch scratchpad (IDEAS.md idea 33): a pitch drawing with a box under it. A trace typed
-there (the usual notation, e.g. 55 3:3 21) is drawn as it is typed and played with the button or
-Enter. Nothing is saved anywhere. Used under a text's lines and in the main window's bottom row."""
+there (the usual notation, e.g. 55 3:3 21) is drawn as it is typed and played with Enter, a click on
+its letter (α, β) or Right Shift+A / Right Shift+B (Josh, 24 October). Nothing is saved anywhere.
+Used under a text's lines and in the main window's bottom row.
+
+What a pad holds is a value with a kind (`content()`: {"kind": "pitch", "value": "55 3:3 21"}), and
+playing goes by the kind (`PLAYERS`), so segmental comparison (Compare V and Compare C, IDEAS.md
+idea 46) can be added later as another kind, with little tabs in the pad to switch."""
 
 from __future__ import annotations
 
@@ -12,12 +17,23 @@ from PySide6.QtWidgets import QHBoxLayout, QLineEdit, QVBoxLayout, QWidget
 from .widgets import PitchCanvas, ipa_font
 
 
+def _play_pitch(main, value: str):
+    """A pitch trace, in the voice and volume of Settings → Pitch."""
+    main.play_pitch(value)
+
+
+# How each kind of content is played: kind -> function(main, value). Segments come later (idea 46).
+PLAYERS = {"pitch": _play_pitch}
+
+
 class PitchScratchpad(QWidget):
+    KIND = "pitch"
+
     def __init__(self, main, low: int, high: int, tip: str, parent=None):
         super().__init__(parent)
-        from .main_window import tool
         from .token_dialog import PitchValidator
         self.main = main
+        self.kind = self.KIND
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 2, 0, 0)
         lay.setSpacing(2)
@@ -33,18 +49,22 @@ class PitchScratchpad(QWidget):
         self.edit.setFont(ipa_font(main.prefs.ipa_size))
         self.edit.textChanged.connect(self.canvas.set_pitch)
         self.edit.returnPressed.connect(self.play)
-        play = tool("Play pitch scratchpad", "play-pitch", self.play, "Play the pitch scratchpad")
-        play.setToolButtonStyle(Qt.ToolButtonIconOnly)
-        row.addWidget(self.edit, 1)
-        row.addWidget(play)
+        row.addWidget(self.edit, 1)                # no play button: the pad's letter plays it
         lay.addLayout(row)
 
     def set_range(self, low: int, high: int):
         self.canvas.set_range(low, high)
 
+    def content(self) -> dict:
+        """What the pad holds: its kind and its value."""
+        return {"kind": self.kind, "value": self.edit.text()}
+
     def play(self):
-        """The trace, in the voice and volume of Settings → Pitch."""
-        self.main.play_pitch(self.edit.text())
+        """Play what the pad holds, by its kind."""
+        c = self.content()
+        player = PLAYERS.get(c["kind"])
+        if player is not None and c["value"].strip():
+            player(self.main, c["value"])
 
 
 class ComparisonPads(QWidget):
@@ -53,21 +73,25 @@ class ComparisonPads(QWidget):
 
     def __init__(self, main, low: int, high: int, tip: str, parent=None):
         super().__init__(parent)
-        from PySide6.QtWidgets import QGridLayout, QLabel
+        from PySide6.QtWidgets import QGridLayout, QLabel, QToolButton
         grid = QGridLayout(self)
         grid.setContentsMargins(0, 0, 0, 0)
         grid.setHorizontalSpacing(8)
         grid.setVerticalSpacing(4)
         self.pads, self.letters = [], []
-        for r, letter in enumerate(("α", "β")):
-            lbl = QLabel(letter)
+        for r, (letter, key) in enumerate((("α", "A"), ("β", "B"))):
+            # the letter is the play button (Josh, 24 October), its key in the hover
+            lbl = QToolButton()
+            lbl.setText(letter)
+            lbl.setAutoRaise(True)
+            lbl.setCursor(Qt.PointingHandCursor)
             f = lbl.font()
             f.setBold(True)
             f.setPointSizeF(f.pointSizeF() * 2.2)
             lbl.setFont(f)
-            lbl.setAlignment(Qt.AlignCenter)
-            lbl.setToolTip(f"Comparison: pitch trace {letter}")
+            lbl.setToolTip(f"Play {letter} (Right Shift+{key})")
             pad = PitchScratchpad(main, low, high, tip)
+            lbl.clicked.connect(lambda _=False, p=pad: self.play(p))
             grid.addWidget(lbl, r, 0)
             grid.addWidget(pad, r, 1)
             self.letters.append(lbl)
@@ -89,6 +113,17 @@ class ComparisonPads(QWidget):
         grid.setColumnStretch(1, 1)
         self.restyle()
         self.show_pitch()
+
+    def play(self, pad):
+        """A letter clicked (or Right Shift+A / B): play its pad, if it is shown."""
+        if pad.isVisible():
+            pad.play()
+
+    def play_key(self, key: str):
+        """Right Shift+A plays α, Right Shift+B β."""
+        i = {"A": 0, "B": 1}.get(key.upper())
+        if i is not None:
+            self.play(self.pads[i])
 
     def set_range(self, low: int, high: int):
         for p in self.pads:
@@ -129,4 +164,6 @@ class ComparisonPads(QWidget):
         from . import theme
         self.hidden_note.setStyleSheet(f"color: {theme.colour('disabled').name()};")
         for lbl in self.letters:
-            lbl.setStyleSheet(f"color: {theme.colour('pitch').name()};")   # the accent, lighter on dark
+            lbl.setStyleSheet(                                      # the accent, lighter on dark
+                f"QToolButton {{ color: {theme.colour('pitch').name()}; border: none; padding: 0 4px; }}"
+                f"QToolButton:hover {{ background: {theme.wash(0.8).name()}; border-radius: 6px; }}")

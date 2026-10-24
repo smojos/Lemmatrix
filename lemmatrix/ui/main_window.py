@@ -1378,6 +1378,8 @@ class MainWindow(QMainWindow):
                             ("Ctrl+Shift+Space", "Play the pitch scratchpad"),
                             ("Tab, Shift+Tab, ↑, ↓", "Move between fields (edit mode)"),
                             ("Ctrl + mouse wheel, Ctrl+0", "Zoom, and back"))),
+        ("The comparison area (α, β)", (("Right Shift+A", "Play α"), ("Right Shift+B", "Play β"),
+                                        ("Click α or β", "Play it"), ("Enter in a pad", "Play it"))),
         ("Cogitate and the XML viewer", (("Alt+← / Alt+→", "Back / Next hypothesis"),
                                          ("Ctrl+F", "XML viewer: the search"),
                                          ("Enter, Shift+Enter, F3", "Next / previous match"))),
@@ -1412,7 +1414,8 @@ class MainWindow(QMainWindow):
         from .. import pitchview                  # the pitch system hidden: its keys do nothing (idea 9)
         if not pitchview.shown():
             out = [(t, [(k, d) for k, d in rows if "Ctrl+Shift+Space" not in k
-                        and "pitch" not in d.lower()]) for t, rows in out]
+                        and "pitch" not in d.lower()]) for t, rows in out
+                   if not t.startswith("The comparison area")]
         return out
 
     def show_shortcuts(self):
