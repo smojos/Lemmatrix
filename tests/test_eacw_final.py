@@ -78,7 +78,7 @@ def test_the_new_database_choice(app):
     from lemmatrix.ui.wordlist_dialogs import WHY_EACW, WordlistChoice
     w = WordlistChoice()
     assert w.choice() == wl.EACW and w.version() == (wl.BASE, wl.AFRICA)
-    assert w.count.text() == "2,281 lemmas"
+    assert w.count.text() == "2,274 lemmas"
     w.items.setCurrentIndex(w.items.findData(wl.EXPANDED))
     w.region.setCurrentIndex(w.region.findData(wl.GLOBAL))
     assert w.count.text() == f"{len(wl.version_items(wl.EXPANDED, wl.GLOBAL)):,} lemmas"
@@ -428,3 +428,21 @@ def test_the_samples_are_built_on_the_eacw():
         assert not wl.gloss_mismatches(db, wl.EACW)[1], f
         assert not wl.out_of_place(db.entries)[1], f
     assert wl.eacw_for_gloss("cat") == "D035" and wl.eacw_for_gloss("eat", "V", verb=True) == "V158"
+
+
+def test_josh_amendments_of_24_october():
+    """B044f the default, C009 and C012–C024 hidden with their female and male the defaults, and the human
+    terms' family links (an un-gendered item on the whole family, a gendered pair on the generic too)."""
+    items = wl.get(wl.EACW).by_number
+    assert not items["B044"].default and items["B044f"].default and not items["B044m"].default
+    assert not items["C009"].default and items["C009f"].default
+    for n in range(12, 25):
+        assert not items[f"C0{n}"].default and items[f"C0{n}f"].default and items[f"C0{n}m"].default
+    nums = lambda ref, lid=wl.CAWL: wl.other_numbers(wl.EACW, ref).get(lid, [])
+    assert nums("B047") == nums("B047f") == nums("B047m") == ["0813"]          # un-gendered: the whole family
+    assert nums("C001") == ["0344", "0345"] and nums("C001", wl.SWADESH) == ["42", "43"]   # a gendered pair
+    assert nums("C001f") == ["0345"] and nums("C001m") == ["0344"]
+    assert nums("B033") == nums("B033f") == ["0406"]                           # soldier, on B033m only before
+    assert nums("B015m") == ["0338"] and not nums("B015f")                      # young man: male only
+    assert nums("B004m") == ["0335"] and nums("B004", wl.SWADESH) and not nums("B004f", wl.SWADESH)  # discrete
+    assert nums("C009f") == ["0356"] and not nums("C009")                     # discrete (Swadesh 39 on C009)

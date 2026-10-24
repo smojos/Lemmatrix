@@ -264,13 +264,17 @@ def other_numbers(base: str, number: str) -> dict[str, list[str]]:
     A hidden EACW item with no number of a list takes the numbers of its gendered family's
     published members (Josh, 23 October: B033f female warrior, if added, goes with B033m male
     warrior's CAWL 0406), or of its other members if those have none. A published item keeps
-    only its own (C001 parent is not CAWL mother)."""
+    only its own. The human terms (B and C) don't inherit: they carry their family links in the
+    data itself since 24 October (an un-gendered CAWL or Swadesh item on the generic and its female
+    and male, a gendered pair on the generic too, unless the family is discrete like B004 child,
+    girl, boy), so CAWL young man stays off B015f female youth."""
     out = {}
     eacw = get(EACW).by_number
     for lid in LIST_IDS:
         if lid != base:
             nums = _order(lid, mapped(base, number, lid))
-            if not nums and base == EACW and number in eacw and not eacw[number].default:
+            if (not nums and base == EACW and number in eacw and not eacw[number].default
+                    and number[:1] not in "BC"):            # the human terms: their links are in the data
                 fam = [n for n in _gender_family(number) if n != number]
                 got = []
                 for group in ([n for n in fam if eacw[n].default], fam):
@@ -693,11 +697,28 @@ def gloss_mismatches(db, base: str) -> tuple[int, list[tuple[object, Item]]]:
     return compared, out
 
 
+def preferred_eacw(item: Item) -> list[str]:
+    """An item's EACW matches, the closest first: a gendered item linked to its sex and the generic
+    (CAWL 0345 mother → C001f and C001, Josh, 24 October) puts the gendered one first; otherwise
+    the list's order (CAWL 0813 rich man → B047 rich person, B047f, B047m)."""
+    groups: dict[str, list[str]] = {}
+    for r in item.eacw:
+        m = _FAMILY.fullmatch(r)
+        groups.setdefault(m.group(1) if m else r, []).append(r)
+    out = []
+    for stem, refs in groups.items():
+        sexed = [r for r in refs if r in (stem + "f", stem + "m")]
+        if stem in refs and len(sexed) == 1:          # the generic and one sex: a gendered item
+            refs = sexed + [r for r in refs if r not in sexed]
+        out += refs
+    return out
+
+
 def item_gloss(lid: str, item: Item) -> str:
-    """The list's own gloss; for the CAWL without its glosses, the EACW's for its first match."""
+    """The list's own gloss; for the CAWL without its glosses, the EACW's for its closest match."""
     if item.gloss:
         return item.gloss
-    for e in item.eacw:
+    for e in preferred_eacw(item):
         if (x := get(EACW).by_number.get(e)) is not None:
             return x.gloss
     return ""
@@ -708,7 +729,7 @@ def word_class_for(lid: str, item: Item) -> str:
     otherwise from the list's own markers ('(v)', '(be)', 'to …' → VERB; '(n)' → NOUN), else ''."""
     if item.word_class:
         return item.word_class
-    for e in item.eacw:
+    for e in preferred_eacw(item):
         if (x := get(EACW).by_number.get(e)) is not None and x.word_class:
             return x.word_class
     return ""
@@ -738,8 +759,8 @@ def gloss_matches(db, lid: str) -> list[tuple[str, object]]:
     exported and their number stored). A lemma that already carries a number of this list isn't
     offered another."""
     if lid == CAWL and not get(CAWL).has_glosses:
-        keys_of = lambda i: set().union(*(gloss_keys(get(EACW).by_number[e].gloss)
-                                          for e in i.eacw if e in get(EACW).by_number)) if i.eacw else set()
+        keys_of = lambda i: set().union(*(gloss_keys(get(EACW).by_number[e].gloss)       # the closest only
+                                          for e in preferred_eacw(i)[:1] if e in get(EACW).by_number)) if i.eacw else set()
     else:
         keys_of = lambda i: gloss_keys(i.gloss)
     taken, with_numbers = set(), set()

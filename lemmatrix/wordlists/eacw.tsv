@@ -286,8 +286,8 @@ B042m	male priest	NOUN	yes
 B043	beggar	NOUN	yes			
 B043f	female beggar	NOUN	no			
 B043m	male beggar	NOUN	no			
-B044	prostitute	NOUN	yes			
-B044f	female prostitute	NOUN	no			
+B044	prostitute	NOUN	no			
+B044f	female prostitute	NOUN	yes			
 B044m	male prostitute	NOUN	no			
 B045	person of village	NOUN	yes		villager	
 B045f	female person of village	NOUN	no			
@@ -367,7 +367,7 @@ C007m	groom	NOUN	yes
 C008	betrothed	NOUN	no		engaged person	
 C008f	fiancee	NOUN	yes		fiancée: accent removed (accents are unfriendly for file names)	
 C008m	fiance	NOUN	yes		fiancé: accent removed (accents are unfriendly for file names)	
-C009	child (offspring)	NOUN	yes			
+C009	child (offspring)	NOUN	no			
 C009f	daughter	NOUN	yes			
 C009m	son	NOUN	yes			
 C010	grandchild	NOUN	yes			
@@ -376,43 +376,43 @@ C010m	grandson	NOUN	yes
 C011	ancestor	NOUN	yes			
 C011f	female ancestor	NOUN	no			
 C011m	male ancestor	NOUN	no			
-C012	paternal grandparent	NOUN	yes			
+C012	paternal grandparent	NOUN	no			
 C012f	paternal grandmother	NOUN	yes			
 C012m	paternal grandfather	NOUN	yes			
-C013	paternal great grandparent	NOUN	yes			
+C013	paternal great grandparent	NOUN	no			
 C013f	paternal great grandmother	NOUN	yes			
 C013m	paternal great grandfather	NOUN	yes			
 C014	paternal pibling	NOUN	no		father's sibling, aunt or uncle	
 C014f	paternal aunt	NOUN	yes			
 C014m	paternal uncle	NOUN	yes			
-C015	paternal cousin	NOUN	yes			
-C015f	female paternal cousin	NOUN	no			
-C015m	male paternal cousin	NOUN	no			
-C016	maternal grandparent	NOUN	yes			
+C015	paternal cousin	NOUN	no			
+C015f	female paternal cousin	NOUN	yes			
+C015m	male paternal cousin	NOUN	yes			
+C016	maternal grandparent	NOUN	no			
 C016f	maternal grandmother	NOUN	yes			
 C016m	maternal grandfather	NOUN	yes			
-C017	maternal great grandparent	NOUN	yes			
+C017	maternal great grandparent	NOUN	no			
 C017f	maternal great grandmother	NOUN	yes			
 C017m	maternal great grandfather	NOUN	yes			
 C018	maternal pibling	NOUN	no		mother's sibling, aunt or uncle	
 C018f	maternal aunt	NOUN	yes			
 C018m	maternal uncle	NOUN	yes			
-C019	maternal cousin	NOUN	yes			
-C019f	female maternal cousin	NOUN	no			
-C019m	male maternal cousin	NOUN	no			
-C020	marital parent-in-law	NOUN	yes		husband's parent	
+C019	maternal cousin	NOUN	no			
+C019f	female maternal cousin	NOUN	yes			
+C019m	male maternal cousin	NOUN	yes			
+C020	marital parent-in-law	NOUN	no		husband's parent	
 C020f	marital mother-in-law	NOUN	yes		husband's mother	
 C020m	marital father-in-law	NOUN	yes		husband's father	
-C021	marital sibling-in-law	NOUN	yes		husband's sibling	
+C021	marital sibling-in-law	NOUN	no		husband's sibling	
 C021f	marital sister-in-law	NOUN	yes		husband's sister	
 C021m	marital brother-in-law	NOUN	yes		husband's brother	
 C022	marital nibling	NOUN	no		husband's sibling's child	
 C022f	marital niece	NOUN	yes		husband's sibling's daughter	
 C022m	marital nephew	NOUN	yes		husband's sibling's son	
-C023	uxorial parent-in-law	NOUN	yes		wife's parent	
+C023	uxorial parent-in-law	NOUN	no		wife's parent	
 C023f	uxorial mother-in-law	NOUN	yes		wife's mother	
 C023m	uxorial father-in-law	NOUN	yes		wife's father	
-C024	uxorial sibling-in-law	NOUN	yes		wife's sibling	
+C024	uxorial sibling-in-law	NOUN	no		wife's sibling	
 C024f	uxorial sister-in-law	NOUN	yes		wife's sister	
 C024m	uxorial brother-in-law	NOUN	yes		wife's brother	
 C025	uxorial nibling	NOUN	no		wife's sibling's child	

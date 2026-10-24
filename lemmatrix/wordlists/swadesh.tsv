@@ -38,10 +38,10 @@ number	gloss	word_class	eacw	cawl
 37	man (adult male)	NOUN	B001m	0328
 38	man (human being)	NOUN	B001	0326
 39	child	NOUN	B004 C009	0334
-40	wife	NOUN	C005f	0363
-41	husband	NOUN	C005m	0362
-42	mother	NOUN	C001f	0345
-43	father	NOUN	C001m	0344
+40	wife	NOUN	C005 C005f	0363
+41	husband	NOUN	C005 C005m	0362
+42	mother	NOUN	C001 C001f	0345
+43	father	NOUN	C001 C001m	0344
 44	animal	NOUN	D001	0957
 45	fish	NOUN	F001	1083
 46	bird	NOUN	E001	1041

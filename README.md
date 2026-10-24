@@ -149,7 +149,7 @@ ever closes by itself with no message, `lemmatrix-crash.log` in this folder says
   Tier mapping; tx, ge, ft by default); a line can be played, played in context, opened in Praat
   with its TextGrid, or clipped as an utterance (its stretch of the recording and its text).
 - **Comparative wordlists:** **New database** starts empty or from one of three lists: the
-  **Extended African Comparative Wordlist** (EACW, recommended: 2,556 items, 2,281 of them in its
+  **Extended African Comparative Wordlist** (EACW, recommended: 2,556 items, 2,274 of them in its
   published list), the **SIL Comparative African Wordlist** (CAWL, 1,700) or the **Swadesh list**
   (207). The EACW comes as its base list or expanded with its hidden items, and global, for all of
   Africa or for one region (North, West, East, South, Central); its lemmas get the list's

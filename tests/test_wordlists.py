@@ -42,7 +42,7 @@ def test_the_eacw_as_josh_set_it():
     assert not any(re.fullmatch(r"C[A-Z]{3}[fm]?", i.number) for i in items)
     assert not any(i.gloss.lower().startswith("ethnic group") for i in items)
     assert not any(re.search(r"\b(LXX|VXX|SP\d|RS\d)\b", i.gloss) for i in items)
-    assert sum(i.default for i in items) == 2281
+    assert sum(i.default for i in items) == 2274
     assert not eacw["I069f"].default and not eacw["I069m"].default     # Josh, 23 October
     # f and m are reserved for female and male: no series runs into them (J073e husk, then J073g)
     assert eacw["J073g"].gloss == "hair (of maize)" and "J073f" not in eacw
@@ -56,8 +56,8 @@ def test_the_eacw_as_josh_set_it():
 def test_the_versions():
     """Josh, 23 October: base or expanded, and global, Africa or one region."""
     count = lambda items, region: len(wl.version_items(items, region))
-    assert count(wl.EXPANDED, wl.AFRICA) == 2556 and count(wl.BASE, wl.AFRICA) == 2281
-    assert count(wl.BASE, wl.GLOBAL) == 2062                # blank sub codes only
+    assert count(wl.EXPANDED, wl.AFRICA) == 2556 and count(wl.BASE, wl.AFRICA) == 2274
+    assert count(wl.BASE, wl.GLOBAL) == 2055                # blank sub codes only
     for r in wl.REGIONS:
         assert count(wl.BASE, wl.GLOBAL) < count(wl.BASE, r) < count(wl.BASE, wl.AFRICA)
     fonio = wl.get(wl.EACW).by_number["J069"]                # W only
@@ -66,11 +66,15 @@ def test_the_versions():
 
 
 def test_hidden_variants_take_their_familys_numbers():
-    """Josh, 23 October: B033f female warrior, if added, goes with B033m's CAWL 0406; a published
-    item with no number of its own (C001 parent) keeps none."""
+    """Josh, 23 October: B033f female warrior, if added, goes with B033m's CAWL 0406 (in the data since
+    24 October); elsewhere a hidden item takes its family's numbers, a published one keeps its own."""
     assert wl.other_numbers(wl.EACW, "B033f") == {wl.CAWL: ["0406"]}
     assert wl.other_numbers(wl.EACW, "B033") == {wl.CAWL: ["0406"]}
-    assert wl.other_numbers(wl.EACW, "C001") == {}
+    assert wl.other_numbers(wl.EACW, "C001") == {wl.CAWL: ["0344", "0345"], wl.SWADESH: ["42", "43"]}   # 24 October
+    hidden = [i for i in wl.get(wl.EACW).items if not i.default and i.number[0] not in "BC"
+              and not wl.mapped(wl.EACW, i.number, wl.CAWL) and len(wl._gender_family(i.number)) > 1
+              and any(wl.mapped(wl.EACW, n, wl.CAWL) for n in wl._gender_family(i.number))]
+    assert hidden and all(wl.other_numbers(wl.EACW, i.number).get(wl.CAWL) for i in hidden)
 
 
 def test_every_mapped_number_exists():
@@ -84,8 +88,8 @@ def test_every_mapped_number_exists():
 
 def test_the_mapping_both_ways():
     assert wl.other_numbers(wl.EACW, "C001f") == {wl.CAWL: ["0345"], wl.SWADESH: ["42"]}
-    assert wl.other_numbers(wl.CAWL, "0345") == {wl.EACW: ["C001f"], wl.SWADESH: ["42"]}
-    assert wl.other_numbers(wl.SWADESH, "42") == {wl.EACW: ["C001f"], wl.CAWL: ["0345"]}
+    assert wl.other_numbers(wl.CAWL, "0345") == {wl.EACW: ["C001", "C001f"], wl.SWADESH: ["42"]}   # the generic too
+    assert wl.other_numbers(wl.SWADESH, "42") == {wl.EACW: ["C001", "C001f"], wl.CAWL: ["0345"]}
     # one number on several lemmas: CAWL brother (elder/younger)
     assert len(wl.mapped(wl.CAWL, "0346", wl.EACW)) > 1
 
@@ -109,7 +113,7 @@ def test_a_new_database_on_the_eacw():
     db = defaults.new_database(wl.EACW)
     assert db.metadata.wordlist_base == wl.EACW
     assert (db.metadata.wordlist_items, db.metadata.wordlist_region) == (wl.BASE, wl.AFRICA)
-    assert len(db.entries) == 2281                             # the base list, all of Africa
+    assert len(db.entries) == 2274                             # the base list, all of Africa
     e = db.entry_by_ref("C001f")
     assert db.gloss(e) == "mother" and db.word_class(e) == "NOUN"
     assert e.lists == {wl.CAWL: ["0345"], wl.SWADESH: ["42"]}
@@ -176,7 +180,7 @@ def test_a_new_database_on_cawl_or_swadesh_has_no_categories(base, first, after)
 def test_a_cawl_database_glosses_and_word_classes():
     db = defaults.new_database(wl.CAWL)
     e = db.entry_by_ref("0345")
-    assert e.lists == {wl.EACW: ["C001f"], wl.SWADESH: ["42"]}
+    assert e.lists == {wl.EACW: ["C001", "C001f"], wl.SWADESH: ["42"]}
     assert db.gloss(e) == "mother"            # the EACW's gloss until SIL allows the CAWL's own
     assert db.word_class(e) == "NOUN"
     assert db.word_class(db.entry_by_ref("0140")) == "VERB"     # eat
@@ -190,11 +194,11 @@ def test_format_9_round_trip(tmp_path):
     storage.save(db, p, backup=False)
     text = p.read_text(encoding="utf-8")
     assert f'<database format="{storage.FORMAT_VERSION}">' in text and '<wordlist base="SWADESH"' in text
-    assert re.search(r'<entry ref="042"[^>]* eacw="C001f" cawl="0345"', text)
+    assert re.search(r'<entry ref="042"[^>]* eacw="C001 C001f" cawl="0345"', text)
     assert '<references scheme="sequence" digits="3"' in text
     back = storage.load(p)
     assert back.metadata.wordlist_base == wl.SWADESH
-    assert back.entry_by_ref("042").lists == {wl.EACW: ["C001f"], wl.CAWL: ["0345"]}
+    assert back.entry_by_ref("042").lists == {wl.EACW: ["C001", "C001f"], wl.CAWL: ["0345"]}
     assert not back.upgraded
 
 
@@ -298,14 +302,14 @@ def _search(win, text):
 
 
 def test_the_lemma_lists_search(win):
-    rows = _search(win, "CAWL 345")
-    assert [e.ref for e in rows] == ["C001f"]
+    rows = _search(win, "CAWL 351")                       # father's sister: C014f, and C014 is hidden
+    assert [e.ref for e in rows] == ["C014f"]
     assert win.lemmas.current_row() is rows[0]              # selected, so the matrix follows
     assert len(_search(win, "SWADESH")) == sum(1 for e in win.doc.db.entries if e.lists.get(wl.SWADESH))
-    assert sorted(e.ref for e in _search(win, "SWADESH 42, CAWL 1")) == ["A001", "C001f"]
+    assert sorted(e.ref for e in _search(win, "SWADESH 42, CAWL 1")) == ["A001", "C001", "C001f"]
     assert _search(win, "CAWL 9999") == []
     assert [e.ref for e in _search(win, "mother")][0] == "C001f"    # plain searches as before
-    assert len(_search(win, "")) == 2281
+    assert len(_search(win, "")) == 2274
 
 
 def test_the_reference_tooltip(win):
