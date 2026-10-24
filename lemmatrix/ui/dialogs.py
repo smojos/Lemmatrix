@@ -119,6 +119,33 @@ class NoForbidden(QLineEdit):
 # Entries
 # ==========================================================================
 
+MORE_KEY = "lemma_dialog/more"         # the workspace: the lemma fields behind the More arrow (idea 60)
+MORE_OPEN = "dialogs/lemma_more"       # this computer: the arrow open or closed
+ALWAYS_SHOWN = ("lemma", "gloss", "word-class")
+
+
+def default_more(db) -> list[str]:
+    """Everything but Lemma, Gloss and Word Class starts behind the More arrow (Josh, 24 October)."""
+    return [f.name for f in db.settings.entry_fields if f.role not in ALWAYS_SHOWN]
+
+
+def more_fields(parent, db) -> set[str]:
+    doc = getattr(parent, "doc", None)
+    ws = getattr(doc, "ws", None) if doc is not None else None
+    v = ws.get(MORE_KEY, None) if ws is not None else None
+    names = [str(x) for x in v] if isinstance(v, list) else default_more(db)
+    keep = {f.name for f in db.settings.entry_fields if f.role not in ALWAYS_SHOWN}
+    return set(names) & keep
+
+
+def _filled(w) -> bool:
+    if isinstance(w, QComboBox):
+        return bool(w.currentText().strip())
+    if isinstance(w, QLineEdit):
+        return bool(w.text().strip())
+    return bool(getattr(w, "items", None))        # the From box's chips
+
+
 class EntryDialog(QDialog):
     """Add or edit an entry; suggests a reference from the chosen category."""
 
@@ -153,9 +180,12 @@ class EntryDialog(QDialog):
         self.origin_on = origin_shown(parent)
         self.from_box = None
         self.setMinimumWidth(480)
+        under_more = more_fields(parent, db)       # behind the More arrow (idea 60, Josh, 24 October)
+        main_rows, more_rows = [], []
         for f in s.entry_fields:
             if f.role == "stem-type" and not self.origin_on:
                 continue                            # Settings → General: Stem type and From hidden
+            rows = more_rows if f.name in under_more else main_rows
             if f.multilingual:
                 for lang in s.gloss_languages:
                     ed = NoForbidden() if (lang == s.primary_gloss and not entry) else QLineEdit()
@@ -164,7 +194,7 @@ class EntryDialog(QDialog):
                     if f.role == "gloss" and lang == "en":           # red lines under unknown words
                         spellui.attach(ed, getattr(parent, "speller", None))
                     if lang == s.primary_gloss:
-                        form.addRow(f"{f.title} ({lang})", ed)
+                        rows.append((f"{f.title} ({lang})", ed))
                     else:
                         others.append((f"{f.title} ({lang})", ed))
                     self.fields[(f.name, lang)] = ed
@@ -179,22 +209,24 @@ class EntryDialog(QDialog):
                 cb.addItems(extra)
                 cb.setCurrentText(entry.get(f.name) if entry else
                                   ("simple" if f.role == "stem-type" and "simple" in listed else ""))
-                form.addRow(f.title, cb)
+                rows.append((f.title, cb))
                 self.fields[(f.name, "")] = cb
                 if f.role == "stem-type":
-                    self._add_from(form, db, entry, parent)
+                    self._add_from(rows, db, entry, parent)
             else:
                 ed = keyboards.tag(QLineEdit(entry.get(f.name) if entry else ""), f.name)
                 if f.role == "lemma":
                     ed.setFont(ipa_font(14))
-                form.addRow(f.title, ed)
+                rows.append((f.title, ed))
                 self.fields[(f.name, "")] = ed
         self.file_gloss = NoForbidden(entry.file_gloss if entry else "")
         self.file_gloss.setPlaceholderText("copied from the gloss when the entry is created")
-        form.addRow("Gloss in file names", self.file_gloss)
+        more_rows.append(("Gloss in file names", self.file_gloss))
         if not entry:
             self.file_gloss.setEnabled(False)
             self.file_gloss.setToolTip("Set automatically from the primary gloss.")
+        for label, w in main_rows:
+            form.addRow(label, w)
         self.others_btn = None
         if others:
             self.others_btn = QToolButton()
@@ -222,13 +254,47 @@ class EntryDialog(QDialog):
             self.others_btn.setChecked(shown)
             self.others_btn.toggled.connect(show)
             show(shown, remember=False)
+        self._more_rows(form, more_rows, parent)
         form.addRow(_buttons(self))
 
-    def _add_from(self, form, db, entry, parent):
+    def _more_rows(self, form, rows, parent):
+        """The fields behind the More arrow (IDEAS.md idea 60, Josh, 24 October): everything but the
+        reference, Lemma, Gloss and Word Class to begin with (Edit → Fields → Under More changes it).
+        The arrow says how many of them are filled; open or closed as last left (this computer)."""
+        self.more_btn = None
+        if not rows:
+            return
+        filled = sum(1 for _, w in rows if w is not self.file_gloss and _filled(w))   # not the automatic one
+        b = QToolButton()
+        b.setCheckable(True)
+        b.setAutoRaise(True)
+        b.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        b.setText(f"More ({filled} filled)" if filled else "More")
+        b.setToolTip("The lemma's other fields: " + ", ".join(label for label, _ in rows if label)
+                     + ". Edit → Fields → Under More chooses which they are.")
+        form.addRow(b)
+        for label, w in rows:
+            form.addRow(label, w)
+        prefs = getattr(parent, "prefs", None)
+
+        def show(on, remember=True):
+            b.setArrowType(Qt.DownArrow if on else Qt.RightArrow)
+            for _, w in rows:
+                form.setRowVisible(w, on)
+            self.adjustSize()
+            if remember and prefs is not None:
+                prefs.set_value(MORE_OPEN, bool(on))
+        shown = prefs.get_bool(MORE_OPEN, False) if prefs is not None else False
+        b.setChecked(shown)
+        b.toggled.connect(show)
+        show(shown, remember=False)
+        self.more_btn = b
+
+    def _add_from(self, rows, db, entry, parent):
         """From, under Stem type: lemmas and languages, as chips (Josh, 22 October)."""
         from .frombox import FromBox
         self.from_box = FromBox(db, entry, getattr(parent, "prefs", None))
-        form.addRow("From", self.from_box)
+        rows.append(("From", self.from_box))
         if entry is not None:
             part = [x for x in db.entries if entry.id in x.from_lemmas]
             if part:
@@ -236,7 +302,7 @@ class EntryDialog(QDialog):
                 lbl.setWordWrap(True)
                 lbl.setFont(ipa_font(12))
                 lbl.setToolTip("The lemmas built from this one (their From)")
-                form.addRow("", lbl)
+                rows.append(("", lbl))
 
     def _suggest(self):
         letter = self.category.currentData()

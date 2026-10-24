@@ -162,8 +162,7 @@ def convert(db: Database, new: str, delete: set | frozenset = frozenset()) -> li
         done.append("Pitch added")
     if has_tone_class(new) and tc is None:
         names = [f.role for f in s.entry_fields]
-        at = next((i + 1 for i, r in enumerate(names) if r == "stem-type"),
-                  next((i + 1 for i, r in enumerate(names) if r == "word-class"), len(names)))
+        at = next((i + 1 for i, r in enumerate(names) if r == "word-class"), len(names))   # before Stem type
         s.entry_fields.insert(at, FieldDef("ToneClass", "Tone Class", closed=True, items=defaults.tone_classes()))
         done.append("Tone Class added")
     # fields the kind doesn't have: removed once nothing holds data in them

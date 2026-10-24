@@ -187,9 +187,10 @@ def default_settings() -> Settings:
         FieldDef("Gloss", role="gloss"),
         FieldDef("WordClass", "Word Class", role="word-class", closed=True,
                  items=[ListItem(n) for n in WORD_CLASSES]),
-        FieldDef("StemType", "Stem type", role="stem-type", closed=True, items=stem_types()),   # 22–23 October
+        # Tone Class and Inflection Class after Word Class, before Stem type (Josh, 24 October)
         FieldDef("ToneClass", "Tone Class", closed=True, items=tone_classes()),
         FieldDef("InflectionClass", "Inflection Class", closed=True, items=inflection_classes()),
+        FieldDef("StemType", "Stem type", role="stem-type", closed=True, items=stem_types()),   # 22–23 October
         FieldDef("Comment", role="comment"),
     ]
     s.token_fields = [

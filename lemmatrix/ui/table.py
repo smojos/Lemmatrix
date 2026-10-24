@@ -152,6 +152,7 @@ class RowFilter(QSortFilterProxyModel):
         # (row, search item) -> True/False when the item is a search of its own (the lemma list's
         # `CAWL 345`, idea 40), or None to search the columns' text as usual
         self.term_match: Callable | None = None
+        self.extra: Callable | None = None         # row -> False to leave it out (Hide empty lemmas, idea 55)
         self.setSortCaseSensitivity(Qt.CaseInsensitive)
         self.setSortRole(Qt.DisplayRole)
 
@@ -178,6 +179,8 @@ class RowFilter(QSortFilterProxyModel):
         m: RowModel = self.sourceModel()
         row = m.rows[r]
         if self.pinned is not None and getattr(row, "id", None) not in pinned_ids(self.pinned):
+            return False
+        if self.extra is not None and not self.extra(row):
             return False
         by_key = {c.key: c for c in m.all_columns}
         for key, flt in self.filters.items():

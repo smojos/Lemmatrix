@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from PySide6.QtWidgets import (QButtonGroup, QDialog, QDialogButtonBox, QFormLayout, QGroupBox,
+from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QDialog, QDialogButtonBox, QFormLayout, QGroupBox,
                                QHBoxLayout, QInputDialog, QLabel, QLineEdit, QListWidget,
                                QListWidgetItem, QMessageBox, QPlainTextEdit, QRadioButton,
                                QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
@@ -161,6 +161,11 @@ class FieldsDialog(QDialog):
         for kind in self.lists:                      # remember original names to follow renames
             for f in self.lists[kind]:
                 f._orig = f.name
+        from .dialogs import ALWAYS_SHOWN, more_fields
+        self._always = ALWAYS_SHOWN
+        under = more_fields(parent, db)              # the lemma dialogue's More arrow (idea 60)
+        for f in self.lists["lemma"]:
+            f._more = f.name in under
         self.current: tuple[str, int] | None = None
 
         outer = QHBoxLayout(self)
@@ -206,9 +211,14 @@ class FieldsDialog(QDialog):
         self.note.setWordWrap(True)
         self.note.setStyleSheet(f"color: {theme.muted()};")
         self.list_editor = ListEditor()
+        self.more_cb = QCheckBox("Under More in the lemma dialogue")
+        self.more_cb.setToolTip("Behind the lemma dialogue's More arrow, so the dialogue shows only "
+                                "the fields you fill in most (Lemma, Gloss and Word Class are always shown)")
+        self.more_cb.toggled.connect(self._more_toggled)
         form.addRow("Label", self.label)
         form.addRow("Element name", self.name)
         form.addRow("Type", tw)
+        form.addRow("", self.more_cb)
         form.addRow(self.note)
         form.addRow(self.list_editor)
         mid.addWidget(self.detail)
@@ -281,6 +291,11 @@ class FieldsDialog(QDialog):
         self.closed_rb.setChecked(f.closed)
         for w in (self.label, self.name, self.open_rb, self.closed_rb):
             w.blockSignals(False)
+        self.more_cb.blockSignals(True)
+        self.more_cb.setVisible(kind == "lemma")
+        self.more_cb.setEnabled(f.role not in self._always)
+        self.more_cb.setChecked(bool(getattr(f, "_more", f.role not in self._always)))
+        self.more_cb.blockSignals(False)
         fixed_type = f.builtin
         self.open_rb.setEnabled(not fixed_type)
         self.closed_rb.setEnabled(not fixed_type)
@@ -296,6 +311,15 @@ class FieldsDialog(QDialog):
             if f.closed and not f.items:
                 self._fill_from_data(kind, f)
             self.list_editor.set_items(f.items)
+
+    def _more_toggled(self, on: bool):
+        if self.current and self.current[0] == "lemma":
+            self.lists["lemma"][self.current[1]]._more = bool(on)
+
+    def more_names(self) -> list[str]:
+        """The lemma fields behind the More arrow, as they are named now (new fields: yes)."""
+        return [f.name for f in self.lists["lemma"]
+                if f.role not in self._always and getattr(f, "_more", True)]
 
     def _fill_from_data(self, kind, f):
         """Start an empty list from the values already in the data."""

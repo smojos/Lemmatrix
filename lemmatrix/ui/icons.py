@@ -29,7 +29,7 @@ WHITE = QColor("white")
 BLACK = QColor("#1b1b1b")
 
 
-WIDE = {"gear-cells": 1.6, "gear-columns": 1.6, "gear-matrix": 1.6, "move-token": 1.6, "lemma-token": 1.6, "text-token": 1.3}   # icons wider than tall: width as a multiple of height
+WIDE = {"gear-cells": 1.6, "gear-columns": 1.6, "gear-matrix": 1.6, "move-token": 1.6, "lemma-token": 1.6, "text-token": 1.3, "hide-empty": 1.6}   # icons wider than tall: width as a multiple of height
 PRAAT_BEIGE = QColor("#909068")
 
 
@@ -303,6 +303,21 @@ def _draw(name: str, s: int, p: QPainter, colour: QColor | None = None, colour2:
         stem.lineTo(sx, s * 0.72)
         stem.quadTo(sx, s * 0.84, sx + s * 0.13, s * 0.80)
         p.drawPath(stem)
+    elif name == "hide-empty":                   # λ∅: hide the lemmas with no token data (idea 55, 24 October)
+        c = colour or GREEN
+        p.setBrush(Qt.NoBrush)
+        p.setPen(QPen(c, max(1.6, s * 0.10), Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        w, top, bottom = s * 0.42, s * 0.18, s * 0.84
+        x0 = s * 0.06                             # λ, as in λ→τ
+        hook = QPainterPath()
+        hook.moveTo(x0, top)
+        hook.lineTo(x0 + w * 0.22, top)
+        hook.lineTo(x0 + w, bottom)
+        p.drawPath(hook)
+        p.drawLine(QPointF(x0 + w * 0.56, s * 0.50), QPointF(x0 + w * 0.02, bottom))
+        r, cx, cy = s * 0.26, s * 1.18, s * 0.52  # ∅: an empty set
+        p.drawEllipse(QPointF(cx, cy), r, r)
+        p.drawLine(QPointF(cx - r * 1.15, cy + r * 1.15), QPointF(cx + r * 1.15, cy - r * 1.15))
     elif name == "text-token":                   # ➜τ: a token made from a text's line (Josh, 21 October)
         c = colour or GREEN
         p.setPen(Qt.NoPen)
@@ -613,7 +628,7 @@ def ink_icon(name: str, size: int = 22) -> QIcon:
 
 
 THEMED = {"reset-filters", "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token",
-          "lemma-token", "text-token", "tick", "refresh-text", "camera", "xml-viewer"}   # follow the theme: redrawn on a change
+          "lemma-token", "text-token", "tick", "refresh-text", "camera", "xml-viewer", "hide-empty"}   # follow the theme: redrawn on a change
 
 
 def themed_icon(name: str, size: int = 22) -> QIcon:

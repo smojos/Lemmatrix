@@ -24,6 +24,7 @@ def test_help_menu_and_lemma_controls_open_the_email(win, monkeypatch):
     from PySide6.QtGui import QDesktopServices
     opened = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda url: opened.append(url.toString()) or True)
+    monkeypatch.setattr(win, "_setup_for_report", lambda kind: None)   # Just the email (idea 50)
     texts = [a.text() for m in win.menuBar().actions() if m.text() == "&Help" for a in m.menu().actions()]
     assert texts[:2] == ["I found a tick!", "Request a feature"]
     win.tick_button.click()

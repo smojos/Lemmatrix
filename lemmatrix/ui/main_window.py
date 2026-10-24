@@ -74,6 +74,7 @@ def pitchmod_parse(text):
 SAMPLE = Path(__file__).resolve().parent.parent.parent / "samples" / "Sample.xml"
 ELICIT_TEST = SAMPLE.parent / "Elicit test" / "ITA-STD_Elicit_Test.xml"
 ALL_DATA, LEMMA_TAG, TAG_TAG = 0, 1, 2
+HIDE_EMPTY = "lemmas/hide_empty"     # the workspace: Hide empty lemmas in the lemma list (idea 55)
 KINDS = {LEMMA_TAG: mx.LEMMA_TAG, TAG_TAG: mx.TAG_TAG}
 
 
@@ -97,7 +98,7 @@ class TokenRow:
 
 INK_ICONS = THEMED                 # drawn in the theme's colours, so they follow the theme
 ICON_ONLY = {"add", "delete", "edit", "play", "reset-filters",   # obvious, shared actions: the name is in the tooltip
-             "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token", "lemma-token", "tick",
+             "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token", "lemma-token", "hide-empty", "tick",
              "camera", "xml-viewer"}
 
 
@@ -264,6 +265,12 @@ class MainWindow(QMainWindow):
                              "one token per lemma for each combination of the tags you pick"),
                         tool("Configure columns", "gear-columns", self.configure_lemma_columns),
                         tool("Clear all filters", "reset-filters", self._clear_lemma_filters, "Clear all filters"))
+        self.hide_empty = tool("Hide empty lemmas", "hide-empty", lambda: None,
+                               "Hide empty lemmas: leave out the lemmas with no token data (no tokens, or "
+                               "only tokens with nothing typed and no recording). Click again to show them.")
+        self.hide_empty.setCheckable(True)        # this database's, in its workspace (idea 55, Josh, 24 October)
+        self.hide_empty.toggled.connect(self._hide_empty_toggled)
+        row.insertWidget(row.count() - 1 if row.count() else 0, self.hide_empty)
         row.addWidget(self.lemma_count)
         self.lemma_search = QLineEdit()
         self.lemma_search.setPlaceholderText("quick search of the visible columns")
@@ -1573,10 +1580,49 @@ class MainWindow(QMainWindow):
         """I found a tick! (kind "bug") or Request a feature: opens an email to the support address."""
         from PySide6.QtCore import QUrl
         from PySide6.QtGui import QDesktopServices
-        url = report.mailto(kind)
+        attached = self._setup_for_report(kind)
+        if attached is False:
+            return                                # Cancel
+        url = report.mailto(kind, attached.name if attached else "")
         if not QDesktopServices.openUrl(QUrl(url, QUrl.TolerantMode)):
             QMessageBox.information(self, "Email", "No email program opened. Please write to "
                                     f"{report.SUPPORT_EMAIL}.")
+
+    def _setup_for_report(self, kind: str):
+        """Offer to send the database's setup with the email (IDEAS.md idea 50, Josh, 24 October):
+        fields, lists, tags, categories and settings, no data at all. Returns the file made, None
+        (just the email) or False (Cancel)."""
+        db = self.doc.db
+        if not db.path:
+            return None
+        from .. import layout, setup_export
+        box = QMessageBox(self)
+        box.setWindowTitle("I found a tick!" if kind == "bug" else "Request a feature")
+        box.setText("Would you like to send your database's setup with the email?")
+        box.setInformativeText(
+            "It shows the developer how your database is set up: its fields and their lists, the tag "
+            "structure, the reference categories and the settings. It holds no data at all: no lemmas, "
+            "tokens, texts or recordings, no people and no places, and the language and variety only as "
+            "LXX and VXX.\n\nNothing in your database changes: the setup is a copy, saved in your "
+            "Exports folder. The email can't attach it by itself, so the folder opens for you to drag "
+            "the file into the email.")
+        make = box.addButton("Make the setup file", QMessageBox.AcceptRole)
+        plain = box.addButton("Just the email", QMessageBox.ActionRole)
+        box.addButton("Cancel", QMessageBox.RejectRole)
+        box.setDefaultButton(plain)
+        box.exec()
+        if box.clickedButton() is plain:
+            return None
+        if box.clickedButton() is not make:
+            return False
+        try:
+            path = setup_export.write(db, layout.exports_folder(db.path))
+        except OSError as exc:
+            QMessageBox.warning(self, "Setup", f"The setup couldn't be written: {exc}")
+            return None
+        self.open_folder(path.parent)
+        self.statusBar().showMessage(f"Setup saved as {path.name} in Exports: drag it into the email.", 8000)
+        return path
 
     def _act(self, menu, text, fn, shortcut=None):
         a = QAction(text, self)
@@ -1824,6 +1870,10 @@ class MainWindow(QMainWindow):
             box.blockSignals(True)                # each database has its own (in its workspace)
             box.setChecked(self.doc.ws.get_bool(name))
             box.blockSignals(False)
+        self.hide_empty.blockSignals(True)        # Hide empty lemmas (idea 55): this database's too
+        self.hide_empty.setChecked(self.doc.ws.get_bool(HIDE_EMPTY))
+        self.hide_empty.blockSignals(False)
+        self._apply_hide_empty()
         self._setup_columns()
         self.lemmas.proxy.pinned = None           # a Ctrl+click pin belongs to the database closed
         self.all_table.proxy.pinned = None
@@ -2823,6 +2873,16 @@ class MainWindow(QMainWindow):
                 self.configs[cfg.kind] = m.copy()
         self.refresh()
 
+    def _hide_empty_toggled(self, on):
+        self.doc.ws_set(HIDE_EMPTY, bool(on) or None)
+        self._apply_hide_empty()
+        self.lemmas.proxy.refilter()
+
+    def _apply_hide_empty(self):
+        """The lemma list leaves out lemmas with no token data while Hide empty lemmas is on (idea 55)."""
+        on = self.hide_empty.isChecked()
+        self.lemmas.proxy.extra = (lambda e: any(t.has_content() for t in e.tokens)) if on else None
+
     def _only_data_toggled(self, on):
         self.doc.ws_set("only_with_data", bool(on))
         self.refresh()
@@ -3815,6 +3875,10 @@ class MainWindow(QMainWindow):
     def edit_fields(self):
         dlg = FieldsDialog(self, self.doc.db)
         if dlg.exec():
+            from .dialogs import MORE_KEY, default_more
+            more = dlg.more_names()                  # the lemma dialogue's More arrow (idea 60): the workspace's
+            if more != default_more(self.doc.db) or self.doc.ws.get(MORE_KEY, None) is not None:
+                self.doc.ws_set(MORE_KEY, more)
             if dlg.apply():
                 self.doc.undo.clear()             # renamed fields can't be undone safely
             self._setup_columns()
