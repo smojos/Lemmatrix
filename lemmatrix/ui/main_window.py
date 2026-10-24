@@ -1263,7 +1263,7 @@ class MainWindow(QMainWindow):
             self.pitch_view_action.isChecked()))
         self.pitch_view_action.setCheckable(True)
         self.pitch_view_action.setChecked(True)
-        self._act(v, "Hide or show the option panels", self.toggle_panels)
+        self._act(v, "Hide or show the working panels", self.toggle_panels)
         # the same keys as in the token dialogue
         self.play_action = self._act(None, "Play the selected token", self.play_selected, "Ctrl+Space")
         self.play_pitch_action = self._act(None, "Play the selected token's pitch", self.play_selected_pitch,
@@ -2308,8 +2308,8 @@ class MainWindow(QMainWindow):
     def _panels_icon(self):
         hidden = self.panels_hidden()
         self.panels_btn.setIcon(icon("chevron-up" if hidden else "chevron-down", 18, theme.colour("pitch").name()))
-        self.panels_btn.setToolTip("Show the option panels" if hidden else
-                                   "Hide the option panels (the lemma options, the matrix options and "
+        self.panels_btn.setToolTip("Show the working panels" if hidden else
+                                   "Hide the working panels (the lemma list's, the working window's and "
                                    "Current Session); they can also be dragged down out of sight")
 
     def _load_notebook(self):

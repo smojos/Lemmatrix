@@ -1556,15 +1556,21 @@ def test_same_recording_name_offers_an_example_tag_and_never_overwrites(win, mon
     # Saving a token whose tags match another's offers the next free tag (X2). There is no
     # "Keep as it is" (Josh, 21 October: two soundfiles of one name): Cancel goes back to the
     # dialogue with nothing saved, every time, and Add saves it with the tag.
+    # (24 October: saving asks the same-configuration box, whose Add is the Example offer.)
     pick = ["cancel"]
     dlg = TokenDialog(win, [Slot(e, None, tuple(first.tags), explicit=True, defaults=False)], 0)
     dlg.edits["Phonetic"].setText("rʉʉr")
-    n, count = len(answers), len(e.tokens)
+    asked = []
+    def ask(o, chip):
+        asked.append(chip)
+        return pick[0]
+    monkeypatch.setattr(dlg, "_ask_duplicate", ask)
+    count = len(e.tokens)
     dlg._ok()
-    assert len(answers) == n + 1 and "x2" in answers[-1]
+    assert asked == ["x2"]
     assert len(e.tokens) == count and dlg.result() == 0                  # nothing saved, still open
     dlg._ok()
-    assert len(answers) == n + 2 and len(e.tokens) == count             # asked again
+    assert len(asked) == 2 and len(e.tokens) == count                   # asked again
     pick = ["add"]
     dlg._ok()
     assert len(e.tokens) == count + 1 and "Example 2" in e.tokens[-1].tags

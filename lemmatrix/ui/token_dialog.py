@@ -832,7 +832,15 @@ class TokenDialog(QDialog):
         # change the tags. A clash it already had (converted data) doesn't stop other edits.
         retagged = self.original is None or list(self.original.tags) != list(t.tags)
         if check_clash and saving and retagged and self._clashes():
-            if not self._offer_example(recording=False):
+            # The same configuration as a token this lemma already has (Josh, 24 October): switch
+            # to it, add an Example tag, or overwrite it. Another lemma's file name (rare) and
+            # several combinations at once keep the plain Example offer.
+            e0, other = self._clashes()[0]
+            if e0 is self.slot.entry and len(combos) == 1:
+                done = self._resolve_duplicate(other)
+                if done is not None:
+                    return done                   # switched (False: stay open) or overwritten (True)
+            elif not self._offer_example(recording=False):
                 return False                      # Cancel: back to the dialogue, nothing saved
             self._collect()
             t = self.token
@@ -946,13 +954,165 @@ class TokenDialog(QDialog):
         box.exec()
         if box.clickedButton() is not add:
             return False
+        self._apply_example(tag)
+        return True
+
+    def _apply_example(self, tag: str):
+        """Give the working token this Example tag in place of any other Example tag."""
         mine = {x.name for _, g in self.db.settings.tags.leaf_groups()
                 if g.name.lower() == "examples" for x in g.tags}
         tags = [x for x in self.token.tags if x not in mine] + [tag]
         self.token.tags = self.db.settings.tags.sort(tags)
         self._build_tags(set(self.token.tags))
         self._fields_changed()
-        return True
+
+    # ------------------------------------- the same configuration (Josh, 24 October)
+    def _core_found(self, o: Token) -> list[tuple[str, bool]]:
+        """The core token fields holding data in a token: (title, bold), Phonemic in bold."""
+        s = self.db.settings
+        out = []
+        for f in s.token_fields:
+            if not f.builtin or (f.role == "pitch" and not self.pitch_shown()):
+                continue
+            has = any(v for v in o.multi.get(f.name, {}).values()) if f.multilingual else bool(o.values.get(f.name))
+            if has:
+                out.append((f.title, f.role == "phonemic"))
+        return out
+
+    def _ask_duplicate(self, o: Token, chip: str) -> str:
+        from .duplicate_token import DuplicateBox
+        box = DuplicateBox(self, self._core_found(o), chip)
+        box.exec()
+        return box.choice
+
+    def _ask_soundfile(self, mine: Path, theirs: Path) -> str | None:
+        """Two soundfiles: 'mine', 'theirs', or None (Cancel)."""
+        from .duplicate_token import SoundfileBox
+        box = SoundfileBox(self, mine, theirs, lambda p: self.main.player.play([p]))
+        box.exec()
+        self.main.player.stop()
+        return box.keep
+
+    def _confirm_overwrite(self, what: str) -> bool:
+        from .duplicate_token import OverwriteBox
+        return OverwriteBox(self, what).exec() == QDialog.Accepted
+
+    def _resolve_duplicate(self, o: Token):
+        """The box: True when overwritten (the dialogue goes on as after a save), False when
+        switched or cancelled (the dialogue stays open), None when Add was chosen (the Example tag
+        is on the token and saving carries on as before)."""
+        from .duplicate_token import DuplicateBox
+        tag = self._free_example()
+        found = self.db.settings.tags.find(tag)
+        chip = found[0].display() if found else tag
+        while True:
+            choice = self._ask_duplicate(o, chip)
+            if choice == DuplicateBox.ADD:
+                self._apply_example(tag)
+                return None
+            if choice not in (DuplicateBox.SWITCH, DuplicateBox.OVERWRITE):
+                return False                      # Cancel: back to the dialogue, nothing saved
+            done = self._merge_into(o, overwrite=choice == DuplicateBox.OVERWRITE)
+            if done is not None:
+                return done                       # else a Cancel further on: back to the box
+
+    def _merge_into(self, o: Token, overwrite: bool):
+        """Put the working token's data into the existing token o (one undo step).
+
+        Switch (overwrite False): only o's empty fields are filled. Overwrite: every field typed
+        here replaces o's; an empty field here never erases anything. With a soundfile on both,
+        the researcher picks the one to keep (the other is held with the deleted recordings, so
+        Undo brings it back); the speaker and date go with the soundfile kept. A token being edited
+        (not new) is removed once its data is in o. Returns True (overwritten), False (switched)
+        or None (a Cancel on the way: nothing changed)."""
+        self._collect()
+        e, t, s = self.slot.entry, self.token, self.db.settings
+        merged = o.copy()
+        overwritten: list[str] = []
+        for f in s.token_fields:
+            if f.multilingual:
+                mine, theirs = t.multi.get(f.name, {}), merged.multi.setdefault(f.name, {})
+                for lang, text in mine.items():
+                    if text and (overwrite or not theirs.get(lang)):
+                        if theirs.get(lang) and theirs[lang] != text:
+                            overwritten.append(f.title)
+                        theirs[lang] = text
+                if not theirs:
+                    merged.multi.pop(f.name, None)
+            else:
+                text = t.values.get(f.name, "")
+                if text and (overwrite or not merged.values.get(f.name)):
+                    if merged.values.get(f.name) and merged.values[f.name] != text:
+                        overwritten.append(f.title)
+                    merged.values[f.name] = text
+        overwritten = list(dict.fromkeys(overwritten))
+        here = t.file and self._path(t.file).exists()
+        there = o.file and self._path(o.file).exists()
+        keep = "mine" if here else "theirs"
+        if here and there and not storage.same_file(self._path(t.file), self._path(o.file)):
+            keep = self._ask_soundfile(self._path(t.file), self._path(o.file))
+            if keep is None:
+                return None
+        if overwrite and (overwritten or (here and there and keep == "mine")):
+            what = list(overwritten) + (["the soundfile"] if here and there and keep == "mine" else [])
+            from .duplicate_token import join
+            if not self._confirm_overwrite(join(what)):
+                return None
+        # the speaker and date (and the rerecord flag) go with the soundfile kept
+        if keep == "mine" and here:
+            merged.speaker, merged.collected, merged.rerecord = t.speaker, t.collected, t.rerecord
+        elif not there and not here:
+            if t.speaker and (overwrite or not merged.speaker):
+                merged.speaker = t.speaker
+            if t.collected and (overwrite or not merged.collected):
+                merged.collected = t.collected
+        renames = list(self._renames)
+        self._renames = []
+        base = len(renames)
+        try:
+            if keep == "mine" and here:
+                name = self.db.expected_filename(e, merged)
+                if there:
+                    src = self._path(o.file)
+                    held = self.doc.hold_recording(src)
+                    src.rename(held)
+                    renames.append((src, held))
+                src, dst = self._path(t.file), self._path(name)
+                if src != dst:
+                    src.rename(dst)
+                    renames.append((src, dst))
+                merged.file = name
+            elif here:                            # theirs kept: this token's recording put aside
+                src = self._path(t.file)
+                held = self.doc.hold_recording(src)
+                src.rename(held)
+                renames.append((src, held))
+        except OSError as exc:
+            for a, b in reversed(renames[base:]):
+                try:
+                    Path(b).rename(a)
+                except OSError:
+                    pass
+            self._renames = renames[:base]
+            QMessageBox.warning(self, "Soundfile", f"Couldn't move the soundfile: {exc}")
+            return None
+        oi = e.tokens.index(o)
+        ci = self.slot.index if self.original is not None else None
+
+        def change(en, oi=oi, ci=ci, merged=merged):
+            en.tokens[oi] = merged
+            if ci is not None:
+                del en.tokens[ci]
+        label = f"Overwrite token in {e.ref}" if overwrite else f"Edit token in {e.ref}"
+        self.doc.edit_entry(e, change, label, renames=renames)
+        new_index = oi - (1 if ci is not None and ci < oi else 0)
+        if ci is not None:                        # Back and Next: the slots after it moved up
+            for sl in self.slots:
+                if sl is not self.slot and sl.entry is e and sl.index is not None and sl.index > ci:
+                    sl.index -= 1
+        self.slot.index = new_index
+        self._load()
+        return overwrite
 
     def _rename_file(self) -> bool:
         t = self.token
