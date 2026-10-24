@@ -10,7 +10,17 @@ linguistic documentation, for any language. It keeps lemmas with their tokens
 holds utterances and texts with their Praat TextGrids, all in readable XML. It is inspired by
 tools such as FLEx, Praat, ELAN, Dekereke and Excel; no code from any of them is used.
 
-**Status:** prototype (Stage 1, version 0.2).
+**Status:** prototype (v0, version 0.2).
+
+## The name
+
+*Lemmatrix* is a portmanteau of **lemma** and **matrix**. The system is built on lemmas as the
+head words, and on matrices that let you look at them in meaningful paradigms and comparisons.
+
+It has a second spelling, **λemmatriχ**, with a lambda at the beginning and a chi at the end.
+Replacing the letters L and X with these letters gives the idea of the Y and the X axes: a
+lowercase lambda (λ) looks like an upside-down Y, and the chi (χ) is the X. And in Lemmatrix
+you can flip the matrices, swapping the X and Y axes, conveniently.
 
 ## Your data, and your own work
 
