@@ -36,6 +36,7 @@
 - **Platforms:** Windows first, then Mac and Linux, because colleagues use both.
 - **Audience:** field linguists. Free to use, share and change under the licence.
 - **A UI for every kind of linguist** (Josh, 23 October): One of the main goals of this program is to make the UI extremely versatile and user friendly, for those linguists who are a little more on the artistic end of the spectrum like myself.
+- **Manageable data** (Josh, 24 October): Linguists want to feel like their data is manageable, especially at first. So Lemmatrix shows what is needed now and keeps the rest within reach: the lemma dialogue's More arrow and the gloss's + (section 3.2), Hide empty lemmas (5.2), the EACW's Base list before Expanded (3.16), the pitch system that can be hidden (3.5). A new dialogue or view starts with the few things most people fill in, and nothing is lost by folding the rest away.
 
 ## 2. Technology and setup
 
