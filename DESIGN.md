@@ -1069,13 +1069,13 @@ New databases start with this structure (revised 20 October). Everything in it c
 
 *Set by Josh on 22 October 2026, to be developed further. Lemmatrix grows through four versions, each with a purpose of its own. They replace the earlier Stages: Stage 1 (the Windows prototype) became v0, Stage 2 (the analysis engine) v2, and Stage 3 (other formats) is split between v1 (import and export for converting databases) and v3 (LaTeX, Word and HTML). The ideas log is grouped by these versions.*
 
-### v0 · Prototype (now: 0.1.x)
+### v0 · Prototype (now: 0.2.x)
 
 - **Purpose:** honing the UI, search, brand, functionality and scope, and getting all the ideas out.
 - **Structure can still change:** file format upgrades are provisional, with no compatibility code for older formats (section 7, 18 October).
-- **Built so far:** everything in sections 3 and 5: database formats up to 10 (pitch kinds as typology, section 3.5), the comparative wordlists (section 3.16), the notebook (format 3) and workspace file, the two archives (section 3.15), the main window, matrices and token dialogue, Bulk edit, predictive translation and spelling, texts and utterances, ɛλicit, the XML viewer, To Do, Cogitate and the whiteboard. (The Stage 1 list this replaced, from 16 October, is all built.)
-- **Before v1:** settle anything structural that is still open, so v1's formats can stay as they are, e.g. typological tagging beyond the pitch kind (IDEAS.md idea 56; the pitch kinds and hiding the pitch system built 23 October, section 3.5), how diacritics are stored (idea 21), and etymology, loan and root/complex marks on lemmas (idea 24).
-- **Ideas:** 14, 16, 18, 21, 24, 43, 56 (the segment scratchpad, idea 46, built 24 October: section 5.1; idea 9, protected core fields, the pitch system and pitch kinds, built 19–23 October: sections 3.2 and 3.5; the comparative wordlists, idea 40, built 22 October: section 3.16; Convert question → hypothesis, idea 35, and pinned questions and To Dos, idea 49, built 22 October: section 3.7).
+- **Built so far:** everything in sections 3 and 5: database formats up to 11 (pitch kinds as typology, section 3.5; the final EACW's version, section 3.16), the comparative wordlists (section 3.16), the notebook (format 3) and workspace file, the two archives (section 3.15), the main window, matrices and token dialogue, Bulk edit, predictive translation and spelling, texts and utterances, ɛλicit, the XML viewer, To Do, Cogitate, the whiteboard, batch tokens from the lemma list (section 5.2) and the phonetics scratchpad (section 5.1). (The Stage 1 list this replaced, from 16 October, is all built.)
+- **Before v1:** settle anything structural that is still open, so v1's formats can stay as they are, e.g. typological tagging beyond the pitch kind (IDEAS.md idea 56; the pitch kinds and hiding the pitch system built 23 October, section 3.5), how diacritics are stored (idea 21), etymology on lemmas beyond Stem type and From (cognates, direction, sources; idea 24) and acknowledgements in the metadata (idea 59). Also before colleagues start: an audit that brings a database up to date with its wordlist (idea 66).
+- **Ideas:** 14, 16, 18, 21, 24, 43, 50, 54, 55, 56, 59, 60, 61, 66 (Open recent and the welcome window, ideas 51 and 52, built 23 October: section 5.1; batch tokens, idea 64, built 24 October: section 5.2; the segment scratchpad, idea 46, built 24 October: section 5.1; idea 9, protected core fields, the pitch system and pitch kinds, built 19–23 October: sections 3.2 and 3.5; the comparative wordlists, idea 40, built 22 October: section 3.16; Convert question → hypothesis, idea 35, and pinned questions and To Dos, idea 49, built 22 October: section 3.7).
 
 ### v1 · Collect (data collection)
 
@@ -1084,7 +1084,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 - **Import and export for converting databases:** from and to other programs (e.g. Dekereke, FLEx through LIFT, Toolbox/SFM), and hopefully Word tables and Excel sheets; exports in formats other programs can use. *This would change the decision of 16 October to keep Dekereke import and export out of the program (section 4); to be settled* (idea 39).
 - **Sharing what was collected:** the Ethical archive is the route for depositing the data (an archive, a repository, a colleague), named and heard as the consent forms allow; the Anonymous archive for showing the setup (section 3.15). What the researcher thinks about the data stays theirs (section 1).
 - **Also planned:** a standalone .exe and installer, and later a fixed "field version".
-- **Ideas:** 1, 10, 19 (ɛλicit's future updates), 20, 27, 28, 34, 39.
+- **Ideas:** 1, 10, 19 (ɛλicit's future updates), 20, 27, 28, 34, 39, 41, 42, 46 (the IPA help chart), 47, 48, 53, 57, 62 (on the v1 release agenda), 63, 65.
 
 ### v2 · Analyze
 
@@ -1098,7 +1098,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 - **Purpose:** from analysis to writing up.
 - Export to LaTeX and Word (interlinear examples, tables, charts); organising papers in preparation; exporting visual aids (charts, diagrams, pictures).
 - **Papers are the researcher's own** (Josh, 22 October): drafts in `Papers/` in the main folder (IDEAS.md idea 30) are unpublished thoughts: in every Full backup, never in an archive. What a paper cites comes from the data with its references, so a reader of the published paper can find it in the archived data.
-- **Ideas:** 2 (the LaTeX example viewer and export), 30, and a hypothesis report, Send to a paper and the snapshot's LaTeX table (idea 35, Later).
+- **Ideas:** 2 (the LaTeX example viewer and export), 30, and a hypothesis report, Send to a paper and the snapshot's LaTeX table (idea 35, Later), 58.
 
 ### Not yet placed
 
