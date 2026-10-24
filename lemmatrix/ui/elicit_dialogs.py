@@ -9,19 +9,19 @@ import datetime as _dt
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import QAbstractTableModel, QModelIndex, QSize, QSortFilterProxyModel, Qt, QUrl
+from PySide6.QtCore import QAbstractTableModel, QModelIndex, QSortFilterProxyModel, Qt, QUrl
 from PySide6.QtGui import QDesktopServices, QGuiApplication
 from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
                                QFileDialog, QFormLayout, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
-                               QMessageBox, QPlainTextEdit, QPushButton, QSplitter, QTableView,
-                               QTableWidget, QTableWidgetItem, QToolButton, QVBoxLayout, QWidget)
+                               QMenu, QMessageBox, QPlainTextEdit, QPushButton, QStackedWidget, QTableView,
+                               QTableWidget, QTableWidgetItem, QVBoxLayout)
 
 from .. import cloud_keys, gdrive
 from .. import elicit as el
 from .. import elicit_prompts, filenames, layout, storage
 from .. import notebook as nbmod
 from ..model import is_utterance, today
-from . import theme
+from . import theme, widgets
 from .winstate import fit_to_screen
 
 NAME = "ɛλicit"
@@ -162,14 +162,17 @@ def _mb(n: int) -> str:
 # --------------------------------------------------------------------------
 
 class _Row:
-    __slots__ = ("entry", "token", "utterance", "recorded", "image", "kind", "ticked", "cells")
+    __slots__ = ("entry", "token", "utterance", "recorded", "image", "kind", "cells")
 
 
-COLUMNS = ("", "Reference", "Form", "Tags", "Card shows", "Recording", "Picture", "Card")
+COLUMNS = ("Reference", "Form", "Tags", "Card shows", "Recording", "Picture", "Card")
+EMPTY = ("Please add tokens and utterances to the request from the main window and Texts and "
+         "utterances: right-click → Add to ɛλicit request.")
 
 
 class ItemModel(QAbstractTableModel):
-    """Every lemma token and utterance, with a tick and the kind of card (New or Rerecord)."""
+    """The tokens and utterances added to the request (Josh, 24 October: only those, added from the
+    main window and Texts and utterances), with the kind of card (New or Rerecord)."""
 
     def __init__(self, db, rows):
         super().__init__()
@@ -187,60 +190,50 @@ class ItemModel(QAbstractTableModel):
         return None
 
     def flags(self, index):
-        f = Qt.ItemIsEnabled | Qt.ItemIsSelectable
-        if index.column() == 0:
-            f |= Qt.ItemIsUserCheckable
-        return f
+        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def data(self, index, role=Qt.DisplayRole):
         r = self.rows[index.row()]
         c = index.column()
-        if role == Qt.CheckStateRole and c == 0:
-            return Qt.Checked if r.ticked else Qt.Unchecked
         if role == Qt.DisplayRole:
-            if c == 7:
+            if c == 6:
                 return "Rerecord" if r.kind == el.RERECORD else "New"
-            return r.cells[c] if c else ""
-        if role == Qt.ToolTipRole and c == 7:
+            return r.cells[c]
+        if role == Qt.ToolTipRole and c == 6:
             return ("It has a soundfile: the card plays it, to be repeated" if r.recorded else
                     "No soundfile yet: the card shows its gloss or translation")
-        if role == Qt.ForegroundRole and c == 4 and r.kind == el.NEW and not r.cells[4]:
+        if role == Qt.ForegroundRole and c == 3 and r.kind == el.NEW and not r.cells[3]:
             return theme.colour("muted")
         return None
 
-    def setData(self, index, value, role=Qt.EditRole):
-        if role == Qt.CheckStateRole and index.column() == 0:
-            self.rows[index.row()].ticked = Qt.CheckState(value) == Qt.Checked
-            self.dataChanged.emit(index, index)
-            return True
-        return False
+    def remove(self, rows: set[int]):
+        self.beginResetModel()
+        self.rows = [r for i, r in enumerate(self.rows) if i not in rows]
+        self.endResetModel()
+
+    def clear(self):
+        self.beginResetModel()
+        self.rows = []
+        self.endResetModel()
 
 
 class ItemFilter(QSortFilterProxyModel):
+    """The search bar: a quick filter of the request's list."""
+
     def __init__(self):
         super().__init__()
         self.text = ""
-        self.ticked_only = False
-        self.scope = 0                           # 0 everything, 1 lemma tokens, 2 citation tokens, 3 utterances
 
     def filterAcceptsRow(self, row, parent):
         r = self.sourceModel().rows[row]
-        if self.ticked_only and not r.ticked:
-            return False
-        if self.scope == 1 and r.utterance or self.scope == 3 and not r.utterance:
-            return False
-        if self.scope == 2 and (r.utterance or not r.token.is_citation):
-            return False
-        if self.text:
-            return self.text in " ".join(r.cells[1:7]).casefold()
-        return True
+        return not self.text or self.text in " ".join(r.cells[:6]).casefold()
 
 
 class RequestDialog(QDialog):
     """Choose the speaker, the researcher, the second language and the cards; then write the
     request's zip and show the message to send with it."""
 
-    def __init__(self, main, preselect=(), new_utterances=(), speaker: str = "", draft: dict | None = None):
+    def __init__(self, main, preselect=(), speaker: str = "", draft: dict | None = None):
         super().__init__(main)
         self.main = main
         self.db = main.doc.db
@@ -248,7 +241,7 @@ class RequestDialog(QDialog):
         self.setWindowTitle(f"Make {NAME} request")
         self._images = self._image_index()
         draft = draft or {}
-        self._build(set(preselect), list(new_utterances or draft.get("new", [])), speaker)
+        self._build(list(preselect), speaker)
         self._apply_draft(draft, keep_speaker=bool(speaker))
         fit_to_screen(self, 1100, 760)
 
@@ -277,35 +270,38 @@ class RequestDialog(QDialog):
         if "audio" in draft:
             choose(self.audio, draft["audio"])
 
-    def new_utterance_rows(self) -> list[dict]:
-        """The new sentences typed in, as {language: translation}."""
-        en = self.db.settings.primary_gloss
-        lang = self.l2.currentData() or ""
-        out = []
-        for r in range(self.new_table.rowCount()):
-            a = (self.new_table.item(r, 0).text() if self.new_table.item(r, 0) else "").strip()
-            b = (self.new_table.item(r, 1).text() if self.new_table.item(r, 1) else "").strip()
-            if a or b:
-                out.append({k: v for k, v in ((en, a), (lang or "_", b)) if v})
-        return out
-
-    def draft(self, with_items: bool = True) -> dict:
-        d = {"speaker": self.speaker.currentData(), "researcher": self.researcher.currentData(),
-             "l2": self.l2.currentData() or "", "l2_name": self.l2_name.text(),
-             "l2_people": dict(self.l2_people),
-             "repeat": self.repeat.isChecked(), "send_by": self.send_by.currentData(),
-             "audio": self.audio.currentData()}
-        d["new"] = self.new_utterance_rows() if with_items else []
-        return d
+    def draft(self) -> dict:
+        return {"speaker": self.speaker.currentData(), "researcher": self.researcher.currentData(),
+                "l2": self.l2.currentData() or "", "l2_name": self.l2_name.text(),
+                "l2_people": dict(self.l2_people),
+                "repeat": self.repeat.isChecked(), "send_by": self.send_by.currentData(),
+                "audio": self.audio.currentData()}
 
     def reset_request(self):
-        """Reset request: clears the ticks and the new sentences; the settings stay."""
-        if (any(r.ticked for r in self.model.rows) or self.new_table.rowCount()) and QMessageBox.question(
-                self, f"Make {NAME} request", "Deselect everything and clear the new sentences?") != QMessageBox.Yes:
+        """Reset request (Josh, 24 October: everything to zero): every token and utterance taken out
+        of the request, and the request details back to their defaults."""
+        if not widgets.ask(self, "Reset request", "Take every token and utterance out of the request, and put "
+                   "the request details back to their defaults?", "Reset request"):
             return
-        self._untick_all()
-        self.new_table.setRowCount(0)
+        self.model.clear()
+        self._defaults()
         self._update_counts()
+
+    def _defaults(self):
+        """The request details as a first request starts: the session's speaker, the first
+        researcher, the first second language, no names typed, 2 or 3 times, a link through Google
+        Drive (if this copy has the keys), FLAC."""
+        current = self.main.session_speaker() if hasattr(self.main, "session_speaker") else ""
+        i = self.speaker.findData(current) if current else -1
+        self.speaker.setCurrentIndex(i if i >= 0 else 0)
+        self.researcher.setCurrentIndex(0)
+        self.l2.setCurrentIndex(1 if self.l2.count() > 1 else 0)
+        self.l2_name.clear()
+        self.l2_people.clear()
+        self._l2_people_changed()
+        self.repeat.setChecked(True)
+        self.send_by.setCurrentIndex(0 if self.send_by.model().item(0).isEnabled() else 1)
+        self.audio.setCurrentIndex(self.audio.findData("flac"))
 
     # ---- the rows -----------------------------------------------------
     def _image_index(self) -> set[str]:
@@ -316,25 +312,28 @@ class RequestDialog(QDialog):
                 if p.is_file() and p.suffix.lower() in layout.IMAGE_EXTENSIONS}
 
     def _rows(self, preselect) -> list[_Row]:
+        """The tokens and utterances added to the request, in the database's order."""
         db = self.db
+        wanted = set(preselect)
         rows = []
         for e, t in db.all_tokens():
+            if t.id not in wanted:
+                continue
             r = _Row()
             r.entry, r.token, r.utterance = e, t, is_utterance(e)
             r.recorded = el.recording_path(db, e, t) is not None
             r.image = (not r.utterance) and filenames.image_stem(db, e, t).lower() in self._images
             r.kind = el.RERECORD if r.recorded else el.NEW   # Josh, 20 October: a soundfile means rerecord
-            r.ticked = t.id in preselect
             show, texts = el.card_texts(db, el.Item(el.NEW, e, t), [db.settings.primary_gloss])
             form = el._form(db, t) or (db.lemma(e) if not r.utterance else e.label)
             tags = "" if r.utterance else db.settings.tags.display(t.tags)
-            r.cells = ["", e.ref, form, tags, next(iter(texts.values()), ""),
+            r.cells = [e.ref, form, tags, next(iter(texts.values()), ""),
                        (t.speaker or "?") if r.recorded else "", "✓" if r.image else ""]
             rows.append(r)
         return rows
 
     # ---- layout -------------------------------------------------------
-    def _build(self, preselect, new_utterances, speaker):
+    def _build(self, preselect, speaker):
         db, md, s = self.db, self.db.metadata, self.db.settings
         lay = QVBoxLayout(self)
         head = QHBoxLayout()                      # the settings on the left half, the logo on the right
@@ -412,99 +411,48 @@ class RequestDialog(QDialog):
         head.addWidget(self.logo, 1)
         lay.addLayout(head)
 
-        split = QSplitter(Qt.Vertical)            # the two sections, adjustable against each other
-        split.setChildrenCollapsible(False)
-        top = QWidget()
-        tl = QVBoxLayout(top)
-        tl.setContentsMargins(0, 0, 0, 0)
-        tl.addWidget(_divider())
-        tl.addWidget(_section("Tokens and Utterances",
-                              "Select what to ask for (or double-click a row). One with a soundfile is a Rerecord: "
-                              "the speaker hears it and repeats it. One without is New: the card shows its gloss "
-                              "or translation. Right-click → Add to ɛλicit request in All data, the matrices and "
-                              "Utterances selects things here too."))
-        bar = QHBoxLayout()
+        # The request's list (Josh, 24 October): only what was added from the main window and Texts
+        # and utterances; right-click (or Delete) takes it out; nothing is chosen here.
+        lay.addWidget(_divider())
+        lay.addWidget(_section("Tokens and Utterances", EMPTY))
         self.search = QLineEdit()
-        self.search.setPlaceholderText("search the references, forms, tags and glosses")
+        self.search.setPlaceholderText("search the request's tokens and utterances")
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self._filter)
-        self.scope = QComboBox()
-        self.scope.addItems(["Everything", "Lemma tokens", "Citation tokens", "Utterances"])
-        self.scope.currentIndexChanged.connect(self._filter)
-        self.ticked_only = QCheckBox("Selected only")
-        self.ticked_only.setChecked(True)         # Josh, 24 October: on at first, so the list is the request
-        self.ticked_only.setToolTip("Show only what is selected for the request; switch it off to choose "
-                                    "from every token and utterance")
-        self.ticked_only.toggled.connect(self._filter)
-        bar.addWidget(self.search, 1)
-        bar.addWidget(self.scope)
-        bar.addWidget(self.ticked_only)
-        shown = QPushButton("Select the tokens All data shows")
-        shown.setToolTip("Selects every token the main window's All data shows now (its filters and search)")
-        shown.clicked.connect(self._tick_all_data)
-        untick = QPushButton("Deselect all")
-        untick.clicked.connect(self._untick_all)
-        bar.addWidget(shown)
-        bar.addWidget(untick)
-        tl.addLayout(bar)
+        lay.addWidget(self.search)
         self.model = ItemModel(db, self._rows(preselect))
         self.proxy = ItemFilter()
         self.proxy.setSourceModel(self.model)
         self.table = QTableView()
         self.table.setModel(self.proxy)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.ExtendedSelection)   # Ctrl+click, Shift+click
+        self.table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._menu)
         self.table.verticalHeader().hide()
         self.table.setWordWrap(False)
         hh = self.table.horizontalHeader()
         hh.setSectionResizeMode(QHeaderView.Interactive)
-        for c, w in enumerate((28, 70, 150, 170, 220, 80, 56, 80)):
+        for c, w in enumerate((70, 150, 170, 220, 80, 56, 80)):
             self.table.setColumnWidth(c, w)
         hh.setStretchLastSection(True)
-        self.table.doubleClicked.connect(self._double_clicked)
-        self.model.dataChanged.connect(lambda *_: self._update_counts())
-        tl.addWidget(self.table, 1)
-        split.addWidget(top)
-
-        bottom = QWidget()
-        bl = QVBoxLayout(bottom)
-        bl.setContentsMargins(0, 0, 0, 0)
-        bl.addWidget(_divider())
-        bl.addWidget(_section("New Utterances", "Sentences to ask for, typed here, with their translations; each "
-                              "answer becomes a new utterance (U) when the recordings come back."))
-        self.new_table = QTableWidget(0, 2)
-        self.new_table.verticalHeader().hide()
-        self.new_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.new_table.itemChanged.connect(lambda *_: self._update_counts())
-        for tr in new_utterances:
-            self._add_new_row(tr)
-        bl.addWidget(self.new_table, 1)
-        nb = QHBoxLayout()
-        from .icons import icon
-        add = QToolButton()                       # the program's Add and Delete icons, names in the tooltips
-        add.setIcon(icon("add", 22))
-        add.setIconSize(QSize(22, 22))
-        add.setAutoRaise(True)
-        add.setToolTip("Add a sentence")
-        add.clicked.connect(lambda: self._add_new_row({}, edit=True))
-        rem = QToolButton()
-        rem.setIcon(icon("delete", 22))
-        rem.setIconSize(QSize(22, 22))
-        rem.setAutoRaise(True)
-        rem.setToolTip("Remove the selected sentences")
-        rem.clicked.connect(self._remove_new_row)
-        nb.addWidget(add)
-        nb.addWidget(rem)
-        nb.addStretch(1)
-        bl.addLayout(nb)
-        split.addWidget(bottom)
-        split.setSizes([500, 200])
-        lay.addWidget(split, 1)
+        from PySide6.QtGui import QKeySequence, QShortcut
+        QShortcut(QKeySequence.Delete, self.table, activated=self.remove_selected)
+        self.empty = QLabel(EMPTY)                # an empty request says how to fill it
+        self.empty.setWordWrap(True)
+        self.empty.setAlignment(Qt.AlignCenter)
+        self.empty.setStyleSheet(f"color: {theme.muted()}; padding: 24px;")
+        self.pages = QStackedWidget()
+        self.pages.addWidget(self.table)
+        self.pages.addWidget(self.empty)
+        lay.addWidget(self.pages, 1)
 
         self.count = QLabel()
         lay.addWidget(self.count)
         buttons = QDialogButtonBox()
         reset = buttons.addButton("Reset request", QDialogButtonBox.ResetRole)
-        reset.setToolTip("Deselects everything and clears the new sentences (the settings stay)")
+        reset.setToolTip("Takes every token and utterance out of the request and puts the request details "
+                         "back to their defaults")
         reset.clicked.connect(self.reset_request)
         self.make_btn = buttons.addButton("Make it rain", QDialogButtonBox.AcceptRole)   # Josh, 21 October
         self.make_btn.setToolTip("Make the request: put it in your Google Drive (or write the zip) and show "
@@ -519,19 +467,14 @@ class RequestDialog(QDialog):
         buttons.rejected.connect(self.reject)
         lay.addWidget(buttons)
         self._l2_changed()
-        self._filter()                            # Selected only, on at first
-        first = next((i for i, r in enumerate(self.model.rows) if r.ticked), None)
-        if first is not None:                     # everything shows; the first ticked one in view
-            self.table.scrollTo(self.proxy.mapFromSource(self.model.index(first, 0)))
 
     def done(self, result):
-        """The ticks, the new sentences and the settings are kept for next time (the right-click
-        Add to ɛλicit request adds to the ticks); once a request is made the ticks and the new
-        sentences are cleared and the settings stay."""
+        """The request's list and the details are kept for next time (the right-click Add to ɛλicit
+        request adds to the list); once a request is made the list is emptied and the details stay."""
         if hasattr(self.main, "elicit_basket"):
             made = self.made is not None
-            self.main.elicit_basket = [] if made else [r.token.id for r in self.model.rows if r.ticked]
-            self.main.elicit_draft = self.draft(with_items=not made)
+            self.main.elicit_basket = [] if made else [r.token.id for r in self.model.rows]
+            self.main.elicit_draft = self.draft()
         super().done(result)
 
     def _l2_changed(self, *_):
@@ -541,9 +484,6 @@ class RequestDialog(QDialog):
         self.l2_name.setEnabled(bool(lang))
         self.l2_name.setToolTip(f"How \"{self.db.metadata.language_name}\" is written in {name}, for the "
                                 f"question \"How do you say this in …?\" (e.g. italiensk)" if lang else "")
-        en = self.db.settings.primary_gloss
-        self.new_table.setHorizontalHeaderLabels([f"Translation ({en})", f"Translation ({lang})" if lang else "—"])
-        self.new_table.setColumnHidden(1, not lang)
         self._l2_people_changed()
         self._update_counts()
 
@@ -573,73 +513,43 @@ class RequestDialog(QDialog):
             edit.setToolTip(f"How the {role.lower()}'s name is written in {name}, for the prompts and the "
                             f"message in {name} (blank: as in the list)" if lang else "")
 
-    def _add_new_row(self, translations: dict, edit: bool = False):
-        r = self.new_table.rowCount()
-        self.new_table.insertRow(r)
-        en = self.db.settings.primary_gloss
-        lang = self.l2.currentData() if hasattr(self, "l2") else ""
-        other = next((v for k, v in translations.items() if k != en), "")
-        self.new_table.setItem(r, 0, QTableWidgetItem(translations.get(en, "")))
-        self.new_table.setItem(r, 1, QTableWidgetItem(translations.get(lang, other) if lang else other))
-        if edit:
-            self.new_table.setCurrentCell(r, 0)
-            self.new_table.editItem(self.new_table.item(r, 0))
-
-    def _remove_new_row(self):
-        rows = sorted({i.row() for i in self.new_table.selectedIndexes()}, reverse=True)
-        for r in rows:
-            self.new_table.removeRow(r)
-        self._update_counts()
-
     def _filter(self, *_):
         self.proxy.text = self.search.text().strip().casefold()
-        self.proxy.scope = self.scope.currentIndex()
-        self.proxy.ticked_only = self.ticked_only.isChecked()
         self.proxy.invalidate()
 
-    def _double_clicked(self, idx):
-        src = self.proxy.mapToSource(idx)
-        if src.column() != 0:
-            r = self.model.rows[src.row()]
-            r.ticked = not r.ticked
-            self.model.dataChanged.emit(self.model.index(src.row(), 0), self.model.index(src.row(), 0))
+    def _selected_rows(self) -> set[int]:
+        return {self.proxy.mapToSource(i).row() for i in self.table.selectionModel().selectedRows()}
 
-    def _tick_all_data(self):
-        try:
-            shown = {r.token.id for r in self.main.all_table.visible_rows()}
-        except AttributeError:
-            shown = set()
-        for r in self.model.rows:
-            if r.token.id in shown:
-                r.ticked = True
-        self.model.layoutChanged.emit()
-        self._update_counts()
+    def remove_selected(self):
+        """Right-click → Remove (or Delete): the selected rows out of the request."""
+        rows = self._selected_rows()
+        if rows:
+            self.model.remove(rows)
+            self._update_counts()
 
-    def _untick_all(self):
-        for r in self.model.rows:
-            r.ticked = False
-        self.model.layoutChanged.emit()
-        self._update_counts()
+    def _menu(self, pos):
+        idx = self.table.indexAt(pos)
+        if not idx.isValid():
+            return
+        if not self.table.selectionModel().isRowSelected(idx.row(), QModelIndex()):
+            self.table.selectRow(idx.row())       # outside the selection: that row alone
+        n = len(self._selected_rows())
+        m = QMenu(self)
+        from .icons import icon
+        a = m.addAction(icon("delete", 16), "Remove from the request" if n == 1 else f"Remove {n} from the request")
+        a.triggered.connect(lambda *_: self.remove_selected())
+        m.exec(self.table.viewport().mapToGlobal(pos))
 
     # ---- what will be sent ---------------------------------------------
     def items(self) -> list:
-        out = [el.Item(r.kind, r.entry, r.token) for r in self.model.rows if r.ticked]
-        en = self.db.settings.primary_gloss
-        lang = self.l2.currentData() or ""
-        for r in range(self.new_table.rowCount()):
-            a = (self.new_table.item(r, 0).text() if self.new_table.item(r, 0) else "").strip()
-            b = (self.new_table.item(r, 1).text() if self.new_table.item(r, 1) else "").strip()
-            if a or (b and lang):
-                tr = {en: a} if a else {}
-                if b and lang:
-                    tr[lang] = b
-                out.append(el.Item(el.NEW_UTTERANCE, translations=tr))
-        return out
+        return [el.Item(r.kind, r.entry, r.token) for r in self.model.rows]
 
     def _update_counts(self, *_):
         if not hasattr(self, "count"):
             return
         items = self.items()
+        self.pages.setCurrentWidget(self.table if items else self.empty)
+        self.search.setEnabled(bool(items))
         size = el.estimated_size(self.db, items, self.audio.currentData())
         n_re = sum(1 for i in items if i.kind == el.RERECORD)
         text = f"{len(items)} card{'s' if len(items) != 1 else ''}"
@@ -648,7 +558,7 @@ class RequestDialog(QDialog):
         text += f" · about {_mb(size)} with the recordings coming back"
         if size > el.SIZE_WARNING:
             text += " · over 50 MB: consider a smaller request"
-        self.count.setText(text)
+        self.count.setText(text if items else "")
         self.make_btn.setEnabled(bool(items) and self.speaker.count() > 0)
 
     def _warnings(self, items) -> bool:
@@ -1290,9 +1200,14 @@ class ReviewDialog(QDialog):
             return
         speaker = self.st.request.speaker["code"]
         self.accept()
-        new_utts = [i.translations for i in items if i.kind == el.NEW_UTTERANCE]
+        # Josh, 24 October: no new sentences in a request any more, so a new one left out or turned
+        # down can't be sent again; the tokens and utterances join the request's list
         pre = [i.token.id for i in items if i.kind != el.NEW_UTTERANCE]
-        RequestDialog(self.main, pre, new_utts, speaker, draft=getattr(self.main, "elicit_draft", None)).exec()
+        basket = list(getattr(self.main, "elicit_basket", []))
+        if hasattr(self.main, "elicit_basket"):
+            self.main.elicit_basket = basket + [t for t in pre if t not in basket]
+            pre = self.main.elicit_basket
+        RequestDialog(self.main, pre, speaker, draft=getattr(self.main, "elicit_draft", None)).exec()
 
 
 def remind(main):

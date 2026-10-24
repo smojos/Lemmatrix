@@ -222,17 +222,15 @@ def test_the_request_dialog(win, monkeypatch):
     from lemmatrix.ui import elicit_dialogs as ed
     db = win.doc.db
     gatto = db.entry_by_ref("D035")
-    dlg = ed.RequestDialog(win, [gatto.tokens[0].id])
+    acqua = db.entry_by_ref("L062")
+    dlg = ed.RequestDialog(win, [acqua.tokens[0].id, gatto.tokens[0].id])
     assert dlg.l2.currentData() == "da" and dlg.speaker.currentData() == "SP1"
-    assert [i.token.id for i in dlg.items()] == [gatto.tokens[0].id]
+    assert len(dlg.model.rows) == 2                                   # only what was added (24 October)
     for r in dlg.model.rows:                                          # a soundfile means rerecord
         assert r.kind == (el.RERECORD if r.recorded else el.NEW)
-    acqua = next(r for r in dlg.model.rows if r.entry.ref == "L062")
-    acqua.ticked = True
-    dlg._add_new_row({"en": "I read a book.", "da": "Jeg læser en bog."})
     dlg.l2_name.setText("italiensk")
-    kinds = [(i.kind, i.entry.ref if i.entry else "") for i in dlg.items()]
-    assert kinds == [(el.NEW, "D035"), (el.RERECORD, "L062"), (el.NEW_UTTERANCE, "")]
+    kinds = [(i.kind, i.entry.ref) for i in dlg.items()]
+    assert kinds == [(el.NEW, "D035"), (el.RERECORD, "L062")]         # in the database's order
     monkeypatch.setattr(QMessageBox, "exec", lambda self: None)
     monkeypatch.setattr(QMessageBox, "clickedButton", lambda self: self.buttons()[0])
     monkeypatch.setattr(ed.SentDialog, "exec", lambda self: None)
@@ -241,7 +239,6 @@ def test_the_request_dialog(win, monkeypatch):
     dlg.send_by.setCurrentIndex(dlg.send_by.findData("file"))       # the zip route (no Google in tests)
     dlg._make()
     assert dlg.made is not None and dlg.made.exists()
-    assert dlg.request.cards[2].translations == {"en": "I read a book.", "da": "Jeg læser en bog."}
     assert dlg.request.language_names["da"] == "italiensk"
     from lemmatrix.model import today
     notes = win.doc.notebook.session(today()).notes             # Josh, 21 October: a line in the notebook
@@ -255,29 +252,42 @@ def test_the_request_dialog(win, monkeypatch):
         f"{rs} sent ɛλicit request to SP1", "Received ɛλicit request from SP1"]
 
 
-def test_everything_shows_and_right_click_ticks(win, monkeypatch):
-    """Josh, 20 October: everything is there, searchable (since 24 October behind Selected only, on at first); Add to ɛλicit request (All
-    data, the matrices, Utterances) ticks a token for it, and the ticks are kept until a request is made."""
+def test_the_request_lists_only_what_was_added(win, monkeypatch):
+    """Josh, 24 October: the request's list is only what was added from the main window and Texts
+    and utterances (right-click → Add to ɛλicit request); nothing is chosen in the dialogue. Right-click
+    or Delete takes the selected rows out; an empty request says how to fill it; the list is kept
+    until a request is made."""
+    from PySide6.QtCore import QItemSelectionModel
     from lemmatrix.ui import elicit_dialogs as ed
     db = win.doc.db
     gatto, pane = db.entry_by_ref("D035"), db.entry_by_ref("J114")
+    dlg = ed.RequestDialog(win, win._elicit_preselect())
+    assert dlg.model.rows == [] and dlg.pages.currentWidget() is dlg.empty
+    assert "Add to ɛλicit request" in dlg.empty.text() and dlg.count.text() == ""
+    assert not dlg.make_btn.isEnabled()
+    dlg.reject()
     text, _, fn, on = win.elicit_menu_item(gatto.tokens[0])
     assert text == "Add to ɛλicit request" and on
     fn()
     win.toggle_elicit(db.utterance_by_ref("U001").token)
+    win.toggle_elicit(pane.tokens[0])
     assert win.elicit_menu_item(gatto.tokens[0])[0] == "Remove from ɛλicit request"
     dlg = ed.RequestDialog(win, win._elicit_preselect())
-    assert dlg.ticked_only.isChecked()                              # Selected only, on at first (24 October)
-    assert dlg.proxy.rowCount() == 2                                # the request: what is selected
-    dlg.ticked_only.setChecked(False)                               # off: everything, searchable
-    assert dlg.proxy.rowCount() == len(dlg.model.rows) == sum(1 for _ in db.all_tokens())
-    dlg.search.setText("pane")
+    assert dlg.pages.currentWidget() is dlg.table
+    assert {i.entry.ref for i in dlg.items()} == {"D035", "J114", "U001"}
+    assert len(dlg.model.rows) == 3 and not hasattr(dlg, "ticked_only") and not hasattr(dlg, "new_table")
+    dlg.search.setText("pane")                                      # the search filters the request's list
     assert dlg.proxy.rowCount() == 1
-    assert {i.entry.ref for i in dlg.items()} == {"D035", "U001"}
-    row = next(r for r in dlg.model.rows if r.entry is pane)
-    row.ticked = True
-    dlg.reject()                                                    # closed: the ticks are kept
-    assert set(win.elicit_basket) == {gatto.tokens[0].id, pane.tokens[0].id, db.utterance_by_ref("U001").token.id}
+    dlg.search.clear()
+    sel = dlg.table.selectionModel()                                # Ctrl+click two, then Remove
+    for ref in ("J114", "U001"):
+        i = next(n for n, r in enumerate(dlg.model.rows) if r.entry.ref == ref)
+        sel.select(dlg.proxy.mapFromSource(dlg.model.index(i, 0)),
+                   QItemSelectionModel.Select | QItemSelectionModel.Rows)
+    dlg.remove_selected()
+    assert [r.entry.ref for r in dlg.model.rows] == ["D035"]
+    dlg.reject()                                                    # closed: the list is kept
+    assert win.elicit_basket == [gatto.tokens[0].id]
     dlg = ed.RequestDialog(win, win._elicit_preselect())
     dlg.made = Path("made.zip")                                     # as if a request was made
     dlg.accept()
@@ -721,32 +731,35 @@ def test_the_button_rains_when_recordings_are_ready_in_drive(win, monkeypatch):
 
 
 def test_the_request_is_remembered_until_reset(win, monkeypatch):
-    """Josh, 21 October: closing Make ɛλicit request keeps its ticks, settings and new sentences;
-    Reset request clears the ticks and the sentences (the settings stay)."""
-    from PySide6.QtWidgets import QMessageBox
-    from lemmatrix.ui import elicit_dialogs as ed
+    """Closing Make ɛλicit request keeps its list and details (Josh, 21 October); Reset request puts
+    everything to zero: the list emptied, the details back to their defaults (Josh, 24 October)."""
+    from lemmatrix.ui import elicit_dialogs as ed, widgets
     db = win.doc.db
     gatto = db.entry_by_ref("D035")
     dlg = ed.RequestDialog(win, [gatto.tokens[0].id], draft=win.elicit_draft)
+    defaults = dlg.draft()
     dlg.l2.setCurrentIndex(dlg.l2.findData(""))                       # no second language
     dlg.repeat.setChecked(False)
     dlg.speaker.setCurrentIndex(dlg.speaker.findData("SP2"))
-    dlg._add_new_row({"en": "The sun is hot."})
+    dlg.audio.setCurrentIndex(dlg.audio.findData("wav"))
     dlg.reject()
     dlg = ed.RequestDialog(win, win._elicit_preselect(), draft=win.elicit_draft)
     assert dlg.l2.currentData() == "" and not dlg.repeat.isChecked() and dlg.speaker.currentData() == "SP2"
-    assert dlg.new_utterance_rows() == [{"en": "The sun is hot."}]
-    assert [i.kind for i in dlg.items()] == [el.NEW, el.NEW_UTTERANCE]
-    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Yes)
+    assert [i.kind for i in dlg.items()] == [el.NEW]
+    monkeypatch.setattr(widgets, "ask", lambda *a, **k: False)        # Cancel: nothing changes
     dlg.reset_request()
-    assert dlg.items() == [] and dlg.l2.currentData() == "" and dlg.speaker.currentData() == "SP2"
+    assert len(dlg.items()) == 1 and dlg.speaker.currentData() == "SP2"
+    monkeypatch.setattr(widgets, "ask", lambda *a, **k: True)
+    dlg.reset_request()
+    assert dlg.items() == [] and dlg.pages.currentWidget() is dlg.empty
+    assert dlg.draft() == defaults                                    # every detail back to its default
     dlg.reject()
-    assert win.elicit_basket == [] and win.elicit_draft["new"] == [] and win.elicit_draft["l2"] == ""
+    assert win.elicit_basket == [] and win.elicit_draft == defaults
     dlg = ed.RequestDialog(win, [gatto.tokens[0].id], draft=win.elicit_draft)
-    dlg._add_new_row({"en": "I read a book.", "da": "Jeg læser en bog."})
-    dlg.made = Path("made")                                          # a request made: the settings stay
+    dlg.speaker.setCurrentIndex(dlg.speaker.findData("SP2"))
+    dlg.made = Path("made")                                          # a request made: the details stay
     dlg.accept()
-    assert win.elicit_basket == [] and win.elicit_draft["new"] == [] and win.elicit_draft["speaker"] == "SP2"
+    assert win.elicit_basket == [] and win.elicit_draft["speaker"] == "SP2"
 
 
 def test_flac_from_the_page_is_lossless_and_becomes_wav(db, tmp_path):
@@ -793,3 +806,23 @@ def test_flac_from_the_page_is_lossless_and_becomes_wav(db, tmp_path):
     wreq = el.new_request(db, items, "SP1", "RS1", "da", audio="wav")
     assert all(c.file.endswith(".wav") for c in wreq.cards)
     assert el.estimated_size(db, items, "flac") < el.estimated_size(db, items, "wav")
+
+
+def test_send_again_puts_the_cards_back_on_the_request(win, monkeypatch):
+    """Send again (the review): the tokens and utterances join the request's list; new sentences
+    can't be sent again, since requests have none any more (Josh, 24 October)."""
+    from types import SimpleNamespace
+    from lemmatrix.ui import elicit_dialogs as ed
+    db = win.doc.db
+    gatto, pane = db.entry_by_ref("D035"), db.entry_by_ref("J114")
+    win.elicit_basket = [pane.tokens[0].id]
+    items = [el.Item(el.NEW, gatto, gatto.tokens[0]), el.Item(el.NEW_UTTERANCE, translations={"en": "Hi."})]
+    monkeypatch.setattr(el, "items_again", lambda *a: items)
+    opened = []
+    monkeypatch.setattr(ed.RequestDialog, "exec", lambda self: opened.append(self) or 0)
+    fake = SimpleNamespace(main=win, db=db, st=SimpleNamespace(request=SimpleNamespace(speaker={"code": "SP2"})),
+                           _again_numbers=lambda: [1, 2], accept=lambda: None)
+    ed.ReviewDialog.send_again(fake)
+    dlg = opened[0]
+    assert {r.entry.ref for r in dlg.model.rows} == {"D035", "J114"} and dlg.speaker.currentData() == "SP2"
+    assert set(win.elicit_basket) == {pane.tokens[0].id, gatto.tokens[0].id}

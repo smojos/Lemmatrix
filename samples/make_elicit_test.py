@@ -22,7 +22,6 @@ so that one request covers every kind of card:
   rerecord, speaker without audio sharing     sole 'sun' (L002, SP2): the ethics warning
   rerecord of an utterance                    il gatto dorme (U001)
   new, an utterance without a recording       il cane mangia (U003)
-  new utterances, typed in the request        e.g. 'The sun is hot.' / 'Solen er varm.'
 
 and a few lemmas not to ask for (cane, casa, mangiare, grande, due, and U002).
 """
