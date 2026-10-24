@@ -164,7 +164,7 @@ class TextsUtterancesWindow(QDialog):
         self.options = QStackedWidget()
         self.options.addWidget(self.texts.bar)
         self.options.addWidget(self._utterances_bar())
-        # Under both tabs: the options (with the comparison area on Texts, the utterance cell on
+        # Under both tabs: the options (with the phonetics scratchpad on Texts, the utterance cell on
         # Utterances), then a large Texts and utterances logo at the right edge (Josh, 22 October).
         bottom = QWidget()
         bot = QHBoxLayout(bottom)

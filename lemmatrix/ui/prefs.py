@@ -23,7 +23,7 @@ class Prefs:
         except (TypeError, ValueError):
             return default
 
-    # the comparison area's tab (Pitch or Segments; idea 46): this computer's
+    # the phonetics scratchpad's tab (Pitch or Segments; idea 46): this computer's
     @property
     def comparison_tab(self) -> str:
         return self._get("comparison/tab", "pitch")

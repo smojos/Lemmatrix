@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
-"""Right Shift+A plays the comparison area's α, Right Shift+B its β (Josh, 24 October), and Right
+"""Right Shift+A plays the phonetics scratchpad's α, Right Shift+B its β (Josh, 24 October), and Right
 Shift+C or G its γ while that is shown (an Easter egg: the working panel dragged tall), in the
 window that is active (the main window, or Texts and utterances on its Texts tab).
 
@@ -22,7 +22,7 @@ _VK_RSHIFT = 0xA1
 _RIGHT_SCANS = {0x36, 62}
 _RIGHT_KEYS = {_VK_RSHIFT, 0xFFE2}
 _MAC_RIGHT_SHIFT = 0x4                    # NX_DEVICERSHIFTKEYMASK in the native modifiers
-# α, β, and γ (C or G) while the comparison area shows it (Josh, 24 October)
+# α, β, and γ (C or G) while the phonetics scratchpad shows it (Josh, 24 October)
 KEYS = {Qt.Key_A: "A", Qt.Key_B: "B", Qt.Key_C: "C", Qt.Key_G: "G"}
 
 
@@ -35,7 +35,7 @@ def _right_shift_windows() -> bool | None:
 
 
 def comparison_in(win):
-    """The visible comparison area of a window, if it has one."""
+    """The visible phonetics scratchpad of a window, if it has one."""
     from .scratchpad import ComparisonPads
     if win is None:
         return None

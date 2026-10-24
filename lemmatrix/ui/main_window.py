@@ -1047,7 +1047,7 @@ class MainWindow(QMainWindow):
         return self.texts_btn
 
     def _scratch_panel(self) -> QWidget:
-        """The comparison area (Josh, 22 October): α and β, with the Pitch and Segments tabs (IDEAS.md
+        """The phonetics scratchpad (Josh, 22 October; named 24 October): α and β, with the Pitch and Segments tabs (IDEAS.md
         ideas 33 and 46), as under a text's lines, for every tab of the Matrix, against Current
         Session. Nothing typed is saved: they're empty each time Lemmatrix opens."""
         from .scratchpad import ComparisonPads
@@ -1324,6 +1324,7 @@ class MainWindow(QMainWindow):
                ("Soundfiles › Tokens", (layout.SOUNDFILES, layout.TOKENS)),
                ("Soundfiles › Utterances", (layout.SOUNDFILES, layout.UTTERANCES)),
                ("Soundfiles › Texts", (layout.SOUNDFILES, layout.TEXTS)),
+               ("Soundfiles › Segments", (layout.SOUNDFILES, layout.SEGMENTS)),
                ("Soundfiles › _Deleted recordings", (layout.SOUNDFILES, layout.HELD)), None,
                ("Backups", (layout.BACKUPS,)), ("Documentation", (layout.DOCUMENTATION,)),
                ("Images", (layout.IMAGES,)), ("Elicit", ("Elicit",)), ("Exports", (layout.EXPORTS,)),
@@ -1379,7 +1380,7 @@ class MainWindow(QMainWindow):
                             ("Ctrl+Shift+Space", "Play the pitch scratchpad"),
                             ("Tab, Shift+Tab, ↑, ↓", "Move between fields (edit mode)"),
                             ("Ctrl + mouse wheel, Ctrl+0", "Zoom, and back"))),
-        ("The comparison area (α, β)", (("Right Shift+A", "Play α"), ("Right Shift+B", "Play β"),
+        ("The phonetics scratchpad (α, β)", (("Right Shift+A", "Play α"), ("Right Shift+B", "Play β"),
                                         ("Click α or β", "Play it"), ("Enter in a pad", "Play it"))),
         ("Cogitate and the XML viewer", (("Alt+← / Alt+→", "Back / Next hypothesis"),
                                          ("Ctrl+F", "XML viewer: the search"),
@@ -1415,8 +1416,8 @@ class MainWindow(QMainWindow):
         from .. import pitchview                  # the pitch system hidden: its keys do nothing (idea 9)
         if not pitchview.shown():
             out = [(t, [(k, d) for k, d in rows if "Ctrl+Shift+Space" not in k
-                        and "pitch" not in d.lower()]) for t, rows in out
-                   if not t.startswith("The comparison area")]
+                        and "pitch" not in d.lower()]) for t, rows in out]   # α and β still play segments
+            out = [(t, rows) for t, rows in out if rows]
         return out
 
     def show_shortcuts(self):
@@ -3808,7 +3809,7 @@ class MainWindow(QMainWindow):
         """Every view of the main window follows Show the pitch system as it is now."""
         self._sync_pitch_view()
         self._setup_columns()
-        self.refresh()                            # no status message: the comparison area says it (Josh)
+        self.refresh()                            # no status message: the phonetics scratchpad says it (Josh)
 
     def _sync_pitch_view(self):
         from .. import pitchview

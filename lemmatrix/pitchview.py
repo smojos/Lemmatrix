@@ -22,7 +22,7 @@ KEY = "pitch/shown"            # the workspace's value (absent: shown)
 
 TOKENS = "tokens"              # lemma tokens: All data, the matrices, the token dialogue
 UTTERANCES = "utterances"      # utterances (and a text's lines): their grid, dialogue and cells
-SCRATCHPADS = "scratchpads"    # the pitch scratchpads of the comparison areas (α and β)
+SCRATCHPADS = "scratchpads"    # the pitch scratchpads of the phonetics scratchpads (α and β)
 PARTS = (TOKENS, UTTERANCES, SCRATCHPADS)
 
 DRAWING = "drawing"            # the key of the pitch drawing in columns and cell views

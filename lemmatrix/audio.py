@@ -366,6 +366,17 @@ def load_for_playing(path: Path) -> tuple[np.ndarray, int]:
         raise AudioError(f"Couldn't play {path.name}: {exc}") from exc
 
 
+LEAD_IN = 0.15          # seconds of silence before a padded sound (Player.play(pad=True))
+TAIL = 0.10             # and after it
+
+
+def padded(samples: np.ndarray, rate: int) -> np.ndarray:
+    """The samples with LEAD_IN and TAIL seconds of silence around them, for playing only."""
+    a = np.asarray(samples, dtype=np.float32).reshape(-1)
+    return np.concatenate([np.zeros(int(rate * LEAD_IN), np.float32), a,
+                           np.zeros(int(rate * TAIL), np.float32)])
+
+
 class Player:
     """Plays one or more soundfiles (WAV, or Ogg and FLAC) in turn, in the background."""
 
@@ -373,15 +384,22 @@ class Player:
         self._stop = threading.Event()
         self._thread = None
 
-    def play(self, paths, on_done=None):
-        """Play WAV files in turn. They are read first, so a file that can't be read
-        (e.g. online-only while offline) raises AudioError here with the reason."""
+    def play(self, paths, on_done=None, pad: bool = False):
+        """Play soundfiles in turn. They are read first, so a file that can't be read
+        (e.g. online-only while offline) raises AudioError here with the reason.
+
+        pad: a little silence before and after while playing (LEAD_IN, TAIL), never written to the
+        file. A soundfile whose sound starts at its first sample (Lemmatrix's own [ts], [f], [ɔ])
+        otherwise loses its onset: audio devices often drop the first tens of milliseconds when a
+        sound starts (Josh, 24 October: "some of the sounds are cut off")."""
         paths = [Path(p) for p in paths if p and Path(p).exists()]
         if not paths:
             self.stop()
             return False
         self.stop()
         sounds = [load_for_playing(p) for p in paths]
+        if pad:
+            sounds = [(padded(d, r), r) for d, r in sounds]
         return self._start([lambda s=s: s for s in sounds], on_done)
 
     def play_samples(self, samples, rate: int, on_done=None):

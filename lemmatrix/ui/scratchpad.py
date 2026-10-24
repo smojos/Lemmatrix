@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
-"""The comparison area: two pads, α and β, for asking a speaker "is it A or B?", in the main
+"""The phonetics scratchpad (Josh, 24 October: the Pitch and Segments scratchpads together; first
+called the phonetics scratchpad): two pads, α and β, for asking a speaker "is it A or B?", in the main
 window and under a text's lines (one widget, used twice: Josh, "complete clones"). A third, γ, is
 an Easter egg (Josh, 24 October): it appears when the working panel is dragged tall enough for it
 (Right Shift+C or G plays it: C follows A and B, G sounds like gamma) and goes again when there
@@ -16,7 +17,7 @@ Two tabs (IDEAS.md idea 46, Josh, 24 October):
 
 α and β play their pad on the tab shown: a click, Right Shift+A / Right Shift+B, or Enter. They are
 grey when there is nothing to play. The boxes of both tabs sit at the same height, with α and β
-centred on them (Josh). A small grey folder in the bottom corner opens Soundfiles/Segments.
+centred on them (Josh). Tab goes round the pads' boxes, for typing (Josh). File → Open folder → Soundfiles › Segments opens their folder.
 Nothing typed is saved: the pads are empty each time Lemmatrix opens."""
 
 from __future__ import annotations
@@ -41,7 +42,7 @@ def _play_segment(main, value):
     from .. import audio
     from PySide6.QtWidgets import QMessageBox
     try:
-        main.player.play([value.path])
+        main.player.play([value.path], pad=True)    # silence round it, so no onset is lost
     except audio.AudioError as exc:
         QMessageBox.warning(main, "Play", str(exc))
 
@@ -219,7 +220,7 @@ class SegmentPad(QWidget):
             PLAYERS[self.kind](self.main, v)
 
     def menu(self) -> QMenu:
-        """The box's own menu, then every voice for the sequence (pick one), Record… and the folder."""
+        """The box's own menu, then every voice for the sequence (pick one) and Record…"""
         m = self.edit.createStandardContextMenu()
         found = self.voices()
         if found:
@@ -234,8 +235,6 @@ class SegmentPad(QWidget):
         a = m.addAction("Record…")
         a.setEnabled(bool(self.sequence()))
         a.triggered.connect(lambda *_: self.record())
-        a = m.addAction("Open the Segments folder")
-        a.triggered.connect(lambda *_: open_segments_folder(self.main))
         return m
 
     def _choose(self, v):
@@ -262,17 +261,8 @@ class SegmentPad(QWidget):
         self.changed.emit()
 
 
-def open_segments_folder(main):
-    """The folder icon: Soundfiles/Segments in the file manager (made if it isn't there)."""
-    from .. import layout
-    db = main.doc.db
-    if not db.path:
-        return
-    main.open_folder(layout.segments_folder(db.path))
-
-
 class ComparisonPads(QWidget):
-    """The comparison area: the Pitch and Segments tabs over α and β. Each letter is on its pad's
+    """The phonetics scratchpad: the Pitch and Segments tabs over α and β. Each letter is on its pad's
     left, large, bold, in the theme colour (grey with nothing to play), centred on the box."""
 
     def __init__(self, main, low: int, high: int, tip: str, parent=None):
@@ -339,21 +329,11 @@ class ComparisonPads(QWidget):
         self.rows[2].hide()                        # γ: hidden until there is room for it
         outer.addLayout(rows)
         outer.addStretch(1)
-        foot = QHBoxLayout()
-        foot.setContentsMargins(0, 0, 0, 0)
-        foot.addStretch(1)
-        self.folder_btn = QToolButton()            # subtle, grey, small (Josh, 24 October)
-        self.folder_btn.setIcon(icon("folder", 14))
-        self.folder_btn.setIconSize(QSize(14, 14))
-        self.folder_btn.setAutoRaise(True)
-        self.folder_btn.setCursor(Qt.PointingHandCursor)
-        self.folder_btn.setToolTip("Open Soundfiles/Segments")
-        self.folder_btn.clicked.connect(lambda *_: open_segments_folder(self.main))
-        foot.addWidget(self.folder_btn)
-        outer.addLayout(foot)
         # γ mustn't make the panel's minimum taller, or it could never be dragged smaller again
         from PySide6.QtWidgets import QLayout
         outer.setSizeConstraint(QLayout.SetNoConstraint)
+        for p in self.pads + self.seg_pads:        # Tab loops round the pads (Josh, 24 October)
+            p.edit.installEventFilter(self)
         self.alpha, self.beta, self.gamma = self.pads
         self.seg_alpha, self.seg_beta, self.seg_gamma = self.seg_pads
         self.tabs.currentChanged.connect(self._tab_changed)
@@ -427,8 +407,7 @@ class ComparisonPads(QWidget):
         lay = self.layout()
         sp = lay.spacing()
         row = max(r.sizeHint().height() for r in self.rows[:2])
-        need = (self.tabs.sizeHint().height() + sp + 3 * row + 2 * 4 + sp
-                + self.folder_btn.sizeHint().height())
+        need = (self.tabs.sizeHint().height() + sp + 3 * row + 2 * 4 + sp)
         return self.height() >= need
 
     def resizeEvent(self, event):
@@ -472,7 +451,7 @@ class ComparisonPads(QWidget):
         """The area's height with α and β only: its minimum, γ or not."""
         sp = self.layout().spacing()
         row = max(r.sizeHint().height() for r in self.rows[:2])
-        return self.tabs.sizeHint().height() + sp + 2 * row + 4 + sp + self.folder_btn.sizeHint().height()
+        return self.tabs.sizeHint().height() + sp + 2 * row + 4
 
     def sizeHint(self):
         h = super().sizeHint()
@@ -532,5 +511,21 @@ class ComparisonPads(QWidget):
     def eventFilter(self, obj, event):
         if event.type() == QEvent.WindowActivate:
             self.refresh()
+            return False
+        if event.type() == QEvent.KeyPress and event.key() in (Qt.Key_Tab, Qt.Key_Backtab) \
+                and not event.modifiers() & (Qt.ControlModifier | Qt.AltModifier):
+            back = event.key() == Qt.Key_Backtab or bool(event.modifiers() & Qt.ShiftModifier)
+            return self.tab_to(obj, -1 if back else 1)
         return False
+
+    def tab_to(self, edit, step: int) -> bool:
+        """Tab from a pad's box to the next pad's on the tab shown, round and round (α > β > α, or
+        α > β > γ > α while γ shows); Shift+Tab back. For typing: nothing plays."""
+        boxes = [p.edit for p, row in zip(self.current_pads(), self.rows) if not row.isHidden()]
+        if edit not in boxes:
+            return False
+        nxt = boxes[(boxes.index(edit) + step) % len(boxes)]
+        nxt.setFocus(Qt.TabFocusReason)
+        nxt.selectAll()
+        return True
 

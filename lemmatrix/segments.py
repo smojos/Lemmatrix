@@ -4,9 +4,9 @@
 
 Whatever is typed in a Segments pad is a **sequence**, and any string is a sequence of its own
 (Josh: questions of segmental equivalency belong to the analysis phase), normalised (NFC) and
-trimmed, nothing else. Two kinds of soundfile answer to a sequence:
+trimmed; the one exception is the tie bar: t͡s and ts call the same thing (Josh, 24 October). Two kinds of soundfile answer to a sequence:
 
-- **The database's own**, recorded in the comparison area into `Soundfiles/Segments` and found by
+- **The database's own**, recorded in the phonetics scratchpad into `Soundfiles/Segments` and found by
   their names alone (like Images: nothing in the database file), named
   `{language}-{variety}-{speaker}_{sequence}.wav` (`LXX-VXX-SP1_ʌ.wav`; with no speaker
   `LXX-VXX_ʌ.wav`). A participant's are data; a researcher's survive a Full backup but go into no
@@ -57,6 +57,16 @@ def norm(text: str) -> str:
     return nfc((text or "").strip())
 
 
+TIE_BARS = "\u0361\u035c"      # ◌͡◌ above and ◌͜◌ below: t͡s and ts call the same thing (Josh, 24 October)
+
+
+def key(text: str) -> str:
+    """What a sequence is looked up by: as typed (normalised), but with tie bars left out, so
+    `ts` finds Lemmatrix's `t͡s` and a recording named either way (Josh: the tie bar doesn't type
+    easily). Names keep what was typed."""
+    return "".join(c for c in norm(text) if c not in TIE_BARS)
+
+
 def problem(text: str) -> str:
     """The characters a sequence can't have (they can't be in file names); "" if none."""
     return forbidden_in(text or "")
@@ -73,15 +83,15 @@ def native_index() -> dict[str, Voice]:
         for row in csv.DictReader(f, delimiter="\t"):
             seq = norm(row["ipa"])
             path = NATIVE_FOLDER / row["soundfile"]
-            if seq and seq not in out and path.exists():
-                out[seq] = Voice(path, seq, native=True,
+            if seq and key(seq) not in out and path.exists():
+                out[key(seq)] = Voice(path, seq, native=True,
                                  credit=f"{row['recorded_by']} · {row['licence']} · {COMMONS}",
                                  name=row["commons_title"].rsplit(".", 1)[0])
     return out
 
 
 def native(sequence: str) -> Voice | None:
-    return native_index().get(norm(sequence))
+    return native_index().get(key(sequence))
 
 
 def folder(db) -> Path:
@@ -158,10 +168,10 @@ def voices(db, sequence: str, session_speaker: str = "") -> list[Voice]:
     """Every soundfile for a sequence, in the order a pad plays them: the session speaker's,
     one with no speaker, the other speakers' (participants in the lists' order, then
     researchers, then anyone else), then Lemmatrix's own."""
-    seq = norm(sequence)
+    seq = key(sequence)
     if not seq:
         return []
-    own = [v for v in recordings(db) if v.sequence == seq]
+    own = [v for v in recordings(db) if key(v.sequence) == seq]
     order = {c: i for i, c in enumerate(_people(db))}
 
     def rank(v: Voice):

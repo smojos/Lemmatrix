@@ -30,7 +30,8 @@ def area(win):
 
 def _played(win, monkeypatch):
     got = []
-    monkeypatch.setattr(win.player, "play", lambda paths, *a, **k: got.append([p.name for p in paths]) or True)
+    monkeypatch.setattr(win.player, "play", lambda paths, *a, **k: got.append([p.name for p in paths])
+                        or (k.get("pad") is True) or True)
     return got
 
 
@@ -83,6 +84,15 @@ def test_the_session_speakers_recording_comes_first(win, area, monkeypatch):
     assert area.seg_alpha.voice().speaker == ""                       # picked from the right-click
     area.seg_alpha.edit.setText("ʌ ")                                 # typing again: the order again
     assert area.seg_alpha.voice().speaker == sp
+
+
+def test_ts_without_a_tie_bar_plays_tʃs_soundfile(win, area, monkeypatch):
+    pads = []
+    monkeypatch.setattr(win.player, "play", lambda paths, *a, **k: pads.append(k.get("pad")) or True)
+    area.seg_alpha.edit.setText("ts")
+    assert area.seg_alpha.voice().path.name == "Voiceless_alveolar_sibilant_affricate.oga"
+    area.letters[0].click()
+    assert pads == [True]                                             # played with silence round it
 
 
 def test_forbidden_characters_are_refused(win, area):
@@ -203,11 +213,15 @@ def test_right_shift_c_types_when_there_is_no_gamma(win, monkeypatch):
     assert keys == ["C", "G"]
 
 
-def test_folder_icon_opens_segments(win, monkeypatch):
+def test_file_open_folder_has_segments(win, monkeypatch):
     opened = []
     monkeypatch.setattr(win, "open_folder", lambda folder: opened.append(folder))
-    win.comparison.folder_btn.click()
+    win._fill_folder_menu()
+    a = next(a for a in win.folder_menu.actions() if a.text() == "Soundfiles › Segments")
+    assert a.isEnabled()                                              # made when opened, if need be
+    a.trigger()
     assert opened == [layout.segments_folder(win.doc.db.path)]
+    assert not hasattr(win.comparison, "folder_btn")                  # no folder icon (Josh)
 
 
 def test_both_areas_are_the_same(win):
@@ -215,7 +229,6 @@ def test_both_areas_are_the_same(win):
     win.open_utterances()
     t = win.utterances_window.texts.comparison
     assert type(t) is ComparisonPads and t.tabs.count() == 2 and len(t.seg_pads) == 3
-    assert t.folder_btn is not None
     win.utterances_window.close()
 
 
@@ -256,3 +269,27 @@ def test_speaker_renames_follow_in_edit_lists(win, monkeypatch):
     monkeypatch.setattr(win, "_apply_tags", lambda *a, **k: None)
     win.edit_lists()
     assert (seg / segments.filename(db, "ʌ", "SPZ")).exists()
+
+
+def test_tab_loops_round_the_pads_without_playing(win, area, monkeypatch):
+    from PySide6.QtWidgets import QApplication
+    played = []
+    monkeypatch.setattr(win.player, "play", lambda *a, **k: played.append(1) or True)
+    win.show()
+    a, b, g = (p.edit for p in area.seg_pads)
+    a.setText("β")
+    assert area.tab_to(a, 1) and QApplication.focusWidget() in (b, None)
+    assert area.tab_to(b, 1)                                          # β > α: round again
+    assert area.tab_to(a, -1)                                         # Shift+Tab: α > β
+    area.rows[2].show()                                               # with γ: α > β > γ > α
+    order = []
+    cur = a
+    for _ in range(3):
+        boxes = [p.edit for p, r in zip(area.seg_pads, area.rows) if not r.isHidden()]
+        cur = boxes[(boxes.index(cur) + 1) % len(boxes)]
+        order.append(cur)
+    assert order == [b, g, a]
+    area.rows[2].hide()
+    ev = QKeyEvent(QEvent.KeyPress, Qt.Key_Tab, Qt.NoModifier)
+    assert area.eventFilter(a, ev)                                    # the Tab key itself goes round
+    assert played == []                                               # for typing: nothing plays

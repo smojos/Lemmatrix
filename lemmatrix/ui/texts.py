@@ -548,7 +548,7 @@ class TextsPanel(QObject):
         self.count = QLabel()
         bl.addWidget(self.count)
         bl.addStretch(1)
-        # the comparison area (two scratchpads, α and β), right-justified beside the bar (Josh, 22 October)
+        # the phonetics scratchpad (two scratchpads, α and β), right-justified beside the bar (Josh, 22 October)
         outer = QWidget()
         ol = QHBoxLayout(outer)
         ol.setContentsMargins(0, 0, 0, 0)
@@ -560,7 +560,7 @@ class TextsPanel(QObject):
         return outer
 
     def _scratchpad(self) -> QWidget:
-        """The comparison area: two pitch scratchpads, α and β (IDEAS.md idea 33; Josh, 22 October).
+        """The phonetics scratchpad: two pitch scratchpads, α and β (IDEAS.md idea 33; Josh, 22 October).
         A trace typed in one is drawn and played (Ctrl+Shift+Space anywhere in the lines plays α), and
         saved nowhere: they go when the window closes."""
         from .scratchpad import ComparisonPads

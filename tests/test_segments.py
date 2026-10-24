@@ -43,7 +43,8 @@ def test_native_lookup_and_credit():
     assert b.native and b.path.name == "Voiced_bilabial_fricative.ogg"
     assert b.credit == "Peter Isotalo · CC BY-SA 3.0 · Wikimedia Commons"
     assert sg.native(" ɛ ").credit.startswith("Terfili")               # trimmed; the actual recorder
-    assert sg.native("t͡s") is not None and sg.native("ts") is None      # any string is its own
+    assert sg.native("ts") is sg.native("t͡s") is not None            # tie bar or not: the same (Josh)
+    assert sg.native("t͜s") is sg.native("t͡s")                        # the tie bar below too
     assert sg.native("ɡ") is not None and sg.native("g") is None
     assert sg.native("ɸʼ").credit.endswith("CC0 · Wikimedia Commons")
 
@@ -70,6 +71,22 @@ def test_names_and_parsing(tmp_path):
     bare = _db(tmp_path, language="", variety="")
     assert sg.filename(bare, "ʌ", "SP1") == "SP1_ʌ.wav" and sg.filename(bare, "ʌ") == "ʌ.wav"
     assert sg.parse(bare, "SP1_ʌ.wav") == ("ʌ", "SP1") and sg.parse(bare, "a_b.wav") == ("a_b", "")
+
+
+def test_tie_bars_call_the_same_recording(tmp_path):
+    db = _db(tmp_path)
+    seg = layout.segments_folder(db.path)
+    seg.mkdir(parents=True)
+    _wav(seg / "LXX-VXX-SP1_t͡ʃa.wav")
+    assert [v.speaker for v in sg.voices(db, "tʃa")] == ["SP1"]
+    assert sg.filename(db, "tʃa", "SP1") == "LXX-VXX-SP1_tʃa.wav"       # names keep what was typed
+
+
+def test_playback_padding_leaves_the_sound_as_it_is():
+    data = np.ones(100, dtype=np.float32)
+    out = audio.padded(data, 1000)
+    assert len(out) == 100 + int(1000 * audio.LEAD_IN) + int(1000 * audio.TAIL)
+    assert not out[:int(1000 * audio.LEAD_IN)].any() and (out[int(1000 * audio.LEAD_IN):][:100] == 1).all()
 
 
 def test_forbidden_characters():
