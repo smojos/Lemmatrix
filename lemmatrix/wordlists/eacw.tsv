@@ -43,7 +43,7 @@ A032	breath	NOUN	yes
 A033	lip	NOUN	yes			
 A034	gum	NOUN	yes			
 A035	tooth	NOUN	yes			
-A035b	edge	NOUN	no			
+A035b	edge	NOUN	no		usually a sharp edge	
 A036	molar	NOUN	yes			
 A037	canine	NOUN	yes			
 A038	incisor	NOUN	yes			
@@ -84,7 +84,7 @@ A071	side	NOUN	yes
 A071b	side of object	NOUN	no			
 A072	rib	NOUN	yes			
 A073	abdomen	NOUN	yes			
-A073b	middle	NOUN	no			
+A073b	middle	NOUN	no		sometimes the inside or flat of something	
 A074	navel	NOUN	yes			
 A075	innards	NOUN	yes			
 A076	liver	NOUN	yes			
@@ -365,9 +365,9 @@ C007	marryee	NOUN	no		neologism, bride or groom
 C007f	bride	NOUN	yes			
 C007m	groom	NOUN	yes			
 C008	betrothed	NOUN	no		engaged person	
-C008f	fiancee	NOUN	yes		fiancée: accent removed (accents are unfriendly for file names)	
-C008m	fiance	NOUN	yes		fiancé: accent removed (accents are unfriendly for file names)	
-C009	child (offspring)	NOUN	no			
+C008f	fiancee	NOUN	yes		fiancée: accent removed	
+C008m	fiance	NOUN	yes		fiancé: accent removed	
+C009	child (offspring)	NOUN	no		necessarily the offspring, cf. B004	
 C009f	daughter	NOUN	yes			
 C009m	son	NOUN	yes			
 C010	grandchild	NOUN	yes			
