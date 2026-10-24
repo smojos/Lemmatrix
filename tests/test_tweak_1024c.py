@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
-"""Josh's tweak of 24 October (IDEAS.md idea 14): a click on the selected token in a matrix
-unselects it, as in All data; a double-click still opens it."""
+"""Josh's tweaks of 24 October (IDEAS.md idea 14): a click on the selected token in a matrix
+unselects it, as in All data (a double-click still opens it); Ctrl + mouse wheel zooms the grids."""
 
 import os
 import time
@@ -15,6 +15,22 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from lemmatrix import matrix as mx  # noqa: E402
 from test_ui import app, win  # noqa: E402,F401
+
+
+import pytest  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _no_modifiers_left(app):
+    """A synthetic Ctrl+0 leaves Qt thinking Ctrl is still held, which changes later tests' clicks
+    (the token dialogue's Ctrl+click); a key press with no modifier clears it."""
+    yield
+    from PySide6.QtGui import QKeyEvent
+    from PySide6.QtWidgets import QWidget
+    w = QWidget()
+    QApplication.sendEvent(w, QKeyEvent(QEvent.KeyPress, Qt.Key_unknown, Qt.NoModifier))
+    w.deleteLater()
+    _settle()
 
 
 def _settle():
@@ -105,3 +121,52 @@ def test_no_unselecting_in_edit_mode_or_with_a_modifier(win):
     _settle()
     assert view.selected == hit
     view.set_edit_mode(False)
+
+
+# ---- Ctrl + mouse wheel zoom in the grids (idea 14, Josh, 24 October) ------------------------
+
+def _wheel(view, steps, mods=Qt.ControlModifier):
+    from PySide6.QtCore import QPoint as P
+    from PySide6.QtGui import QWheelEvent
+    pos = QPointF(view.viewport().rect().center())
+    ev = QWheelEvent(pos, view.viewport().mapToGlobal(pos), P(0, 0), P(0, 120 * steps),
+                     Qt.NoButton, mods, Qt.NoScrollPhase, False)
+    QApplication.sendEvent(view.viewport(), ev)
+
+
+def test_ctrl_wheel_zooms_the_grids_and_ctrl_0_resets(win):
+    from PySide6.QtGui import QKeyEvent
+    win.resize(1400, 780)
+    win.show()
+    _settle()
+    for t in (win.lemmas, win.all_table):
+        pt = t.font().pointSizeF()
+        ipa = t.model_.ipa.pointSizeF()
+        row_h = t.verticalHeader().defaultSectionSize()
+        w0 = t.horizontalHeader().sectionSize(0)
+        _wheel(t, 3)
+        _settle()
+        assert t.zoom > 1.3
+        assert t.font().pointSizeF() > pt and t.model_.ipa.pointSizeF() > ipa
+        assert t.verticalHeader().defaultSectionSize() > row_h
+        assert t.horizontalHeader().sectionSize(0) > w0
+        QApplication.sendEvent(t, QKeyEvent(QEvent.KeyPress, Qt.Key_0, Qt.ControlModifier))
+        _settle()
+        assert t.zoom == 1.0 and abs(t.font().pointSizeF() - pt) < 0.01
+        assert abs(t.model_.ipa.pointSizeF() - ipa) < 0.01
+        assert t.verticalHeader().defaultSectionSize() == row_h
+        assert abs(t.horizontalHeader().sectionSize(0) - w0) <= 2
+
+
+def test_each_grid_has_its_own_zoom_and_a_plain_wheel_still_scrolls(win):
+    win.resize(1400, 780)
+    win.show()
+    _settle()
+    _wheel(win.lemmas, 2)
+    assert win.lemmas.zoom > 1.1 and win.all_table.zoom == 1.0
+    _wheel(win.all_table, -1, Qt.NoModifier)
+    assert win.all_table.zoom == 1.0
+    _wheel(win.lemmas, -20)
+    assert win.lemmas.zoom == win.lemmas.ZOOM_MIN
+    win.lemmas.set_zoom(1.0)
+

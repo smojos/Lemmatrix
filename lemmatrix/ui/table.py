@@ -335,7 +335,7 @@ class ChipsDelegate(QStyledItemDelegate):
         row = index.data(Qt.UserRole + 1)
         f = option.font
         f.setPointSizeF(max(7.0, f.pointSizeF() - 1))
-        return QSize(chips_width(self.labels(row), f) + 10, 24)
+        return QSize(chips_width(self.labels(row), f) + 10, max(24, QFontMetrics(f).height() + 10))
 
 
 class DrawingDelegate(QStyledItemDelegate):
@@ -343,6 +343,9 @@ class DrawingDelegate(QStyledItemDelegate):
         super().__init__(parent)
         self.settings = settings                  # () -> (low, high)
         self.unit = underscore_unit(ipa_font(13))
+
+    def set_zoom(self, zoom: float):
+        self.unit = underscore_unit(ipa_font(round(13 * zoom)))
 
     def paint(self, painter, option, index):
         super().paint(painter, option, index)
@@ -352,7 +355,7 @@ class DrawingDelegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         from .widgets import pitch_width
-        return QSize(int(pitch_width(index.data(Qt.UserRole) or "", self.unit)) + 14, 24)
+        return QSize(int(pitch_width(index.data(Qt.UserRole) or "", self.unit)) + 14, max(24, option.fontMetrics.height() + 8))
 
 
 class FilterTable(QTableView):
@@ -408,6 +411,53 @@ class FilterTable(QTableView):
         self._tip_timer = QTimer(self)
         self._tip_timer.setSingleShot(True)
         self._tip_timer.timeout.connect(self._show_tip)
+        self.zoom = 1.0                           # Ctrl + mouse wheel; not saved: back to 1 on the next start
+        self._base_font = QFont(self.font())
+        self._base_header_font = QFont(self.horizontalHeader().font())
+
+    # ---- zoom (Ctrl + mouse wheel, Ctrl+0; IDEAS.md idea 14, Josh, 24 October) ----------------
+    # As in the matrices and a text's lines: each grid its own zoom, the text, the IPA font,
+    # the chips, the pitch drawings, the rows' height and the columns' widths together.
+    ZOOM_MIN, ZOOM_MAX, ZOOM_STEP = 0.6, 2.5, 1.1
+
+    def set_zoom(self, zoom: float):
+        zoom = max(self.ZOOM_MIN, min(self.ZOOM_MAX, zoom))
+        old = self.zoom
+        if abs(zoom - old) < 1e-6:
+            return
+        self.zoom = zoom
+        f = QFont(self._base_font)
+        f.setPointSizeF(self._base_font.pointSizeF() * zoom)
+        self.setFont(f)
+        hf = QFont(self._base_header_font)
+        hf.setPointSizeF(self._base_header_font.pointSizeF() * zoom)
+        self.horizontalHeader().setFont(hf)
+        ipa = self.model_.ipa
+        ipa.setPointSizeF(max(4.0, ipa.pointSizeF() / old * zoom))
+        for d in self._delegates:
+            if hasattr(d, "set_zoom"):
+                d.set_zoom(zoom)
+        self.verticalHeader().setDefaultSectionSize(round(26 * zoom))
+        hh = self.horizontalHeader()
+        last = hh.count() - 1
+        for i in range(hh.count()):
+            if i == last and hh.stretchLastSection():
+                continue
+            hh.resizeSection(i, max(20, round(hh.sectionSize(i) * zoom / old)))
+        n = self.model_.rowCount()
+        if n:
+            self.model_.dataChanged.emit(self.model_.index(0, 0),
+                                         self.model_.index(n - 1, self.model_.columnCount() - 1))
+        self.viewport().update()
+
+    def wheelEvent(self, event):
+        if event.modifiers() & Qt.ControlModifier:
+            d = event.angleDelta().y() or event.angleDelta().x()
+            if d:
+                self.set_zoom(self.zoom * (self.ZOOM_STEP ** (d / 120)))
+            event.accept()
+            return
+        super().wheelEvent(event)
 
     # ---- tooltips ----------------------------------------------------------
     # Twice Qt's usual wait before a cell's tooltip appears (Josh, 18 October: it came too
@@ -768,6 +818,10 @@ class FilterTable(QTableView):
         """No type-to-jump: IPA takes several keystrokes per symbol, so jumping only confuses (Josh, 19 October)."""
 
     def keyPressEvent(self, event):
+        if (event.key() == Qt.Key_0 and event.modifiers() & Qt.ControlModifier
+                and self.state() != QAbstractItemView.EditingState):
+            self.set_zoom(1.0)                  # the zoom back to normal
+            return
         if event.key() in (Qt.Key_Return, Qt.Key_Enter) and self.state() != QAbstractItemView.EditingState:
             row = self.current_row()
             if row is not None:
