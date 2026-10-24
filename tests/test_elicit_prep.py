@@ -158,13 +158,15 @@ def test_the_token_dialogue_has_other_languages_folded_away(win):
 
 def test_the_lemma_dialogue_folds_the_arabic_gloss_away(win):
     from lemmatrix.ui.dialogs import EntryDialog
-    win.prefs.set_value("dialogs/other_languages", False)
+    win.prefs.set_value("dialogs/lemma_other_glosses", False)
     e = win.doc.db.entries[0]
     dlg = EntryDialog(win, win.doc.db, e)
     ar = dlg.fields[("Gloss", "ar")]
     assert dlg.others_btn is not None and ar.isHidden()
     assert ar.text() == e.get("Gloss", "ar")                           # still saved as it was
+    assert dlg.others_btn.text() == "+"                             # a little + beside the gloss (24 October)
     dlg.others_btn.setChecked(True)
-    assert not ar.isHidden()
-    win.prefs.set_value("dialogs/other_languages", False)
+    assert not ar.isHidden() and dlg.others_btn.text() == "−"
+    assert win.prefs.get_bool("dialogs/lemma_other_glosses")
+    win.prefs.set_value("dialogs/lemma_other_glosses", False)
     dlg.reject()

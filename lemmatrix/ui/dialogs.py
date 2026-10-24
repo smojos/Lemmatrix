@@ -121,6 +121,7 @@ class NoForbidden(QLineEdit):
 
 MORE_KEY = "lemma_dialog/more"         # the workspace: the lemma fields behind the More arrow (idea 60)
 MORE_OPEN = "dialogs/lemma_more"       # this computer: the arrow open or closed
+OTHER_GLOSSES = "dialogs/lemma_other_glosses"   # this computer: the gloss's + open or closed
 ALWAYS_SHOWN = ("lemma", "gloss", "word-class")
 
 
@@ -176,10 +177,11 @@ class EntryDialog(QDialog):
         if entry is None and s.ref_scheme == SEQUENCE:   # built on the CAWL or Swadesh: the next number
             self.category.setCurrentIndex(1)
         self.fields: dict[tuple[str, str], QWidget] = {}
-        others = []                                 # second languages: under Other languages (idea 19)
+        self.other_rows = []                        # second languages' glosses: behind the gloss's + (idea 19)
+        self.others_btn = None
         self.origin_on = origin_shown(parent)
         self.from_box = None
-        self.setMinimumWidth(480)
+        self.setMinimumWidth(340)
         under_more = more_fields(parent, db)       # behind the More arrow (idea 60, Josh, 24 October)
         main_rows, more_rows = [], []
         for f in s.entry_fields:
@@ -187,6 +189,7 @@ class EntryDialog(QDialog):
                 continue                            # Settings → General: Stem type and From hidden
             rows = more_rows if f.name in under_more else main_rows
             if f.multilingual:
+                primary_row, others = None, []
                 for lang in s.gloss_languages:
                     ed = NoForbidden() if (lang == s.primary_gloss and not entry) else QLineEdit()
                     ed.setText(entry.get(f.name, lang) if entry else "")
@@ -194,10 +197,16 @@ class EntryDialog(QDialog):
                     if f.role == "gloss" and lang == "en":           # red lines under unknown words
                         spellui.attach(ed, getattr(parent, "speller", None))
                     if lang == s.primary_gloss:
-                        rows.append((f"{f.title} ({lang})", ed))
+                        primary_row = (f"{f.title} ({lang})", ed)
                     else:
                         others.append((f"{f.title} ({lang})", ed))
                     self.fields[(f.name, lang)] = ed
+                if primary_row is not None and others and self.others_btn is None:
+                    primary_row = (primary_row[0], self._with_plus(primary_row[1], [l for l, _ in others]))
+                if primary_row is not None:
+                    rows.append(primary_row)
+                rows.extend(others)                 # right under it, shown by the +
+                self.other_rows.extend(w for _, w in others)
             elif f.closed:
                 cb = QComboBox()
                 cb.setEditable(True)
@@ -227,35 +236,53 @@ class EntryDialog(QDialog):
             self.file_gloss.setToolTip("Set automatically from the primary gloss.")
         for label, w in main_rows:
             form.addRow(label, w)
-        self.others_btn = None
-        if others:
-            self.others_btn = QToolButton()
-            self.others_btn.setCheckable(True)
-            self.others_btn.setAutoRaise(True)
-            self.others_btn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-            langs = [lang for lang in s.gloss_languages if lang != s.primary_gloss]
-            self.others_btn.setText(f"Other languages ({', '.join(langs)})")
-            self.others_btn.setToolTip("Glosses in the database's other gloss languages: they help "
-                                       "speakers understand (e.g. in ɛλicit requests)")
-            form.addRow(self.others_btn)
-            self.other_rows = []
-            for label, ed in others:
-                form.addRow(label, ed)
-                self.other_rows.append(ed)
-            prefs = getattr(parent, "prefs", None)
-
-            def show(on, remember=True):
-                self.others_btn.setArrowType(Qt.DownArrow if on else Qt.RightArrow)
-                for w in self.other_rows:
-                    form.setRowVisible(w, on)
-                if remember and prefs is not None:
-                    prefs.set_value("dialogs/other_languages", bool(on))
-            shown = prefs.get_bool("dialogs/other_languages", False) if prefs is not None else False
-            self.others_btn.setChecked(shown)
-            self.others_btn.toggled.connect(show)
-            show(shown, remember=False)
+        self._form = form
         self._more_rows(form, more_rows, parent)
+        if self.others_btn is not None:            # the + beside the gloss (Josh, 24 October)
+            prefs = getattr(parent, "prefs", None)
+            filled = sum(1 for w in self.other_rows if w.text().strip())
+            if filled:
+                self.others_btn.setToolTip(self.others_btn.toolTip() + f" ({filled} filled)")
+            shown = prefs.get_bool(OTHER_GLOSSES, False) if prefs is not None else False
+            self.others_btn.setChecked(shown)
+            self._show_others(shown, remember=False)
+            self.others_btn.toggled.connect(self._show_others)
         form.addRow(_buttons(self))
+        self.adjustSize()
+        self.resize(min(max(self.minimumWidth(), self.sizeHint().width()), 460), self.sizeHint().height())
+
+    def _with_plus(self, ed, labels):
+        """The primary gloss with a small + at its right: the other languages' glosses under it."""
+        box = QWidget()
+        h = QHBoxLayout(box)
+        h.setContentsMargins(0, 0, 0, 0)
+        h.setSpacing(2)
+        h.addWidget(ed, 1)
+        b = QToolButton()
+        b.setCheckable(True)
+        b.setAutoRaise(True)
+        b.setText("+")
+        f = b.font()
+        f.setBold(True)
+        f.setPointSizeF(f.pointSizeF() + 3)
+        b.setFont(f)
+        b.setFixedWidth(24)
+        b.setStyleSheet(f"color: {theme.colour('pitch').name()};")   # the theme colour, lighter on dark
+        b.setToolTip("Glosses in the database's other gloss languages (" + ", ".join(labels)
+                     + "): they help speakers understand, e.g. in ɛλicit requests")
+        h.addWidget(b)
+        self.others_btn = b
+        return box
+
+    def _show_others(self, on: bool, remember: bool = True):
+        self.others_btn.setText("−" if on else "+")
+        for w in self.other_rows:
+            self._form.setRowVisible(w, on)
+        self.adjustSize()
+        if remember:
+            prefs = getattr(self.parent(), "prefs", None)
+            if prefs is not None:
+                prefs.set_value(OTHER_GLOSSES, bool(on))
 
     def _more_rows(self, form, rows, parent):
         """The fields behind the More arrow (IDEAS.md idea 60, Josh, 24 October): everything but the
