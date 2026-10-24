@@ -1538,11 +1538,14 @@ def test_same_recording_name_offers_an_example_tag_and_never_overwrites(win, mon
             return np.full(4410, 0.1, dtype=np.float32)
     monkeypatch.setattr("lemmatrix.audio.Recorder", lambda *a, **k: type("R", (), {"start": lambda s: None})())
 
-    # Recording a second token with the same tags: Cancel records nothing
+    # Recording a second token with the same tags asks the same-configuration box (24 October):
+    # Cancel records nothing
     pick = ["cancel"]
+    chips = []
+    monkeypatch.setattr(TokenDialog, "_ask_duplicate", lambda self, o, chip: chips.append(chip) or pick[0])
     dlg = TokenDialog(win, [Slot(e, None, tuple(first.tags), explicit=True, defaults=False)], 0)
     dlg._record()
-    assert dlg.recorder is None and answers and "x1" in answers[-1]
+    assert dlg.recorder is None and chips == ["x1"]
     # Add X1 and record: the new token gets its own name; the other's recording is untouched
     pick = ["add"]
     dlg._record()

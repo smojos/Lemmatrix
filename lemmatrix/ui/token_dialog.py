@@ -1182,8 +1182,19 @@ class TokenDialog(QDialog):
             self._stop_recording()
             return
         self._collect()
-        if self._clashes() and not self._offer_example(recording=True):
-            return                                # never record over another token's recording
+        clashes = self._clashes()
+        if clashes:
+            # the same box as saving (Josh, 24 October): switch, add an Example tag, overwrite.
+            # Switched or overwritten, the dialogue shows that token and records onto it (its own
+            # recording is asked about below, as always); Cancel records nothing.
+            e0, other = clashes[0]
+            if e0 is self.slot.entry and len(self.tag_combinations()) == 1:
+                self._resolve_duplicate(other)
+                if self._clashes():
+                    return                        # Cancel: nothing recorded
+                self._collect()
+            elif not self._offer_example(recording=True):
+                return                            # never record over another token's recording
         exp = self._expected()
         own = [p for p in {self.token.file, exp} if p and self._path(p).exists()]
         if own:

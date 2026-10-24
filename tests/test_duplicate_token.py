@@ -142,3 +142,32 @@ def test_the_box_lists_core_fields_with_phonemic_bold(win):
     ow.check.setChecked(True)
     assert ow.go.isEnabled() and "Phonetic and the soundfile will be overwritten" in ow.check.text()
     dlg.reject()
+
+
+def test_recording_asks_the_same_box(win, monkeypatch):
+    import numpy as np
+    from lemmatrix import storage
+    lion = win.doc.db.entry_by_ref("D002")
+    pl = lion.tokens[3]
+    count = len(lion.tokens)
+    monkeypatch.setattr("lemmatrix.audio.Recorder", lambda *a, **k: type("R", (), {"start": lambda s: None})())
+    dlg = _new(win, lion, pl.tags)
+    seen = _answers(monkeypatch, dlg, "cancel")
+    dlg._record()
+    assert seen and dlg.recorder is None and len(lion.tokens) == count       # Cancel: nothing recorded
+    # Add: the Example tag, then it records under a name of its own
+    _answers(monkeypatch, dlg, "add")
+    dlg._record()
+    assert dlg.recorder is not None and "Example 1" in dlg.token.tags
+    dlg.recorder = None
+    # Switch: the dialogue shows the existing token and records onto it (its recording asked about)
+    dlg2 = _new(win, lion, pl.tags)
+    _answers(monkeypatch, dlg2, "switch")
+    replace = []
+    from PySide6.QtWidgets import QMessageBox
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: replace.append(a[2]) or QMessageBox.Yes)
+    dlg2._record()
+    assert dlg2.original is lion.tokens[3] and replace and "Replace this token's recording" in replace[0]
+    assert dlg2.recorder is not None
+    dlg2.recorder = None
+    dlg.reject(); dlg2.reject()
