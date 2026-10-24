@@ -90,7 +90,7 @@ class PeopleEditor(QWidget):
         else:
             self.table.horizontalHeaderItem(self.col("identifiable")).setToolTip(
                 "May be named (with email and description) in an Ethical archive (File → Export); "
-                "otherwise only the code. Ticked for a new researcher")
+                "otherwise only the code. Selected for a new researcher")
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -700,7 +700,7 @@ class ListsDialog(QDialog):
                    "The researchers of the sessions. The code is what the notebook and the Current "
                    "Session show; renaming a code renames it in the notebook too. The email is where "
                    "ɛλicit requests tell a researcher their recordings have come in. Identifiable? "
-                   "(ticked for a new researcher) keeps the name, email and description in an Ethical "
+                   "(selected for a new researcher) keeps the name, email and description in an Ethical "
                    "archive; the Anonymous archive never names anyone.",
                    lambda: self._reset_people(self.researchers, defaults.default_researchers(),
                                               self._researcher_use))
@@ -709,7 +709,7 @@ class ListsDialog(QDialog):
                    "The participants (speakers). The code is the tokens' speaker; renaming it renames it "
                    "in the tokens and the notebook too. The consent file documents their informed consent: "
                    "click it to open it (a file inside the database's folder is kept relative to it). "
-                   "Tick Identifiable? and Audio sharing? only when the consent form explicitly agrees "
+                   "Select Identifiable? and Audio sharing? only when the consent form explicitly agrees "
                    "to them: an Ethical archive names only the identifiable participants and includes only "
                    "the recordings of those who agreed to audio sharing, and ɛλicit warns before sending "
                    "a recording whose speaker hasn't agreed to it.",

@@ -301,7 +301,7 @@ class RequestDialog(QDialog):
     def reset_request(self):
         """Reset request: clears the ticks and the new sentences; the settings stay."""
         if (any(r.ticked for r in self.model.rows) or self.new_table.rowCount()) and QMessageBox.question(
-                self, f"Make {NAME} request", "Untick everything and clear the new sentences?") != QMessageBox.Yes:
+                self, f"Make {NAME} request", "Deselect everything and clear the new sentences?") != QMessageBox.Yes:
             return
         self._untick_all()
         self.new_table.setRowCount(0)
@@ -419,10 +419,10 @@ class RequestDialog(QDialog):
         tl.setContentsMargins(0, 0, 0, 0)
         tl.addWidget(_divider())
         tl.addWidget(_section("Tokens and Utterances",
-                              "Tick what to ask for (or double-click a row). One with a soundfile is a Rerecord: "
+                              "Select what to ask for (or double-click a row). One with a soundfile is a Rerecord: "
                               "the speaker hears it and repeats it. One without is New: the card shows its gloss "
                               "or translation. Right-click → Add to ɛλicit request in All data, the matrices and "
-                              "Utterances ticks things here too."))
+                              "Utterances selects things here too."))
         bar = QHBoxLayout()
         self.search = QLineEdit()
         self.search.setPlaceholderText("search the references, forms, tags and glosses")
@@ -431,15 +431,18 @@ class RequestDialog(QDialog):
         self.scope = QComboBox()
         self.scope.addItems(["Everything", "Lemma tokens", "Citation tokens", "Utterances"])
         self.scope.currentIndexChanged.connect(self._filter)
-        self.ticked_only = QCheckBox("Ticked only")
+        self.ticked_only = QCheckBox("Selected only")
+        self.ticked_only.setChecked(True)         # Josh, 24 October: on at first, so the list is the request
+        self.ticked_only.setToolTip("Show only what is selected for the request; switch it off to choose "
+                                    "from every token and utterance")
         self.ticked_only.toggled.connect(self._filter)
         bar.addWidget(self.search, 1)
         bar.addWidget(self.scope)
         bar.addWidget(self.ticked_only)
-        shown = QPushButton("Tick the tokens All data shows")
-        shown.setToolTip("Ticks every token the main window's All data shows now (its filters and search)")
+        shown = QPushButton("Select the tokens All data shows")
+        shown.setToolTip("Selects every token the main window's All data shows now (its filters and search)")
         shown.clicked.connect(self._tick_all_data)
-        untick = QPushButton("Untick all")
+        untick = QPushButton("Deselect all")
         untick.clicked.connect(self._untick_all)
         bar.addWidget(shown)
         bar.addWidget(untick)
@@ -501,7 +504,7 @@ class RequestDialog(QDialog):
         lay.addWidget(self.count)
         buttons = QDialogButtonBox()
         reset = buttons.addButton("Reset request", QDialogButtonBox.ResetRole)
-        reset.setToolTip("Unticks everything and clears the new sentences (the settings stay)")
+        reset.setToolTip("Deselects everything and clears the new sentences (the settings stay)")
         reset.clicked.connect(self.reset_request)
         self.make_btn = buttons.addButton("Make it rain", QDialogButtonBox.AcceptRole)   # Josh, 21 October
         self.make_btn.setToolTip("Make the request: put it in your Google Drive (or write the zip) and show "
@@ -516,6 +519,7 @@ class RequestDialog(QDialog):
         buttons.rejected.connect(self.reject)
         lay.addWidget(buttons)
         self._l2_changed()
+        self._filter()                            # Selected only, on at first
         first = next((i for i, r in enumerate(self.model.rows) if r.ticked), None)
         if first is not None:                     # everything shows; the first ticked one in view
             self.table.scrollTo(self.proxy.mapFromSource(self.model.index(first, 0)))

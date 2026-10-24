@@ -340,7 +340,7 @@ class TextDialog(QDialog):
             return
         main, rules = self.chosen()
         if not main:
-            self.lines_note.setText(f"<span style='color:{theme.colour('error').name()}'>Tick the main tier: "
+            self.lines_note.setText(f"<span style='color:{theme.colour('error').name()}'>Select the main tier: "
                                     "its intervals are the text's lines.</span>")
             return
         try:
@@ -360,7 +360,7 @@ class TextDialog(QDialog):
             QMessageBox.warning(self, "Text", f"The reference {ref} is already used.")
             return
         if self.tiers.rowCount() and not self.chosen()[0]:
-            QMessageBox.warning(self, "Text", "Tick the main tier: its intervals are the text's lines.")
+            QMessageBox.warning(self, "Text", "Select the main tier: its intervals are the text's lines.")
             return
         if self.new_wav is None and self.text is None:
             if QMessageBox.question(self, "Text", "Add the text without a recording? It can be chosen "

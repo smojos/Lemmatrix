@@ -325,7 +325,7 @@ SHORTCUTS = (
                 "a stop and fricative in different syllables would be tied too."),
     ShortcutDef("pitch", "Pitch", ("pitch",),
                 (Direction("up", "Raise by one"), Direction("down", "Lower by one")),
-                "Moves every pitch digit up or down one step. If any ticked token would go past the "
+                "Moves every pitch digit up or down one step. If any selected token would go past the "
                 "display range (Settings → Pitch), nothing is changed."),
     ShortcutDef("sentence", "Sentence-ify", ("translation",),
                 (Direction("on", "Make sentences"),),
@@ -719,7 +719,7 @@ def summary(p: Plan, level: str, warn_unusual: bool = True) -> list[str]:
     """The preview's lines, besides the count."""
     lines = []
     if p.kept:
-        lines.append(f"{p.kept} ticked token{'s' if p.kept != 1 else ''} already "
+        lines.append(f"{p.kept} selected token{'s' if p.kept != 1 else ''} already "
                      f"{'have translations' if p.kept != 1 else 'has a translation'}: left as "
                      f"{'they are' if p.kept != 1 else 'it is'}")
     if p.unpredicted:

@@ -30,3 +30,30 @@ def test_soundfile_is_one_word():
             if two_words.search(line):
                 found.append(f"{f.relative_to(ROOT)}:{n}: {line.strip()}")
     assert not found, "Write soundfile as one word:\n" + "\n".join(found)
+
+
+def test_tick_means_a_bug_only():
+    """"Tick" is a bug (I found a tick!); a checkbox is selected or deselected (Josh, 24 October).
+    Checks the program's own text (its strings, not names in the code) and the README and DESIGN.md."""
+    import io
+    import tokenize
+    word = re.compile(r"\b(un)?tick(s|ed|ing)?\b", re.I)
+    bug = re.compile(r"I found a tick!|a tick is a bug|a tick drawn in", re.I)
+    found = []
+    for f in tracked_text_files():
+        rel = f.relative_to(ROOT)
+        if f.suffix == ".py" and rel.parts[0] == "lemmatrix":
+            src = f.read_text(encoding="utf-8")
+            for t in tokenize.generate_tokens(io.StringIO(src).readline):
+                if t.type != tokenize.STRING and t.type != getattr(tokenize, "FSTRING_MIDDLE", -1):
+                    continue
+                s = t.string
+                if s.strip("'\"").lower() in ("tick", "ticked") or s.lstrip("rbfRBF").startswith(('"""', "'''")):
+                    continue                     # an icon's or a field's name; docstrings are for coders
+                if word.search(bug.sub("", s)):
+                    found.append(f"{rel}:{t.start[0]}: {s.strip()[:100]}")
+        elif f.name in ("README.md", "DESIGN.md"):
+            for n, line in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
+                if word.search(bug.sub("", line)) and "A tick is a bug" not in line:
+                    found.append(f"{rel}:{n}: {line.strip()[:100]}")
+    assert not found, "Say selected / deselected (a tick is a bug):\n" + "\n".join(found)

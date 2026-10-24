@@ -947,7 +947,7 @@ class ConfigureViewDialog(QDialog):
         self.setWindowTitle("Configure view")
         self.resize(420, 420)
         lay = QVBoxLayout(self)
-        note = QLabel("Tick what each line shows, and drag to reorder. Fields ticked in “Line up” are "
+        note = QLabel("Select what each line shows, and drag to reorder. Fields selected in “Line up” are "
                       "aligned word by word, as in LaTeX glossing: spaces separate the units, "
                       "{braces} group several words into one, and {} is an empty one.")
         note.setWordWrap(True)

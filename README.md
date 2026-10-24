@@ -29,7 +29,7 @@ Lemmatrix keeps two kinds of thing apart, and the difference runs through the wh
 - **The data** is what you collected and what describes it: lemmas and tokens with their
   recordings, utterances, texts with their TextGrids, the fields, tags and lists that describe
   them (your tone classes, word classes, reference categories), the metadata, and the consent
-  ticks that say how it may be shared. It lives in the database file and its soundfiles, and it
+  checkboxes that say how it may be shared. It lives in the database file and its soundfiles, and it
   is what you archive and share: *ethically collected and shared*.
 - **Your own work** is what you make of the data: the notebook's notes, questions and To Dos,
   your Cogitate hypotheses with the evidence for and against them, your workspace, and later the
@@ -38,10 +38,10 @@ Lemmatrix keeps two kinds of thing apart, and the difference runs through the wh
 
 Both are on screen together (that is the point), but they are stored apart. **File → Full
 backup** keeps everything, for you. **File → Export → Ethical archive** and **Anonymous
-archive** share the data only: the notebook stays out unless you tick it in, and the workspace
+archive** share the data only: the notebook stays out unless you select it in, and the workspace
 goes blank. Others can look at your archived data and come to their own conclusions; they don't
 get to piggyback on your unpublished thoughts. The **Ethical archive** names only the people
-ticked *Identifiable?* and carries only the recordings of speakers who agreed to audio sharing,
+with *Identifiable?* selected and carries only the recordings of speakers who agreed to audio sharing,
 as their consent forms allow; the **Anonymous archive** names nobody at all (codes renumbered, no
 recordings), and is the one to use when you ask an AI for help with your data.
 
@@ -201,7 +201,7 @@ ever closes by itself with no message, `lemmatrix-crash.log` in this folder says
   path to Praat), Display (light or dark theme, accent colour for highlights, chips and pitch
   traces, IPA font size), Pitch (display range, playback voice).
 - **Bulk edit** (Edit → Bulk edit…, Ctrl+E): a window of its own with a Lemmas tab and a
-  Tokens tab, which start with the main window's filters, and a tick on every row. Operations:
+  Tokens tab, which start with the main window's filters, and a checkbox on every row. Operations:
   Replace (plain text or a regular expression), Shortcuts (y / j, tie bars on affricates,
   raise or lower pitch), Set value (a field, a tag added or removed, the speaker, the date,
   the word class), Copy, Clear, and Predict (fills empty English translations with their
@@ -230,7 +230,7 @@ ever closes by itself with no message, `lemmatrix-crash.log` in this folder says
   **Anonymous archive** (nobody named, every code renumbered, no recordings; for showing your
   setup, or for AI). Both leave your notebook out by default and write a blank workspace; the
   consent forms can travel in a password-protected zip. Researchers and participants have an
-  *Identifiable?* tick in Edit → Lists (ticked for a new researcher, not for a new participant).
+  *Identifiable?* checkbox in Edit → Lists (selected for a new researcher, not for a new participant).
 - **Undo and redo** for all changes to entries and tokens.
 
 ## Not in this version yet

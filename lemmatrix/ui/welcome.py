@@ -153,7 +153,7 @@ class WelcomeDialog(QDialog):
         bottom = QHBoxLayout()
         self.every_start = QCheckBox("Show this at every start")
         self.every_start.setChecked(show_every_start)
-        self.every_start.setToolTip("Unticked, Lemmatrix opens your most recent database straight "
+        self.every_start.setToolTip("Not selected: Lemmatrix opens your most recent database straight "
                                     "away. Also in Settings → General.")
         self.every_start.setStyleSheet(f"color: {muted};")
         bottom.addWidget(self.every_start)

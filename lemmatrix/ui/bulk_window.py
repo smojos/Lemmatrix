@@ -86,7 +86,7 @@ class BulkModel(RowModel):
             if role == Qt.CheckStateRole:
                 return Qt.Checked if self.win.is_ticked(row) else Qt.Unchecked
             if role == Qt.ToolTipRole:
-                return "Ticked rows are changed; untick a row to leave it out"
+                return "Selected rows are changed; deselect a row to leave it out"
             if role == Qt.UserRole + 1:
                 return row
             if role == Qt.UserRole:
@@ -298,12 +298,12 @@ class BulkEditWindow(QDialog):
         search.setMaximumWidth(360)
         bar.addWidget(search, 1)
         self.searches[level] = search
-        for text, on in (("Tick all shown", True), ("Untick all shown", False)):
+        for text, on in (("Select all shown", True), ("Deselect all shown", False)):
             b = QPushButton(text)
             b.clicked.connect(lambda *_, lv=level, on=on: self.set_ticked(self.tables[lv].visible_rows(), on))
             bar.addWidget(b)
-        tick_sel = QPushButton("Untick selected")
-        tick_sel.setToolTip("Leave the selected rows out (select several with Shift or Ctrl)")
+        tick_sel = QPushButton("Deselect highlighted rows")
+        tick_sel.setToolTip("Leave the highlighted rows out (highlight several with Shift or Ctrl)")
         tick_sel.clicked.connect(lambda *_, lv=level: self.set_ticked(self._selected(lv), False))
         bar.addWidget(tick_sel)
         bar.addStretch(1)
@@ -511,7 +511,7 @@ class BulkEditWindow(QDialog):
         w, form = self._form()
         self.x_field = QComboBox()
         form.addRow("Field", self.x_field)
-        note = QLabel("Empties the field in every ticked row.")
+        note = QLabel("Empties the field in every selected row.")
         note.setStyleSheet(f"color: {theme.muted()};")
         form.addRow(note)
         self._watch(self.x_field)
@@ -531,9 +531,9 @@ class BulkEditWindow(QDialog):
         key = bulk.predicted_target(self.db)
         if key:
             self.p_field.setText(bulk.target(self.db, bulk.TOKENS, key).title)
-            note = ("Fills each ticked token's empty English translation with its suggestion, the grey "
+            note = ("Fills each selected token's empty English translation with its suggestion, the grey "
                     "text the token dialogue shows. Translations already there are left alone, and so are "
-                    "tokens without a suggestion. Check the preview and untick any wrong ones before Apply.")
+                    "tokens without a suggestion. Check the preview and deselect any wrong ones before Apply.")
         else:
             self.p_field.setText("(no English translation field)")
             note = "Predicted translations are only for an English translation field."
@@ -575,8 +575,8 @@ class BulkEditWindow(QDialog):
 
     # ---- columns and rows --------------------------------------------
     def _tick_column(self) -> Column:
-        return Column(TICK, "✓", lambda r: "Ticked" if self.is_ticked(r) else "Unticked", closed=True,
-                      tree=lambda: [ListItem("Ticked"), ListItem("Unticked")], edit=_noop)
+        return Column(TICK, "✓", lambda r: "Selected" if self.is_ticked(r) else "Not selected", closed=True,
+                      tree=lambda: [ListItem("Selected"), ListItem("Not selected")], edit=_noop)
 
     def _columns(self, level: str) -> list[Column]:
         m = self.main
@@ -704,7 +704,7 @@ class BulkEditWindow(QDialog):
         ticked = sum(1 for r in shown if self.is_ticked(r))
         noun = "lemmas" if self.level == bulk.LEMMAS else "tokens"
         n = t.active_filters()
-        self.count.setText(f"{len(shown)} {noun} shown  ·  {ticked} ticked"
+        self.count.setText(f"{len(shown)} {noun} shown  ·  {ticked} selected"
                            + (f"  ·  {n} column filter{'s' if n != 1 else ''} on" if n else ""))
 
     # ---- fields and pages --------------------------------------------
@@ -850,7 +850,7 @@ class BulkEditWindow(QDialog):
         self.clear_preview()
         rows = self.chosen_rows()
         if not rows:
-            self._show("Nothing is ticked.", error=True)
+            self._show("Nothing is selected.", error=True)
             return
         try:
             op = self.build_op()
@@ -897,7 +897,7 @@ class BulkEditWindow(QDialog):
             return
         changed = plan.rows_changed
         if not changed and not plan.pairs:
-            self._show(f"No ticked {noun} would change.")
+            self._show(f"No selected {noun} would change.")
             self.apply_btn.setEnabled(False)
             return
         warn_unusual = self.main.prefs.warn_unusual_tags
@@ -905,7 +905,7 @@ class BulkEditWindow(QDialog):
         if plan.unusual and warn_unusual:
             lines += "<li><a href='unusual-off'>Don't show this warning again</a></li>"
         warn = bool(plan.renames or plan.comment_dates or (plan.unusual and warn_unusual))
-        self._show(f"<b>{changed} of {ticked} ticked {noun}{'s' if ticked != 1 else ''} will change.</b>"
+        self._show(f"<b>{changed} of {ticked} selected {noun}{'s' if ticked != 1 else ''} will change.</b>"
                    f"<ul>{lines}</ul>" + ("" if not plan.renames else
                                           "<span>Renamed: " + _esc(", ".join(
                                               f"{a.name} → {b.name}" for a, b in plan.renames[:4]))

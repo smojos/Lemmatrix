@@ -57,9 +57,9 @@ class ConfigureCellDialog(QDialog):
         self.setWindowIcon(icon("gear"))
         self.resize(380, 400)
         lay = QVBoxLayout(self)
-        note = QLabel("Tick what each cell shows; drag to reorder. Lines ticked in “Line up” are aligned "
+        note = QLabel("Select what each cell shows; drag to reorder. Lines selected in “Line up” are aligned "
                       "word by word, as in a text's lines (spaces separate the units, {braces} group "
-                      "several words into one); the same ticks for every cell view.")
+                      "several words into one); the same choices for every cell view.")
         note.setWordWrap(True)
         lay.addWidget(note)
         self.list = QTreeWidget()

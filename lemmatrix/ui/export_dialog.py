@@ -22,7 +22,7 @@ INTRO = {
                "consent links all go, the language's and variety's names become their codes, and no "
                "recordings go in. The database itself isn't changed.",
     ETHICAL: "A copy of the data to share or deposit, as the consent forms allow. Participants and "
-             "researchers ticked Identifiable? (Edit → Lists) keep their names; everyone else is their "
+             "researchers with Identifiable? selected (Edit → Lists) keep their names; everyone else is their "
              "code only. Only the recordings of speakers who agreed to audio sharing go in. The database "
              "itself isn't changed.",
 }

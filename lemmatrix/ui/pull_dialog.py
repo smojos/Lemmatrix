@@ -207,8 +207,8 @@ class PushDialog(QDialog):
         self.plan = plan
         self.setWindowTitle("Push to source")
         lay = QVBoxLayout(self)
-        intro = QLabel("This writes the ticked fields, as they are in Lemmatrix, into their tiers in the "
-                       "TextGrid. Untick any you don't want written.")
+        intro = QLabel("This writes the selected fields, as they are in Lemmatrix, into their tiers in the "
+                       "TextGrid. Deselect any you don't want written.")
         intro.setWordWrap(True)
         lay.addWidget(intro)
         self.tree = QTreeWidget()
@@ -230,7 +230,7 @@ class PushDialog(QDialog):
             it.setFlags(it.flags() | Qt.ItemIsUserCheckable)
             it.setCheckState(1, Qt.Checked if ch.edited else Qt.Unchecked)   # Praat's changes: not by default
             if not ch.edited:
-                it.setToolTip(2, "Changed in Praat since it was copied, not edited here: ticking it writes "
+                it.setToolTip(2, "Changed in Praat since it was copied, not edited here: selecting it writes "
                                  "Lemmatrix's version back over Praat's. Pull from source takes Praat's instead.")
             for col, value in ((3, ch.old), (4, ch.new)):
                 if f is not None and f.role in ("phonetic", "phonemic"):

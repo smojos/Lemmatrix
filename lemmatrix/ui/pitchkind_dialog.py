@@ -31,7 +31,7 @@ class ConvertDialog(QDialog):
         self.ticks: dict[str, QCheckBox] = {}
         for h in holding:
             box = QCheckBox(h.label)
-            box.setToolTip("Ticked: deleted with Delete the ticked data…; kept hidden otherwise")
+            box.setToolTip("Selected: deleted with Delete the selected data…; kept hidden otherwise")
             self.ticks[h.key] = box
             lay.addWidget(box)
         added = pitchkind.added(db, new)
@@ -40,7 +40,7 @@ class ConvertDialog(QDialog):
         row = QHBoxLayout()
         keep = QPushButton("Keep it hidden")
         keep.setDefault(True)
-        self.delete_btn = QPushButton("Delete the ticked data…")
+        self.delete_btn = QPushButton("Delete the selected data…")
         self.delete_btn.setEnabled(False)
         cancel = QPushButton("Cancel")
         for b in (keep, self.delete_btn, cancel):

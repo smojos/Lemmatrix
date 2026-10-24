@@ -200,7 +200,7 @@ class WordlistExportDialog(QDialog):
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setStretchLastSection(True)
         lay.addWidget(self.table, 1)
-        self.note = QLabel("Ticked matches are exported, and their number is kept on the lemma "
+        self.note = QLabel("Selected matches are exported, and their number is kept on the lemma "
                            "(one undo step), so the next export finds them.")
         self.note.setWordWrap(True)
         lay.addWidget(self.note)
@@ -501,7 +501,7 @@ class InsertItemsDialog(QDialog):
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         lay.addWidget(self.table, 1)
         bar = QHBoxLayout()
-        tick_all, untick = QPushButton("Tick all shown"), QPushButton("Untick all")
+        tick_all, untick = QPushButton("Select all shown"), QPushButton("Deselect all")
         tick_all.clicked.connect(lambda: self._tick_all(True))
         untick.clicked.connect(lambda: self._tick_all(False))
         bar.addWidget(tick_all)

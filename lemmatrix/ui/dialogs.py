@@ -668,7 +668,7 @@ class PreferencesDialog(QDialog):
                                "(it stays while the database opens either way). Click it to close it sooner.")
         self.welcome = QCheckBox("Show the welcome window at every start")
         self.welcome.setChecked(prefs.show_welcome)
-        self.welcome.setToolTip("Unticked, Lemmatrix opens the database you opened most recently "
+        self.welcome.setToolTip("Not selected: Lemmatrix opens the database you opened most recently "
                                 "(the welcome window still shows when it can't find one). It is shown "
                                 "by itself the very first time.")
         self.ipa = QSpinBox()
@@ -792,7 +792,7 @@ class PreferencesDialog(QDialog):
                                  "Raise and Lower pitch, Bulk edit's Pitch shortcut and the pitch scratchpads. "
                                  "Off hides them everywhere, to declutter: the data is kept exactly as it is "
                                  "(tone fields such as Tone Class stay), and everything comes back as it was "
-                                 "when it is ticked again. Also View → Show pitch system.")
+                                 "when it is selected again. Also View → Show pitch system.")
         from .. import pitchkind
         kind = pitchkind.kind(db)                    # the database's pitch kind (idea 9)
         self.kind_note = QLabel(f"Pitch kind: {pitchkind.LABELS[kind]}. {pitchkind.TIPS[kind]}.")
@@ -932,8 +932,8 @@ class UsualDialog(QDialog):
                       "token dialogue for lemmas of these classes, their defaults go on new tokens, and "
                       "on other lemmas its tags are marked as unusual (they're still allowed). A class "
                       "includes the classes nested under it in the Word Class list.\n\n"
-                      + ("Nothing ticked: as its parent group (" + ", ".join(inherited) + ")."
-                         if inherited else "Nothing ticked: usual for every lemma."))
+                      + ("Nothing selected: as its parent group (" + ", ".join(inherited) + ")."
+                         if inherited else "Nothing selected: usual for every lemma."))
         note.setWordWrap(True)
         lay.addWidget(note)
         self.tree = QTreeWidget()

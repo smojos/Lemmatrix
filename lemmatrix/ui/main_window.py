@@ -790,7 +790,7 @@ class MainWindow(QMainWindow):
             kind = "a rerecord" if item is not None and elicit.recording_path(self.doc.db, item, token) else "new"
             msg = f"Added to the ɛλicit request as {kind}"
         n = len(self.elicit_basket)
-        self.statusBar().showMessage(f"{msg} ({n} ticked for Make ɛλicit request).", 5000)
+        self.statusBar().showMessage(f"{msg} ({n} selected for Make ɛλicit request).", 5000)
 
     def add_citations_to_elicit(self, entries):
         """The lemma list's right-click (idea 64): the selected lemmas' citation tokens, ticked for
@@ -803,7 +803,7 @@ class MainWindow(QMainWindow):
         new = [t.id for t in tokens if t.id not in basket]
         self.elicit_basket = basket + new
         self.statusBar().showMessage(f"Added {len(new)} token(s) to the ɛλicit request "
-                                     f"({len(self.elicit_basket)} ticked for Make ɛλicit request).", 6000)
+                                     f"({len(self.elicit_basket)} selected for Make ɛλicit request).", 6000)
         return len(new)
 
     def elicit_menu_item(self, token):

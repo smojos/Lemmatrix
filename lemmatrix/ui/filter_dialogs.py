@@ -101,8 +101,8 @@ class ChooseDialog(QDialog):
         self.tree.expandAll()
         self.tree.itemChanged.connect(self._changed)
         lay.addWidget(self.tree, 1)
-        lay.addWidget(QLabel("Clicking a group's box ticks everything under it; "
-                             "Ctrl-click ticks only that item."))
+        lay.addWidget(QLabel("Clicking a group's box selects everything under it; "
+                             "Ctrl-click selects only that item."))
         self.usage = QCheckBox("Display usage figures")
         self.usage.toggled.connect(self._show_usage)
         lay.addWidget(self.usage)
@@ -110,7 +110,7 @@ class ChooseDialog(QDialog):
         self.any = QRadioButton("Any selected")
         self.exact = QRadioButton("Exactly selected")
         self.none = QRadioButton("No selected")
-        self.exact.setToolTip("Only the exact combination of the ticked tags (group defaults don't count)")
+        self.exact.setToolTip("Only the exact combination of the selected tags (group defaults don't count)")
         row.addWidget(self.any)
         if allow_exactly:
             row.addWidget(self.exact)
