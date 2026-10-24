@@ -30,16 +30,19 @@ day the text was recorded.
 
 from __future__ import annotations
 
+import copy
 import datetime as _dt
+import json
 import os
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .model import Database, Entry, Token, nfc, today, write_atomically, xml_safe
+from .model import Database, Entry, Token, new_id, nfc, today, write_atomically, xml_safe
 from . import hypotheses as _hy
 
-FORMAT_VERSION = "3"                  # 2: <todo> beside <question>; 3: <hypotheses>, ids on questions (21 October)
+FORMAT_VERSION = "4"                  # 2: <todo> beside <question>; 3: <hypotheses>, ids on questions (21 October);
+                                      # 4: <snapshot> in the day (24 October)
 SUFFIX = ".notebook"
 
 QUESTION, TODO = "question", "todo"   # a notebook item's kind: its list, its element in the file
@@ -141,6 +144,22 @@ class NoteComment:
 
 
 @dataclass
+class Snapshot:
+    """A snapshot (Josh, 24 October): the main window's complete setup when the camera was clicked,
+    an item of the day like a question, in the Snapshots list (View → Snapshots, the notebook's
+    Snapshots tab). There is no resolving: a snapshot is renamed, pinned, linked or deleted. A
+    hypothesis that cites one keeps its own copy of the setup, so deleting it from the list never
+    breaks the evidence."""
+    id: str
+    name: str
+    view: dict
+    taken: str = ""                   # the day taken (the session's day)
+    time: str = ""                    # HH:MM, so the day's snapshots read in order
+    about: str = ""                   # how the setup read when taken ("Lemma/Tag · Basic Imperatives · …")
+    pinned: bool = False              # kept at the top of the list, as questions and To Dos
+
+
+@dataclass
 class Session:
     date: str                                            # YYYY-MM-DD
     researchers: list[str] = field(default_factory=list)  # codes
@@ -152,6 +171,7 @@ class Session:
     todos: list[Question] = field(default_factory=list)  # To Dos: Questions of kind TODO
     texts: list[str] = field(default_factory=list)       # ids of the texts worked on that day (their lines)
     hypotheses: list[str] = field(default_factory=list)  # ids of the hypotheses worked on that day (Cogitate)
+    snapshots: list[Snapshot] = field(default_factory=list)   # the snapshots taken that day (24 October)
 
 
 def items(s: Session, kind: str) -> list[Question]:
@@ -179,6 +199,7 @@ class Notebook:
     path: str = ""
     dirty: bool = False
     repaired: bool = False            # had characters XML can't hold, taken out on reading
+    upgraded: bool = False            # older snapshots put into the list on reading (format 4)
 
     def session(self, date: str) -> Session | None:
         return next((s for s in self.sessions if s.date == date), None)
@@ -215,6 +236,20 @@ class Notebook:
         """Every question (or To Do), newest day first, the pinned ones above the rest."""
         every = [(s, q) for s in self.newest_first() for q in items(s, kind)]
         return [x for x in every if x[1].pinned] + [x for x in every if not x[1].pinned]
+
+    def all_snapshots(self) -> list[tuple[Session, Snapshot]]:
+        """Every snapshot, the newest first (day, then time), the pinned ones above the rest."""
+        every = [(s, x) for s in self.sessions for x in s.snapshots]
+        order = {id(x): i for i, (_, x) in enumerate(every)}      # taken later in the same minute: first
+        every.sort(key=lambda p: (p[0].date, p[1].time, order[id(p[1])]), reverse=True)
+        return [x for x in every if x[1].pinned] + [x for x in every if not x[1].pinned]
+
+    def snapshot(self, ident: str) -> tuple[Session, Snapshot] | None:
+        for s in self.sessions:
+            for x in s.snapshots:
+                if x.id == ident:
+                    return s, x
+        return None
 
     def people(self) -> tuple[list[str], list[str]]:
         """Every researcher and participant code that appears, in order of first appearance."""
@@ -450,10 +485,12 @@ def add_note_line(nb: Notebook, date: str, line: str) -> Session:
 # notebook window): switching off never touches what is already written, and nothing is written
 # afterwards for the days missed.
 
-ELICIT_HISTORY, COGITATE_HISTORY = "elicit", "cogitate"
-HISTORY_ORDER = (ELICIT_HISTORY, COGITATE_HISTORY)
-HISTORY_HEADINGS = {ELICIT_HISTORY: "=====ELICIT HISTORY=====", COGITATE_HISTORY: "=====COGITATE HISTORY====="}
-HISTORY_SETTINGS = {ELICIT_HISTORY: "notebook/elicit_history", COGITATE_HISTORY: "notebook/cogitate_history"}
+ELICIT_HISTORY, COGITATE_HISTORY, SNAPSHOT_HISTORY = "elicit", "cogitate", "snapshot"
+HISTORY_ORDER = (ELICIT_HISTORY, COGITATE_HISTORY, SNAPSHOT_HISTORY)   # Snapshots' last (24 October)
+HISTORY_HEADINGS = {ELICIT_HISTORY: "=====ELICIT HISTORY=====", COGITATE_HISTORY: "=====COGITATE HISTORY=====",
+                    SNAPSHOT_HISTORY: "=====SNAPSHOT HISTORY====="}
+HISTORY_SETTINGS = {ELICIT_HISTORY: "notebook/elicit_history", COGITATE_HISTORY: "notebook/cogitate_history",
+                    SNAPSHOT_HISTORY: "notebook/snapshot_history"}
 
 
 def _is_heading(row: str) -> bool:
@@ -552,6 +589,69 @@ def push_line_question(nb: Notebook, db: Database, date: str, question: str, tex
     return q
 
 
+# --------------------------------------------------------------------------
+# Snapshots (Josh, 24 October)
+# --------------------------------------------------------------------------
+
+HISTORY_LABELS = {ELICIT_HISTORY: "Write ELICIT HISTORY", COGITATE_HISTORY: "Write COGITATE HISTORY",
+                  SNAPSHOT_HISTORY: "Write SNAPSHOT HISTORY"}
+HISTORY_WHAT = {ELICIT_HISTORY: "ɛλicit request made or received", COGITATE_HISTORY: "change to a hypothesis",
+                SNAPSHOT_HISTORY: "snapshot taken"}
+
+
+def snapshot_line(snap: Snapshot) -> str:
+    """The line a snapshot taken writes under =====SNAPSHOT HISTORY=====."""
+    return f"Snapshot taken{(' ' + snap.time) if snap.time else ''}: {snap.name}"
+
+
+def snapshot_state(nb: Notebook) -> dict:
+    """Every day's snapshots, copied (an undo step's before and after)."""
+    return {s.date: copy.deepcopy(s.snapshots) for s in nb.sessions if s.snapshots}
+
+
+def set_snapshot_state(nb: Notebook, state: dict):
+    for s in nb.sessions:
+        s.snapshots = copy.deepcopy(state.get(s.date, []))
+    nb.dirty = True
+
+
+def take_snapshot(nb: Notebook, date: str, view: dict, about: str, clock: str = "") -> tuple[Session, Snapshot]:
+    """A new snapshot in the day's list, named as the setup reads (renamed later if wanted)."""
+    s = nb.add_session(date)
+    snap = Snapshot(new_id(), about or "Snapshot", copy.deepcopy(view), date, clock, about)
+    s.snapshots.append(snap)
+    nb.dirty = True
+    return s, snap
+
+
+def delete_snapshot(nb: Notebook, snap: Snapshot) -> bool:
+    """Out of the list (and its day); hypotheses citing it keep their copy of the setup."""
+    for s in nb.sessions:
+        if snap in s.snapshots:
+            s.snapshots.remove(snap)
+            nb.dirty = True
+            return True
+    return False
+
+
+def _list_old_snapshots(nb: Notebook) -> int:
+    """Notebooks before format 4 kept a snapshot only inside its hypothesis link: each becomes an
+    item of the day it was linked (named as it read), and the link points at it. Returns how many."""
+    n = 0
+    for h in nb.hypotheses:
+        for ln in h.links:
+            if ln.kind != _hy.SNAPSHOT or ln.target or ln.view is None:
+                continue
+            day = ln.date or ln.linked or h.made or today()
+            day = min(day, today())
+            s = nb.session(day) or nb.add_session(day)
+            snap = Snapshot(new_id(), ln.about or "Snapshot", copy.deepcopy(ln.view), day, "", ln.about)
+            s.snapshots.append(snap)
+            ln.target = snap.id
+            n += 1
+    return n
+
+
 def matches(s: Session, db: Database | None, text: str, nb: "Notebook | None" = None) -> bool:
     """Search: the date, notes, people, places, comments, questions and to dos, and (given the
     notebook) the hypotheses worked on that day."""
@@ -568,6 +668,7 @@ def matches(s: Session, db: Database | None, text: str, nb: "Notebook | None" = 
         parts.append(md.location_path(key) if md else key)
     parts += [c.text for c in s.comments] + [c.about for c in s.comments]
     parts += [q.text for q in s.questions + s.todos]
+    parts += [x.name for x in s.snapshots] + [x.about for x in s.snapshots]
     if any(text in (x or "").lower() for x in parts):
         return True
     if nb is not None and s.hypotheses:          # the hypotheses worked on that day (Cogitate)
@@ -646,10 +747,20 @@ def load(path: str | os.PathLike) -> Notebook:
                                                q.get("id", ""), q.get("pinned") == "yes"))
         s.texts = [x.get("id", "") for x in el.findall("text") if x.get("id")]
         s.hypotheses = [x.get("id", "") for x in el.findall("hypothesis") if x.get("id")]
+        for x in el.findall("snapshot"):
+            ve = x.find("view")
+            try:
+                view = json.loads(ve.text) if ve is not None and (ve.text or "").strip() else {}
+            except ValueError:
+                view = {}
+            s.snapshots.append(Snapshot(x.get("id") or new_id(), nfc(x.get("name", "")) or "Snapshot", view,
+                                        x.get("taken", s.date), x.get("time", ""), nfc(x.get("about", "")),
+                                        x.get("pinned") == "yes"))
         nb.sessions.append(s)
     _hy.read_xml(nb, root)
     nb.sort()
-    nb.dirty = nb.repaired                # so saving writes the repaired file
+    nb.upgraded = _list_old_snapshots(nb) > 0     # older snapshots into the list (format 4)
+    nb.dirty = nb.repaired or nb.upgraded  # so saving writes the repaired (or upgraded) file
     return nb
 
 
@@ -691,6 +802,16 @@ def to_string(nb: Notebook, database_name: str = "") -> str:
             ET.SubElement(el, "text", id=tid)
         for hid in s.hypotheses:                  # the hypotheses worked on that day (Cogitate)
             ET.SubElement(el, "hypothesis", id=hid)
+        for x in s.snapshots:                     # the snapshots taken that day (format 4)
+            xa = {"id": x.id, "name": x.name, "taken": x.taken or s.date}
+            if x.time:
+                xa["time"] = x.time
+            if x.about:
+                xa["about"] = x.about
+            if x.pinned:
+                xa["pinned"] = "yes"
+            se = ET.SubElement(el, "snapshot", xa)
+            ET.SubElement(se, "view").text = json.dumps(x.view, ensure_ascii=False, sort_keys=True)
     _hy.write_xml(nb, root)
     ET.indent(root, space="  ")
     return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(root, encoding="unicode") + "\n"

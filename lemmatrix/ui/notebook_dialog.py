@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
-"""The notebook window (View → Notebook) and the lists of all questions and to dos (View →
-Questions, View → To Do).
+"""The notebook window (View → Notebook) and the lists of all questions, to dos and snapshots
+(View → Questions, View → To Do, View → Snapshots).
 
 The notebook is one page a day: the session's date, who was there and where, notes
 (in Charis, so IPA can be typed), the comments written that day with links to
@@ -28,7 +28,8 @@ from .icons import icon
 from .widgets import ipa_font, meaning
 
 NEWEST, OLDEST = "newest", "oldest"
-QUESTIONS_TAB, TODO_TAB, HYPOTHESES_TAB, COMMENTS_TAB, RECORDINGS_TAB, TEXTS_TAB = range(6)   # the notebook's tabs
+# the notebook's tabs; Snapshots after To Do (Josh, 24 October)
+QUESTIONS_TAB, TODO_TAB, SNAPSHOTS_TAB, HYPOTHESES_TAB, COMMENTS_TAB, RECORDINGS_TAB, TEXTS_TAB = range(7)
 KIND_ICON = {nbmod.QUESTION: "push-question", nbmod.TODO: "push-todo"}        # the green ?, the orange flag
 
 
@@ -292,11 +293,10 @@ class NotebookDialog(QDialog):
         nl.addWidget(self.notes, 1)
         hist = QHBoxLayout()
         self.history_ticks = {}
-        for section, label in ((nbmod.ELICIT_HISTORY, "Write ELICIT HISTORY"),
-                               (nbmod.COGITATE_HISTORY, "Write COGITATE HISTORY")):
+        for section, label in nbmod.HISTORY_LABELS.items():
             box = QCheckBox(label)
             box.setToolTip(f"Write a line under {nbmod.HISTORY_HEADINGS[section]} in the day's notes for each "
-                           f"{'ɛλicit request made or received' if section == nbmod.ELICIT_HISTORY else 'change to a hypothesis'}"
+                           f"{nbmod.HISTORY_WHAT[section]}"
                            ". Switching it off leaves what is written; nothing is written later for the days "
                            "it was off. The same as Edit → Settings → General (this database).")
             box.toggled.connect(lambda on, sec=section: self._history_toggled(sec, on))
@@ -352,6 +352,8 @@ class NotebookDialog(QDialog):
             self.q_panel.resolve_btn
         self.tabs.addTab(self.q_panel, "Questions")       # first (Josh, 18 October), then To Do, Comments…
         self.tabs.addTab(self.t_panel, "To Do")
+        self.s_panel = SnapshotsPanel(self)               # Snapshots, after To Do (Josh, 24 October)
+        self.tabs.addTab(self.s_panel, "Snapshots")
         self.tabs.addTab(self.hyps, "Hypotheses")         # after To Do (Josh, 21 October)
         self.tabs.addTab(self.comments, "Comments")
         self.tabs.addTab(self.recordings, "Recordings")
@@ -429,7 +431,7 @@ class NotebookDialog(QDialog):
     def _search_changed(self):
         self._fill_days(self.session.date if self.session else None)
         self._highlight()
-        for view in (self.comments, self.questions, self.todos):      # their marks
+        for view in (self.comments, self.questions, self.todos, self.s_panel.tree):      # their marks
             view.viewport().update()
 
     # ============================================================== one day
@@ -458,6 +460,8 @@ class NotebookDialog(QDialog):
                                     "notebook in the Current Session.")
             self.tabs.setTabText(QUESTIONS_TAB, "Questions")
             self.tabs.setTabText(TODO_TAB, "To Do")
+            self.tabs.setTabText(SNAPSHOTS_TAB, "Snapshots")
+            self.s_panel.tree.clear()
             self.tabs.setTabText(HYPOTHESES_TAB, "Hypotheses")
             self.tabs.setTabText(COMMENTS_TAB, "Comments")
             self.tabs.setTabText(RECORDINGS_TAB, "Recordings")
@@ -476,6 +480,7 @@ class NotebookDialog(QDialog):
             self._fill_texts()
             self._fill_hypotheses()
             self._fill_questions()
+            self.s_panel.fill()
         self._loading = False
         self._question_buttons()
         self._highlight()
@@ -1285,3 +1290,316 @@ class TodoDialog(ItemsDialog):
 
     def __init__(self, main):
         super().__init__(main, nbmod.TODO)
+
+
+# ==========================================================================
+# Snapshots (Josh, 24 October): the notebook's tab and View → Snapshots
+# ==========================================================================
+# A snapshot is taken by the camera under the working window. The list has no resolving: a snapshot
+# is restored (double-click), renamed, pinned, linked to a hypothesis or deleted. Every change is one
+# undo step (Document.change_snapshots). Deleting never breaks a hypothesis: its link keeps a copy.
+
+def _setup(snap) -> str:
+    """The Setup column: how the view read when taken, left blank while the name is still that."""
+    return "" if snap.about == snap.name else snap.about
+
+
+def snapshot_icon(size: int = 18):
+    return icon("snapshots", size, theme.colour("pitch").name())
+
+
+class SnapshotActions:
+    """What the notebook's Snapshots tab and View → Snapshots share; current() gives (session, snapshot)."""
+
+    def _main(self):
+        raise NotImplementedError
+
+    def restore(self):
+        cur = self.current()
+        if cur is not None:
+            self._main().restore_snapshot(cur[1].view)
+
+    def rename(self):
+        cur = self.current()
+        if cur is None:
+            return
+        snap = cur[1]
+        text = ask_text(self, "Rename snapshot", f"Snapshot (taken {cur[0].date}"
+                        f"{' ' + snap.time if snap.time else ''}):", snap.name)
+        if text and text.strip() and text.strip() != snap.name:
+            ident, new = snap.id, text.strip()
+
+            def change():
+                hit = self._main().doc.notebook.snapshot(ident)
+                if hit is not None:
+                    hit[1].name = new
+            self._main().doc.change_snapshots("Rename snapshot", change)
+            self._after(ident)
+
+    def toggle_pin(self):
+        cur = self.current()
+        if cur is None:
+            return
+        ident = cur[1].id
+
+        def change():
+            hit = self._main().doc.notebook.snapshot(ident)
+            if hit is not None:
+                hit[1].pinned = not hit[1].pinned
+        self._main().doc.change_snapshots("Pin snapshot", change)
+        self._after(ident)
+
+    def delete(self):
+        cur = self.current()
+        if cur is None:
+            return
+        from .. import hypotheses as hy
+        snap = cur[1]
+        book = self._main().doc.notebook
+        citing = [h.label for h in book.hypotheses for ln in h.links
+                  if ln.kind == hy.SNAPSHOT and ln.target == snap.id]
+        msg = f"Delete this snapshot?\n\n{snap.name}"
+        if citing:
+            msg += (f"\n\nIt is cited by {', '.join(dict.fromkeys(citing))}. Those links keep their own "
+                    "copy, so they still restore the view (shown grey: deleted from the list).")
+        if QMessageBox.question(self, "Delete snapshot", msg) != QMessageBox.Yes:
+            return
+        ident = snap.id
+
+        def change():
+            hit = book.snapshot(ident)
+            if hit is not None:
+                nbmod.delete_snapshot(book, hit[1])
+        self._main().doc.change_snapshots("Delete snapshot", change)
+        self._after(None)
+
+    def link_to_hypothesis(self):
+        cur = self.current()
+        if cur is not None:
+            self._main().link_listed_snapshot(cur[1], self)
+            self._after(cur[1].id)
+
+    def _after(self, ident):
+        """Fill again, the snapshot (found by id: undo puts back copies) selected."""
+        self.fill(ident)
+
+    def _menu_items(self, cur):
+        on = cur is not None
+        snap = cur[1] if on else None
+        return [("Restore the view", icon("camera", 16, theme.colour("pitch").name()), self.restore, on),
+                ("Rename…", icon("edit", 16), self.rename, on),
+                ("Unpin" if snap is not None and snap.pinned else "Pin to the top", pin_icon(),
+                 self.toggle_pin, on),
+                ("Link to hypothesis…", _cogitate_icon(), self.link_to_hypothesis, on),
+                ("Delete snapshot", icon("delete", 16), self.delete, on)]
+
+    def _show_menu(self, tree, pos, extra=()):
+        it = tree.itemAt(pos)
+        if it is not None:
+            tree.setCurrentItem(it)
+        cur = self.current()
+        m = QMenu(tree)
+        for text, ic, fn, enabled in list(self._menu_items(cur)) + list(extra):
+            a = m.addAction(ic, text) if ic is not None else m.addAction(text)
+            a.setEnabled(enabled)
+            a.triggered.connect(lambda *_, fn=fn: fn())
+        m.exec(tree.viewport().mapToGlobal(pos))
+
+    @staticmethod
+    def _item(cols, snap, session):
+        it = QTreeWidgetItem(cols)
+        it.setData(0, Qt.UserRole, (session, snap))
+        it.setToolTip(0, f"{snap.name}\n{snap.about}\nDouble-click to restore the view")
+        return it
+
+
+class SnapshotsPanel(QWidget, SnapshotActions):
+    """The notebook's Snapshots tab: the day's snapshots, newest first."""
+
+    def __init__(self, dlg: "NotebookDialog"):
+        QWidget.__init__(self)
+        self.dlg = dlg
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        row = QHBoxLayout()
+
+        def button(ic, tip, fn):
+            b = QToolButton()
+            b.setIcon(ic)
+            b.setIconSize(QSize(30, 30))
+            b.setAutoRaise(True)
+            b.setToolTip(tip)
+            b.clicked.connect(lambda *_: fn())
+            row.addWidget(b)
+            return b
+        self.restore_btn = button(icon("camera", 30, theme.colour("pitch").name()),
+                                  "Restore the view of the selected snapshot (also: double-click)", self.restore)
+        self.rename_btn = button(icon("edit", 30), "Rename the selected snapshot", self.rename)
+        self.pin_btn = button(pin_icon(30), "Pin the selected snapshot to the top of the list", self.toggle_pin)
+        self.link_btn = button(_cogitate_icon(30), "Link the selected snapshot to a hypothesis",
+                               self.link_to_hypothesis)
+        self.delete_btn = button(icon("delete", 30), "Delete the selected snapshot (hypotheses citing it "
+                                 "keep their copy)", self.delete)
+        row.addStretch(1)
+        lay.addLayout(row)
+        self.tree = QTreeWidget()
+        self.tree.setColumnCount(3)
+        self.tree.setHeaderLabels(["Snapshot", "Time", "Setup"])
+        self.tree.setRootIsDecorated(False)
+        wrapping(self.tree, lambda: dlg.search.text())
+        h = self.tree.header()
+        h.setSectionResizeMode(0, QHeaderView.Stretch)
+        h.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        h.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        h.setStretchLastSection(False)
+        self.tree.itemDoubleClicked.connect(lambda *_: self.restore())
+        self.tree.currentItemChanged.connect(lambda *_: self.buttons())
+        self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(lambda pos: self._show_menu(self.tree, pos))
+        lay.addWidget(self.tree, 1)
+
+    def _main(self):
+        return self.dlg.main
+
+    def current(self):
+        it = self.tree.currentItem()
+        return it.data(0, Qt.UserRole) if it is not None else None
+
+    def fill(self, ident: str | None = None):
+        self.tree.clear()
+        s = self.dlg.session
+        if s is None:
+            return
+        snaps = [x for _, x in sorted(enumerate(s.snapshots), key=lambda p: (p[1].time, p[0]), reverse=True)]
+        for snap in [x for x in snaps if x.pinned] + [x for x in snaps if not x.pinned]:
+            it = self._item([snap.name, snap.time, _setup(snap)], snap, s)
+            if snap.pinned:
+                it.setIcon(0, pin_icon())
+            self.tree.addTopLevelItem(it)
+            if snap.id == ident:
+                self.tree.setCurrentItem(it)
+        self.dlg.tabs.setTabText(SNAPSHOTS_TAB, f"Snapshots ({len(snaps)})" if snaps else "Snapshots")
+        self.buttons()
+
+    def buttons(self):
+        on = self.current() is not None
+        for b in (self.restore_btn, self.rename_btn, self.pin_btn, self.link_btn, self.delete_btn):
+            b.setEnabled(on)
+
+
+class SnapshotsDialog(QDialog, SnapshotActions):
+    """View → Snapshots (Ctrl+Shift+P): every snapshot, newest first, the pinned ones on top; a window
+    beside the main one, not modal, as View → Questions and View → To Do."""
+
+    def __init__(self, main):
+        QDialog.__init__(self, main)
+        self.main = main
+        self.setWindowTitle("Snapshots")
+        self.setWindowIcon(snapshot_icon(32))
+        self.setModal(False)
+        self.setWindowFlag(Qt.WindowMinMaxButtonsHint, True)
+        self.resize(980, 620)
+        lay = QVBoxLayout(self)
+        self.search = QLineEdit()
+        self.search.setPlaceholderText("Search the snapshots")
+        self.search.setClearButtonEnabled(True)
+        self.search.textChanged.connect(lambda *_: self.fill())
+        lay.addWidget(self.search)
+        self.tree = QTreeWidget()
+        self.tree.setColumnCount(4)
+        self.tree.setHeaderLabels(["Session", "Snapshot", "Time", "Setup"])
+        self.tree.setRootIsDecorated(False)
+        wrapping(self.tree, lambda: self.search.text())
+        self.tree.setSelectionMode(QAbstractItemView.SingleSelection)
+        h = self.tree.header()
+        h.setSectionResizeMode(QHeaderView.ResizeToContents)
+        h.setSectionResizeMode(1, QHeaderView.Stretch)
+        h.setStretchLastSection(False)
+        self.tree.itemDoubleClicked.connect(lambda *_: self.restore())
+        self.tree.currentItemChanged.connect(lambda *_: self._buttons())
+        self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(
+            lambda pos: self._show_menu(self.tree, pos, [("Open in notebook", icon("notebook", 16,
+                                        theme.accent().name()), self.open_day, self.current() is not None)]))
+        lay.addWidget(self.tree, 1)
+        row = QHBoxLayout()
+        self.restore_btn = QPushButton(icon("camera", 18, theme.colour("pitch").name()), "Restore")
+        self.restore_btn.setToolTip("Restore the selected snapshot's view in the main window (also: double-click)")
+        self.restore_btn.clicked.connect(lambda *_: self.restore())
+        self.rename_btn = QPushButton(icon("edit", 18), "")
+        self.rename_btn.setToolTip("Rename the selected snapshot")
+        self.rename_btn.clicked.connect(lambda *_: self.rename())
+        self.pin_btn = QPushButton(pin_icon(18), "")
+        self.pin_btn.setToolTip("Pin the selected snapshot to the top of the list")
+        self.pin_btn.clicked.connect(lambda *_: self.toggle_pin())
+        self.link_btn = QPushButton(_cogitate_icon(18), "")
+        self.link_btn.setToolTip("Link the selected snapshot to a hypothesis")
+        self.link_btn.clicked.connect(lambda *_: self.link_to_hypothesis())
+        self.delete_btn = QPushButton(icon("delete", 18), "")
+        self.delete_btn.setToolTip("Delete the selected snapshot (hypotheses citing it keep their copy)")
+        self.delete_btn.clicked.connect(lambda *_: self.delete())
+        self.open_btn = QPushButton(icon("notebook", 18, theme.accent().name()), "Open in notebook")
+        self.open_btn.clicked.connect(lambda *_: self.open_day())
+        self.count = QLabel()
+        self.count.setStyleSheet(f"color: {theme.muted()};")
+        close = QPushButton("Close")
+        close.clicked.connect(self.accept)
+        for w in (self.restore_btn, self.rename_btn, self.pin_btn, self.link_btn, self.delete_btn, self.open_btn):
+            row.addWidget(w)
+        row.addWidget(self.count)
+        row.addStretch(1)
+        row.addWidget(close)
+        lay.addLayout(row)
+        self.fill()
+
+    def _main(self):
+        return self.main
+
+    def current(self):
+        it = self.tree.currentItem()
+        return it.data(0, Qt.UserRole) if it is not None else None
+
+    def refresh(self):
+        cur = self.current()
+        self.fill(cur[1].id if cur is not None else None)
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() == QEvent.ActivationChange and self.isActiveWindow():
+            self.refresh()
+
+    def fill(self, ident: str | None = None):
+        text = self.search.text().strip().lower()
+        self.tree.clear()
+        every = self.main.doc.notebook.all_snapshots()
+        shown = 0
+        for s, snap in every:
+            if text and not any(text in (x or "").lower() for x in (snap.name, snap.about, s.date)):
+                continue
+            it = self._item([s.date, snap.name, snap.time, _setup(snap)], snap, s)
+            if snap.pinned:
+                it.setIcon(1, pin_icon())
+            self.tree.addTopLevelItem(it)
+            shown += 1
+            if snap.id == ident:
+                self.tree.setCurrentItem(it)
+        self.count.setText(f"{shown} shown of {len(every)}")
+        self._buttons()
+        QTimer.singleShot(0, self.tree.doItemsLayout)
+
+    def _buttons(self):
+        cur = self.current()
+        for b in (self.restore_btn, self.rename_btn, self.pin_btn, self.link_btn, self.delete_btn, self.open_btn):
+            b.setEnabled(cur is not None)
+        self.pin_btn.setToolTip("Unpin the selected snapshot" if cur is not None and cur[1].pinned
+                                else "Pin the selected snapshot to the top of the list")
+
+    def open_day(self):
+        cur = self.current()
+        if cur is None:
+            return
+        self.main.open_notebook(cur[0].date)
+        nb = getattr(self.main, "notebook_dialog", None)
+        if nb is not None:
+            nb.tabs.setCurrentIndex(SNAPSHOTS_TAB)
+            nb.s_panel.fill(cur[1].id)

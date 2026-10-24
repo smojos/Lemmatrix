@@ -574,6 +574,13 @@ class MetadataDialog(QDialog):
 # Preferences
 # ==========================================================================
 
+# The app bar's badges (Josh, 24 October): Questions, To Do and Snapshots each have one, each
+# switched on or off on its own in Settings → Display (this computer).
+BADGE_QUESTIONS, BADGE_TODO, BADGE_SNAPSHOTS = "display/badge_questions", "display/badge_todo", "display/badge_snapshots"
+BADGES = ((BADGE_QUESTIONS, "Questions: the number of open questions", "On the ? in the app bar"),
+          (BADGE_TODO, "To Do: the number of open To Dos", "On the orange flag in the app bar"),
+          (BADGE_SNAPSHOTS, "Snapshots: the number taken today", "On the Snapshots button in the app bar"))
+
 ORIGIN_KEY = "origin/shown"      # Settings → General: Stem type and From shown (the workspace's)
 
 
@@ -736,12 +743,11 @@ class PreferencesDialog(QDialog):
         from .. import notebook as nbmod             # the notebook's history sections (this database)
         ws = getattr(getattr(parent, "doc", None), "workspace", None)
         self.history = {}
-        for section, label in ((nbmod.ELICIT_HISTORY, "Write ELICIT HISTORY"),
-                               (nbmod.COGITATE_HISTORY, "Write COGITATE HISTORY")):
+        for section, label in nbmod.HISTORY_LABELS.items():
             box = QCheckBox(label)
             box.setChecked(ws.get_bool(nbmod.HISTORY_SETTINGS[section], True) if ws is not None else True)
             box.setToolTip(f"A line under {nbmod.HISTORY_HEADINGS[section]} in the day's notes for each "
-                           f"{'ɛλicit request made or received' if section == nbmod.ELICIT_HISTORY else 'change to a hypothesis'}"
+                           f"{nbmod.HISTORY_WHAT[section]}"
                            ". Switching it off leaves what is written; nothing is written later for the days it was off.")
             self.history[section] = box
         self.origin_on = QCheckBox("Show Stem type and From")       # Josh, 22 October
@@ -779,9 +785,16 @@ class PreferencesDialog(QDialog):
                            (conv.NO_QUOTES, "no quotes")):
             self.conv_quotes.addItem(label, key)
         self.conv_quotes.setCurrentIndex(max(0, self.conv_quotes.findData(c.quotes)))
+        self.badges = {}                              # the app bar's badges (Josh, 24 October): each its own
+        for key, label, tip in BADGES:
+            box = QCheckBox(label)
+            box.setChecked(prefs.get_bool(key, True))
+            box.setToolTip(tip)
+            self.badges[key] = box
         page("Display", [("This computer", [("Theme", self.theme), ("Accent colour", self.accent),
                                             ("IPA font size", self.ipa),
                                             ("Splash screen", self.splash)]),
+                         ("Badges on the app bar (this computer)", [(None, b) for b in self.badges.values()]),
                          ("Display conventions: matrix cells, text lines, the utterance cell (this computer)",
                           [(None, self.conv_on), (None, self.conv_brackets), (None, self.conv_slashes),
                            (None, self.conv_caps), ("Translations in", self.conv_quotes)])])
@@ -888,6 +901,8 @@ class PreferencesDialog(QDialog):
         p.pitch_voice = self.voice.currentData()
         p.pitch_volume = self.volume.value()
         p.full_backup_folder = self.backups.text().strip()
+        for key, box in self.badges.items():
+            p.set_value(key, box.isChecked())
         doc = getattr(self.parent(), "doc", None)
         if doc is not None:                       # the notebook's history switches: the workspace's
             from .. import notebook as nbmod

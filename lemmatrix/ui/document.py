@@ -324,8 +324,50 @@ class HypothesisCommand(QUndoCommand):
         self.doc.hypothesesChanged.emit()
 
 
+class SnapshotCommand(QUndoCommand):
+    """A change to the Snapshots list (taken, renamed, pinned, deleted; Josh, 24 October): every day's
+    snapshots before and after, and the line written under =====SNAPSHOT HISTORY=====, taken out
+    again on undo (nothing else in the notes touched). Applied once already."""
+
+    def __init__(self, doc: "Document", label: str, before: dict, after: dict, line: tuple | None, made_day: str):
+        super().__init__(label)
+        self.doc, self.before, self.after, self.line, self.made_day = doc, before, after, line, made_day
+        self._skip = True
+
+    def redo(self):
+        if self._skip:
+            self._skip = False
+            return
+        nb = self.doc.notebook
+        if self.made_day:
+            nb.add_session(self.made_day)
+        if self.line is not None:
+            date, text = self.line
+            s = nb.add_session(date)
+            s.notes, _ = nbmod.history_add(s.notes, nbmod.SNAPSHOT_HISTORY, text)
+        nbmod.set_snapshot_state(nb, self.after)
+        self.doc.snapshotsChanged.emit()
+
+    def undo(self):
+        nb = self.doc.notebook
+        nbmod.set_snapshot_state(nb, self.before)
+        if self.line is not None:
+            date, text = self.line
+            s = nb.session(date)
+            if s is not None:
+                s.notes = nbmod.history_remove(s.notes, nbmod.SNAPSHOT_HISTORY, text)
+        if self.made_day:
+            from ..hypotheses import _empty
+            s = nb.session(self.made_day)
+            if s is not None and _empty(s):
+                nb.sessions.remove(s)
+        nb.dirty = True
+        self.doc.snapshotsChanged.emit()
+
+
 class Document(QObject):
     changed = Signal()            # entries or tokens changed
+    snapshotsChanged = Signal()   # the Snapshots list: taken, renamed, pinned, deleted (or undone)
     hypothesesChanged = Signal()  # Cogitate: a hypothesis made, edited, linked… (or undone)
     linesChanged = Signal(str)    # a text's lines changed (its id)
     settingsChanged = Signal()    # metadata or settings changed
@@ -408,6 +450,29 @@ class Document(QObject):
         nb.dirty = True
         self.dirtyChanged.emit(True)
         self.hypothesesChanged.emit()
+        return result
+
+    def change_snapshots(self, label: str, change, history_line: tuple | None = None):
+        """Run change() on the Snapshots list as one undo step; history_line (date, text) is written
+        under =====SNAPSHOT HISTORY===== when the history is switched on. Returns what change returns."""
+        nb = self.notebook
+        before = nbmod.snapshot_state(nb)
+        days = {x.date for x in nb.sessions}
+        result = change()
+        made = next((x.date for x in nb.sessions if x.date not in days), "")
+        line = None
+        if history_line is not None and self.workspace.get_bool(nbmod.HISTORY_SETTINGS[nbmod.SNAPSHOT_HISTORY], True):
+            date, text = history_line
+            s = nb.add_session(date)
+            s.notes, _ = nbmod.history_add(s.notes, nbmod.SNAPSHOT_HISTORY, text)
+            line = history_line
+        after = nbmod.snapshot_state(nb)
+        if before == after and line is None and not made:
+            return result
+        self.undo.push(SnapshotCommand(self, label, before, after, line, made))
+        nb.dirty = True
+        self.dirtyChanged.emit(True)
+        self.snapshotsChanged.emit()
         return result
 
     def notebook_changed(self):

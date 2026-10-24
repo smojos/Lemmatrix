@@ -137,7 +137,7 @@ def test_tools_menu_opens_it_and_there_is_no_button(win):
     a.trigger()
     assert win.whiteboard_window is not None and win.whiteboard_window.isVisible()
     head = [win.head_icons.itemAt(i).widget() for i in range(win.head_icons.count())]
-    assert len(head) == 6                    # ɛλicit, χμλ, Cogitate, ?, To Do, Texts and utterances
+    assert len(head) == 7                    # ɛλicit, χμλ, Cogitate, ?, Snapshots, To Do, Texts and utterances
 
 
 def test_drawing_with_each_marker_and_rubbing_out(win):

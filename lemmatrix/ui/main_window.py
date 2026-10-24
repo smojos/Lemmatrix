@@ -176,6 +176,7 @@ class MainWindow(QMainWindow):
         self.doc.work_date = self.work_date
         self.doc.changed.connect(self._doc_changed)
         self.doc.pitchKindChanged.connect(self.pitch_view_changed)   # converted, or undone (idea 9)
+        self.doc.snapshotsChanged.connect(self._snapshots_changed)   # the Snapshots list (24 October)
         self.doc.dirtyChanged.connect(self._dirty_changed)
         self.autosave = QTimer(self)
         self.autosave.timeout.connect(self._autosave)
@@ -297,7 +298,8 @@ class MainWindow(QMainWindow):
         self.head_icons.addWidget(self._elicit_button())   # ɛλicit, left of Texts and utterances
         self.head_icons.addWidget(self._xml_button())      # the XML viewer, between them (21 October)
         self.head_icons.addWidget(self._cogitate_button())    # Cogitate, between χμλ and the ? (21 October)
-        self.head_icons.addWidget(self._questions_button())   # Questions, then To Do, then Texts and utterances
+        self.head_icons.addWidget(self._questions_button())   # Questions, Snapshots, To Do, Texts and utterances
+        self.head_icons.addWidget(self._snapshots_button())   # Snapshots, between ? and the flag (24 October)
         self.head_icons.addWidget(self._todo_button())        # To Do's flag (Josh, 21 October)
         self.head_icons.addWidget(self._texts_button())
         top.addLayout(self.head_icons)
@@ -483,15 +485,21 @@ class MainWindow(QMainWindow):
 
     # ---- snapshots (Cogitate, IDEAS.md ideas 16 and 35) -----------------------------------------
     def _camera_button(self) -> QToolButton:
-        """The camera, in every tab's options: a snapshot of the complete setup, with a menu."""
+        """The camera, in every tab's options: a click takes a snapshot of the complete setup into the
+        Snapshots list (Josh, 24 October); right-click for the menu it used to open."""
         b = tool("Snapshot", "camera", lambda: None,
-                 "Snapshot: the complete setup (tab, lemma, filters, matrix), to link to a hypothesis")
+                 "Take a snapshot: the complete setup (tab, lemma, filters, matrix), into the Snapshots "
+                 "list (Ctrl+Shift+P). Right-click: link it to a hypothesis")
         b.clicked.disconnect()
-        b.clicked.connect(lambda *_, b=b: self.snapshot_menu(b.mapToGlobal(b.rect().bottomLeft())))
+        b.clicked.connect(lambda *_: self.take_snapshot())
+        b.setContextMenuPolicy(Qt.CustomContextMenu)
+        b.customContextMenuRequested.connect(lambda pos, b=b: self.snapshot_menu(b.mapToGlobal(pos)))
         return b
 
     def snapshot_menu(self, pos):
         m = QMenu(self)
+        a = m.addAction(icon("camera", 16, theme.colour("pitch").name()), "Take snapshot")
+        a.triggered.connect(lambda *_: self.take_snapshot())
         a = m.addAction(icon("cogitate", 16, theme.colour("pitch").name()), "Link snapshot to hypothesis…")
         a.triggered.connect(lambda *_: self.link_snapshot())
         a = m.addAction("Export to LaTeX table")
@@ -518,12 +526,80 @@ class MainWindow(QMainWindow):
             parts.append("filtered")
         return " · ".join(parts)
 
-    def link_snapshot(self):
-        """The camera's Link snapshot to hypothesis…: the setup as it is now, in a link."""
-        from .. import hypotheses as hy
+    def take_snapshot(self, animate: bool = True):
+        """The camera: the setup as it is now, into today's Snapshots (one undo step), with a box
+        shrinking into the Snapshots button (Josh, 24 October). Returns (session, snapshot)."""
+        import datetime as _dt
         self._save_view()
-        link = hy.snapshot_link(self.view_state(), self.snapshot_about())
-        return self.link_to_hypothesis(link)
+        view, about = self.view_state(), self.snapshot_about()
+        day, clock = self.work_date() or today(), _dt.datetime.now().strftime("%H:%M")
+        out = self.doc.change_snapshots(
+            "Take snapshot", lambda: nbmod.take_snapshot(self.doc.notebook, day, view, about, clock),
+            (day, nbmod.snapshot_line(nbmod.Snapshot("", about or "Snapshot", {}, day, clock))))
+        if animate:
+            self._snapshot_flight()
+        self.statusBar().showMessage(f"Snapshot taken: {about}  (View → Snapshots, Ctrl+Shift+P)", 6000)
+        return out
+
+    def _snapshot_flight(self):
+        """The visual cue: an outline of the working window shrinking into the Snapshots button."""
+        from PySide6.QtCore import QEasingCurve, QParallelAnimationGroup, QPropertyAnimation, QRect
+        from PySide6.QtWidgets import QFrame, QGraphicsOpacityEffect
+        src, dst = getattr(self, "views", None), getattr(self, "snapshots_btn", None)
+        if src is None or dst is None or not self.isVisible():
+            return
+        start = QRect(src.mapTo(self, src.rect().topLeft()), src.size())
+        end = QRect(dst.mapTo(self, dst.rect().center()), dst.size() / 3)
+        end.moveCenter(dst.mapTo(self, dst.rect().center()))
+        box = QFrame(self)
+        c = theme.colour("pitch")
+        box.setStyleSheet(f"background: rgba({c.red()}, {c.green()}, {c.blue()}, 40); "
+                          f"border: 3px solid {c.name()}; border-radius: 6px;")
+        box.setAttribute(Qt.WA_TransparentForMouseEvents)
+        box.setGeometry(start)
+        fade = QGraphicsOpacityEffect(box)
+        box.setGraphicsEffect(fade)
+        box.show()
+        box.raise_()
+        grow = QPropertyAnimation(box, b"geometry", box)
+        grow.setDuration(450)
+        grow.setStartValue(start)
+        grow.setEndValue(end)
+        grow.setEasingCurve(QEasingCurve.InCubic)
+        dim = QPropertyAnimation(fade, b"opacity", box)
+        dim.setDuration(450)
+        dim.setStartValue(1.0)
+        dim.setEndValue(0.35)
+        group = QParallelAnimationGroup(box)
+        group.addAnimation(grow)
+        group.addAnimation(dim)
+        group.finished.connect(box.deleteLater)
+        self._flight = group
+        group.start()
+
+    def link_snapshot(self):
+        """Link snapshot to hypothesis… (the camera's right-click, Matrix ▸): a snapshot is taken into
+        the list, then linked by its id, the link keeping its own copy of the setup."""
+        from .. import hypotheses as hy
+        _, snap = self.take_snapshot()
+        return self.link_to_hypothesis(hy.snapshot_link(snap.view, snap.name, target=snap.id, date=snap.taken))
+
+    def link_listed_snapshot(self, snap, parent=None):
+        """Link to hypothesis… from the Snapshots list."""
+        from .. import hypotheses as hy
+        return self.link_to_hypothesis(hy.snapshot_link(snap.view, snap.name, target=snap.id, date=snap.taken),
+                                       parent)
+
+    def _snapshots_changed(self):
+        """Taken, renamed, pinned or deleted (or undone): the badge and the open lists follow."""
+        self.update_badges()
+        dlg = self.items_dialogs.get("snapshots")
+        if dlg is not None and dlg.isVisible():
+            dlg.refresh()
+        if self.notebook_dialog is not None and self.notebook_dialog.isVisible():
+            self.notebook_dialog.reload()
+        if self.cogitate_window is not None and self.cogitate_window.isVisible():
+            self.cogitate_window.refill()
 
     def restore_snapshot(self, view: dict):
         """A snapshot clicked: that view again in the main window."""
@@ -949,8 +1025,21 @@ class MainWindow(QMainWindow):
         b.setIconSize(QSize(self.TEXTS_ICON, self.TEXTS_ICON))
         b.setAutoRaise(True)
         b.setCursor(Qt.PointingHandCursor)
-        b.setToolTip("Questions: every question in the notebook")
+        b.setToolTip("Questions: every question in the notebook (Ctrl+Shift+Q)")
         b.clicked.connect(lambda *_: self.open_questions())
+        self._add_badge("questions", b)
+        return b
+
+    def _snapshots_button(self) -> QToolButton:
+        """Between the ? and the To Do flag: View → Snapshots (Josh's icon, 24 October)."""
+        b = self.snapshots_btn = QToolButton()
+        b.setIconSize(QSize(self.TEXTS_ICON, self.TEXTS_ICON))
+        b.setAutoRaise(True)
+        b.setCursor(Qt.PointingHandCursor)
+        b.setToolTip("Snapshots: every snapshot in the notebook (Ctrl+Shift+P). The camera under the "
+                     "working window takes one.")
+        b.clicked.connect(lambda *_: self.open_snapshots())
+        self._add_badge("snapshots", b)
         return b
 
     def _todo_button(self) -> QToolButton:
@@ -962,26 +1051,54 @@ class MainWindow(QMainWindow):
         b.setToolTip("To Do: every to do in the notebook (Ctrl+Shift+T)")
         b.clicked.connect(lambda *_: self.open_todos())
         # The badge: the number of open to dos, top right, in the theme colour (Josh, 22 October)
-        self.todo_badge = QLabel(b)
-        self.todo_badge.setAlignment(Qt.AlignCenter)
-        self.todo_badge.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.todo_badge.hide()
-        b.installEventFilter(self)
+        self.todo_badge = self._add_badge("todo", b)
         return b
+
+    def _add_badge(self, key: str, button) -> QLabel:
+        """A badge at a button's top right (Questions, Snapshots, To Do; Josh, 22 and 24 October)."""
+        if not hasattr(self, "badges"):
+            self.badges = {}
+        lbl = QLabel(button)
+        lbl.setAlignment(Qt.AlignCenter)
+        lbl.setAttribute(Qt.WA_TransparentForMouseEvents)
+        lbl.hide()
+        button.installEventFilter(self)
+        self.badges[key] = (button, lbl)
+        return lbl
+
+    def badge_counts(self) -> dict:
+        """What each badge counts: open questions, open To Dos, the snapshots taken today."""
+        book = getattr(self.doc, "notebook", None)
+        if book is None:
+            return {"questions": 0, "todo": 0, "snapshots": 0}
+        day = self.work_date() if hasattr(self, "sess_nodate") else today()
+        s = book.session(day)
+        return {"questions": sum(1 for _, q in book.all_items(nbmod.QUESTION) if q.is_open),
+                "todo": sum(1 for _, q in book.all_items(nbmod.TODO) if q.is_open),
+                "snapshots": len(s.snapshots) if s is not None else 0}
 
     def open_todo_count(self) -> int:
         book = getattr(self.doc, "notebook", None)
         return 0 if book is None else sum(1 for _, q in book.all_items(nbmod.TODO) if q.is_open)
 
     def update_todo_badge(self):
-        """The To Do button's badge: just the number of open to dos; none when there are none."""
-        badge = getattr(self, "todo_badge", None)
-        if badge is None:
-            return
-        n = self.open_todo_count()
-        if n == 0:
-            badge.hide()
-            return
+        """Every badge (the name is older: the To Do badge came first)."""
+        self.update_badges()
+
+    def update_badges(self):
+        """The app bar's badges: just the number, none when it is 0 or the badge is switched off
+        in Settings → Display (each on its own, this computer)."""
+        from .dialogs import BADGE_QUESTIONS, BADGE_SNAPSHOTS, BADGE_TODO
+        keys = {"questions": BADGE_QUESTIONS, "todo": BADGE_TODO, "snapshots": BADGE_SNAPSHOTS}
+        counts = self.badge_counts()
+        for name, (button, badge) in getattr(self, "badges", {}).items():
+            n = counts.get(name, 0)
+            if n == 0 or not self.prefs.get_bool(keys[name], True):
+                badge.hide()
+                continue
+            self._style_badge(button, badge, n)
+
+    def _style_badge(self, button, badge, n: int):
         badge.setText(str(n) if n < 100 else "99+")
         f = badge.font()
         f.setBold(True)
@@ -992,13 +1109,13 @@ class MainWindow(QMainWindow):
         badge.setFixedSize(w, h)
         badge.setStyleSheet(f"background: {theme.colour('pitch').name()}; color: white; "
                             f"border-radius: {h // 2}px; padding: 0px;")
-        self._place_todo_badge()
+        badge.move(max(0, button.width() - badge.width() - 1), 1)
         badge.show()
         badge.raise_()
 
     def _place_todo_badge(self):
-        b, badge = self.todo_btn, self.todo_badge
-        badge.move(max(0, b.width() - badge.width() - 1), 1)
+        for button, badge in getattr(self, "badges", {}).values():
+            badge.move(max(0, button.width() - badge.width() - 1), 1)
 
     def xml_target(self):
         """Where the XML viewer opens: the selected token (All data or a matrix cell), else the lemma
@@ -1159,7 +1276,7 @@ class MainWindow(QMainWindow):
     def eventFilter(self, obj, event):
         if obj is getattr(self, "right_split", None) and event.type() == QEvent.Resize:
             self._fit_session()
-        if obj is getattr(self, "todo_btn", None) and event.type() == QEvent.Resize:
+        if event.type() == QEvent.Resize and any(obj is b for b, _ in getattr(self, "badges", {}).values()):
             self._place_todo_badge()
         return super().eventFilter(obj, event)
 
@@ -1254,6 +1371,7 @@ class MainWindow(QMainWindow):
         self._act(v, "&Notebook", self.open_notebook, "Ctrl+B")
         self._act(v, "&Questions", self.open_questions, "Ctrl+Shift+Q")
         self._act(v, "To &Do", self.open_todos, "Ctrl+Shift+T")
+        self._act(v, "&Snapshots", self.open_snapshots, "Ctrl+Shift+P")      # Josh, 24 October
         self._act(v, "&Texts and utterances", lambda *_: self.open_utterances(), "Ctrl+U")
         self._act(v, "&XML viewer", lambda *_: self.open_xml_viewer())
         self._act(v, "&Cogitate (hypotheses)", lambda *_: self.open_cogitate())
@@ -1307,7 +1425,8 @@ class MainWindow(QMainWindow):
         items += [self.matrix_edit_action,
                   self._act(m, "S&wap rows and columns", lambda: self.switch_axes(tab()), "Ctrl+T")]
         m.addSeparator()
-        self._act(m, "Link snapshot to &hypothesis…", self.link_snapshot)   # every tab
+        self._act(m, "Take sna&pshot", self.take_snapshot)                   # every tab (24 October)
+        self._act(m, "Link snapshot to &hypothesis…", self.link_snapshot)
         self.matrix_menu_items = items
 
         def update(*_):
@@ -2263,6 +2382,7 @@ class MainWindow(QMainWindow):
         self.xml_btn.setIcon(icon("xml-viewer", self.TEXTS_ICON, theme.colour("pitch").name()))
         self.questions_btn.setIcon(icon("questions", self.TEXTS_ICON, theme.colour("pitch").name()))
         self.todo_btn.setIcon(icon("todo", self.TEXTS_ICON, theme.colour("pitch").name()))
+        self.snapshots_btn.setIcon(icon("snapshots", self.TEXTS_ICON, theme.colour("pitch").name()))
         self.update_todo_badge()
         self.cogitate_btn.setIcon(icon("cogitate", self.TEXTS_ICON, theme.colour("pitch").name()))
         if self.cogitate_window is not None:
@@ -2403,6 +2523,11 @@ class MainWindow(QMainWindow):
         """View → To Do: every to do in the notebook, as View → Questions (Josh, 21 October)."""
         from .notebook_dialog import TodoDialog
         return self._open_items("todo", TodoDialog)
+
+    def open_snapshots(self):
+        """View → Snapshots (Ctrl+Shift+P): every snapshot, as View → Questions (Josh, 24 October)."""
+        from .notebook_dialog import SnapshotsDialog
+        return self._open_items("snapshots", SnapshotsDialog)
 
     def _open_items(self, key, cls):
         """View → Questions / To Do: a window beside the main one, not modal, so the main window
@@ -3841,6 +3966,7 @@ class MainWindow(QMainWindow):
             theme.from_prefs(self.prefs)
             self._restyle()
             self._sync_pitch_view()               # Show the pitch system (Settings → Pitch)
+            self.update_badges()                  # each badge switched on or off (Settings → Display)
             self._setup_columns()                 # Stem type and From shown or hidden
             self.all_table.model_.ipa.setPointSize(self.prefs.ipa_size)
             self.lemmas.model_.ipa.setPointSize(self.prefs.ipa_size)

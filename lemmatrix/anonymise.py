@@ -557,6 +557,10 @@ def anonymise(db: Database, nb: nbmod.Notebook | None, opts: Options, report: Re
             for c in sess.comments:
                 c.text = scrub.text(c.text, f"Notebook {sess.date} comment", report)
                 c.about = scrub.text(c.about, f"Notebook {sess.date} link", report)
+            for x in sess.snapshots:              # the Snapshots list (24 October)
+                x.name = scrub.text(x.name, f"Notebook {sess.date} snapshot", report)
+                x.about = scrub.text(x.about, f"Notebook {sess.date} snapshot", report)
+                x.view = scrub.value(x.view, f"Notebook {sess.date} snapshot", report)
         for h in book.hypotheses:                 # hypotheses (Cogitate) are notes too
             where = f"Hypothesis {h.label}"
             h.summary = scrub.text(h.summary, f"{where} summary", report)

@@ -13,8 +13,9 @@ point at ids, so they survive reference and tag changes:
 - a token or an utterance (its entry's and token's ids);
 - a text's line (the text's id and the line's start time, as bookmarks are: a boundary moved in
   Praat finds the nearest line);
-- a snapshot: the complete setup of the main window, copied into the link (snapshot.py), so it is
-  archived with the notebook and restores that view when clicked;
+- a snapshot: an item of the Snapshots list (notebook.Snapshot, by its id, 24 October), with the
+  complete setup of the main window also copied into the link, so deleting the snapshot from the
+  list never breaks the evidence: the link still restores that view;
 - a question or a To Do (its id; it may have been converted since), a comment (the notebook's
   record of it, that day's version, copied, so later edits don't change what was cited), and
   another hypothesis;
@@ -71,9 +72,11 @@ class Link:
     view: dict | None = None          # a snapshot's setup
 
     def same_item(self, other: "Link") -> bool:
-        """The same thing linked (a snapshot never is: each is its own)."""
-        if self.kind != other.kind or self.kind == SNAPSHOT:
+        """The same thing linked (a snapshot of the list by its id; an older one never is)."""
+        if self.kind != other.kind:
             return False
+        if self.kind == SNAPSHOT:
+            return bool(self.target) and self.target == other.target
         if self.kind == LINE:
             return self.entry == other.entry and self.start is not None and other.start is not None \
                 and abs(self.start - other.start) < 0.005
@@ -169,7 +172,7 @@ class Journal:
 
 def _empty(s) -> bool:
     return not (s.notes.strip() or s.comments or s.questions or s.todos or s.texts or s.hypotheses
-                or s.researchers or s.participants or s.locations)
+                or getattr(s, "snapshots", None) or s.researchers or s.participants or s.locations)
 
 
 def _short(text: str, n: int = 60) -> str:
@@ -346,8 +349,21 @@ def line_link(db: Database, text, start: float, line_text: str = "", clock: str 
                 text=nfc(line_text or ""))
 
 
-def snapshot_link(view: dict, about: str, mark: str = RELEVANT, note: str = "") -> Link:
-    return Link(SNAPSHOT, mark, note, about=about, view=copy.deepcopy(view), date=today())
+def snapshot_link(view: dict, about: str, mark: str = RELEVANT, note: str = "", target: str = "",
+                  date: str = "") -> Link:
+    """A snapshot: its id in the list (target) and its own copy of the setup."""
+    return Link(SNAPSHOT, mark, note, target=target, about=about, view=copy.deepcopy(view), date=date or today())
+
+
+def snapshot_listed(nb, link: Link):
+    """The list's snapshot a link points at, or None (deleted from the list, or an older link)."""
+    if link.kind != SNAPSHOT or not link.target or nb is None or not hasattr(nb, "snapshot"):
+        return None
+    hit = nb.snapshot(link.target)
+    return hit[1] if hit is not None else None
+
+
+SNAPSHOT_DELETED = "Snapshot deleted from the list"
 
 
 def question_link(session, q, mark: str = RELEVANT, note: str = "") -> Link:
@@ -460,7 +476,11 @@ def label(db: Database | None, nb, link: Link) -> str:
     if k == HYPOTHESIS:
         return hit.title() if hit is not None else (link.about or "Hypothesis")
     if k == SNAPSHOT:
-        return link.about or "Snapshot"
+        snap = snapshot_listed(nb, link)
+        if snap is not None:                       # renamed in the list: the link follows the name
+            return snap.name
+        name = link.about or "Snapshot"
+        return f"{name} ({SNAPSHOT_DELETED.lower()})" if link.target else name
     if k == DRAWING:
         return f"Drawing: {link.about or link.target}"
     return link.about or KIND_NAMES.get(k, k)

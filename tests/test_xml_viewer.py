@@ -32,8 +32,8 @@ def test_search_ignores_diacritics_and_capitals():
 def test_button_sits_between_elicit_and_questions(win):
     order = [win.head_icons.itemAt(i).widget() for i in range(win.head_icons.count())]
     assert [order.index(b) for b in (win.elicit_btn, win.xml_btn, win.cogitate_btn, win.questions_btn,
-                                     win.todo_btn, win.texts_btn)] \
-        == [0, 1, 2, 3, 4, 5]                # ɛλicit, XML viewer, Cogitate, Questions, To Do, Texts and utterances
+                                     win.snapshots_btn, win.todo_btn, win.texts_btn)] \
+        == [0, 1, 2, 3, 4, 5, 6]             # ɛλicit, XML viewer, Cogitate, Questions, Snapshots, To Do, Texts…
     assert not win.xml_btn.icon().isNull()
 
 

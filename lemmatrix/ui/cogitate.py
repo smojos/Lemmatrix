@@ -248,8 +248,9 @@ def _esc(text: str) -> str:
 class _LinkRow:
     """A row of the links list: the link, and how it reads now."""
 
-    def __init__(self, link: hy.Link, item: str, gone: bool):
+    def __init__(self, link: hy.Link, item: str, gone: bool, faded: bool = False):
         self.link, self.item, self.gone = link, item, gone
+        self.faded = faded            # a snapshot deleted from the list: grey, still restores (24 October)
 
     def __eq__(self, other):
         return isinstance(other, _LinkRow) and other.link is self.link
@@ -472,8 +473,11 @@ class CogitateWindow(QDialog):
         lcols = [
             Column("kind", "Kind", lambda r: hy.KIND_NAMES[r.link.kind]),
             Column("item", "Item", lambda r: r.item, ipa=True,
-                   tooltip=lambda r: hy.gone_text(r.link) if r.gone else "Double-click to go there",
-                   color=lambda r: theme.colour("error") if r.gone else None),
+                   tooltip=lambda r: hy.gone_text(r.link) if r.gone else (
+                       hy.SNAPSHOT_DELETED + ": this link keeps its own copy and still restores the view"
+                       if r.faded else "Double-click to go there"),
+                   color=lambda r: theme.colour("error") if r.gone else (
+                       theme.colour("muted") if r.faded else None)),
             Column("note", "Note", lambda r: r.link.note, edit=lambda r, t: None),   # before Mark (Josh, 22 October)
             Column("mark", "Mark", lambda r: mark_label(r.link.mark)),
             Column("linked", "Linked", lambda r: r.link.linked),
@@ -613,7 +617,8 @@ class CogitateWindow(QDialog):
                 item = f"{item}  ({hy.gone_text(ln).lower()})"
             if text and not any(text in (x or "").lower() for x in (item, ln.note, ln.text, ln.about)):
                 continue
-            rows.append(_LinkRow(ln, item, gone))
+            faded = ln.kind == hy.SNAPSHOT and bool(ln.target) and hy.snapshot_listed(book, ln) is None
+            rows.append(_LinkRow(ln, item, gone, faded))
         self.links.set_rows(rows)
         self.link_count.setText(f"{len(rows)} / {len(h.links)}" if h.links else "no links yet")
         self.link_count.setToolTip("links shown / all")

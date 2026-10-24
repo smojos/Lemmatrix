@@ -50,7 +50,7 @@ def test_the_file_round_trip(tmp_path):
     book.confidence = hy.default_confidence()[:2]
     nb.save(book, tmp_path / "x.notebook")
     text = (tmp_path / "x.notebook").read_text(encoding="utf-8")
-    assert 'format="3"' in text and "<hypotheses" in text and "<summary>Tone spreads rightward</summary>" in text
+    assert 'format="4"' in text and "<hypotheses" in text and "<summary>Tone spreads rightward</summary>" in text
     assert text.index("<hypotheses") > text.index("<session")      # at the end of the notebook
     b = nb.load(tmp_path / "x.notebook")
     assert [x.label for x in b.hypotheses] == ["H1", "H2"] and b.next_number == 3

@@ -18,6 +18,7 @@ XML_VIEWER_FILE = Path(__file__).resolve().parent.parent / "resources" / "xml_vi
 QUESTIONS_FILE = Path(__file__).resolve().parent.parent / "resources" / "questions.svg"   # Josh's, 21 October
 COGITATE_FILE = Path(__file__).resolve().parent.parent / "resources" / "cogitate.svg"     # Josh's hypotheses.svg
 TODO_FILE = Path(__file__).resolve().parent.parent / "resources" / "to_do.svg"            # Josh's, 22 October
+SNAPSHOTS_FILE = Path(__file__).resolve().parent.parent / "resources" / "snapshots.svg"   # Josh's, 24 October
 
 GREEN = QColor("#2e9e44")
 RED = QColor("#d93030")
@@ -664,12 +665,12 @@ def icon(name: str, size: int = 22, colour: str | None = None) -> QIcon:
         QSvgRenderer(QByteArray(svg.encode("utf-8"))).render(p, QRectF(0, 0, size, size))
         p.end()
         return QIcon(pm)
-    if name in ("xml-viewer", "questions", "cogitate", "todo"):   # Josh's χμλ, ?, Cogitate and To Do; colour: for his teal
+    if name in ("xml-viewer", "questions", "cogitate", "todo", "snapshots"):   # Josh's χμλ, ?, Cogitate, To Do, Snapshots
         from PySide6.QtCore import QByteArray
         from PySide6.QtSvg import QSvgRenderer
         from .. import elicit_art
         svg = {"xml-viewer": XML_VIEWER_FILE, "questions": QUESTIONS_FILE,
-               "cogitate": COGITATE_FILE, "todo": TODO_FILE}[name].read_text(encoding="utf-8")
+               "cogitate": COGITATE_FILE, "todo": TODO_FILE, "snapshots": SNAPSHOTS_FILE}[name].read_text(encoding="utf-8")
         if colour:
             svg = re.sub(re.escape(elicit_art.TEAL), colour, svg, flags=re.IGNORECASE)
         QSvgRenderer(QByteArray(svg.encode("utf-8"))).render(p, QRectF(0, 0, size, size))
