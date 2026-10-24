@@ -140,6 +140,7 @@ class TextsUtterancesWindow(QDialog):
         self.texts = TextsPanel(self)             # the texts above, the chosen text's lines below
         self.pages.addWidget(self.texts.page)
         t = self.table = UtteranceTable(self)
+        t.set_multi_select()                      # Ctrl+click, Shift+click (Josh, 24 October)
         self.pages.addWidget(t)
         bxl.addWidget(self.pages, 1)
 
@@ -900,6 +901,21 @@ class TextsUtterancesWindow(QDialog):
         self.table.select_row(u)
 
     def delete(self):
+        many = self.table.selected_rows()
+        if len(many) > 1:                         # several (Josh, 24 October): asked once, one undo step
+            if QMessageBox.question(self, "Delete utterances",
+                                    f"Delete {len(many)} utterances ({', '.join(u.ref for u in many[:8])}"
+                                    f"{' …' if len(many) > 8 else ''})?\nTheir recordings go to the Recycle "
+                                    "Bin when the database is closed; until then, undo brings them back.") \
+                    != QMessageBox.Yes:
+                return
+            self.doc.undo.beginMacro(f"Delete {len(many)} utterances")
+            try:
+                for u in many:
+                    self._delete(u)
+            finally:
+                self.doc.undo.endMacro()
+            return
         u = self.table.current_row()
         if u is None:
             return
@@ -913,6 +929,14 @@ class TextsUtterancesWindow(QDialog):
                     "until then, undo brings it back.")
         if QMessageBox.question(self, "Delete utterance", msg) != QMessageBox.Yes:
             return
+        self._delete(u)
+
+    def _delete(self, u):
+        """Delete one utterance, its recording held for undo."""
+        t = u.token
+        prefs = self.main.prefs
+        folder = storage.utterance_folder(self.db)
+        with_file = bool(t.file) and prefs.delete_recordings_with_tokens and (folder / t.file).exists()
         renames = []
         if with_file:
             self.main.player.stop()
@@ -959,9 +983,21 @@ class TextsUtterancesWindow(QDialog):
 
     def _menu(self, row, pos):
         from .. import pitchview
-        if row is not None:
-            self.table.select_row(row)
+        self.table.keep_selection(row)            # a right-click inside the selection keeps it
         m = QMenu(self)
+        many = self.table.selected_rows()
+        if len(many) > 1:                         # several utterances (Josh, 24 October)
+            items = [("Add", "add", self.add, True),
+                     (f"Delete {len(many)} utterances", "delete", self.delete, True)]
+            if hasattr(self.main, "add_to_elicit"):
+                items.insert(1, (f"Add {len(many)} to the ɛλicit request", None,
+                                 lambda: self.main.add_to_elicit([u.token for u in many]), True))
+            for text, name, fn, on in items:
+                a = m.addAction(icon(name, 16), text) if name else m.addAction(text)
+                a.setEnabled(on)
+                a.triggered.connect(lambda *_, fn=fn: fn())
+            m.exec(pos)
+            return
         items = [("Add", "add", self.add, True), ("Import…", None, self.import_dialog, True),
                  ("Edit", "edit", self.edit, row is not None),
                  ("Play", "play", self.play, row is not None and bool(row.token.file)),

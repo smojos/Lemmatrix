@@ -203,3 +203,73 @@ def test_deleting_several_lemmas_is_one_undo_step(win):
     assert len(db.entries) == n - 2 and goat not in db.entries
     win.doc.undo.undo()
     assert len(db.entries) == n
+
+
+# ---- Ctrl+click and Shift+click in All data, Utterances and Texts (Josh, 24 October) ----------
+def test_all_data_selects_several_and_deletes_them_as_one_step(win):
+    t = win.all_table
+    assert t.selectionMode() == QAbstractItemView.ExtendedSelection
+    rows = t.visible_rows()[:3]
+    t.select_rows(rows)
+    assert len(t.selected_rows()) == 3
+    from lemmatrix import storage
+    folder = storage.sound_folder(win.doc.db)
+    files = [folder / r.entry.tokens[r.index].file for r in rows
+             if r.entry.tokens[r.index].file and (folder / r.entry.tokens[r.index].file).exists()]
+    assert files                                             # the sample's recordings
+    total = sum(len(e.tokens) for e in win.doc.db.entries)
+    win.delete_token()
+    assert sum(len(e.tokens) for e in win.doc.db.entries) == total - 3
+    assert not any(f.exists() for f in files)                # held for undo
+    assert win.doc.undo.undoText() == "Delete 3 tokens"
+    win.doc.undo.undo()
+    assert sum(len(e.tokens) for e in win.doc.db.entries) == total
+    assert all(f.exists() for f in files)
+
+
+def test_a_plain_click_inside_several_selected_keeps_one(win):
+    t = win.all_table
+    t.resize(700, 400)
+    t.show()
+    rows = t.visible_rows()[:3]
+    t.select_rows(rows)
+    idx = t.proxy.index(0, 0)
+    QTest.mouseClick(t.viewport(), Qt.LeftButton, Qt.NoModifier, t.visualRect(idx).center())
+    QTest.qWait(400)
+    assert len(t.selected_rows()) == 1                       # not unselected: just that one
+    t.hide()
+
+
+def test_hypotheses_questions_and_to_dos_stay_one_at_a_time(win):
+    from lemmatrix.ui.cogitate import CogitateWindow
+    cw = CogitateWindow(win)
+    assert cw.table.selectionMode() == QAbstractItemView.SingleSelection
+    assert cw.links.selectionMode() == QAbstractItemView.SingleSelection
+    cw.close()
+
+
+def test_utterances_and_texts_select_several_and_delete_them_as_one_step(win):
+    from lemmatrix.model import Text
+    db = win.doc.db
+    for ref in ("W001", "W002", "W003"):
+        db.utterances.append(db.new_utterance(ref))
+    for ref in ("T001", "T002"):
+        db.texts.append(Text(ref=ref))
+    uw = win.open_utterances()
+    uw.refresh()
+    uw.texts.refresh()
+    assert uw.table.selectionMode() == QAbstractItemView.ExtendedSelection
+    assert uw.texts.table.selectionMode() == QAbstractItemView.ExtendedSelection
+    uw.table.select_rows(db.utterances[:2])
+    uw.delete()
+    assert [u.ref for u in db.utterances] == ["W003"]
+    win.doc.undo.undo()
+    assert len(db.utterances) == 3
+    uw.refresh()
+    uw.texts.refresh()
+    uw.texts.table.select_rows(list(db.texts))
+    uw.texts.delete()
+    assert not db.texts
+    win.doc.undo.undo()
+    assert [t.ref for t in db.texts] == ["T001", "T002"]
+    uw.close()

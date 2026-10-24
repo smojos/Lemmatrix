@@ -425,6 +425,7 @@ class TextsPanel(QObject):
 
         page = self.page = QSplitter(Qt.Vertical)
         self.table = FilterTable()
+        self.table.set_multi_select()             # Ctrl+click, Shift+click (Josh, 24 October)
         self.table.rowActivated.connect(lambda row: self.edit(row))
         self.table.deleteRequested.connect(self.delete)
         self.table.contextRequested.connect(self._text_menu)
@@ -1189,6 +1190,21 @@ class TextsPanel(QObject):
         self.select(t)
 
     def delete(self):
+        many = self.table.selected_rows()
+        if len(many) > 1:                         # several (Josh, 24 October): asked once, one undo step
+            if QMessageBox.question(self.win, "Delete texts",
+                                    f"Delete {len(many)} texts ({', '.join(t.ref for t in many[:8])}"
+                                    f"{' …' if len(many) > 8 else ''})?\nTheir recordings and TextGrids go to "
+                                    "the Recycle Bin when the database is closed; until then, undo brings them "
+                                    "back. Utterances clipped from them stay.") != QMessageBox.Yes:
+                return
+            self.doc.undo.beginMacro(f"Delete {len(many)} texts")
+            try:
+                for t in many:
+                    self._delete(t)
+            finally:
+                self.doc.undo.endMacro()
+            return
         t = self.current()
         if t is None:
             return
@@ -1202,6 +1218,10 @@ class TextsPanel(QObject):
                     "stay, with their own recordings.")
         if QMessageBox.question(self.win, "Delete text", msg) != QMessageBox.Yes:
             return
+        self._delete(t)
+
+    def _delete(self, t):
+        """Delete one text, its recording and TextGrid held for undo."""
         renames = []
         folder = storage.text_folder(self.db)
         self.main.player.stop()
@@ -1216,13 +1236,13 @@ class TextsPanel(QObject):
         self.doc.delete_entry(t, renames=renames)
 
     def _text_menu(self, row, pos):
-        if row is not None:
-            self.table.select_row(row)
+        self.table.keep_selection(row)            # a right-click inside the selection keeps it
         m = QMenu(self.win)
         for text, name, fn, on in (("Add", "add", self.add, True), ("Edit", "edit", self.edit, row is not None),
                                    ("Open in Praat", "praat", self.open_in_praat, row is not None),
                                    ("Refresh text", "refresh-text", self.refresh_text, row is not None),
-                                   ("Delete", "delete", self.delete, row is not None)):
+                                   (f"Delete {n} texts" if (n := len(self.table.selected_rows())) > 1
+                                    else "Delete", "delete", self.delete, row is not None)):
             a = m.addAction(icon(name, 16), text)
             a.setEnabled(on)
             a.triggered.connect(lambda *_, fn=fn: fn())

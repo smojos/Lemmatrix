@@ -509,6 +509,11 @@ class FilterTable(QTableView):
         rows = sorted({i.row() for i in self.selectionModel().selectedRows()})
         return [self.model_.rows[self.proxy.mapToSource(self.proxy.index(r, 0)).row()] for r in rows]
 
+    def keep_selection(self, row):
+        """A right-click: inside the selection it stays as it is; elsewhere that row is selected."""
+        if row is not None and not any(r is row for r in self.selected_rows()):
+            self.select_row(row)
+
     def select_rows(self, rows):
         """Select these rows (those shown), the first one current."""
         from PySide6.QtCore import QItemSelection, QItemSelectionModel
@@ -717,6 +722,7 @@ class FilterTable(QTableView):
         if self.click_unselects and event.button() == Qt.LeftButton and not event.modifiers():
             idx = self.indexAt(event.position().toPoint())
             if idx.isValid() and self.selectionModel().isRowSelected(idx.row(), QModelIndex()) \
+                    and len(self.selectionModel().selectedRows()) <= 1 \
                     and not (self.model_.columns[self.proxy.mapToSource(idx).column()].edit
                              and idx == self.currentIndex()):
                 self._unselect_on_release = True

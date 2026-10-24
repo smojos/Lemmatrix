@@ -395,6 +395,7 @@ class MainWindow(QMainWindow):
         self.all_table.contextRequested.connect(self._all_menu)
         self.all_table.space_plays = True
         self.all_table.click_unselects = True     # a click on the selected token unselects it
+        self.all_table.set_multi_select()         # Ctrl+click, Shift+click (Josh, 24 October)
         self.all_table.playRequested.connect(self.play_selected)
         self.all_table.clicked.connect(lambda *_: self.autoplay.isChecked() and self.play_selected())
         self.all_table.model_.edited.connect(self._cell_edited)
@@ -3055,7 +3056,46 @@ class MainWindow(QMainWindow):
         """Ctrl+R: open the selected token (an empty matrix cell: a new one) and start recording."""
         self.edit_token(record=True)
 
+    def delete_tokens(self, rows) -> bool:
+        """Delete several tokens selected in All data (Josh, 24 October): asked once, one undo step;
+        their recordings are held as for one (undo brings them back)."""
+        db = self.doc.db
+        pairs_ = [(r.entry, r.entry.tokens[r.index]) for r in rows if 0 <= r.index < len(r.entry.tokens)]
+        if not pairs_:
+            return False
+        gone = {id(t) for _, t in pairs_}
+        lemmas = {id(e) for e, _ in pairs_}
+        if QMessageBox.question(self, "Delete tokens",
+                                f"Delete {len(pairs_)} tokens of {len(lemmas)} lemma(s)?\n"
+                                "Their recordings go to the Recycle Bin when the database is closed; "
+                                "until then, undo brings them back.") != QMessageBox.Yes:
+            return False
+        folder = storage.sound_folder(db)
+        renames = []
+        if self.prefs.delete_recordings_with_tokens:
+            self.player.stop()
+            for e, t in pairs_:
+                shared = bool(t.file) and any(o.file == t.file and id(o) not in gone
+                                              for en in db.entries for o in en.tokens)
+                path = folder / t.file if t.file else None
+                if path is not None and not shared and path.exists():
+                    renames.append((path, self.doc.hold_recording(path)))
+        changed = []
+        for e in db.entries:
+            if id(e) in lemmas:
+                c = e.copy()
+                c.tokens = [ct for ct, ot in zip(c.tokens, e.tokens) if id(ot) not in gone]
+                changed.append((e, c))
+        problems = self.doc.apply_changes(f"Delete {len(pairs_)} tokens", changed, renames, stamp=False)
+        if problems:
+            QMessageBox.warning(self, "Delete tokens", "\n".join(problems))
+            return False
+        return True
+
     def delete_token(self):
+        if self.tabs.currentIndex() == ALL_DATA and len(rows := self.all_table.selected_rows()) > 1:
+            self.delete_tokens(rows)
+            return
         sel = self.selected_token()
         if sel is None:
             return
@@ -3345,10 +3385,19 @@ class MainWindow(QMainWindow):
         self.doc.edit_entry(row.entry, change, "Accept suggested translation")
 
     def _all_menu(self, row, pos):
-        if row is not None:
-            self.all_table.select_row(row)
+        self.all_table.keep_selection(row)        # a right-click inside the selection keeps it
+        rows = self.all_table.selected_rows()
         accept = ([None, ("Accept suggested translation", "", lambda r=row: self.accept_suggestion(r))]
                   if self.suggestion_for(row) else [])
+        if len(rows) > 1:                         # several tokens: what acts on them all
+            toks = [r.entry.tokens[r.index] for r in rows]
+            self._menu([("Add token", "add", self.add_token),
+                        (f"Delete {len(rows)} tokens", "delete", self.delete_token), None,
+                        (f"Add {len(rows)} tokens to the ɛλicit request", elicit_icon(16),
+                         lambda: self.add_to_elicit(toks)), None,
+                        ("Configure columns", "gear-columns", self.configure_all_columns),
+                        ("Clear all filters", "reset-filters", self._clear_all_filters)], pos)
+            return
         self._menu([*self._spelling_items(self.all_table, pos, row),("Add token", "add", self.add_token), ("Delete token", "delete", self.delete_token),
                     ("Edit token", "edit", self.edit_token), self._move_item(), *accept, None,
                     *self._token_items(), self.elicit_menu_item(self._selected_token_obj()),
