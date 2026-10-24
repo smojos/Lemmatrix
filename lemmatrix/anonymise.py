@@ -79,6 +79,8 @@ class Options:
     consent_password: str = ""         # "": consent forms left out; else a password-protected zip
     hide_language_code: bool = False   # anonymous only: the language code becomes LXX
     hide_variety_code: bool = False    # anonymous only: the variety code becomes VXX
+    thanks: bool = False               # ethical only: the personal thank-yous (idea 59, Josh, 24 October:
+                                       # a person thanked may not have signed an agreement; off by default)
 
     @classmethod
     def for_kind(cls, kind: str) -> "Options":
@@ -122,6 +124,8 @@ class Report:
     renamed_files: int = 0                                    # soundfile and TextGrid names changed
     key_written: bool = False
     notebook: bool = False
+    thanks_in: int = 0                                        # personal thank-yous kept (ethical, chosen)
+    thanks_out: int = 0                                       # left out
     scrubber: "Scrubber | None" = field(default=None, repr=False, compare=False)
 
     @property
@@ -489,6 +493,17 @@ def anonymise(db: Database, nb: nbmod.Notebook | None, opts: Options, report: Re
             md.author = owner.code
         else:
             md.author = scrub.text(md.author, "Owner", report)
+    # Acknowledgements (idea 59): an organisation's support stays (names replaced, in the anonymous
+    # archive, as in any free text); the personal thank-yous go only into an ethical archive, when chosen
+    if opts.anonymous:
+        for x in md.support:
+            x.organisation = scrub.text(x.organisation, "Support", report)
+            x.grant = scrub.text(x.grant, "Support", report)
+            x.funded = scrub.text(x.funded, "Support", report)
+    if opts.thanks and not opts.anonymous:
+        report.thanks_in = len(md.thanks)
+    else:
+        report.thanks_out, md.thanks = len(md.thanks), []
     moved = _trim_places(md.locations, opts.place_levels, report) if opts.place_levels else {}
 
     def pc(c: str) -> str:
@@ -788,6 +803,11 @@ def summary(report: Report, opts: Options) -> str:
     if opts.consent_password:
         lines.append(f"{report.consent_files} consent file(s) are in the password-protected zip, named by code"
                      + (f"; none found for {', '.join(report.missing_consent)}." if report.missing_consent else "."))
+    if report.thanks_in:
+        lines.append(f"{report.thanks_in} personal thank-you(s) went in, at your choice: everyone named needs "
+                     "to have given their informed consent.")
+    elif report.thanks_out:
+        lines.append(f"{report.thanks_out} personal thank-you(s) stayed out (Acknowledgements → Thanks).")
     lines.append("The notebook went in, at your choice." if report.notebook else
                  "The notebook (your notes, questions and hypotheses) stayed out: it is your own work, "
                  "kept in your Full backups.")

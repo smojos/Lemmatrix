@@ -75,6 +75,14 @@ class ArchiveExportDialog(QDialog):
         self.notebook = QCheckBox("Include the notebook (notes, questions, To Dos and Cogitate's hypotheses)")
         self.notebook.setToolTip(anonymise.PRIVATE_NOTE)
         self.names = QCheckBox()
+        self.thanks = QCheckBox("Include the personal thank-yous (Edit → Metadata → Acknowledgements)")
+        self.thanks.setToolTip("Organisations' support always goes in. The thank-yous to people are left out "
+                               "unless you include them here.")
+        self.thanks_note = QLabel("⚠ If they name or identify people, everyone named must have given their "
+                                  "informed consent to be named in the archive.")
+        self.thanks_note.setWordWrap(True)
+        self.thanks_note.setStyleSheet(f"color: {theme.muted()};")
+        self.thanks.toggled.connect(lambda on: self.thanks_note.setVisible(on and self.kind != ANONYMOUS))
         self.recordings = QCheckBox()
         self.places = QComboBox()
         self.places.addItem("Keep every place", 0)
@@ -100,6 +108,9 @@ class ArchiveExportDialog(QDialog):
         form.addRow(self.codes_label, codes)
         form.addRow("Notebook", self.notebook)
         form.addRow("Free text", self.names)
+        self.thanks_label = QLabel("Thanks")
+        form.addRow(self.thanks_label, self.thanks)
+        form.addRow("", self.thanks_note)
         form.addRow("Recordings", self.recordings)
         form.addRow("Places", self.places)
         form.addRow("Consent forms", self.consent)
@@ -184,6 +195,12 @@ class ArchiveExportDialog(QDialog):
             self.recordings.setChecked(defaults.recordings)
             self.recordings.setText("Include the recordings of speakers who agreed to audio sharing")
         self.places.setCurrentIndex(self.places.findData(defaults.place_levels))
+        self.thanks.setChecked(defaults.thanks)
+        self.thanks.setEnabled(not anon and bool(self.main.doc.db.metadata.thanks))
+        self.thanks.setText("None in an anonymous archive (they name people)" if anon else
+                            "Include the personal thank-yous (Edit → Metadata → Acknowledgements)"
+                            if self.main.doc.db.metadata.thanks else "None in the metadata")
+        self.thanks_note.setVisible(False)
         self.consent.setItemText(1, "Add them, with the code key, as a password-protected zip" if anon
                                  else "Add them as a password-protected zip")
         self.consent.setToolTip("The key (old code → new code) is kept only inside this zip, never in the clear"
@@ -204,7 +221,8 @@ class ArchiveExportDialog(QDialog):
             recordings=self.recordings.isChecked() and not anon, place_levels=int(self.places.currentData()),
             consent_password=self.password.text() if self.consent.currentData() else "",
             hide_language_code=anon and self.hide_language.isChecked(),
-            hide_variety_code=anon and self.hide_variety.isChecked())
+            hide_variety_code=anon and self.hide_variety.isChecked(),
+            thanks=self.thanks.isChecked() and not anon)
 
     def accept(self):
         if self.consent.currentData():

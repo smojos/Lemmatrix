@@ -665,3 +665,194 @@ def check_reference_order(win):
     win.doc.restructure(f"Move {len(moving):,} lemmas into the list's order", order)
     win.lemmas.set_rows(db.entries)
     win.statusBar().showMessage(f"Moved {len(moving):,} lemmas into the list's order.", 8000)
+
+
+# --------------------------------------------------------------------------
+# Tools → Audits → Check wordlist integrity… (idea 66, Josh, 24 October)
+# --------------------------------------------------------------------------
+class IntegrityDialog(QDialog):
+    """Every finding of wordlist_check, grouped by kind, each with its checkbox (a kind's own box
+    selects or deselects all of it); Fix the selected is one undo step. A finding that can't be
+    fixed (a lemma with data whose item is hidden) is listed without a checkbox."""
+
+    def __init__(self, win, findings):
+        super().__init__(win)
+        from PySide6.QtGui import QColor
+        from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
+        from .. import wordlist_check as wc
+        self.win, self.db, self.findings = win, win.doc.db, findings
+        short = wl.SHORT.get(wl.base_of(self.db), "wordlist")
+        self.setWindowTitle(f"Check {short} integrity")
+        self.resize(820, 600)
+        lay = QVBoxLayout(self)
+        intro = QLabel(self._intro())
+        intro.setWordWrap(True)
+        lay.addWidget(intro)
+        self.tree = QTreeWidget()
+        self.tree.setColumnCount(4)
+        self.tree.setHeaderLabels(["Lemma", "Gloss", "Found", "Fix"])
+        self.tree.header().setSectionResizeMode(2, QHeaderView.Stretch)
+        grey = QColor("#8c8c8c")
+        self.items: list[tuple[object, object]] = []      # (tree item, finding)
+        for kind in wc.KINDS:
+            mine = [f for f in findings if f.kind == kind]
+            if not mine:
+                continue
+            top = QTreeWidgetItem([f"{wc.KIND_NAMES[kind]} ({len(mine):,})"])
+            fixable = [f for f in mine if f.fixable]
+            if fixable:
+                top.setFlags(top.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsAutoTristate)
+            self.tree.addTopLevelItem(top)
+            for f in mine:
+                it = QTreeWidgetItem([f.ref, f.gloss, f.text, f.fix or "Kept (listed only)"])
+                if f.fixable:
+                    it.setFlags(it.flags() | Qt.ItemIsUserCheckable)
+                    it.setCheckState(0, Qt.Checked if f.selected else Qt.Unchecked)
+                else:
+                    for c in range(4):
+                        it.setForeground(c, grey)
+                top.addChild(it)
+                self.items.append((it, f))
+            top.setExpanded(any(f.selected for f in mine) or len(mine) <= 12)
+        for c in (0, 1, 3):
+            self.tree.resizeColumnToContents(c)
+        self.tree.itemChanged.connect(lambda *_: self._count())
+        lay.addWidget(self.tree, 1)
+        note = QLabel("Lemmas with data are never removed. You can undo the fixes in one step (Ctrl+Z).")
+        note.setWordWrap(True)
+        from . import theme
+        note.setStyleSheet(f"color: {theme.muted()};")
+        lay.addWidget(note)
+        buttons = QDialogButtonBox()
+        self.fix_btn = buttons.addButton("Fix the selected", QDialogButtonBox.AcceptRole)
+        buttons.addButton("Close", QDialogButtonBox.RejectRole)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.fix_btn.setDefault(True)
+        lay.addWidget(buttons)
+        self._count()
+
+    def _intro(self) -> str:
+        from .. import wordlist_check as wc
+        db = self.db
+        base = wl.base_of(db)
+        text = f"How this database compares with the {wl.NAMES[base]} as Lemmatrix has it now."
+        if base == wl.EACW:
+            items, region = wc._items_region(db)
+            text += f" Its version: {wl.version_name(items, region)}."
+            since = wl.editions_since(wc.version(db))
+            if since:
+                text += (f" The list has been updated since this database was ({wc.version(db)} → "
+                         f"{wl.EACW_VERSION}: " + "; ".join(e.note for e in since) + "). What the update "
+                         "changed starts selected.")
+        return text
+
+    def sync(self):
+        """The findings' selected as the checkboxes are."""
+        for it, f in self.items:
+            if f.fixable:
+                f.selected = it.checkState(0) == Qt.Checked
+
+    def _count(self):
+        self.sync()
+        n = sum(1 for _, f in self.items if f.selected and f.fixable)
+        self.fix_btn.setText(f"Fix the selected ({n:,})" if n else "Fix the selected")
+        self.fix_btn.setEnabled(bool(n) or self._stamp_only())
+
+    def _stamp_only(self) -> bool:
+        """Nothing selected, but the EACW edition can still be recorded (the update, declined in part)."""
+        from .. import wordlist_check as wc
+        return wc.out_of_date(self.db)
+
+
+def apply_fixes(win, findings) -> int:
+    """Fix the selected findings as one undo step, and record the shipped EACW edition. Returns how
+    many findings were fixed."""
+    from .. import wordlist_check as wc
+    db = win.doc.db
+
+    def new_entry(item):
+        classes = set(db.settings.word_classes())
+        e = db.new_entry(item.number, gloss=item.gloss,
+                         word_class=item.word_class if item.word_class in classes else "",
+                         speaker=win.session_speaker(), date=win.session_date())
+        wl.fill_item(db, e, item)
+        return e
+
+    order, pairs, made = wc.plan(db, findings, new_entry)
+    n = sum(1 for f in findings if f.selected and f.fixable)
+    version = wl.EACW_VERSION if wl.is_eacw(db) else ""
+    what = wc.summary(findings)
+    win.doc.fix_wordlist(f"Wordlist integrity{': ' + what if what else ''}", order, pairs, version)
+    win.lemmas.set_rows(db.entries)
+    return n
+
+
+def check_wordlist_integrity(win):
+    """Tools → Audits → Check wordlist integrity… (idea 66)."""
+    from .. import wordlist_check as wc
+    db = win.doc.db
+    title = "Check wordlist integrity"
+    if not wl.base_of(db):
+        QMessageBox.information(win, title, "This database isn't built on a wordlist (Tools → Link to "
+                                "wordlists… sets that).")
+        return
+    findings = wc.check(db)
+    if not findings:
+        if wc.out_of_date(db):
+            db.metadata.wordlist_version = wl.EACW_VERSION
+            win.doc.settings_changed()
+        QMessageBox.information(win, title, f"The database is as the {wl.NAMES[wl.base_of(db)]} has it.")
+        return
+    d = IntegrityDialog(win, findings)
+    if d.exec() != QDialog.Accepted:
+        return
+    d.sync()
+    n = apply_fixes(win, findings)
+    win.statusBar().showMessage(f"Fixed {n:,} finding(s)." if n else "Recorded the list's new version.", 8000)
+
+
+def update_wordlist(win) -> int:
+    """The notice's one click (Josh: "bring their version of the list up to date with the click of
+    a button"): every fix that starts selected, and the new edition recorded; one undo step."""
+    from .. import wordlist_check as wc
+    findings = wc.check(win.doc.db)
+    n = apply_fixes(win, findings)
+    win.statusBar().showMessage(f"The EACW is up to date ({wl.EACW_VERSION}): "
+                                f"{wc.summary(findings) or 'nothing to change'}. Ctrl+Z undoes it.", 15000)
+    return n
+
+
+def offer_update(win):
+    """On opening an EACW database on an older edition of the list: say so, and offer the update
+    (Update, Review first…, Not now). Not modal, so nothing waits on it."""
+    from .. import wordlist_check as wc
+    db = win.doc.db
+    if not wc.out_of_date(db):
+        return None
+    since = wl.editions_since(wc.version(db))
+    findings = wc.check(db)
+    if not any(f.selected and f.fixable for f in findings):   # nothing it changed is in this database
+        db.metadata.wordlist_version = wl.EACW_VERSION         # recorded with the next save
+        return None
+    box = QMessageBox(QMessageBox.Information, "The EACW has been updated",
+                      f"Lemmatrix has a newer edition of the Extended African Comparative Wordlist "
+                      f"({wl.EACW_VERSION}) than this database ({wc.version(db)}):\n\n"
+                      + "\n".join(f"• {e.version}: {e.note}" for e in since)
+                      + f"\n\nBringing the database up to date: {wc.summary(findings)}. Lemmas with data "
+                      "are never removed, and it is one undo step.", parent=win)
+    update = box.addButton("Update", QMessageBox.AcceptRole)
+    review = box.addButton("Review first…", QMessageBox.ActionRole)
+    box.addButton("Not now", QMessageBox.RejectRole)
+    box.setDefaultButton(update)
+
+    def clicked(b):
+        if b is update:
+            update_wordlist(win)
+        elif b is review:
+            check_wordlist_integrity(win)
+    box.buttonClicked.connect(clicked)
+    box.setWindowModality(Qt.WindowModal)
+    box.show()
+    win._wordlist_notice = box
+    return box

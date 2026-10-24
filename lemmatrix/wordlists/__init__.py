@@ -85,6 +85,37 @@ REGION_NAMES = {GLOBAL: "Global", AFRICA: "Africa", **REGIONS}
 ITEM_NAMES = {BASE: "Base", EXPANDED: "Expanded"}
 
 
+# ---- the EACW's editions (Josh, 24 October 2026: "I want to be able to update EACW periodically") ---
+# Each edition of the shipped list, oldest first: its date (the version a database records on its
+# <wordlist>, format 12), what changed, and the items it made default or hid. A database with no
+# version is on the first edition (every EACW database was made from it or after it). A new edition
+# goes at the end, with the eacw.tsv that has it; on opening, a database on an older one is told and
+# offered the update (Tools → Audits → Check wordlist integrity…, lemmatrix/wordlist_check.py).
+@dataclass(frozen=True)
+class Edition:
+    version: str
+    note: str
+    made_default: frozenset = frozenset()
+    hidden: frozenset = frozenset()
+
+
+EDITIONS = (
+    Edition("2026-10-23", "The final list (2,281 published items)"),
+    Edition("2026-10-24", "B044f the default, B044 hidden; C009 hidden; C012–C024 hidden, all their f and m "
+            "the default (2,274 published)",
+            made_default=frozenset({"B044f", "C015f", "C015m", "C019f", "C019m"}),
+            hidden=frozenset({"B044", "C009", *(f"C0{n}" for n in range(12, 25))})),
+)
+EACW_VERSION = EDITIONS[-1].version
+
+
+def editions_since(version: str) -> list[Edition]:
+    """The editions after a database's version ("" or unknown: the first edition's)."""
+    known = [e.version for e in EDITIONS]
+    at = known.index(version) if version in known else 0
+    return list(EDITIONS[at + 1:])
+
+
 def in_version(item: Item, items: str = EXPANDED, region: str = AFRICA) -> bool:
     """Whether an EACW item is in a version of the list: base (default items only) or expanded;
     global (blank sub code), Africa (all) or a region (blank, A, or that region's letter)."""
@@ -632,6 +663,7 @@ def link_as_eacw(db, items: str = BASE, region: str = AFRICA):
     other lists' numbers and the fields' values, and the lemmas in the list's order. No undo."""
     md = db.metadata
     md.wordlist_base, md.wordlist_items, md.wordlist_region = EACW, items, region
+    md.wordlist_version = EACW_VERSION
     ensure_fields(db)
     ensure_word_classes(db)
     for e, numbers in link_plan(db, EACW):

@@ -26,6 +26,7 @@ def setup_copy(db: Database) -> Database:
     out.entries, out.utterances, out.texts = [], [], []
     md = out.metadata
     md.researchers, md.participants, md.locations = [], [], []
+    md.support, md.thanks = [], []                 # the acknowledgements are data too (idea 59)
     md.author, md.description = "", ""
     md.name = "Setup"
     out.path = None

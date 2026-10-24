@@ -1362,6 +1362,7 @@ class MainWindow(QMainWindow):
         self._act(t, "Find missing or unlinked recordings…", self.find_missing_recordings)
         self._act(t, "Check clipped utterances…", self.check_clipped)
         self._act(t, "Check reference order…", self.check_reference_order)     # 23 October
+        self._act(t, "Check wordlist integrity…", self.check_wordlist_integrity)   # idea 66, 24 October
         self._act(t, "Check &spelling…", self.check_spelling, "F7")
         self._act(t, "Give every lemma its citation token…", self.give_citation_tokens)   # idea 64
         t.addSection("Soundfiles")
@@ -1909,6 +1910,8 @@ class MainWindow(QMainWindow):
             self.doc.settings_changed()           # unsaved, so saving writes the new format
             QMessageBox.information(self, "Database upgraded", "\n\n".join(notes))
         self._check_layout(db)
+        from .wordlist_dialogs import offer_update   # the EACW updated since (idea 66)
+        offer_update(self)
 
     # ------------------------------------------------- the workspace file (idea 36)
     def _workspace_for(self, db: Database, ask: bool = True):
@@ -4429,6 +4432,11 @@ class MainWindow(QMainWindow):
         """Tools → Check reference order… (Josh, 23 October): lemmas out of the EACW's order."""
         from .wordlist_dialogs import check_reference_order
         check_reference_order(self)
+
+    def check_wordlist_integrity(self):
+        """Tools → Audits → Check wordlist integrity… (idea 66): one report, select and fix."""
+        from .wordlist_dialogs import check_wordlist_integrity
+        check_wordlist_integrity(self)
 
     def link_wordlists(self):
         """Tools → Link to wordlists…: an existing database's base list and numbers (idea 40)."""

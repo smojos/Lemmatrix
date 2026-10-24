@@ -160,6 +160,22 @@ class WordlistBaseCommand(QUndoCommand):
         self.doc.changed.emit()
 
 
+class WordlistVersionCommand(QUndoCommand):
+    """The EACW edition a database is up to date with (Check wordlist integrity…, idea 66)."""
+
+    def __init__(self, doc: "Document", before: str, after: str):
+        super().__init__("Wordlist version")
+        self.doc, self.before, self.after = doc, before, after
+
+    def redo(self):
+        self.doc.db.metadata.wordlist_version = self.after
+        self.doc.changed.emit()
+
+    def undo(self):
+        self.doc.db.metadata.wordlist_version = self.before
+        self.doc.changed.emit()
+
+
 class PitchKindCommand(QUndoCommand):
     """Converting the pitch kind (idea 9): the kind, the fields added or removed, and any data
     deleted, as one undo step. Applied already when pushed."""
@@ -590,6 +606,16 @@ class Document(QObject):
         if self.db.metadata.wordlist_base != base:
             self.undo.push(WordlistBaseCommand(self, self.db.metadata.wordlist_base, base))
         self.apply_changes("Wordlist numbers", pairs, stamp=False)
+        self.undo.endMacro()
+        self.changed.emit()
+
+    def fix_wordlist(self, label: str, order, pairs, version: str = ""):
+        """Check wordlist integrity… (idea 66): the lemmas added, removed, moved and changed, and the
+        EACW edition recorded, as one undo step."""
+        self.undo.beginMacro(label)
+        self.restructure(label, order, pairs)
+        if version and self.db.metadata.wordlist_version != version:
+            self.undo.push(WordlistVersionCommand(self, self.db.metadata.wordlist_version, version))
         self.undo.endMacro()
         self.changed.emit()
 

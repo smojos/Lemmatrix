@@ -18,21 +18,22 @@ from pathlib import Path
 
 from .matrix import CITATION, EXACT, MatrixConfig, Spec
 from .model import (LEMMAS, TEXTS, UTTERANCES, ClipSource, Database, Entry, FieldDef, Group, ListItem,
-                    Location, Metadata, Person, RefCategory, Settings, Tag, TagStructure, Text, TierMapping,
-                    TierRule, Token, Utterance, is_utterance, new_id, nfc, write_atomically, xml_safe)
+                    Location, Metadata, Person, RefCategory, Settings, Support, Tag, TagStructure, Text,
+                    Thanks, TierMapping, TierRule, Token, Utterance, is_utterance, new_id, nfc, write_atomically, xml_safe)
 
-FORMAT_VERSION = "11"
+FORMAT_VERSION = "12"
 WORDLIST_ATTRS = {"EACW": "eacw", "CAWL": "cawl", "SWADESH": "swadesh"}   # format 9 (idea 40)
 # Until version 1.0 only the current format is read (Josh, 18 October 2026: his database is the
 # only one, so there is no compatibility code for older formats). When the format changes, a
 # provisional upgrade from the format before is written for his database and taken out again
 # once it has been saved in the new one.
-READABLE = ("5", "6", "7", "8", "9", "10", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
+READABLE = ("5", "6", "7", "8", "9", "10", "11", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
 # 7: before researchers had the Identifiable? tick and both ticks were always written; 8: before the
 # comparative wordlists (format 9, 22 October: no base and no numbers yet, so nothing to change);
 # 9: before the <typology> block (format 10, 23 October: an older file is tonal, as every database was);
 # 10: before the EACW's version on <wordlist> (format 11, 23 October: items and region, none in an
-# older file, so nothing to change)
+# older file, so nothing to change); 11: before the acknowledgements and the EACW's version number
+# (format 12, 24 October: none in an older file, so nothing to change)
 BACKUPS_KEPT = 10
 
 
@@ -237,6 +238,11 @@ def _load_metadata(m) -> Metadata:
         md.wordlist_base = (x.get("base") or "").upper()
         md.wordlist_items = (x.get("items") or "").strip()      # format 11: base or expanded
         md.wordlist_region = (x.get("region") or "").strip()    # format 11: global, africa, N W E S C
+        md.wordlist_version = (x.get("version") or "").strip()  # format 12: the EACW's version
+    if (a := m.find("acknowledgements")) is not None:            # format 12 (idea 59)
+        md.support = [Support(nfc(x.get("organisation", "")), nfc(x.get("grant", "")), _text(x))
+                      for x in a.findall("support")]
+        md.thanks = [Thanks(nfc(x.get("who", "")), _text(x)) for x in a.findall("thanks")]
     return md
 
 
@@ -523,7 +529,18 @@ def to_element(db: Database) -> ET.Element:
             a["items"] = md.wordlist_items
         if md.wordlist_region:
             a["region"] = md.wordlist_region
+        if md.wordlist_version:                   # format 12: the EACW's version it is up to date with
+            a["version"] = md.wordlist_version
         ET.SubElement(m, "wordlist", a)
+    if md.support or md.thanks:                   # format 12 (idea 59): <support organisation=".." grant="..">
+        ack = ET.SubElement(m, "acknowledgements")   # what it funded</support>, <thanks who="..">what for</thanks>
+        for x in md.support:
+            a = {"organisation": x.organisation}
+            if x.grant:
+                a["grant"] = x.grant
+            ET.SubElement(ack, "support", a).text = x.funded or None
+        for x in md.thanks:
+            ET.SubElement(ack, "thanks", {"who": x.who}).text = x.what_for or None
 
     s = db.settings
     st = ET.SubElement(root, "settings")

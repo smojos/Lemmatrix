@@ -535,6 +535,24 @@ class Settings:
 # --------------------------------------------------------------------------
 
 @dataclass
+class Support:
+    """Acknowledgements (IDEAS.md idea 59, Josh, 24 October): an organisation's support of the
+    project: who, the grant or its number, and what it funded."""
+    organisation: str = ""
+    grant: str = ""
+    funded: str = ""
+
+
+@dataclass
+class Thanks:
+    """Acknowledgements (idea 59): a personal thank-you, to a person or a group, and what for. Left
+    out of the Anonymous archive, and of the Ethical one unless chosen there (Josh: a person thanked
+    may not have signed an agreement)."""
+    who: str = ""
+    what_for: str = ""
+
+
+@dataclass
 class Person:
     """A researcher or a participant (speaker)."""
     code: str
@@ -594,6 +612,9 @@ class Metadata:
     # typological features (format 10; IDEAS.md ideas 9 and 56): data about the language, read near
     # the top of the file by people and machines. "tone": tonal, intonational or unspecified
     typology: dict[str, str] = field(default_factory=lambda: {"tone": "tonal"})
+    wordlist_version: str = ""    # EACW: the version of the list the database is up to date with (format 12)
+    support: list[Support] = field(default_factory=list)    # acknowledgements (format 12, idea 59)
+    thanks: list[Thanks] = field(default_factory=list)
 
     def researcher(self, code: str) -> Person | None:
         return next((p for p in self.researchers if p.code == code), None)

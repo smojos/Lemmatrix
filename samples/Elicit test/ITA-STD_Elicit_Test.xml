@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<database format="11">
+<database format="12">
   <metadata>
     <language code="ITA">Italian</language>
     <variety code="STD">Standard Italian</variety>
@@ -29,7 +29,7 @@
       </location>
     </location>
     <description>A small invented Italian database (Danish as the second gloss language) for trying out ɛλicit. Built by samples/make_elicit_test.py; the recordings are Josh Smolders'.</description>
-    <wordlist base="EACW" items="base" region="africa" />
+    <wordlist base="EACW" items="base" region="africa" version="2026-10-24" />
   </metadata>
   <settings>
     <entry-fields>

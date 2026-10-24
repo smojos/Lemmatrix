@@ -555,6 +555,64 @@ def pitch_kind_row(kind: str):
     return combo, w
 
 
+class AckTable(QWidget):
+    """One list of the acknowledgements (idea 59): a small table to type in, with + and −."""
+
+    def __init__(self, headers, rows, tips=()):
+        super().__init__()
+        from PySide6.QtWidgets import QTableWidget, QTableWidgetItem
+        self._item = QTableWidgetItem
+        lay = QHBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        self.table = QTableWidget(0, len(headers))
+        self.table.setHorizontalHeaderLabels(headers)
+        for c, tip in enumerate(tips):
+            self.table.horizontalHeaderItem(c).setToolTip(tip)
+        self.table.verticalHeader().hide()
+        self.table.horizontalHeader().setSectionResizeMode(len(headers) - 1, QHeaderView.Stretch)
+        self.table.setMinimumHeight(96)
+        self.table.setMaximumHeight(140)
+        for row in rows:
+            self.add(row)
+        lay.addWidget(self.table, 1)
+        side = QVBoxLayout()
+        plus, minus = QToolButton(), QToolButton()
+        plus.setText("+")
+        plus.setToolTip("Add a row")
+        minus.setText("−")
+        minus.setToolTip("Remove the selected row")
+        plus.clicked.connect(lambda *_: self.add([""] * self.table.columnCount(), edit=True))
+        minus.clicked.connect(lambda *_: self.remove())
+        side.addWidget(plus)
+        side.addWidget(minus)
+        side.addStretch(1)
+        lay.addLayout(side)
+
+    def add(self, values, edit: bool = False):
+        r = self.table.rowCount()
+        self.table.insertRow(r)
+        for c, v in enumerate(values):
+            self.table.setItem(r, c, self._item(v))
+        if edit:
+            self.table.setCurrentCell(r, 0)
+            self.table.editItem(self.table.item(r, 0))
+
+    def remove(self):
+        r = self.table.currentRow()
+        if r >= 0:
+            self.table.removeRow(r)
+
+    def rows(self) -> list[list[str]]:
+        """The rows typed, without the empty ones."""
+        out = []
+        for r in range(self.table.rowCount()):
+            vals = [nfc((self.table.item(r, c).text() if self.table.item(r, c) else "").strip())
+                    for c in range(self.table.columnCount())]
+            if any(vals):
+                out.append(vals)
+        return out
+
+
 class MetadataDialog(QDialog):
     """Language, variety, the database's name, author, description and gloss languages.
 
@@ -565,7 +623,7 @@ class MetadataDialog(QDialog):
         self.db = db
         md = db.metadata
         self.setWindowTitle("Database metadata")
-        self.resize(560, 300)
+        self.resize(600, 560)
         lay = QVBoxLayout(self)
         form = QFormLayout()
         self.lang_code = NoForbidden(md.language_code)
@@ -597,6 +655,22 @@ class MetadataDialog(QDialog):
                                 "column, a cell line or a dialogue's Other languages is set to show them.")
         form.addRow("Gloss languages", self.glosses)
         lay.addLayout(form)
+        # Acknowledgements (idea 59, Josh, 24 October): two lists, an organisation's support and thanks
+        ack = QGroupBox("Acknowledgements")
+        al = QVBoxLayout(ack)
+        al.addWidget(QLabel("Support (funders, institutions, grants)"))
+        self.support = AckTable(["Organisation", "Grant or number", "What it funded"],
+                                [[x.organisation, x.grant, x.funded] for x in md.support])
+        al.addWidget(self.support)
+        al.addWidget(QLabel("Thanks"))
+        self.thanks = AckTable(["Person or group", "What for"], [[x.who, x.what_for] for x in md.thanks])
+        al.addWidget(self.thanks)
+        caution = QLabel("Thanks are left out of the Anonymous archive, and of the Ethical archive unless you "
+                         "include them there; anyone named must have given their informed consent.")
+        caution.setWordWrap(True)
+        caution.setStyleSheet(f"color: {theme.muted()};")
+        al.addWidget(caution)
+        lay.addWidget(ack)
         note = QLabel("Researchers, participants (speakers) and locations: Edit → Lists.")
         note.setStyleSheet(f"color: {theme.muted()};")
         lay.addWidget(note)
@@ -660,6 +734,9 @@ class MetadataDialog(QDialog):
         md.name = nfc(self.db_name.text().strip())
         md.author = nfc(self.author.text().strip())
         md.description = nfc(self.description.text().strip())
+        from ..model import Support, Thanks
+        md.support = [Support(*r) for r in self.support.rows()]
+        md.thanks = [Thanks(*r) for r in self.thanks.rows()]
         langs = self.glosses.text().split()
         self.db.settings.gloss_languages = langs
         self.db.settings.primary_gloss = langs[0]

@@ -276,6 +276,7 @@ def fill_from_wordlist(db: Database, base: str, items: str = "", region: str = "
         items = items or wl.BASE         # and the list's word classes (DEM, CONJ…)
         region = region or wl.AFRICA
         db.metadata.wordlist_items, db.metadata.wordlist_region = items, region
+        db.metadata.wordlist_version = wl.EACW_VERSION      # format 12: up to date with the shipped list
         chosen = wl.version_items(items, region)
         wl.ensure_fields(db)
         wl.ensure_word_classes(db)

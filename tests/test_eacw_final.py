@@ -48,15 +48,15 @@ def win(app, tmp_path, monkeypatch):
     w.close()
 
 
-# ---- format 11 -------------------------------------------------------------------------------
+# ---- format 11 (12 since 24 October: the EACW's edition too) ---------------------------------
 def test_format_11_keeps_the_version(tmp_path):
     db = newdb.make(newdb.Choices(base=wl.EACW, items=wl.EXPANDED, region="W"))
     p = tmp_path / "W.xml"
     db.path = str(p)
     storage.save(db, p, backup=False)
     text = p.read_text(encoding="utf-8")
-    assert '<database format="11">' in text
-    assert '<wordlist base="EACW" items="expanded" region="W" />' in text
+    assert '<database format="12">' in text
+    assert f'<wordlist base="EACW" items="expanded" region="W" version="{wl.EACW_VERSION}" />' in text
     back = storage.load(p)
     assert (back.metadata.wordlist_items, back.metadata.wordlist_region) == (wl.EXPANDED, "W")
     assert back.entry_by_ref("D009").get("Taxon") == "Capra hircus (Bovidae)"
@@ -68,7 +68,7 @@ def test_a_format_10_database_opens(tmp_path):
     p = tmp_path / "S.xml"
     db.path = str(p)
     storage.save(db, p, backup=False)
-    p.write_text(p.read_text(encoding="utf-8").replace('format="11"', 'format="10"'), encoding="utf-8")
+    p.write_text(p.read_text(encoding="utf-8").replace('format="12"', 'format="10"'), encoding="utf-8")
     back = storage.load(p)
     assert back.upgraded and back.metadata.wordlist_base == wl.SWADESH and not back.metadata.wordlist_items
 
