@@ -849,6 +849,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 - **Zoom** (Josh, 21 October): **Ctrl + mouse wheel** over a matrix zooms its cells and headers (the fields, the pitch drawing and the tag chips), from 0.6 to 2.5 times, and the cells are sized from their content again; **Ctrl+0** puts it back. Lemma/Tag and Tag/Tag each have their own zoom; it stays while Lemmatrix is open and isn't saved, so it's back to normal on the next start.
 - **Several tokens matching one cell** (Loose, or duplicates) are shown **side by side**, in tag order, each with a small chip saying what it adds (e.g. "+GEN").
 - **Cells don't show a play marker.** Double-clicking a token opens it; double-clicking an empty cell creates a token with that cell's tags and the session's speaker and date.
+- **A click on the selected token unselects it** (Josh, 24 October; IDEAS.md idea 14), as in All data (section 5.3): Delete, Edit and Play then have nothing to act on. A double-click still opens it, and in edit mode, or with Ctrl, Shift or Alt held, a click never unselects.
 - **Tags down the side wrap** (20 October): with the axes swapped (and in Tag/Tag's rows), a header's chips wrap onto more lines once it is 170 px wide, and the row grows to fit, instead of being cut off.
 - **A long lemma doesn't stretch its header** (Josh, 24 October): a lemma's header (its form, reference or gloss) is no wider than **170 px down the side** and **110 px across the top** (a column's default width; the column itself still follows its data and can be widened by hand), the rest ending in **…**; the hover gives it in full.
 - **Tags across the top wrap too** (20 October): onto two lines at most. A column is as wide as its data, and only widens past that when its tags wouldn't fit in two lines; the header row (and the switch button) is two lines tall when any column needs it. A column narrowed by hand cuts the second line off with …
@@ -864,7 +865,7 @@ New databases start with this structure (revised 20 October). Everything in it c
   - **Configure matrix:** two lists, rows (Y) and columns (X), each a list of tag sets with a match type (Citation / Exact / Loose). Any tags can go on either axis; **cells whose row and column tags contradict** (e.g. 1SG.A × 3SG.A) are greyed out and can't take a token.
   - Duplicate, Remove all and Restore all present as in Lemma/Tag; here Restore all present gives one Loose line for each tag the shown lemmas use.
   - **Save matrix**, **Rename matrix**, **Delete matrix** and **Clear matrix**, as in Lemma/Tag (a saved Tag/Tag matrix works for any lemma; the row and column headers mark tags that aren't usual for it).
-- Side-by-side tokens, switch button and double-click behave as in Lemma/Tag.
+- Side-by-side tokens, switch button, double-click and click-to-unselect behave as in Lemma/Tag.
 
 ### 5.6 Token dialogue
 

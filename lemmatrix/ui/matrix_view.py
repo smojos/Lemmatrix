@@ -627,9 +627,14 @@ class MatrixView(QTableView):
         return r, c, n
 
     def mousePressEvent(self, event):
-        super().mousePressEvent(event)
         pos = event.position().toPoint()
         hit = self._hit(pos)
+        # A plain click on the selected token unselects it, as in All data (IDEAS.md idea 14, Josh,
+        # 24 October); not in edit mode, and not when the click is the first of a double-click.
+        self._unselect_on_release = bool(
+            hit and hit[2] >= 0 and hit == self.selected and not self.edit_mode
+            and event.button() == Qt.LeftButton and not event.modifiers())
+        super().mousePressEvent(event)
         if hit:
             self.selected = hit if hit[2] >= 0 else (hit[0], hit[1], -1)
             self.viewport().update()
@@ -720,7 +725,24 @@ class MatrixView(QTableView):
                 return True
         return super().eventFilter(obj, event)
 
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        if getattr(self, "_unselect_on_release", False):
+            self._unselect_on_release = False
+            from PySide6.QtCore import QTimer
+            from PySide6.QtWidgets import QApplication
+            self._pending_unselect = self.selected
+            QTimer.singleShot(QApplication.doubleClickInterval() + 10, self._unselect_if_still)
+
+    def _unselect_if_still(self):
+        pending, self._pending_unselect = getattr(self, "_pending_unselect", None), None
+        if pending is not None and pending == self.selected:
+            self.selected = None
+            self.clearSelection()
+            self.viewport().update()
+
     def mouseDoubleClickEvent(self, event):
+        self._pending_unselect = None             # a double-click opens; it never unselects
         hit = self._hit(event.position().toPoint())
         if hit:
             self.cellActivated.emit(*hit)
