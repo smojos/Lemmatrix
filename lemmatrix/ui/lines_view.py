@@ -821,6 +821,8 @@ class LinesView(QAbstractScrollArea):
             ed.setFont(self._font(spec) if spec is not None else self.plain)
             ed.setContextMenuPolicy(Qt.CustomContextMenu)
             ed.customContextMenuRequested.connect(lambda pos, ed=ed: self._editor_menu(ed, pos))
+        from . import keyboards
+        keyboards.tag(ed, key)                     # the field's own keyboard (idea 43)
         original = self.value(ln, key)
         ed.setText(original)                       # the symbols show while editing
         ed.installEventFilter(self)

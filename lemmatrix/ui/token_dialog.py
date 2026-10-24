@@ -20,6 +20,7 @@ from .. import audio, matrix as mx, pitch as pitchmod, predict, storage
 from ..model import Entry, Token, new_id
 from PySide6.QtCore import QSize
 
+from . import keyboards
 from . import spellui, theme
 from .icons import icon
 from .table import show_suggestion
@@ -127,7 +128,7 @@ class TokenDialog(QDialog):
         for f in s.token_fields:
             if f.role == "pitch" and not pitch_on:
                 continue                          # not edited here: the token keeps its Pitch as it is
-            ed = QLineEdit()
+            ed = keyboards.tag(QLineEdit(), f.name)        # its own keyboard (idea 43)
             if f.role in ("phonetic", "phonemic"):
                 ed.setFont(ipa_font(self.main.prefs.ipa_size + 3))
             else:
@@ -641,7 +642,7 @@ class TokenDialog(QDialog):
         for f in fields:
             for lang in others:
                 label = QLabel(f"{f.title} ({lang})")
-                ed = QLineEdit()
+                ed = keyboards.tag(QLineEdit(), f"{f.name}:{lang}")
                 ed.setFont(ipa_font(self.main.prefs.ipa_size + 1))
                 ed.textChanged.connect(self._fields_changed)
                 ed.installEventFilter(self)

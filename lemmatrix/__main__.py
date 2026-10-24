@@ -84,6 +84,8 @@ def main() -> int:
     app._right_shift = rightshift.install(app)          # Right Shift+A / B play α / β
     from .ui import symbols
     app._symbols = symbols.install(app)                 # Σymbols in every text field's right-click menu
+    from .ui import keyboards
+    app._keyboards = keyboards.install(app)             # a field's own keyboard (idea 43; off until set up)
 
     from .ui import splash as splashmod
     splash = splashmod.show(app)                        # until the database is open (a dialogue closes it)

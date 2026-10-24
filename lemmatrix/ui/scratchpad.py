@@ -146,6 +146,8 @@ class SegmentPad(QWidget):
         row = QHBoxLayout()
         row.setSpacing(4)
         self.edit = QLineEdit()
+        from . import keyboards
+        keyboards.tag(self.edit, keyboards.SEGMENT)  # typed as transcriptions (idea 43)
         self.edit.setPlaceholderText("ʌ, pu, t͡s…")
         self.edit.setToolTip("Type a sequence (a sound, a syllable, anything): its soundfile is "
                              "found as you type. Enter, the letter or Right Shift plays it")

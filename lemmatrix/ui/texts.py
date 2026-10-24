@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog,
 
 from .. import audio, layout, lines as lmod, notebook as nbmod, storage, textgrid as tgmod
 from ..model import SPEAKER_FIELD, TEXTS, ClipSource, ListItem, Text, TierMapping, TierRule, nfc, tier_base
+from . import keyboards
 from . import chiprow as chips, theme
 from .filter_dialogs import ConfigureColumnsDialog
 from .icons import icon, themed_icon
@@ -102,7 +103,7 @@ class TextDialog(QDialog):
                 w.setToolTip("Pick from the list, or type a new value to add it to the list "
                              "(the lists are in Edit → Lists)")
             else:
-                w = QLineEdit(text.get(f.name) if text else "")
+                w = keyboards.tag(QLineEdit(text.get(f.name) if text else ""), f.name)   # idea 43
                 if f.role == "title":
                     w.textChanged.connect(self._title_changed)
             form.addRow(f.title, w)

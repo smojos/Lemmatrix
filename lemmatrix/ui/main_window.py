@@ -146,6 +146,8 @@ class MainWindow(QMainWindow):
         self.player = audio.Player()
         self.doc = Document(db or new_database())
         self.doc.setParent(self)
+        from . import keyboards                   # automatic keyboard switching (idea 43): this database's fields
+        keyboards.set_context(lambda: (self.doc.db, self.prefs))
         self.configs: dict = {}               # (kind, word class) -> current MatrixConfig
         self.switched = {LEMMA_TAG: False, TAG_TAG: False}
         self.layouts: dict = {}

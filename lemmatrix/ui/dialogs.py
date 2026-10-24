@@ -13,9 +13,10 @@ from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import (QCheckBox, QColorDialog, QComboBox, QDialog, QDialogButtonBox, QFormLayout,
                                QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMessageBox,
                                QPushButton, QSlider, QSpinBox, QTabWidget, QToolButton, QTreeWidget, QTreeWidgetItem,
-                               QVBoxLayout, QWidget, QInputDialog)
+                               QVBoxLayout, QWidget, QInputDialog, QScrollArea, QFrame)
 
 from ..model import (SEQUENCE, Database, Entry, Group, Tag, forbidden_in, nfc)
+from . import keyboards
 from . import spellui, theme
 from .widgets import ipa_font
 
@@ -159,6 +160,7 @@ class EntryDialog(QDialog):
                 for lang in s.gloss_languages:
                     ed = NoForbidden() if (lang == s.primary_gloss and not entry) else QLineEdit()
                     ed.setText(entry.get(f.name, lang) if entry else "")
+                    keyboards.tag(ed, f"{f.name}:{lang}")             # its own keyboard (idea 43)
                     if f.role == "gloss" and lang == "en":           # red lines under unknown words
                         spellui.attach(ed, getattr(parent, "speller", None))
                     if lang == s.primary_gloss:
@@ -182,7 +184,7 @@ class EntryDialog(QDialog):
                 if f.role == "stem-type":
                     self._add_from(form, db, entry, parent)
             else:
-                ed = QLineEdit(entry.get(f.name) if entry else "")
+                ed = keyboards.tag(QLineEdit(entry.get(f.name) if entry else ""), f.name)
                 if f.role == "lemma":
                     ed.setFont(ipa_font(14))
                 form.addRow(f.title, ed)
@@ -596,7 +598,7 @@ class PreferencesDialog(QDialog):
         self.db, self.prefs = db, prefs
         s = db.settings
         self.setWindowTitle("Settings")
-        self.resize(640, 500)
+        self.resize(660, 680)                 # the pages scroll if the screen is smaller
         lay = QVBoxLayout(self)
         tabs = QTabWidget()
         lay.addWidget(tabs)
@@ -738,7 +740,11 @@ class PreferencesDialog(QDialog):
                         f.addRow(widget)
                 v.addWidget(box)
             v.addStretch(1)
-            tabs.addTab(w, title)
+            area = QScrollArea()                  # a long page scrolls on a small screen
+            area.setWidgetResizable(True)
+            area.setFrameShape(QFrame.NoFrame)
+            area.setWidget(w)
+            tabs.addTab(area, title)
 
         from .. import notebook as nbmod             # the notebook's history sections (this database)
         ws = getattr(getattr(parent, "doc", None), "workspace", None)
@@ -755,12 +761,14 @@ class PreferencesDialog(QDialog):
         self.origin_on.setToolTip("Where a lemma comes from: the Stem type field (simple, complex, loan) and "
                                   "From (the lemmas it's built from, the languages it was borrowed from). "
                                   "Off hides them everywhere; what's filled in is kept.")
+        self.kb = keyboards.KeyboardSection(self, db, prefs)   # automatic keyboard switching (idea 43)
         page("General", [("This computer", [("Autosave every", self.autosave),
                                             ("Full backup folder", self.backups),
                                             (None, self.welcome)]),
                          ("Lemmas (this database)", [(None, self.origin_on)]),
                          ("Notebook (this database)", [(None, b) for b in self.history.values()]),
-                         ("Warnings (this computer)", [(None, self.unusual), (None, self.spelling), (None, self.confirm)])])
+                         ("Warnings (this computer)", [(None, self.unusual), (None, self.spelling), (None, self.confirm)]),
+                         ("Keyboards (this computer)", [(None, w) for w in self.kb.widgets()])])
         page("Sound", [
             ("This database", [("File name pattern", self.pattern), ("Tag separator", self.separator),
                                ("Utterance file names", self.utt_pattern),
@@ -903,6 +911,7 @@ class PreferencesDialog(QDialog):
         p.full_backup_folder = self.backups.text().strip()
         for key, box in self.badges.items():
             p.set_value(key, box.isChecked())
+        self.kb.apply()
         doc = getattr(self.parent(), "doc", None)
         if doc is not None:                       # the notebook's history switches: the workspace's
             from .. import notebook as nbmod

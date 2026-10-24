@@ -671,6 +671,8 @@ class MatrixView(QTableView):
         if q is None:
             return
         ed = QLineEdit(self.viewport())
+        from . import keyboards
+        keyboards.tag(ed, key)                   # the line's own keyboard (idea 43)
         ed.setFont(self.delegate._font(key))
         original = mx.cell_text(self.db, t, key)
         ed.setText(original)                     # the glossing symbols show while editing
