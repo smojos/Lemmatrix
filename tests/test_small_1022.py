@@ -14,7 +14,7 @@ def test_pitch_scratchpad_in_the_main_window(win, monkeypatch):
     played = []
     monkeypatch.setattr(win, "play_pitch", lambda text: played.append(text))
     sp = win.comparison.alpha
-    assert win.scratchpad is sp and [l.text() for l in win.comparison.letters] == ["α", "β"]
+    assert win.scratchpad is sp and [l.text() for l in win.comparison.letters] == ["α", "β", "γ"]
     win.comparison.beta.edit.setText("33")
     win.comparison.beta.edit.returnPressed.emit()
     assert played == ["33"]

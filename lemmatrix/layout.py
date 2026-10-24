@@ -10,6 +10,7 @@
     │  ├─ Tokens/              lemma tokens' recordings
     │  ├─ Utterances/          (idea 7, stage 2)
     │  ├─ Texts/               (idea 7, stage 3)
+│  ├─ Segments/            the segment scratchpad's recordings, by sequence and speaker (idea 46)
     │  └─ _Deleted recordings/ deleted tokens' recordings, held for undo
     ├─ Backups/                the automatic local backups
     ├─ Documentation/          consent forms and other documentation
@@ -34,6 +35,7 @@ SOUNDFILES = "Soundfiles"
 TOKENS = "Tokens"
 UTTERANCES = "Utterances"
 TEXTS = "Texts"
+SEGMENTS = "Segments"                      # the segment scratchpad's recordings (idea 46)
 HELD = "_Deleted recordings"
 BACKUPS = "Backups"
 DOCUMENTATION = "Documentation"
@@ -63,6 +65,11 @@ def texts_folder(db_path) -> Path:
 
 def utterances_folder(db_path) -> Path:
     return soundfiles(db_path) / UTTERANCES
+
+
+def segments_folder(db_path) -> Path:
+    """The segment scratchpad's recordings (IDEAS.md idea 46): made with the first one."""
+    return soundfiles(db_path) / SEGMENTS
 
 
 def held_folder(db_path) -> Path:

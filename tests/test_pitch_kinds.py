@@ -147,7 +147,8 @@ def test_converting_from_edit_metadata_is_one_undo_step(win, monkeypatch):
     assert pk.kind(db) == pk.INTONATIONAL and win.doc.dirty
     assert not pitchview.has(pitchview.TOKENS) and pitchview.has(pitchview.UTTERANCES)
     assert "drawing" not in [c.key for c in win.all_table.model_.columns]
-    assert win.comparison.alpha.isHidden() and win.comparison.hidden_note.isHidden()   # no reminder (Josh)
+    assert win.comparison.alpha.isHidden() and not win.comparison.tabs.isTabEnabled(0)   # no pitch (idea 46)
+    assert not win.comparison.note_menu().actions()               # nothing to unhide in this kind
     win.doc.undo.undo()
     assert pk.kind(db) == pk.TONAL and pitchview.has(pitchview.TOKENS)
     assert "drawing" in [c.key for c in win.all_table.model_.columns]

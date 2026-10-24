@@ -15,7 +15,7 @@ first runs (`requirements.txt`), each under its own licence.
 | [pyzipper](https://pypi.org/project/pyzipper/) | password-protected zips (anonymous backup) | MIT |
 | [praatio](https://pypi.org/project/praatio/) | reading and writing Praat TextGrids | MIT |
 | [Pillow](https://pypi.org/project/pillow/) | shrinking pictures for ɛλicit requests (GIFs keep their animation) | MIT-CMU (HPND) |
-| [soundfile](https://pypi.org/project/soundfile/) (with libsndfile) | reading ɛλicit's FLAC recordings | BSD-3-Clause (libsndfile: LGPL-2.1-or-later) |
+| [soundfile](https://pypi.org/project/soundfile/) (with libsndfile) | reading ɛλicit's FLAC recordings and playing the IPA soundfiles (Ogg Vorbis) | BSD-3-Clause (libsndfile: LGPL-2.1-or-later) |
 | [pycountry](https://pypi.org/project/pycountry/) (with the Debian iso-codes data) | the ISO 639-3 languages for a lemma's From | LGPL-2.1-only |
 | [pytest](https://pypi.org/project/pytest/) | the automated tests (development only) | MIT |
 
@@ -44,6 +44,17 @@ The mapping between the three lists (the `eacw` and `cawl` columns) was drafted 
 October 2026 from the lists' glosses; its EACW links were reviewed by Joshua A. G. Smolders and
 graded and checked in the list's final audit (23 October 2026). The EACW's taxa and regional sub
 codes were checked against Wikipedia's articles (facts only; no text is copied from them).
+
+**The IPA soundfiles** (`lemmatrix/ipa/`; IDEAS.md idea 46) are recordings, not code, and not
+under the AGPL or ARTWORK.md: the 126 soundfiles of Wikimedia Commons' *General phonetics* page
+(https://commons.wikimedia.org/wiki/General_phonetics), **unchanged**, at the versions pinned on
+24 October 2026 (`tools/fetch_commons_soundfiles.py`). 120 are under CC BY-SA 3.0, 4 under
+CC BY-SA 4.0, 1 CC0 and 1 public domain. Recorded by Peter Isotalo (79), Denelson83 (25: one
+edited by Trlkly, one by Fête and Marlin Setia1), Adamsa123 (8), Halibutt (4), TFighterPilot (2),
+and Erutuon, Fête, JøMa, Octane, PharyngealImplosive7, Pmx, Terfili and UzbekistanQoppa (one each).
+Each one's recorder, licence and Commons page are in `lemmatrix/ipa/CREDITS.md` (with the version and
+SHA-1 in `credits.tsv`), and Lemmatrix shows the credit when one is played. See
+`lemmatrix/ipa/LICENSE-IPA.md`.
 
 **Other programs.** Lemmatrix can open recordings in [Praat](https://www.praat.org) (by Paul
 Boersma and David Weenink), if it is installed; Praat isn't part of Lemmatrix.

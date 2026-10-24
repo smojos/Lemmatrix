@@ -14,6 +14,10 @@ The **Extended African Comparative Wordlist** (`lemmatrix/wordlists/eacw.tsv`, w
 the other lists) is **not** under the AGPL either: it is data, under **CC BY 4.0**. See
 `lemmatrix/wordlists/LICENSE-EACW.md`. The other wordlists' terms are in `THIRD-PARTY.md`.
 
+The **IPA soundfiles** (`lemmatrix/ipa/`) are not under the AGPL or ARTWORK.md: they are
+recordings from Wikimedia Commons, each under its own licence (CC BY-SA, CC0 or public domain),
+credited in `lemmatrix/ipa/CREDITS.md`. See `lemmatrix/ipa/LICENSE-IPA.md`.
+
 ## Additional terms (AGPL-3.0, section 7)
 
 These terms apply to every file of Lemmatrix that is under the AGPL.

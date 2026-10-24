@@ -188,14 +188,17 @@ def test_bulk_edit_and_tier_mapping(win):
 
 def test_comparison_area_keeps_alpha_and_beta(win):
     c = win.comparison
-    assert not c.alpha.isHidden() and c.hidden_note.isHidden()
+    c.set_tab("pitch")
+    assert not c.alpha.isHidden() and c.tabs.isTabEnabled(0) and c.tabs.tabText(0) == "Pitch"
     _hide(win)
+    # the Pitch tab says no pitch and can't be chosen; Segments is shown (idea 46, Josh)
     assert c.alpha.isHidden() and c.beta.isHidden()
-    assert not c.hidden_note.isHidden() and c.hidden_note.text() == "pitch hidden"
-    assert c.hidden_note.font().italic()
-    assert all(not lbl.isHidden() for lbl in c.letters)          # α and β stay at the left edge
+    assert c.tabs.tabText(0) == "no pitch" and not c.tabs.isTabEnabled(0) and c.current() == "segment"
+    assert not c.seg_alpha.isHidden()
+    assert all(not lbl.isHidden() for lbl in c.letters[:2])      # α and β stay at the left edge
+    assert win.prefs.comparison_tab == "pitch"                    # switched for it, not remembered
     next(x for x in c.note_menu().actions() if x.text() == "Unhide pitch").trigger()   # right-click
-    assert pitchview.shown() and not c.alpha.isHidden() and c.hidden_note.isHidden()
+    assert pitchview.shown() and c.current() == "pitch" and not c.alpha.isHidden()
 
 
 def test_settings_tick(win):
@@ -214,7 +217,7 @@ def test_utterances_window_follows(win):
     assert "drawing" in [c.key for c in w._columns()]
     _hide(win)
     assert "drawing" not in [c.key for c in w.table.model_.columns]
-    assert w.texts.comparison.alpha.isHidden() and not w.texts.comparison.hidden_note.isHidden()
+    assert w.texts.comparison.alpha.isHidden() and w.texts.comparison.tabs.tabText(0) == "no pitch"
     w.close()
 
 

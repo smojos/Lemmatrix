@@ -22,6 +22,7 @@ def _played(win, monkeypatch):
 def test_letters_are_the_play_buttons_and_no_play_button_is_left(win, monkeypatch):
     from PySide6.QtWidgets import QToolButton
     c = win.comparison
+    c.set_tab("pitch")
     played = _played(win, monkeypatch)
     win.show()
     c.alpha.edit.setText("55 21")
@@ -40,6 +41,7 @@ def test_letters_are_the_play_buttons_and_no_play_button_is_left(win, monkeypatc
 def test_right_shift_plays_and_left_shift_types(win, monkeypatch):
     from lemmatrix.ui import rightshift
     c = win.comparison
+    c.set_tab("pitch")
     played = _played(win, monkeypatch)
     win.show()
     monkeypatch.setattr(rightshift, "comparison_in", lambda w: c)

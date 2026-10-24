@@ -673,6 +673,13 @@ def export(db: Database, nb: nbmod.Notebook | None, folder: str | Path, opts: Op
                     report.recordings += 1
                 else:
                     report.missing_recordings += 1
+    if opts.with_recordings:
+        # the segment scratchpad's soundfiles (idea 46): a participant's with Audio sharing?;
+        # never a researcher's (not data: Josh, 24 October) or one with no speaker
+        from . import segments
+        copied, left = segments.copy_shared(db, folder / layout.SOUNDFILES / layout.SEGMENTS)
+        report.recordings += copied
+        report.withheld_recordings += left
     # texts: TextGrids always (text, not voices), their recordings only in the ethical archive
     # and only when every participant of the text agreed to audio sharing
     for t, ct in zip(db.texts, out.texts):

@@ -1,20 +1,34 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
-"""The pitch scratchpad (IDEAS.md idea 33): a pitch drawing with a box under it. A trace typed
-there (the usual notation, e.g. 55 3:3 21) is drawn as it is typed and played with Enter, a click on
-its letter (α, β) or Right Shift+A / Right Shift+B (Josh, 24 October). Nothing is saved anywhere.
-Used under a text's lines and in the main window's bottom row.
+"""The comparison area: two pads, α and β, for asking a speaker "is it A or B?", in the main
+window and under a text's lines (one widget, used twice: Josh, "complete clones"). A third, γ, is
+an Easter egg (Josh, 24 October): it appears when the working panel is dragged tall enough for it
+(Right Shift+C or G plays it: C follows A and B, G sounds like gamma) and goes again when there
+isn't room.
 
-What a pad holds is a value with a kind (`content()`: {"kind": "pitch", "value": "55 3:3 21"}), and
-playing goes by the kind (`PLAYERS`), so segmental comparison (Compare V and Compare C, IDEAS.md
-idea 46) can be added later as another kind, with little tabs in the pad to switch."""
+Two tabs (IDEAS.md idea 46, Josh, 24 October):
+- **Pitch** (idea 33): a pitch drawing with a box under it; a trace typed there (the usual
+  notation, e.g. 55 3:3 21) is drawn as it is typed. With the pitch system hidden, or a pitch kind
+  without scratchpads, the tab says *no pitch* and can't be chosen.
+- **Segments**: a box for any sequence (ʌ, pu, t͡s); typing silently finds its soundfile (the
+  session speaker's, one with no speaker, another speaker's, then Lemmatrix's own IPA soundfiles;
+  `segments.voices`), and the record button beside the box records one into Soundfiles/Segments.
+
+α and β play their pad on the tab shown: a click, Right Shift+A / Right Shift+B, or Enter. They are
+grey when there is nothing to play. The boxes of both tabs sit at the same height, with α and β
+centred on them (Josh). A small grey folder in the bottom corner opens Soundfiles/Segments.
+Nothing typed is saved: the pads are empty each time Lemmatrix opens."""
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QHBoxLayout, QLineEdit, QVBoxLayout, QWidget
+from PySide6.QtCore import QEvent, QSize, Qt, Signal
+from PySide6.QtGui import QValidator
+from PySide6.QtWidgets import (QHBoxLayout, QLineEdit, QMenu, QSizePolicy, QStackedWidget,
+                               QTabBar, QToolButton, QToolTip, QVBoxLayout, QWidget)
 
 from .widgets import PitchCanvas, ipa_font
+
+PITCH, SEGMENTS = "pitch", "segment"
 
 
 def _play_pitch(main, value: str):
@@ -22,12 +36,24 @@ def _play_pitch(main, value: str):
     main.play_pitch(value)
 
 
-# How each kind of content is played: kind -> function(main, value). Segments come later (idea 46).
-PLAYERS = {"pitch": _play_pitch}
+def _play_segment(main, value):
+    """A segment soundfile (a segments.Voice), as it is."""
+    from .. import audio
+    from PySide6.QtWidgets import QMessageBox
+    try:
+        main.player.play([value.path])
+    except audio.AudioError as exc:
+        QMessageBox.warning(main, "Play", str(exc))
+
+
+# How each kind of content is played: kind -> function(main, value).
+PLAYERS = {PITCH: _play_pitch, SEGMENTS: _play_segment}
 
 
 class PitchScratchpad(QWidget):
-    KIND = "pitch"
+    """The Pitch tab's pad: the drawing on top, the box under it."""
+    KIND = PITCH
+    changed = Signal()
 
     def __init__(self, main, low: int, high: int, tip: str, parent=None):
         super().__init__(parent)
@@ -48,9 +74,14 @@ class PitchScratchpad(QWidget):
         self.edit.setValidator(PitchValidator(self.edit))
         self.edit.setFont(ipa_font(main.prefs.ipa_size))
         self.edit.textChanged.connect(self.canvas.set_pitch)
+        self.edit.textChanged.connect(lambda *_: self.changed.emit())
         self.edit.returnPressed.connect(self.play)
         row.addWidget(self.edit, 1)                # no play button: the pad's letter plays it
         lay.addLayout(row)
+
+    def top_height(self) -> int:
+        """The height above the box (the drawing), for lining the tabs and letters up."""
+        return self.canvas.minimumHeight() + self.layout().spacing() + self.layout().contentsMargins().top()
 
     def set_range(self, low: int, high: int):
         self.canvas.set_range(low, high)
@@ -59,28 +90,223 @@ class PitchScratchpad(QWidget):
         """What the pad holds: its kind and its value."""
         return {"kind": self.kind, "value": self.edit.text()}
 
+    def playable(self) -> bool:
+        from .. import pitch as pitchmod
+        try:
+            return bool(self.edit.text().strip()) and bool(pitchmod.parse(self.edit.text()))
+        except Exception:                          # noqa: BLE001 (a half-typed trace)
+            return False
+
+    def describe(self) -> str:
+        return ""
+
     def play(self):
         """Play what the pad holds, by its kind."""
         c = self.content()
-        player = PLAYERS.get(c["kind"])
-        if player is not None and c["value"].strip():
-            player(self.main, c["value"])
+        if c["value"].strip():
+            PLAYERS[c["kind"]](self.main, c["value"])
+
+
+class _SequenceValidator(QValidator):
+    """No characters Windows forbids in file names (the sequence names its soundfile); a short
+    message says why, at the box."""
+
+    def __init__(self, edit, parent=None):
+        super().__init__(parent)
+        self.edit = edit
+
+    def validate(self, text, pos):
+        from .. import segments
+        bad = segments.problem(text)
+        if bad:
+            QToolTip.showText(self.edit.mapToGlobal(self.edit.rect().bottomLeft()),
+                              f"{bad} can't be in a sequence: it names its soundfile.", self.edit)
+            return QValidator.Invalid, text, pos
+        return QValidator.Acceptable, text, pos
+
+
+class SegmentPad(QWidget):
+    """The Segments tab's pad: room above (so its box lines up with the pitch box), the box, and
+    the record button beside it."""
+    KIND = SEGMENTS
+    changed = Signal()
+
+    def __init__(self, main, parent=None):
+        super().__init__(parent)
+        from .icons import icon
+        self.main = main
+        self.kind = self.KIND
+        self.chosen = None                        # a voice picked from the right-click menu
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(0, 2, 0, 0)
+        lay.setSpacing(2)
+        self.top = QWidget()                       # the pitch drawing's height, empty
+        lay.addWidget(self.top)
+        row = QHBoxLayout()
+        row.setSpacing(4)
+        self.edit = QLineEdit()
+        self.edit.setPlaceholderText("ʌ, pu, t͡s…")
+        self.edit.setToolTip("Type a sequence (a sound, a syllable, anything): its soundfile is "
+                             "found as you type. Enter, the letter or Right Shift plays it")
+        self.edit.setFont(ipa_font(main.prefs.ipa_size))
+        self.edit.setValidator(_SequenceValidator(self.edit, self.edit))
+        self.edit.textChanged.connect(self._typed)
+        self.edit.returnPressed.connect(self.play)
+        self.edit.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.edit.customContextMenuRequested.connect(lambda pos: self.menu().exec(self.edit.mapToGlobal(pos)))
+        row.addWidget(self.edit, 1)
+        self.record_btn = QToolButton()            # outside the box (Josh, 24 October)
+        self.record_btn.setIcon(icon("record", 24))
+        self.record_btn.setIconSize(QSize(24, 24))
+        self.record_btn.setAutoRaise(True)
+        self.record_btn.setCursor(Qt.PointingHandCursor)
+        self.record_btn.setToolTip("Record this sequence (into Soundfiles/Segments)")
+        self.record_btn.clicked.connect(lambda *_: self.record())
+        row.addWidget(self.record_btn, 0, Qt.AlignVCenter)
+        lay.addLayout(row)
+
+    def set_top(self, h: int):
+        self.top.setFixedHeight(max(0, h - self.layout().spacing() - self.layout().contentsMargins().top()))
+
+    def _db(self):
+        doc = getattr(self.main, "doc", None)
+        return doc.db if doc is not None else None
+
+    def _typed(self, *_):
+        self.chosen = None
+        self.changed.emit()
+
+    def sequence(self) -> str:
+        from .. import segments
+        return segments.norm(self.edit.text())
+
+    def voices(self) -> list:
+        from .. import segments
+        db = self._db()
+        if db is None or not self.sequence():
+            return []
+        return segments.voices(db, self.sequence(), self.main.session_speaker())
+
+    def voice(self):
+        found = self.voices()
+        if self.chosen is not None and any(v.path == self.chosen.path for v in found):
+            return self.chosen
+        return found[0] if found else None
+
+    def content(self) -> dict:
+        return {"kind": self.kind, "value": self.edit.text()}
+
+    def playable(self) -> bool:
+        return self.voice() is not None
+
+    def describe(self) -> str:
+        """Whose voice plays, for the letter's hover."""
+        v = self.voice()
+        if v is None:
+            return f"No soundfile for {self.sequence()} yet: record one" if self.sequence() else ""
+        if v.native:
+            return f"[{v.sequence}] {v.credit}"
+        from .. import audio
+        try:
+            date = audio.read_info(v.path).get("ICRD", "") if v.path.suffix.lower() == ".wav" else ""
+        except OSError:
+            date = ""
+        return f"{v.path.name}" + (f" · {v.speaker}" if v.speaker else "") + (f" · {date}" if date else "")
+
+    def play(self):
+        v = self.voice()
+        if v is not None:
+            PLAYERS[self.kind](self.main, v)
+
+    def menu(self) -> QMenu:
+        """The box's own menu, then every voice for the sequence (pick one), Record… and the folder."""
+        m = self.edit.createStandardContextMenu()
+        found = self.voices()
+        if found:
+            m.addSeparator()
+            cur = self.voice()
+            for v in found:
+                a = m.addAction(v.label())
+                a.setCheckable(True)
+                a.setChecked(cur is not None and v.path == cur.path)
+                a.triggered.connect(lambda *_, v=v: self._choose(v))
+        m.addSeparator()
+        a = m.addAction("Record…")
+        a.setEnabled(bool(self.sequence()))
+        a.triggered.connect(lambda *_: self.record())
+        a = m.addAction("Open the Segments folder")
+        a.triggered.connect(lambda *_: open_segments_folder(self.main))
+        return m
+
+    def _choose(self, v):
+        self.chosen = v
+        self.changed.emit()
+        self.play()
+
+    def record(self):
+        from PySide6.QtWidgets import QMessageBox
+        if not self.sequence():
+            self.edit.setFocus()
+            QToolTip.showText(self.edit.mapToGlobal(self.edit.rect().bottomLeft()),
+                              "Type the sequence to record first.", self.edit)
+            return
+        db = self._db()
+        if db is None or not db.path:
+            QMessageBox.information(self, "Record", "Save the database first: segment soundfiles go into its "
+                                    "Soundfiles/Segments folder.")
+            return
+        from .segment_record import SegmentRecordDialog
+        dlg = SegmentRecordDialog(self.main, self.sequence(), self)
+        dlg.exec()
+        self.chosen = None
+        self.changed.emit()
+
+
+def open_segments_folder(main):
+    """The folder icon: Soundfiles/Segments in the file manager (made if it isn't there)."""
+    from .. import layout
+    db = main.doc.db
+    if not db.path:
+        return
+    main.open_folder(layout.segments_folder(db.path))
 
 
 class ComparisonPads(QWidget):
-    """The comparison area (Josh, 22 October): two scratchpads, α on top and β under it, for asking
-    a speaker "is it A or B?". Each has its letter on its left, large, bold, in the theme colour."""
+    """The comparison area: the Pitch and Segments tabs over α and β. Each letter is on its pad's
+    left, large, bold, in the theme colour (grey with nothing to play), centred on the box."""
 
     def __init__(self, main, low: int, high: int, tip: str, parent=None):
         super().__init__(parent)
-        from PySide6.QtWidgets import QGridLayout, QLabel, QToolButton
-        grid = QGridLayout(self)
-        grid.setContentsMargins(0, 0, 0, 0)
-        grid.setHorizontalSpacing(8)
-        grid.setVerticalSpacing(4)
-        self.pads, self.letters = [], []
-        for r, (letter, key) in enumerate((("α", "A"), ("β", "B"))):
-            # the letter is the play button (Josh, 24 October), its key in the hover
+        from .icons import icon
+        self.main = main
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(2)
+        self.tabs = QTabBar()
+        self.tabs.addTab("Pitch")
+        self.tabs.addTab("Segments")
+        self.tabs.setExpanding(False)
+        self.tabs.setDrawBase(False)
+        self.tabs.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tabs.customContextMenuRequested.connect(self._tab_menu)
+        outer.addWidget(self.tabs, 0, Qt.AlignLeft)
+        rows = QVBoxLayout()
+        rows.setSpacing(4)
+        self.pads, self.seg_pads, self.letters, self.stacks, self.letter_tops, self.rows = [], [], [], [], [], []
+        # α and β; γ, an Easter egg (Josh, 24 October), only while the working panel is dragged
+        # tall enough for a third row
+        for letter, keys in (("α", "A"), ("β", "B"), ("γ", "C or G")):
+            roww = QWidget()
+            row = QHBoxLayout(roww)
+            row.setContentsMargins(0, 0, 0, 0)
+            row.setSpacing(8)
+            # the letter is the play button (Josh, 24 October), centred on the box (Josh): room
+            # above it as tall as the drawing, then the letter at the box's height
+            col = QVBoxLayout()
+            col.setContentsMargins(0, 0, 0, 0)
+            col.setSpacing(0)
+            top = QWidget()
+            col.addWidget(top)
             lbl = QToolButton()
             lbl.setText(letter)
             lbl.setAutoRaise(True)
@@ -89,81 +315,222 @@ class ComparisonPads(QWidget):
             f.setBold(True)
             f.setPointSizeF(f.pointSizeF() * 2.2)
             lbl.setFont(f)
-            lbl.setToolTip(f"Play {letter} (Right Shift+{key})")
-            pad = PitchScratchpad(main, low, high, tip)
-            lbl.clicked.connect(lambda _=False, p=pad: self.play(p))
-            grid.addWidget(lbl, r, 0)
-            grid.addWidget(pad, r, 1)
+            lbl.setProperty("key", keys)
+            i = len(self.letters)
+            lbl.clicked.connect(lambda _=False, i=i: self.play_row(i))
+            col.addWidget(lbl, 0, Qt.AlignVCenter)
+            row.addLayout(col)
+            pitch = PitchScratchpad(main, low, high, tip)
+            seg = SegmentPad(main)
+            stack = QStackedWidget()
+            stack.addWidget(pitch)
+            stack.addWidget(seg)
+            stack.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
+            row.addWidget(stack, 1)
+            rows.addWidget(roww)
+            for p in (pitch, seg):
+                p.changed.connect(self.refresh)
+            self.pads.append(pitch)
+            self.seg_pads.append(seg)
             self.letters.append(lbl)
-            self.pads.append(pad)
-        self.alpha, self.beta = self.pads
-        # the pitch system hidden (idea 9): the pads go, α and β stay at the area's left edge
-        # (Compare V and Compare C will join them there, idea 46); until then a faint line says why,
-        # in italics and intentionally lowercase (Josh, 23 October); right-click it to unhide
-        self.main = main
-        self.hidden_note = QLabel("pitch hidden")
-        f = self.hidden_note.font()
-        f.setItalic(True)
-        self.hidden_note.setFont(f)
-        self.hidden_note.setToolTip("The pitch system is hidden. Right-click to unhide it "
-                                    "(or View → Show pitch system, or File → Settings → Pitch)")
-        self.hidden_note.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.hidden_note.customContextMenuRequested.connect(self._note_menu)
-        grid.addWidget(self.hidden_note, 0, 1, 2, 1, Qt.AlignLeft | Qt.AlignVCenter)
-        grid.setColumnStretch(1, 1)
+            self.stacks.append(stack)
+            self.letter_tops.append(top)
+            self.rows.append(roww)
+        self.rows[2].hide()                        # γ: hidden until there is room for it
+        outer.addLayout(rows)
+        outer.addStretch(1)
+        foot = QHBoxLayout()
+        foot.setContentsMargins(0, 0, 0, 0)
+        foot.addStretch(1)
+        self.folder_btn = QToolButton()            # subtle, grey, small (Josh, 24 October)
+        self.folder_btn.setIcon(icon("folder", 14))
+        self.folder_btn.setIconSize(QSize(14, 14))
+        self.folder_btn.setAutoRaise(True)
+        self.folder_btn.setCursor(Qt.PointingHandCursor)
+        self.folder_btn.setToolTip("Open Soundfiles/Segments")
+        self.folder_btn.clicked.connect(lambda *_: open_segments_folder(self.main))
+        foot.addWidget(self.folder_btn)
+        outer.addLayout(foot)
+        # γ mustn't make the panel's minimum taller, or it could never be dragged smaller again
+        from PySide6.QtWidgets import QLayout
+        outer.setSizeConstraint(QLayout.SetNoConstraint)
+        self.alpha, self.beta, self.gamma = self.pads
+        self.seg_alpha, self.seg_beta, self.seg_gamma = self.seg_pads
+        self.tabs.currentChanged.connect(self._tab_changed)
+        self._sync_heights()
         self.restyle()
+        want = 1 if getattr(main.prefs, "comparison_tab", PITCH) == SEGMENTS else 0
+        self._auto = True
+        self.tabs.setCurrentIndex(want)
+        self._auto = False
+        self._tab_changed(want, remember=False)
         self.show_pitch()
 
+    # ---- tabs
+    def current(self) -> str:
+        return SEGMENTS if self.tabs.currentIndex() == 1 else PITCH
+
+    def current_pads(self) -> list:
+        return self.seg_pads if self.current() == SEGMENTS else self.pads
+
+    def _tab_changed(self, index: int, remember: bool = True):
+        for st in self.stacks:
+            st.setCurrentIndex(1 if index == 1 else 0)
+        if remember and not getattr(self, "_auto", False) and self.tabs.isTabEnabled(index):
+            self.main.prefs.comparison_tab = SEGMENTS if index == 1 else PITCH
+        self.refresh()
+
+    def set_tab(self, kind: str):
+        i = 1 if kind == SEGMENTS else 0
+        if self.tabs.isTabEnabled(i):
+            self.tabs.setCurrentIndex(i)
+
+    def _tab_menu(self, pos):
+        if self.tabs.tabAt(pos) == 0 and not self.tabs.isTabEnabled(0):
+            m = self.note_menu()
+            if m.actions():
+                m.exec(self.tabs.mapToGlobal(pos))
+
+    def note_menu(self) -> QMenu:
+        """The right-click menu of the *no pitch* tab: Unhide pitch (where the kind has pitch)."""
+        from .. import pitchview
+        m = QMenu(self)
+        if pitchview.has(pitchview.SCRATCHPADS):
+            a = m.addAction("Unhide pitch")
+            a.triggered.connect(lambda *_: self.main.set_pitch_shown(True))
+        return m
+
+    # ---- playing
     def play(self, pad):
-        """A letter clicked (or Right Shift+A / B): play its pad, if it is shown."""
-        if pad.isVisible():
+        """A pad played (its letter clicked, or Right Shift+A / B), if it is the tab shown."""
+        if pad in self.current_pads():
             pad.play()
 
-    def play_key(self, key: str):
-        """Right Shift+A plays α, Right Shift+B β."""
-        i = {"A": 0, "B": 1}.get(key.upper())
-        if i is not None:
-            self.play(self.pads[i])
+    def play_row(self, i: int):
+        if self.rows[i].isVisible() or not self.isVisible():
+            self.play(self.current_pads()[i])
 
+    def has_gamma(self) -> bool:
+        return not self.rows[2].isHidden()
+
+    def play_key(self, key: str) -> bool:
+        """Right Shift+A plays α, Right Shift+B β, and Right Shift+C or G γ while it is shown, on
+        the tab shown. False if the key has nothing to play here (it is then typed)."""
+        i = {"A": 0, "B": 1, "C": 2, "G": 2}.get(key.upper())
+        if i is None or (i == 2 and not self.has_gamma()):
+            return False
+        self.play_row(i)
+        return True
+
+    # ---- γ: shown while the area is tall enough for a third row
+    def _third_fits(self) -> bool:
+        lay = self.layout()
+        sp = lay.spacing()
+        row = max(r.sizeHint().height() for r in self.rows[:2])
+        need = (self.tabs.sizeHint().height() + sp + 3 * row + 2 * 4 + sp
+                + self.folder_btn.sizeHint().height())
+        return self.height() >= need
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        fits = self._third_fits()
+        if fits != self.has_gamma():
+            self.rows[2].setVisible(fits)
+            self.refresh()
+
+    # ---- the pitch system
     def set_range(self, low: int, high: int):
         for p in self.pads:
             p.set_range(low, high)
+        self._sync_heights()
 
     def show_pitch(self, on: bool | None = None):
-        """Show the pitch scratchpads, or hide them (the pitch system hidden); None: as the open
-        database's Show the pitch system says."""
+        """The Pitch tab, or *no pitch* (the pitch system hidden, or a pitch kind without
+        scratchpads: it can't be chosen); None: as the open database says."""
         from .. import pitchview
         if on is None:
             on = pitchview.shown(pitchview.SCRATCHPADS)
-        for p in self.pads:
-            p.setVisible(on)
-        # the pitch kind has no scratchpads (intonational, unspecified): "no pitch", nothing to unhide
+        self._auto = True                         # Qt moves off a disabled tab by itself
+        self.tabs.setTabEnabled(0, on)
+        self.tabs.setTabText(0, "Pitch" if on else "no pitch")
         kind_has = pitchview.has(pitchview.SCRATCHPADS)
-        self.hidden_note.setText("pitch hidden" if kind_has else "no pitch")
-        self.hidden_note.setToolTip(
+        self.tabs.setTabToolTip(0, "" if on else (
             "The pitch system is hidden. Right-click to unhide it (or View → Show pitch system, or "
             "File → Settings → Pitch)" if kind_has else
-            "This database's pitch kind has no pitch scratchpads (Edit → Metadata → Pitch kind)")
-        self.hidden_note.setContextMenuPolicy(Qt.CustomContextMenu if kind_has else Qt.NoContextMenu)
-        # no reminder where the kind has no pitch at all (Josh, 23 October: an annoying reminder to
-        # non-tonal researchers that they don't have what they need): α and β alone
-        self.hidden_note.setVisible(not on and kind_has)
+            "This database's pitch kind has no pitch scratchpads (Edit → Metadata → Pitch kind)"))
+        try:                                      # switched for the pitch system: not remembered
+            if not on and self.tabs.currentIndex() == 0:
+                self.tabs.setCurrentIndex(1)
+            elif on and self.main.prefs.comparison_tab != SEGMENTS and self.tabs.currentIndex() == 1:
+                self.tabs.setCurrentIndex(0)      # back to the tab this computer was on
+        finally:
+            self._auto = False
+        self._tab_changed(self.tabs.currentIndex(), remember=False)
 
-    def note_menu(self):
-        """The right-click menu of the pitch hidden line: Unhide pitch."""
-        from PySide6.QtWidgets import QMenu
-        m = QMenu(self)
-        a = m.addAction("Unhide pitch")
-        a.triggered.connect(lambda *_: self.main.set_pitch_shown(True))
-        return m
+    # ---- looks
+    def _two_rows(self) -> int:
+        """The area's height with α and β only: its minimum, γ or not."""
+        sp = self.layout().spacing()
+        row = max(r.sizeHint().height() for r in self.rows[:2])
+        return self.tabs.sizeHint().height() + sp + 2 * row + 4 + sp + self.folder_btn.sizeHint().height()
 
-    def _note_menu(self, pos):
-        self.note_menu().exec(self.hidden_note.mapToGlobal(pos))
+    def sizeHint(self):
+        h = super().sizeHint()
+        h.setHeight(self._two_rows())
+        return h
+
+    def minimumSizeHint(self):
+        h = super().minimumSizeHint()
+        h.setHeight(self._two_rows())
+        return h
+
+    def _sync_heights(self):
+        """The boxes of both tabs at the same height, and α and β centred on them (Josh)."""
+        h = self.pads[0].top_height()
+        for seg in self.seg_pads:
+            seg.set_top(h)
+        box = self.pads[0].edit.sizeHint().height()
+        wide = max(lbl.sizeHint().width() for lbl in self.letters)   # the boxes' left edges in line
+        for top, lbl, seg in zip(self.letter_tops, self.letters, self.seg_pads):
+            top.setFixedHeight(h)
+            lbl.setFixedHeight(max(box, seg.record_btn.sizeHint().height()))
+            lbl.setFixedWidth(wide)
+
+    def refresh(self):
+        """α and β in the theme colour when there is something to play, grey when not; their
+        hover says whose voice it is."""
+        from . import theme
+        on, off = theme.colour("pitch").name(), theme.colour("disabled").name()
+        for pad, lbl in zip(self.current_pads(), self.letters):
+            ok = pad.playable()
+            lbl.setStyleSheet(
+                f"QToolButton {{ color: {on if ok else off}; border: none; padding: 0 4px; }}"
+                f"QToolButton:hover {{ background: {theme.wash(0.8).name()}; border-radius: 6px; }}")
+            tip = f"Play {lbl.text()} (Right Shift+{lbl.property('key')})"
+            more = pad.describe()
+            lbl.setToolTip(tip + ("\n" + more if more else ""))
 
     def restyle(self):
         from . import theme
-        self.hidden_note.setStyleSheet(f"color: {theme.colour('disabled').name()};")
-        for lbl in self.letters:
-            lbl.setStyleSheet(                                      # the accent, lighter on dark
-                f"QToolButton {{ color: {theme.colour('pitch').name()}; border: none; padding: 0 4px; }}"
-                f"QToolButton:hover {{ background: {theme.wash(0.8).name()}; border-radius: 6px; }}")
+        a = theme.accent()
+        self.tabs.setStyleSheet(
+            "QTabBar::tab { padding: 3px 10px; font-weight: normal; } "
+            f"QTabBar::tab:selected {{ background: {a.name()}; color: {theme.text_on(a).name()}; }}"
+            f"QTabBar::tab:disabled {{ color: {theme.colour('disabled').name()}; font-style: italic; }}")
+        self.refresh()
+
+    # a file added or deleted by hand (Explorer, Praat) shows when the window comes back
+    def showEvent(self, event):
+        super().showEvent(event)
+        w = self.window()
+        if w is not None and getattr(self, "_watching", None) is not w:
+            w.installEventFilter(self)
+            self._watching = w
+        self._sync_heights()
+        self.refresh()
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.WindowActivate:
+            self.refresh()
+        return False
+

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
-"""Right Shift+A plays the comparison area's α, Right Shift+B its β (Josh, 24 October), in the
+"""Right Shift+A plays the comparison area's α, Right Shift+B its β (Josh, 24 October), and Right
+Shift+C or G its γ while that is shown (an Easter egg: the working panel dragged tall), in the
 window that is active (the main window, or Texts and utterances on its Texts tab).
 
 Qt's shortcuts can't tell the right Shift from the left, so one filter on the whole application
@@ -21,6 +22,8 @@ _VK_RSHIFT = 0xA1
 _RIGHT_SCANS = {0x36, 62}
 _RIGHT_KEYS = {_VK_RSHIFT, 0xFFE2}
 _MAC_RIGHT_SHIFT = 0x4                    # NX_DEVICERSHIFTKEYMASK in the native modifiers
+# α, β, and γ (C or G) while the comparison area shows it (Josh, 24 October)
+KEYS = {Qt.Key_A: "A", Qt.Key_B: "B", Qt.Key_C: "C", Qt.Key_G: "G"}
 
 
 def _right_shift_windows() -> bool | None:
@@ -62,14 +65,15 @@ class RightShiftFilter(QObject):
             if event.nativeScanCode() in _RIGHT_SCANS or event.nativeVirtualKey() in _RIGHT_KEYS:
                 self.right = t == QEvent.KeyPress
             return False
-        if t == QEvent.KeyPress and event.key() in (Qt.Key_A, Qt.Key_B) \
+        if t == QEvent.KeyPress and event.key() in KEYS \
                 and event.modifiers() & Qt.ShiftModifier \
                 and not event.modifiers() & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier) \
                 and self.right_held(event):
             area = comparison_in(QApplication.activeWindow())
-            if area is not None:
+            key = KEYS[event.key()]
+            if area is not None and (key in "AB" or area.has_gamma()):
                 if not event.isAutoRepeat():
-                    area.play_key("A" if event.key() == Qt.Key_A else "B")
+                    area.play_key(key)
                 return True               # not typed: it plays
         return False
 

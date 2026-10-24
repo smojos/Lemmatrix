@@ -38,6 +38,8 @@ def about_text() -> str:
             "The icons, the splash screen and the ɛλicit drawings are the author's artwork, "
             "all rights reserved (ARTWORK.md). The Extended African Comparative Wordlist is the "
             "author's data under CC BY 4.0 (lemmatrix/wordlists/LICENSE-EACW.md). "
+            "The IPA soundfiles are from Wikimedia Commons, recorded by Peter Isotalo, Denelson83, "
+            "Adamsa123, Halibutt and others, each under its own licence (lemmatrix/ipa/CREDITS.md). "
             "Lemmatrix™ (also written λemmatriχ™) and ɛλicit™ are trademarks of "
             "Joshua A. G. Smolders.<br><br>"
             f'Source code: <a href="{SOURCE_URL}">{SOURCE_URL.removeprefix("https://")}</a><br>'
@@ -1045,18 +1047,17 @@ class MainWindow(QMainWindow):
         return self.texts_btn
 
     def _scratch_panel(self) -> QWidget:
-        """The comparison area (Josh, 22 October): two pitch scratchpads, α and β, as under a text's
-        lines (IDEAS.md idea 33), for every tab of the Matrix, against Current Session. Nothing is
-        saved: they're empty each time Lemmatrix opens."""
+        """The comparison area (Josh, 22 October): α and β, with the Pitch and Segments tabs (IDEAS.md
+        ideas 33 and 46), as under a text's lines, for every tab of the Matrix, against Current
+        Session. Nothing typed is saved: they're empty each time Lemmatrix opens."""
         from .scratchpad import ComparisonPads
         panel, pl = self._bar()
         s = self.doc.db.settings
         self.comparison = ComparisonPads(self, s.pitch_low, s.pitch_high,
-                                         "Pitch scratchpad: type a pitch trace to see and hear it (Enter or "
-                                         "the play button). Nothing is saved")
+                                         "Pitch scratchpad: type a pitch trace to see and hear it (Enter, or "
+                                         "click its letter). Nothing is saved")
         self.scratchpad = self.comparison.alpha
-        pl.addWidget(self.comparison)
-        pl.addStretch(1)
+        pl.addWidget(self.comparison, 1)          # all the panel's height: γ comes when it's tall (idea 46)
         panel.setFixedWidth(280)
         return panel
 
@@ -3716,6 +3717,9 @@ class MainWindow(QMainWindow):
             self.doc.undo.clear()                 # renames can't be undone safely
             if self.speaker_code in speakers:
                 self.speaker_code = speakers[self.speaker_code]
+        if renames[chips.PARTICIPANTS] or renames[chips.RESEARCHERS]:
+            from .. import segments               # their segment soundfiles follow (idea 46)
+            segments.rename_speakers(db, {**renames[chips.RESEARCHERS], **speakers})
         if any(renames.values()):
             for t in db.texts:                    # texts' people and places follow renamed codes
                 t.participants = [speakers.get(c, c) for c in t.participants]

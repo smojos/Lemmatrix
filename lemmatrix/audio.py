@@ -185,6 +185,24 @@ def read_wav(path: str | Path) -> tuple[np.ndarray, int]:
     return _decode(raw, width, ch), rate
 
 
+def read_any(path: str | Path) -> tuple[np.ndarray, int]:
+    """Read a soundfile as mono float samples: WAV here, Ogg Vorbis and FLAC (Lemmatrix's own IPA
+    soundfiles, idea 46) through soundfile. Played as they are: nothing is changed."""
+    path = Path(path)
+    if path.suffix.lower() == ".wav":
+        return read_wav(path)
+    try:
+        import soundfile
+    except ImportError as exc:
+        raise AudioError("Playing this soundfile needs the soundfile package (in requirements.txt): start "
+                         "Lemmatrix with Run Lemmatrix.bat once to install it.") from exc
+    try:
+        data, rate = soundfile.read(str(path), dtype="float32", always_2d=True)
+    except Exception as exc:                      # noqa: BLE001 (libsndfile's errors)
+        raise AudioError(f"Couldn't read {path.name}: {exc}") from exc
+    return (data.mean(axis=1) if data.shape[1] > 1 else data[:, 0]).astype(np.float32), rate
+
+
 def read_segment(path: str | Path, start: float, end: float) -> tuple[np.ndarray, int]:
     """Mono float samples of a stretch of a PCM WAV file (seconds; clipped to the file)."""
     with wave.open(str(path), "rb") as w:
@@ -338,7 +356,7 @@ def load_for_playing(path: Path) -> tuple[np.ndarray, int]:
     from .storage import is_cloud_only
     cloud = is_cloud_only(path)
     try:
-        return read_wav(path)
+        return read_any(path)
     except (OSError, EOFError, wave.Error, AudioError, ValueError) as exc:
         if cloud:
             raise AudioError(
@@ -349,7 +367,7 @@ def load_for_playing(path: Path) -> tuple[np.ndarray, int]:
 
 
 class Player:
-    """Plays one or more WAV files in turn, in the background."""
+    """Plays one or more soundfiles (WAV, or Ogg and FLAC) in turn, in the background."""
 
     def __init__(self):
         self._stop = threading.Event()

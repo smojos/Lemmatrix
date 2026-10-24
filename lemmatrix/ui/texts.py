@@ -554,8 +554,7 @@ class TextsPanel(QObject):
         ol.setContentsMargins(0, 0, 0, 0)
         ol.addWidget(bar, 1)
         cmp_panel, cl = self.main._bar()
-        cl.addWidget(self._scratchpad())
-        cl.addStretch(1)
+        cl.addWidget(self._scratchpad(), 1)       # all the panel's height (γ, idea 46)
         cmp_panel.setFixedWidth(280)
         ol.addWidget(cmp_panel)
         return outer
