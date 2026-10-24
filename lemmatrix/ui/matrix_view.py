@@ -129,6 +129,8 @@ class MatrixModel(QAbstractTableModel):
             return it.chips if (it.spec and it.spec.match != mx.CITATION) else None
         if role == Qt.UserRole + 1:
             return it.spec.match == mx.LOOSE if it.spec else False
+        if role == Qt.UserRole + 2:                # a lemma's header (its width is capped)
+            return it.entry is not None
         if role == Qt.FontRole and it.entry is not None:
             return ipa_font(round(13 * self.zoom))
         if role == Qt.ToolTipRole:
@@ -150,6 +152,7 @@ class ChipHeader(QHeaderView):
         self.setSectionsClickable(True)
         self.setHighlightSections(False)
         self.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.setTextElideMode(Qt.ElideRight)       # a long lemma ends in … (its width is capped)
         f = self.font()
         self.chip_font = QFont(f)
         self._base_pt = f.pointSizeF()
@@ -233,11 +236,20 @@ class ChipHeader(QHeaderView):
         painter.restore()
 
     WRAP_WIDTH = 170       # the widest a header of tags down the side grows before it wraps
+    LEMMA_WIDTH = 110      # the widest a lemma's header across the top grows (a column's default width)
 
     def sectionSizeFromContents(self, index):
         s = super().sectionSizeFromContents(index)
         chips = self._chips(index)
         if chips is None:
+            m = self.model()
+            if m is not None and m.headerData(index, self.orientation(), Qt.UserRole + 2):
+                # a long lemma or gloss doesn't stretch its row header or column (Josh, 24 October):
+                # no wider than the default, the rest elided (the hover has it all)
+                zoom = self.chip_font.pointSizeF() / self._base_pt if self._base_pt else 1.0
+                cap = round((self.WRAP_WIDTH if self.orientation() == Qt.Vertical else self.LEMMA_WIDTH) * zoom)
+                if s.width() > cap:
+                    s = QSize(cap, s.height())
             return s
         _, h = chip_metrics(self.chip_font)
         labels = chips or ["(no tags)"]

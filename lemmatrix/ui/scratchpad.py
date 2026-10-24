@@ -491,6 +491,9 @@ class ComparisonPads(QWidget):
 
     def restyle(self):
         from . import theme
+        # given the palette directly: on Windows Qt didn't always pass a theme change down to the
+        # pads, so their boxes stayed dark after switching to light (Josh, 24 October)
+        self.setPalette(theme.interface_palette())
         a = theme.accent()
         self.tabs.setStyleSheet(
             "QTabBar::tab { padding: 3px 10px; font-weight: normal; } "

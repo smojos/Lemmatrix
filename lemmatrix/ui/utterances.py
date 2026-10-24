@@ -197,6 +197,7 @@ class TextsUtterancesWindow(QDialog):
         from PySide6.QtGui import QShortcut
         QShortcut(QKeySequence("Ctrl+Space"), self, self._play_key)       # an utterance, or a text's line
         QShortcut(QKeySequence("Ctrl+Shift+Space"), self, self.play_pitch)    # as in All data
+        QShortcut(QKeySequence("Ctrl+Alt+Space"), self, self._praat_key)  # as in All data (Josh, 24 October)
 
         for a in (self.doc.undo.createUndoAction(self, "Undo"), self.doc.undo.createRedoAction(self, "Redo")):
             self.addAction(a)
@@ -601,6 +602,18 @@ class TextsUtterancesWindow(QDialog):
             self.texts.play_line()
         else:
             self.play()
+
+    def _praat_key(self):
+        """Ctrl+Alt+Space: the text's recording and TextGrid at the selected line, or the utterance's
+        recording, in Praat."""
+        if self.tabs.currentIndex() == TEXTS:
+            self.texts.open_in_praat()
+            return
+        u = self.table.current_row()
+        if u is None:
+            return
+        path = storage.utterance_folder(self.db) / u.token.file if u.token.file else None
+        self.main.open_in_praat(path, self)
 
     def select_text(self, text):
         """Show a text (from the notebook)."""
