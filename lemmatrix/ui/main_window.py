@@ -38,7 +38,7 @@ def about_text() -> str:
             "The icons, the splash screen and the ɛλicit drawings are the author's artwork, "
             "all rights reserved (ARTWORK.md). The Extended African Comparative Wordlist is the "
             "author's data under CC BY 4.0 (lemmatrix/wordlists/LICENSE-EACW.md). "
-            "Lemmatrix™ and ɛλicit™ are trademarks of "
+            "Lemmatrix™ (also written λemmatriχ™) and ɛλicit™ are trademarks of "
             "Joshua A. G. Smolders.<br><br>"
             f'Source code: <a href="{SOURCE_URL}">{SOURCE_URL.removeprefix("https://")}</a><br>'
             f'Support, bugs and suggestions: <a href="mailto:{SUPPORT_EMAIL}">{SUPPORT_EMAIL}</a><br><br>'

@@ -35,4 +35,5 @@ These terms apply to every file of Lemmatrix that is under the AGPL.
 
 ## Trademark
 
-Lemmatrix™ and ɛλicit™ are trademarks of Joshua A. G. Smolders.
+Lemmatrix™, its alternative spelling λemmatriχ™ (with an initial lambda and a final chi) and ɛλicit™
+are trademarks of Joshua A. G. Smolders.

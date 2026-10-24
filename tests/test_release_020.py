@@ -119,3 +119,11 @@ def test_settings_has_the_welcome_tick(win):
         assert not dlg.welcome.isChecked()
     finally:
         win.prefs.welcome_mode = old
+
+
+def test_the_alternative_spelling_is_a_trademark_too():
+    """Josh, 24 October: λemmatriχ (an initial lambda, a final chi) is a trademark like Lemmatrix."""
+    from lemmatrix.ui.main_window import about_text
+    for name in ("NOTICE.md", "README.md", "AUTHORS", "DESIGN.md", ".zenodo.json"):
+        assert "λemmatriχ" in (ROOT / name).read_text(encoding="utf-8"), name
+    assert "λemmatriχ™" in about_text()

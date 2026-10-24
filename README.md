@@ -329,7 +329,8 @@ Wordlist and the Swadesh list) is data, not code: © Joshua A. G. Smolders, unde
 Commons Attribution 4.0 licence, so anyone may reuse it, in other wordlists and compilations too,
 with credit ([LICENSE-EACW.md](lemmatrix/wordlists/LICENSE-EACW.md)).
 
-**The name.** Lemmatrix™ and ɛλicit™ are trademarks of Joshua A. G. Smolders. Modified versions
+**The name.** Lemmatrix™, its alternative spelling λemmatriχ™ (with an initial lambda and a final
+chi) and ɛλicit™ are trademarks of Joshua A. G. Smolders. Modified versions
 must use a different name.
 
 The libraries Lemmatrix uses keep their own licences: see [THIRD-PARTY.md](THIRD-PARTY.md).
