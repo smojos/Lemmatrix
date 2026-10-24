@@ -968,7 +968,8 @@ def test_questions_window(win):
     assert not s.questions[0].is_open and win.doc.dirty
 
 
-def test_ctrl_click_shows_only_that_lemma(win):
+def test_alt_click_shows_only_that_lemma(win):
+    """The pin: Alt+click since 24 October (idea 64: Ctrl+click selects several lemmas now)."""
     from PySide6.QtCore import QPoint, Qt
     from PySide6.QtTest import QTest
     t = win.lemmas
@@ -976,14 +977,14 @@ def test_ctrl_click_shows_only_that_lemma(win):
     goat = win.doc.db.entry_by_ref("D002")
     t.select_row(goat)
     rect = t.visualRect(t.currentIndex())
-    QTest.mouseClick(t.viewport(), Qt.LeftButton, Qt.ControlModifier, rect.center())
+    QTest.mouseClick(t.viewport(), Qt.LeftButton, Qt.AltModifier, rect.center())
     assert t.visible_rows() == [goat]
     assert t.current_row() is goat
     win.refresh()
     assert win.lemma_count.text() == f"1 / {len(win.doc.db.entries)}"     # plain numbers
     assert "Only D002" in win.lemma_count.toolTip()
     rect = t.visualRect(t.currentIndex())
-    QTest.mouseClick(t.viewport(), Qt.LeftButton, Qt.ControlModifier, rect.center())
+    QTest.mouseClick(t.viewport(), Qt.LeftButton, Qt.AltModifier, rect.center())
     assert t.proxy.rowCount() == total and t.current_row() is goat
     t.toggle_pin(goat)
     win._clear_lemma_filters()                   # Clear all filters undoes it too

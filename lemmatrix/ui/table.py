@@ -132,13 +132,22 @@ class RowModel(QAbstractTableModel):
         return None
 
 
+def pinned_ids(pinned) -> frozenset:
+    """The ids a pin shows: one (a str) or several (a frozenset)."""
+    if pinned is None:
+        return frozenset()
+    return frozenset([pinned]) if isinstance(pinned, str) else frozenset(pinned)
+
+
 class RowFilter(QSortFilterProxyModel):
     searchChanged = Signal()                       # the views repaint their search marks
 
     def __init__(self):
         super().__init__()
         self.filters: dict[str, object] = {}       # column key -> filter
-        self.pinned: str | None = None             # Ctrl+click: the id of the only row shown
+        # Alt+click (the lemma list; Ctrl+click until 24 October): the id of the only row shown,
+        # or a frozenset of ids (Show only the selected lemmas, idea 64)
+        self.pinned: str | frozenset | None = None
         self.search = ""
         # (row, search item) -> True/False when the item is a search of its own (the lemma list's
         # `CAWL 345`, idea 40), or None to search the columns' text as usual
@@ -168,7 +177,7 @@ class RowFilter(QSortFilterProxyModel):
     def filterAcceptsRow(self, r, parent):
         m: RowModel = self.sourceModel()
         row = m.rows[r]
-        if self.pinned is not None and getattr(row, "id", None) != self.pinned:
+        if self.pinned is not None and getattr(row, "id", None) not in pinned_ids(self.pinned):
             return False
         by_key = {c.key: c for c in m.all_columns}
         for key, flt in self.filters.items():
@@ -373,7 +382,7 @@ class FilterTable(QTableView):
         self.setAlternatingRowColors(False)
         theme.as_data(self)
         self.space_plays = False                  # True: the spacebar asks to play (All data)
-        self.ctrl_click_pins = False              # True: Ctrl+click shows only that row (the lemma list)
+        self.alt_click_pins = False               # True: Alt+click shows only that row (the lemma list)
         self.click_unselects = False              # True: a click on the selected row unselects it (All data)
         self.verticalHeader().hide()
         self.verticalHeader().setDefaultSectionSize(26)
@@ -488,6 +497,34 @@ class FilterTable(QTableView):
     def current_row(self):
         return self.row_at(self.currentIndex())
 
+    def set_multi_select(self, on: bool = True):
+        """Windows-style selecting (the lemma list, idea 64): Ctrl+click adds or removes a row,
+        Shift+click selects a range, Ctrl+Shift+click adds one, Ctrl+A selects every row shown."""
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection if on else QAbstractItemView.SingleSelection)
+
+    def selected_rows(self) -> list:
+        """The selected rows, in the order shown."""
+        if not self.selectionModel().hasSelection():
+            return []
+        rows = sorted({i.row() for i in self.selectionModel().selectedRows()})
+        return [self.model_.rows[self.proxy.mapToSource(self.proxy.index(r, 0)).row()] for r in rows]
+
+    def select_rows(self, rows):
+        """Select these rows (those shown), the first one current."""
+        from PySide6.QtCore import QItemSelection, QItemSelectionModel
+        wanted = set(map(id, rows))
+        sel = QItemSelection()
+        first = None
+        for r in range(self.proxy.rowCount()):
+            idx = self.proxy.index(r, 0)
+            if id(self.row_at(idx)) in wanted:
+                sel.select(idx, idx)
+                first = first or idx
+        if first is not None:
+            self.setCurrentIndex(first)
+            self.selectionModel().select(sel, QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows)
+            self.scrollTo(first)
+
     def selected_row(self):
         """The row that is selected (None when a click has unselected it), unlike current_row,
         which Qt keeps after the selection is cleared."""
@@ -541,18 +578,34 @@ class FilterTable(QTableView):
         self.filtersChanged.emit()
 
     def toggle_pin(self, row):
-        """Ctrl+click: show only this row; again (on any row): show them all again."""
+        """Alt+click (Ctrl+click until 24 October): show only this row; again (on any row): show
+        them all again."""
         self.proxy.pinned = None if self.proxy.pinned is not None or row is None else getattr(row, "id", None)
         self.proxy.refilter()
         self._refresh_header()
         self.select_row(row)
         self.filtersChanged.emit()
 
+    def pin_rows(self, rows):
+        """Show only these rows (right-click → Show only the selected lemmas, idea 64); none:
+        show them all again."""
+        ids = frozenset(i for r in rows if (i := getattr(r, "id", None)))
+        self.proxy.pinned = None if not ids else (next(iter(ids)) if len(ids) == 1 else ids)
+        self.proxy.refilter()
+        self._refresh_header()
+        self.select_rows(rows)
+        self.filtersChanged.emit()
+
+    def pinned_rows(self) -> list:
+        ids = pinned_ids(self.proxy.pinned)
+        return [r for r in self.model_.rows if getattr(r, "id", None) in ids]
+
     def filter_state(self) -> dict:
-        """The column filters and the Ctrl+click pin, as plain data (kept in the workspace)."""
+        """The column filters and the pin, as plain data (kept in the workspace)."""
         out = {"filters": {k: d for k, f in self.proxy.filters.items() if (d := fl.encode(f)) is not None}}
         if self.proxy.pinned is not None:
-            out["pinned"] = self.proxy.pinned
+            p = self.proxy.pinned
+            out["pinned"] = p if isinstance(p, str) else sorted(p)
         return out
 
     def set_filter_state(self, state: dict):
@@ -562,13 +615,16 @@ class FilterTable(QTableView):
         self.proxy.filters = {k: f for k, d in (state.get("filters") or {}).items()
                               if k in keys and (f := fl.decode(d)) is not None}
         pin = state.get("pinned")
-        self.proxy.pinned = pin if isinstance(pin, str) and pin else None
+        if isinstance(pin, list):
+            pin = frozenset(x for x in pin if isinstance(x, str) and x) or None
+        self.proxy.pinned = pin if (isinstance(pin, str) and pin) or isinstance(pin, frozenset) else None
         self.proxy.refilter()
         self._refresh_header()
         self.filtersChanged.emit()
 
     def pinned_row(self):
-        if self.proxy.pinned is None:
+        """The pinned row when one is pinned (None for none, or for several)."""
+        if not isinstance(self.proxy.pinned, str):
             return None
         return next((r for r in self.model_.rows if getattr(r, "id", None) == self.proxy.pinned), None)
 
@@ -649,7 +705,7 @@ class FilterTable(QTableView):
 
     # ---- keys and clicks -------------------------------------------------
     def mousePressEvent(self, event):
-        if self.ctrl_click_pins and event.button() == Qt.LeftButton and event.modifiers() & Qt.ControlModifier:
+        if self.alt_click_pins and event.button() == Qt.LeftButton and event.modifiers() & Qt.AltModifier:
             idx = self.indexAt(event.position().toPoint())
             if idx.isValid():
                 self.toggle_pin(self.row_at(idx))

@@ -290,6 +290,7 @@ class TokenDialog(QDialog):
                                 "next recordings too, until another is chosen.")
         self.speaker.currentTextChanged.connect(self._fields_changed)
         self.speaker.activated.connect(lambda _: self.main.set_speaker(self.speaker.currentText()))
+        self.speaker.activated.connect(lambda _: setattr(self, "_planned", False))   # chosen on purpose
         self.speaker.setFixedWidth(130)
         rl.addWidget(self.speaker, 3, 4)
         rl.addWidget(QLabel("Date"), 4, 3, Qt.AlignRight)
@@ -298,6 +299,7 @@ class TokenDialog(QDialog):
         self.date.setValidator(QRegularExpressionValidator(
             QRegularExpression(r"(\d{4}-\d{2}-\d{2})?"), self.date))
         self.date.textChanged.connect(self._fields_changed)
+        self.date.textEdited.connect(lambda _: setattr(self, "_planned", False))   # typed on purpose
         self.date.installEventFilter(self)        # Ctrl+Space plays here too
         self.date.setFixedWidth(130)
         rl.addWidget(self.date, 4, 4)
@@ -418,9 +420,15 @@ class TokenDialog(QDialog):
         known = {tg.name for tg, _ in s.tags.tags()}
         self.unknown_tags = [x for x in t.tags if x not in known]
         self._build_tags(set(t.tags))
-        self._fill_speakers(t.speaker)
+        # A planned token (a batch's, idea 64: no speaker, no date, no recording yet) shows the
+        # Current Session's speaker and date as its defaults; they are written when it is recorded
+        # or something is typed in it (Josh, 24 October), not on merely opening and closing it.
+        self._planned = (self.original is not None and not t.speaker and not t.collected and not t.file)
+        speaker, date = ((self.main.session_speaker(), self.main.session_date()) if self._planned
+                         else (t.speaker, t.collected))
+        self._fill_speakers(speaker)
         self.date.blockSignals(True)
-        self.date.setText(t.collected)
+        self.date.setText(date)
         self.date.blockSignals(False)
         self._show_rerecord(t.rerecord)
         if self.comment is not None:
@@ -486,6 +494,10 @@ class TokenDialog(QDialog):
         t.speaker = self.speaker.currentText()
         t.collected = self.date.text().strip()
         t.rerecord = self.rerecord_btn.isChecked()
+        o = self.original
+        if getattr(self, "_planned", False) and o is not None and not t.file \
+                and t.values == o.values and t.multi == o.multi:
+            t.speaker, t.collected = o.speaker, o.collected   # nothing collected yet: still blank
 
     def _fields_changed(self, *_):
         self._collect()

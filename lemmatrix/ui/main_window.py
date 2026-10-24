@@ -251,10 +251,12 @@ class MainWindow(QMainWindow):
         bar, bl = self._bar()
         self.lemma_count = QLabel()               # "2369 / 2369": shown / all, at the right of the buttons
         row = self._row(bl, tool("Add", "add", self.add_entry, "Add a lemma"),
-                        tool("Delete", "delete", self.delete_entry, "Delete the selected lemma (Delete)"),
+                        tool("Delete", "delete", self.delete_entry, "Delete the selected lemma or lemmas (Delete)"),
                         tool("Edit", "edit", self.edit_entry, "Edit the selected lemma (Enter)"),
                         tool("Create token for this lemma", "lemma-token", self.add_token_to_lemma,
-                             "Create token for this lemma: a new token of the lemma selected here"),
+                             "Create token for this lemma: a new token of the lemma selected here\n"
+                             "With several lemmas selected (Ctrl+click, Shift+click, Ctrl+A): "
+                             "one token per lemma for each combination of the tags you pick"),
                         tool("Configure columns", "gear-columns", self.configure_lemma_columns),
                         tool("Clear all filters", "reset-filters", self._clear_lemma_filters, "Clear all filters"))
         row.addWidget(self.lemma_count)
@@ -379,7 +381,8 @@ class MainWindow(QMainWindow):
         from .. import wordlists
         self.lemmas.proxy.term_match = lambda row, term: wordlists.search_match(self.doc.db, row, term)
         self._search_timers["lemma"].timeout.connect(self._select_wordlist_hit)
-        self.lemmas.ctrl_click_pins = True
+        self.lemmas.alt_click_pins = True         # the pin (Ctrl+click until 24 October, idea 64)
+        self.lemmas.set_multi_select()            # Ctrl, Shift, Ctrl+Shift, Ctrl+A (idea 64)
         self.lemmas.filtersChanged.connect(lambda: self.schedule_refresh())
         self.lemmas.rowActivated.connect(lambda e: self.edit_entry())
         self.lemmas.deleteRequested.connect(self.delete_entry)
@@ -787,6 +790,20 @@ class MainWindow(QMainWindow):
             msg = f"Added to the ɛλicit request as {kind}"
         n = len(self.elicit_basket)
         self.statusBar().showMessage(f"{msg} ({n} ticked for Make ɛλicit request).", 5000)
+
+    def add_citations_to_elicit(self, entries):
+        """The lemma list's right-click (idea 64): the selected lemmas' citation tokens, ticked for
+        the next ɛλicit request."""
+        self.add_to_elicit([t for e in entries if (t := next((x for x in e.tokens if x.is_citation), None))])
+
+    def add_to_elicit(self, tokens):
+        """Tick these tokens for the next ɛλicit request (those already ticked stay)."""
+        basket = self.elicit_basket
+        new = [t.id for t in tokens if t.id not in basket]
+        self.elicit_basket = basket + new
+        self.statusBar().showMessage(f"Added {len(new)} token(s) to the ɛλicit request "
+                                     f"({len(self.elicit_basket)} ticked for Make ɛλicit request).", 6000)
+        return len(new)
 
     def elicit_menu_item(self, token):
         """The right-click item for a token or an utterance (All data, the matrices, Utterances)."""
@@ -1218,6 +1235,7 @@ class MainWindow(QMainWindow):
         self._act(t, "Check clipped utterances…", self.check_clipped)
         self._act(t, "Check reference order…", self.check_reference_order)     # 23 October
         self._act(t, "Check &spelling…", self.check_spelling, "F7")
+        self._act(t, "Give every lemma its citation token…", self.give_citation_tokens)   # idea 64
         t.addSection("Soundfiles")
         self._act(t, "Update all soundfile names", self.update_all_names)
         self._act(t, "Fill in recording dates from the soundfiles…", self.fill_recording_dates)
@@ -1347,7 +1365,8 @@ class MainWindow(QMainWindow):
                                        ("Delete", "Delete the selected token"),
                                        ("Ctrl + mouse wheel, Ctrl+0", "Zoom a matrix, and back"),
                                        ("Shift + mouse wheel", "Scroll sideways"),
-                                       ("Ctrl+click a lemma", "Show only that lemma"))),
+                                       ("Ctrl+click, Shift+click, Ctrl+A", "Select several lemmas"),
+                                       ("Alt+click a lemma", "Show only that lemma"))),
         ("Token and utterance dialogues", (("Ctrl+R", "Record / stop"), ("Ctrl+Space", "Play"),
                                            ("Ctrl+Shift+Space", "Play the pitch"),
                                            ("Alt+← / Alt+→", "Back / Next"),
@@ -2687,10 +2706,13 @@ class MainWindow(QMainWindow):
         self._scan_sound_folder()
         visible = self.lemmas.visible_rows()
         pin = self.lemmas.pinned_row()
+        pins = self.lemmas.pinned_rows() if pin is None and self.lemmas.proxy.pinned else []
         self.lemma_count.setText(f"{len(visible)} / {len(db.entries)}")
         self.lemma_count.setToolTip(f"{len(visible)} of {len(db.entries)} lemmas shown"
-                                    + (f"\nOnly {pin.ref} {db.lemma(pin)}: Ctrl+click it again to show all"
-                                       if pin is not None else ""))
+                                    + (f"\nOnly {pin.ref} {db.lemma(pin)}: Alt+click it again to show all"
+                                       if pin is not None else "")
+                                    + (f"\n{len(pins)} lemmas pinned: Alt+click a lemma, or Clear all "
+                                       "filters, to show all" if pins else ""))
         only_data = self.only_data.isChecked()
         if tab == ALL_DATA:
             vis = set(map(id, visible))
@@ -3003,7 +3025,11 @@ class MainWindow(QMainWindow):
 
     def add_token_to_lemma(self):
         """λ→τ, Create token for this lemma: a new token of the lemma list's selected lemma,
-        whatever is selected in the matrix (21 October)."""
+        whatever is selected in the matrix (21 October). With several lemmas selected, the batch
+        box (idea 64): one token per lemma and per combination of the tags picked."""
+        if len(self.lemmas.selected_rows()) > 1:
+            self.batch_tokens()
+            return
         entry = self.lemmas.current_row()
         if entry is None:
             QMessageBox.information(self, "Create token", "Select a lemma first.")
@@ -3185,11 +3211,22 @@ class MainWindow(QMainWindow):
         m.exec(pos)
 
     def _lemma_menu(self, row, pos):
-        if row is not None:
-            self.lemmas.select_row(row)
-        self._menu([*self._spelling_items(self.lemmas, pos, row), ("Add lemma", "add", self.add_entry), ("Delete lemma", "delete", self.delete_entry),
+        if row is not None and not any(r is row for r in self.lemmas.selected_rows()):
+            self.lemmas.select_row(row)           # a right-click inside the selection keeps it
+        sel = self.lemmas.selected_rows()
+        many = len(sel) > 1
+        pinned = self.lemmas.proxy.pinned is not None
+        self._menu([*self._spelling_items(self.lemmas, pos, row), ("Add lemma", "add", self.add_entry),
+                    (f"Delete {len(sel)} lemmas" if many else "Delete lemma", "delete", self.delete_entry),
                     ("Edit lemma", "edit", self.edit_entry),
-                    ("Create token for this lemma", "lemma-token", self.add_token_to_lemma, row is not None),
+                    (f"Create tokens for the {len(sel)} selected lemmas…" if many else "Create token for this lemma",
+                     "lemma-token", self.add_token_to_lemma, row is not None),
+                    ("Show all lemmas again" if pinned else
+                     (f"Show only the {len(sel)} selected lemmas" if many else "Show only this lemma"),
+                     None, (lambda: self.lemmas.pin_rows([])) if pinned else (lambda: self.lemmas.pin_rows(sel)),
+                     pinned or bool(sel)),
+                    ("Add the citation token" + ("s" if many else "") + " to the ɛλicit request",
+                     elicit_icon(16), lambda: self.add_citations_to_elicit(sel), bool(sel)),
                     *([("Insert EACW items…", "add", lambda: self.insert_eacw_items(row))]
                       if wordlists.is_eacw(self.doc.db) else []), None,
                     ("Configure columns", "gear-columns", self.configure_lemma_columns),
@@ -3526,6 +3563,18 @@ class MainWindow(QMainWindow):
         self.bulk_window.activateWindow()
 
     def delete_entry(self):
+        sel = self.lemmas.selected_rows()
+        if len(sel) > 1:                          # several selected (idea 64): asked once, one undo step
+            n = sum(len(e.tokens) for e in sel)
+            refs = ", ".join(e.ref for e in sel[:8]) + (" …" if len(sel) > 8 else "")
+            if QMessageBox.question(self, "Delete lemmas",
+                                    f"Delete {len(sel)} lemmas ({refs}) and their {n} token(s)?\n"
+                                    "Their recordings stay in the sound folder. You can undo this.") \
+                    != QMessageBox.Yes:
+                return
+            gone = set(map(id, sel))
+            self.doc.restructure(f"Delete {len(sel)} lemmas", [e for e in self.doc.db.entries if id(e) not in gone])
+            return
         e = self.lemmas.current_row()
         if e is None:
             return
@@ -4101,6 +4150,28 @@ class MainWindow(QMainWindow):
         """Tools → Convert references from a table… (Josh, 23 October): a conversion map."""
         from .convert_dialog import ConvertReferencesDialog
         ConvertReferencesDialog(self).exec()
+
+    def batch_tokens(self):
+        """λ→τ with several lemmas selected (idea 64): the batch box, then the closing box."""
+        from .batch_tokens import run_batch
+        run_batch(self)
+
+    def give_citation_tokens(self):
+        """Tools → Audits → Give every lemma its citation token… (idea 64): an empty one, first,
+        for each lemma without one (e.g. from a conversion); one undo step."""
+        from .. import batch
+        pairs = batch.citation_pairs(self.doc.db)
+        if not pairs:
+            QMessageBox.information(self, "Citation tokens", "Every lemma has its citation token.")
+            return
+        refs = ", ".join(e.ref for e, _ in pairs[:10]) + (" …" if len(pairs) > 10 else "")
+        if QMessageBox.question(self, "Citation tokens",
+                                f"{len(pairs)} lemma{'s have' if len(pairs) != 1 else ' has'} no citation token "
+                                f"(a token without tags): {refs}\n\nGive each an empty one? It has no speaker "
+                                "or date until it is recorded. You can undo this.") != QMessageBox.Yes:
+            return
+        self.doc.apply_changes(f"Citation tokens for {len(pairs)} lemmas", pairs, stamp=False)
+        self.statusBar().showMessage(f"Gave {len(pairs)} lemma(s) an empty citation token.", 8000)
 
     def check_reference_order(self):
         """Tools → Check reference order… (Josh, 23 October): lemmas out of the EACW's order."""
