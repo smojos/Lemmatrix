@@ -283,21 +283,21 @@
       <Phonetic>mɪɲɔ̃ː tʊːm</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ tʊ́ʊm</Phonemic>
       <Morphemes>1SG.A-see head</Morphemes>
-      <Pitch>11 3:3 5:5</Pitch>
+      <Pitch>11 3:3 4:4</Pitch>
       <Translation lang="en">I see the head</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="1fd3261a89">
       <Phonetic>mɪtʊːm</Phonetic>
       <Phonemic>mɪ̀tʊ́ʊm</Phonemic>
       <Morphemes>1SG.POSS-head</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">my head</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="22ae945a01">
       <Phonetic>jɔtʊːm</Phonetic>
       <Phonemic>jɔ̀tʊ́ʊm</Phonemic>
       <Morphemes>2SG.POSS-head</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">your (sg) head</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="ba58b62166">
@@ -332,14 +332,14 @@
       <Phonetic>mɪtʊːmã</Phonetic>
       <Phonemic>mɪ̀tʊ́ʊmà</Phonemic>
       <Morphemes>1SG.POSS-head-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">my heads</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="39a71ece5a">
       <Phonetic>jɔtʊːmã</Phonetic>
       <Phonemic>jɔ̀tʊ́ʊmà</Phonemic>
       <Morphemes>2SG.POSS-head-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">your (sg) heads</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="0336c64e56">
@@ -642,21 +642,21 @@
       <Phonetic>mɪɲɔ̃ː cɔka</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ cɔ́kà</Phonemic>
       <Morphemes>1SG.A-see tooth</Morphemes>
-      <Pitch>11 3:3 55 10</Pitch>
+      <Pitch>11 3:3 44 10</Pitch>
       <Translation lang="en">I see the tooth</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="e7a898f3cd">
       <Phonetic>mɪcɔka</Phonetic>
       <Phonemic>mɪ̀cɔ́kà</Phonemic>
       <Morphemes>1SG.POSS-tooth</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">my tooth</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="322f6f6004">
       <Phonetic>jɔcɔka</Phonetic>
       <Phonemic>jɔ̀cɔ́kà</Phonemic>
       <Morphemes>2SG.POSS-tooth</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">your (sg) tooth</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="a29924e159">
@@ -691,14 +691,14 @@
       <Phonetic>mɪcɔkanã</Phonetic>
       <Phonemic>mɪ̀cɔ́kànà</Phonemic>
       <Morphemes>1SG.POSS-tooth-PL</Morphemes>
-      <Pitch>11 55 11 10</Pitch>
+      <Pitch>11 44 11 10</Pitch>
       <Translation lang="en">my teeth</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="fcaa03f06e">
       <Phonetic>jɔcɔkanã</Phonetic>
       <Phonemic>jɔ̀cɔ́kànà</Phonemic>
       <Morphemes>2SG.POSS-tooth-PL</Morphemes>
-      <Pitch>11 55 11 10</Pitch>
+      <Pitch>11 44 11 10</Pitch>
       <Translation lang="en">your (sg) teeth</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="2d50221305">
@@ -741,112 +741,112 @@
       <Phonetic>dambɛ</Phonetic>
       <Phonemic>dàmbɛ́</Phonemic>
       <Morphemes>hand</Morphemes>
-      <Pitch>11 55</Pitch>
+      <Pitch>11 44</Pitch>
       <Translation lang="en">hand</Translation>
     </token>
     <token tags="Plural, Nominative, isolation" speaker="SP1" collected="2026-10-20" id="da9a4ccd45">
       <Phonetic>dambɛnã</Phonetic>
       <Phonemic>dàmbɛ́nà</Phonemic>
       <Morphemes>hand-PL</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">hands</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 1" speaker="SP1" collected="2026-10-20" id="2dafec93a1">
       <Phonetic>dambɛ ɗɪ̰ː</Phonetic>
       <Phonemic>dàmbɛ́ ɗɪ̄ɪ</Phonemic>
       <Morphemes>hand COP</Morphemes>
-      <Pitch>11 55 3:3</Pitch>
+      <Pitch>11 44 3:3</Pitch>
       <Translation lang="en">it is a hand</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 2" speaker="SP1" collected="2026-10-20" id="eb598538e0">
       <Phonetic>mɪɲɔ̃ː dambɛ</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ dàmbɛ́</Phonemic>
       <Morphemes>1SG.A-see hand</Morphemes>
-      <Pitch>11 3:3 11 55</Pitch>
+      <Pitch>11 3:3 11 33</Pitch>
       <Translation lang="en">I see the hand</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="13af3afd2a">
       <Phonetic>mɪdambɛ</Phonetic>
       <Phonemic>mɪ̀dàmbɛ́</Phonemic>
       <Morphemes>1SG.POSS-hand</Morphemes>
-      <Pitch>11 11 55</Pitch>
+      <Pitch>11 11 44</Pitch>
       <Translation lang="en">my hand</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="a4aff3f177">
       <Phonetic>jɔdambɛ</Phonetic>
       <Phonemic>jɔ̀dàmbɛ́</Phonemic>
       <Morphemes>2SG.POSS-hand</Morphemes>
-      <Pitch>11 11 55</Pitch>
+      <Pitch>11 11 44</Pitch>
       <Translation lang="en">your (sg) hand</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="7e31c34703">
       <Phonetic>wɛdambɛ</Phonetic>
       <Phonemic>wɛ́dàmbɛ́</Phonemic>
       <Morphemes>3SG.POSS-hand</Morphemes>
-      <Pitch>55 11 55</Pitch>
+      <Pitch>55 11 44</Pitch>
       <Translation lang="en">his hand</Translation>
     </token>
     <token tags="Singular, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="f6d5d8bd72">
       <Phonetic>tʌdambɛ</Phonetic>
       <Phonemic>tʌ́dàmbɛ́</Phonemic>
       <Morphemes>1PL.POSS-hand</Morphemes>
-      <Pitch>55 11 55</Pitch>
+      <Pitch>55 11 44</Pitch>
       <Translation lang="en">our hand</Translation>
     </token>
     <token tags="Singular, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="4908efd748">
       <Phonetic>βʊdambɛ</Phonetic>
       <Phonemic>βʊ̄dàmbɛ́</Phonemic>
       <Morphemes>2PL.POSS-hand</Morphemes>
-      <Pitch>33 11 55</Pitch>
+      <Pitch>33 11 44</Pitch>
       <Translation lang="en">your (pl) hand</Translation>
     </token>
     <token tags="Singular, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="1856db68e5">
       <Phonetic>kʲɪdambɛ</Phonetic>
       <Phonemic>kɪ́dàmbɛ́</Phonemic>
       <Morphemes>3PL.POSS-hand</Morphemes>
-      <Pitch>55 11 55</Pitch>
+      <Pitch>55 11 44</Pitch>
       <Translation lang="en">their hand</Translation>
     </token>
     <token tags="Plural, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="28294d42b4">
       <Phonetic>mɪdambɛnã</Phonetic>
       <Phonemic>mɪ̀dàmbɛ́nà</Phonemic>
       <Morphemes>1SG.POSS-hand-PL</Morphemes>
-      <Pitch>11 11 55 10</Pitch>
+      <Pitch>11 11 44 10</Pitch>
       <Translation lang="en">my hands</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="3cf3dccc60">
       <Phonetic>jɔdambɛnã</Phonetic>
       <Phonemic>jɔ̀dàmbɛ́nà</Phonemic>
       <Morphemes>2SG.POSS-hand-PL</Morphemes>
-      <Pitch>11 11 55 10</Pitch>
+      <Pitch>11 11 44 10</Pitch>
       <Translation lang="en">your (sg) hands</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="2014c55eed">
       <Phonetic>wɛdambɛnã</Phonetic>
       <Phonemic>wɛ́dàmbɛ́nà</Phonemic>
       <Morphemes>3SG.POSS-hand-PL</Morphemes>
-      <Pitch>55 11 55 10</Pitch>
+      <Pitch>55 11 44 10</Pitch>
       <Translation lang="en">his hands</Translation>
     </token>
     <token tags="Plural, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="92af973426">
       <Phonetic>tʌdambɛnã</Phonetic>
       <Phonemic>tʌ́dàmbɛ́nà</Phonemic>
       <Morphemes>1PL.POSS-hand-PL</Morphemes>
-      <Pitch>55 11 55 10</Pitch>
+      <Pitch>55 11 44 10</Pitch>
       <Translation lang="en">our hands</Translation>
     </token>
     <token tags="Plural, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="aa566389b0">
       <Phonetic>βʊdambɛnã</Phonetic>
       <Phonemic>βʊ̄dàmbɛ́nà</Phonemic>
       <Morphemes>2PL.POSS-hand-PL</Morphemes>
-      <Pitch>33 11 55 10</Pitch>
+      <Pitch>33 11 44 10</Pitch>
       <Translation lang="en">your (pl) hands</Translation>
     </token>
     <token tags="Plural, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="94628227f4">
       <Phonetic>kʲɪdambɛnã</Phonetic>
       <Phonemic>kɪ́dàmbɛ́nà</Phonemic>
       <Morphemes>3PL.POSS-hand-PL</Morphemes>
-      <Pitch>55 11 55 10</Pitch>
+      <Pitch>55 11 44 10</Pitch>
       <Translation lang="en">their hands</Translation>
     </token>
   </entry>
@@ -882,21 +882,21 @@
       <Phonetic>mɪɲɔ̃ː pʰṳrʊ</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ pʰúrʊ̀</Phonemic>
       <Morphemes>1SG.A-see foot</Morphemes>
-      <Pitch>11 3:3 55 10</Pitch>
+      <Pitch>11 3:3 44 10</Pitch>
       <Translation lang="en">I see the foot</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="0453240c60">
       <Phonetic>mɪpʰṳrʊ</Phonetic>
       <Phonemic>mɪ̀pʰúrʊ̀</Phonemic>
       <Morphemes>1SG.POSS-foot</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">my foot</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="d9d465196b">
       <Phonetic>jɔpʰṳrʊ</Phonetic>
       <Phonemic>jɔ̀pʰúrʊ̀</Phonemic>
       <Morphemes>2SG.POSS-foot</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">your (sg) foot</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="9defc9e793">
@@ -931,14 +931,14 @@
       <Phonetic>mɪpʰṳrʊnã</Phonetic>
       <Phonemic>mɪ̀pʰúrʊ̀nà</Phonemic>
       <Morphemes>1SG.POSS-foot-PL</Morphemes>
-      <Pitch>11 55 11 10</Pitch>
+      <Pitch>11 44 11 10</Pitch>
       <Translation lang="en">my feet</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="a2ac55fdcb">
       <Phonetic>jɔpʰṳrʊnã</Phonetic>
       <Phonemic>jɔ̀pʰúrʊ̀nà</Phonemic>
       <Morphemes>2SG.POSS-foot-PL</Morphemes>
-      <Pitch>11 55 11 10</Pitch>
+      <Pitch>11 44 11 10</Pitch>
       <Translation lang="en">your (sg) feet</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="4e4f77cd82">
@@ -1002,21 +1002,21 @@
       <Phonetic>mɪɲɔ̃ː ʔɪ̰ːn</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ ʔɪ́ɪn</Phonemic>
       <Morphemes>1SG.A-see person</Morphemes>
-      <Pitch>11 3:3 5:5</Pitch>
+      <Pitch>11 3:3 4:4</Pitch>
       <Translation lang="en">I see the person</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="63bf74e92f">
       <Phonetic>mɪʔɪ̰ːn</Phonetic>
       <Phonemic>mɪ̀ʔɪ́ɪn</Phonemic>
       <Morphemes>1SG.POSS-person</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">my person</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="b7804c8966">
       <Phonetic>jɔʔɪ̰ːn</Phonetic>
       <Phonemic>jɔ̀ʔɪ́ɪn</Phonemic>
       <Morphemes>2SG.POSS-person</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">your (sg) person</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="55576c2d9a">
@@ -1051,14 +1051,14 @@
       <Phonetic>mɪʔɪ̰ːnã</Phonetic>
       <Phonemic>mɪ̀ʔɪ́ɪnà</Phonemic>
       <Morphemes>1SG.POSS-person-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">my people</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="c027a5570c">
       <Phonetic>jɔʔɪ̰ːnã</Phonetic>
       <Phonemic>jɔ̀ʔɪ́ɪnà</Phonemic>
       <Morphemes>2SG.POSS-person-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">your (sg) people</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="4807be0e5b">
@@ -1121,21 +1121,21 @@
       <Phonetic>mɪɲɔ̃ː dɛnzɪ</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ dɛ̄nzɪ́</Phonemic>
       <Morphemes>1SG.A-see woman</Morphemes>
-      <Pitch>11 3:3 33 55</Pitch>
+      <Pitch>11 3:3 33 44</Pitch>
       <Translation lang="en">I see the woman</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="bab0ff7e56">
       <Phonetic>mɪdɛnzɪ</Phonetic>
       <Phonemic>mɪ̀dɛ̄nzɪ́</Phonemic>
       <Morphemes>1SG.POSS-woman</Morphemes>
-      <Pitch>11 33 55</Pitch>
+      <Pitch>11 33 44</Pitch>
       <Translation lang="en">my woman</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="ab3b73a5d3">
       <Phonetic>jɔdɛnzɪ</Phonetic>
       <Phonemic>jɔ̀dɛ̄nzɪ́</Phonemic>
       <Morphemes>2SG.POSS-woman</Morphemes>
-      <Pitch>11 33 55</Pitch>
+      <Pitch>11 33 44</Pitch>
       <Translation lang="en">your (sg) woman</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="8338d33397">
@@ -1170,14 +1170,14 @@
       <Phonetic>mɪdɛnzɪnã</Phonetic>
       <Phonemic>mɪ̀dɛ̄nzɪ́nà</Phonemic>
       <Morphemes>1SG.POSS-woman-PL</Morphemes>
-      <Pitch>11 33 55 10</Pitch>
+      <Pitch>11 33 44 10</Pitch>
       <Translation lang="en">my women</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="f0ee334e21">
       <Phonetic>jɔdɛnzɪnã</Phonetic>
       <Phonemic>jɔ̀dɛ̄nzɪ́nà</Phonemic>
       <Morphemes>2SG.POSS-woman-PL</Morphemes>
-      <Pitch>11 33 55 10</Pitch>
+      <Pitch>11 33 44 10</Pitch>
       <Translation lang="en">your (sg) women</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="d2fc54b4d6">
@@ -1602,21 +1602,21 @@
       <Phonetic>mɪɲɔ̃ː βɔː</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ βɔ́ɔ</Phonemic>
       <Morphemes>1SG.A-see father</Morphemes>
-      <Pitch>11 3:3 5:5</Pitch>
+      <Pitch>11 3:3 4:4</Pitch>
       <Translation lang="en">I see the father</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="782769f0b0">
       <Phonetic>mɪβɔː</Phonetic>
       <Phonemic>mɪ̀βɔ́ɔ</Phonemic>
       <Morphemes>1SG.POSS-father</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">my father</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="cb6edc59d9">
       <Phonetic>jɔβɔː</Phonetic>
       <Phonemic>jɔ̀βɔ́ɔ</Phonemic>
       <Morphemes>2SG.POSS-father</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">your (sg) father</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="fc9422eb31">
@@ -1651,14 +1651,14 @@
       <Phonetic>mɪβɔːnã</Phonetic>
       <Phonemic>mɪ̀βɔ́ɔnà</Phonemic>
       <Morphemes>1SG.POSS-father-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">my fathers</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="accb1784ba">
       <Phonetic>jɔβɔːnã</Phonetic>
       <Phonemic>jɔ̀βɔ́ɔnà</Phonemic>
       <Morphemes>2SG.POSS-father-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">your (sg) fathers</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="4178afdf95">
@@ -1723,21 +1723,21 @@
       <Phonetic>mɪɲɔ̃ː dʌːm</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ dʌ́ʌm</Phonemic>
       <Morphemes>1SG.A-see goat</Morphemes>
-      <Pitch>11 3:3 5:5</Pitch>
+      <Pitch>11 3:3 4:4</Pitch>
       <Translation lang="en">I see the goat</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_D009_goat_1SG_POSS.wav" id="68c0129ec4">
       <Phonetic>mɪdʌːm</Phonetic>
       <Phonemic>mɪ̀dʌ́ʌm</Phonemic>
       <Morphemes>1SG.POSS-goat</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">my goat</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_D009_goat_2SG_POSS.wav" id="dcded2d6bc">
       <Phonetic>jɔdʌːm</Phonetic>
       <Phonemic>jɔ̀dʌ́ʌm</Phonemic>
       <Morphemes>2SG.POSS-goat</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">your (sg) goat</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_D009_goat_3SG_POSS.wav" id="48244fe8b2">
@@ -1772,14 +1772,14 @@
       <Phonetic>mɪdʌːmã</Phonetic>
       <Phonemic>mɪ̀dʌ́ʌmà</Phonemic>
       <Morphemes>1SG.POSS-goat-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">my goats</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_D009_goat_PL-2SG_POSS.wav" id="f2ed3b40f6">
       <Phonetic>jɔdʌːmã</Phonetic>
       <Phonemic>jɔ̀dʌ́ʌmà</Phonemic>
       <Morphemes>2SG.POSS-goat-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">your (sg) goats</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_D009_goat_PL-3SG_POSS.wav" id="9bd3ec2f0b">
@@ -1844,21 +1844,21 @@
       <Phonetic>mɪɲɔ̃ː pɛː</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ pɛ́ɛ</Phonemic>
       <Morphemes>1SG.A-see sheep</Morphemes>
-      <Pitch>11 3:3 5:5</Pitch>
+      <Pitch>11 3:3 4:4</Pitch>
       <Translation lang="en">I see the sheep</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="de87e6b260">
       <Phonetic>mɪpɛː</Phonetic>
       <Phonemic>mɪ̀pɛ́ɛ</Phonemic>
       <Morphemes>1SG.POSS-sheep</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">my sheep</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="b2aa758d7b">
       <Phonetic>jɔpɛː</Phonetic>
       <Phonemic>jɔ̀pɛ́ɛ</Phonemic>
       <Morphemes>2SG.POSS-sheep</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">your (sg) sheep</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="6b7251cb32">
@@ -1893,14 +1893,14 @@
       <Phonetic>mɪpɛːnã</Phonetic>
       <Phonemic>mɪ̀pɛ́ɛnà</Phonemic>
       <Morphemes>1SG.POSS-sheep-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">my sheep</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="3ed79a15cc">
       <Phonetic>jɔpɛːnã</Phonetic>
       <Phonemic>jɔ̀pɛ́ɛnà</Phonemic>
       <Morphemes>2SG.POSS-sheep-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">your (sg) sheep</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="2aafbc389f">
@@ -2305,112 +2305,112 @@
       <Phonetic>ʃɔmbɔrɔ</Phonetic>
       <Phonemic>ʃɔ̀mbɔ́rɔ̀</Phonemic>
       <Morphemes>elephant</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">elephant</Translation>
     </token>
     <token tags="Plural, Nominative, isolation" speaker="SP1" collected="2026-10-20" id="8b0c955ab7">
       <Phonetic>ʃɔmbɔrɔnã</Phonetic>
       <Phonemic>ʃɔ̀mbɔ́rɔ̀nà</Phonemic>
       <Morphemes>elephant-PL</Morphemes>
-      <Pitch>11 55 11 10</Pitch>
+      <Pitch>11 44 11 10</Pitch>
       <Translation lang="en">elephants</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 1" speaker="SP1" collected="2026-10-20" id="83f0323cf7">
       <Phonetic>ʃɔmbɔrɔ ɗɪ̰ː</Phonetic>
       <Phonemic>ʃɔ̀mbɔ́rɔ̀ ɗɪ̄ɪ</Phonemic>
       <Morphemes>elephant COP</Morphemes>
-      <Pitch>11 55 11 3:3</Pitch>
+      <Pitch>11 44 11 2:21</Pitch>
       <Translation lang="en">it is an elephant</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 2" speaker="SP1" collected="2026-10-20" id="7925b04982">
       <Phonetic>mɪɲɔ̃ː ʃɔmbɔrɔ</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ ʃɔ̀mbɔ́rɔ̀</Phonemic>
       <Morphemes>1SG.A-see elephant</Morphemes>
-      <Pitch>11 3:3 11 55 10</Pitch>
+      <Pitch>11 3:3 11 33 10</Pitch>
       <Translation lang="en">I see the elephant</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="d1998d6705">
       <Phonetic>mɪʃɔmbɔrɔ</Phonetic>
       <Phonemic>mɪ̀ʃɔ̀mbɔ́rɔ̀</Phonemic>
       <Morphemes>1SG.POSS-elephant</Morphemes>
-      <Pitch>11 11 55 10</Pitch>
+      <Pitch>11 11 44 10</Pitch>
       <Translation lang="en">my elephant</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="3a895557c2">
       <Phonetic>jɔʃɔmbɔrɔ</Phonetic>
       <Phonemic>jɔ̀ʃɔ̀mbɔ́rɔ̀</Phonemic>
       <Morphemes>2SG.POSS-elephant</Morphemes>
-      <Pitch>11 11 55 10</Pitch>
+      <Pitch>11 11 44 10</Pitch>
       <Translation lang="en">your (sg) elephant</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="3f0f11f516">
       <Phonetic>wɛʃɔmbɔrɔ</Phonetic>
       <Phonemic>wɛ́ʃɔ̀mbɔ́rɔ̀</Phonemic>
       <Morphemes>3SG.POSS-elephant</Morphemes>
-      <Pitch>55 11 55 10</Pitch>
+      <Pitch>55 11 44 10</Pitch>
       <Translation lang="en">his elephant</Translation>
     </token>
     <token tags="Singular, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="3edb791d75">
       <Phonetic>tʌʃɔmbɔrɔ</Phonetic>
       <Phonemic>tʌ́ʃɔ̀mbɔ́rɔ̀</Phonemic>
       <Morphemes>1PL.POSS-elephant</Morphemes>
-      <Pitch>55 11 55 10</Pitch>
+      <Pitch>55 11 44 10</Pitch>
       <Translation lang="en">our elephant</Translation>
     </token>
     <token tags="Singular, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="b8563f4509">
       <Phonetic>βʊʃɔmbɔrɔ</Phonetic>
       <Phonemic>βʊ̄ʃɔ̀mbɔ́rɔ̀</Phonemic>
       <Morphemes>2PL.POSS-elephant</Morphemes>
-      <Pitch>33 11 55 10</Pitch>
+      <Pitch>33 11 44 10</Pitch>
       <Translation lang="en">your (pl) elephant</Translation>
     </token>
     <token tags="Singular, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="66d7dffe54">
       <Phonetic>kʲɪʃɔmbɔrɔ</Phonetic>
       <Phonemic>kɪ́ʃɔ̀mbɔ́rɔ̀</Phonemic>
       <Morphemes>3PL.POSS-elephant</Morphemes>
-      <Pitch>55 11 55 10</Pitch>
+      <Pitch>55 11 44 10</Pitch>
       <Translation lang="en">their elephant</Translation>
     </token>
     <token tags="Plural, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="92b5f436d0">
       <Phonetic>mɪʃɔmbɔrɔnã</Phonetic>
       <Phonemic>mɪ̀ʃɔ̀mbɔ́rɔ̀nà</Phonemic>
       <Morphemes>1SG.POSS-elephant-PL</Morphemes>
-      <Pitch>11 11 55 11 10</Pitch>
+      <Pitch>11 11 44 11 10</Pitch>
       <Translation lang="en">my elephants</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="597fd4eb24">
       <Phonetic>jɔʃɔmbɔrɔnã</Phonetic>
       <Phonemic>jɔ̀ʃɔ̀mbɔ́rɔ̀nà</Phonemic>
       <Morphemes>2SG.POSS-elephant-PL</Morphemes>
-      <Pitch>11 11 55 11 10</Pitch>
+      <Pitch>11 11 44 11 10</Pitch>
       <Translation lang="en">your (sg) elephants</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="5c41ca70ca">
       <Phonetic>wɛʃɔmbɔrɔnã</Phonetic>
       <Phonemic>wɛ́ʃɔ̀mbɔ́rɔ̀nà</Phonemic>
       <Morphemes>3SG.POSS-elephant-PL</Morphemes>
-      <Pitch>55 11 55 11 10</Pitch>
+      <Pitch>55 11 44 11 10</Pitch>
       <Translation lang="en">his elephants</Translation>
     </token>
     <token tags="Plural, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="8e345f71d7">
       <Phonetic>tʌʃɔmbɔrɔnã</Phonetic>
       <Phonemic>tʌ́ʃɔ̀mbɔ́rɔ̀nà</Phonemic>
       <Morphemes>1PL.POSS-elephant-PL</Morphemes>
-      <Pitch>55 11 55 11 10</Pitch>
+      <Pitch>55 11 44 11 10</Pitch>
       <Translation lang="en">our elephants</Translation>
     </token>
     <token tags="Plural, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="7504c8aabb">
       <Phonetic>βʊʃɔmbɔrɔnã</Phonetic>
       <Phonemic>βʊ̄ʃɔ̀mbɔ́rɔ̀nà</Phonemic>
       <Morphemes>2PL.POSS-elephant-PL</Morphemes>
-      <Pitch>33 11 55 11 10</Pitch>
+      <Pitch>33 11 44 11 10</Pitch>
       <Translation lang="en">your (pl) elephants</Translation>
     </token>
     <token tags="Plural, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="ec7b870675">
       <Phonetic>kʲɪʃɔmbɔrɔnã</Phonetic>
       <Phonemic>kɪ́ʃɔ̀mbɔ́rɔ̀nà</Phonemic>
       <Morphemes>3PL.POSS-elephant-PL</Morphemes>
-      <Pitch>55 11 55 11 10</Pitch>
+      <Pitch>55 11 44 11 10</Pitch>
       <Translation lang="en">their elephants</Translation>
     </token>
   </entry>
@@ -2447,21 +2447,21 @@
       <Phonetic>mɪɲɔ̃ː ŋɔːɲ</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ ŋɔ́ɔɲ</Phonemic>
       <Morphemes>1SG.A-see lion</Morphemes>
-      <Pitch>11 3:3 5:5</Pitch>
+      <Pitch>11 3:3 4:4</Pitch>
       <Translation lang="en">I see the lion</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="a1da5d5752">
       <Phonetic>mɪŋɔːɲ</Phonetic>
       <Phonemic>mɪ̀ŋɔ́ɔɲ</Phonemic>
       <Morphemes>1SG.POSS-lion</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">my lion</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="debe58635a">
       <Phonetic>jɔŋɔːɲ</Phonetic>
       <Phonemic>jɔ̀ŋɔ́ɔɲ</Phonemic>
       <Morphemes>2SG.POSS-lion</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">your (sg) lion</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="e685d0a509">
@@ -2496,14 +2496,14 @@
       <Phonetic>mɪŋɔːɲã</Phonetic>
       <Phonemic>mɪ̀ŋɔ́ɔɲà</Phonemic>
       <Morphemes>1SG.POSS-lion-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">my lions</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="759bc8b83b">
       <Phonetic>jɔŋɔːɲã</Phonetic>
       <Phonemic>jɔ̀ŋɔ́ɔɲà</Phonemic>
       <Morphemes>2SG.POSS-lion-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">your (sg) lions</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="04bd6ddd53">
@@ -2547,112 +2547,112 @@
       <Phonetic>ɓʊ̰ːndʊ</Phonetic>
       <Phonemic>ɓʊ̀ʊndʊ́</Phonemic>
       <Morphemes>ostrich</Morphemes>
-      <Pitch>1:1 55</Pitch>
+      <Pitch>1:1 44</Pitch>
       <Translation lang="en">ostrich</Translation>
     </token>
     <token tags="Plural, Nominative, isolation" speaker="SP1" collected="2026-10-20" id="9173877bef">
       <Phonetic>ɓʊ̰ːndʊnã</Phonetic>
       <Phonemic>ɓʊ̀ʊndʊ́nà</Phonemic>
       <Morphemes>ostrich-PL</Morphemes>
-      <Pitch>1:1 55 10</Pitch>
+      <Pitch>1:1 44 10</Pitch>
       <Translation lang="en">ostrichs</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 1" speaker="SP1" collected="2026-10-20" id="41f7415802">
       <Phonetic>ɓʊ̰ːndʊ ɗɪ̰ː</Phonetic>
       <Phonemic>ɓʊ̀ʊndʊ́ ɗɪ̄ɪ</Phonemic>
       <Morphemes>ostrich COP</Morphemes>
-      <Pitch>1:1 55 3:3</Pitch>
+      <Pitch>1:1 44 3:3</Pitch>
       <Translation lang="en">it is an ostrich</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 2" speaker="SP1" collected="2026-10-20" id="546081a20d">
       <Phonetic>mɪɲɔ̃ː ɓʊ̰ːndʊ</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ ɓʊ̀ʊndʊ́</Phonemic>
       <Morphemes>1SG.A-see ostrich</Morphemes>
-      <Pitch>11 3:3 1:1 55</Pitch>
+      <Pitch>11 3:3 1:1 33</Pitch>
       <Translation lang="en">I see the ostrich</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="fca64aad61">
       <Phonetic>mɪɓʊ̰ːndʊ</Phonetic>
       <Phonemic>mɪ̀ɓʊ̀ʊndʊ́</Phonemic>
       <Morphemes>1SG.POSS-ostrich</Morphemes>
-      <Pitch>11 1:1 55</Pitch>
+      <Pitch>11 1:1 44</Pitch>
       <Translation lang="en">my ostrich</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="6035a87b6a">
       <Phonetic>jɔɓʊ̰ːndʊ</Phonetic>
       <Phonemic>jɔ̀ɓʊ̀ʊndʊ́</Phonemic>
       <Morphemes>2SG.POSS-ostrich</Morphemes>
-      <Pitch>11 1:1 55</Pitch>
+      <Pitch>11 1:1 44</Pitch>
       <Translation lang="en">your (sg) ostrich</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="f67f841fc4">
       <Phonetic>wɛɓʊ̰ːndʊ</Phonetic>
       <Phonemic>wɛ́ɓʊ̀ʊndʊ́</Phonemic>
       <Morphemes>3SG.POSS-ostrich</Morphemes>
-      <Pitch>55 1:1 55</Pitch>
+      <Pitch>55 1:1 44</Pitch>
       <Translation lang="en">his ostrich</Translation>
     </token>
     <token tags="Singular, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="1486e948fe">
       <Phonetic>tʌɓʊ̰ːndʊ</Phonetic>
       <Phonemic>tʌ́ɓʊ̀ʊndʊ́</Phonemic>
       <Morphemes>1PL.POSS-ostrich</Morphemes>
-      <Pitch>55 1:1 55</Pitch>
+      <Pitch>55 1:1 44</Pitch>
       <Translation lang="en">our ostrich</Translation>
     </token>
     <token tags="Singular, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="67aad740c9">
       <Phonetic>βʊɓʊ̰ːndʊ</Phonetic>
       <Phonemic>βʊ̄ɓʊ̀ʊndʊ́</Phonemic>
       <Morphemes>2PL.POSS-ostrich</Morphemes>
-      <Pitch>33 1:1 55</Pitch>
+      <Pitch>33 1:1 44</Pitch>
       <Translation lang="en">your (pl) ostrich</Translation>
     </token>
     <token tags="Singular, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="33f9699028">
       <Phonetic>kʲɪɓʊ̰ːndʊ</Phonetic>
       <Phonemic>kɪ́ɓʊ̀ʊndʊ́</Phonemic>
       <Morphemes>3PL.POSS-ostrich</Morphemes>
-      <Pitch>55 1:1 55</Pitch>
+      <Pitch>55 1:1 44</Pitch>
       <Translation lang="en">their ostrich</Translation>
     </token>
     <token tags="Plural, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="772742205a">
       <Phonetic>mɪɓʊ̰ːndʊnã</Phonetic>
       <Phonemic>mɪ̀ɓʊ̀ʊndʊ́nà</Phonemic>
       <Morphemes>1SG.POSS-ostrich-PL</Morphemes>
-      <Pitch>11 1:1 55 10</Pitch>
+      <Pitch>11 1:1 44 10</Pitch>
       <Translation lang="en">my ostrichs</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="8ccb297caf">
       <Phonetic>jɔɓʊ̰ːndʊnã</Phonetic>
       <Phonemic>jɔ̀ɓʊ̀ʊndʊ́nà</Phonemic>
       <Morphemes>2SG.POSS-ostrich-PL</Morphemes>
-      <Pitch>11 1:1 55 10</Pitch>
+      <Pitch>11 1:1 44 10</Pitch>
       <Translation lang="en">your (sg) ostrichs</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="31ee1713cf">
       <Phonetic>wɛɓʊ̰ːndʊnã</Phonetic>
       <Phonemic>wɛ́ɓʊ̀ʊndʊ́nà</Phonemic>
       <Morphemes>3SG.POSS-ostrich-PL</Morphemes>
-      <Pitch>55 1:1 55 10</Pitch>
+      <Pitch>55 1:1 44 10</Pitch>
       <Translation lang="en">his ostrichs</Translation>
     </token>
     <token tags="Plural, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="6a009af3c4">
       <Phonetic>tʌɓʊ̰ːndʊnã</Phonetic>
       <Phonemic>tʌ́ɓʊ̀ʊndʊ́nà</Phonemic>
       <Morphemes>1PL.POSS-ostrich-PL</Morphemes>
-      <Pitch>55 1:1 55 10</Pitch>
+      <Pitch>55 1:1 44 10</Pitch>
       <Translation lang="en">our ostrichs</Translation>
     </token>
     <token tags="Plural, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="1f4a3bc958">
       <Phonetic>βʊɓʊ̰ːndʊnã</Phonetic>
       <Phonemic>βʊ̄ɓʊ̀ʊndʊ́nà</Phonemic>
       <Morphemes>2PL.POSS-ostrich-PL</Morphemes>
-      <Pitch>33 1:1 55 10</Pitch>
+      <Pitch>33 1:1 44 10</Pitch>
       <Translation lang="en">your (pl) ostrichs</Translation>
     </token>
     <token tags="Plural, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="9d67f303d1">
       <Phonetic>kʲɪɓʊ̰ːndʊnã</Phonetic>
       <Phonemic>kɪ́ɓʊ̀ʊndʊ́nà</Phonemic>
       <Morphemes>3PL.POSS-ostrich-PL</Morphemes>
-      <Pitch>55 1:1 55 10</Pitch>
+      <Pitch>55 1:1 44 10</Pitch>
       <Translation lang="en">their ostrichs</Translation>
     </token>
   </entry>
@@ -2688,21 +2688,21 @@
       <Phonetic>mɪɲɔ̃ː kʷʊkʷʊ</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ kʊ́kʊ̀</Phonemic>
       <Morphemes>1SG.A-see duck</Morphemes>
-      <Pitch>11 3:3 55 10</Pitch>
+      <Pitch>11 3:3 44 10</Pitch>
       <Translation lang="en">I see the duck</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="848cbbc04f">
       <Phonetic>mɪkʷʊkʷʊ</Phonetic>
       <Phonemic>mɪ̀kʊ́kʊ̀</Phonemic>
       <Morphemes>1SG.POSS-duck</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">my duck</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="944edb59b8">
       <Phonetic>jɔkʷʊkʷʊ</Phonetic>
       <Phonemic>jɔ̀kʊ́kʊ̀</Phonemic>
       <Morphemes>2SG.POSS-duck</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">your (sg) duck</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="bf9abb3673">
@@ -2737,14 +2737,14 @@
       <Phonetic>mɪkʷʊkʷʊnã</Phonetic>
       <Phonemic>mɪ̀kʊ́kʊ̀nà</Phonemic>
       <Morphemes>1SG.POSS-duck-PL</Morphemes>
-      <Pitch>11 55 11 10</Pitch>
+      <Pitch>11 44 11 10</Pitch>
       <Translation lang="en">my ducks</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="962a6daf13">
       <Phonetic>jɔkʷʊkʷʊnã</Phonetic>
       <Phonemic>jɔ̀kʊ́kʊ̀nà</Phonemic>
       <Morphemes>2SG.POSS-duck-PL</Morphemes>
-      <Pitch>11 55 11 10</Pitch>
+      <Pitch>11 44 11 10</Pitch>
       <Translation lang="en">your (sg) ducks</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="8e9eaa4f1e">
@@ -2808,21 +2808,21 @@
       <Phonetic>mɪɲɔ̃ː ɗɪ̰ɗɪ̰</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ ɗɪ́ꜜɗɪ́</Phonemic>
       <Morphemes>1SG.A-see eagle</Morphemes>
-      <Pitch>11 3:3 55 44</Pitch>
+      <Pitch>11 3:3 44 33</Pitch>
       <Translation lang="en">I see the eagle</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="ccd01a4de8">
       <Phonetic>mɪɗɪ̰ɗɪ̰</Phonetic>
       <Phonemic>mɪ̀ɗɪ́ꜜɗɪ́</Phonemic>
       <Morphemes>1SG.POSS-eagle</Morphemes>
-      <Pitch>11 55 44</Pitch>
+      <Pitch>11 44 33</Pitch>
       <Translation lang="en">my eagle</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="6c66537b59">
       <Phonetic>jɔɗɪ̰ɗɪ̰</Phonetic>
       <Phonemic>jɔ̀ɗɪ́ꜜɗɪ́</Phonemic>
       <Morphemes>2SG.POSS-eagle</Morphemes>
-      <Pitch>11 55 44</Pitch>
+      <Pitch>11 44 33</Pitch>
       <Translation lang="en">your (sg) eagle</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="d47faefece">
@@ -2857,14 +2857,14 @@
       <Phonetic>mɪɗɪ̰ɗɪ̰nã</Phonetic>
       <Phonemic>mɪ̀ɗɪ́ꜜɗɪ́nà</Phonemic>
       <Morphemes>1SG.POSS-eagle-PL</Morphemes>
-      <Pitch>11 55 44 10</Pitch>
+      <Pitch>11 44 33 10</Pitch>
       <Translation lang="en">my eagles</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="da667884b9">
       <Phonetic>jɔɗɪ̰ɗɪ̰nã</Phonetic>
       <Phonemic>jɔ̀ɗɪ́ꜜɗɪ́nà</Phonemic>
       <Morphemes>2SG.POSS-eagle-PL</Morphemes>
-      <Pitch>11 55 44 10</Pitch>
+      <Pitch>11 44 33 10</Pitch>
       <Translation lang="en">your (sg) eagles</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="02072c29f6">
@@ -2929,21 +2929,21 @@
       <Phonetic>mɪɲɔ̃ː ɲɛːm</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ ɲɛ́ɛm</Phonemic>
       <Morphemes>1SG.A-see fish</Morphemes>
-      <Pitch>11 3:3 5:5</Pitch>
+      <Pitch>11 3:3 4:4</Pitch>
       <Translation lang="en">I see the fish</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="d472c23a9b">
       <Phonetic>mɪɲɛːm</Phonetic>
       <Phonemic>mɪ̀ɲɛ́ɛm</Phonemic>
       <Morphemes>1SG.POSS-fish</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">my fish</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="c755bf8018">
       <Phonetic>jɔɲɛːm</Phonetic>
       <Phonemic>jɔ̀ɲɛ́ɛm</Phonemic>
       <Morphemes>2SG.POSS-fish</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">your (sg) fish</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="07a6988e41">
@@ -2978,14 +2978,14 @@
       <Phonetic>mɪɲɛːmã</Phonetic>
       <Phonemic>mɪ̀ɲɛ́ɛmà</Phonemic>
       <Morphemes>1SG.POSS-fish-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">my fish</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="08d65d95fc">
       <Phonetic>jɔɲɛːmã</Phonetic>
       <Phonemic>jɔ̀ɲɛ́ɛmà</Phonemic>
       <Morphemes>2SG.POSS-fish-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">your (sg) fish</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="2813facab6">
@@ -3029,112 +3029,112 @@
       <Phonetic>kʰʌ̤nt̪ʌ</Phonetic>
       <Phonemic>kʰʌ̀nt̪ʌ́</Phonemic>
       <Morphemes>catfish</Morphemes>
-      <Pitch>11 55</Pitch>
+      <Pitch>11 44</Pitch>
       <Translation lang="en">catfish</Translation>
     </token>
     <token tags="Plural, Nominative, isolation" speaker="SP1" collected="2026-10-20" id="32fe2b1f0e">
       <Phonetic>kʰʌ̤nt̪ʌnã</Phonetic>
       <Phonemic>kʰʌ̀nt̪ʌ́nà</Phonemic>
       <Morphemes>catfish-PL</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">catfish</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 1" speaker="SP1" collected="2026-10-20" id="730cca03e8">
       <Phonetic>kʰʌ̤nt̪ʌ ɗɪ̰ː</Phonetic>
       <Phonemic>kʰʌ̀nt̪ʌ́ ɗɪ̄ɪ</Phonemic>
       <Morphemes>catfish COP</Morphemes>
-      <Pitch>11 55 3:3</Pitch>
+      <Pitch>11 44 3:3</Pitch>
       <Translation lang="en">it is a catfish</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 2" speaker="SP1" collected="2026-10-20" id="725b21431c">
       <Phonetic>mɪɲɔ̃ː kʰʌ̤nt̪ʌ</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ kʰʌ̀nt̪ʌ́</Phonemic>
       <Morphemes>1SG.A-see catfish</Morphemes>
-      <Pitch>11 3:3 11 55</Pitch>
+      <Pitch>11 3:3 11 33</Pitch>
       <Translation lang="en">I see the catfish</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="e42dbafaad">
       <Phonetic>mɪkʰʌ̤nt̪ʌ</Phonetic>
       <Phonemic>mɪ̀kʰʌ̀nt̪ʌ́</Phonemic>
       <Morphemes>1SG.POSS-catfish</Morphemes>
-      <Pitch>11 11 55</Pitch>
+      <Pitch>11 11 44</Pitch>
       <Translation lang="en">my catfish</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="0ffda59055">
       <Phonetic>jɔkʰʌ̤nt̪ʌ</Phonetic>
       <Phonemic>jɔ̀kʰʌ̀nt̪ʌ́</Phonemic>
       <Morphemes>2SG.POSS-catfish</Morphemes>
-      <Pitch>11 11 55</Pitch>
+      <Pitch>11 11 44</Pitch>
       <Translation lang="en">your (sg) catfish</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="8eaec8c9e4">
       <Phonetic>wɛkʰʌ̤nt̪ʌ</Phonetic>
       <Phonemic>wɛ́kʰʌ̀nt̪ʌ́</Phonemic>
       <Morphemes>3SG.POSS-catfish</Morphemes>
-      <Pitch>55 11 55</Pitch>
+      <Pitch>55 11 44</Pitch>
       <Translation lang="en">his catfish</Translation>
     </token>
     <token tags="Singular, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="5572d9dac5">
       <Phonetic>tʌkʰʌ̤nt̪ʌ</Phonetic>
       <Phonemic>tʌ́kʰʌ̀nt̪ʌ́</Phonemic>
       <Morphemes>1PL.POSS-catfish</Morphemes>
-      <Pitch>55 11 55</Pitch>
+      <Pitch>55 11 44</Pitch>
       <Translation lang="en">our catfish</Translation>
     </token>
     <token tags="Singular, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="aa14b1cb10">
       <Phonetic>βʊkʰʌ̤nt̪ʌ</Phonetic>
       <Phonemic>βʊ̄kʰʌ̀nt̪ʌ́</Phonemic>
       <Morphemes>2PL.POSS-catfish</Morphemes>
-      <Pitch>33 11 55</Pitch>
+      <Pitch>33 11 44</Pitch>
       <Translation lang="en">your (pl) catfish</Translation>
     </token>
     <token tags="Singular, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="ed0907403c">
       <Phonetic>kʲɪkʰʌ̤nt̪ʌ</Phonetic>
       <Phonemic>kɪ́kʰʌ̀nt̪ʌ́</Phonemic>
       <Morphemes>3PL.POSS-catfish</Morphemes>
-      <Pitch>55 11 55</Pitch>
+      <Pitch>55 11 44</Pitch>
       <Translation lang="en">their catfish</Translation>
     </token>
     <token tags="Plural, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="5eb2b28091">
       <Phonetic>mɪkʰʌ̤nt̪ʌnã</Phonetic>
       <Phonemic>mɪ̀kʰʌ̀nt̪ʌ́nà</Phonemic>
       <Morphemes>1SG.POSS-catfish-PL</Morphemes>
-      <Pitch>11 11 55 10</Pitch>
+      <Pitch>11 11 44 10</Pitch>
       <Translation lang="en">my catfish</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="6228855ea5">
       <Phonetic>jɔkʰʌ̤nt̪ʌnã</Phonetic>
       <Phonemic>jɔ̀kʰʌ̀nt̪ʌ́nà</Phonemic>
       <Morphemes>2SG.POSS-catfish-PL</Morphemes>
-      <Pitch>11 11 55 10</Pitch>
+      <Pitch>11 11 44 10</Pitch>
       <Translation lang="en">your (sg) catfish</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="0c39ce2f47">
       <Phonetic>wɛkʰʌ̤nt̪ʌnã</Phonetic>
       <Phonemic>wɛ́kʰʌ̀nt̪ʌ́nà</Phonemic>
       <Morphemes>3SG.POSS-catfish-PL</Morphemes>
-      <Pitch>55 11 55 10</Pitch>
+      <Pitch>55 11 44 10</Pitch>
       <Translation lang="en">his catfish</Translation>
     </token>
     <token tags="Plural, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="85b7009804">
       <Phonetic>tʌkʰʌ̤nt̪ʌnã</Phonetic>
       <Phonemic>tʌ́kʰʌ̀nt̪ʌ́nà</Phonemic>
       <Morphemes>1PL.POSS-catfish-PL</Morphemes>
-      <Pitch>55 11 55 10</Pitch>
+      <Pitch>55 11 44 10</Pitch>
       <Translation lang="en">our catfish</Translation>
     </token>
     <token tags="Plural, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="d861428539">
       <Phonetic>βʊkʰʌ̤nt̪ʌnã</Phonetic>
       <Phonemic>βʊ̄kʰʌ̀nt̪ʌ́nà</Phonemic>
       <Morphemes>2PL.POSS-catfish-PL</Morphemes>
-      <Pitch>33 11 55 10</Pitch>
+      <Pitch>33 11 44 10</Pitch>
       <Translation lang="en">your (pl) catfish</Translation>
     </token>
     <token tags="Plural, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="7ef1d5f907">
       <Phonetic>kʲɪkʰʌ̤nt̪ʌnã</Phonetic>
       <Phonemic>kɪ́kʰʌ̀nt̪ʌ́nà</Phonemic>
       <Morphemes>3PL.POSS-catfish-PL</Morphemes>
-      <Pitch>55 11 55 10</Pitch>
+      <Pitch>55 11 44 10</Pitch>
       <Translation lang="en">their catfish</Translation>
     </token>
   </entry>
@@ -3171,21 +3171,21 @@
       <Phonetic>mɪɲɔ̃ː t͡sɔː</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ t͡sɔ́ɔ</Phonemic>
       <Morphemes>1SG.A-see snake</Morphemes>
-      <Pitch>11 3:3 5:5</Pitch>
+      <Pitch>11 3:3 4:4</Pitch>
       <Translation lang="en">I see the snake</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="b154b3b3a9">
       <Phonetic>mɪt͡sɔː</Phonetic>
       <Phonemic>mɪ̀t͡sɔ́ɔ</Phonemic>
       <Morphemes>1SG.POSS-snake</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">my snake</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="02261e91d3">
       <Phonetic>jɔt͡sɔː</Phonetic>
       <Phonemic>jɔ̀t͡sɔ́ɔ</Phonemic>
       <Morphemes>2SG.POSS-snake</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">your (sg) snake</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="914a5cd634">
@@ -3220,14 +3220,14 @@
       <Phonetic>mɪt͡sɔːnã</Phonetic>
       <Phonemic>mɪ̀t͡sɔ́ɔnà</Phonemic>
       <Morphemes>1SG.POSS-snake-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">my snakes</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="63808aece7">
       <Phonetic>jɔt͡sɔːnã</Phonetic>
       <Phonemic>jɔ̀t͡sɔ́ɔnà</Phonemic>
       <Morphemes>2SG.POSS-snake-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">your (sg) snakes</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="1844ef488f">
@@ -3271,112 +3271,112 @@
       <Phonetic>ŋaŋkara</Phonetic>
       <Phonemic>ŋàŋkáꜜrá</Phonemic>
       <Morphemes>crocodile</Morphemes>
-      <Pitch>11 55 44</Pitch>
+      <Pitch>11 44 33</Pitch>
       <Translation lang="en">crocodile</Translation>
     </token>
     <token tags="Plural, Nominative, isolation" speaker="SP1" collected="2026-10-20" id="8574b94e6a">
       <Phonetic>ŋaŋkaranã</Phonetic>
       <Phonemic>ŋàŋkáꜜránà</Phonemic>
       <Morphemes>crocodile-PL</Morphemes>
-      <Pitch>11 55 44 10</Pitch>
+      <Pitch>11 44 33 10</Pitch>
       <Translation lang="en">crocodiles</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 1" speaker="SP1" collected="2026-10-20" id="bfd4b1da5a">
       <Phonetic>ŋaŋkara ɗɪ̰ː</Phonetic>
       <Phonemic>ŋàŋkáꜜrá ɗɪ̄ɪ</Phonemic>
       <Morphemes>crocodile COP</Morphemes>
-      <Pitch>11 55 44 3:3</Pitch>
+      <Pitch>11 44 33 2:21</Pitch>
       <Translation lang="en">it is a crocodile</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 2" speaker="SP1" collected="2026-10-20" id="a6e79b12ec">
       <Phonetic>mɪɲɔ̃ː ŋaŋkara</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ ŋàŋkáꜜrá</Phonemic>
       <Morphemes>1SG.A-see crocodile</Morphemes>
-      <Pitch>11 3:3 11 55 44</Pitch>
+      <Pitch>11 3:3 11 33 33</Pitch>
       <Translation lang="en">I see the crocodile</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="1a08ec1622">
       <Phonetic>mɪŋaŋkara</Phonetic>
       <Phonemic>mɪ̀ŋàŋkáꜜrá</Phonemic>
       <Morphemes>1SG.POSS-crocodile</Morphemes>
-      <Pitch>11 11 55 44</Pitch>
+      <Pitch>11 11 44 33</Pitch>
       <Translation lang="en">my crocodile</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="11abb73891">
       <Phonetic>jɔŋaŋkara</Phonetic>
       <Phonemic>jɔ̀ŋàŋkáꜜrá</Phonemic>
       <Morphemes>2SG.POSS-crocodile</Morphemes>
-      <Pitch>11 11 55 44</Pitch>
+      <Pitch>11 11 44 33</Pitch>
       <Translation lang="en">your (sg) crocodile</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="a381f22ce5">
       <Phonetic>wɛŋaŋkara</Phonetic>
       <Phonemic>wɛ́ŋàŋkáꜜrá</Phonemic>
       <Morphemes>3SG.POSS-crocodile</Morphemes>
-      <Pitch>55 11 55 44</Pitch>
+      <Pitch>55 11 44 33</Pitch>
       <Translation lang="en">his crocodile</Translation>
     </token>
     <token tags="Singular, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="290ec04ca3">
       <Phonetic>tʌŋaŋkara</Phonetic>
       <Phonemic>tʌ́ŋàŋkáꜜrá</Phonemic>
       <Morphemes>1PL.POSS-crocodile</Morphemes>
-      <Pitch>55 11 55 44</Pitch>
+      <Pitch>55 11 44 33</Pitch>
       <Translation lang="en">our crocodile</Translation>
     </token>
     <token tags="Singular, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="df9968f875">
       <Phonetic>βʊŋaŋkara</Phonetic>
       <Phonemic>βʊ̄ŋàŋkáꜜrá</Phonemic>
       <Morphemes>2PL.POSS-crocodile</Morphemes>
-      <Pitch>33 11 55 44</Pitch>
+      <Pitch>33 11 44 33</Pitch>
       <Translation lang="en">your (pl) crocodile</Translation>
     </token>
     <token tags="Singular, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="f3a55272d4">
       <Phonetic>kʲɪŋaŋkara</Phonetic>
       <Phonemic>kɪ́ŋàŋkáꜜrá</Phonemic>
       <Morphemes>3PL.POSS-crocodile</Morphemes>
-      <Pitch>55 11 55 44</Pitch>
+      <Pitch>55 11 44 33</Pitch>
       <Translation lang="en">their crocodile</Translation>
     </token>
     <token tags="Plural, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="581886ede5">
       <Phonetic>mɪŋaŋkaranã</Phonetic>
       <Phonemic>mɪ̀ŋàŋkáꜜránà</Phonemic>
       <Morphemes>1SG.POSS-crocodile-PL</Morphemes>
-      <Pitch>11 11 55 44 10</Pitch>
+      <Pitch>11 11 44 33 10</Pitch>
       <Translation lang="en">my crocodiles</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="eccc0e4d24">
       <Phonetic>jɔŋaŋkaranã</Phonetic>
       <Phonemic>jɔ̀ŋàŋkáꜜránà</Phonemic>
       <Morphemes>2SG.POSS-crocodile-PL</Morphemes>
-      <Pitch>11 11 55 44 10</Pitch>
+      <Pitch>11 11 44 33 10</Pitch>
       <Translation lang="en">your (sg) crocodiles</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="8ed8ce1c38">
       <Phonetic>wɛŋaŋkaranã</Phonetic>
       <Phonemic>wɛ́ŋàŋkáꜜránà</Phonemic>
       <Morphemes>3SG.POSS-crocodile-PL</Morphemes>
-      <Pitch>55 11 55 44 10</Pitch>
+      <Pitch>55 11 44 33 10</Pitch>
       <Translation lang="en">his crocodiles</Translation>
     </token>
     <token tags="Plural, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="8fc18a9644">
       <Phonetic>tʌŋaŋkaranã</Phonetic>
       <Phonemic>tʌ́ŋàŋkáꜜránà</Phonemic>
       <Morphemes>1PL.POSS-crocodile-PL</Morphemes>
-      <Pitch>55 11 55 44 10</Pitch>
+      <Pitch>55 11 44 33 10</Pitch>
       <Translation lang="en">our crocodiles</Translation>
     </token>
     <token tags="Plural, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="af397dbada">
       <Phonetic>βʊŋaŋkaranã</Phonetic>
       <Phonemic>βʊ̄ŋàŋkáꜜránà</Phonemic>
       <Morphemes>2PL.POSS-crocodile-PL</Morphemes>
-      <Pitch>33 11 55 44 10</Pitch>
+      <Pitch>33 11 44 33 10</Pitch>
       <Translation lang="en">your (pl) crocodiles</Translation>
     </token>
     <token tags="Plural, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="ca1a2ecce2">
       <Phonetic>kʲɪŋaŋkaranã</Phonetic>
       <Phonemic>kɪ́ŋàŋkáꜜránà</Phonemic>
       <Morphemes>3PL.POSS-crocodile-PL</Morphemes>
-      <Pitch>55 11 55 44 10</Pitch>
+      <Pitch>55 11 44 33 10</Pitch>
       <Translation lang="en">their crocodiles</Translation>
     </token>
   </entry>
@@ -3411,7 +3411,7 @@
       <Phonetic>mɪɲɔ̃ː ɓɛ̰ɓɛ̰</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ ɓɛ̀ɓɛ̄</Phonemic>
       <Morphemes>1SG.A-see frog</Morphemes>
-      <Pitch>11 3:3 11 33</Pitch>
+      <Pitch>11 3:3 11 21</Pitch>
       <Translation lang="en">I see the frog</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="2fe08bcb64">
@@ -3532,21 +3532,21 @@
       <Phonetic>mɪɲɔ̃ː dɔŋ</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ dɔ́ŋ</Phonemic>
       <Morphemes>1SG.A-see bee</Morphemes>
-      <Pitch>11 3:3 55</Pitch>
+      <Pitch>11 3:3 44</Pitch>
       <Translation lang="en">I see the bee</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="eb44f1b301">
       <Phonetic>mɪdɔŋ</Phonetic>
       <Phonemic>mɪ̀dɔ́ŋ</Phonemic>
       <Morphemes>1SG.POSS-bee</Morphemes>
-      <Pitch>11 55</Pitch>
+      <Pitch>11 44</Pitch>
       <Translation lang="en">my bee</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="b4e3ce4dfa">
       <Phonetic>jɔdɔŋ</Phonetic>
       <Phonemic>jɔ̀dɔ́ŋ</Phonemic>
       <Morphemes>2SG.POSS-bee</Morphemes>
-      <Pitch>11 55</Pitch>
+      <Pitch>11 44</Pitch>
       <Translation lang="en">your (sg) bee</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="28279e06b4">
@@ -3581,14 +3581,14 @@
       <Phonetic>mɪdɔŋã</Phonetic>
       <Phonemic>mɪ̀dɔ́ŋà</Phonemic>
       <Morphemes>1SG.POSS-bee-PL</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">my bees</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="f5e6dd47cd">
       <Phonetic>jɔdɔŋã</Phonetic>
       <Phonemic>jɔ̀dɔ́ŋà</Phonemic>
       <Morphemes>2SG.POSS-bee-PL</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">your (sg) bees</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="5803dd4f83">
@@ -3652,21 +3652,21 @@
       <Phonetic>mɪɲɔ̃ː ʃasa</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ ʃáꜜsá</Phonemic>
       <Morphemes>1SG.A-see honey</Morphemes>
-      <Pitch>11 3:3 55 44</Pitch>
+      <Pitch>11 3:3 44 33</Pitch>
       <Translation lang="en">I see the honey</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="035267ef74">
       <Phonetic>mɪʃasa</Phonetic>
       <Phonemic>mɪ̀ʃáꜜsá</Phonemic>
       <Morphemes>1SG.POSS-honey</Morphemes>
-      <Pitch>11 55 44</Pitch>
+      <Pitch>11 44 33</Pitch>
       <Translation lang="en">my honey</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="aedf638f07">
       <Phonetic>jɔʃasa</Phonetic>
       <Phonemic>jɔ̀ʃáꜜsá</Phonemic>
       <Morphemes>2SG.POSS-honey</Morphemes>
-      <Pitch>11 55 44</Pitch>
+      <Pitch>11 44 33</Pitch>
       <Translation lang="en">your (sg) honey</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="5c3849be9f">
@@ -3701,14 +3701,14 @@
       <Phonetic>mɪʃasanã</Phonetic>
       <Phonemic>mɪ̀ʃáꜜsánà</Phonemic>
       <Morphemes>1SG.POSS-honey-PL</Morphemes>
-      <Pitch>11 55 44 10</Pitch>
+      <Pitch>11 44 33 10</Pitch>
       <Translation lang="en">my honeys</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="7947a940d2">
       <Phonetic>jɔʃasanã</Phonetic>
       <Phonemic>jɔ̀ʃáꜜsánà</Phonemic>
       <Morphemes>2SG.POSS-honey-PL</Morphemes>
-      <Pitch>11 55 44 10</Pitch>
+      <Pitch>11 44 33 10</Pitch>
       <Translation lang="en">your (sg) honeys</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="e5c714322f">
@@ -4014,21 +4014,21 @@
       <Phonetic>mɪɲɔ̃ː jʊː</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ jʊ́ʊ</Phonemic>
       <Morphemes>1SG.A-see god</Morphemes>
-      <Pitch>11 3:3 5:5</Pitch>
+      <Pitch>11 3:3 4:4</Pitch>
       <Translation lang="en">I see the god</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="7cac045f72">
       <Phonetic>mɪjʊː</Phonetic>
       <Phonemic>mɪ̀jʊ́ʊ</Phonemic>
       <Morphemes>1SG.POSS-god</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">my god</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="2e06840436">
       <Phonetic>jɔjʊː</Phonetic>
       <Phonemic>jɔ̀jʊ́ʊ</Phonemic>
       <Morphemes>2SG.POSS-god</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">your (sg) god</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="41155a7936">
@@ -4063,14 +4063,14 @@
       <Phonetic>mɪjʊːnã</Phonetic>
       <Phonemic>mɪ̀jʊ́ʊnà</Phonemic>
       <Morphemes>1SG.POSS-god-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">my gods</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="759e52fc68">
       <Phonetic>jɔjʊːnã</Phonetic>
       <Phonemic>jɔ̀jʊ́ʊnà</Phonemic>
       <Morphemes>2SG.POSS-god-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">your (sg) gods</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="92294d8dea">
@@ -4134,21 +4134,21 @@
       <Phonetic>mɪɲɔ̃ː jɛːn</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ jɛ́ɛn</Phonemic>
       <Morphemes>1SG.A-see tree</Morphemes>
-      <Pitch>11 3:3 5:5</Pitch>
+      <Pitch>11 3:3 4:4</Pitch>
       <Translation lang="en">I see the tree</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="1ae48ce3c4">
       <Phonetic>mɪjɛːn</Phonetic>
       <Phonemic>mɪ̀jɛ́ɛn</Phonemic>
       <Morphemes>1SG.POSS-tree</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">my tree</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="f7611e56a2">
       <Phonetic>jɔjɛːn</Phonetic>
       <Phonemic>jɔ̀jɛ́ɛn</Phonemic>
       <Morphemes>2SG.POSS-tree</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">your (sg) tree</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="89128bc27a">
@@ -4183,14 +4183,14 @@
       <Phonetic>mɪjɛːnã</Phonetic>
       <Phonemic>mɪ̀jɛ́ɛnà</Phonemic>
       <Morphemes>1SG.POSS-tree-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">my trees</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="5ea97ea31e">
       <Phonetic>jɔjɛːnã</Phonetic>
       <Phonemic>jɔ̀jɛ́ɛnà</Phonemic>
       <Morphemes>2SG.POSS-tree-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">your (sg) trees</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="d4ac46e256">
@@ -4233,112 +4233,112 @@
       <Phonetic>palata</Phonetic>
       <Phonemic>pàlàtá</Phonemic>
       <Morphemes>leaf</Morphemes>
-      <Pitch>11 11 55</Pitch>
+      <Pitch>11 11 44</Pitch>
       <Translation lang="en">leaf</Translation>
     </token>
     <token tags="Plural, Nominative, isolation" speaker="SP1" collected="2026-10-20" id="d004be996d">
       <Phonetic>palatanã</Phonetic>
       <Phonemic>pàlàtánà</Phonemic>
       <Morphemes>leaf-PL</Morphemes>
-      <Pitch>11 11 55 10</Pitch>
+      <Pitch>11 11 44 10</Pitch>
       <Translation lang="en">leaves</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 1" speaker="SP1" collected="2026-10-20" id="b34a5d37e8">
       <Phonetic>palata ɗɪ̰ː</Phonetic>
       <Phonemic>pàlàtá ɗɪ̄ɪ</Phonemic>
       <Morphemes>leaf COP</Morphemes>
-      <Pitch>11 11 55 3:3</Pitch>
+      <Pitch>11 11 44 3:3</Pitch>
       <Translation lang="en">it is a leaf</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 2" speaker="SP1" collected="2026-10-20" id="710383b28b">
       <Phonetic>mɪɲɔ̃ː palata</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ pàlàtá</Phonemic>
       <Morphemes>1SG.A-see leaf</Morphemes>
-      <Pitch>11 3:3 11 11 55</Pitch>
+      <Pitch>11 3:3 11 11 33</Pitch>
       <Translation lang="en">I see the leaf</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="e6ff453e50">
       <Phonetic>mɪpalata</Phonetic>
       <Phonemic>mɪ̀pàlàtá</Phonemic>
       <Morphemes>1SG.POSS-leaf</Morphemes>
-      <Pitch>11 11 11 55</Pitch>
+      <Pitch>11 11 11 44</Pitch>
       <Translation lang="en">my leaf</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="256b62d49e">
       <Phonetic>jɔpalata</Phonetic>
       <Phonemic>jɔ̀pàlàtá</Phonemic>
       <Morphemes>2SG.POSS-leaf</Morphemes>
-      <Pitch>11 11 11 55</Pitch>
+      <Pitch>11 11 11 44</Pitch>
       <Translation lang="en">your (sg) leaf</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="9063830fca">
       <Phonetic>wɛpalata</Phonetic>
       <Phonemic>wɛ́pàlàtá</Phonemic>
       <Morphemes>3SG.POSS-leaf</Morphemes>
-      <Pitch>55 11 11 55</Pitch>
+      <Pitch>55 11 11 44</Pitch>
       <Translation lang="en">his leaf</Translation>
     </token>
     <token tags="Singular, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="e25d34d17c">
       <Phonetic>tʌpalata</Phonetic>
       <Phonemic>tʌ́pàlàtá</Phonemic>
       <Morphemes>1PL.POSS-leaf</Morphemes>
-      <Pitch>55 11 11 55</Pitch>
+      <Pitch>55 11 11 44</Pitch>
       <Translation lang="en">our leaf</Translation>
     </token>
     <token tags="Singular, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="2ec5dad77f">
       <Phonetic>βʊpalata</Phonetic>
       <Phonemic>βʊ̄pàlàtá</Phonemic>
       <Morphemes>2PL.POSS-leaf</Morphemes>
-      <Pitch>33 11 11 55</Pitch>
+      <Pitch>33 11 11 44</Pitch>
       <Translation lang="en">your (pl) leaf</Translation>
     </token>
     <token tags="Singular, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="c3e5aa3cc9">
       <Phonetic>kʲɪpalata</Phonetic>
       <Phonemic>kɪ́pàlàtá</Phonemic>
       <Morphemes>3PL.POSS-leaf</Morphemes>
-      <Pitch>55 11 11 55</Pitch>
+      <Pitch>55 11 11 44</Pitch>
       <Translation lang="en">their leaf</Translation>
     </token>
     <token tags="Plural, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="464e985cad">
       <Phonetic>mɪpalatanã</Phonetic>
       <Phonemic>mɪ̀pàlàtánà</Phonemic>
       <Morphemes>1SG.POSS-leaf-PL</Morphemes>
-      <Pitch>11 11 11 55 10</Pitch>
+      <Pitch>11 11 11 44 10</Pitch>
       <Translation lang="en">my leaves</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="e9ea208014">
       <Phonetic>jɔpalatanã</Phonetic>
       <Phonemic>jɔ̀pàlàtánà</Phonemic>
       <Morphemes>2SG.POSS-leaf-PL</Morphemes>
-      <Pitch>11 11 11 55 10</Pitch>
+      <Pitch>11 11 11 44 10</Pitch>
       <Translation lang="en">your (sg) leaves</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="e6a4625903">
       <Phonetic>wɛpalatanã</Phonetic>
       <Phonemic>wɛ́pàlàtánà</Phonemic>
       <Morphemes>3SG.POSS-leaf-PL</Morphemes>
-      <Pitch>55 11 11 55 10</Pitch>
+      <Pitch>55 11 11 44 10</Pitch>
       <Translation lang="en">his leaves</Translation>
     </token>
     <token tags="Plural, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="6196bf2809">
       <Phonetic>tʌpalatanã</Phonetic>
       <Phonemic>tʌ́pàlàtánà</Phonemic>
       <Morphemes>1PL.POSS-leaf-PL</Morphemes>
-      <Pitch>55 11 11 55 10</Pitch>
+      <Pitch>55 11 11 44 10</Pitch>
       <Translation lang="en">our leaves</Translation>
     </token>
     <token tags="Plural, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="76dc2476ea">
       <Phonetic>βʊpalatanã</Phonetic>
       <Phonemic>βʊ̄pàlàtánà</Phonemic>
       <Morphemes>2PL.POSS-leaf-PL</Morphemes>
-      <Pitch>33 11 11 55 10</Pitch>
+      <Pitch>33 11 11 44 10</Pitch>
       <Translation lang="en">your (pl) leaves</Translation>
     </token>
     <token tags="Plural, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="4f54e58568">
       <Phonetic>kʲɪpalatanã</Phonetic>
       <Phonemic>kɪ́pàlàtánà</Phonemic>
       <Morphemes>3PL.POSS-leaf-PL</Morphemes>
-      <Pitch>55 11 11 55 10</Pitch>
+      <Pitch>55 11 11 44 10</Pitch>
       <Translation lang="en">their leaves</Translation>
     </token>
   </entry>
@@ -4354,112 +4354,112 @@
       <Phonetic>d͡zamã</Phonetic>
       <Phonemic>d͡zàmá</Phonemic>
       <Morphemes>sorghum</Morphemes>
-      <Pitch>11 55</Pitch>
+      <Pitch>11 44</Pitch>
       <Translation lang="en">sorghum</Translation>
     </token>
     <token tags="Plural, Nominative, isolation" speaker="SP1" collected="2026-10-20" id="f4a1d0307c">
       <Phonetic>d͡zamanã</Phonetic>
       <Phonemic>d͡zàmánà</Phonemic>
       <Morphemes>sorghum-PL</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">sorghums</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 1" speaker="SP1" collected="2026-10-20" id="42d8e304ff">
       <Phonetic>d͡zamã ɗɪ̰ː</Phonetic>
       <Phonemic>d͡zàmá ɗɪ̄ɪ</Phonemic>
       <Morphemes>sorghum COP</Morphemes>
-      <Pitch>11 55 3:3</Pitch>
+      <Pitch>11 44 3:3</Pitch>
       <Translation lang="en">it is sorghum</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 2" speaker="SP1" collected="2026-10-20" id="0c515f92ce">
       <Phonetic>mɪɲɔ̃ː d͡zamã</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ d͡zàmá</Phonemic>
       <Morphemes>1SG.A-see sorghum</Morphemes>
-      <Pitch>11 3:3 11 55</Pitch>
+      <Pitch>11 3:3 11 33</Pitch>
       <Translation lang="en">I see the sorghum</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="e43fecba73">
       <Phonetic>mɪd͡zamã</Phonetic>
       <Phonemic>mɪ̀d͡zàmá</Phonemic>
       <Morphemes>1SG.POSS-sorghum</Morphemes>
-      <Pitch>11 11 55</Pitch>
+      <Pitch>11 11 44</Pitch>
       <Translation lang="en">my sorghum</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="46cb69f90e">
       <Phonetic>jɔd͡zamã</Phonetic>
       <Phonemic>jɔ̀d͡zàmá</Phonemic>
       <Morphemes>2SG.POSS-sorghum</Morphemes>
-      <Pitch>11 11 55</Pitch>
+      <Pitch>11 11 44</Pitch>
       <Translation lang="en">your (sg) sorghum</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="5f22a2b734">
       <Phonetic>wɛd͡zamã</Phonetic>
       <Phonemic>wɛ́d͡zàmá</Phonemic>
       <Morphemes>3SG.POSS-sorghum</Morphemes>
-      <Pitch>55 11 55</Pitch>
+      <Pitch>55 11 44</Pitch>
       <Translation lang="en">his sorghum</Translation>
     </token>
     <token tags="Singular, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="57a1ebc3cf">
       <Phonetic>tʌd͡zamã</Phonetic>
       <Phonemic>tʌ́d͡zàmá</Phonemic>
       <Morphemes>1PL.POSS-sorghum</Morphemes>
-      <Pitch>55 11 55</Pitch>
+      <Pitch>55 11 44</Pitch>
       <Translation lang="en">our sorghum</Translation>
     </token>
     <token tags="Singular, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="912c196aa0">
       <Phonetic>βʊd͡zamã</Phonetic>
       <Phonemic>βʊ̄d͡zàmá</Phonemic>
       <Morphemes>2PL.POSS-sorghum</Morphemes>
-      <Pitch>33 11 55</Pitch>
+      <Pitch>33 11 44</Pitch>
       <Translation lang="en">your (pl) sorghum</Translation>
     </token>
     <token tags="Singular, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="2162416f97">
       <Phonetic>kʲɪd͡zamã</Phonetic>
       <Phonemic>kɪ́d͡zàmá</Phonemic>
       <Morphemes>3PL.POSS-sorghum</Morphemes>
-      <Pitch>55 11 55</Pitch>
+      <Pitch>55 11 44</Pitch>
       <Translation lang="en">their sorghum</Translation>
     </token>
     <token tags="Plural, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="f17da65cd2">
       <Phonetic>mɪd͡zamanã</Phonetic>
       <Phonemic>mɪ̀d͡zàmánà</Phonemic>
       <Morphemes>1SG.POSS-sorghum-PL</Morphemes>
-      <Pitch>11 11 55 10</Pitch>
+      <Pitch>11 11 44 10</Pitch>
       <Translation lang="en">my sorghums</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="38de74f5fd">
       <Phonetic>jɔd͡zamanã</Phonetic>
       <Phonemic>jɔ̀d͡zàmánà</Phonemic>
       <Morphemes>2SG.POSS-sorghum-PL</Morphemes>
-      <Pitch>11 11 55 10</Pitch>
+      <Pitch>11 11 44 10</Pitch>
       <Translation lang="en">your (sg) sorghums</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="0567ec8bc7">
       <Phonetic>wɛd͡zamanã</Phonetic>
       <Phonemic>wɛ́d͡zàmánà</Phonemic>
       <Morphemes>3SG.POSS-sorghum-PL</Morphemes>
-      <Pitch>55 11 55 10</Pitch>
+      <Pitch>55 11 44 10</Pitch>
       <Translation lang="en">his sorghums</Translation>
     </token>
     <token tags="Plural, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="025fc1ad1e">
       <Phonetic>tʌd͡zamanã</Phonetic>
       <Phonemic>tʌ́d͡zàmánà</Phonemic>
       <Morphemes>1PL.POSS-sorghum-PL</Morphemes>
-      <Pitch>55 11 55 10</Pitch>
+      <Pitch>55 11 44 10</Pitch>
       <Translation lang="en">our sorghums</Translation>
     </token>
     <token tags="Plural, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="34ffd0226e">
       <Phonetic>βʊd͡zamanã</Phonetic>
       <Phonemic>βʊ̄d͡zàmánà</Phonemic>
       <Morphemes>2PL.POSS-sorghum-PL</Morphemes>
-      <Pitch>33 11 55 10</Pitch>
+      <Pitch>33 11 44 10</Pitch>
       <Translation lang="en">your (pl) sorghums</Translation>
     </token>
     <token tags="Plural, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="d219eb8789">
       <Phonetic>kʲɪd͡zamanã</Phonetic>
       <Phonemic>kɪ́d͡zàmánà</Phonemic>
       <Morphemes>3PL.POSS-sorghum-PL</Morphemes>
-      <Pitch>55 11 55 10</Pitch>
+      <Pitch>55 11 44 10</Pitch>
       <Translation lang="en">their sorghums</Translation>
     </token>
   </entry>
@@ -4495,21 +4495,21 @@
       <Phonetic>mɪɲɔ̃ː kʷʊndɛ</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ kʊ́ndɛ̀</Phonemic>
       <Morphemes>1SG.A-see food</Morphemes>
-      <Pitch>11 3:3 55 10</Pitch>
+      <Pitch>11 3:3 44 10</Pitch>
       <Translation lang="en">I see the food</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="8503b28460">
       <Phonetic>mɪkʷʊndɛ</Phonetic>
       <Phonemic>mɪ̀kʊ́ndɛ̀</Phonemic>
       <Morphemes>1SG.POSS-food</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">my food</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="60e37a0da7">
       <Phonetic>jɔkʷʊndɛ</Phonetic>
       <Phonemic>jɔ̀kʊ́ndɛ̀</Phonemic>
       <Morphemes>2SG.POSS-food</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">your (sg) food</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="e790e0e4ed">
@@ -4544,14 +4544,14 @@
       <Phonetic>mɪkʷʊndɛnã</Phonetic>
       <Phonemic>mɪ̀kʊ́ndɛ̀nà</Phonemic>
       <Morphemes>1SG.POSS-food-PL</Morphemes>
-      <Pitch>11 55 11 10</Pitch>
+      <Pitch>11 44 11 10</Pitch>
       <Translation lang="en">my foods</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="a170e1cd39">
       <Phonetic>jɔkʷʊndɛnã</Phonetic>
       <Phonemic>jɔ̀kʊ́ndɛ̀nà</Phonemic>
       <Morphemes>2SG.POSS-food-PL</Morphemes>
-      <Pitch>11 55 11 10</Pitch>
+      <Pitch>11 44 11 10</Pitch>
       <Translation lang="en">your (sg) foods</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="36dca512a6">
@@ -4855,21 +4855,21 @@
       <Phonetic>mɪɲɔ̃ː dɪːɗɪ̰</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ dɪ́ɪɗɪ̀</Phonemic>
       <Morphemes>1SG.A-see pot</Morphemes>
-      <Pitch>11 3:3 5:5 10</Pitch>
+      <Pitch>11 3:3 4:4 10</Pitch>
       <Translation lang="en">I see the pot</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="1541e8bdef">
       <Phonetic>mɪdɪːɗɪ̰</Phonetic>
       <Phonemic>mɪ̀dɪ́ɪɗɪ̀</Phonemic>
       <Morphemes>1SG.POSS-pot</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">my pot</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="1065b54ad2">
       <Phonetic>jɔdɪːɗɪ̰</Phonetic>
       <Phonemic>jɔ̀dɪ́ɪɗɪ̀</Phonemic>
       <Morphemes>2SG.POSS-pot</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">your (sg) pot</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="80ce069d98">
@@ -4904,14 +4904,14 @@
       <Phonetic>mɪdɪːɗɪ̰nã</Phonetic>
       <Phonemic>mɪ̀dɪ́ɪɗɪ̀nà</Phonemic>
       <Morphemes>1SG.POSS-pot-PL</Morphemes>
-      <Pitch>11 5:5 11 10</Pitch>
+      <Pitch>11 4:4 11 10</Pitch>
       <Translation lang="en">my pots</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="d6692ac357">
       <Phonetic>jɔdɪːɗɪ̰nã</Phonetic>
       <Phonemic>jɔ̀dɪ́ɪɗɪ̀nà</Phonemic>
       <Morphemes>2SG.POSS-pot-PL</Morphemes>
-      <Pitch>11 5:5 11 10</Pitch>
+      <Pitch>11 4:4 11 10</Pitch>
       <Translation lang="en">your (sg) pots</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="6cd86101cd">
@@ -4954,112 +4954,112 @@
       <Phonetic>t͡sɪmpɪ</Phonetic>
       <Phonemic>t͡sɪ̀mpɪ́</Phonemic>
       <Morphemes>knife</Morphemes>
-      <Pitch>11 55</Pitch>
+      <Pitch>11 44</Pitch>
       <Translation lang="en">knife</Translation>
     </token>
     <token tags="Plural, Nominative, isolation" speaker="SP1" collected="2026-10-20" id="9b8e6fd1d8">
       <Phonetic>t͡sɪmpɪnã</Phonetic>
       <Phonemic>t͡sɪ̀mpɪ́nà</Phonemic>
       <Morphemes>knife-PL</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">knives</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 1" speaker="SP1" collected="2026-10-20" id="c3b8b96937">
       <Phonetic>t͡sɪmpɪ ɗɪ̰ː</Phonetic>
       <Phonemic>t͡sɪ̀mpɪ́ ɗɪ̄ɪ</Phonemic>
       <Morphemes>knife COP</Morphemes>
-      <Pitch>11 55 3:3</Pitch>
+      <Pitch>11 44 3:3</Pitch>
       <Translation lang="en">it is a knife</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 2" speaker="SP1" collected="2026-10-20" id="fe4353b40d">
       <Phonetic>mɪɲɔ̃ː t͡sɪmpɪ</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ t͡sɪ̀mpɪ́</Phonemic>
       <Morphemes>1SG.A-see knife</Morphemes>
-      <Pitch>11 3:3 11 55</Pitch>
+      <Pitch>11 3:3 11 33</Pitch>
       <Translation lang="en">I see the knife</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="b5589c70f4">
       <Phonetic>mɪt͡sɪmpɪ</Phonetic>
       <Phonemic>mɪ̀t͡sɪ̀mpɪ́</Phonemic>
       <Morphemes>1SG.POSS-knife</Morphemes>
-      <Pitch>11 11 55</Pitch>
+      <Pitch>11 11 44</Pitch>
       <Translation lang="en">my knife</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="d9b6fbe229">
       <Phonetic>jɔt͡sɪmpɪ</Phonetic>
       <Phonemic>jɔ̀t͡sɪ̀mpɪ́</Phonemic>
       <Morphemes>2SG.POSS-knife</Morphemes>
-      <Pitch>11 11 55</Pitch>
+      <Pitch>11 11 44</Pitch>
       <Translation lang="en">your (sg) knife</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="12dd0fb329">
       <Phonetic>wɛt͡sɪmpɪ</Phonetic>
       <Phonemic>wɛ́t͡sɪ̀mpɪ́</Phonemic>
       <Morphemes>3SG.POSS-knife</Morphemes>
-      <Pitch>55 11 55</Pitch>
+      <Pitch>55 11 44</Pitch>
       <Translation lang="en">his knife</Translation>
     </token>
     <token tags="Singular, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="6e3b990c6f">
       <Phonetic>tʌt͡sɪmpɪ</Phonetic>
       <Phonemic>tʌ́t͡sɪ̀mpɪ́</Phonemic>
       <Morphemes>1PL.POSS-knife</Morphemes>
-      <Pitch>55 11 55</Pitch>
+      <Pitch>55 11 44</Pitch>
       <Translation lang="en">our knife</Translation>
     </token>
     <token tags="Singular, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="4eb558c63f">
       <Phonetic>βʊt͡sɪmpɪ</Phonetic>
       <Phonemic>βʊ̄t͡sɪ̀mpɪ́</Phonemic>
       <Morphemes>2PL.POSS-knife</Morphemes>
-      <Pitch>33 11 55</Pitch>
+      <Pitch>33 11 44</Pitch>
       <Translation lang="en">your (pl) knife</Translation>
     </token>
     <token tags="Singular, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="0750a70c02">
       <Phonetic>kʲɪt͡sɪmpɪ</Phonetic>
       <Phonemic>kɪ́t͡sɪ̀mpɪ́</Phonemic>
       <Morphemes>3PL.POSS-knife</Morphemes>
-      <Pitch>55 11 55</Pitch>
+      <Pitch>55 11 44</Pitch>
       <Translation lang="en">their knife</Translation>
     </token>
     <token tags="Plural, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="5a670e4c33">
       <Phonetic>mɪt͡sɪmpɪnã</Phonetic>
       <Phonemic>mɪ̀t͡sɪ̀mpɪ́nà</Phonemic>
       <Morphemes>1SG.POSS-knife-PL</Morphemes>
-      <Pitch>11 11 55 10</Pitch>
+      <Pitch>11 11 44 10</Pitch>
       <Translation lang="en">my knives</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="ff424a295e">
       <Phonetic>jɔt͡sɪmpɪnã</Phonetic>
       <Phonemic>jɔ̀t͡sɪ̀mpɪ́nà</Phonemic>
       <Morphemes>2SG.POSS-knife-PL</Morphemes>
-      <Pitch>11 11 55 10</Pitch>
+      <Pitch>11 11 44 10</Pitch>
       <Translation lang="en">your (sg) knives</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="588368d756">
       <Phonetic>wɛt͡sɪmpɪnã</Phonetic>
       <Phonemic>wɛ́t͡sɪ̀mpɪ́nà</Phonemic>
       <Morphemes>3SG.POSS-knife-PL</Morphemes>
-      <Pitch>55 11 55 10</Pitch>
+      <Pitch>55 11 44 10</Pitch>
       <Translation lang="en">his knives</Translation>
     </token>
     <token tags="Plural, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="6a47768764">
       <Phonetic>tʌt͡sɪmpɪnã</Phonetic>
       <Phonemic>tʌ́t͡sɪ̀mpɪ́nà</Phonemic>
       <Morphemes>1PL.POSS-knife-PL</Morphemes>
-      <Pitch>55 11 55 10</Pitch>
+      <Pitch>55 11 44 10</Pitch>
       <Translation lang="en">our knives</Translation>
     </token>
     <token tags="Plural, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="a5f354ad0c">
       <Phonetic>βʊt͡sɪmpɪnã</Phonetic>
       <Phonemic>βʊ̄t͡sɪ̀mpɪ́nà</Phonemic>
       <Morphemes>2PL.POSS-knife-PL</Morphemes>
-      <Pitch>33 11 55 10</Pitch>
+      <Pitch>33 11 44 10</Pitch>
       <Translation lang="en">your (pl) knives</Translation>
     </token>
     <token tags="Plural, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="80cdc1898b">
       <Phonetic>kʲɪt͡sɪmpɪnã</Phonetic>
       <Phonemic>kɪ́t͡sɪ̀mpɪ́nà</Phonemic>
       <Morphemes>3PL.POSS-knife-PL</Morphemes>
-      <Pitch>55 11 55 10</Pitch>
+      <Pitch>55 11 44 10</Pitch>
       <Translation lang="en">their knives</Translation>
     </token>
   </entry>
@@ -5095,21 +5095,21 @@
       <Phonetic>mɪɲɔ̃ː lʊŋgʷʊ</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ lʊ́ŋgʊ̀</Phonemic>
       <Morphemes>1SG.A-see rope</Morphemes>
-      <Pitch>11 3:3 55 10</Pitch>
+      <Pitch>11 3:3 44 10</Pitch>
       <Translation lang="en">I see the rope</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="71b2fdf35a">
       <Phonetic>mɪlʊŋgʷʊ</Phonetic>
       <Phonemic>mɪ̀lʊ́ŋgʊ̀</Phonemic>
       <Morphemes>1SG.POSS-rope</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">my rope</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="36d3027dc9">
       <Phonetic>jɔlʊŋgʷʊ</Phonetic>
       <Phonemic>jɔ̀lʊ́ŋgʊ̀</Phonemic>
       <Morphemes>2SG.POSS-rope</Morphemes>
-      <Pitch>11 55 10</Pitch>
+      <Pitch>11 44 10</Pitch>
       <Translation lang="en">your (sg) rope</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="8809c16730">
@@ -5144,14 +5144,14 @@
       <Phonetic>mɪlʊŋgʷʊnã</Phonetic>
       <Phonemic>mɪ̀lʊ́ŋgʊ̀nà</Phonemic>
       <Morphemes>1SG.POSS-rope-PL</Morphemes>
-      <Pitch>11 55 11 10</Pitch>
+      <Pitch>11 44 11 10</Pitch>
       <Translation lang="en">my ropes</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="7e378fca15">
       <Phonetic>jɔlʊŋgʷʊnã</Phonetic>
       <Phonemic>jɔ̀lʊ́ŋgʊ̀nà</Phonemic>
       <Morphemes>2SG.POSS-rope-PL</Morphemes>
-      <Pitch>11 55 11 10</Pitch>
+      <Pitch>11 44 11 10</Pitch>
       <Translation lang="en">your (sg) ropes</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="fe2724f5d2">
@@ -5693,21 +5693,21 @@
       <Phonetic>mɪɲɔ̃ː ɓʊ̰ː</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ ɓʊ́ʊ</Phonemic>
       <Morphemes>1SG.A-see rain</Morphemes>
-      <Pitch>11 3:3 5:5</Pitch>
+      <Pitch>11 3:3 4:4</Pitch>
       <Translation lang="en">I see the rain</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="2c155fe15b">
       <Phonetic>mɪɓʊ̰ː</Phonetic>
       <Phonemic>mɪ̀ɓʊ́ʊ</Phonemic>
       <Morphemes>1SG.POSS-rain</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">my rain</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="8fa67ba0cf">
       <Phonetic>jɔɓʊ̰ː</Phonetic>
       <Phonemic>jɔ̀ɓʊ́ʊ</Phonemic>
       <Morphemes>2SG.POSS-rain</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">your (sg) rain</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="1243f7d84d">
@@ -5742,14 +5742,14 @@
       <Phonetic>mɪɓʊ̰ːnã</Phonetic>
       <Phonemic>mɪ̀ɓʊ́ʊnà</Phonemic>
       <Morphemes>1SG.POSS-rain-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">my rains</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="dcab87cfba">
       <Phonetic>jɔɓʊ̰ːnã</Phonetic>
       <Phonemic>jɔ̀ɓʊ́ʊnà</Phonemic>
       <Morphemes>2SG.POSS-rain-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">your (sg) rains</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="fca236b2f7">
@@ -5813,21 +5813,21 @@
       <Phonetic>mɪɲɔ̃ː d̪ɔːɲ</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ d̪ɔ́ɔɲ</Phonemic>
       <Morphemes>1SG.A-see fire</Morphemes>
-      <Pitch>11 3:3 5:5</Pitch>
+      <Pitch>11 3:3 4:4</Pitch>
       <Translation lang="en">I see the fire</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="42a85e1c72">
       <Phonetic>mɪd̪ɔːɲ</Phonetic>
       <Phonemic>mɪ̀d̪ɔ́ɔɲ</Phonemic>
       <Morphemes>1SG.POSS-fire</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">my fire</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="d3ede39048">
       <Phonetic>jɔd̪ɔːɲ</Phonetic>
       <Phonemic>jɔ̀d̪ɔ́ɔɲ</Phonemic>
       <Morphemes>2SG.POSS-fire</Morphemes>
-      <Pitch>11 5:5</Pitch>
+      <Pitch>11 4:4</Pitch>
       <Translation lang="en">your (sg) fire</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="becca6d817">
@@ -5862,14 +5862,14 @@
       <Phonetic>mɪd̪ɔːɲã</Phonetic>
       <Phonemic>mɪ̀d̪ɔ́ɔɲà</Phonemic>
       <Morphemes>1SG.POSS-fire-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">my fires</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="2f231db767">
       <Phonetic>jɔd̪ɔːɲã</Phonetic>
       <Phonemic>jɔ̀d̪ɔ́ɔɲà</Phonemic>
       <Morphemes>2SG.POSS-fire-PL</Morphemes>
-      <Pitch>11 5:5 10</Pitch>
+      <Pitch>11 4:4 10</Pitch>
       <Translation lang="en">your (sg) fires</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="756759da08">
@@ -5933,21 +5933,21 @@
       <Phonetic>mɪɲɔ̃ː ɲʊ̃ː</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ ɲʊ́ʊ̀</Phonemic>
       <Morphemes>1SG.A-see water</Morphemes>
-      <Pitch>11 3:3 5:10</Pitch>
+      <Pitch>11 3:3 4:10</Pitch>
       <Translation lang="en">I see the water</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="ce4b424d77">
       <Phonetic>mɪɲʊ̃ː</Phonetic>
       <Phonemic>mɪ̀ɲʊ́ʊ̀</Phonemic>
       <Morphemes>1SG.POSS-water</Morphemes>
-      <Pitch>11 5:10</Pitch>
+      <Pitch>11 4:10</Pitch>
       <Translation lang="en">my water</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="b7e12fc5a0">
       <Phonetic>jɔɲʊ̃ː</Phonetic>
       <Phonemic>jɔ̀ɲʊ́ʊ̀</Phonemic>
       <Morphemes>2SG.POSS-water</Morphemes>
-      <Pitch>11 5:10</Pitch>
+      <Pitch>11 4:10</Pitch>
       <Translation lang="en">your (sg) water</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="a53438ed89">
@@ -5982,14 +5982,14 @@
       <Phonetic>mɪɲʊːnã</Phonetic>
       <Phonemic>mɪ̀ɲʊ́ʊ̀nà</Phonemic>
       <Morphemes>1SG.POSS-water-PL</Morphemes>
-      <Pitch>11 5:1 10</Pitch>
+      <Pitch>11 4:1 10</Pitch>
       <Translation lang="en">my waters</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="86be576d2f">
       <Phonetic>jɔɲʊːnã</Phonetic>
       <Phonemic>jɔ̀ɲʊ́ʊ̀nà</Phonemic>
       <Morphemes>2SG.POSS-water-PL</Morphemes>
-      <Pitch>11 5:1 10</Pitch>
+      <Pitch>11 4:1 10</Pitch>
       <Translation lang="en">your (sg) waters</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="4f2c15c282">
@@ -6152,112 +6152,112 @@
       <Phonetic>kʷɔːlɔ</Phonetic>
       <Phonemic>kɔ̀ɔlɔ́</Phonemic>
       <Morphemes>stone</Morphemes>
-      <Pitch>1:1 55</Pitch>
+      <Pitch>1:1 44</Pitch>
       <Translation lang="en">stone</Translation>
     </token>
     <token tags="Plural, Nominative, isolation" speaker="SP1" collected="2026-10-20" id="00c89d9b6e">
       <Phonetic>kʷɔːlɔnã</Phonetic>
       <Phonemic>kɔ̀ɔlɔ́nà</Phonemic>
       <Morphemes>stone-PL</Morphemes>
-      <Pitch>1:1 55 10</Pitch>
+      <Pitch>1:1 44 10</Pitch>
       <Translation lang="en">stones</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 1" speaker="SP1" collected="2026-10-20" id="4a6dc40107">
       <Phonetic>kʷɔːlɔ ɗɪ̰ː</Phonetic>
       <Phonemic>kɔ̀ɔlɔ́ ɗɪ̄ɪ</Phonemic>
       <Morphemes>stone COP</Morphemes>
-      <Pitch>1:1 55 3:3</Pitch>
+      <Pitch>1:1 44 3:3</Pitch>
       <Translation lang="en">it is a stone</Translation>
     </token>
     <token tags="Singular, Nominative, isolation, Frame 2" speaker="SP1" collected="2026-10-20" id="8c554ffc66">
       <Phonetic>mɪɲɔ̃ː kʷɔːlɔ</Phonetic>
       <Phonemic>mɪ̀ɲɔ̄ɔ kɔ̀ɔlɔ́</Phonemic>
       <Morphemes>1SG.A-see stone</Morphemes>
-      <Pitch>11 3:3 1:1 55</Pitch>
+      <Pitch>11 3:3 1:1 33</Pitch>
       <Translation lang="en">I see the stone</Translation>
     </token>
     <token tags="Singular, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="2a4baeb977">
       <Phonetic>mɪkʷɔːlɔ</Phonetic>
       <Phonemic>mɪ̀kɔ̀ɔlɔ́</Phonemic>
       <Morphemes>1SG.POSS-stone</Morphemes>
-      <Pitch>11 1:1 55</Pitch>
+      <Pitch>11 1:1 44</Pitch>
       <Translation lang="en">my stone</Translation>
     </token>
     <token tags="Singular, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="b0510036ef">
       <Phonetic>jɔkʷɔːlɔ</Phonetic>
       <Phonemic>jɔ̀kɔ̀ɔlɔ́</Phonemic>
       <Morphemes>2SG.POSS-stone</Morphemes>
-      <Pitch>11 1:1 55</Pitch>
+      <Pitch>11 1:1 44</Pitch>
       <Translation lang="en">your (sg) stone</Translation>
     </token>
     <token tags="Singular, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="7e6b0bce14">
       <Phonetic>wɛkʷɔːlɔ</Phonetic>
       <Phonemic>wɛ́kɔ̀ɔlɔ́</Phonemic>
       <Morphemes>3SG.POSS-stone</Morphemes>
-      <Pitch>55 1:1 55</Pitch>
+      <Pitch>55 1:1 44</Pitch>
       <Translation lang="en">his stone</Translation>
     </token>
     <token tags="Singular, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="c3c78568fd">
       <Phonetic>tʌkʷɔːlɔ</Phonetic>
       <Phonemic>tʌ́kɔ̀ɔlɔ́</Phonemic>
       <Morphemes>1PL.POSS-stone</Morphemes>
-      <Pitch>55 1:1 55</Pitch>
+      <Pitch>55 1:1 44</Pitch>
       <Translation lang="en">our stone</Translation>
     </token>
     <token tags="Singular, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="f55f7acdcc">
       <Phonetic>βʊkʷɔːlɔ</Phonetic>
       <Phonemic>βʊ̄kɔ̀ɔlɔ́</Phonemic>
       <Morphemes>2PL.POSS-stone</Morphemes>
-      <Pitch>33 1:1 55</Pitch>
+      <Pitch>33 1:1 44</Pitch>
       <Translation lang="en">your (pl) stone</Translation>
     </token>
     <token tags="Singular, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="4393cce418">
       <Phonetic>kʲɪkʷɔːlɔ</Phonetic>
       <Phonemic>kɪ́kɔ̀ɔlɔ́</Phonemic>
       <Morphemes>3PL.POSS-stone</Morphemes>
-      <Pitch>55 1:1 55</Pitch>
+      <Pitch>55 1:1 44</Pitch>
       <Translation lang="en">their stone</Translation>
     </token>
     <token tags="Plural, Nominative, 1SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="d240013407">
       <Phonetic>mɪkʷɔːlɔnã</Phonetic>
       <Phonemic>mɪ̀kɔ̀ɔlɔ́nà</Phonemic>
       <Morphemes>1SG.POSS-stone-PL</Morphemes>
-      <Pitch>11 1:1 55 10</Pitch>
+      <Pitch>11 1:1 44 10</Pitch>
       <Translation lang="en">my stones</Translation>
     </token>
     <token tags="Plural, Nominative, 2SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="6727a8ce42">
       <Phonetic>jɔkʷɔːlɔnã</Phonetic>
       <Phonemic>jɔ̀kɔ̀ɔlɔ́nà</Phonemic>
       <Morphemes>2SG.POSS-stone-PL</Morphemes>
-      <Pitch>11 1:1 55 10</Pitch>
+      <Pitch>11 1:1 44 10</Pitch>
       <Translation lang="en">your (sg) stones</Translation>
     </token>
     <token tags="Plural, Nominative, 3SG.POSS, isolation" speaker="SP1" collected="2026-10-20" id="c08c05765f">
       <Phonetic>wɛkʷɔːlɔnã</Phonetic>
       <Phonemic>wɛ́kɔ̀ɔlɔ́nà</Phonemic>
       <Morphemes>3SG.POSS-stone-PL</Morphemes>
-      <Pitch>55 1:1 55 10</Pitch>
+      <Pitch>55 1:1 44 10</Pitch>
       <Translation lang="en">his stones</Translation>
     </token>
     <token tags="Plural, Nominative, 1PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="f6b0869e1f">
       <Phonetic>tʌkʷɔːlɔnã</Phonetic>
       <Phonemic>tʌ́kɔ̀ɔlɔ́nà</Phonemic>
       <Morphemes>1PL.POSS-stone-PL</Morphemes>
-      <Pitch>55 1:1 55 10</Pitch>
+      <Pitch>55 1:1 44 10</Pitch>
       <Translation lang="en">our stones</Translation>
     </token>
     <token tags="Plural, Nominative, 2PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="ab003da3a4">
       <Phonetic>βʊkʷɔːlɔnã</Phonetic>
       <Phonemic>βʊ̄kɔ̀ɔlɔ́nà</Phonemic>
       <Morphemes>2PL.POSS-stone-PL</Morphemes>
-      <Pitch>33 1:1 55 10</Pitch>
+      <Pitch>33 1:1 44 10</Pitch>
       <Translation lang="en">your (pl) stones</Translation>
     </token>
     <token tags="Plural, Nominative, 3PL.POSS, isolation" speaker="SP1" collected="2026-10-20" id="08873fbc8d">
       <Phonetic>kʲɪkʷɔːlɔnã</Phonetic>
       <Phonemic>kɪ́kɔ̀ɔlɔ́nà</Phonemic>
       <Morphemes>3PL.POSS-stone-PL</Morphemes>
-      <Pitch>55 1:1 55 10</Pitch>
+      <Pitch>55 1:1 44 10</Pitch>
       <Translation lang="en">their stones</Translation>
     </token>
   </entry>
@@ -6270,7 +6270,7 @@
       <Phonetic>ɲamã</Phonetic>
       <Phonemic>ɲàmá</Phonemic>
       <Morphemes>today</Morphemes>
-      <Pitch>11 55</Pitch>
+      <Pitch>11 44</Pitch>
       <Translation lang="en">today</Translation>
     </token>
   </entry>
@@ -6361,7 +6361,7 @@
       <Phonetic>pɛpɛ</Phonetic>
       <Phonemic>pɛ̀pɛ́</Phonemic>
       <Morphemes>white</Morphemes>
-      <Pitch>11 55</Pitch>
+      <Pitch>11 44</Pitch>
       <Translation lang="en">white</Translation>
     </token>
   </entry>
@@ -6400,7 +6400,7 @@
       <Phonetic>lʌːŋgʌ</Phonetic>
       <Phonemic>lʌ̀ʌŋgʌ́</Phonemic>
       <Morphemes>long</Morphemes>
-      <Pitch>1:1 55</Pitch>
+      <Pitch>1:1 44</Pitch>
       <Translation lang="en">long</Translation>
     </token>
   </entry>
@@ -6439,7 +6439,7 @@
       <Phonetic>sadɛ</Phonetic>
       <Phonemic>sàdɛ́</Phonemic>
       <Morphemes>three</Morphemes>
-      <Pitch>11 55</Pitch>
+      <Pitch>11 44</Pitch>
       <Translation lang="en">three</Translation>
     </token>
   </entry>
@@ -6504,7 +6504,7 @@
       <Phonetic>t̪ʰʌ̤ːn sadɛ</Phonetic>
       <Phonemic>t̪ʰʌ́ʌn sàdɛ́</Phonemic>
       <Morphemes>five three</Morphemes>
-      <Pitch>5:5 11 55</Pitch>
+      <Pitch>5:5 11 44</Pitch>
       <Translation lang="en">eight</Translation>
     </token>
   </entry>
@@ -6530,7 +6530,7 @@
       <Phonetic>ɟɔ</Phonetic>
       <Phonemic>ɟɔ̌</Phonemic>
       <Morphemes>ten</Morphemes>
-      <Pitch>15</Pitch>
+      <Pitch>14</Pitch>
       <Translation lang="en">ten</Translation>
     </token>
   </entry>
@@ -6621,7 +6621,7 @@
       <Phonetic>dɛː</Phonetic>
       <Phonemic>dɛ̀ɛ́</Phonemic>
       <Morphemes>here</Morphemes>
-      <Pitch>1:5</Pitch>
+      <Pitch>1:4</Pitch>
       <Translation lang="en">here</Translation>
     </token>
   </entry>
@@ -6656,14 +6656,14 @@
       <Phonetic>kʌ ɲɔːra</Phonetic>
       <Phonemic>kʌ̀ ɲɔ̄ɔrá</Phonemic>
       <Morphemes>NEG see-IMP</Morphemes>
-      <Pitch>11 3:3 55</Pitch>
+      <Pitch>11 3:3 44</Pitch>
       <Translation lang="en">don't see! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="817d284eda">
       <Phonetic>kʌ βʊɲɔːra</Phonetic>
       <Phonemic>kʌ̀ βʊ̄ɲɔ̄ɔrá</Phonemic>
       <Morphemes>NEG 2PL.A-see-IMP</Morphemes>
-      <Pitch>11 33 3:3 55</Pitch>
+      <Pitch>11 33 3:3 44</Pitch>
       <Translation lang="en">don't see! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="e2ec30fa6e">
@@ -6677,7 +6677,7 @@
       <Phonetic>wɛɲɔːrɛ ŋɔːɲ</Phonetic>
       <Phonemic>wɛ́ɲɔ̄ɔrɛ̀ ŋɔ́ɔɲ</Phonemic>
       <Morphemes>3SG.A-see-PST lion</Morphemes>
-      <Pitch>55 3:3 11 5:5</Pitch>
+      <Pitch>55 3:3 11 4:4</Pitch>
       <Translation lang="en">he saw the lion</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="fbfc6095b8">
@@ -6698,7 +6698,7 @@
       <Phonetic>kʲɪɲɔːrɛ ŋɔːɲ</Phonetic>
       <Phonemic>kɪ́ɲɔ̄ɔrɛ̀ ŋɔ́ɔɲ</Phonemic>
       <Morphemes>3PL.A-see-PST lion</Morphemes>
-      <Pitch>55 3:3 11 5:5</Pitch>
+      <Pitch>55 3:3 11 4:4</Pitch>
       <Translation lang="en">they saw the lion</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="ddcd09c0d7">
@@ -6727,70 +6727,70 @@
       <Phonetic>pʰɪ̤ːra</Phonetic>
       <Phonemic>pʰɪ̀ɪrá</Phonemic>
       <Morphemes>hear-IMP</Morphemes>
-      <Pitch>1:1 55</Pitch>
+      <Pitch>1:1 44</Pitch>
       <Translation lang="en">hear! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="7edeb8daa7">
       <Phonetic>βʊpʰɪ̤ːra</Phonetic>
       <Phonemic>βʊ̄pʰɪ̀ɪrá</Phonemic>
       <Morphemes>2PL.A-hear-IMP</Morphemes>
-      <Pitch>33 1:1 55</Pitch>
+      <Pitch>33 1:1 44</Pitch>
       <Translation lang="en">hear! (pl)</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="bee245ee8b">
       <Phonetic>kʌ pʰɪ̤ːra</Phonetic>
       <Phonemic>kʌ̀ pʰɪ̀ɪrá</Phonemic>
       <Morphemes>NEG hear-IMP</Morphemes>
-      <Pitch>11 1:1 55</Pitch>
+      <Pitch>11 1:1 44</Pitch>
       <Translation lang="en">don't hear! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="4cab9756ef">
       <Phonetic>kʌ βʊpʰɪ̤ːra</Phonetic>
       <Phonemic>kʌ̀ βʊ̄pʰɪ̀ɪrá</Phonemic>
       <Morphemes>NEG 2PL.A-hear-IMP</Morphemes>
-      <Pitch>11 33 1:1 55</Pitch>
+      <Pitch>11 33 1:1 33</Pitch>
       <Translation lang="en">don't hear! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="02c3b5dfc1">
       <Phonetic>wɛpʰɪ̤ː ɓʊ̰ː</Phonetic>
       <Phonemic>wɛ́pʰɪ̀ɪ ɓʊ́ʊ</Phonemic>
       <Morphemes>3SG.A-hear rain</Morphemes>
-      <Pitch>55 1:1 5:5</Pitch>
+      <Pitch>55 1:1 4:4</Pitch>
       <Translation lang="en">he hears the rain</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="07fd26d1f8">
       <Phonetic>wɛpʰɪ̤ːrɛ ɓʊ̰ː</Phonetic>
       <Phonemic>wɛ́pʰɪ̀ɪrɛ̀ ɓʊ́ʊ</Phonemic>
       <Morphemes>3SG.A-hear-PST rain</Morphemes>
-      <Pitch>55 1:1 11 5:5</Pitch>
+      <Pitch>55 1:1 11 4:4</Pitch>
       <Translation lang="en">he heard the rain</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="44ee599c22">
       <Phonetic>wɛdɔpʰɪ̤ː ɓʊ̰ː</Phonetic>
       <Phonemic>wɛ́dɔ̄pʰɪ̀ɪ ɓʊ́ʊ</Phonemic>
       <Morphemes>3SG.A-FUT-hear rain</Morphemes>
-      <Pitch>55 33 1:1 5:5</Pitch>
+      <Pitch>55 33 1:1 4:4</Pitch>
       <Translation lang="en">he will hear the rain</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="886ac777ac">
       <Phonetic>kʲɪpʰɪ̤ː ɓʊ̰ː</Phonetic>
       <Phonemic>kɪ́pʰɪ̀ɪ ɓʊ́ʊ</Phonemic>
       <Morphemes>3PL.A-hear rain</Morphemes>
-      <Pitch>55 1:1 5:5</Pitch>
+      <Pitch>55 1:1 4:4</Pitch>
       <Translation lang="en">they hear the rain</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="7b4879810a">
       <Phonetic>kʲɪpʰɪ̤ːrɛ ɓʊ̰ː</Phonetic>
       <Phonemic>kɪ́pʰɪ̀ɪrɛ̀ ɓʊ́ʊ</Phonemic>
       <Morphemes>3PL.A-hear-PST rain</Morphemes>
-      <Pitch>55 1:1 11 5:5</Pitch>
+      <Pitch>55 1:1 11 4:4</Pitch>
       <Translation lang="en">they heard the rain</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="ef98753e8a">
       <Phonetic>kʲɪdɔpʰɪ̤ː ɓʊ̰ː</Phonetic>
       <Phonemic>kɪ́dɔ̄pʰɪ̀ɪ ɓʊ́ʊ</Phonemic>
       <Morphemes>3PL.A-FUT-hear rain</Morphemes>
-      <Pitch>55 33 1:1 5:5</Pitch>
+      <Pitch>55 33 1:1 4:4</Pitch>
       <Translation lang="en">they will hear the rain</Translation>
     </token>
   </entry>
@@ -6825,14 +6825,14 @@
       <Phonetic>kʌ tʌŋã</Phonetic>
       <Phonemic>kʌ̀ tʌ̄ŋá</Phonemic>
       <Morphemes>NEG eat-IMP</Morphemes>
-      <Pitch>11 33 55</Pitch>
+      <Pitch>11 33 44</Pitch>
       <Translation lang="en">don't eat! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_V158_eat_2PL_A-IMP-NEG.wav" id="3038ffbe4a">
       <Phonetic>kʌ βʊtʌŋã</Phonetic>
       <Phonemic>kʌ̀ βʊ̄tʌ̄ŋá</Phonemic>
       <Morphemes>NEG 2PL.A-eat-IMP</Morphemes>
-      <Pitch>11 33 33 55</Pitch>
+      <Pitch>11 33 33 44</Pitch>
       <Translation lang="en">don't eat! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_V158_eat_3SG_A-NP_O.wav" id="02ba45bb55">
@@ -6846,7 +6846,7 @@
       <Phonetic>wɛtʌŋɛ̃ kʷʊndɛ</Phonetic>
       <Phonemic>wɛ́tʌ̄ŋɛ̀ kʊ́ndɛ̀</Phonemic>
       <Morphemes>3SG.A-eat-PST food</Morphemes>
-      <Pitch>55 33 11 55 10</Pitch>
+      <Pitch>55 33 11 44 10</Pitch>
       <Translation lang="en">he ate the food</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_V158_eat_3SG_A-NP_O-FUT.wav" id="234e59178a">
@@ -6867,7 +6867,7 @@
       <Phonetic>kʲɪtʌŋɛ̃ kʷʊndɛ</Phonetic>
       <Phonemic>kɪ́tʌ̄ŋɛ̀ kʊ́ndɛ̀</Phonemic>
       <Morphemes>3PL.A-eat-PST food</Morphemes>
-      <Pitch>55 33 11 55 10</Pitch>
+      <Pitch>55 33 11 44 10</Pitch>
       <Translation lang="en">they ate the food</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_V158_eat_3PL_A-NP_O-FUT.wav" id="7fe9a07d8b">
@@ -6896,70 +6896,70 @@
       <Phonetic>mʊːnã</Phonetic>
       <Phonemic>mʊ̀ʊná</Phonemic>
       <Morphemes>drink-IMP</Morphemes>
-      <Pitch>1:1 55</Pitch>
+      <Pitch>1:1 44</Pitch>
       <Translation lang="en">drink! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_V168_drink_2PL_A-IMP.wav" id="e70bd301e3">
       <Phonetic>βʊmʊːnã</Phonetic>
       <Phonemic>βʊ̄mʊ̀ʊná</Phonemic>
       <Morphemes>2PL.A-drink-IMP</Morphemes>
-      <Pitch>33 1:1 55</Pitch>
+      <Pitch>33 1:1 44</Pitch>
       <Translation lang="en">drink! (pl)</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_V168_drink_2SG_A-IMP-NEG.wav" id="dde82d8c6b">
       <Phonetic>kʌ mʊːnã</Phonetic>
       <Phonemic>kʌ̀ mʊ̀ʊná</Phonemic>
       <Morphemes>NEG drink-IMP</Morphemes>
-      <Pitch>11 1:1 55</Pitch>
+      <Pitch>11 1:1 44</Pitch>
       <Translation lang="en">don't drink! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_V168_drink_2PL_A-IMP-NEG.wav" id="60ff8ed54a">
       <Phonetic>kʌ βʊmʊːnã</Phonetic>
       <Phonemic>kʌ̀ βʊ̄mʊ̀ʊná</Phonemic>
       <Morphemes>NEG 2PL.A-drink-IMP</Morphemes>
-      <Pitch>11 33 1:1 55</Pitch>
+      <Pitch>11 33 1:1 33</Pitch>
       <Translation lang="en">don't drink! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_V168_drink_3SG_A-NP_O.wav" id="45aee39f2d">
       <Phonetic>wɛmʊːn ɲʊ̃ː</Phonetic>
       <Phonemic>wɛ́mʊ̀ʊn ɲʊ́ʊ̀</Phonemic>
       <Morphemes>3SG.A-drink water</Morphemes>
-      <Pitch>55 1:1 5:10</Pitch>
+      <Pitch>55 1:1 4:10</Pitch>
       <Translation lang="en">he drinks the water</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_V168_drink_3SG_A-NP_O-PST.wav" id="69f9f4451c">
       <Phonetic>wɛmʊːnɛ̃ ɲʊ̃ː</Phonetic>
       <Phonemic>wɛ́mʊ̀ʊnɛ̀ ɲʊ́ʊ̀</Phonemic>
       <Morphemes>3SG.A-drink-PST water</Morphemes>
-      <Pitch>55 1:1 11 5:10</Pitch>
+      <Pitch>55 1:1 11 4:10</Pitch>
       <Translation lang="en">he drank the water</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_V168_drink_3SG_A-NP_O-FUT.wav" id="c1bfa86fe1">
       <Phonetic>wɛdɔmʊːn ɲʊ̃ː</Phonetic>
       <Phonemic>wɛ́dɔ̄mʊ̀ʊn ɲʊ́ʊ̀</Phonemic>
       <Morphemes>3SG.A-FUT-drink water</Morphemes>
-      <Pitch>55 33 1:1 5:10</Pitch>
+      <Pitch>55 33 1:1 4:10</Pitch>
       <Translation lang="en">he will drink the water</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_V168_drink_3PL_A-NP_O.wav" id="0d78059fe0">
       <Phonetic>kʲɪmʊːn ɲʊ̃ː</Phonetic>
       <Phonemic>kɪ́mʊ̀ʊn ɲʊ́ʊ̀</Phonemic>
       <Morphemes>3PL.A-drink water</Morphemes>
-      <Pitch>55 1:1 5:10</Pitch>
+      <Pitch>55 1:1 4:10</Pitch>
       <Translation lang="en">they drink the water</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_V168_drink_3PL_A-NP_O-PST.wav" id="901b729ced">
       <Phonetic>kʲɪmʊːnɛ̃ ɲʊ̃ː</Phonetic>
       <Phonemic>kɪ́mʊ̀ʊnɛ̀ ɲʊ́ʊ̀</Phonemic>
       <Morphemes>3PL.A-drink-PST water</Morphemes>
-      <Pitch>55 1:1 11 5:10</Pitch>
+      <Pitch>55 1:1 11 4:10</Pitch>
       <Translation lang="en">they drank the water</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" file="LXX-VXX_V168_drink_3PL_A-NP_O-FUT.wav" id="3f702b4e99">
       <Phonetic>kʲɪdɔmʊːn ɲʊ̃ː</Phonetic>
       <Phonemic>kɪ́dɔ̄mʊ̀ʊn ɲʊ́ʊ̀</Phonemic>
       <Morphemes>3PL.A-FUT-drink water</Morphemes>
-      <Pitch>55 33 1:1 5:10</Pitch>
+      <Pitch>55 33 1:1 4:10</Pitch>
       <Translation lang="en">they will drink the water</Translation>
     </token>
   </entry>
@@ -6995,14 +6995,14 @@
       <Phonetic>kʌ pʼɪ̰ra</Phonetic>
       <Phonemic>kʌ̀ pʼɪ́rá</Phonemic>
       <Morphemes>NEG hit-IMP</Morphemes>
-      <Pitch>11 55 55</Pitch>
+      <Pitch>11 44 44</Pitch>
       <Translation lang="en">don't hit! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="b790dde9bf">
       <Phonetic>kʌ βʊpʼɪ̰ra</Phonetic>
       <Phonemic>kʌ̀ βʊ̄pʼɪ́rá</Phonemic>
       <Morphemes>NEG 2PL.A-hit-IMP</Morphemes>
-      <Pitch>11 33 55 55</Pitch>
+      <Pitch>11 33 44 44</Pitch>
       <Translation lang="en">don't hit! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="80bd245f6c">
@@ -7066,70 +7066,70 @@
       <Phonetic>rɛːmã</Phonetic>
       <Phonemic>rɛ̀ɛmá</Phonemic>
       <Morphemes>kill-IMP</Morphemes>
-      <Pitch>1:1 55</Pitch>
+      <Pitch>1:1 44</Pitch>
       <Translation lang="en">kill! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="d15238ec28">
       <Phonetic>βʊrɛːmã</Phonetic>
       <Phonemic>βʊ̄rɛ̀ɛmá</Phonemic>
       <Morphemes>2PL.A-kill-IMP</Morphemes>
-      <Pitch>33 1:1 55</Pitch>
+      <Pitch>33 1:1 44</Pitch>
       <Translation lang="en">kill! (pl)</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="b67bebef76">
       <Phonetic>kʌ rɛːmã</Phonetic>
       <Phonemic>kʌ̀ rɛ̀ɛmá</Phonemic>
       <Morphemes>NEG kill-IMP</Morphemes>
-      <Pitch>11 1:1 55</Pitch>
+      <Pitch>11 1:1 44</Pitch>
       <Translation lang="en">don't kill! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="b72e210b49">
       <Phonetic>kʌ βʊrɛːmã</Phonetic>
       <Phonemic>kʌ̀ βʊ̄rɛ̀ɛmá</Phonemic>
       <Morphemes>NEG 2PL.A-kill-IMP</Morphemes>
-      <Pitch>11 33 1:1 55</Pitch>
+      <Pitch>11 33 1:1 33</Pitch>
       <Translation lang="en">don't kill! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="ec2181c21b">
       <Phonetic>wɛrɛːm t͡sɔː</Phonetic>
       <Phonemic>wɛ́rɛ̀ɛm t͡sɔ́ɔ</Phonemic>
       <Morphemes>3SG.A-kill snake</Morphemes>
-      <Pitch>55 1:1 5:5</Pitch>
+      <Pitch>55 1:1 4:4</Pitch>
       <Translation lang="en">he kills the snake</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="df0a7fb454">
       <Phonetic>wɛrɛːmɛ̃ t͡sɔː</Phonetic>
       <Phonemic>wɛ́rɛ̀ɛmɛ̀ t͡sɔ́ɔ</Phonemic>
       <Morphemes>3SG.A-kill-PST snake</Morphemes>
-      <Pitch>55 1:1 11 5:5</Pitch>
+      <Pitch>55 1:1 11 4:4</Pitch>
       <Translation lang="en">he killed the snake</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="29132ae4d0">
       <Phonetic>wɛdɔrɛːm t͡sɔː</Phonetic>
       <Phonemic>wɛ́dɔ̄rɛ̀ɛm t͡sɔ́ɔ</Phonemic>
       <Morphemes>3SG.A-FUT-kill snake</Morphemes>
-      <Pitch>55 33 1:1 5:5</Pitch>
+      <Pitch>55 33 1:1 4:4</Pitch>
       <Translation lang="en">he will kill the snake</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="71e3507438">
       <Phonetic>kʲɪrɛːm t͡sɔː</Phonetic>
       <Phonemic>kɪ́rɛ̀ɛm t͡sɔ́ɔ</Phonemic>
       <Morphemes>3PL.A-kill snake</Morphemes>
-      <Pitch>55 1:1 5:5</Pitch>
+      <Pitch>55 1:1 4:4</Pitch>
       <Translation lang="en">they kill the snake</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="5d95e711ea">
       <Phonetic>kʲɪrɛːmɛ̃ t͡sɔː</Phonetic>
       <Phonemic>kɪ́rɛ̀ɛmɛ̀ t͡sɔ́ɔ</Phonemic>
       <Morphemes>3PL.A-kill-PST snake</Morphemes>
-      <Pitch>55 1:1 11 5:5</Pitch>
+      <Pitch>55 1:1 11 4:4</Pitch>
       <Translation lang="en">they killed the snake</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="5e7bd2cfb4">
       <Phonetic>kʲɪdɔrɛːm t͡sɔː</Phonetic>
       <Phonemic>kɪ́dɔ̄rɛ̀ɛm t͡sɔ́ɔ</Phonemic>
       <Morphemes>3PL.A-FUT-kill snake</Morphemes>
-      <Pitch>55 33 1:1 5:5</Pitch>
+      <Pitch>55 33 1:1 4:4</Pitch>
       <Translation lang="en">they will kill the snake</Translation>
     </token>
   </entry>
@@ -7165,14 +7165,14 @@
       <Phonetic>kʌ gʷʊːra</Phonetic>
       <Phonemic>kʌ̀ gʊ́ʊrá</Phonemic>
       <Morphemes>NEG hold-IMP</Morphemes>
-      <Pitch>11 5:5 55</Pitch>
+      <Pitch>11 4:4 44</Pitch>
       <Translation lang="en">don't hold! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="a4eea6c30d">
       <Phonetic>kʌ βʊgʷʊːra</Phonetic>
       <Phonemic>kʌ̀ βʊ̄gʊ́ʊrá</Phonemic>
       <Morphemes>NEG 2PL.A-hold-IMP</Morphemes>
-      <Pitch>11 33 5:5 55</Pitch>
+      <Pitch>11 33 4:4 44</Pitch>
       <Translation lang="en">don't hold! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="2d706bff5c">
@@ -7236,70 +7236,70 @@
       <Phonetic>janã</Phonetic>
       <Phonemic>jàná</Phonemic>
       <Morphemes>take-IMP</Morphemes>
-      <Pitch>11 55</Pitch>
+      <Pitch>11 44</Pitch>
       <Translation lang="en">take! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="5fcec3c343">
       <Phonetic>βʊjanã</Phonetic>
       <Phonemic>βʊ̄jàná</Phonemic>
       <Morphemes>2PL.A-take-IMP</Morphemes>
-      <Pitch>33 11 55</Pitch>
+      <Pitch>33 11 44</Pitch>
       <Translation lang="en">take! (pl)</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="81e3b277d3">
       <Phonetic>kʌ janã</Phonetic>
       <Phonemic>kʌ̀ jàná</Phonemic>
       <Morphemes>NEG take-IMP</Morphemes>
-      <Pitch>11 11 55</Pitch>
+      <Pitch>11 11 44</Pitch>
       <Translation lang="en">don't take! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="1d6320a61b">
       <Phonetic>kʌ βʊjanã</Phonetic>
       <Phonemic>kʌ̀ βʊ̄jàná</Phonemic>
       <Morphemes>NEG 2PL.A-take-IMP</Morphemes>
-      <Pitch>11 33 11 55</Pitch>
+      <Pitch>11 33 11 33</Pitch>
       <Translation lang="en">don't take! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="84433bc90b">
       <Phonetic>wɛjan t͡sɪmpɪ</Phonetic>
       <Phonemic>wɛ́jàn t͡sɪ̀mpɪ́</Phonemic>
       <Morphemes>3SG.A-take knife</Morphemes>
-      <Pitch>55 11 11 55</Pitch>
+      <Pitch>55 11 11 44</Pitch>
       <Translation lang="en">he takes the knife</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="58409e0125">
       <Phonetic>wɛjanɛ̃ t͡sɪmpɪ</Phonetic>
       <Phonemic>wɛ́jànɛ̀ t͡sɪ̀mpɪ́</Phonemic>
       <Morphemes>3SG.A-take-PST knife</Morphemes>
-      <Pitch>55 11 11 11 55</Pitch>
+      <Pitch>55 11 11 11 44</Pitch>
       <Translation lang="en">he took the knife</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="b0b0e58144">
       <Phonetic>wɛdɔjan t͡sɪmpɪ</Phonetic>
       <Phonemic>wɛ́dɔ̄jàn t͡sɪ̀mpɪ́</Phonemic>
       <Morphemes>3SG.A-FUT-take knife</Morphemes>
-      <Pitch>55 33 11 11 55</Pitch>
+      <Pitch>55 33 11 11 44</Pitch>
       <Translation lang="en">he will take the knife</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="bb68aef48b">
       <Phonetic>kʲɪjan t͡sɪmpɪ</Phonetic>
       <Phonemic>kɪ́jàn t͡sɪ̀mpɪ́</Phonemic>
       <Morphemes>3PL.A-take knife</Morphemes>
-      <Pitch>55 11 11 55</Pitch>
+      <Pitch>55 11 11 44</Pitch>
       <Translation lang="en">they take the knife</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="01cd2c5a83">
       <Phonetic>kʲɪjanɛ̃ t͡sɪmpɪ</Phonetic>
       <Phonemic>kɪ́jànɛ̀ t͡sɪ̀mpɪ́</Phonemic>
       <Morphemes>3PL.A-take-PST knife</Morphemes>
-      <Pitch>55 11 11 11 55</Pitch>
+      <Pitch>55 11 11 11 44</Pitch>
       <Translation lang="en">they took the knife</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="d09c315bb4">
       <Phonetic>kʲɪdɔjan t͡sɪmpɪ</Phonetic>
       <Phonemic>kɪ́dɔ̄jàn t͡sɪ̀mpɪ́</Phonemic>
       <Morphemes>3PL.A-FUT-take knife</Morphemes>
-      <Pitch>55 33 11 11 55</Pitch>
+      <Pitch>55 33 11 11 44</Pitch>
       <Translation lang="en">they will take the knife</Translation>
     </token>
   </entry>
@@ -7335,14 +7335,14 @@
       <Phonetic>kʌ ɓɛ̰ːŋã</Phonetic>
       <Phonemic>kʌ̀ ɓɛ́ɛŋá</Phonemic>
       <Morphemes>NEG carry-IMP</Morphemes>
-      <Pitch>11 5:5 55</Pitch>
+      <Pitch>11 4:4 44</Pitch>
       <Translation lang="en">don't carry! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="5e9b7bc945">
       <Phonetic>kʌ βʊɓɛ̰ːŋã</Phonetic>
       <Phonemic>kʌ̀ βʊ̄ɓɛ́ɛŋá</Phonemic>
       <Morphemes>NEG 2PL.A-carry-IMP</Morphemes>
-      <Pitch>11 33 5:5 55</Pitch>
+      <Pitch>11 33 4:4 44</Pitch>
       <Translation lang="en">don't carry! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="239f8ab8ba">
@@ -7356,7 +7356,7 @@
       <Phonetic>wɛɓɛ̰ːŋɛ̃ dɪːɗɪ̰</Phonetic>
       <Phonemic>wɛ́ɓɛ́ɛŋɛ̀ dɪ́ɪɗɪ̀</Phonemic>
       <Morphemes>3SG.A-carry-PST pot</Morphemes>
-      <Pitch>55 5:5 11 5:5 10</Pitch>
+      <Pitch>55 5:5 11 4:4 10</Pitch>
       <Translation lang="en">he carried the pot</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="2cb3519d94">
@@ -7377,7 +7377,7 @@
       <Phonetic>kʲɪɓɛ̰ːŋɛ̃ dɪːɗɪ̰</Phonetic>
       <Phonemic>kɪ́ɓɛ́ɛŋɛ̀ dɪ́ɪɗɪ̀</Phonemic>
       <Morphemes>3PL.A-carry-PST pot</Morphemes>
-      <Pitch>55 5:5 11 5:5 10</Pitch>
+      <Pitch>55 5:5 11 4:4 10</Pitch>
       <Translation lang="en">they carried the pot</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="66085d841d">
@@ -7406,70 +7406,70 @@
       <Phonetic>ɥɛnã</Phonetic>
       <Phonemic>ɥɛ̂ná</Phonemic>
       <Morphemes>find-IMP</Morphemes>
-      <Pitch>51 55</Pitch>
+      <Pitch>51 44</Pitch>
       <Translation lang="en">find! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="49bda0ae0b">
       <Phonetic>βʊɥɛnã</Phonetic>
       <Phonemic>βʊ̄ɥɛ̂ná</Phonemic>
       <Morphemes>2PL.A-find-IMP</Morphemes>
-      <Pitch>33 51 55</Pitch>
+      <Pitch>33 51 44</Pitch>
       <Translation lang="en">find! (pl)</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="336f4f7766">
       <Phonetic>kʌ ɥɛnã</Phonetic>
       <Phonemic>kʌ̀ ɥɛ̂ná</Phonemic>
       <Morphemes>NEG find-IMP</Morphemes>
-      <Pitch>11 51 55</Pitch>
+      <Pitch>11 41 33</Pitch>
       <Translation lang="en">don't find! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="d6d7bf31fd">
       <Phonetic>kʌ βʊɥɛnã</Phonetic>
       <Phonemic>kʌ̀ βʊ̄ɥɛ̂ná</Phonemic>
       <Morphemes>NEG 2PL.A-find-IMP</Morphemes>
-      <Pitch>11 33 51 55</Pitch>
+      <Pitch>11 33 41 33</Pitch>
       <Translation lang="en">don't find! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="9d16859799">
       <Phonetic>wɛɥɛn dʌːm</Phonetic>
       <Phonemic>wɛ́ɥɛ̂n dʌ́ʌm</Phonemic>
       <Morphemes>3SG.A-find goat</Morphemes>
-      <Pitch>55 51 5:5</Pitch>
+      <Pitch>55 51 4:4</Pitch>
       <Translation lang="en">he finds the goat</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="cb095e4da5">
       <Phonetic>wɛɥɛnɛ̃ dʌːm</Phonetic>
       <Phonemic>wɛ́ɥɛ̂nɛ̀ dʌ́ʌm</Phonemic>
       <Morphemes>3SG.A-find-PST goat</Morphemes>
-      <Pitch>55 51 11 5:5</Pitch>
+      <Pitch>55 51 11 4:4</Pitch>
       <Translation lang="en">he found the goat</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="b840c0afd0">
       <Phonetic>wɛdɔɥɛn dʌːm</Phonetic>
       <Phonemic>wɛ́dɔ̄ɥɛ̂n dʌ́ʌm</Phonemic>
       <Morphemes>3SG.A-FUT-find goat</Morphemes>
-      <Pitch>55 33 51 5:5</Pitch>
+      <Pitch>55 33 51 4:4</Pitch>
       <Translation lang="en">he will find the goat</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="8763444792">
       <Phonetic>kʲɪɥɛn dʌːm</Phonetic>
       <Phonemic>kɪ́ɥɛ̂n dʌ́ʌm</Phonemic>
       <Morphemes>3PL.A-find goat</Morphemes>
-      <Pitch>55 51 5:5</Pitch>
+      <Pitch>55 51 4:4</Pitch>
       <Translation lang="en">they find the goat</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="bc931982a2">
       <Phonetic>kʲɪɥɛnɛ̃ dʌːm</Phonetic>
       <Phonemic>kɪ́ɥɛ̂nɛ̀ dʌ́ʌm</Phonemic>
       <Morphemes>3PL.A-find-PST goat</Morphemes>
-      <Pitch>55 51 11 5:5</Pitch>
+      <Pitch>55 51 11 4:4</Pitch>
       <Translation lang="en">they found the goat</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="f16fd71573">
       <Phonetic>kʲɪdɔɥɛn dʌːm</Phonetic>
       <Phonemic>kɪ́dɔ̄ɥɛ̂n dʌ́ʌm</Phonemic>
       <Morphemes>3PL.A-FUT-find goat</Morphemes>
-      <Pitch>55 33 51 5:5</Pitch>
+      <Pitch>55 33 51 4:4</Pitch>
       <Translation lang="en">they will find the goat</Translation>
     </token>
   </entry>
@@ -7491,70 +7491,70 @@
       <Phonetic>kʷʼɔ̰tara</Phonetic>
       <Phonemic>kʼɔ́tàrá</Phonemic>
       <Morphemes>cut-IMP</Morphemes>
-      <Pitch>55 11 55</Pitch>
+      <Pitch>55 11 44</Pitch>
       <Translation lang="en">cut! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="eb71fd5e4f">
       <Phonetic>βʊkʷʼɔ̰tara</Phonetic>
       <Phonemic>βʊ̄kʼɔ́tàrá</Phonemic>
       <Morphemes>2PL.A-cut-IMP</Morphemes>
-      <Pitch>33 55 11 55</Pitch>
+      <Pitch>33 55 11 44</Pitch>
       <Translation lang="en">cut! (pl)</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="4ed1fe7235">
       <Phonetic>kʌ kʷʼɔ̰tara</Phonetic>
       <Phonemic>kʌ̀ kʼɔ́tàrá</Phonemic>
       <Morphemes>NEG cut-IMP</Morphemes>
-      <Pitch>11 55 11 55</Pitch>
+      <Pitch>11 44 11 33</Pitch>
       <Translation lang="en">don't cut! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="8eba3e2f47">
       <Phonetic>kʌ βʊkʷʼɔ̰tara</Phonetic>
       <Phonemic>kʌ̀ βʊ̄kʼɔ́tàrá</Phonemic>
       <Morphemes>NEG 2PL.A-cut-IMP</Morphemes>
-      <Pitch>11 33 55 11 55</Pitch>
+      <Pitch>11 33 44 11 33</Pitch>
       <Translation lang="en">don't cut! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="f18802f9fb">
       <Phonetic>wɛkʷʼɔ̰ta lʊŋgʷʊ</Phonetic>
       <Phonemic>wɛ́kʼɔ́tà lʊ́ŋgʊ̀</Phonemic>
       <Morphemes>3SG.A-cut rope</Morphemes>
-      <Pitch>55 55 11 55 10</Pitch>
+      <Pitch>55 55 11 44 10</Pitch>
       <Translation lang="en">he cuts the rope</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="a0f7efe843">
       <Phonetic>wɛkʷʼɔ̰tarɛ lʊŋgʷʊ</Phonetic>
       <Phonemic>wɛ́kʼɔ́tàrɛ̀ lʊ́ŋgʊ̀</Phonemic>
       <Morphemes>3SG.A-cut-PST rope</Morphemes>
-      <Pitch>55 55 11 11 55 10</Pitch>
+      <Pitch>55 55 11 11 44 10</Pitch>
       <Translation lang="en">he cut the rope</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="4dd4b7afef">
       <Phonetic>wɛdɔkʷʼɔ̰ta lʊŋgʷʊ</Phonetic>
       <Phonemic>wɛ́dɔ̄kʼɔ́tà lʊ́ŋgʊ̀</Phonemic>
       <Morphemes>3SG.A-FUT-cut rope</Morphemes>
-      <Pitch>55 33 55 11 55 10</Pitch>
+      <Pitch>55 33 55 11 44 10</Pitch>
       <Translation lang="en">he will cut the rope</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="e06ee6dd82">
       <Phonetic>kʲɪkʷʼɔ̰ta lʊŋgʷʊ</Phonetic>
       <Phonemic>kɪ́kʼɔ́tà lʊ́ŋgʊ̀</Phonemic>
       <Morphemes>3PL.A-cut rope</Morphemes>
-      <Pitch>55 55 11 55 10</Pitch>
+      <Pitch>55 55 11 44 10</Pitch>
       <Translation lang="en">they cut the rope</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="6f65a03b04">
       <Phonetic>kʲɪkʷʼɔ̰tarɛ lʊŋgʷʊ</Phonetic>
       <Phonemic>kɪ́kʼɔ́tàrɛ̀ lʊ́ŋgʊ̀</Phonemic>
       <Morphemes>3PL.A-cut-PST rope</Morphemes>
-      <Pitch>55 55 11 11 55 10</Pitch>
+      <Pitch>55 55 11 11 44 10</Pitch>
       <Translation lang="en">they cut the rope</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="16ece320e2">
       <Phonetic>kʲɪdɔkʷʼɔ̰ta lʊŋgʷʊ</Phonetic>
       <Phonemic>kɪ́dɔ̄kʼɔ́tà lʊ́ŋgʊ̀</Phonemic>
       <Morphemes>3PL.A-FUT-cut rope</Morphemes>
-      <Pitch>55 33 55 11 55 10</Pitch>
+      <Pitch>55 33 55 11 44 10</Pitch>
       <Translation lang="en">they will cut the rope</Translation>
     </token>
   </entry>
@@ -7569,77 +7569,77 @@
       <Phonetic>t̪ɔːŋkʷɔ</Phonetic>
       <Phonemic>t̪ɔ̀ɔŋkɔ́</Phonemic>
       <Morphemes>wash</Morphemes>
-      <Pitch>1:1 55</Pitch>
+      <Pitch>1:1 44</Pitch>
       <Translation lang="en">to wash</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="38ffec62e0">
       <Phonetic>t̪ɔːŋkʷɔra</Phonetic>
       <Phonemic>t̪ɔ̀ɔŋkɔ́rá</Phonemic>
       <Morphemes>wash-IMP</Morphemes>
-      <Pitch>1:1 55 55</Pitch>
+      <Pitch>1:1 44 44</Pitch>
       <Translation lang="en">wash! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="6debc3a342">
       <Phonetic>βʊt̪ɔːŋkʷɔra</Phonetic>
       <Phonemic>βʊ̄t̪ɔ̀ɔŋkɔ́rá</Phonemic>
       <Morphemes>2PL.A-wash-IMP</Morphemes>
-      <Pitch>33 1:1 55 55</Pitch>
+      <Pitch>33 1:1 44 44</Pitch>
       <Translation lang="en">wash! (pl)</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="b2ca88eb1f">
       <Phonetic>kʌ t̪ɔːŋkʷɔra</Phonetic>
       <Phonemic>kʌ̀ t̪ɔ̀ɔŋkɔ́rá</Phonemic>
       <Morphemes>NEG wash-IMP</Morphemes>
-      <Pitch>11 1:1 55 55</Pitch>
+      <Pitch>11 1:1 44 44</Pitch>
       <Translation lang="en">don't wash! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="f9bf8c9f4b">
       <Phonetic>kʌ βʊt̪ɔːŋkʷɔra</Phonetic>
       <Phonemic>kʌ̀ βʊ̄t̪ɔ̀ɔŋkɔ́rá</Phonemic>
       <Morphemes>NEG 2PL.A-wash-IMP</Morphemes>
-      <Pitch>11 33 1:1 55 55</Pitch>
+      <Pitch>11 33 1:1 33 33</Pitch>
       <Translation lang="en">don't wash! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="a25743eefd">
       <Phonetic>wɛt̪ɔːŋkʷɔ dambɛ</Phonetic>
       <Phonemic>wɛ́t̪ɔ̀ɔŋkɔ́ dàmbɛ́</Phonemic>
       <Morphemes>3SG.A-wash hand</Morphemes>
-      <Pitch>55 1:1 55 11 55</Pitch>
+      <Pitch>55 1:1 44 11 33</Pitch>
       <Translation lang="en">he washes the hand</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="98dc66358c">
       <Phonetic>wɛt̪ɔːŋkʷɔrɛ dambɛ</Phonetic>
       <Phonemic>wɛ́t̪ɔ̀ɔŋkɔ́rɛ̀ dàmbɛ́</Phonemic>
       <Morphemes>3SG.A-wash-PST hand</Morphemes>
-      <Pitch>55 1:1 55 11 11 55</Pitch>
+      <Pitch>55 1:1 44 11 11 33</Pitch>
       <Translation lang="en">he washed the hand</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="93fd3896d7">
       <Phonetic>wɛdɔt̪ɔːŋkʷɔ dambɛ</Phonetic>
       <Phonemic>wɛ́dɔ̄t̪ɔ̀ɔŋkɔ́ dàmbɛ́</Phonemic>
       <Morphemes>3SG.A-FUT-wash hand</Morphemes>
-      <Pitch>55 33 1:1 55 11 55</Pitch>
+      <Pitch>55 33 1:1 44 11 33</Pitch>
       <Translation lang="en">he will wash the hand</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="764f4b408d">
       <Phonetic>kʲɪt̪ɔːŋkʷɔ dambɛ</Phonetic>
       <Phonemic>kɪ́t̪ɔ̀ɔŋkɔ́ dàmbɛ́</Phonemic>
       <Morphemes>3PL.A-wash hand</Morphemes>
-      <Pitch>55 1:1 55 11 55</Pitch>
+      <Pitch>55 1:1 44 11 33</Pitch>
       <Translation lang="en">they wash the hand</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="79721bdcdf">
       <Phonetic>kʲɪt̪ɔːŋkʷɔrɛ dambɛ</Phonetic>
       <Phonemic>kɪ́t̪ɔ̀ɔŋkɔ́rɛ̀ dàmbɛ́</Phonemic>
       <Morphemes>3PL.A-wash-PST hand</Morphemes>
-      <Pitch>55 1:1 55 11 11 55</Pitch>
+      <Pitch>55 1:1 44 11 11 33</Pitch>
       <Translation lang="en">they washed the hand</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="2a8a2ac2c5">
       <Phonetic>kʲɪdɔt̪ɔːŋkʷɔ dambɛ</Phonetic>
       <Phonemic>kɪ́dɔ̄t̪ɔ̀ɔŋkɔ́ dàmbɛ́</Phonemic>
       <Morphemes>3PL.A-FUT-wash hand</Morphemes>
-      <Pitch>55 33 1:1 55 11 55</Pitch>
+      <Pitch>55 33 1:1 44 11 33</Pitch>
       <Translation lang="en">they will wash the hand</Translation>
     </token>
   </entry>
@@ -7661,28 +7661,28 @@
       <Phonetic>t͡sʊmbara</Phonetic>
       <Phonemic>t͡sʊ̀mbàrá</Phonemic>
       <Morphemes>cook-IMP</Morphemes>
-      <Pitch>11 11 55</Pitch>
+      <Pitch>11 11 44</Pitch>
       <Translation lang="en">cook! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="a243962ca3">
       <Phonetic>βʊt͡sʊmbara</Phonetic>
       <Phonemic>βʊ̄t͡sʊ̀mbàrá</Phonemic>
       <Morphemes>2PL.A-cook-IMP</Morphemes>
-      <Pitch>33 11 11 55</Pitch>
+      <Pitch>33 11 11 44</Pitch>
       <Translation lang="en">cook! (pl)</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="ccb90ce2a6">
       <Phonetic>kʌ t͡sʊmbara</Phonetic>
       <Phonemic>kʌ̀ t͡sʊ̀mbàrá</Phonemic>
       <Morphemes>NEG cook-IMP</Morphemes>
-      <Pitch>11 11 11 55</Pitch>
+      <Pitch>11 11 11 44</Pitch>
       <Translation lang="en">don't cook! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="89c28a41fd">
       <Phonetic>kʌ βʊt͡sʊmbara</Phonetic>
       <Phonemic>kʌ̀ βʊ̄t͡sʊ̀mbàrá</Phonemic>
       <Morphemes>NEG 2PL.A-cook-IMP</Morphemes>
-      <Pitch>11 33 11 11 55</Pitch>
+      <Pitch>11 33 11 11 33</Pitch>
       <Translation lang="en">don't cook! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="f2abee173f">
@@ -7746,28 +7746,28 @@
       <Phonetic>ɟɛːra</Phonetic>
       <Phonemic>ɟɛ̀ɛrá</Phonemic>
       <Morphemes>build-IMP</Morphemes>
-      <Pitch>1:1 55</Pitch>
+      <Pitch>1:1 44</Pitch>
       <Translation lang="en">build! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="a68341043c">
       <Phonetic>βʊɟɛːra</Phonetic>
       <Phonemic>βʊ̄ɟɛ̀ɛrá</Phonemic>
       <Morphemes>2PL.A-build-IMP</Morphemes>
-      <Pitch>33 1:1 55</Pitch>
+      <Pitch>33 1:1 44</Pitch>
       <Translation lang="en">build! (pl)</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="c2d5936db0">
       <Phonetic>kʌ ɟɛːra</Phonetic>
       <Phonemic>kʌ̀ ɟɛ̀ɛrá</Phonemic>
       <Morphemes>NEG build-IMP</Morphemes>
-      <Pitch>11 1:1 55</Pitch>
+      <Pitch>11 1:1 44</Pitch>
       <Translation lang="en">don't build! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="26ac268df5">
       <Phonetic>kʌ βʊɟɛːra</Phonetic>
       <Phonemic>kʌ̀ βʊ̄ɟɛ̀ɛrá</Phonemic>
       <Morphemes>NEG 2PL.A-build-IMP</Morphemes>
-      <Pitch>11 33 1:1 55</Pitch>
+      <Pitch>11 33 1:1 33</Pitch>
       <Translation lang="en">don't build! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="737e08176e">
@@ -7824,77 +7824,77 @@
       <Phonetic>sɪndʊ</Phonetic>
       <Phonemic>sɪ̀ndʊ́</Phonemic>
       <Morphemes>plant</Morphemes>
-      <Pitch>11 55</Pitch>
+      <Pitch>11 44</Pitch>
       <Translation lang="en">to plant</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="1d40233e2c">
       <Phonetic>sɪndʊra</Phonetic>
       <Phonemic>sɪ̀ndʊ́rá</Phonemic>
       <Morphemes>plant-IMP</Morphemes>
-      <Pitch>11 55 55</Pitch>
+      <Pitch>11 44 44</Pitch>
       <Translation lang="en">plant! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="3583566eca">
       <Phonetic>βʊsɪndʊra</Phonetic>
       <Phonemic>βʊ̄sɪ̀ndʊ́rá</Phonemic>
       <Morphemes>2PL.A-plant-IMP</Morphemes>
-      <Pitch>33 11 55 55</Pitch>
+      <Pitch>33 11 44 44</Pitch>
       <Translation lang="en">plant! (pl)</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="3410940149">
       <Phonetic>kʌ sɪndʊra</Phonetic>
       <Phonemic>kʌ̀ sɪ̀ndʊ́rá</Phonemic>
       <Morphemes>NEG plant-IMP</Morphemes>
-      <Pitch>11 11 55 55</Pitch>
+      <Pitch>11 11 44 44</Pitch>
       <Translation lang="en">don't plant! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="dce4fcf247">
       <Phonetic>kʌ βʊsɪndʊra</Phonetic>
       <Phonemic>kʌ̀ βʊ̄sɪ̀ndʊ́rá</Phonemic>
       <Morphemes>NEG 2PL.A-plant-IMP</Morphemes>
-      <Pitch>11 33 11 55 55</Pitch>
+      <Pitch>11 33 11 33 33</Pitch>
       <Translation lang="en">don't plant! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="fadbf5773b">
       <Phonetic>wɛsɪndʊ d͡zamã</Phonetic>
       <Phonemic>wɛ́sɪ̀ndʊ́ d͡zàmá</Phonemic>
       <Morphemes>3SG.A-plant sorghum</Morphemes>
-      <Pitch>55 11 55 11 55</Pitch>
+      <Pitch>55 11 44 11 33</Pitch>
       <Translation lang="en">he plants the sorghum</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="4ec81ac86b">
       <Phonetic>wɛsɪndʊrɛ d͡zamã</Phonetic>
       <Phonemic>wɛ́sɪ̀ndʊ́rɛ̀ d͡zàmá</Phonemic>
       <Morphemes>3SG.A-plant-PST sorghum</Morphemes>
-      <Pitch>55 11 55 11 11 55</Pitch>
+      <Pitch>55 11 44 11 11 33</Pitch>
       <Translation lang="en">he planted the sorghum</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="1fc594a3b4">
       <Phonetic>wɛdɔsɪndʊ d͡zamã</Phonetic>
       <Phonemic>wɛ́dɔ̄sɪ̀ndʊ́ d͡zàmá</Phonemic>
       <Morphemes>3SG.A-FUT-plant sorghum</Morphemes>
-      <Pitch>55 33 11 55 11 55</Pitch>
+      <Pitch>55 33 11 44 11 33</Pitch>
       <Translation lang="en">he will plant the sorghum</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="772822303d">
       <Phonetic>kʲɪsɪndʊ d͡zamã</Phonetic>
       <Phonemic>kɪ́sɪ̀ndʊ́ d͡zàmá</Phonemic>
       <Morphemes>3PL.A-plant sorghum</Morphemes>
-      <Pitch>55 11 55 11 55</Pitch>
+      <Pitch>55 11 44 11 33</Pitch>
       <Translation lang="en">they plant the sorghum</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="d499306963">
       <Phonetic>kʲɪsɪndʊrɛ d͡zamã</Phonetic>
       <Phonemic>kɪ́sɪ̀ndʊ́rɛ̀ d͡zàmá</Phonemic>
       <Morphemes>3PL.A-plant-PST sorghum</Morphemes>
-      <Pitch>55 11 55 11 11 55</Pitch>
+      <Pitch>55 11 44 11 11 33</Pitch>
       <Translation lang="en">they planted the sorghum</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="d8b107dea7">
       <Phonetic>kʲɪdɔsɪndʊ d͡zamã</Phonetic>
       <Phonemic>kɪ́dɔ̄sɪ̀ndʊ́ d͡zàmá</Phonemic>
       <Morphemes>3PL.A-FUT-plant sorghum</Morphemes>
-      <Pitch>55 33 11 55 11 55</Pitch>
+      <Pitch>55 33 11 44 11 33</Pitch>
       <Translation lang="en">they will plant the sorghum</Translation>
     </token>
   </entry>
@@ -7916,70 +7916,70 @@
       <Phonetic>ŋɪmbɪra</Phonetic>
       <Phonemic>ŋɪ́mbɪ̀rá</Phonemic>
       <Morphemes>catch-IMP</Morphemes>
-      <Pitch>55 11 55</Pitch>
+      <Pitch>55 11 44</Pitch>
       <Translation lang="en">catch! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="401ca5d5ed">
       <Phonetic>βʊŋɪmbɪra</Phonetic>
       <Phonemic>βʊ̄ŋɪ́mbɪ̀rá</Phonemic>
       <Morphemes>2PL.A-catch-IMP</Morphemes>
-      <Pitch>33 55 11 55</Pitch>
+      <Pitch>33 55 11 44</Pitch>
       <Translation lang="en">catch! (pl)</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="16c6356071">
       <Phonetic>kʌ ŋɪmbɪra</Phonetic>
       <Phonemic>kʌ̀ ŋɪ́mbɪ̀rá</Phonemic>
       <Morphemes>NEG catch-IMP</Morphemes>
-      <Pitch>11 55 11 55</Pitch>
+      <Pitch>11 44 11 33</Pitch>
       <Translation lang="en">don't catch! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="a75c6e286b">
       <Phonetic>kʌ βʊŋɪmbɪra</Phonetic>
       <Phonemic>kʌ̀ βʊ̄ŋɪ́mbɪ̀rá</Phonemic>
       <Morphemes>NEG 2PL.A-catch-IMP</Morphemes>
-      <Pitch>11 33 55 11 55</Pitch>
+      <Pitch>11 33 44 11 33</Pitch>
       <Translation lang="en">don't catch! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="aaa0406ada">
       <Phonetic>wɛŋɪmbɪ ɲɛːm</Phonetic>
       <Phonemic>wɛ́ŋɪ́mbɪ̀ ɲɛ́ɛm</Phonemic>
       <Morphemes>3SG.A-catch fish</Morphemes>
-      <Pitch>55 55 11 5:5</Pitch>
+      <Pitch>55 55 11 4:4</Pitch>
       <Translation lang="en">he catches the fish</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="3985c01bf3">
       <Phonetic>wɛŋɪmbɪrɛ ɲɛːm</Phonetic>
       <Phonemic>wɛ́ŋɪ́mbɪ̀rɛ̀ ɲɛ́ɛm</Phonemic>
       <Morphemes>3SG.A-catch-PST fish</Morphemes>
-      <Pitch>55 55 11 11 5:5</Pitch>
+      <Pitch>55 55 11 11 4:4</Pitch>
       <Translation lang="en">he caught the fish</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="b549162079">
       <Phonetic>wɛdɔŋɪmbɪ ɲɛːm</Phonetic>
       <Phonemic>wɛ́dɔ̄ŋɪ́mbɪ̀ ɲɛ́ɛm</Phonemic>
       <Morphemes>3SG.A-FUT-catch fish</Morphemes>
-      <Pitch>55 33 55 11 5:5</Pitch>
+      <Pitch>55 33 55 11 4:4</Pitch>
       <Translation lang="en">he will catch the fish</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="370ab6a11c">
       <Phonetic>kʲɪŋɪmbɪ ɲɛːm</Phonetic>
       <Phonemic>kɪ́ŋɪ́mbɪ̀ ɲɛ́ɛm</Phonemic>
       <Morphemes>3PL.A-catch fish</Morphemes>
-      <Pitch>55 55 11 5:5</Pitch>
+      <Pitch>55 55 11 4:4</Pitch>
       <Translation lang="en">they catch the fish</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="6dd730ebe8">
       <Phonetic>kʲɪŋɪmbɪrɛ ɲɛːm</Phonetic>
       <Phonemic>kɪ́ŋɪ́mbɪ̀rɛ̀ ɲɛ́ɛm</Phonemic>
       <Morphemes>3PL.A-catch-PST fish</Morphemes>
-      <Pitch>55 55 11 11 5:5</Pitch>
+      <Pitch>55 55 11 11 4:4</Pitch>
       <Translation lang="en">they caught the fish</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="2d35bd2730">
       <Phonetic>kʲɪdɔŋɪmbɪ ɲɛːm</Phonetic>
       <Phonemic>kɪ́dɔ̄ŋɪ́mbɪ̀ ɲɛ́ɛm</Phonemic>
       <Morphemes>3PL.A-FUT-catch fish</Morphemes>
-      <Pitch>55 33 55 11 5:5</Pitch>
+      <Pitch>55 33 55 11 4:4</Pitch>
       <Translation lang="en">they will catch the fish</Translation>
     </token>
   </entry>
@@ -7994,77 +7994,77 @@
       <Phonetic>cʼa̰lamã</Phonetic>
       <Phonemic>cʼàlàmá</Phonemic>
       <Morphemes>sell</Morphemes>
-      <Pitch>11 11 55</Pitch>
+      <Pitch>11 11 44</Pitch>
       <Translation lang="en">to sell</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="11a90f8014">
       <Phonetic>cʼa̰lamara</Phonetic>
       <Phonemic>cʼàlàmárá</Phonemic>
       <Morphemes>sell-IMP</Morphemes>
-      <Pitch>11 11 55 55</Pitch>
+      <Pitch>11 11 44 44</Pitch>
       <Translation lang="en">sell! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="71d7a5d56b">
       <Phonetic>βʊcʼa̰lamara</Phonetic>
       <Phonemic>βʊ̄cʼàlàmárá</Phonemic>
       <Morphemes>2PL.A-sell-IMP</Morphemes>
-      <Pitch>33 11 11 55 55</Pitch>
+      <Pitch>33 11 11 44 44</Pitch>
       <Translation lang="en">sell! (pl)</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="0a341fd762">
       <Phonetic>kʌ cʼa̰lamara</Phonetic>
       <Phonemic>kʌ̀ cʼàlàmárá</Phonemic>
       <Morphemes>NEG sell-IMP</Morphemes>
-      <Pitch>11 11 11 55 55</Pitch>
+      <Pitch>11 11 11 44 44</Pitch>
       <Translation lang="en">don't sell! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="2382a41f4c">
       <Phonetic>kʌ βʊcʼa̰lamara</Phonetic>
       <Phonemic>kʌ̀ βʊ̄cʼàlàmárá</Phonemic>
       <Morphemes>NEG 2PL.A-sell-IMP</Morphemes>
-      <Pitch>11 33 11 11 55 55</Pitch>
+      <Pitch>11 33 11 11 33 33</Pitch>
       <Translation lang="en">don't sell! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="507b9c1b88">
       <Phonetic>wɛcʼa̰lamã cʰʌ̤ː</Phonetic>
       <Phonemic>wɛ́cʼàlàmá cʰʌ̀ʌ</Phonemic>
       <Morphemes>3SG.A-sell milk</Morphemes>
-      <Pitch>55 11 11 55 1:10</Pitch>
+      <Pitch>55 11 11 44 1:10</Pitch>
       <Translation lang="en">he sells the milk</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="c0195fd8d2">
       <Phonetic>wɛcʼa̰lamarɛ cʰʌ̤ː</Phonetic>
       <Phonemic>wɛ́cʼàlàmárɛ̀ cʰʌ̀ʌ</Phonemic>
       <Morphemes>3SG.A-sell-PST milk</Morphemes>
-      <Pitch>55 11 11 55 11 1:10</Pitch>
+      <Pitch>55 11 11 44 11 1:10</Pitch>
       <Translation lang="en">he sold the milk</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="a018e8c644">
       <Phonetic>wɛdɔcʼa̰lamã cʰʌ̤ː</Phonetic>
       <Phonemic>wɛ́dɔ̄cʼàlàmá cʰʌ̀ʌ</Phonemic>
       <Morphemes>3SG.A-FUT-sell milk</Morphemes>
-      <Pitch>55 33 11 11 55 1:10</Pitch>
+      <Pitch>55 33 11 11 44 1:10</Pitch>
       <Translation lang="en">he will sell the milk</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="1866d68cda">
       <Phonetic>kʲɪcʼa̰lamã cʰʌ̤ː</Phonetic>
       <Phonemic>kɪ́cʼàlàmá cʰʌ̀ʌ</Phonemic>
       <Morphemes>3PL.A-sell milk</Morphemes>
-      <Pitch>55 11 11 55 1:10</Pitch>
+      <Pitch>55 11 11 44 1:10</Pitch>
       <Translation lang="en">they sell the milk</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="f86f98a6fd">
       <Phonetic>kʲɪcʼa̰lamarɛ cʰʌ̤ː</Phonetic>
       <Phonemic>kɪ́cʼàlàmárɛ̀ cʰʌ̀ʌ</Phonemic>
       <Morphemes>3PL.A-sell-PST milk</Morphemes>
-      <Pitch>55 11 11 55 11 1:10</Pitch>
+      <Pitch>55 11 11 44 11 1:10</Pitch>
       <Translation lang="en">they sold the milk</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="8639161147">
       <Phonetic>kʲɪdɔcʼa̰lamã cʰʌ̤ː</Phonetic>
       <Phonemic>kɪ́dɔ̄cʼàlàmá cʰʌ̀ʌ</Phonemic>
       <Morphemes>3PL.A-FUT-sell milk</Morphemes>
-      <Pitch>55 33 11 11 55 1:10</Pitch>
+      <Pitch>55 33 11 11 44 1:10</Pitch>
       <Translation lang="en">they will sell the milk</Translation>
     </token>
   </entry>
@@ -8100,14 +8100,14 @@
       <Phonetic>kʌ d͡zɪːnã</Phonetic>
       <Phonemic>kʌ̀ d͡zɪ́ɪná</Phonemic>
       <Morphemes>NEG know-IMP</Morphemes>
-      <Pitch>11 5:5 55</Pitch>
+      <Pitch>11 4:4 44</Pitch>
       <Translation lang="en">don't know! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="322bfa9eb4">
       <Phonetic>kʌ βʊd͡zɪːnã</Phonetic>
       <Phonemic>kʌ̀ βʊ̄d͡zɪ́ɪná</Phonemic>
       <Morphemes>NEG 2PL.A-know-IMP</Morphemes>
-      <Pitch>11 33 5:5 55</Pitch>
+      <Pitch>11 33 4:4 44</Pitch>
       <Translation lang="en">don't know! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="cc7890a731">
@@ -8121,7 +8121,7 @@
       <Phonetic>wɛd͡zɪːnɛ̃ ʔɪ̰ːn</Phonetic>
       <Phonemic>wɛ́d͡zɪ́ɪnɛ̀ ʔɪ́ɪn</Phonemic>
       <Morphemes>3SG.A-know-PST person</Morphemes>
-      <Pitch>55 5:5 11 5:5</Pitch>
+      <Pitch>55 5:5 11 4:4</Pitch>
       <Translation lang="en">he knew the person</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="c31bd06ef2">
@@ -8142,7 +8142,7 @@
       <Phonetic>kʲɪd͡zɪːnɛ̃ ʔɪ̰ːn</Phonetic>
       <Phonemic>kɪ́d͡zɪ́ɪnɛ̀ ʔɪ́ɪn</Phonemic>
       <Morphemes>3PL.A-know-PST person</Morphemes>
-      <Pitch>55 5:5 11 5:5</Pitch>
+      <Pitch>55 5:5 11 4:4</Pitch>
       <Translation lang="en">they knew the person</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="f1c8b900d8">
@@ -8171,28 +8171,28 @@
       <Phonetic>lɔːlɛra</Phonetic>
       <Phonemic>lɔ̄ɔlɛ̀rá</Phonemic>
       <Morphemes>call-IMP</Morphemes>
-      <Pitch>3:3 11 55</Pitch>
+      <Pitch>3:3 11 44</Pitch>
       <Translation lang="en">call! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="5cec5e9b3d">
       <Phonetic>βʊlɔːlɛra</Phonetic>
       <Phonemic>βʊ̄lɔ̄ɔlɛ̀rá</Phonemic>
       <Morphemes>2PL.A-call-IMP</Morphemes>
-      <Pitch>33 3:3 11 55</Pitch>
+      <Pitch>33 3:3 11 44</Pitch>
       <Translation lang="en">call! (pl)</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="e66cfd0d44">
       <Phonetic>kʌ lɔːlɛra</Phonetic>
       <Phonemic>kʌ̀ lɔ̄ɔlɛ̀rá</Phonemic>
       <Morphemes>NEG call-IMP</Morphemes>
-      <Pitch>11 3:3 11 55</Pitch>
+      <Pitch>11 3:3 11 33</Pitch>
       <Translation lang="en">don't call! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="b9b96b02d4">
       <Phonetic>kʌ βʊlɔːlɛra</Phonetic>
       <Phonemic>kʌ̀ βʊ̄lɔ̄ɔlɛ̀rá</Phonemic>
       <Morphemes>NEG 2PL.A-call-IMP</Morphemes>
-      <Pitch>11 33 3:3 11 55</Pitch>
+      <Pitch>11 33 3:3 11 33</Pitch>
       <Translation lang="en">don't call! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="f7f8e2820a">
@@ -8249,77 +8249,77 @@
       <Phonetic>βada</Phonetic>
       <Phonemic>βàdá</Phonemic>
       <Morphemes>throw</Morphemes>
-      <Pitch>11 55</Pitch>
+      <Pitch>11 44</Pitch>
       <Translation lang="en">to throw</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="75d4d8ddae">
       <Phonetic>βadara</Phonetic>
       <Phonemic>βàdárá</Phonemic>
       <Morphemes>throw-IMP</Morphemes>
-      <Pitch>11 55 55</Pitch>
+      <Pitch>11 44 44</Pitch>
       <Translation lang="en">throw! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="b940a20f98">
       <Phonetic>βʊβadara</Phonetic>
       <Phonemic>βʊ̄βàdárá</Phonemic>
       <Morphemes>2PL.A-throw-IMP</Morphemes>
-      <Pitch>33 11 55 55</Pitch>
+      <Pitch>33 11 44 44</Pitch>
       <Translation lang="en">throw! (pl)</Translation>
     </token>
     <token tags="2SG.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="f3227e228f">
       <Phonetic>kʌ βadara</Phonetic>
       <Phonemic>kʌ̀ βàdárá</Phonemic>
       <Morphemes>NEG throw-IMP</Morphemes>
-      <Pitch>11 11 55 55</Pitch>
+      <Pitch>11 11 44 44</Pitch>
       <Translation lang="en">don't throw! (sg)</Translation>
     </token>
     <token tags="2PL.A, Simple, Present, Perfective, Imperative, Negative, isolation" speaker="SP1" collected="2026-10-20" id="e78a6163dd">
       <Phonetic>kʌ βʊβadara</Phonetic>
       <Phonemic>kʌ̀ βʊ̄βàdárá</Phonemic>
       <Morphemes>NEG 2PL.A-throw-IMP</Morphemes>
-      <Pitch>11 33 11 55 55</Pitch>
+      <Pitch>11 33 11 33 33</Pitch>
       <Translation lang="en">don't throw! (pl)</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="8659f665c8">
       <Phonetic>wɛβada kʷɔːlɔ</Phonetic>
       <Phonemic>wɛ́βàdá kɔ̀ɔlɔ́</Phonemic>
       <Morphemes>3SG.A-throw stone</Morphemes>
-      <Pitch>55 11 55 1:1 55</Pitch>
+      <Pitch>55 11 44 1:1 33</Pitch>
       <Translation lang="en">he throws the stone</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="e4569679f2">
       <Phonetic>wɛβadarɛ kʷɔːlɔ</Phonetic>
       <Phonemic>wɛ́βàdárɛ̀ kɔ̀ɔlɔ́</Phonemic>
       <Morphemes>3SG.A-throw-PST stone</Morphemes>
-      <Pitch>55 11 55 11 1:1 55</Pitch>
+      <Pitch>55 11 44 11 1:1 33</Pitch>
       <Translation lang="en">he threw the stone</Translation>
     </token>
     <token tags="3SG.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="d07c54db40">
       <Phonetic>wɛdɔβada kʷɔːlɔ</Phonetic>
       <Phonemic>wɛ́dɔ̄βàdá kɔ̀ɔlɔ́</Phonemic>
       <Morphemes>3SG.A-FUT-throw stone</Morphemes>
-      <Pitch>55 33 11 55 1:1 55</Pitch>
+      <Pitch>55 33 11 44 1:1 33</Pitch>
       <Translation lang="en">he will throw the stone</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Present, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="0fa4bc6322">
       <Phonetic>kʲɪβada kʷɔːlɔ</Phonetic>
       <Phonemic>kɪ́βàdá kɔ̀ɔlɔ́</Phonemic>
       <Morphemes>3PL.A-throw stone</Morphemes>
-      <Pitch>55 11 55 1:1 55</Pitch>
+      <Pitch>55 11 44 1:1 33</Pitch>
       <Translation lang="en">they throw the stone</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Past, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="0ccf387d46">
       <Phonetic>kʲɪβadarɛ kʷɔːlɔ</Phonetic>
       <Phonemic>kɪ́βàdárɛ̀ kɔ̀ɔlɔ́</Phonemic>
       <Morphemes>3PL.A-throw-PST stone</Morphemes>
-      <Pitch>55 11 55 11 1:1 55</Pitch>
+      <Pitch>55 11 44 11 1:1 33</Pitch>
       <Translation lang="en">they threw the stone</Translation>
     </token>
     <token tags="3PL.A, NP.O, Simple, Future, Perfective, Indicative, Affirmative, isolation" speaker="SP1" collected="2026-10-20" id="17d0c98e1d">
       <Phonetic>kʲɪdɔβada kʷɔːlɔ</Phonetic>
       <Phonemic>kɪ́dɔ̄βàdá kɔ̀ɔlɔ́</Phonemic>
       <Morphemes>3PL.A-FUT-throw stone</Morphemes>
-      <Pitch>55 33 11 55 1:1 55</Pitch>
+      <Pitch>55 33 11 44 1:1 33</Pitch>
       <Translation lang="en">they will throw the stone</Translation>
     </token>
   </entry>

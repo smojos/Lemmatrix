@@ -12,8 +12,9 @@ tags, lists, people and places); only the frames' carrier sentences are filled i
 Phonology
   Consonants  p pʼ pʰ b ɓ t tʼ tʰ t̪ t̪ʰ t̪ʼ d̪ d ɗ c cʰ cʼ ɟ k kʼ kʰ g ʔ β s z ʃ t͡s d͡z n m ŋ ɲ l r w j ɥ
   Vowels      a i ɪ u ʊ e ɛ o ɔ ʌ ə, and long aa ii ɪɪ uu ʊʊ ee ɛɛ oo ɔɔ ʌʌ
-  Tones       v́ H, v̄ M, v̀ L, v̂ HL, v̌ LH, ꜜ downstep (Phonemic only); Pitch: H 55, M 33, L 11,
-              a downstepped H 44; a final L falls to 10 (final lowering). A long vowel's tone is marked on its first half (áa);
+  Tones       v́ H, v̄ M, v̀ L, v̂ HL, v̌ LH, ꜜ downstep (Phonemic only); Pitch: H 55, M 33, L 11, a downstepped H 44;
+              downdrift: after an L, H is 44 then 33, M 33 then 22, never back up to 5;
+              a final L falls to 10 (final lowering). A long vowel's tone is marked on its first half (áa);
               a contour on a long vowel is split between the halves (áà).
   Syllables   CVN CVVN CV CVV CVCV CVVCV CVNCV CVVNCV CVCVCV CVNCVCV; a nasal before a
               consonant shares its place.
@@ -205,18 +206,41 @@ def phonetic(form: str) -> str:
     return nfc(" ".join(phonetic_word(w) for w in form.split()))
 
 
-def tone_points(t: str) -> list[int]:
-    """Pitch points of one vowel's tone: H 5, M 3, L 1; a downstepped H ('!H') 4."""
-    down = t.startswith("!")
-    t = t.lstrip("!")
-    pts = [LEVEL[x] for x in ([t] if t in LEVEL else [t[0], t[1]])]
-    if down and t.startswith("H"):
-        pts[0] -= 1
-    return pts
+class Register:
+    """Downdrift across an utterance (Josh, 25 October): pitch never rises from a low back to the
+    top. H starts at 5 and M at 3; each H or M that follows an L, and each downstep, lowers the
+    register a step: H 5 > 4 > 3, M 3 > 3 > 2 (never lower). L is always 1."""
+
+    def __init__(self):
+        self.drops = 0
+        self.after_low = False
+
+    def level(self, tone: str) -> int:
+        down = tone.startswith("!")
+        tone = tone.lstrip("!")
+        if tone == "L":
+            self.after_low = True
+            return LEVEL["L"]
+        if self.after_low or down:
+            self.drops = min(2, self.drops + 1)
+            self.after_low = False
+        high = LEVEL["H"] - self.drops
+        return high if tone == "H" else (LEVEL["M"] if self.drops < 2 else LEVEL["M"] - 1)
+
+
+def vowel_tones(tone: str) -> list[str]:
+    """One vowel's tone as a list of levels' names: H, L, M, '!H', or a contour (HL, LH)."""
+    down = tone.startswith("!")
+    t = tone.lstrip("!")
+    parts = [t] if t in LEVEL else [t[0], t[1]]
+    if down:
+        parts[0] = "!" + parts[0]
+    return parts
 
 
 def pitch_of(form: str) -> str:
-    """The Pitch field from the tones: one syllable per vowel nucleus."""
+    """The Pitch field from the tones: one syllable per vowel nucleus, with downdrift."""
+    reg = Register()
     sylls = []
     for word in form.split():
         segs = segments(word)
@@ -233,10 +257,15 @@ def pitch_of(form: str) -> str:
             i += 1
 
             if len(tones) == 2:                      # a long vowel: a long step between its halves
-                a, b = tone_points(tones[0]), tone_points(tones[1] or tones[0].lstrip("!")[-1:])
-                sylls.append(f"{a[0]}:{b[-1]}")
+                first = vowel_tones(tones[0])
+                second = vowel_tones(tones[1]) if tones[1] else [first[-1].lstrip("!")]
+                a = reg.level(first[0])
+                if len(first) == 2:
+                    reg.level(first[1])
+                b = reg.level(second[-1])
+                sylls.append(f"{a}:{b}")
             else:
-                sylls.append("".join(map(str, tone_points(tone))))
+                sylls.append("".join(str(reg.level(x)) for x in vowel_tones(tone)))
     return phonetic_pitch(pitch.normalise(" ".join(sylls)))
 
 
