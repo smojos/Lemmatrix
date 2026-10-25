@@ -35,7 +35,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 from . import elicit_prompts, filenames, layout, storage
-from .model import UTTERANCES, Database, Entry, Token, is_utterance, nfc
+from .model import UTTERANCES, Database, Entry, Token, is_utterance, nfc, sync_file, write_bytes_safely
 
 FORMAT = "lemmatrix-elicit-request"
 RESPONSE_FORMAT = "lemmatrix-elicit-response"
@@ -437,6 +437,7 @@ def write_request(db: Database, req: Request, items) -> Path:
         zf.writestr("request.json", req.to_page_json().encode("utf-8"))
         for name, data in blobs:
             zf.writestr(name, data)
+    sync_file(tmp)                                # on the disk before it replaces the old one
     os.replace(tmp, target)
     return target
 
@@ -638,7 +639,7 @@ def receive_drive(db: Database, st: Stored, drive, state: DriveState | None = No
                 continue
             if progress is not None:
                 progress(k, len(cards), f)
-            (tmp / f).write_bytes(drive.download(state.files[f]))
+            write_bytes_safely(tmp / f, drive.download(state.files[f]))   # on the disk before Drive's copy goes
         _wav_from_flac(tmp, data)
         (tmp / "response.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
     except BaseException:
@@ -680,8 +681,10 @@ class Stored:
         return p if p.exists() else None
 
     def save_review(self):
-        (self.folder / "review.json").write_text(json.dumps(self.review, ensure_ascii=False, indent=1),
-                                                 encoding="utf-8")
+        """Written safely (the audit, 25 October): it was written straight over the old one, and a
+        broken review.json read as no review at all, so every card showed as waiting again."""
+        write_bytes_safely(self.folder / "review.json",
+                           json.dumps(self.review, ensure_ascii=False, indent=1).encode("utf-8"))
 
 
 def load_stored(folder: Path) -> Stored | None:
@@ -819,7 +822,7 @@ def receive(db: Database, path) -> Stored:
                 if a.get("status") == "recorded" and f:
                     if not _SAFE.match(f) or "/" in f or f.startswith("."):
                         raise ElicitError(f"A recording has a name that can't be used: {f}")
-                    (tmp / f).write_bytes(zf.read("recordings/" + f))
+                    write_bytes_safely(tmp / f, zf.read("recordings/" + f))
             _wav_from_flac(tmp, data)
             (tmp / "response.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
     except KeyError as exc:

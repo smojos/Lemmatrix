@@ -264,6 +264,8 @@ def full_backup(db_path, target, progress=None) -> int:
                 zf.write(f, Path(main.name) / rel, compress_type=kind)
             if progress is not None:
                 progress(len(files), len(files), "")
+        from .model import sync_file
+        sync_file(tmp)                            # on the disk before it counts as the backup
         os.replace(tmp, target)
     except BaseException:
         try:

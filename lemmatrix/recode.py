@@ -15,7 +15,7 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .model import Database, tier_base
+from .model import Database, sync_file, tier_base
 
 
 @dataclass
@@ -80,6 +80,7 @@ def _rename_tiers(db: Database, text, codes: dict[str, str]) -> bool:
     tmp = path.with_name(path.name + ".lemmatrix-writing")
     try:
         new.save(str(tmp), format="long_textgrid", includeBlankSpaces=True)
+        sync_file(tmp)                            # on the disk before it replaces the old one
         os.replace(tmp, path)
     finally:
         if tmp.exists():

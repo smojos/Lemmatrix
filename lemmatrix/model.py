@@ -44,6 +44,31 @@ def write_atomically(path: str, text: str):
     return tmp
 
 
+def sync_file(path) -> None:
+    """Make the operating system put a file's contents on the disk now, not when it gets round to
+    it, so a power cut or a flat battery straight after can't leave it empty or cut short. (On
+    Windows the file must be opened for writing to be flushed.)"""
+    import os
+    with open(path, "rb+") as fh:
+        fh.flush()
+        os.fsync(fh.fileno())
+
+
+def write_bytes_safely(path, data: bytes, suffix: str = ".part") -> None:
+    """Write a file as the database is written (the audit, 25 October): into path + suffix, put on
+    the disk (sync), then swapped in for the old file, so a crash at any moment leaves the old file
+    or the new one, never half of one. For recordings above all: they can't be made again."""
+    import os
+    from pathlib import Path as _Path
+    path = _Path(path)
+    tmp = path.with_name(path.name + suffix)
+    with open(tmp, "wb") as fh:
+        fh.write(data)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(tmp, path)
+
+
 def nfc(text: str | None) -> str:
     """Normalise text to Unicode NFC so identical-looking strings match."""
     if not text:

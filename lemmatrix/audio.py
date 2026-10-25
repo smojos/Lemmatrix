@@ -22,6 +22,8 @@ from pathlib import Path
 
 import numpy as np
 
+from .model import write_bytes_safely
+
 
 class AudioError(Exception):
     pass
@@ -68,9 +70,7 @@ def write_wav(path: str | Path, samples: np.ndarray, sample_rate: int, bits: int
     blob = b"RIFF" + struct.pack("<I", 4 + len(chunks)) + b"WAVE" + chunks
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".part")
-    tmp.write_bytes(blob)
-    tmp.replace(path)
+    write_bytes_safely(path, blob)             # on the disk before it replaces the old one
 
 
 def write_pcm16(path: str | Path, pcm: np.ndarray, sample_rate: int, artist: str = "", date: str = "") -> None:
@@ -84,9 +84,7 @@ def write_pcm16(path: str | Path, pcm: np.ndarray, sample_rate: int, artist: str
     blob = b"RIFF" + struct.pack("<I", 4 + len(chunks)) + b"WAVE" + chunks
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".part")
-    tmp.write_bytes(blob)
-    tmp.replace(path)
+    write_bytes_safely(path, blob)             # on the disk before it replaces the old one
 
 
 def flac_to_wav(src: str | Path, dst: str | Path, artist: str = "", date: str = "") -> None:
@@ -232,9 +230,7 @@ def clip_wav(src: str | Path, dst: str | Path, start: float, end: float, artist:
     blob = b"RIFF" + struct.pack("<I", 4 + len(chunks)) + b"WAVE" + chunks
     dst = Path(dst)
     dst.parent.mkdir(parents=True, exist_ok=True)
-    tmp = dst.with_suffix(dst.suffix + ".part")
-    tmp.write_bytes(blob)
-    tmp.replace(dst)
+    write_bytes_safely(dst, blob)              # on the disk before it replaces the old one
 
 
 def duration(path: str | Path) -> float:

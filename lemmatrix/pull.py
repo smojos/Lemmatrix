@@ -29,7 +29,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import storage, textgrid as tgmod
-from .model import SPEAKER_FIELD, ClipSource, Database, Text, Utterance, tier_base
+from .model import SPEAKER_FIELD, ClipSource, Database, Text, Utterance, sync_file, tier_base
 
 OK = "ok"
 CHANGED = "changed"            # the text of a tier is different
@@ -367,6 +367,7 @@ def push(db: Database, text: Text, jobs: list[tuple[Check, list[PushChange]]]) -
     backup_textgrid(db, path)
     tmp = path.with_name(path.name + ".lemmatrix-writing")
     tg.save(str(tmp), format="long_textgrid", includeBlankSpaces=True)
+    sync_file(tmp)                                # on the disk before it replaces the old one
     os.replace(tmp, path)
     stamp = tgmod.modified(path)
     out = {}

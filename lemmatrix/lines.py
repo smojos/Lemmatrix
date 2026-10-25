@@ -23,7 +23,7 @@ from pathlib import Path
 
 from . import textgrid as tgmod
 from .interlinear import bare, split_units
-from .model import SPEAKER_FIELD, Database, Text, TierRule, nfc, tier_base
+from .model import SPEAKER_FIELD, Database, Text, TierRule, nfc, sync_file, tier_base
 
 SAME = tgmod.SAME_TIME
 
@@ -94,6 +94,7 @@ class Buffer:
             backup_textgrid(db, self.path)
         tmp = self.path.with_name(self.path.name + ".lemmatrix-writing")
         self.tg.save(str(tmp), format="long_textgrid", includeBlankSpaces=True)
+        sync_file(tmp)                            # on the disk before it replaces the old one
         os.replace(tmp, self.path)
         self.stamp = _stamp(self.path)
         self.changed = False
