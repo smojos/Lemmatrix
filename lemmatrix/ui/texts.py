@@ -430,7 +430,8 @@ class TextsPanel(QObject):
         self.table.deleteRequested.connect(self.delete)
         self.table.contextRequested.connect(self._text_menu)
         self.table.filtersChanged.connect(self._update_count)
-        self.table.selectionModel().currentRowChanged.connect(lambda *a: self._show_lines())
+        self.table.selectionModel().currentRowChanged.connect(
+            lambda *a: None if getattr(self, "_refreshing", False) else self._show_lines())
         top = QWidget()                           # the texts, with their own buttons right under them
         tl = QVBoxLayout(top)
         tl.setContentsMargins(0, 0, 0, 0)
@@ -628,9 +629,18 @@ class TextsPanel(QObject):
 
     # ---- refreshing ---------------------------------------------------
     def refresh(self):
-        self.table.set_rows(list(self.db.texts))
-        if self.table.current_row() is None and self.db.texts:
-            self.table.select_row(self.table.visible_rows()[0] if self.table.visible_rows() else None)
+        self._refreshing = True                   # the table re-selecting its text lays the lines out
+        try:                                      # too: here only once, below (25 October)
+            self.table.set_rows(list(self.db.texts))
+            if self.table.current_row() is None and self.db.texts:
+                self.table.select_row(self.table.visible_rows()[0] if self.table.visible_rows() else None)
+        finally:
+            self._refreshing = False
+        fresh, self._lines_fresh = getattr(self, "_lines_fresh", None), None
+        t = self.current()
+        if fresh is not None and t is not None and t.id == fresh and self._grid_stamp(t) == self._shown_stamp:
+            self._update_count()                  # a line edit: its lines are already shown as they are
+            return
         self._lines_for = None
         self._show_lines()
         self._update_count()
@@ -959,6 +969,8 @@ class TextsPanel(QObject):
         t = self.current()
         if t is not None and t.id == text_id:
             self._show_lines()
+            self._lines_fresh = t.id              # the refresh that follows the same edit needn't
+                                                  # lay them out again (25 October: it did, twice per edit)
 
     def _grid_stamp(self, t):
         path = self.grid_path(t) if t is not None else None

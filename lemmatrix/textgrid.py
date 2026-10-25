@@ -116,6 +116,36 @@ def segments_in(entries, start: float, end: float) -> list[int]:
     return [i for i, e in enumerate(entries) if min(e[1], end) - max(e[0], start) > SAME_TIME]
 
 
+class _TierIndex:
+    """A tier's segments by time, to find a line's segments without looking at every one
+    (25 October: building a long text's lines looked at every segment of every tier for each
+    line). The same answer as segments_in. TextGrid intervals are in time order and don't
+    overlap, so the segments that can overlap a line are a run found by bisecting; each is
+    then checked with the same test as segments_in. Anything unusual (out of order): the slow way."""
+
+    def __init__(self, entries):
+        import bisect
+        self.entries = entries
+        self.ends = [float(e[1]) for e in entries]
+        self.sorted = all(float(entries[i][0]) <= float(entries[i + 1][0]) and
+                          self.ends[i] <= self.ends[i + 1]
+                          for i in range(len(entries) - 1))
+        self._bisect = bisect.bisect_right
+
+    def within(self, start: float, end: float) -> list[int]:
+        if not self.sorted:
+            return segments_in(self.entries, start, end)
+        out = []
+        i = self._bisect(self.ends, start + SAME_TIME)        # the first that ends past the line's start
+        n, entries = len(self.entries), self.entries
+        while i < n and float(entries[i][0]) < end - SAME_TIME:
+            e = entries[i]
+            if min(e[1], end) - max(e[0], start) > SAME_TIME:
+                out.append(i)
+            i += 1
+        return out
+
+
 def joined(entries, idx: list[int], start: float | None = None, end: float | None = None) -> str:
     """A tier's text in a line. One segment: its text. Several (a word-level tier): one unit
     each, an empty one as {} and one of several words in braces, so the units line up with the
@@ -168,13 +198,13 @@ def lines_from(tg, mapping: TierMapping, default_speaker: str = "") -> list[Line
                 continue                                # another speaker's tier
             if not speaker and tier_base(n)[1]:
                 continue
-            others.append((n, rule, tier))
+            others.append((n, rule, tier, _TierIndex(tier.entries)))
         spans = [(float(a), float(b)) for a, b, label in interval[main].entries if nfc((label or "").strip())]
 
         def fill(ln):
-            for n, rule, tier in others:
+            for n, rule, tier, index in others:
                 entries = tier.entries
-                part = joined(entries, segments_in(entries, ln.start, ln.end), ln.start, ln.end)
+                part = joined(entries, index.within(ln.start, ln.end), ln.start, ln.end)
                 if not part:
                     continue
                 if rule.field == SPEAKER_FIELD:      # a tier of speaker codes
@@ -194,9 +224,10 @@ def lines_from(tg, mapping: TierMapping, default_speaker: str = "") -> list[Line
             fill(ln)
             lines.append(ln)
         # stretches where only other tiers have text: lines too, flagged as missing the main tier's
-        orphans = sorted((float(a), float(b)) for n, rule, tier in others if rule.field != SPEAKER_FIELD
+        main_index = _TierIndex(spans)
+        orphans = sorted((float(a), float(b)) for n, rule, tier, _ in others if rule.field != SPEAKER_FIELD
                          for a, b, label in tier.entries if nfc((label or "").strip())
-                         and not any(min(b, e) - max(a, s) > SAME_TIME for s, e in spans))
+                         and not main_index.within(float(a), float(b)))
         stretches: list[list[float]] = []
         for a, b in orphans:                    # overlapping ones (across tiers) make one stretch
             if stretches and a < stretches[-1][1] - SAME_TIME:

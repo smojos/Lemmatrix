@@ -146,13 +146,26 @@ def parse(db, name: str, extra: tuple = ()) -> tuple[str, str] | None:
     return stem, ""
 
 
+_LISTED: dict = {}                          # what recordings() found, by everything it depends on
+
+
 def recordings(db, extra: tuple = ()) -> list[Voice]:
-    """The database's segment soundfiles (extra: other speaker codes to recognise)."""
+    """The database's segment soundfiles (extra: other speaker codes to recognise). Remembered
+    until the folder, the codes or the people change: the phonetics scratchpad asked several
+    times per keystroke, listing the folder each time (the audit, 25 October)."""
     out = []
     if not db.path:
         return out
+    d = folder(db)
     try:
-        files = sorted(folder(db).iterdir())
+        key = (str(d), d.stat().st_mtime_ns, prefix(db), tuple(_people(db)), tuple(extra))
+    except OSError:
+        return out
+    hit = _LISTED.get(key)
+    if hit is not None:
+        return list(hit)
+    try:
+        files = sorted(d.iterdir())
     except OSError:
         return out
     for f in files:
@@ -161,6 +174,9 @@ def recordings(db, extra: tuple = ()) -> list[Voice]:
         got = parse(db, f.name, extra)
         if got:
             out.append(Voice(f, norm(got[0]), got[1]))
+    if len(_LISTED) > 32:
+        _LISTED.clear()
+    _LISTED[key] = list(out)
     return out
 
 

@@ -194,3 +194,111 @@ def test_remembered_places_are_the_places():
     refs = [i.number for i in wl.get(wl.EACW).items][::7] + ["B001b", "A002c", "CBDI", "RC3", "Z9", "", "xyz"]
     for r in refs:
         assert wl.place(r) == wl._place_in(r, fresh), r
+
+
+# ---------------------------------------------------------------- stage 1 (25 October, evening)
+
+def test_a_lines_segments_are_found_as_before():
+    import random
+    from lemmatrix import textgrid as tg
+    rnd = random.Random(3)
+    for _ in range(200):
+        t, entries = 0.0, []
+        for _ in range(rnd.randint(0, 40)):
+            a = t + rnd.choice([0, 0, 0.0005, rnd.random()])
+            b = a + rnd.choice([0.0, 0.0004, rnd.random(), 2 * rnd.random()])
+            entries.append((a, b, "x"))
+            t = b
+        idx = tg._TierIndex(entries)
+        for _ in range(30):
+            s = rnd.random() * (t + 1) - 0.5
+            e = s + rnd.choice([0, 0.0003, rnd.random() * 3])
+            assert idx.within(s, e) == tg.segments_in(entries, s, e)
+    shuffled = [(2.0, 3.0, "b"), (0.0, 1.0, "a")]                  # out of order: the slow way, same answer
+    assert tg._TierIndex(shuffled).within(0.0, 3.0) == tg.segments_in(shuffled, 0.0, 3.0)
+
+
+def test_the_predictor_is_built_once_in_a_database_with_no_translations(monkeypatch):
+    from lemmatrix import predict
+    db = storage.load(SAMPLES / "Test-300.xml")
+    tr = db.settings.token_field("translation").name
+    for e in db.entries:
+        for t in e.tokens:
+            t.set(tr, "", db.settings.primary_gloss)
+    p = predict.Predictor()
+    p.refresh(db)
+    rebuilt = []
+    real = predict.Predictor._rebuild
+    monkeypatch.setattr(predict.Predictor, "_rebuild", lambda self: (rebuilt.append(1), real(self))[1])
+    for e in db.entries[:50]:
+        p.suggest(db, e, e.tokens[0].tags, refresh=False)
+    assert rebuilt == []                                            # an empty index is still built
+
+
+def test_segment_recordings_are_listed_again_only_when_something_changed(win, monkeypatch):
+    from lemmatrix import segments
+    db = win.doc.db
+    d = segments.folder(db)
+    d.mkdir(parents=True, exist_ok=True)
+    (d / segments.filename(db, "pu", "SP1")).write_bytes(b"RIFF")
+    first = segments.recordings(db)
+    calls = []
+    real = Path.iterdir
+    monkeypatch.setattr(Path, "iterdir", lambda self: (calls.append(1), real(self))[1])
+    assert segments.recordings(db) == first and calls == []         # remembered
+    (d / segments.filename(db, "ʌ", "SP1")).write_bytes(b"RIFF")    # a new recording: listed again
+    assert {v.sequence for v in segments.recordings(db)} >= {"pu", "ʌ"} and calls
+
+
+def test_a_line_edit_lays_the_lines_out_once(win, monkeypatch):
+    from lemmatrix import textgrid as tg
+    from lemmatrix.model import Text
+    db = win.doc.db
+    folder = storage.text_folder(db)
+    folder.mkdir(parents=True, exist_ok=True)
+    tg.write_example(folder / "T.TextGrid", {"tx": [(0.0, 1.0, "aa"), (1.0, 2.0, "bb")]}, 2.0)
+    db.texts.append(Text("T009", textgrid="T.TextGrid"))
+    win.open_utterances()
+    texts = win.utterances_window.texts
+    texts.refresh()
+    texts.table.select_row(db.texts[-1])
+    shown = []
+    real = texts._show_lines
+    monkeypatch.setattr(texts, "_show_lines", lambda: (shown.append(1), real())[1])
+    t = texts.current()
+    texts._lines_edited(t.id)                                       # what a line edit sends first…
+    win.utterances_window.refresh()                                 # …then the change everyone hears
+    assert len(shown) == 1
+    win.utterances_window.close()
+
+
+def test_the_matrix_finds_the_same_tokens_as_checking_every_pair():
+    from lemmatrix import matrix as mx
+    db = storage.load(SAMPLES / "Test-300.xml")
+    specs = mx.auto_specs(db, db.entries)
+    loose = [mx.Spec(frozenset([n]), mx.LOOSE) for n in sorted({n for s in specs[:6] for n in s.tags})]
+    cfg = mx.MatrixConfig(x=specs + loose + [mx.Spec.citation()])
+    lay = mx.lemma_tag_layout(db, db.entries, cfg)
+    defaults = mx.default_names(db)
+    order = mx.global_order(db)
+    for r, row in enumerate(lay.rows):
+        for c, col in enumerate(lay.cols):
+            hits = [(row.entry, t) for t in row.entry.tokens if mx.fits(t.tags, col.spec, defaults)]
+            want = mx._sorted_hits(hits, order, defaults) if hits else None
+            assert lay.cells.get((r, c)) == want, (row.entry.ref, col.spec)
+
+
+def test_the_matrix_measures_the_same_with_its_memory(win):
+    from lemmatrix import matrix as mx
+    from lemmatrix.ui import main_window as mw
+    db = win.doc.db
+    lay = mx.lemma_tag_layout(db, db.entries, mx.MatrixConfig(x=mx.auto_specs(db, db.entries)))
+    v = win.lt_view
+    d = v.delegate
+    v.model_.set_layout(lay)
+    plain = {(r, c): (d.cell_width(r, c, h), d.cell_height(r, c, h)) for (r, c), h in lay.cells.items()}
+    d.begin_pass()
+    remembered = {(r, c): (d.cell_width(r, c, h), d.cell_height(r, c, h)) for (r, c), h in lay.cells.items()}
+    d.end_pass()
+    assert remembered == plain and d._memo is None
+    assert mw.LEMMA_TAG is not None

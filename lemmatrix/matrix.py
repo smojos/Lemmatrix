@@ -340,12 +340,26 @@ def lemma_tag_layout(db: Database, entries: list[Entry], config: MatrixConfig | 
         text = {"reference": e.ref, "gloss": db.gloss(e)}.get(entry_label) or db.lemma(e) or e.ref
         rows.append(AxisItem(text, entry=e))
     lay = Layout(rows=rows, cols=cols)
+    # The same answers as fits() for every token and column, without asking every pair (25 October:
+    # 2,300 lemmas × 92 columns × their tokens was millions of checks on each refresh): an Exact
+    # column wants exactly the tokens whose marked tags are its own, so they are looked up.
+    col_marked = [marked(col.spec.tags, defaults) for col in cols]
     for r, row in enumerate(rows):
         toks = row.entry.tokens
+        tagsets = [frozenset(t.tags) for t in toks]
+        by_marked: dict[frozenset, list[int]] = {}
+        for k, tt in enumerate(tagsets):
+            by_marked.setdefault(marked(tt, defaults), []).append(k)
         for c, col in enumerate(cols):
-            hits = [(row.entry, t) for t in toks if fits(t.tags, col.spec, defaults)]
-            if hits:
-                lay.cells[(r, c)] = _sorted_hits(hits, order, defaults)
+            spec = col.spec
+            if spec.match == EXACT:
+                ks = [k for k in by_marked.get(col_marked[c], ()) if spec.tags <= tagsets[k]]
+            elif spec.match == CITATION:
+                ks = [k for k, tt in enumerate(tagsets) if not tt]
+            else:
+                ks = [k for k, tt in enumerate(tagsets) if spec.tags <= tt]
+            if ks:
+                lay.cells[(r, c)] = _sorted_hits([(row.entry, toks[k]) for k in ks], order, defaults)
     return lay
 
 

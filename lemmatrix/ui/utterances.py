@@ -526,6 +526,7 @@ class TextsUtterancesWindow(QDialog):
         super().changeEvent(event)
         from PySide6.QtCore import QEvent
         if event.type() == QEvent.ActivationChange and self.isActiveWindow():
+            self._scan_key = None                 # Explorer or OneDrive may have changed the folder
             if self.db.utterances and self.recheck():
                 self.table.set_rows(list(self.db.utterances))
             # a text's lines are read again even with no utterances in the database (Josh,
@@ -573,10 +574,17 @@ class TextsUtterancesWindow(QDialog):
 
     # ---- refreshing ---------------------------------------------------
     def refresh(self):
+        folder = storage.utterance_folder(self.db)
         try:
-            self.sound_files, self.cloud_files = storage.scan_sound_folder(storage.utterance_folder(self.db))
-        except Exception:
-            self.sound_files, self.cloud_files = set(), set()
+            key = (str(folder), folder.stat().st_mtime_ns)
+        except OSError:
+            key = (str(folder), None)
+        if key != getattr(self, "_scan_key", None) or not hasattr(self, "sound_files"):
+            try:                                  # listed again only when the folder changed, or on
+                self.sound_files, self.cloud_files = storage.scan_sound_folder(folder)   # coming back
+            except Exception:                     # to the window (as Soundfiles/Tokens; 25 October)
+                self.sound_files, self.cloud_files = set(), set()
+            self._scan_key = key
         self.checks = pull.check_all(self.db, self.doc.text_buffers)
         self.table.set_rows(list(self.db.utterances))
         self._update_count()

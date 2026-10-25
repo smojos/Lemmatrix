@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QHeaderView, QStyle, QStyledIt
                                QTableView, QToolButton)
 
 from .. import matrix as mx
-from ..model import Database
+from ..model import Database, is_utterance
 from .icons import icon
 from . import conventions, theme, widgets
 from .widgets import meaning
@@ -295,22 +295,45 @@ class TokenCellDelegate(QStyledItemDelegate):
         f = self.view.db.settings.token_field(name.partition(":")[0])
         return f.role if f is not None else ""
 
+    # ---- one layout pass's memory (set_layout): the same answers worked out once each --------
+    # Measuring every cell to size the columns asked the same questions (a token's text and units,
+    # a text's width, a tag set's chips) hundreds of thousands of times at full size (25 October).
+    # Nothing can change during one pass, and the memory is let go when it ends.
+    _memo: dict | None = None
+
+    def begin_pass(self):
+        self._memo = {}
+
+    def end_pass(self):
+        self._memo = None
+
+    def _m(self, key, fn):
+        memo = self._memo
+        if memo is None:
+            return fn()
+        if key in memo:
+            return memo[key]
+        v = memo[key] = fn()
+        return v
+
     def _text(self, t, name):
         """A line's text as shown: the glossing symbols hidden ({big dog} → big dog), the display
         conventions on (idea 26)."""
         from .lines_view import shown
-        return conventions.wrap(self._role(name), shown(mx.cell_text(self.view.db, t, name)))
+        return self._m(("text", id(t), name), lambda: conventions.wrap(
+            self._role(name), shown(mx.cell_text(self.view.db, t, name))))
 
     def _w(self, name, text) -> int:
-        return conventions.width(text, self._font(name), conventions.small_caps_on(self._role(name)))
+        return self._m(("w", name, text), lambda: conventions.width(
+            text, self._font(name), conventions.small_caps_on(self._role(name))))
 
     def _aligned(self, name) -> bool:
-        return mx.is_aligned(self.view.db, name, self.view.aligned)
+        return self._m(("aligned", name), lambda: mx.is_aligned(self.view.db, name, self.view.aligned))
 
     def _units(self, t, name) -> list[str]:
         from ..interlinear import bare, split_units
-        return conventions.wrap_units(self._role(name),
-                                      [bare(u) for u in split_units(mx.cell_text(self.view.db, t, name))])
+        return self._m(("units", id(t), name), lambda: conventions.wrap_units(
+            self._role(name), [bare(u) for u in split_units(mx.cell_text(self.view.db, t, name))]))
 
     def _cols(self, t) -> list[int]:
         """The lined-up columns of a token: each the widest unit at that place in its aligned lines."""
@@ -331,9 +354,16 @@ class TokenCellDelegate(QStyledItemDelegate):
 
     def chips_for(self, r, c, t):
         lay = self.view.model_.layout_
-        db = self.view.db
         spec = lay.spec_at(r, c)
         entry, _ = lay.target(r, c)
+        # a lemma's chips depend on it only through its word class (what's unusual, and the note)
+        who = ((self.view.db.word_class(entry), is_utterance(entry))
+               if entry is not None and self._memo is not None else id(entry))
+        return self._m(("chips", id(spec), entry is None, who, tuple(t.tags)),
+                       lambda: self._chips_for(lay, spec, entry, t))
+
+    def _chips_for(self, lay, spec, entry, t):
+        db = self.view.db
         out = mx.extra_chips(db, t, spec, entry, self.view.defaults)
         if widgets.SHOW_UNUSUAL and entry is not None and lay.entry is None and spec is not None:
             # Lemma/Tag: the column's own tags aren't marked in its header (the column spans
@@ -347,8 +377,8 @@ class TokenCellDelegate(QStyledItemDelegate):
         for _, t in hits:
             w = 0.0
             if "drawing" in self.view.cell_fields:
-                w = pitch_width(t.get("Pitch"), self.unit)
-            cols = self._cols(t)
+                w = self._m(("pitch", t.get("Pitch"), self.unit), lambda: pitch_width(t.get("Pitch"), self.unit))
+            cols = self._m(("cols", id(t)), lambda: self._cols(t))
             for name in self._lines():
                 if self._aligned(name) and self._units(t, name):
                     w = max(w, sum(cols) - self.UNIT_GAP)
@@ -370,7 +400,7 @@ class TokenCellDelegate(QStyledItemDelegate):
         if "drawing" in self.view.cell_fields:
             h += self.draw_h + 4
         for name in self._lines():
-            h += QFontMetrics(self._font(name)).height() + 1
+            h += self._m(("h", name), lambda: QFontMetrics(self._font(name)).height()) + 1
         return h
 
     def cell_width(self, r, c, hits) -> int:
@@ -590,9 +620,13 @@ class MatrixView(QTableView):
         widths = [0] * len(layout.cols)
         z = getattr(self, "zoom", 1.0)
         heights = [round(40 * z)] * len(layout.rows)
-        for (r, c), hits in layout.cells.items():
-            widths[c] = max(widths[c], d.cell_width(r, c, hits))
-            heights[r] = max(heights[r], d.cell_height(r, c, hits))
+        d.begin_pass()
+        try:
+            for (r, c), hits in layout.cells.items():
+                widths[c] = max(widths[c], d.cell_width(r, c, hits))
+                heights[r] = max(heights[r], d.cell_height(r, c, hits))
+        finally:
+            d.end_pass()
         hh, vh = self.horizontalHeader(), self.verticalHeader()
         for c, w in enumerate(widths):
             hh.resizeSection(c, max(round(110 * z), w, hh.sectionSizeFromContents(c).width()))

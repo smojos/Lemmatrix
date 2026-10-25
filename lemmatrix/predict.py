@@ -244,6 +244,8 @@ class Predictor:
         self._entries: dict[str, tuple] = {}     # entry id -> (fingerprint, contributions)
         self._settings_key = None
         self._index: dict = {}                   # (word class or "", tag key) -> {Template: [count, glosses]}
+        self._built = False                      # built at least once (an empty index can be built: a
+                                                 # database with no translations yet; 25 October)
 
     # ---- learning ------------------------------------------------------
     def _contributions(self, db: Database, e: Entry, fname: str, classes: list[str]) -> list:
@@ -286,7 +288,7 @@ class Predictor:
             del self._entries[gone]
             changed = True
         order = [e.id for e in db.entries]
-        if changed or not self._index or order != getattr(self, "_order", None):
+        if changed or not self._built or order != getattr(self, "_order", None):
             self._order = order
             self._rebuild()
 
@@ -302,6 +304,7 @@ class Predictor:
                     if len(slot[1]) < 5 and gloss not in slot[1]:
                         slot[1].append(gloss)
         self._index = index
+        self._built = True
 
     # ---- suggesting ----------------------------------------------------
     def suggest(self, db: Database, e: Entry, tags, current: str = "",
@@ -316,7 +319,7 @@ class Predictor:
         gloss = db.gloss(e, LANG)
         if not gloss:
             return None
-        if refresh or not self._index:
+        if refresh or not self._built:
             self.refresh(db)
         key = tag_key(db, tags)
         for level in tuple(db.classes(e)) + ("",):
