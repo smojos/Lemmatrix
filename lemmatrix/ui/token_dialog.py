@@ -73,10 +73,45 @@ class TokenDialog(QDialog):
         self.setWindowTitle("Edit Token")
         self.resize(920, 780)
         self._build()
+        self._scroll_body()
         g = self.main.prefs.get_bytes("window/token_dialog")
         if g:                                     # the size and place it had when last closed
             self.restoreGeometry(g)
         self._load()
+
+    def _scroll_body(self):
+        """Everything but the bottom row (Back, Next, OK, Cancel) in a scroll area, so the dialogue
+        is never taller than the screen: the utterance dialogue, with its Lemmas and Source boxes
+        and large IPA, was, and its recording area was out of reach (Josh, 25 October)."""
+        outer = self.layout()
+        nav = outer.itemAt(outer.count() - 1)
+        body = QWidget()
+        inner = QVBoxLayout(body)
+        inner.setContentsMargins(0, 0, 0, 0)
+        while outer.count() > 1:
+            item = outer.takeAt(0)
+            stretch = 0
+            if item.widget() is not None:
+                inner.addWidget(item.widget())
+            elif item.layout() is not None:
+                lay = item.layout()
+                lay.setParent(None)
+                stretch = 1 if lay is getattr(self, "_top_layout", None) else 0
+                inner.addLayout(lay, stretch)
+            else:
+                inner.addItem(item)
+        scroll = QScrollArea()
+        scroll.setWidget(body)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.NoFrame)
+        self.body_scroll = scroll
+        outer.insertWidget(0, scroll, 1)
+        assert outer.itemAt(1) is nav
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        from .winstate import _clamp
+        _clamp(self)                              # a remembered size taller than this screen
 
     # ------------------------------------------------------------------ UI
     PITCH_PART = "tokens"      # which part of the pitch system this dialogue shows (pitchview, idea 9)
@@ -97,6 +132,7 @@ class TokenDialog(QDialog):
         outer.addWidget(self.header)
 
         top = QHBoxLayout()
+        self._top_layout = top                    # the part that stretches (_scroll_body)
         outer.addLayout(top, 1)
 
         left = QGridLayout()

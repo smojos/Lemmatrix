@@ -894,7 +894,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 
 ### 5.6 Token dialogue
 
-*Based on the user's "Edit Token" mockup.* Used for both creating and editing tokens.
+*Based on the user's "Edit Token" mockup.* Used for both creating and editing tokens. **Never taller than the screen** (Josh, 25 October): everything above the bottom row (Back, Next, OK, Cancel) is in a scroll area, so on a smaller screen, or with large IPA, the dialogue scrolls instead of running off the bottom; the bottom row always stays in view, and a remembered size bigger than the screen is brought inside it on opening. The utterance dialogue (section 3.10), with its Lemmas and Source boxes, is the one that ran off the screen.
 
 - **Push to question** (18 October): a green ? button beside the Comment box. The comment becomes an open question in the notebook on the session's day (today with No date; a day without notes gets them, with the Current Session's people and places), linked to the token, and the box is cleared. A new token is saved first, so the link works. **Push to To Do** (21 October): a little orange flag beside the ?, the same into the day's To Do list (section 3.7). Under the fields, the **Cogitate button** (48 px, Link to hypothesis…) and **In hypotheses: H3 (evidence)…** (section 3.14).
 - **Rerecord flag** (18 October): a faint grey thumbs-down at the top right of the recording area; click it to flag the recording to be made again (it turns red), click again to unflag. Recording over it unflags it. Kept in the workspace by token id (section 3.13, 21 October; `rerecord="yes"` on the token before format 7), undone with the edit it was part of, and found with All data's Soundfile filter → Rerecord.

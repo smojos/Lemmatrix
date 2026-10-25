@@ -533,3 +533,26 @@ def test_ipa_size_applies_at_start_and_everywhere(win):
     finally:
         win.prefs.ipa_size = old
         widgets.set_ipa_size(old)
+
+
+# ---- the utterance dialogue fits the screen (Josh, 25 October: its recording area was out of reach) --
+
+def test_utterance_dialogue_scrolls_rather_than_outgrowing_the_screen(win, tmp_path, monkeypatch):
+    from lemmatrix.ui import widgets
+    from lemmatrix.ui.token_dialog import Slot
+    from lemmatrix.ui.utterances import UtteranceDialog
+    monkeypatch.setattr(widgets, "IPA_SIZE", 22)              # large IPA, as on Josh's screen
+    uw, t = _add_text(win, tmp_path, monkeypatch)
+    uw.texts.lines.select_row(uw.texts.lines.rows[0])
+    u = uw.texts.clip()[0]
+    dlg = UtteranceDialog(win, [Slot(u, 0)], 0, uw)
+    assert dlg.minimumSizeHint().height() < 400                # the body scrolls; it set the minimum before
+    body = dlg.body_scroll.widget()
+    for w in (dlg.meter, dlg.clip_source_box, dlg.lemma_find, dlg.header):
+        assert body.isAncestorOf(w)                            # the recording area, Source, Lemmas
+    dlg.resize(900, 3000)
+    dlg.show()
+    a = dlg.screen().availableGeometry()
+    assert dlg.frameGeometry().height() <= a.height()          # never taller than the screen
+    assert not body.isAncestorOf(dlg.next_btn)                 # Back, Next, OK, Cancel always in view
+    dlg.reject()
