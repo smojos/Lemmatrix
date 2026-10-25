@@ -106,6 +106,27 @@ class _ElicitChecked(QObject):
     done = Signal(object, object)
 
 
+class _RestyleOnShow(QObject):
+    """A hidden window missed a theme change: it is restyled the next time it is shown (25 October;
+    before, the XML viewer kept the old theme's colours)."""
+    _filter = None
+
+    @classmethod
+    def mark(cls, w: QWidget):
+        if cls._filter is None:
+            cls._filter = cls()
+        if not w.property("restyle_on_show"):
+            w.setProperty("restyle_on_show", True)
+            w.installEventFilter(cls._filter)
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Show and obj.property("restyle_on_show"):
+            obj.setProperty("restyle_on_show", False)
+            obj.removeEventFilter(self)
+            obj._restyle()
+        return False
+
+
 def tool(text: str, icon_name: str | None, fn, tip: str = "") -> QToolButton:
     b = QToolButton()
     b.setText(text)
@@ -2727,8 +2748,11 @@ class MainWindow(QMainWindow):
         # windows already open (Texts and utterances, Bulk edit…) follow a theme change too
         from PySide6.QtWidgets import QApplication
         for w in QApplication.topLevelWidgets():
-            if w is not self and w.isVisible() and callable(getattr(w, "_restyle", None)):
-                w._restyle()
+            if w is not self and callable(getattr(w, "_restyle", None)):
+                if w.isVisible():
+                    w._restyle()
+                else:                             # hidden (the XML viewer, Cogitate…): when next shown
+                    _RestyleOnShow.mark(w)
 
     @staticmethod
     def _spec_json(sp: mx.Spec) -> dict:

@@ -817,11 +817,17 @@ def gloss_matches(db, lid: str) -> list[tuple[str, object]]:
 
 def export_form(db, entry) -> str:
     """A lemma's form in a wordlist export: its Lemma field, else its citation token's Phonetic
-    (Josh, 23 October), else its citation token's Phonemic."""
+    (Josh, 23 October), else its citation token's Phonemic. The citation token is the one with no
+    tags, else one with only its groups' default tags (SG where SG is the default); never just the
+    first token, which may be a plural or a possessed form (25 October: it could export one)."""
     form = db.lemma(entry)
     if form:
         return form
-    t = entry.citation_token()
+    tags = db.settings.tags
+
+    def plain(tok) -> bool:
+        return all(tags.tag(n) is not None and tags.tag(n).default for n in tok.tags)
+    t = next((x for x in entry.tokens if x.is_citation), None) or next((x for x in entry.tokens if plain(x)), None)
     if t is None:
         return ""
     for role in ("phonetic", "phonemic"):

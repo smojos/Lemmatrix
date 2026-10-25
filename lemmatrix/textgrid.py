@@ -63,9 +63,13 @@ def _open(path):
 
 
 def modified(path) -> str:
-    """When the TextGrid was last changed (ISO, to the second): stored with clipped utterances."""
+    """When the TextGrid was last changed: stored with clipped utterances, so Pull can skip a file
+    not saved since. In UTC to the microsecond (25 October): to the second, a save in Praat within
+    the same second as the clip looked unchanged, and local time shifted an hour when the clocks
+    changed. An older stamp (local, to the second) never matches, so its file is simply read."""
     try:
-        return _dt.datetime.fromtimestamp(os.path.getmtime(path)).isoformat(timespec="seconds")
+        return _dt.datetime.fromtimestamp(os.path.getmtime(path), _dt.timezone.utc).isoformat(
+            timespec="microseconds")
     except OSError:
         return ""
 

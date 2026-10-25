@@ -56,19 +56,29 @@ def _live(owner, win) -> bool:
     return isinstance(owner, QWidget) and owner.window() is win and owner.isVisible()
 
 
-def run_shortcut(widget: QWidget, pitch: bool) -> bool:
-    """Run the Ctrl+Space (pitch: Ctrl+Shift+Space) shortcut of `widget`'s window."""
+def find_shortcut(widget: QWidget, pitch: bool):
+    """The Ctrl+Space (pitch: Ctrl+Shift+Space) shortcut or action of `widget`'s window, or None."""
     win = widget.window()
     seq = PLAY_PITCH if pitch else PLAY
     for sc in win.findChildren(QShortcut):
         if sc.key() == seq and sc.isEnabled() and _live(sc.parent(), win):
-            sc.activated.emit()
-            return True
+            return sc
     for act in dict.fromkeys([*win.actions(), *win.findChildren(QAction)]):
         if seq in act.shortcuts() and act.isEnabled() and _live(act.parent(), win):
-            act.trigger()
-            return True
-    return False
+            return act
+    return None
+
+
+def run_shortcut(widget: QWidget, pitch: bool) -> bool:
+    """Run the Ctrl+Space (pitch: Ctrl+Shift+Space) shortcut of `widget`'s window."""
+    found = find_shortcut(widget, pitch)
+    if found is None:
+        return False
+    if isinstance(found, QShortcut):
+        found.activated.emit()
+    else:
+        found.trigger()
+    return True
 
 
 class CtrlSpaceFilter(QObject):
@@ -99,6 +109,8 @@ class CtrlSpaceFilter(QObject):
         ctrl, shift, alt = self._modifiers(event)
         if not ctrl or alt:                       # Ctrl+Alt is AltGr on Windows: leave it be
             return False
+        if find_shortcut(obj, shift) is None:     # nothing to play in this window: the key is left to
+            return False                          # the field (it used to be swallowed; 25 October)
         if t == QEvent.ShortcutOverride:          # handled on the key press, so only once
             event.accept()
             return True

@@ -209,3 +209,5 @@ class SpellingWindow(QDialog):
         if getattr(self.main, "spelling_window", None) is self:
             self.main.spelling_window = None
         super().closeEvent(event)
+        if event.isAccepted():
+            self.deleteLater()                    # forgotten by the main window: freed, not kept hidden

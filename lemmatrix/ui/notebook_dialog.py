@@ -691,7 +691,7 @@ class NotebookDialog(QDialog):
 
     def _hypotheses_changed(self):
         """A hypothesis changed (or was undone): its line in the notes, and the Hypotheses tab."""
-        if self.session is None:
+        if self.session is None or not self.isVisible():   # hidden: reloaded when opened again
             return
         if self.session not in self.book.sessions:       # an undo took the day away again
             self.reload()

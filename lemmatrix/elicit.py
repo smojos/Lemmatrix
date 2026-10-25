@@ -218,7 +218,9 @@ class Request:
         if d.get("format") != FORMAT:
             raise ElicitError("This isn't an ɛλicit request.")
         d = dict(d)
-        d["cards"] = [Card(**c) for c in d.get("cards", [])]
+        cards = {f for f in Card.__dataclass_fields__}       # a field a later version adds is left out,
+        d["cards"] = [Card(**{k: v for k, v in c.items() if k in cards})   # not the whole request
+                      for c in d.get("cards", [])]
         known = {f for f in cls.__dataclass_fields__}
         return cls(**{k: v for k, v in d.items() if k in known})
 

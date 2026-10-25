@@ -1030,6 +1030,8 @@ class BulkEditWindow(QDialog):
         if getattr(self.main, "bulk_window", None) is self:
             self.main.bulk_window = None
         super().closeEvent(event)
+        if event.isAccepted():
+            self.deleteLater()                    # forgotten by the main window: freed, not kept hidden
 
 
 def row_key_of(row) -> tuple:

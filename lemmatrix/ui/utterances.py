@@ -1096,6 +1096,8 @@ class TextsUtterancesWindow(QDialog):
         if getattr(self.main, "utterances_window", None) is self:
             self.main.utterances_window = None
         super().closeEvent(event)
+        if event.isAccepted():
+            self.deleteLater()                    # forgotten by the main window: freed, not kept hidden
 
 
 class HalfSplitter(QSplitter):
