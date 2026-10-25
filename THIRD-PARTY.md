@@ -1,6 +1,6 @@
 # Third-party software
 
-Lemmatrix is © 2026 Joshua A. G. Smolders and licensed under AGPL-3.0-or-later (see `LICENSE`); its artwork is not (see `ARTWORK.md`).
+Lemmatrix is © 2026 Joshua A. G. Smolders and licensed under AGPL-3.0-or-later (see `LICENSE`); its artwork and sample databases are not (see `ARTWORK.md` and `SAMPLES.md`).
 It doesn't include any of the libraries below: they are installed from PyPI when Lemmatrix
 first runs (`requirements.txt`), each under its own licence.
 

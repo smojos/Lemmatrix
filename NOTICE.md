@@ -10,6 +10,10 @@ official sources: https://github.com/smojos/Lemmatrix and https://doi.org/10.528
 The program's artwork (its icons, the splash screen and the ɛλicit drawings) is **not** under the
 AGPL: see `ARTWORK.md`.
 
+The **sample databases** (the sample and the ɛλicit test database, with the scripts that build
+them: `samples/make_sample.py` and `samples/make_elicit_test.py`) are **not** under the AGPL
+either: they are the author's creative work, all rights reserved. See `SAMPLES.md`.
+
 The **Extended African Comparative Wordlist** (`lemmatrix/wordlists/eacw.tsv`, with its links to
 the other lists) is **not** under the AGPL either: it is data, under **CC BY 4.0**. See
 `lemmatrix/wordlists/LICENSE-EACW.md`. The other wordlists' terms are in `THIRD-PARTY.md`.

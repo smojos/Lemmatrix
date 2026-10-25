@@ -47,7 +47,7 @@ recordings), and is the one to use when you ask an AI for help with your data.
 
 © 2026 Joshua A. G. Smolders. Free software under the
 [GNU Affero General Public License, version 3 or later](LICENSE) (AGPL-3.0-or-later), with
-[additional terms](NOTICE.md); the artwork is [all rights reserved](ARTWORK.md).
+[additional terms](NOTICE.md); the artwork and the sample databases are [all rights reserved](ARTWORK.md) ([SAMPLES.md](SAMPLES.md)).
 
 **Free, always.** Lemmatrix is free to download and use, at no charge, and it always will be.
 Get it from its official homes: this repository, or Zenodo
@@ -84,7 +84,8 @@ deliberate, part of the author's personal campaign to make it a compound, like *
 3. On the first start the welcome window asks; choose **Yes, load the sample** to try it with invented data
    (later: Help → Sample databases): a made-up language
    (LXX) with 98 lemmas, saved matrices and synthetic recordings, built by
-   `samples/make_sample.py`. It isn't a real language; any resemblance to one is coincidental. The copy goes to
+   `samples/make_sample.py`. It isn't a real language: its word forms were generated at random by Claude AI from a phoneme inventory
+   I fed it, plus Lemmatrix's tag system. Any resemblance to any living language is a complete coincidence. The copy goes to
    `Documents\Lemmatrix Sample`, so the sample in the repository stays untouched.
 
 4. Once it has run, double-click **`Make desktop shortcut.bat`** to put a Lemmatrix shortcut,
@@ -273,6 +274,7 @@ tools/make_elicit_web.py  the web page's favicon, logo and home-screen icons
 LICENSE               the GNU Affero General Public License, version 3
 NOTICE.md             the additional terms: the author's credit, marked changes, the name
 ARTWORK.md            the icons, splash screen and ɛλicit drawings: all rights reserved
+SAMPLES.md            the sample and ɛλicit test databases: all rights reserved
 AUTHORS, CITATION.cff who made Lemmatrix and how to cite it
 THIRD-PARTY.md        the libraries Lemmatrix uses, with their licences
 ```
@@ -333,6 +335,13 @@ says that it has been changed; and it takes a name of its own.
 © Joshua A. G. Smolders, all rights reserved ([ARTWORK.md](ARTWORK.md)). Lemmatrix may be shared
 as it is, artwork included; anyone who distributes a modified version must make their own icons
 and splash screen for everything.
+
+**The sample databases are not under the AGPL either.** The sample database and the ɛλicit test
+database (with `samples/make_sample.py` and `samples/make_elicit_test.py`, which build them) are
+the author's creative work: an invented language, its words and texts, and recordings of his own
+voice. © Joshua A. G. Smolders, all rights reserved ([SAMPLES.md](SAMPLES.md)). Take the program
+and its usefulness; the samples stay his. Lemmatrix may be shared as it is, samples included;
+anyone who distributes a modified version must make sample data of their own.
 
 **The Extended African Comparative Wordlist is CC BY 4.0.** The EACW that new databases can
 start from (`lemmatrix/wordlists/eacw.tsv`, with its links to the SIL Comparative African

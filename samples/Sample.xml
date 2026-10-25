@@ -23,7 +23,7 @@
         </location>
       </location>
     </location>
-    <description>Invented sample data for trying out Lemmatrix: not a real language, and any resemblance to one is coincidental. Built by samples/make_sample.py.</description>
+    <description>Invented sample data for trying out Lemmatrix: not a real language. Its word forms were generated at random by Claude AI, from a phoneme inventory Josh fed it and Lemmatrix's tag system. Any resemblance to any living language is a complete coincidence. © Joshua A. G. Smolders, all rights reserved (SAMPLES.md). Built by samples/make_sample.py.</description>
     <wordlist base="EACW" items="base" region="africa" version="2026-10-24" />
   </metadata>
   <settings>

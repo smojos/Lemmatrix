@@ -1,11 +1,13 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
+# SPDX-License-Identifier: LicenseRef-Lemmatrix-Samples
+# Copyright © 2026 Joshua A. G. Smolders. All rights reserved: see SAMPLES.md.
 """Build the sample database: an invented language, with short synthetic recordings.
 
     python samples/make_sample.py        ->  samples/Sample.xml and samples/Soundfiles/
 
-The language (LXX, variety VXX) is made up for trying out Lemmatrix: it is not a real language,
-and any resemblance to one is coincidental. The database uses the program's defaults (fields,
+The language (LXX, variety VXX) is made up for trying out Lemmatrix: it is not a real language.
+Its word forms (and its text) were generated at random by Claude AI, from a phoneme inventory
+Josh fed it and Lemmatrix's tag system. Any resemblance to any living language is a complete coincidence.
+The database uses the program's defaults (fields,
 tags, lists, people and places); only the frames' carrier sentences are filled in.
 
 Phonology
@@ -310,8 +312,11 @@ class Builder:
         md.language_code, md.language_name = "LXX", "Sample language"
         md.variety_code, md.variety_name = "VXX", "Sample variety"
         md.name = "Sample"
-        md.description = ("Invented sample data for trying out Lemmatrix: not a real language, and any "
-                          "resemblance to one is coincidental. Built by samples/make_sample.py.")
+        md.description = ("Invented sample data for trying out Lemmatrix: not a real language. Its word forms were "
+                          "generated at random by Claude AI, from a phoneme inventory Josh fed it and "
+                          "Lemmatrix's tag system. Any resemblance to any living language is a complete coincidence. "
+                          "© Joshua A. G. Smolders, all rights reserved (SAMPLES.md). "
+                          "Built by samples/make_sample.py.")
         for name, carrier in FRAMES.items():
             db.settings.tags.tag(name).description = carrier
         self.folder = HERE / "Soundfiles" / "Tokens"
