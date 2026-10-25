@@ -13,14 +13,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QDir, QFile, QRegularExpression, QSize, Qt, QTimer
+from PySide6.QtCore import QDir, QFile, QRegularExpression, Qt
 from PySide6.QtGui import QKeySequence, QRegularExpressionValidator, QShortcut
-from PySide6.QtWidgets import (QComboBox, QDialog, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+from PySide6.QtWidgets import (QComboBox, QDialog, QHBoxLayout, QLabel, QLineEdit,
                                QMessageBox, QPushButton, QVBoxLayout)
 
 from .. import audio, segments
 from . import theme
-from .icons import icon
 
 
 
@@ -30,51 +29,14 @@ class SegmentRecordDialog(QDialog):
         self.main = main
         self.db = main.doc.db
         self.sequence = segments.norm(sequence)
-        self.recorder = None
         self.setWindowTitle(f"Record {self.sequence}")
         outer = QVBoxLayout(self)
-        rec = QGroupBox()
-        rl = QGridLayout(rec)
-        self.filename = QLabel()
-        ff = self.filename.font()
-        ff.setPointSize(ff.pointSize() + 3)
-        self.filename.setFont(ff)
-        self.filename.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        rl.addWidget(self.filename, 0, 0, 1, 5)
-        self.location = QLabel()
-        self.location.setStyleSheet(f"color: {theme.muted()};")
-        self.location.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        self.location.setWordWrap(True)
-        rl.addWidget(self.location, 1, 0, 1, 5)
-        self.name_note = QLabel()
-        rl.addWidget(self.name_note, 2, 0, 1, 5)
-
-        buttons = QHBoxLayout()
-
-        def icon_button(name, tip):
-            b = QPushButton()
-            b.setIcon(icon(name, 40))
-            b.setIconSize(QSize(40, 40))
-            b.setFixedSize(48, 48)
-            b.setFlat(True)
-            b.setToolTip(tip)
-            b.setStyleSheet("QPushButton { border: none; }")
-            buttons.addWidget(b)
-            return b
-        self.record_btn = icon_button("record", "Record (Ctrl+R)")
-        self.play_btn = icon_button("play", "Play (Ctrl+Space)")
-        self.delete_btn = icon_button("delete-recording", "Delete recording")
-        self.update_btn = icon_button("update", "Update file name")
-        self.praat_btn = icon_button("praat", "Open in Praat")
-        self.source_box = QComboBox()
-        self.source_box.addItem("Microphone", "microphone")
-        self.source_box.addItem("Computer audio", "computer")
-        self.source_box.setToolTip("Record from: the same choice as Settings → Sound → Recording source "
-                                   "(this computer)")
-        self.source_box.setCurrentIndex(max(0, self.source_box.findData(main.prefs.record_source)))
-        self.source_box.currentIndexChanged.connect(self._source_changed)
-        buttons.addWidget(self.source_box, 0, Qt.AlignVCenter)
-        rl.addLayout(buttons, 3, 0, 2, 2)
+        from .recording_panel import RecordingPanel   # one for tokens, utterances and segments
+        rec = self.rec_panel = RecordingPanel(main, self, name_span=5, stretch_before_source=False)
+        rl = rec.grid
+        for name in ("filename", "location", "name_note", "record_btn", "play_btn", "delete_btn",
+                     "update_btn", "praat_btn", "source_box", "meter", "level_note"):
+            setattr(self, name, getattr(rec, name))
         self.record_btn.clicked.connect(lambda *_: self._record())
         self.play_btn.clicked.connect(lambda *_: self._play())
         self.delete_btn.clicked.connect(lambda *_: self._delete())
@@ -93,16 +55,6 @@ class SegmentRecordDialog(QDialog):
         self.date.setValidator(QRegularExpressionValidator(QRegularExpression(r"(\d{4}-\d{2}-\d{2})?"), self.date))
         self.date.setFixedWidth(160)
         rl.addWidget(self.date, 4, 4)
-        from .levelmeter import LevelMeter
-        self.meter = LevelMeter()
-        self.meter.setFixedWidth(220)
-        rl.addWidget(self.meter, 5, 0, 1, 2)
-        self.level_note = QLabel()
-        self.level_note.setWordWrap(True)
-        self.level_note.setStyleSheet(f"color: {theme.colour('error').name()};")
-        self.level_note.hide()
-        rl.addWidget(self.level_note, 6, 0, 1, 5)
-        rl.setColumnStretch(2, 1)
         outer.addWidget(rec)
 
         nav = QHBoxLayout()
@@ -117,9 +69,6 @@ class SegmentRecordDialog(QDialog):
         cancel.clicked.connect(self.reject)
         QShortcut(QKeySequence("Ctrl+R"), self, self._record)
         QShortcut(QKeySequence("Ctrl+Space"), self, self._play)
-        self.timer = QTimer(self)
-        self.timer.setInterval(50)
-        self.timer.timeout.connect(lambda: self.recorder and self.meter.set_level(self.recorder.level))
 
         self._fill_speakers(main.session_speaker())
         self.file: Path | None = None             # the recording this dialogue shows
@@ -181,10 +130,18 @@ class SegmentRecordDialog(QDialog):
             b.setEnabled(has)
         self.update_btn.setEnabled(has and self.file.name != exp)
 
-    def _source_changed(self, *_):
-        src = self.source_box.currentData()
-        if src and src != self.main.prefs.record_source:
-            self.main.prefs.record_source = src
+    # The take in progress and the meter's timer are the recording panel's (recording_panel.py)
+    @property
+    def recorder(self):
+        return self.rec_panel.recorder if hasattr(self, "rec_panel") else None
+
+    @recorder.setter
+    def recorder(self, value):
+        self.rec_panel.recorder = value
+
+    @property
+    def timer(self):
+        return self.rec_panel.timer
 
     # ---- recording
     def _record(self):
@@ -196,41 +153,17 @@ class SegmentRecordDialog(QDialog):
         if target.exists() and QMessageBox.question(
                 self, "Record", f"Replace {target.name}? The old one goes to the Recycle Bin.") != QMessageBox.Yes:
             return
-        prefs = self.main.prefs
-        self._source_changed()
-        self.recorder = audio.Recorder(prefs.record_source, prefs.sample_rate)
-        try:
-            self.recorder.start()
-        except audio.AudioError as exc:
-            self.recorder = None
-            QMessageBox.warning(self, "Record", str(exc))
-            return
-        self.main.player.stop()
-        self.meter.reset()
-        self.level_note.hide()
-        self.record_btn.setIcon(icon("stop", 40))
-        self.record_btn.setToolTip("Stop recording (Ctrl+R)")
-        self.timer.start()
+        self.rec_panel.start()
 
     def _stop(self):
-        rec, self.recorder = self.recorder, None
-        self.timer.stop()
-        self.meter.set_level(0.0)
-        self.record_btn.setIcon(icon("record", 40))
-        self.record_btn.setToolTip("Record (Ctrl+R)")
-        samples = rec.stop()
-        if len(samples) == 0:
-            QMessageBox.warning(self, "Record", "Nothing was recorded. Check the microphone.")
-            return
-        self.save(samples, rec.sample_rate)
+        take = self.rec_panel.stop()
+        if take is not None:
+            self.save(*take)
 
     def save(self, samples, rate: int) -> bool:
         """A recording made: written under the expected name (the one it replaces to the Recycle
         Bin), with the speaker and date in the WAV's own metadata."""
-        from . import levelmeter                     # clipped or very quiet: said, never changed
-        verdict, db = levelmeter.check(samples)
-        self.level_note.setText(levelmeter.message(verdict, db))
-        self.level_note.setVisible(bool(verdict))
+        self.rec_panel.show_level(samples)           # clipped or very quiet: said, never changed
         target = segments.folder(self.db) / self.expected()
         target.parent.mkdir(parents=True, exist_ok=True)
         if target.exists():
@@ -308,8 +241,5 @@ class SegmentRecordDialog(QDialog):
         self.accept()
 
     def reject(self):
-        if self.recorder:
-            self.recorder.stop()
-            self.recorder = None
-            self.timer.stop()
+        self.rec_panel.cancel()                   # a take in progress is thrown away
         super().reject()

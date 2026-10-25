@@ -66,7 +66,6 @@ class TokenDialog(QDialog):
         self.pos = index
         self.token: Token | None = None
         self.original: Token | None = None
-        self.recorder: audio.Recorder | None = None
         self._renames: list = []                  # recordings renamed, to go with the next commit
         self.unknown_tags: list[str] = []
         self.suggestion: predict.Suggestion | None = None   # the predicted translation shown, if any
@@ -299,14 +298,12 @@ class TokenDialog(QDialog):
         tl.addWidget(self.combo_note)
         top.addWidget(tags_box, 2)
 
-        rec = QGroupBox()
-        rl = QGridLayout(rec)
-        self.filename = QLabel()
-        ff = self.filename.font()
-        ff.setPointSize(ff.pointSize() + 3)
-        self.filename.setFont(ff)
-        self.filename.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        rl.addWidget(self.filename, 0, 0, 1, 4)
+        from .recording_panel import RecordingPanel   # one for tokens, utterances and segments
+        rec = self.rec_panel = RecordingPanel(self.main, self)
+        rl = rec.grid
+        for name in ("filename", "location", "name_note", "record_btn", "play_btn", "delete_btn",
+                     "update_btn", "praat_btn", "source_box", "meter", "level_note"):
+            setattr(self, name, getattr(rec, name))
         self.rerecord_btn = QToolButton()        # the rerecord flag: faint grey, red when on
         self.rerecord_btn.setCheckable(True)
         self.rerecord_btn.setAutoRaise(True)
@@ -316,14 +313,6 @@ class TokenDialog(QDialog):
                                         "{ border: none; background: transparent; }")
         self.rerecord_btn.toggled.connect(self._rerecord_toggled)
         rl.addWidget(self.rerecord_btn, 0, 4, Qt.AlignRight | Qt.AlignTop)
-        self.location = QLabel()
-        self.location.setStyleSheet(f"color: {theme.muted()};")
-        self.location.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        self.location.setWordWrap(True)
-        rl.addWidget(self.location, 1, 0, 1, 5)
-        self.name_note = QLabel()
-        self.name_note.setStyleSheet(f"color: {theme.colour('error').name()};")
-        rl.addWidget(self.name_note, 2, 0, 1, 5)
         rl.addWidget(QLabel("Speaker"), 3, 3, Qt.AlignRight)
         self.speaker = QComboBox()
         self.speaker.setToolTip("The token's speaker. Choosing one makes them the speaker of the "
@@ -344,50 +333,13 @@ class TokenDialog(QDialog):
         self.date.setFixedWidth(130)
         rl.addWidget(self.date, 4, 4)
 
-        buttons = QHBoxLayout()
-        def icon_button(name, tip):
-            b = QPushButton()
-            b.setIcon(icon(name, 40))
-            b.setIconSize(QSize(40, 40))
-            b.setFixedSize(48, 48)
-            b.setFlat(True)
-            b.setToolTip(tip)
-            b.setStyleSheet("QPushButton { border: none; }")
-            buttons.addWidget(b)
-            return b
-        self.record_btn = icon_button("record", "Record (Ctrl+R)")
-        self.play_btn = icon_button("play", "Play (Ctrl+Space)")
-        self.delete_btn = icon_button("delete-recording", "Delete recording")
-        self.update_btn = icon_button("update", "Update file name")
-        self.praat_btn = icon_button("praat", "Open in Praat")
-        buttons.addStretch(1)
-        # the recording source (Josh, 21 October): the same setting as Settings → Sound
-        self.source_box = QComboBox()
-        self.source_box.addItem("Microphone", "microphone")
-        self.source_box.addItem("Computer audio", "computer")
-        self.source_box.setToolTip("Record from: the same choice as Settings → Sound → Recording source "
-                                   "(this computer)")
-        self.source_box.setCurrentIndex(max(0, self.source_box.findData(self.main.prefs.record_source)))
-        self.source_box.currentIndexChanged.connect(self._source_changed)
-        buttons.addWidget(self.source_box, 0, Qt.AlignVCenter)
         self.record_btn.clicked.connect(self._record)
         self.play_btn.clicked.connect(self._play)
         self.delete_btn.clicked.connect(self._delete_recording)
         self.update_btn.clicked.connect(self._update_name)
         self.praat_btn.clicked.connect(lambda *_: self._open_in_praat())
-        rl.addLayout(buttons, 3, 0, 2, 2)
         rec.setContextMenuPolicy(Qt.CustomContextMenu)
         rec.customContextMenuRequested.connect(lambda pos, rec=rec: self._recording_menu(rec.mapToGlobal(pos)))
-        from .levelmeter import LevelMeter           # in dB, with zones and a peak (Josh, 22 October)
-        self.meter = LevelMeter()
-        self.meter.setFixedWidth(220)
-        rl.addWidget(self.meter, 5, 0, 1, 2)
-        self.level_note = QLabel()                    # after recording: clipped or very quiet
-        self.level_note.setWordWrap(True)
-        self.level_note.setStyleSheet(f"color: {theme.colour('error').name()};")
-        self.level_note.hide()
-        rl.addWidget(self.level_note, 6, 0, 1, 5)
-        rl.setColumnStretch(2, 1)
         outer.addWidget(rec)
 
         nav = QHBoxLayout()
@@ -418,9 +370,19 @@ class TokenDialog(QDialog):
         QShortcut(QKeySequence("Alt+Left"), self, lambda: self._move(-1))
         QShortcut(QKeySequence("Alt+Right"), self, lambda: self._move(1))
 
-        self.timer = QTimer(self)
-        self.timer.setInterval(50)
-        self.timer.timeout.connect(self._update_meter)
+    # The take in progress and the meter's timer are the recording panel's (recording_panel.py)
+    @property
+    def recorder(self):
+        return self.rec_panel.recorder if hasattr(self, "rec_panel") else None
+
+    @recorder.setter
+    def recorder(self, value):
+        if hasattr(self, "rec_panel"):
+            self.rec_panel.recorder = value
+
+    @property
+    def timer(self):
+        return self.rec_panel.timer
 
     # ---------------------------------------------------------------- data
     @property
@@ -801,9 +763,7 @@ class TokenDialog(QDialog):
             self.name_note.setText(self.name_note.text() + " It will be renamed when you leave this token.")
 
     def _source_changed(self, *_):
-        src = self.source_box.currentData()
-        if src and src != self.main.prefs.record_source:
-            self.main.prefs.record_source = src
+        self.rec_panel.source_changed()
 
     # ---------------------------------------------------------- committing
     PITCH_LIKE = re.compile(r"^(?=.*\d)[\d\s:,\u02d0]+$")
@@ -1228,10 +1188,7 @@ class TokenDialog(QDialog):
         super().done(result)
 
     def reject(self):
-        if self.recorder:
-            self.recorder.stop()
-            self.recorder = None
-            self.timer.stop()
+        self.rec_panel.cancel()                   # a take in progress is thrown away
         self.main.player.stop()
         super().reject()
 
@@ -1262,36 +1219,14 @@ class TokenDialog(QDialog):
                    "Replace it? (It goes to the Recycle Bin.)")
             if QMessageBox.question(self, "Record", ask) != QMessageBox.Yes:
                 return
-        prefs = self.main.prefs
-        self._source_changed()
-        self.recorder = audio.Recorder(prefs.record_source, prefs.sample_rate)
-        try:
-            self.recorder.start()
-        except audio.AudioError as exc:
-            self.recorder = None
-            QMessageBox.warning(self, "Record", str(exc))
-            return
-        self.main.player.stop()
-        self.meter.reset()
-        self.level_note.hide()
-        self.record_btn.setIcon(icon("stop", 40))
-        self.record_btn.setToolTip("Stop recording (Ctrl+R)")
-        self.timer.start()
+        self.rec_panel.start()
 
     def _stop_recording(self):
-        rec, self.recorder = self.recorder, None
-        self.timer.stop()
-        self.meter.set_level(0.0)
-        self.record_btn.setIcon(icon("record", 40))
-        self.record_btn.setToolTip("Record (Ctrl+R)")
-        samples = rec.stop()
-        if len(samples) == 0:
-            QMessageBox.warning(self, "Record", "Nothing was recorded. Check the microphone.")
+        take = self.rec_panel.stop()
+        if take is None:
             return
-        from . import levelmeter                     # clipped or very quiet: said, never changed
-        verdict, db = levelmeter.check(samples)
-        self.level_note.setText(levelmeter.message(verdict, db))
-        self.level_note.setVisible(bool(verdict))
+        samples, rate = take
+        self.rec_panel.show_level(samples)           # clipped or very quiet: said, never changed
         self._collect()
         t = self.token
         # Whoever is the session's speaker now (perhaps no one) is the token's speaker;
@@ -1313,7 +1248,7 @@ class TokenDialog(QDialog):
         if self._path(exp).exists():              # the recording being replaced: to the Recycle Bin
             QFile.moveToTrash(str(self._path(exp)))
         try:
-            audio.write_wav(self._path(exp), samples, rec.sample_rate, self.main.prefs.bit_depth,
+            audio.write_wav(self._path(exp), samples, rate, self.main.prefs.bit_depth,
                             artist=t.speaker, date=t.collected)
         except (OSError, audio.AudioError) as exc:
             QMessageBox.warning(self, "Record", f"Couldn't save the recording: {exc}")
@@ -1421,10 +1356,6 @@ class TokenDialog(QDialog):
         h = self.main.link_to_hypothesis(hy.token_link(self.db, self.slot.entry, self.token), self)
         self._show_hypotheses()
         return h
-
-    def _update_meter(self):
-        if self.recorder:
-            self.meter.set_level(self.recorder.level)
 
     def _play(self):
         if self.recorder:
