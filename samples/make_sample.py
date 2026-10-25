@@ -498,6 +498,7 @@ class Builder:
         self.db = db = new_database()
         md = db.metadata
         sample_metadata(md)
+        db.settings.pitch_low = 0            # Josh, 25 October: the final falls to 0 show
         md.language_code, md.language_name = "LXX", "Sample language"
         md.variety_code, md.variety_name = "VXX", "Sample variety"
         md.name = "Sample"
