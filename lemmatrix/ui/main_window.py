@@ -807,6 +807,10 @@ class MainWindow(QMainWindow):
             try:
                 drive = gdrive.Drive(token, on_token=keep)
                 for st in outstanding:
+                    try:                          # expired: nothing left readable by link (P2)
+                        elicit.unshare_expired(drive, st)
+                    except Exception:             # noqa: BLE001 (tried again in 10 minutes)
+                        pass
                     state = elicit.drive_state(drive, st)
                     if state.finished or state.turned_down:
                         found[st.request.id] = (st.request.speaker["code"], state.uploaded,
@@ -3963,7 +3967,9 @@ class MainWindow(QMainWindow):
                 self.speaker_code = speakers[self.speaker_code]
         if renames[chips.PARTICIPANTS] or renames[chips.RESEARCHERS]:
             from .. import segments               # their segment soundfiles follow (idea 46)
-            segments.rename_speakers(db, {**renames[chips.RESEARCHERS], **speakers})
+            people = {**renames[chips.RESEARCHERS], **speakers}
+            segments.rename_speakers(db, people)
+            self._follow_people_renames(people)
         if any(renames.values()):
             for t in db.texts:                    # texts' people and places follow renamed codes
                 t.participants = [speakers.get(c, c) for c in t.participants]
@@ -3981,6 +3987,34 @@ class MainWindow(QMainWindow):
         self._fill_session()
         if self.notebook_dialog is not None:
             self.notebook_dialog.reload()
+
+    def _follow_people_renames(self, people: dict[str, str]):
+        """Renamed codes outside the records (the audit, P7): TextGrid tier names (tx@SP1),
+        clipped utterances' copies of them, the stored ɛλicit requests and the request being
+        put together; a TextGrid that couldn't be written is named."""
+        from .. import recode
+        res = recode.follow(self.doc.db, people)
+        draft = self.elicit_draft
+        if draft:
+            new = dict(draft)
+            for key in ("speaker", "researcher"):
+                if new.get(key) in people:
+                    new[key] = people[new[key]]
+            l2p = {}
+            for k, v in (new.get("l2_people") or {}).items():
+                lang, _, code = k.partition("|")
+                l2p[f"{lang}|{people.get(code, code)}"] = v
+            new["l2_people"] = l2p
+            if new != draft:
+                self.elicit_draft = new
+        if res.utterances:                        # the copies are in the database: an unsaved change
+            self.doc._settings_dirty = True
+            self.doc.dirtyChanged.emit(True)
+        if res.failed:
+            QMessageBox.warning(self, "Edit → Lists",
+                                "The renamed codes couldn't be written into the tier names of "
+                                + ", ".join(res.failed) + " (open in Praat, or unreadable). Rename those "
+                                "tiers in Praat.")
 
     def _apply_tags(self, dlg, value_renames: dict | None = None):
         """Use the tag structure from the tag editor; renamed tags, and values renamed in the

@@ -164,18 +164,28 @@ class Scrubber:
         self.exact: dict[str, object] = {}      # matched as written
         self.folded: dict[str, object] = {}     # matched in any case (full names)
         self.rx: re.Pattern | None = None
+        self.unreplaced: list[str] = []         # name parts not replaced on their own (initials, "van")
 
     def add_name(self, name: str, code: str):
-        """A person's full name (any case), then each part of it of 3 letters or more that
-        isn't written in lower case (as written; scripts without capitals count), so "Sample
-        Speaker" goes before "Sample"."""
+        """A person's full name (any case), then each part of it of 2 letters or more that
+        isn't written in lower case (as written; scripts without capitals count), and in
+        capitals too from 3 letters (JOSH), so "Sample Speaker" goes before "Sample". Two
+        letters count (Li, Ng; the audit, P6), as written only. A one-letter part (an initial)
+        or a lower-case one (van, de) isn't replaced on its own: it would hit ordinary words;
+        the report lists them to look for."""
         name = _nfc((name or "").strip())
         if not name or not code or name.lower() in ("redacted", code.lower()):
             return
         self.folded.setdefault(name.lower(), code)
         for part in re.split(r"[\s.,]+", name):
-            if len(part) >= 3 and part[:1].isalpha() and not part[:1].islower():
+            if not part:
+                continue
+            if len(part) >= 2 and part[:1].isalpha() and not part[:1].islower():
                 self.exact.setdefault(part, code)
+                if len(part) >= 3 and part.upper() != part:
+                    self.exact.setdefault(part.upper(), code)
+            elif part != name and part not in self.unreplaced:
+                self.unreplaced.append(part)
 
     def keep_name(self, name: str):
         """A full name that stays as it is (an identifiable person's), even where a part of it
@@ -350,6 +360,7 @@ class Plan:
     var_code: str
     scrub: Scrubber
     key: list[tuple[str, str, str]]
+    refs: dict[str, str] = field(default_factory=dict)   # old reference (upper case) -> new (P4)
 
 
 def plan(db: Database, nb: nbmod.Notebook | None, opts: Options) -> Plan:
@@ -360,6 +371,7 @@ def plan(db: Database, nb: nbmod.Notebook | None, opts: Options) -> Plan:
     pmap: dict[str, str] = {}
     rmap: dict[str, str] = {}
     lang_code, var_code = md.language_code, md.variety_code
+    refs: dict[str, str] = {}
     if opts.anonymous:
         pmap, rmap = code_map(db, nb if opts.notebook else None)
         key += [("participant", o, n) for o, n in pmap.items()]
@@ -374,6 +386,14 @@ def plan(db: Database, nb: nbmod.Notebook | None, opts: Options) -> Plan:
             if old and new != old:
                 key.append((kind, old, new))
                 s.add_word(old, new)
+        if md.language_code and lang_code != md.language_code:
+            # the EACW names an ethnic group C + its ISO code: the language's own group (CBDI) would
+            # show the hidden code in its reference, file names and notes (the audit, P4)
+            old_ref = "C" + md.language_code.upper()
+            if any(e.ref.upper() == old_ref for e in db.entries):
+                refs[old_ref] = "C" + lang_code
+                key.append(("reference", old_ref, refs[old_ref]))
+                s.add_word(old_ref, refs[old_ref], any_case=True)
         for p in md.participants:
             s.add_name(p.name, pmap.get(p.code, p.code))
         for p in md.researchers:
@@ -399,7 +419,7 @@ def plan(db: Database, nb: nbmod.Notebook | None, opts: Options) -> Plan:
                 s.add_name(p.name, p.code)
                 s.add_word(_nfc(p.email), p.code, any_case=True)
     s.compile()
-    return Plan(pmap, rmap, lang_code, var_code, s, key)
+    return Plan(pmap, rmap, lang_code, var_code, s, key, refs)
 
 
 def archive_stem(db: Database, nb: nbmod.Notebook | None, opts: Options) -> str:
@@ -493,9 +513,9 @@ def anonymise(db: Database, nb: nbmod.Notebook | None, opts: Options, report: Re
             md.author = owner.code
         else:
             md.author = scrub.text(md.author, "Owner", report)
-    # Acknowledgements (idea 59): an organisation's support stays (names replaced, in the anonymous
-    # archive, as in any free text); the personal thank-yous go only into an ethical archive, when chosen
-    if opts.anonymous:
+    # Acknowledgements (idea 59): an organisation's support stays (names replaced, as in any
+    # free text, in both archives); the personal thank-yous go only into an ethical archive, when chosen
+    if opts.anonymous or opts.names:              # an ethical archive's hidden names too (P5)
         for x in md.support:
             x.organisation = scrub.text(x.organisation, "Support", report)
             x.grant = scrub.text(x.grant, "Support", report)
@@ -515,6 +535,8 @@ def anonymise(db: Database, nb: nbmod.Notebook | None, opts: Options, report: Re
     skip = _untouched_names(out.settings)
     texts_by_id = {t.id: t for t in db.texts}
     for e in out.items():                         # lemmas and utterances
+        if e.ref.upper() in p.refs:
+            e.ref = p.refs[e.ref.upper()]
         _scrub_values(e, skip, scrub, e.ref, report)
         e.file_gloss = scrub.text(e.file_gloss, f"{e.ref} file label", report)
         src = getattr(e, "source", None)          # a clipped utterance's copy of its line's tiers
@@ -816,6 +838,10 @@ def summary(report: Report, opts: Options) -> str:
         lines += [f"  • {r}" for r in report.replaced[:25]]
         if len(report.replaced) > 25:
             lines.append(f"  … and {len(report.replaced) - 25} more")
+    left = report.scrubber.unreplaced if report.scrubber is not None else []
+    if left:
+        lines.append("\nNot replaced on their own (initials and lower-case name parts would hit ordinary "
+                     "words): " + ", ".join(f"“{x}”" for x in left) + ". Search the free text for them.")
     lines.append("\nComments, translations and TextGrids can still hold things that identify people (a name "
                  "that isn't on the lists, a village). Read them through before sharing.")
     return "\n".join(lines)

@@ -89,19 +89,55 @@ class Prefs:
         self.q.setValue(key, value)
 
     @property
+    def _google_target(self) -> str:
+        """The Credential Manager's name for this computer's sign-in (tests use their own)."""
+        return f"Lemmatrix/{os.environ.get('LEMMATRIX_SETTINGS', 'Lemmatrix')}/elicit-google"
+
+    @property
     def google_token(self) -> dict:
         """ɛλicit's Google Drive sign-in on this computer (a refresh token: it reaches only the files
-        Lemmatrix made itself, the drive.file permission); {} when signed out."""
+        Lemmatrix made itself, the drive.file permission); {} when signed out. On Windows it is kept
+        in the Credential Manager, encrypted for this Windows user (the audit, P8, 25 October); a
+        sign-in still in the settings from before is moved there the first time it is read.
+        Elsewhere, or if Windows refuses, in the settings as before."""
         import json
+        from .. import credstore
+        raw = None
+        if credstore.available():
+            try:
+                raw = credstore.read(self._google_target)
+            except credstore.CredError:
+                raw = None
+        old = self.q.value("elicit/google_token", "") or ""
+        if raw is None and old and credstore.available():
+            try:                                  # moved out of the settings, once
+                credstore.write(self._google_target, old)
+                self.q.remove("elicit/google_token")
+                self.q.sync()
+            except credstore.CredError:
+                pass
         try:
-            return json.loads(self.q.value("elicit/google_token", "") or "{}")
+            return json.loads(raw or old or "{}")
         except (ValueError, TypeError):
             return {}
 
     @google_token.setter
     def google_token(self, token: dict):
         import json
-        self.q.setValue("elicit/google_token", json.dumps(token) if token else "")
+        from .. import credstore
+        text = json.dumps(token) if token else ""
+        if credstore.available():
+            try:
+                if text:
+                    credstore.write(self._google_target, text)
+                else:
+                    credstore.delete(self._google_target)
+                self.q.remove("elicit/google_token")   # never left in plain text beside it
+                self.q.sync()
+                return
+            except credstore.CredError:
+                pass                              # kept in the settings, as before
+        self.q.setValue("elicit/google_token", text)
         self.q.sync()
 
     def get_list(self, key: str) -> list[str]:

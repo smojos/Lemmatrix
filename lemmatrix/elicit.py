@@ -45,6 +45,11 @@ EXPIRY_DAYS = 14
 SIZE_WARNING = 50 * 1024 * 1024          # bytes: warn before sending a bigger request
 IMAGE_MAX = 500                          # px: longer sides are shrunk
 WEB_PAGE = "https://smojos.github.io/Lemmatrix/elicit/"
+# What the web page reads of a person and of a card (docs/elicit/elicit.js): the speaker's copy
+# of the request holds only these (Request.to_page_json)
+PAGE_PERSON = ("name", "names")
+PAGE_CARD = ("n", "kind", "show", "texts", "image", "original", "file", "repeat", "image_id",
+             "original_id", "upload")
 # A guess at a recording's size on the phone, for the size warning: 16-bit mono at 48 kHz.
 BYTES_PER_SECOND = 96_000
 SECONDS = {"token": 6, "utterance": 9}
@@ -195,6 +200,19 @@ class Request:
     def to_json(self) -> str:
         return json.dumps(asdict(self), ensure_ascii=False, indent=1)
 
+    def to_page_json(self) -> str:
+        """What the speaker's copy holds (the zip's request.json, and the one shared by link in
+        Google Drive): only what the web page reads. No emails, no researcher's code, no database
+        name or codes, and no lemma or token ids, references or labels (the audit, P1, 25
+        October). The researcher's own copy in the Elicit folder keeps everything."""
+        d = asdict(self)
+        d["speaker"] = {k: v for k, v in self.speaker.items() if k in PAGE_PERSON + ("code",)}
+        d["researcher"] = {k: v for k, v in self.researcher.items() if k in PAGE_PERSON}
+        d["database"] = {"language_name": self.database.get("language_name", "")}
+        d["cards"] = [{k: v for k, v in asdict(c).items() if k in PAGE_CARD} for c in self.cards]
+        d["drive"] = {k: v for k, v in self.drive.items() if k in ("response", "status")}
+        return json.dumps(d, ensure_ascii=False, indent=1)
+
     @classmethod
     def from_dict(cls, d: dict) -> "Request":
         if d.get("format") != FORMAT:
@@ -314,32 +332,60 @@ def estimated_size(db: Database, items, audio: str = "flac") -> int:
 
 def shrink_image(src: Path, longest: int = IMAGE_MAX) -> tuple[bytes, str]:
     """The image as bytes, its longer side at most `longest` pixels (animated GIFs keep their
-    frames). Returns (bytes, extension). Without Pillow, the file as it is."""
+    frames), **without its metadata**: EXIF (a camera's GPS position, the owner's name), XMP and
+    PNG text chunks never leave with a request, small pictures included (the audit, P3, 25
+    October). A photo turned by its EXIF orientation is turned for good first, so it still shows
+    the right way up. Returns (bytes, extension). Without Pillow, the file as it is."""
     ext = src.suffix.lower()
     try:
-        from PIL import Image, ImageSequence
+        from PIL import Image, ImageOps, ImageSequence
     except ImportError:
         return src.read_bytes(), ext
     with Image.open(src) as im:
         w, h = im.size
-        if max(w, h) <= longest:
+        small = max(w, h) <= longest
+        if small and not _has_metadata(im):
             return src.read_bytes(), ext
-        scale = longest / max(w, h)
-        size = (max(1, round(w * scale)), max(1, round(h * scale)))
         out = io.BytesIO()
         if ext == ".gif":
+            size = im.size if small else _scaled(im.size, longest)
             frames, durations = [], []
             for frame in ImageSequence.Iterator(im):
                 durations.append(frame.info.get("duration", im.info.get("duration", 100)))
-                frames.append(frame.convert("RGBA").resize(size, Image.LANCZOS))
+                f = frame.convert("RGBA")
+                frames.append(f if small else f.resize(size, Image.LANCZOS))
             frames[0].save(out, "GIF", save_all=True, append_images=frames[1:], duration=durations,
                            loop=im.info.get("loop", 0), disposal=2)
-        elif ext == ".png":
-            im.resize(size, Image.LANCZOS).save(out, "PNG")
+            return out.getvalue(), ext
+        turned = ImageOps.exif_transpose(im)
+        size = turned.size if small else _scaled(turned.size, longest)
+        pic = turned if size == turned.size else turned.resize(size, Image.LANCZOS)
+        if ext == ".png":
+            pic.save(out, "PNG")              # no pnginfo, exif or icc: nothing but the pixels
         else:
-            im.convert("RGB").resize(size, Image.LANCZOS).save(out, "JPEG", quality=85)
+            pic.convert("RGB").save(out, "JPEG", quality=90 if small else 85)
             ext = ".jpg"
         return out.getvalue(), ext
+
+
+def _scaled(size: tuple[int, int], longest: int) -> tuple[int, int]:
+    w, h = size
+    scale = longest / max(w, h)
+    return max(1, round(w * scale)), max(1, round(h * scale))
+
+
+def _has_metadata(im) -> bool:
+    """Whether a picture carries anything but pixels: EXIF, XMP, text chunks, comments."""
+    try:
+        if len(im.getexif()):
+            return True
+    except Exception:                             # noqa: BLE001 (a damaged EXIF block is still metadata)
+        return True
+    info = {k.lower() if isinstance(k, str) else k for k in im.info}
+    harmless = {"dpi", "jfif", "jfif_version", "jfif_unit", "jfif_density", "progressive", "progression",
+                "duration", "loop", "background", "transparency", "version", "gamma", "aspect",
+                "interlace", "adobe", "adobe_transform", "srgb", "extension", "disposal", "palette"}
+    return bool(info - harmless)
 
 
 def request_folder_name(req: Request) -> str:
@@ -386,7 +432,7 @@ def write_request(db: Database, req: Request, items) -> Path:
     target = folder / zip_name(req)
     tmp = target.with_name(target.name + ".part")
     with zipfile.ZipFile(tmp, "w", zipfile.ZIP_STORED) as zf:
-        zf.writestr("request.json", req.to_json().encode("utf-8"))
+        zf.writestr("request.json", req.to_page_json().encode("utf-8"))
         for name, data in blobs:
             zf.writestr(name, data)
     os.replace(tmp, target)
@@ -460,7 +506,7 @@ def publish_drive(db: Database, req: Request, items, drive, api_key: str, progre
         req.drive = {"folder": folder, "response": drive.upload_link(RESPONSE, "application/json", folder),
                      "status": drive.upload_link(STATUS, "application/json", folder)}
         step("Uploading the request")
-        rid = drive.upload("request.json", req.to_json().encode("utf-8"), "application/json", folder)
+        rid = drive.upload("request.json", req.to_page_json().encode("utf-8"), "application/json", folder)
         drive.share_by_link(rid)
         req.drive["request"] = rid
         req.drive["link"] = f"{req.page}#d={rid}&k={api_key}"
@@ -521,6 +567,34 @@ def outstanding_drive(db: Database) -> list[Stored]:
     """Drive requests not yet received (their folder is still in Drive)."""
     return [st for st in stored_requests(db.path)
             if st.request.transport == "drive" and st.response is None and not st.request.drive.get("closed")]
+
+
+def expired(req: Request, today: _dt.date | None = None) -> bool:
+    """Past the request's last day (as the web page counts it): nothing more can be recorded."""
+    today = today or _dt.date.today()
+    try:
+        return today > _dt.date.fromisoformat(req.expires)
+    except (TypeError, ValueError):
+        return False
+
+
+def unshare_expired(drive, st: Stored) -> bool:
+    """An expired Drive request not yet received or withdrawn: delete the files shared by link
+    (the pictures, the recordings to repeat, which may be other speakers' voices, and
+    request.json), so nothing stays readable by link indefinitely (the audit, P2, 25 October).
+    The speaker's recordings and response stay in the folder, which was never shared, for
+    Receive ɛλicitation. True when something was done; noted in the local request.json."""
+    req = st.request
+    if req.transport != "drive" or req.drive.get("closed") or req.drive.get("unshared") or not expired(req):
+        return False
+    ids = [c.image_id for c in req.cards if c.image_id] + [c.original_id for c in req.cards if c.original_id]
+    if req.drive.get("request"):
+        ids.append(req.drive["request"])
+    for fid in dict.fromkeys(ids):
+        drive.delete(fid)                         # a file already gone is fine (Drive.delete)
+    req.drive["unshared"] = _dt.date.today().isoformat()
+    (st.folder / "request.json").write_text(req.to_json(), encoding="utf-8")
+    return True
 
 
 def close_drive(drive, st: Stored, note: str = ""):
