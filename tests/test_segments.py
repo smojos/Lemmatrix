@@ -149,7 +149,7 @@ def test_alternative_callers_call_the_ipa_symbols_soundfile():
                      ("ch", "t͡ʃ"), ("(.)", "ʘ"), ("G'", "ʛ"), ("J", "d͡ʒ"), ("X", "q")):
         assert sg.called(alt) == ipa, alt
         assert sg.native(ipa) is not None, ipa                 # every target is a built-in sound
-    assert sg.called("rr") == ""                               # waiting: given for both ɻ and ɽ
+    assert sg.called("rr") == "ɽ"                              # the flap, not ɻ (Josh, 25 October)
     for alt in sg.callers():                                   # no alternative is itself a built-in
         assert sg.native(alt) is None or sg.key(sg.native(alt).sequence) == sg.key(sg.called(alt)), alt
 

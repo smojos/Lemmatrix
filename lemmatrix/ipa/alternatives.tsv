@@ -1,7 +1,6 @@
 # The phonetics scratchpad's alternative callers (Josh, 25 October 2026): typing the
 # alternative on its own calls the IPA symbol's soundfiles. One per line: IPA, then the
 # alternative, separated by a tab. Lines starting with # are left out.
-# rr is waiting for Josh: he gave it for both ɻ and ɽ.
 ipa	alternative
 ɡ	g
 ʀ	R
@@ -66,3 +65,4 @@ d͡ʒ	J
 d͡z	dz
 t͡s	ts
 ʜ	H
+ɽ	rr
