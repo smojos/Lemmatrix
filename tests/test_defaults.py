@@ -81,7 +81,12 @@ def test_new_database_round_trips(tmp_path):
 def test_the_shipped_sample_opens(tmp_path):
     shutil.copytree(SAMPLE, tmp_path / "s", ignore=shutil.ignore_patterns("*.py"))
     db = storage.load(tmp_path / "s" / "Sample.xml")
-    assert db.metadata.language_code == "LXX" and [p.code for p in db.metadata.participants] == ["SP1", "SP2"]
+    assert db.metadata.language_code == "LXX" and [p.code for p in db.metadata.participants] == ["DML"]
+    assert [r.code for r in db.metadata.researchers] == ["JJA"]
+    assert {t.speaker for _, t in db.all_tokens()} == {"DML"}
+    assert [s.organisation for s in db.metadata.support] == ["University of Wagandha"]
+    assert [loc.name for _, loc in db.metadata.all_locations()] == [
+        "Canada", "British Columbia", "Langley", "Wagandha", "Whero State", "Nowhero"]
     files = {t.file for _, t in db.all_tokens() if t.file}
     assert files and all((storage.sound_folder(db) / f).exists() for f in files)
     assert len(files) == len([t for _, t in db.all_tokens() if t.file])       # no two tokens share a file

@@ -72,6 +72,7 @@ def test_format_8_ticks_researchers_and_writes_both_ticks(tmp_path):
     text = (SAMPLES / "Sample.xml").read_text(encoding="utf-8")
     text = text.replace(f'format="{storage.FORMAT_VERSION}"', 'format="7"')
     text = text.replace(' identifiable="yes"', "").replace(' identifiable="no"', "").replace(' audio-sharing="no"', "")
+    text = text.replace(' audio-sharing="yes"', "")
     p.write_text(text, encoding="utf-8")
     db = storage.load(p)
     assert db.upgraded
@@ -80,14 +81,15 @@ def test_format_8_ticks_researchers_and_writes_both_ticks(tmp_path):
     storage.save(db, p, backup=False)
     saved = p.read_text(encoding="utf-8")
     assert f'<database format="{storage.FORMAT_VERSION}">' in saved
-    assert '<researcher code="RS1" name="Researcher 1" identifiable="yes" />' in saved
-    assert '<participant code="SP1" name="Speaker 1" identifiable="no" audio-sharing="no" />' in saved
+    assert '<researcher code="JJA" name="Joshua J Alexander" identifiable="yes" />' in saved
+    assert '<participant code="DML" name="Dzosho Mofo Lakanoro" identifiable="no" audio-sharing="no" />' in saved
     again = storage.load(p)
     assert not again.upgraded and again.metadata.researchers[0].identifiable
 
 
 def test_a_researcher_unticked_stays_unticked(tmp_path):
     db = storage.load(SAMPLES / "Sample.xml")
+    db.metadata.researchers.append(Person.researcher("RS2"))     # the sample has one researcher
     db.metadata.researchers[1].identifiable = False
     storage.save(db, tmp_path / "S.xml", backup=False)
     back = storage.load(tmp_path / "S.xml")

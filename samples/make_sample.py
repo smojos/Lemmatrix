@@ -7,7 +7,8 @@
 The language (LXX, variety VXX) is made up for trying out Lemmatrix: it is not a real language.
 Any resemblance to any living language is a complete coincidence.
 The database uses the program's defaults (fields,
-tags, lists, people and places); only the frames' carrier sentences are filled in.
+tags, lists), with invented people, places and a funder (sample_metadata); only the frames'
+carrier sentences are filled in.
 
 Phonology
   Consonants  p pʼ pʰ b ɓ t tʼ tʰ t̪ t̪ʰ t̪ʼ d̪ d ɗ c cʰ cʼ ɟ k kʼ kʰ g ʔ β s z ʃ t͡s d͡z n m ŋ ɲ l r w j ɥ
@@ -50,7 +51,7 @@ from lemmatrix import wordlists as wl  # noqa: E402
 from lemmatrix.defaults import new_database  # noqa: E402
 
 RATE = 11025
-SPEAKER, DATE = "SP1", "2026-10-20"
+SPEAKER, DATE = "DML", "2026-10-20"
 
 # ---------------------------------------------------------------------------------------------
 # The lexicon (phonemic, with tones)
@@ -346,12 +347,28 @@ def hum(pitch_text: str) -> np.ndarray:
     return np.concatenate(out)
 
 
+def sample_metadata(md) -> None:
+    """The sample's invented people, places and funder (Josh, 25 October): none of them is real."""
+    from lemmatrix.model import Location, Person, Support
+    md.author = "Joshua J Alexander"
+    md.researchers = [Person.researcher("JJA", "Joshua J Alexander")]
+    md.participants = [Person("DML", "Dzosho Mofo Lakanoro", identifiable=True, audio_sharing=True)]
+    md.locations = [
+        Location("Canada", "CA", children=[
+            Location("British Columbia", "BC", children=[Location("Langley", "LANG")])]),
+        Location("Wagandha", "WG", NOT_REAL, children=[
+            Location("Whero State", "WHS", NOT_REAL, children=[Location("Nowhero", "NOWH", NOT_REAL)])])]
+    md.support = [Support("University of Wagandha", "", "the sample language's documentation")]
+
+
+NOT_REAL = "Not a real place; any resemblance is coincidental."
+
+
 class Builder:
     def __init__(self):
         self.db = db = new_database()
-        from lemmatrix.defaults import easter_egg_locations   # Ucluelet and Pade: kept here (Josh)
-        db.metadata.locations = easter_egg_locations()
         md = db.metadata
+        sample_metadata(md)
         md.language_code, md.language_name = "LXX", "Sample language"
         md.variety_code, md.variety_name = "VXX", "Sample variety"
         md.name = "Sample"
