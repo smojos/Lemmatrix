@@ -215,16 +215,23 @@ def inside(path: Path, folder: Path) -> bool:
         return False
 
 
+# Half-finished writes: a new copy being written beside a file that is still whole (the database,
+# notebook and workspace via .saving; recordings, exports and downloads via .part; TextGrids via
+# .lemmatrix-writing). Never in a full backup. A file in the middle of a rename
+# (.lemmatrix-renaming) is different: it is the whole recording under a passing name, perhaps the
+# only copy after a crash, so the backup keeps it (the audit, 25 October).
+HALF_WRITTEN = (".saving", ".part", ".lemmatrix-writing", ".tmp")
+
+
 def backup_files(db_path) -> list[Path]:
     """Every file the full backup takes: the main folder and its subfolders, without the
-    open-database markers and half-finished saves."""
+    open-database markers and half-finished writes."""
     main = main_folder(db_path)
     out = []
     for root, dirs, files in os.walk(main):
         dirs.sort()
         for name in sorted(files):
-            if name.endswith(".lemmatrix-lock") or name.endswith(".lemmatrix-renaming") \
-                    or name.endswith(".tmp"):
+            if name.endswith(".lemmatrix-lock") or name.endswith(HALF_WRITTEN):
                 continue
             out.append(Path(root) / name)
     return out

@@ -1129,7 +1129,11 @@ class TextsPanel(QObject):
                         return None
                     out.append((src, dst))
                 elif src.name != name:            # only the case differs
-                    src.rename(dst)
+                    try:
+                        src.rename(dst)
+                    except OSError as exc:
+                        QMessageBox.warning(self.win, "Text", f"Couldn't rename {src.name}: {exc}")
+                        return None
                     out.append((src, dst))
                 setattr(t, attr, name)
                 continue
@@ -1161,8 +1165,11 @@ class TextsPanel(QObject):
         if not dlg.exec():
             return
         after = dlg.record()
-        renames = []
         folder = storage.text_folder(self.db)
+        # Nothing on disk changes until every check has passed (the audit, 25 October): first the
+        # title's renames are planned, then a new recording or TextGrid is copied in (which may
+        # ask, or stop), and only then are the files renamed, put back if one can't be.
+        planned = []
         if after.file_label != t.file_label:      # the title in file names: both files renamed
             for attr, ext in (("file", ".wav"), ("textgrid", ".TextGrid")):
                 old = getattr(t, attr)
@@ -1174,12 +1181,27 @@ class TextsPanel(QObject):
                     if dst.exists() and not storage.same_file(src, dst):
                         QMessageBox.warning(self.win, "Text", f"Can't rename {old}: {new} already exists.")
                         return
-                    src.rename(dst)
-                    renames.append((src, dst))
-                    setattr(after, attr, new)
+                    planned.append((attr, src, dst))
         copies = self._copy_in(after, dlg.new_wav, dlg.new_grid)
         if copies is None:
             return
+        renames = []
+        for attr, src, dst in planned:
+            try:
+                src.rename(dst)
+            except OSError as exc:                # e.g. open in Praat: put everything back
+                for a, b in reversed(renames + copies):
+                    try:
+                        b.rename(a)
+                    except OSError:
+                        pass
+                QMessageBox.warning(self.win, "Text", f"Couldn't rename {src.name}: {exc}\n\n"
+                                    "Nothing was changed. If the file is open in Praat, close it there "
+                                    "and try again.")
+                return
+            renames.append((src, dst))
+            setattr(after, attr, dst.name)
+        renames += copies                         # Undo takes a newly copied file out again
 
         def change(x, after=after):
             x.__dict__.update(after.copy().__dict__)

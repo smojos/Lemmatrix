@@ -1629,7 +1629,7 @@ class MainWindow(QMainWindow):
         a = QAction(text, self)
         if shortcut:
             a.setShortcut(QKeySequence(shortcut))
-        a.triggered.connect(fn)
+        a.triggered.connect(lambda *_: fn())   # never Qt's checked flag as fn's first argument
         if menu is None:                  # a shortcut only, not in a menu
             self.addAction(a)
         else:

@@ -79,9 +79,16 @@ def _items_region(db) -> tuple[str, str]:
     return md.wordlist_items or wl.BASE, md.wordlist_region or wl.AFRICA
 
 
-def has_data(db, e) -> bool:
+def built_from(db) -> set:
+    """The ids of the lemmas other lemmas are built from (their From), for has_data's used_in."""
+    return {i for o in db.entries for i in o.from_lemmas}
+
+
+def has_data(db, e, used_in: set | None = None) -> bool:
     """Whether a lemma holds anything of the researcher's: a token with something in it, a field
-    the list doesn't fill, a gloss in another language, From, or another lemma built from it."""
+    the list doesn't fill, a gloss in another language, From, or another lemma built from it.
+    The one test for "empty" (Check wordlist integrity and Convert references from a table both
+    use it); used_in: built_from(db), worked out once when many lemmas are asked about."""
     if any(t.has_content() for t in e.tokens):
         return True
     s = db.settings
@@ -95,7 +102,7 @@ def has_data(db, e) -> bool:
             return True
     if e.from_lemmas or e.from_languages:
         return True
-    return any(e.id in other.from_lemmas for other in db.entries if other is not e)
+    return e.id in (built_from(db) if used_in is None else used_in)
 
 
 def _numbers_text(base: str, e, new: dict) -> str:

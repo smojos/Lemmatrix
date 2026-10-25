@@ -682,8 +682,12 @@ class BulkEditWindow(QDialog):
 
     def _selected(self, level: str) -> list:
         t = self.tables[level]
-        rows = {t.row_at(i) for i in t.selectionModel().selectedRows()}
-        return [r for r in rows if r is not None]
+        out = []                                  # by identity: lemmas can't go into a set
+        for i in t.selectionModel().selectedRows():
+            r = t.row_at(i)
+            if r is not None and not any(r is x for x in out):
+                out.append(r)
+        return out
 
     @property
     def level(self) -> str:

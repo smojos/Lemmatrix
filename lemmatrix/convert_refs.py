@@ -26,6 +26,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .model import FORBIDDEN_CHARS, Database, Entry, forbidden_in, nfc
+from .wordlist_check import built_from, has_data   # the one test for an empty lemma (audit, 25 October)
 
 DELETE = {"-", "(deleted)", "(removed)", "delete"}
 HEADERS = {"old": "old", "old ref": "old", "old reference": "old",
@@ -68,17 +69,6 @@ def read_table(path) -> list[Row]:
     return out
 
 
-def has_data(db: Database, e: Entry) -> bool:
-    """Whether a lemma holds anything a researcher put there: a token with content, a lemma form or
-    any lemma field but its gloss, word class, stem type and the wordlist's Clarification and
-    Taxon; From links."""
-    if any(t.has_content() for t in e.tokens) or e.from_lemmas or e.from_languages:
-        return True
-    s = db.settings
-    skip = {f.name for f in s.entry_fields if f.role in ("gloss", "word-class", "stem-type", "clarification", "taxon")}
-    return any(v for k, v in e.values.items() if k not in skip)
-
-
 def _norm(text: str) -> str:
     return " ".join((text or "").casefold().split())
 
@@ -100,6 +90,7 @@ class Plan:
 def plan(db: Database, rows: list[Row]) -> Plan:
     p = Plan()
     by_ref = {e.ref: e for e in db.entries}
+    used = built_from(db)
     seen = set()
     gf = db.settings.entry_field("gloss")
     for r in rows:
@@ -112,7 +103,7 @@ def plan(db: Database, rows: list[Row]) -> Plan:
             p.unknown.append(r.old)
             continue
         if r.new in DELETE or not r.new:
-            if has_data(db, e):
+            if has_data(db, e, used):
                 p.problems.append(f"{r.old} {db.gloss(e)} has data, so it can't be deleted: give it a new reference")
             else:
                 p.deletions.append(e)

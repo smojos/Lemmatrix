@@ -90,7 +90,8 @@ class ConvertReferencesDialog(QDialog):
             for c, v in enumerate(vals):
                 self.table.setItem(r, c, QTableWidgetItem(v))
         self.table.resizeColumnsToContents()
-        with_data = sum(1 for e, _ in p.refs if cr.has_data(db, e))
+        used = cr.built_from(db)
+        with_data = sum(1 for e, _ in p.refs if cr.has_data(db, e, used))
         parts = [f"{len(p.refs):,} references change ({with_data:,} of those lemmas have data)",
                  f"{len(p.glosses):,} glosses change", f"{len(p.deletions):,} empty lemmas are deleted"]
         if p.unknown:

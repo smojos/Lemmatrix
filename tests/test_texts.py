@@ -404,7 +404,7 @@ def test_clipped_utterance_shows_its_source(win, tmp_path, monkeypatch):
     uw.texts.lines.select_row(uw.texts.lines.rows[0])
     u = uw.texts.clip()[0]
     dlg = UtteranceDialog(win, [Slot(u, 0)], 0, uw)
-    assert not dlg.source_box.isHidden() and "T001" in dlg.source_label.text()
+    assert not dlg.clip_source_box.isHidden() and "T001" in dlg.source_label.text()
     played = []
     monkeypatch.setattr(win.player, "play_samples", lambda s, r, *a: played.append(len(s) / r))
     dlg._play_context()

@@ -406,11 +406,11 @@ def refresh_comments(db: Database, session: Session) -> bool:
 def empty_days(nb, db: Database, before: str) -> list[Session]:
     """Days before `before` with only people and places in them (Josh, 23 October: Write to notebook
     pressed, then nothing done that day): no notes, comments, questions, To Dos, texts or
-    hypotheses, and no recordings or texts dated that day."""
+    hypotheses, no snapshots, and no recordings or texts dated that day."""
     out = []
     for s in nb.sessions:
         if s.date >= before or s.notes.strip() or s.comments or s.questions or s.todos or s.texts \
-                or s.hypotheses:
+                or s.hypotheses or s.snapshots:
             continue
         if recordings(db, s.date) or any(t.date == s.date for t in db.texts):
             continue

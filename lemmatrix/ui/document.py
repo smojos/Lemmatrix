@@ -188,7 +188,10 @@ class PitchKindCommand(QUndoCommand):
     @staticmethod
     def capture(db):
         """What converting can change: the kind, the field lists, the range, and every Pitch and
-        Tone Class value (a few thousand short strings at most)."""
+        Tone Class value (a few thousand short strings at most). Values are kept by the lemma's
+        and the token's ids, never as the objects: undoing any other edit puts fresh copies of a
+        lemma's tokens in place, so objects kept here would no longer be in the database (the
+        audit, 25 October)."""
         from .. import pitchkind
         values = []
         names = {f.name for f in db.settings.token_fields if f.role == "pitch"} | {"Pitch"}
@@ -197,10 +200,10 @@ class PitchKindCommand(QUndoCommand):
             for t in e.tokens:
                 for n in names:
                     if n in t.values:
-                        values.append((t, n, t.values[n]))
+                        values.append((e.id, t.id, n, t.values[n]))
             for n in ({tc.name} if tc else set()) | {"ToneClass"}:
                 if n in e.values:
-                    values.append((e, n, e.values[n]))
+                    values.append((e.id, None, n, e.values[n]))
         s = db.settings
         return (dict(db.metadata.typology), list(s.entry_fields), list(s.token_fields),
                 s.pitch_low, s.pitch_high, values)
@@ -212,10 +215,21 @@ class PitchKindCommand(QUndoCommand):
         db.settings.entry_fields[:] = entry_fields
         db.settings.token_fields[:] = token_fields
         db.settings.pitch_low, db.settings.pitch_high = low, high
-        for obj, name, _ in self.before[5] + self.after[5]:
-            obj.values.pop(name, None)
-        for obj, name, value in values:
-            obj.values[name] = value
+        entries = {e.id: e for e in list(db.entries) + list(db.utterances)}
+
+        def find(eid, tid):
+            e = entries.get(eid)
+            if e is None or tid is None:
+                return e
+            return next((t for t in e.tokens if t.id == tid), None)
+        for eid, tid, name, _ in self.before[5] + self.after[5]:
+            obj = find(eid, tid)
+            if obj is not None:
+                obj.values.pop(name, None)
+        for eid, tid, name, value in values:
+            obj = find(eid, tid)
+            if obj is not None:                   # (a lemma or token deleted since: nothing to restore)
+                obj.values[name] = value
         self.doc.pitch_kind_changed()
 
     def redo(self):

@@ -1195,8 +1195,8 @@ class UtteranceDialog(TokenDialog):
         self.lemma_find.returnPressed.connect(lambda: self._lemma_chosen(self.lemma_find.text()))
         bl.addWidget(self.lemma_find)
         outer.insertWidget(2, box)
-        self.source_box = QGroupBox("Source")     # for an utterance clipped from a text's line
-        sl = QHBoxLayout(self.source_box)
+        self.clip_source_box = QGroupBox("Source")    # for an utterance clipped from a text's line (source_box is Record from)
+        sl = QHBoxLayout(self.clip_source_box)
         self.source_label = QLabel()
         self.source_label.setWordWrap(True)
         sl.addWidget(self.source_label, 1)
@@ -1216,7 +1216,7 @@ class UtteranceDialog(TokenDialog):
         self.source_push_btn.setToolTip("Write the fields edited here into the text's TextGrid")
         self.source_push_btn.clicked.connect(lambda *_: self._push())
         sl.addWidget(self.source_push_btn)
-        outer.insertWidget(3, self.source_box)
+        outer.insertWidget(3, self.clip_source_box)
         for ed in (self.label_edit, self.lemma_find):     # Ctrl+Space plays, never types a space
             ed.installEventFilter(self)
         self.show_all_btn.setToolTip("Shown first: the tag groups for utterances only, the groups with "
@@ -1306,7 +1306,7 @@ class UtteranceDialog(TokenDialog):
 
     def _show_source(self):
         u = self.slot.entry
-        self.source_box.setVisible(u.source is not None)
+        self.clip_source_box.setVisible(u.source is not None)
         if u.source is None:
             return
         from .texts import clock

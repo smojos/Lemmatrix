@@ -140,7 +140,10 @@ def changes(db: Database, p: Plan, folder: Path, add_examples: bool) -> tuple[li
     group_names = {x.name for x in examples_group(db).tags} if examples_group(db) else set()
     sources: dict[int, tuple[Entry, Entry]] = {}
     after_target = p.target.copy()
-    replaced: list[int] = []
+    # the empty citation tokens the moved tokens replace, taken now by position in the copy (the
+    # target as it was), and removed below by identity: adding a moved citation token puts it in
+    # front, so a position would no longer point at the same token (the audit, 25 October)
+    replaced = [after_target.tokens[m.replaces] for m in p.moves if m.replaces is not None]
     renames, taken = [], set()
     for m in p.moves:
         t = m.token
@@ -148,8 +151,6 @@ def changes(db: Database, p: Plan, folder: Path, add_examples: bool) -> tuple[li
             grew = _ensure_example(db, m.example) or grew
             t.tags = db.settings.tags.sort([x for x in t.tags if x not in group_names] + [m.example])
             m.clash = ""
-        if m.replaces is not None:
-            replaced.append(m.replaces)
         after_target.add_token(t)
         if t.file and db.settings.auto_update_names and not m.clash:
             new = db.expected_filename(after_target, t)
@@ -165,8 +166,7 @@ def changes(db: Database, p: Plan, folder: Path, add_examples: bool) -> tuple[li
                     t.file = new
         src_e = sources.setdefault(id(m.source), (m.source, m.source.copy()))[1]
         src_e.tokens[m.index] = None
-    for i in sorted(replaced, reverse=True):          # the empty citation tokens moved tokens replace
-        after_target.tokens.pop(i)
+    after_target.tokens = [x for x in after_target.tokens if not any(x is r for r in replaced)]
     pairs = []
     for e, after in sources.values():
         after.tokens = [t for t in after.tokens if t is not None]
