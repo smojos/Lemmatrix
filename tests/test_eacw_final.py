@@ -18,34 +18,25 @@ from lemmatrix import defaults, newdb, storage  # noqa: E402
 from lemmatrix import wordlists as wl  # noqa: E402
 
 pytest.importorskip("PySide6")
-from PySide6.QtWidgets import QApplication, QDialog, QMessageBox  # noqa: E402
+from PySide6.QtWidgets import QDialog, QMessageBox  # noqa: E402
 
 
-@pytest.fixture(scope="module")
-def app():
-    return QApplication.instance() or QApplication([])
-
-
-def _window(tmp_path, db):
+def _window(tmp_path, db, make=None):
     from lemmatrix.ui import main_window
     if not db.path:
         db.path = str(tmp_path / "E.xml")
     storage.save(db, db.path, backup=False)
+    if make is not None:                           # the shared window factory (conftest.py)
+        return make(storage.load(db.path))
     w = main_window.MainWindow()
     w.load_database(storage.load(db.path))
     return w
 
 
 @pytest.fixture
-def win(app, tmp_path, monkeypatch):
-    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Yes)
-    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: None)
-    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
-    w = _window(tmp_path, defaults.new_database(wl.EACW))
-    yield w
-    w.doc.undo.setClean()
-    w.doc._settings_dirty = False
-    w.close()
+def win(make_win, tmp_path):
+    """An EACW database (the shared window factory, conftest.py)."""
+    return _window(tmp_path, defaults.new_database(wl.EACW), make_win)
 
 
 # ---- format 11 (12 since 24 October: the EACW's edition too) ---------------------------------

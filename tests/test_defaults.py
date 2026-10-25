@@ -9,7 +9,6 @@ import pytest
 
 from lemmatrix import defaults, resets, storage
 from lemmatrix.defaults import new_database
-from test_ui import app, win  # noqa: F401,E402  (fixtures)
 from lemmatrix.model import Group, ListItem, Location, Person, RefCategory, Tag, TagStructure
 
 pytestmark = pytest.mark.real_defaults

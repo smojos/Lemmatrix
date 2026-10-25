@@ -1,0 +1,6 @@
+# Only for running the tests ("Run tests.bat" installs these); Lemmatrix itself needs none of them.
+-r requirements.txt
+pytest>=8
+praat-parselmouth>=0.4   # Praat itself, to check that Praat reads the TextGrids Lemmatrix writes
+# The ɛλicit page's own tests also need a browser, and skip without one:
+#   pip install playwright  then  playwright install chromium

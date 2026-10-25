@@ -10,7 +10,6 @@ os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from lemmatrix import storage, xmlview  # noqa: E402
-from test_ui import app, win  # noqa: E402,F401
 
 
 def test_line_of_finds_entries_and_tokens():

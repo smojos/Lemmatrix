@@ -9,7 +9,7 @@ import pytest
 
 from lemmatrix import audio, matrix, pitch, storage
 from lemmatrix.defaults import new_database
-from lemmatrix.model import ListItem, Person, Token, forbidden_in
+from lemmatrix.model import ListItem, Person, forbidden_in
 
 
 @pytest.fixture
@@ -205,7 +205,7 @@ def test_pitch_notation():
 # ---- filters --------------------------------------------------------------
 
 def test_text_filters():
-    from lemmatrix.filters import TextFilter, ANYWHERE, WHOLE, START, END, REGEX
+    from lemmatrix.filters import TextFilter, WHOLE, START, END, REGEX
     assert TextFilter("dɪɪt").matches("dɪɪʈʰ") is False         # ʈ is a different letter
     assert TextFilter("dɪɪt").matches("dɪɪtʰ")                  # ʰ ignored
     assert TextFilter("dɪɪt", WHOLE).matches("dɪɪtʰ")
@@ -219,7 +219,7 @@ def test_text_filters():
 
 
 def test_choice_filters():
-    from lemmatrix.filters import ChoiceFilter, Blanks, NonBlanks, matches, ANY, NONE, EXACTLY
+    from lemmatrix.filters import ChoiceFilter, Blanks, NonBlanks, matches, NONE, EXACTLY
     assert matches(ChoiceFilter({"NOUN"}), "NOUN") and not matches(ChoiceFilter({"NOUN"}), "VERB")
     assert matches(ChoiceFilter({"NOUN"}, NONE), "VERB")
     tags = ["Plural", "Genitive", "isolation"]
@@ -403,7 +403,6 @@ def test_same_file_allows_case_only_renames(tmp_path):
 
 def test_open_marker_lifecycle(tmp_path, monkeypatch):
     import json
-    import os
     from lemmatrix import lock
     db = tmp_path / "x.xml"
     db.write_text("<database/>")

@@ -181,28 +181,19 @@ def test_receiving_checks_the_request(db, tmp_path):
 
 
 @pytest.fixture
-def win(tmp_path, monkeypatch, db):
-    pytest.importorskip("PySide6")
-    from PySide6.QtWidgets import QApplication, QMessageBox
-    QApplication.instance() or QApplication([])
-    from lemmatrix.ui import elicit_dialogs, main_window
-    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Yes)
-    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: None)
-    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
+def win(make_win, monkeypatch, db):
+    """The ɛλicit test database (the shared window factory, conftest.py), never signed in."""
+    from PySide6.QtWidgets import QMessageBox
+
+    from lemmatrix import gdrive
+    from lemmatrix.ui import elicit_dialogs
     monkeypatch.setattr(QMessageBox, "exec", lambda self: 0)          # message boxes built by hand
     monkeypatch.setattr(elicit_dialogs, "remind", lambda main: None)
-    from lemmatrix import gdrive
 
     def no_sign_in(*a, **k):                                         # tests never open a browser
         raise gdrive.DriveError("no signing in during tests")
     monkeypatch.setattr(gdrive, "authorize", no_sign_in)
-    w = main_window.MainWindow()
-    w.prefs.google_token = {}
-    w.load_database(db)
-    yield w
-    w.doc.undo.setClean()
-    w.doc._settings_dirty = False
-    w.close()
+    return make_win(db, before_load=lambda w: setattr(w.prefs, "google_token", {}))
 
 
 def test_the_button_sits_left_of_texts_and_utterances(win):

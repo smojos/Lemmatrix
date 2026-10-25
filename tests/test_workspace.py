@@ -12,7 +12,7 @@ from pathlib import Path
 from lemmatrix import matrix as mx, storage, workspace as wsmod
 from lemmatrix import filters as fl
 
-from test_ui import SAMPLES, app, win  # noqa: F401 (fixtures)
+from test_ui import SAMPLES  # noqa: F401 (fixtures)
 
 
 def _matrix(name="Plurals"):

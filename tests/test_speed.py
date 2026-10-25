@@ -15,7 +15,6 @@ import pytest  # noqa: E402
 
 from lemmatrix import filters as fl, layout, storage  # noqa: E402
 from lemmatrix.model import Group, Tag, TagStructure  # noqa: E402
-from test_ui import app, win  # noqa: F401,E402  (fixtures)
 
 SAMPLES = Path(__file__).resolve().parent.parent / "samples"
 

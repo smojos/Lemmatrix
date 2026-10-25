@@ -4,9 +4,7 @@
 moving tokens to another lemma."""
 
 import os
-import shutil
 
-import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
@@ -16,9 +14,8 @@ from PySide6.QtWidgets import QMessageBox  # noqa: E402
 
 from lemmatrix import export, storage  # noqa: E402
 from lemmatrix.defaults import ensure_core_fields, new_database  # noqa: E402
-from lemmatrix.model import FieldDef, Utterance, Token  # noqa: E402
+from lemmatrix.model import FieldDef  # noqa: E402
 
-from test_ui import app, win  # noqa: F401  (fixtures)
 
 
 # ---- protected core fields --------------------------------------------------------------

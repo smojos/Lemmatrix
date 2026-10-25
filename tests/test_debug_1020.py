@@ -12,7 +12,6 @@ from PySide6.QtCore import QEvent, QObject, QRectF  # noqa: E402
 from PySide6.QtGui import QColor, QImage, QPainter  # noqa: E402
 from PySide6.QtWidgets import QApplication, QSplitter  # noqa: E402
 
-from test_ui import app, win  # noqa: E402,F401
 
 
 def _settle():
@@ -178,7 +177,7 @@ def test_deleting_a_lemmas_last_token_in_all_data_doesnt_crash(win, monkeypatch)
 
 
 def _click(table, row, col=0):
-    from PySide6.QtCore import QPoint, QPointF, Qt
+    from PySide6.QtCore import QPointF, Qt
     from PySide6.QtGui import QMouseEvent
     i = table.model_.rows.index(row)
     idx = table.proxy.mapFromSource(table.model_.index(i, col))

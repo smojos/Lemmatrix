@@ -2,7 +2,7 @@
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The audit of 25 October 2026: the "fix first" bugs (claude/AUDIT.md, B1–B9)."""
 
-from test_texts import _add_text, app, win  # noqa: F401  (fixtures)
+from test_texts import _add_text  # noqa: F401  (fixtures)
 
 
 # ---- B1: Record in the utterance dialogue -------------------------------------------------

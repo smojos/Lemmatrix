@@ -7,7 +7,6 @@ import csv
 import hashlib
 
 import numpy as np
-import pytest
 
 from lemmatrix import audio, layout, segments as sg
 from lemmatrix.model import Database, Person

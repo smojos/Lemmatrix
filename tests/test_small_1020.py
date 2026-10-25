@@ -5,12 +5,11 @@ glosses and translations quoted the same everywhere."""
 
 import os
 
-import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 
-from test_texts import _add_text, app, win  # noqa: E402,F401  (the same window and text)
+from test_texts import _add_text  # noqa: E402,F401  (the same window and text)
 
 
 def test_meanings_are_in_single_quotes_and_never_doubled():
@@ -49,7 +48,6 @@ def test_ctrl_e_toggles_edit_mode_in_the_lines(win, tmp_path, monkeypatch):
 
 
 def test_push_a_line_comment_to_question(win, tmp_path, monkeypatch):
-    from lemmatrix import notebook as nbmod
     uw, t = _add_text(win, tmp_path, monkeypatch)
     p = uw.texts
     line = p.lines.rows[0]

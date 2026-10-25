@@ -12,7 +12,6 @@ os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
-from test_ui import app, win  # noqa: E402,F401
 
 
 def _new(win, entry, tags):
@@ -145,8 +144,6 @@ def test_the_box_lists_core_fields_with_phonemic_bold(win):
 
 
 def test_recording_asks_the_same_box(win, monkeypatch):
-    import numpy as np
-    from lemmatrix import storage
     lion = win.doc.db.entry_by_ref("D002")
     pl = lion.tokens[3]
     count = len(lion.tokens)

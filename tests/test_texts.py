@@ -142,40 +142,11 @@ def test_clip_and_segment(tmp_path):
 
 import os
 import time
-import shutil
 
 import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
-
-
-@pytest.fixture(scope="module")
-def app():
-    pytest.importorskip("PySide6")
-    from PySide6.QtWidgets import QApplication
-    return QApplication.instance() or QApplication([])
-
-
-@pytest.fixture
-def win(app, tmp_path, monkeypatch):
-    from PySide6.QtWidgets import QInputDialog, QMessageBox
-    from lemmatrix.ui import main_window
-    shutil.copy2(SAMPLES / "Sample.xml", tmp_path / "Sample.xml")
-    shutil.copytree(SAMPLES / "Soundfiles", tmp_path / "Soundfiles")
-    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Yes)
-    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: None)
-    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
-    monkeypatch.setattr(QInputDialog, "getItem", lambda parent, title, label, items, *a, **k:
-                        (next(i for i in items if i.startswith("W")), True))
-    w = main_window.MainWindow()
-    w.load_database(storage.load(tmp_path / "Sample.xml"))
-    yield w
-    if w.utterances_window is not None:
-        w.utterances_window.close()
-    w.doc.undo.setClean()
-    w.doc._settings_dirty = False
-    w.close()
 
 
 def _recording(path, seconds=4.0, rate=8000):

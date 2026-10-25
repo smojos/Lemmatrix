@@ -10,7 +10,7 @@ os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 
 from PySide6.QtCore import Qt  # noqa: E402
 
-from test_texts import _add_text, app, win  # noqa: E402,F401
+from test_texts import _add_text  # noqa: E402,F401
 
 
 def test_questions_and_to_do_are_not_modal(win):

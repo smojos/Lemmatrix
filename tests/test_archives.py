@@ -14,7 +14,6 @@ from lemmatrix import anonymise, defaults, notebook as nbmod, storage, textgrid 
 from lemmatrix.anonymise import ANONYMOUS, ETHICAL, Options  # noqa: E402
 from lemmatrix.model import Person, Text  # noqa: E402
 
-from test_ui import app, win  # noqa: F401,E402 (fixtures)
 
 SAMPLES = Path(__file__).resolve().parent.parent / "samples"
 

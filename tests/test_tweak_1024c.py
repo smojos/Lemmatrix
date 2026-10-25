@@ -14,7 +14,6 @@ from PySide6.QtGui import QMouseEvent  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from lemmatrix import matrix as mx  # noqa: E402
-from test_ui import app, win  # noqa: E402,F401
 
 
 import pytest  # noqa: E402

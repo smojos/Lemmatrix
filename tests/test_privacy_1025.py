@@ -14,7 +14,6 @@ from lemmatrix.anonymise import ANONYMOUS, ETHICAL, Options
 from lemmatrix.model import Person
 from test_archives import _all_text, _db as _archive_db
 from test_elicit import FakeDrive, _items, _wav_bytes, db  # noqa: F401  (fixture)
-from test_ui import app  # noqa: F401  (fixture)
 
 
 # ---------------------------------------------------------------- P1: the speaker's copy of the request

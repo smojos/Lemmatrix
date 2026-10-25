@@ -7,7 +7,6 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 
-from test_ui import app, win  # noqa: E402,F401
 
 
 def test_splash_has_rounded_corners(app):

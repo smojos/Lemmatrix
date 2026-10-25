@@ -18,7 +18,6 @@ from PySide6.QtWidgets import QApplication, QMessageBox  # noqa: E402
 from lemmatrix import hypotheses as hy  # noqa: E402
 from lemmatrix import layout, storage  # noqa: E402
 from lemmatrix import whiteboard as wb  # noqa: E402
-from test_ui import app, win  # noqa: E402,F401
 
 
 # ---- the board itself (no Qt) -----------------------------------------------------------

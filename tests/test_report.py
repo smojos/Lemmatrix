@@ -8,7 +8,6 @@ from urllib.parse import parse_qs, urlparse
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 
-from test_ui import app, win  # noqa: E402,F401
 
 
 def test_mailto_links():

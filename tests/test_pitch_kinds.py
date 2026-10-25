@@ -12,7 +12,7 @@ os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 import pytest  # noqa: E402
 
 from lemmatrix import newdb, pitchkind as pk, pitchview, storage  # noqa: E402
-from test_ui import SAMPLES, app, win  # noqa: E402,F401
+from test_ui import SAMPLES  # noqa: E402,F401
 
 
 @pytest.fixture(autouse=True)

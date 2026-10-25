@@ -10,7 +10,6 @@ os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
-from test_ui import app, win  # noqa: E402,F401
 
 
 def _dialog(win, entry, index=None, tags=("Singular",)):

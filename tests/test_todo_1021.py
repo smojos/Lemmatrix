@@ -8,7 +8,7 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 
-from test_texts import _add_text, app, win  # noqa: E402,F401
+from test_texts import _add_text  # noqa: E402,F401
 
 
 def test_todos_are_saved_beside_the_questions(tmp_path):

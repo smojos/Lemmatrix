@@ -6,7 +6,6 @@ ticks and researchers' emails, and the Images folder."""
 
 import os
 
-import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
@@ -15,7 +14,6 @@ from lemmatrix import anonymise, bulk, filenames, layout, storage  # noqa: E402
 from lemmatrix import matrix as mx  # noqa: E402
 from lemmatrix.model import Person  # noqa: E402
 
-from test_texts import app, win  # noqa: E402,F401  (the same window)
 
 
 # ---- people -------------------------------------------------------------------

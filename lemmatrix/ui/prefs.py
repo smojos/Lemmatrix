@@ -9,10 +9,19 @@ import os
 from PySide6.QtCore import QSettings
 
 
+def settings_store() -> QSettings:
+    """This computer's preferences. Tests set LEMMATRIX_SETTINGS so they never touch the real
+    ones, and LEMMATRIX_SETTINGS_FILE so each run has a file of its own (the audit, 25 October):
+    QSettings(organisation, name) always uses the registry on Windows, whatever default is set."""
+    file = os.environ.get("LEMMATRIX_SETTINGS_FILE")
+    if file:
+        return QSettings(file, QSettings.IniFormat)
+    return QSettings("Lemmatrix", os.environ.get("LEMMATRIX_SETTINGS", "Lemmatrix"))
+
+
 class Prefs:
     def __init__(self):
-        # Tests set LEMMATRIX_SETTINGS so they never touch the real preferences.
-        self.q = QSettings("Lemmatrix", os.environ.get("LEMMATRIX_SETTINGS", "Lemmatrix"))
+        self.q = settings_store()
 
     def _get(self, key, default, kind=str):
         v = self.q.value(key, default)

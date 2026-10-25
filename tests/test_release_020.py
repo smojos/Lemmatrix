@@ -10,7 +10,6 @@ from pathlib import Path
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 
-from test_ui import app, win  # noqa: E402,F401
 
 ROOT = Path(__file__).resolve().parent.parent
 WORDLISTS = ROOT / "lemmatrix" / "wordlists"

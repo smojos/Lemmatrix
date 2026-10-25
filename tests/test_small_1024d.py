@@ -13,7 +13,6 @@ from PySide6.QtWidgets import QApplication, QMessageBox  # noqa: E402
 
 from lemmatrix import report, setup_export, storage  # noqa: E402
 from lemmatrix.defaults import default_settings, new_database  # noqa: E402
-from test_ui import app, win  # noqa: E402,F401
 
 
 def _settle():

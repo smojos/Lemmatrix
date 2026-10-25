@@ -10,7 +10,6 @@ os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 from PySide6.QtCore import QEvent, Qt  # noqa: E402
 from PySide6.QtGui import QKeyEvent  # noqa: E402
 
-from test_ui import app, win  # noqa: E402,F401
 
 
 def _played(win, monkeypatch):

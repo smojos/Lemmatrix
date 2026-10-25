@@ -10,9 +10,8 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 
 from lemmatrix import hypotheses as hy, notebook as nb  # noqa: E402
-from lemmatrix.model import today  # noqa: E402
 
-from test_texts import _add_text, app, win  # noqa: E402,F401
+from test_texts import _add_text  # noqa: E402,F401
 
 DAY = "2026-10-16"
 

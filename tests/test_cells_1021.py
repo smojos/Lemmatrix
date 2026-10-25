@@ -9,7 +9,7 @@ from PySide6.QtCore import Qt
 from lemmatrix import matrix as mx
 
 from test_texts import _add_text  # noqa: F401
-from test_utterances import _wav, app, win  # noqa: F401 (fixtures)
+from test_utterances import _wav  # noqa: F401 (fixtures)
 
 
 def _utterance(win, tmp_path):

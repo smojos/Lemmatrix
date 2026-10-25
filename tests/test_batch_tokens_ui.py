@@ -11,7 +11,6 @@ from PySide6.QtWidgets import QAbstractItemView, QMessageBox
 from lemmatrix import batch, matrix as mx
 from lemmatrix.model import Token
 
-from test_ui import app, win  # noqa: F401 (fixtures)
 
 
 def _nouns(win):

@@ -112,7 +112,9 @@ For heavier testing there's also **`samples/Test-300.xml`**: 300 invented lemmas
 `samples/make_test_database.py`. If you save changes to it, GitHub Desktop will list the file
 as changed; discard that change to get the original back.
 
-To run the automated tests, double-click **`Run tests.bat`** (after the first run).
+To run the automated tests, double-click **`Run tests.bat`** (after the first run). The first
+time, it installs the test tools in `requirements-dev.txt` (pytest, and Praat to check the
+TextGrids Lemmatrix writes); Lemmatrix itself doesn't need them.
 
 If something goes wrong, a message box shows the details, and they're also written to
 `lemmatrix-errors.log` in this folder. Include it when you report a problem. If Lemmatrix

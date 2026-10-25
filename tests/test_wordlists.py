@@ -270,29 +270,16 @@ def test_link_plan_for_an_existing_eacw_database():
 
 # ---- the windows ------------------------------------------------------------
 pytest.importorskip("PySide6")
-from PySide6.QtWidgets import QApplication, QMessageBox  # noqa: E402
-
-
-@pytest.fixture(scope="module")
-def app():
-    return QApplication.instance() or QApplication([])
+from PySide6.QtWidgets import QMessageBox  # noqa: E402
 
 
 @pytest.fixture
-def win(app, tmp_path, monkeypatch):
-    from lemmatrix.ui import main_window
-    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Yes)
-    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: None)
-    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
+def win(make_win, tmp_path):
+    """An EACW database with forms (the shared window factory, conftest.py)."""
     db = _eacw_db_with_forms()
     db.path = str(tmp_path / "W.xml")
     storage.save(db, db.path, backup=False)
-    w = main_window.MainWindow()
-    w.load_database(storage.load(db.path))
-    yield w
-    w.doc.undo.setClean()
-    w.doc._settings_dirty = False
-    w.close()
+    return make_win(storage.load(db.path))
 
 
 def _search(win, text):

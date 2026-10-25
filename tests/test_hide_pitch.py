@@ -14,7 +14,6 @@ import pytest  # noqa: E402
 
 from lemmatrix import matrix as mx, pitchview  # noqa: E402
 from lemmatrix import workspace as wsmod  # noqa: E402
-from test_ui import app, win  # noqa: E402,F401
 
 LEMMA_TAG = 1
 

@@ -9,7 +9,7 @@ from PySide6.QtGui import QColor, QMouseEvent, QWheelEvent
 
 from lemmatrix import textgrid as tgmod
 
-from test_texts import _add_text, app, win  # noqa: F401 (fixtures)
+from test_texts import _add_text  # noqa: F401 (fixtures)
 
 
 def _pixel(ic, size, fx, fy) -> QColor:

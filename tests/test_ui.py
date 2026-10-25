@@ -20,28 +20,6 @@ from lemmatrix import storage  # noqa: E402
 SAMPLES = Path(__file__).resolve().parent / "data" / "sample"    # the prototype's sample (conftest.py)
 
 
-@pytest.fixture(scope="module")
-def app():
-    return QApplication.instance() or QApplication([])
-
-
-@pytest.fixture
-def win(app, tmp_path, monkeypatch):
-    from lemmatrix.ui import main_window
-    shutil.copy2(SAMPLES / "Sample.xml", tmp_path / "Sample.xml")
-    shutil.copytree(SAMPLES / "Soundfiles", tmp_path / "Soundfiles")
-    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Yes)
-    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: None)
-    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
-    w = main_window.MainWindow()
-    w.load_database(storage.load(tmp_path / "Sample.xml"))
-    w.prefs.confirm_delete = True
-    yield w
-    w.doc.undo.setClean()
-    w.doc._settings_dirty = False
-    w.close()
-
-
 def test_fill_an_empty_cell_and_undo(win):
     from lemmatrix.ui.token_dialog import Slot, TokenDialog
     rʉʉr = win.doc.db.entry_by_ref("D002")
@@ -326,7 +304,6 @@ def test_clear_and_rename_matrix(win, monkeypatch):
 
 def test_renamed_tags_follow_into_matrices(win, monkeypatch):
     from lemmatrix import matrix as mx
-    from lemmatrix.ui import main_window as mw
     db = win.doc.db
     db.settings.matrices.append(mx.MatrixConfig("Pl", mx.LEMMA_TAG,
                                                 x=[mx.Spec(frozenset({"Plural"}), mx.LOOSE)]))
@@ -973,7 +950,7 @@ def test_questions_window(win):
 
 def test_alt_click_shows_only_that_lemma(win):
     """The pin: Alt+click since 24 October (idea 64: Ctrl+click selects several lemmas now)."""
-    from PySide6.QtCore import QPoint, Qt
+    from PySide6.QtCore import Qt
     from PySide6.QtTest import QTest
     t = win.lemmas
     total = t.proxy.rowCount()
@@ -1261,7 +1238,6 @@ def test_predicted_translation_in_the_token_dialogue(win):
 
 
 def test_bulk_edit_fills_predicted_translations(win):
-    from lemmatrix import bulk
     from lemmatrix.ui import bulk_window as bw
     lion = win.doc.db.entry_by_ref("D002")
     i = next(i for i, t in enumerate(lion.tokens) if set(t.tags) >= {"Plural", "Genitive"})
@@ -1403,7 +1379,6 @@ def test_spelling_in_the_lemma_dialogue(win):
 
 
 def test_all_data_tooltips_only_add_something(win):
-    from PySide6.QtCore import Qt
     from PySide6.QtWidgets import QStyle
     table = win.all_table
     goat = win.doc.db.entry_by_ref("D001")
@@ -1669,7 +1644,6 @@ def test_file_menu_has_full_backup_and_no_save_as(win):
 
 def test_full_backup_from_the_window(win, tmp_path, monkeypatch):
     import zipfile
-    from lemmatrix import layout
     target = tmp_path.parent / f"{tmp_path.name}-cloud" / "backup.zip"
     target.parent.mkdir(exist_ok=True)
     monkeypatch.setattr(win, "_full_backup_path", lambda suggested: str(target))

@@ -4,12 +4,11 @@
 
 import os
 
-import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 
-from test_texts import _add_text, app, win  # noqa: F401  (fixtures)
+from test_texts import _add_text  # noqa: F401  (fixtures)
 
 
 def test_search_spans_ignore_diacritics_and_capitals():

@@ -12,7 +12,6 @@ from pathlib import Path
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 
-from test_texts import app, win  # noqa: E402,F401
 
 from lemmatrix import bulk, matrix as mx, pitch, storage  # noqa: E402
 

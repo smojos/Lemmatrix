@@ -10,14 +10,13 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 
 from PySide6.QtCore import Qt  # noqa: E402
-from PySide6.QtWidgets import QApplication, QDialog, QMessageBox  # noqa: E402
+from PySide6.QtWidgets import QApplication, QDialog  # noqa: E402
 
 from lemmatrix import anonymise as an  # noqa: E402
 from lemmatrix import newdb, setup_export, storage  # noqa: E402
 from lemmatrix import wordlist_check as wc  # noqa: E402
 from lemmatrix import wordlists as wl  # noqa: E402
 from lemmatrix.model import Support, Thanks, Token  # noqa: E402
-from test_ui import app, win  # noqa: E402,F401
 
 
 def _settle():

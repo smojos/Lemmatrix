@@ -14,7 +14,6 @@ from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtWidgets import QApplication, QLineEdit, QVBoxLayout, QWidget  # noqa: E402
 
 from lemmatrix.ui import keyboards as kb  # noqa: E402
-from test_ui import app, win  # noqa: E402,F401
 
 EN, IPA, AM = "hkl:0809:8090809", "tip:0409:{KEYMAN}:{SILIPA}", "tip:045e:{KEYMAN}:{AMHARIC}"
 

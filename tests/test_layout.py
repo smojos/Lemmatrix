@@ -3,7 +3,6 @@
 """The fixed folder layout (format 4): sound folder, Morphemes, consent relinking, full backup."""
 
 import datetime as dt
-import os
 import shutil
 import zipfile
 from pathlib import Path

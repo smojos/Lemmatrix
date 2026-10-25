@@ -16,7 +16,6 @@ from PySide6.QtGui import QKeyEvent  # noqa: E402
 
 from lemmatrix import audio, layout, segments  # noqa: E402
 from lemmatrix.model import Person  # noqa: E402
-from test_ui import app, win  # noqa: E402,F401
 
 
 @pytest.fixture

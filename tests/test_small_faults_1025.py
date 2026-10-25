@@ -16,7 +16,6 @@ from PySide6.QtWidgets import QDialog, QLineEdit, QVBoxLayout
 
 from lemmatrix import elicit as el, textgrid as tgmod, wordlists as wl
 from lemmatrix.model import Token
-from test_ui import app, win  # noqa: F401  (fixtures)
 
 
 def _flush_deletes():

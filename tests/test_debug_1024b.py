@@ -11,7 +11,6 @@ os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 from PySide6.QtGui import QPalette  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
-from test_ui import app, win  # noqa: E402,F401
 
 
 def test_a_long_lemma_is_capped_down_the_side_and_across_the_top(win):
@@ -54,7 +53,7 @@ def test_the_scratchpad_follows_dark_to_light(win):
 
 
 def test_ctrl_alt_space_opens_the_line_in_praat(win, monkeypatch):
-    from PySide6.QtGui import QKeySequence, QShortcut
+    from PySide6.QtGui import QShortcut
     w = win.open_utterances()
     keys = {s.key().toString(): s for s in w.findChildren(QShortcut)}
     assert "Ctrl+Alt+Space" in keys

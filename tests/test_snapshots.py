@@ -9,7 +9,6 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 
-from test_texts import app, win  # noqa: E402,F401
 
 VIEW = {"tab": 1, "lemma": "D001"}
 

@@ -8,11 +8,25 @@ not the defaults, so they keep using that structure. Tests of the defaults thems
 `real_defaults` and see the structure a new database really gets.
 """
 
+import os
+import shutil
+import tempfile
+from pathlib import Path
+
 import pytest
 
-from lemmatrix import defaults
-from lemmatrix.defaults import EXAMPLES, INSTANCES, _tags
-from lemmatrix.model import Group, TagStructure
+# Every test run gets settings of its own, in a temporary folder, as an .ini file (the audit, 25
+# October): runs used to share one real store ("Lemmatrix-tests" in the registry on Windows), so a
+# run could inherit what an earlier one left behind. Set before any Lemmatrix module opens them.
+os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
+_SETTINGS_DIR = tempfile.mkdtemp(prefix="lemmatrix-test-settings-")
+os.environ["LEMMATRIX_SETTINGS_FILE"] = os.path.join(_SETTINGS_DIR, "Lemmatrix-tests.ini")
+
+from lemmatrix import defaults  # noqa: E402
+from lemmatrix.defaults import EXAMPLES, INSTANCES, _tags  # noqa: E402
+from lemmatrix.model import Group, TagStructure  # noqa: E402
+
+SAMPLE = Path(__file__).resolve().parent / "data" / "sample"    # the prototype's sample (feature tests)
 
 REAL_TAG_STRUCTURE = defaults.default_tag_structure
 
@@ -64,6 +78,62 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "real_defaults: use the tag structure new databases really get")
 
 
+def pytest_unconfigure(config):
+    shutil.rmtree(_SETTINGS_DIR, ignore_errors=True)
+
+
+# ---- the windows the feature tests use (one copy here; the audit, 25 October: six copies, each a
+# little different, were imported from one test file into another) ----------------------------
+
+@pytest.fixture(scope="session")
+def app():
+    pytest.importorskip("PySide6")
+    from PySide6.QtWidgets import QApplication
+    return QApplication.instance() or QApplication([])
+
+
+@pytest.fixture
+def make_win(app, monkeypatch):
+    """make_win(db) → a main window with this database open: the message boxes answered (Yes),
+    a category asked for answered W, and everything left clean afterwards (no unsaved-changes
+    question when it closes)."""
+    from PySide6.QtWidgets import QInputDialog, QMessageBox
+
+    from lemmatrix.ui import main_window
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Yes)
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: None)
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
+    monkeypatch.setattr(QInputDialog, "getItem", lambda parent, title, label, items, *a, **k:
+                        (next((i for i in items if str(i).startswith("W")), items[0] if items else ""), True))
+    made = []
+
+    def make(db, before_load=None):
+        w = main_window.MainWindow()
+        if before_load is not None:
+            before_load(w)
+        w.load_database(db)
+        made.append(w)
+        return w
+    yield make
+    for w in made:
+        if getattr(w, "utterances_window", None) is not None:
+            w.utterances_window.close()
+        w.doc.undo.setClean()
+        w.doc._settings_dirty = False
+        w.close()
+
+
+@pytest.fixture
+def win(make_win, tmp_path):
+    """The main window on a copy of the prototype's sample (tests/data/sample)."""
+    from lemmatrix import storage
+    shutil.copy2(SAMPLE / "Sample.xml", tmp_path / "Sample.xml")
+    shutil.copytree(SAMPLE / "Soundfiles", tmp_path / "Soundfiles")
+    w = make_win(storage.load(tmp_path / "Sample.xml"))
+    w.prefs.confirm_delete = True
+    return w
+
+
 @pytest.fixture(autouse=True)
 def _prototype_tags(request, monkeypatch):
     if request.node.get_closest_marker("real_defaults") is None:
@@ -92,14 +162,12 @@ def _no_old_computer_settings():
     36). In tests that copy would carry one test's columns or options into the next (the test
     settings are one store), so the settings that move are cleared before each test."""
     try:
-        import os
-
-        from PySide6.QtCore import QSettings
+        from lemmatrix.ui.prefs import settings_store
     except ImportError:
         yield
         return
-    q = QSettings("Lemmatrix", os.environ.get("LEMMATRIX_SETTINGS", "Lemmatrix-tests"))
-    if q.applicationName() not in ("Lemmatrix",):         # never the real preferences
+    q = settings_store()
+    if q.fileName() == os.environ.get("LEMMATRIX_SETTINGS_FILE"):     # never the real preferences
         for key in ("columns", "lines", "views", "sessions", "fullbackup", "matrix/autoplay",
                     "matrix/only_with_data", "notebook/sort",
                     "session/speaker"):
