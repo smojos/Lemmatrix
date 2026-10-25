@@ -23,8 +23,10 @@ def _db(tmp_path):
     """A copy of the sample with real-looking people, a text with a TextGrid, comments and a
     notebook (all invented: nothing here is anyone's data)."""
     shutil.copy2(SAMPLES / "Sample.xml", tmp_path / "LXX-VXX_Lexicon.xml")
-    shutil.copytree(SAMPLES / "Soundfiles", tmp_path / "Soundfiles")
+    shutil.copytree(SAMPLES / "Soundfiles", tmp_path / "Soundfiles", ignore=shutil.ignore_patterns("Texts", "Utterances"))
     db = storage.load(tmp_path / "LXX-VXX_Lexicon.xml")
+    db.texts.clear()                    # the sample's own text and clips: this fixture makes its own
+    db.utterances.clear()
     md = db.metadata
     md.language_name, md.variety_name = "Sample language", "Hill"
     md.participants = [Person("KDB", "Kuku Dabi", "a farmer", "Consent/KDB.pdf", identifiable=True,
@@ -82,7 +84,8 @@ def test_format_8_ticks_researchers_and_writes_both_ticks(tmp_path):
     saved = p.read_text(encoding="utf-8")
     assert f'<database format="{storage.FORMAT_VERSION}">' in saved
     assert '<researcher code="JJA" name="Joshua J Alexander" identifiable="yes" />' in saved
-    assert '<participant code="DML" name="Dzosho Mofo Lakanoro" identifiable="no" audio-sharing="no" />' in saved
+    assert ('<participant code="DML" name="Dzosho Mofo Lakanoro" consent="Documentation/DML consent form.pdf" '
+            'identifiable="no" audio-sharing="no" />') in saved
     again = storage.load(p)
     assert not again.upgraded and again.metadata.researchers[0].identifiable
 

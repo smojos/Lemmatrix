@@ -87,9 +87,22 @@ def test_the_shipped_sample_opens(tmp_path):
     assert [s.organisation for s in db.metadata.support] == ["University of Wagandha"]
     assert [loc.name for _, loc in db.metadata.all_locations()] == [
         "Canada", "British Columbia", "Langley", "Wagandha", "Whero State", "Nowhero"]
-    files = {t.file for _, t in db.all_tokens() if t.file}
+    tokens = [t for e in db.entries for t in e.tokens if t.file]            # the lemmas' (utterances: below)
+    files = {t.file for t in tokens}
     assert files and all((storage.sound_folder(db) / f).exists() for f in files)
-    assert len(files) == len([t for _, t in db.all_tokens() if t.file])       # no two tokens share a file
+    assert len(files) == len(tokens)                                           # no two tokens share a file
+    # the text, its lines and the utterances clipped from it; the consent form (Josh, 25 October)
+    from lemmatrix import textgrid as tgmod
+    text = db.text_by_ref("T001")
+    folder = storage.text_folder(db)
+    assert (folder / text.file).exists() and (folder / text.textgrid).exists()
+    lines = tgmod.read_lines(folder / text.textgrid, text.tiers, "DML")
+    assert len(lines) == 10 and lines[2].values["Phonemic"] == "ŋɔ́ɔɲ dʊ́ŋ ɗɪ̄ɪ"
+    assert [u.ref for u in db.clipped_from(text)] == ["U001", "U002", "U003"]
+    assert all((storage.utterance_folder(db) / u.token.file).exists() for u in db.utterances)
+    assert [e.multi["Gloss"]["en"] for e in db.linked_lemmas(db.utterances[0])] == ["lion", "big"]
+    consent = db.metadata.participant("DML").consent
+    assert (tmp_path / "s" / consent).exists()
 
 
 # ---- Reset to defaults --------------------------------------------------------

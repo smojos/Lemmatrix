@@ -9,7 +9,7 @@
     <name>Sample</name>
     <author>Joshua J Alexander</author>
     <researcher code="JJA" name="Joshua J Alexander" identifiable="yes" />
-    <participant code="DML" name="Dzosho Mofo Lakanoro" identifiable="yes" audio-sharing="yes" />
+    <participant code="DML" name="Dzosho Mofo Lakanoro" consent="Documentation/DML consent form.pdf" identifiable="yes" audio-sharing="yes" />
     <location name="Canada" code="CA">
       <location name="British Columbia" code="BC">
         <location name="Langley" code="LANG" />
@@ -8327,4 +8327,69 @@
       <Translation lang="en">they will throw the stone</Translation>
     </token>
   </entry>
+  <utterances>
+    <utterance ref="U001" file-label="It was a big lion" lemmas="f11e33b95a b735a457cb" id="b9ecfd0166">
+      <token speaker="DML" collected="2026-10-25" file="LXX-VXX_U001_It_was_a_big_lion.wav" id="c5a1735297">
+        <Phonetic>ŋɔːɲ dʊŋ ɗɪ̰ː</Phonetic>
+        <Phonemic>ŋɔ́ɔɲ dʊ́ŋ ɗɪ̄ɪ</Phonemic>
+        <Morphemes>lion big COP</Morphemes>
+        <Pitch>5:5 55 3:3</Pitch>
+        <Translation lang="en">It was a big lion.</Translation>
+      </token>
+      <source text="048c3c0405" start="6.1800" end="7.3600" modified="2026-10-25T12:11:33.243518+00:00">
+        <copied tier="Phonetic">ŋɔːɲ dʊŋ ɗɪ̰ː</copied>
+        <copied tier="Phonemic">ŋɔ́ɔɲ dʊ́ŋ ɗɪ̄ɪ</copied>
+        <copied tier="Pitch">5:5 55 3:3</copied>
+        <copied tier="Morphemes">lion big COP</copied>
+        <copied tier="Translation">It was a big lion.</copied>
+      </source>
+    </utterance>
+    <utterance ref="U002" file-label="The lion ate two goats" lemmas="f11e33b95a 9c439009bc f788fc94c3 adb1d34a41" id="0c6908065f">
+      <token speaker="DML" collected="2026-10-25" file="LXX-VXX_U002_The_lion_ate_two_goats.wav" id="f783db988a">
+        <Phonetic>ŋɔːɲ wɛtʌŋɛ̃ dʌːmã ɓɪ̰ː</Phonetic>
+        <Phonemic>ŋɔ́ɔɲ wɛ́tʌ̄ŋɛ̀ dʌ́ʌmà ɓɪ̀ɪ</Phonemic>
+        <Morphemes>lion 3SG.A-eat-PST goat-PL two</Morphemes>
+        <Pitch>5:5 55 33 11 4:4 11 1:10</Pitch>
+        <Translation lang="en">The lion ate two goats.</Translation>
+      </token>
+      <source text="048c3c0405" start="7.9700" end="9.6300" modified="2026-10-25T12:11:33.243518+00:00">
+        <copied tier="Phonetic">ŋɔːɲ wɛtʌŋɛ̃ dʌːmã ɓɪ̰ː</copied>
+        <copied tier="Phonemic">ŋɔ́ɔɲ wɛ́tʌ̄ŋɛ̀ dʌ́ʌmà ɓɪ̀ɪ</copied>
+        <copied tier="Pitch">5:5 55 33 11 4:4 11 1:10</copied>
+        <copied tier="Morphemes">lion 3SG.A-eat-PST goat-PL two</copied>
+        <copied tier="Translation">The lion ate two goats.</copied>
+      </source>
+    </utterance>
+    <utterance ref="U003" file-label="We will eat lion meat today" lemmas="9c439009bc f11e33b95a 9d9500df05 100e0e7089" id="62117116f4">
+      <token speaker="DML" collected="2026-10-25" file="LXX-VXX_U003_We_will_eat_lion_meat_today.wav" id="0c53fff4fc">
+        <Phonetic>tʌdɔtʌŋ ŋɔːɲ rɪːŋ ɲamã</Phonetic>
+        <Phonemic>tʌ́dɔ̄tʌ̄ŋ ŋɔ́ɔɲ rɪ̀ɪŋ ɲàmá</Phonemic>
+        <Morphemes>1PL.A-FUT-eat lion meat today</Morphemes>
+        <Pitch>55 33 33 5:5 1:1 11 44</Pitch>
+        <Translation lang="en">“We will eat lion meat today.”</Translation>
+      </token>
+      <source text="048c3c0405" start="20.6100" end="22.2100" modified="2026-10-25T12:11:33.243518+00:00">
+        <copied tier="Phonetic">tʌdɔtʌŋ ŋɔːɲ rɪːŋ ɲamã</copied>
+        <copied tier="Phonemic">tʌ́dɔ̄tʌ̄ŋ ŋɔ́ɔɲ rɪ̀ɪŋ ɲàmá</copied>
+        <copied tier="Pitch">55 33 33 5:5 1:1 11 44</copied>
+        <copied tier="Morphemes">1PL.A-FUT-eat lion meat today</copied>
+        <copied tier="Translation">“We will eat lion meat today.”</copied>
+      </source>
+    </utterance>
+  </utterances>
+  <texts>
+    <text ref="T001" file-label="The man and the lion" date="2026-10-25" participants="DML" researchers="JJA" locations="NOWH" file="LXX-VXX_T001_The_man_and_the_lion.wav" textgrid="LXX-VXX_T001_The_man_and_the_lion.TextGrid" id="048c3c0405">
+      <Title>The man and the lion</Title>
+      <Genre>folktale</Genre>
+      <Status>analyzed</Status>
+      <tiers main="Phonetic">
+        <tier name="Phonetic" field="Phonetic" />
+        <tier name="Phonemic" field="Phonemic" />
+        <tier name="Pitch" field="Pitch" />
+        <tier name="Morphemes" field="Morphemes" />
+        <tier name="Translation" field="Translation" lang="en" />
+        <tier name="Comment" field="Comment" />
+      </tiers>
+    </text>
+  </texts>
 </database>

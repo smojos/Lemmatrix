@@ -4696,6 +4696,9 @@ class MainWindow(QMainWindow):
                 if (target / "Soundfiles").exists():
                     shutil.rmtree(target / "Soundfiles", ignore_errors=True)
                 shutil.copytree(sounds, target / "Soundfiles")
+            docs = SAMPLE.parent / "Documentation"           # DML's consent form (25 October)
+            if docs.exists():
+                shutil.copytree(docs, target / "Documentation", dirs_exist_ok=True)
         except OSError as exc:
             QMessageBox.warning(self, "Sample", f"The sample couldn't be copied to {target}: {exc}")
             return

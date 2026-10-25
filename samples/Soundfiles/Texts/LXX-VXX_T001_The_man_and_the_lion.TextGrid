@@ -1,0 +1,525 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 22.989433106575962 
+tiers? <exists> 
+size = 6 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "Phonetic" 
+        xmin = 0 
+        xmax = 22.989433106575962 
+        intervals: size = 20 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.99 
+            text = "" 
+        intervals [2]:
+            xmin = 0.99 
+            xmax = 2.78 
+            text = "ɲamã gaːnã wɛjanɛ̃ bɛːŋ" 
+        intervals [3]:
+            xmin = 2.78 
+            xmax = 3.81 
+            text = "" 
+        intervals [4]:
+            xmin = 3.81 
+            xmax = 5.15 
+            text = "wɛɲɔːrɛ ŋɔːɲ dɛː" 
+        intervals [5]:
+            xmin = 5.15 
+            xmax = 6.18 
+            text = "" 
+        intervals [6]:
+            xmin = 6.18 
+            xmax = 7.36 
+            text = "ŋɔːɲ dʊŋ ɗɪ̰ː" 
+        intervals [7]:
+            xmin = 7.36 
+            xmax = 7.97 
+            text = "" 
+        intervals [8]:
+            xmin = 7.97 
+            xmax = 9.63 
+            text = "ŋɔːɲ wɛtʌŋɛ̃ dʌːmã ɓɪ̰ː" 
+        intervals [9]:
+            xmin = 9.63 
+            xmax = 10.43 
+            text = "" 
+        intervals [10]:
+            xmin = 10.43 
+            xmax = 11.87 
+            text = "gaːnã wɛlɔːlɛrɛ tʰʊ̤ŋã" 
+        intervals [11]:
+            xmin = 11.87 
+            xmax = 12.58 
+            text = "" 
+        intervals [12]:
+            xmin = 12.58 
+            xmax = 13.95 
+            text = "tʰʊ̤ŋã kʲɪɓɛ̰ːŋɛ̃ kʷɔːlɔnã" 
+        intervals [13]:
+            xmin = 13.95 
+            xmax = 15.01 
+            text = "" 
+        intervals [14]:
+            xmin = 15.01 
+            xmax = 16.60410300503467 
+            text = "gaːnã wɛβadarɛ kʷɔːlɔ" 
+        intervals [15]:
+            xmin = 16.60410300503467 
+            xmax = 17.76 
+            text = "wɛrɛːmɛ̃ ŋɔːɲ" 
+        intervals [16]:
+            xmin = 17.76 
+            xmax = 18.82 
+            text = "" 
+        intervals [17]:
+            xmin = 18.82 
+            xmax = 20.03 
+            text = "dɛnzɪ wɛt͡sʊmbarɛ rɪːŋ" 
+        intervals [18]:
+            xmin = 20.03 
+            xmax = 20.61 
+            text = "" 
+        intervals [19]:
+            xmin = 20.61 
+            xmax = 22.21 
+            text = "tʌdɔtʌŋ ŋɔːɲ rɪːŋ ɲamã" 
+        intervals [20]:
+            xmin = 22.21 
+            xmax = 22.989433106575962 
+            text = "" 
+    item [2]:
+        class = "IntervalTier" 
+        name = "Phonemic" 
+        xmin = 0 
+        xmax = 22.989433106575962 
+        intervals: size = 20 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.99 
+            text = "" 
+        intervals [2]:
+            xmin = 0.99 
+            xmax = 2.78 
+            text = "ɲàmá gàanà wɛ́jànɛ̀ bɛ̄ɛŋ" 
+        intervals [3]:
+            xmin = 2.78 
+            xmax = 3.81 
+            text = "" 
+        intervals [4]:
+            xmin = 3.81 
+            xmax = 5.15 
+            text = "wɛ́ɲɔ̄ɔrɛ̀ ŋɔ́ɔɲ dɛ̀ɛ́" 
+        intervals [5]:
+            xmin = 5.15 
+            xmax = 6.18 
+            text = "" 
+        intervals [6]:
+            xmin = 6.18 
+            xmax = 7.36 
+            text = "ŋɔ́ɔɲ dʊ́ŋ ɗɪ̄ɪ" 
+        intervals [7]:
+            xmin = 7.36 
+            xmax = 7.97 
+            text = "" 
+        intervals [8]:
+            xmin = 7.97 
+            xmax = 9.63 
+            text = "ŋɔ́ɔɲ wɛ́tʌ̄ŋɛ̀ dʌ́ʌmà ɓɪ̀ɪ" 
+        intervals [9]:
+            xmin = 9.63 
+            xmax = 10.43 
+            text = "" 
+        intervals [10]:
+            xmin = 10.43 
+            xmax = 11.87 
+            text = "gàanà wɛ́lɔ̄ɔlɛ̀rɛ̀ tʰʊ̀ŋà" 
+        intervals [11]:
+            xmin = 11.87 
+            xmax = 12.58 
+            text = "" 
+        intervals [12]:
+            xmin = 12.58 
+            xmax = 13.95 
+            text = "tʰʊ̀ŋà kɪ́ɓɛ́ɛŋɛ̀ kɔ̀ɔlɔ́nà" 
+        intervals [13]:
+            xmin = 13.95 
+            xmax = 15.01 
+            text = "" 
+        intervals [14]:
+            xmin = 15.01 
+            xmax = 16.60410300503467 
+            text = "gàanà wɛ́βàdárɛ̀ kɔ̀ɔlɔ́" 
+        intervals [15]:
+            xmin = 16.60410300503467 
+            xmax = 17.76 
+            text = "wɛ́rɛ̀ɛmɛ̀ ŋɔ́ɔɲ" 
+        intervals [16]:
+            xmin = 17.76 
+            xmax = 18.82 
+            text = "" 
+        intervals [17]:
+            xmin = 18.82 
+            xmax = 20.03 
+            text = "dɛ̄nzɪ́ wɛ́t͡sʊ̀mbàrɛ̀ rɪ̀ɪŋ" 
+        intervals [18]:
+            xmin = 20.03 
+            xmax = 20.61 
+            text = "" 
+        intervals [19]:
+            xmin = 20.61 
+            xmax = 22.21 
+            text = "tʌ́dɔ̄tʌ̄ŋ ŋɔ́ɔɲ rɪ̀ɪŋ ɲàmá" 
+        intervals [20]:
+            xmin = 22.21 
+            xmax = 22.989433106575962 
+            text = "" 
+    item [3]:
+        class = "IntervalTier" 
+        name = "Pitch" 
+        xmin = 0 
+        xmax = 22.989433106575962 
+        intervals: size = 20 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.99 
+            text = "" 
+        intervals [2]:
+            xmin = 0.99 
+            xmax = 2.78 
+            text = "11 44 1:1 11 33 11 11 2:21" 
+        intervals [3]:
+            xmin = 2.78 
+            xmax = 3.81 
+            text = "" 
+        intervals [4]:
+            xmin = 3.81 
+            xmax = 5.15 
+            text = "55 3:3 11 4:4 1:3" 
+        intervals [5]:
+            xmin = 5.15 
+            xmax = 6.18 
+            text = "" 
+        intervals [6]:
+            xmin = 6.18 
+            xmax = 7.36 
+            text = "5:5 55 3:3" 
+        intervals [7]:
+            xmin = 7.36 
+            xmax = 7.97 
+            text = "" 
+        intervals [8]:
+            xmin = 7.97 
+            xmax = 9.63 
+            text = "5:5 55 33 11 4:4 11 1:10" 
+        intervals [9]:
+            xmin = 9.63 
+            xmax = 10.43 
+            text = "" 
+        intervals [10]:
+            xmin = 10.43 
+            xmax = 11.87 
+            text = "1:1 11 44 3:3 11 11 11 10" 
+        intervals [11]:
+            xmin = 11.87 
+            xmax = 12.58 
+            text = "" 
+        intervals [12]:
+            xmin = 12.58 
+            xmax = 13.95 
+            text = "11 11 44 4:4 11 1:1 33 10" 
+        intervals [13]:
+            xmin = 13.95 
+            xmax = 15.01 
+            text = "" 
+        intervals [14]:
+            xmin = 15.01 
+            xmax = 16.60410300503467 
+            text = "1:1 11 44 11 33 11 1:1 33" 
+        intervals [15]:
+            xmin = 16.60410300503467 
+            xmax = 17.76 
+            text = "55 1:1 11 4:4" 
+        intervals [16]:
+            xmin = 17.76 
+            xmax = 18.82 
+            text = "" 
+        intervals [17]:
+            xmin = 18.82 
+            xmax = 20.03 
+            text = "33 55 55 11 11 11 1:10" 
+        intervals [18]:
+            xmin = 20.03 
+            xmax = 20.61 
+            text = "" 
+        intervals [19]:
+            xmin = 20.61 
+            xmax = 22.21 
+            text = "55 33 33 5:5 1:1 11 44" 
+        intervals [20]:
+            xmin = 22.21 
+            xmax = 22.989433106575962 
+            text = "" 
+
+    item [4]:
+        class = "IntervalTier" 
+        name = "Morphemes" 
+        xmin = 0 
+        xmax = 22.989433106575962 
+        intervals: size = 20 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.99 
+            text = "" 
+        intervals [2]:
+            xmin = 0.99 
+            xmax = 2.78 
+            text = "today man 3SG.A-take-PST spear" 
+        intervals [3]:
+            xmin = 2.78 
+            xmax = 3.81 
+            text = "" 
+        intervals [4]:
+            xmin = 3.81 
+            xmax = 5.15 
+            text = "3SG.A-see-PST lion here" 
+        intervals [5]:
+            xmin = 5.15 
+            xmax = 6.18 
+            text = "" 
+        intervals [6]:
+            xmin = 6.18 
+            xmax = 7.36 
+            text = "lion big COP" 
+        intervals [7]:
+            xmin = 7.36 
+            xmax = 7.97 
+            text = "" 
+        intervals [8]:
+            xmin = 7.97 
+            xmax = 9.63 
+            text = "lion 3SG.A-eat-PST goat-PL two" 
+        intervals [9]:
+            xmin = 9.63 
+            xmax = 10.43 
+            text = "" 
+        intervals [10]:
+            xmin = 10.43 
+            xmax = 11.87 
+            text = "man 3SG.A-call-PST child-PL" 
+        intervals [11]:
+            xmin = 11.87 
+            xmax = 12.58 
+            text = "" 
+        intervals [12]:
+            xmin = 12.58 
+            xmax = 13.95 
+            text = "child-PL 3PL.A-carry-PST stone-PL" 
+        intervals [13]:
+            xmin = 13.95 
+            xmax = 15.01 
+            text = "" 
+        intervals [14]:
+            xmin = 15.01 
+            xmax = 16.60410300503467 
+            text = "man 3SG.A-throw-PST stone" 
+        intervals [15]:
+            xmin = 16.60410300503467 
+            xmax = 17.76 
+            text = "3SG.A-kill-PST lion" 
+        intervals [16]:
+            xmin = 17.76 
+            xmax = 18.82 
+            text = "" 
+        intervals [17]:
+            xmin = 18.82 
+            xmax = 20.03 
+            text = "woman 3SG.A-cook-PST meat" 
+        intervals [18]:
+            xmin = 20.03 
+            xmax = 20.61 
+            text = "" 
+        intervals [19]:
+            xmin = 20.61 
+            xmax = 22.21 
+            text = "1PL.A-FUT-eat lion meat today" 
+        intervals [20]:
+            xmin = 22.21 
+            xmax = 22.989433106575962 
+            text = "" 
+    item [5]:
+        class = "IntervalTier" 
+        name = "Translation" 
+        xmin = 0 
+        xmax = 22.989433106575962 
+        intervals: size = 20 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.99 
+            text = "" 
+        intervals [2]:
+            xmin = 0.99 
+            xmax = 2.78 
+            text = "Today the man took a spear." 
+        intervals [3]:
+            xmin = 2.78 
+            xmax = 3.81 
+            text = "" 
+        intervals [4]:
+            xmin = 3.81 
+            xmax = 5.15 
+            text = "He saw a lion here." 
+        intervals [5]:
+            xmin = 5.15 
+            xmax = 6.18 
+            text = "" 
+        intervals [6]:
+            xmin = 6.18 
+            xmax = 7.36 
+            text = "It was a big lion." 
+        intervals [7]:
+            xmin = 7.36 
+            xmax = 7.97 
+            text = "" 
+        intervals [8]:
+            xmin = 7.97 
+            xmax = 9.63 
+            text = "The lion ate two goats." 
+        intervals [9]:
+            xmin = 9.63 
+            xmax = 10.43 
+            text = "" 
+        intervals [10]:
+            xmin = 10.43 
+            xmax = 11.87 
+            text = "The man called the children." 
+        intervals [11]:
+            xmin = 11.87 
+            xmax = 12.58 
+            text = "" 
+        intervals [12]:
+            xmin = 12.58 
+            xmax = 13.95 
+            text = "The children carried stones." 
+        intervals [13]:
+            xmin = 13.95 
+            xmax = 15.01 
+            text = "" 
+        intervals [14]:
+            xmin = 15.01 
+            xmax = 16.60410300503467 
+            text = "The man threw a stone." 
+        intervals [15]:
+            xmin = 16.60410300503467 
+            xmax = 17.76 
+            text = "He killed the lion." 
+        intervals [16]:
+            xmin = 17.76 
+            xmax = 18.82 
+            text = "" 
+        intervals [17]:
+            xmin = 18.82 
+            xmax = 20.03 
+            text = "The woman cooked the meat." 
+        intervals [18]:
+            xmin = 20.03 
+            xmax = 20.61 
+            text = "" 
+        intervals [19]:
+            xmin = 20.61 
+            xmax = 22.21 
+            text = "“We will eat lion meat today.”" 
+        intervals [20]:
+            xmin = 22.21 
+            xmax = 22.989433106575962 
+            text = "" 
+    item [6]:
+        class = "IntervalTier" 
+        name = "Comment" 
+        xmin = 0 
+        xmax = 22.989433106575962 
+        intervals: size = 20 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.99 
+            text = "" 
+        intervals [2]:
+            xmin = 0.99 
+            xmax = 2.78 
+            text = "" 
+        intervals [3]:
+            xmin = 2.78 
+            xmax = 3.81 
+            text = "" 
+        intervals [4]:
+            xmin = 3.81 
+            xmax = 5.15 
+            text = "" 
+        intervals [5]:
+            xmin = 5.15 
+            xmax = 6.18 
+            text = "" 
+        intervals [6]:
+            xmin = 6.18 
+            xmax = 7.36 
+            text = "" 
+        intervals [7]:
+            xmin = 7.36 
+            xmax = 7.97 
+            text = "" 
+        intervals [8]:
+            xmin = 7.97 
+            xmax = 9.63 
+            text = "" 
+        intervals [9]:
+            xmin = 9.63 
+            xmax = 10.43 
+            text = "" 
+        intervals [10]:
+            xmin = 10.43 
+            xmax = 11.87 
+            text = "" 
+        intervals [11]:
+            xmin = 11.87 
+            xmax = 12.58 
+            text = "" 
+        intervals [12]:
+            xmin = 12.58 
+            xmax = 13.95 
+            text = "" 
+        intervals [13]:
+            xmin = 13.95 
+            xmax = 15.01 
+            text = "" 
+        intervals [14]:
+            xmin = 15.01 
+            xmax = 16.60410300503467 
+            text = "" 
+        intervals [15]:
+            xmin = 16.60410300503467 
+            xmax = 17.76 
+            text = "" 
+        intervals [16]:
+            xmin = 17.76 
+            xmax = 18.82 
+            text = "" 
+        intervals [17]:
+            xmin = 18.82 
+            xmax = 20.03 
+            text = "" 
+        intervals [18]:
+            xmin = 20.03 
+            xmax = 20.61 
+            text = "" 
+        intervals [19]:
+            xmin = 20.61 
+            xmax = 22.21 
+            text = "" 
+        intervals [20]:
+            xmin = 22.21 
+            xmax = 22.989433106575962 
+            text = "" 

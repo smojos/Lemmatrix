@@ -31,6 +31,12 @@ Morphology
   Verbs     PRS unmarked, PST -ɛ̀ (class I) / -rɛ̀ (class II), FUT dɔ̄- after the subject;
             IMP -á / -rá, 2PL with βʊ̄-; NEG imperative: kʌ̀ before the verb.
             A full noun object (NP.O) follows the verb.
+  Syntax    SVO; a full noun subject comes before the verb, which keeps its agreeing prefix
+            (ŋɔ́ɔɲ wɛ́-tʌ̄ŋɛ̀ 'the lion ate'); adjectives and numbers follow the noun (dʌ́ʌmà ɓɪ̀ɪ
+            'two goats'); a possessor noun comes before the possessed, unmarked (ŋɔ́ɔɲ rɪ̀ɪŋ 'lion
+            meat'); an adverb starts or ends the clause; a copula clause is X (ADJ) ɗɪ̄ɪ.
+  Text      T001 'The man and the lion' (TEXT_LINES), recorded by Josh, with lines 3, 4 and 10
+            clipped as U001-U003.
   Frames    Frame 1: ___ ɗɪ̄ɪ 'it is a ___'; Frame 2: mɪ̀ɲɔ̄ɔ ___ 'I see the ___'.
 """
 
@@ -325,6 +331,129 @@ def inflection_class(root: str) -> str:
 
 
 # ---------------------------------------------------------------------------------------------
+# The text, its clipped utterances and the consent form (Josh, 25 October)
+# ---------------------------------------------------------------------------------------------
+
+TEXT_TITLE = "The man and the lion"
+TEXT_DATE = "2026-10-25"
+# Josh's recording and TextGrid (Soundfiles/Texts), one line per interval: Phonemic, Morphemes, Translation
+TEXT_LINES = [
+    ("ɲàmá gàanà wɛ́jànɛ̀ bɛ̄ɛŋ", "today man 3SG.A-take-PST spear", "Today the man took a spear."),
+    ("wɛ́ɲɔ̄ɔrɛ̀ ŋɔ́ɔɲ dɛ̀ɛ́", "3SG.A-see-PST lion here", "He saw a lion here."),
+    ("ŋɔ́ɔɲ dʊ́ŋ ɗɪ̄ɪ", "lion big COP", "It was a big lion."),
+    ("ŋɔ́ɔɲ wɛ́tʌ̄ŋɛ̀ dʌ́ʌmà ɓɪ̀ɪ", "lion 3SG.A-eat-PST goat-PL two", "The lion ate two goats."),
+    ("gàanà wɛ́lɔ̄ɔlɛ̀rɛ̀ tʰʊ̀ŋà", "man 3SG.A-call-PST child-PL", "The man called the children."),
+    ("tʰʊ̀ŋà kɪ́ɓɛ́ɛŋɛ̀ kɔ̀ɔlɔ́nà", "child-PL 3PL.A-carry-PST stone-PL", "The children carried stones."),
+    ("gàanà wɛ́βàdárɛ̀ kɔ̀ɔlɔ́", "man 3SG.A-throw-PST stone", "The man threw a stone."),
+    ("wɛ́rɛ̀ɛmɛ̀ ŋɔ́ɔɲ", "3SG.A-kill-PST lion", "He killed the lion."),
+    ("dɛ̄nzɪ́ wɛ́t͡sʊ̀mbàrɛ̀ rɪ̀ɪŋ", "woman 3SG.A-cook-PST meat", "The woman cooked the meat."),
+    ("tʌ́dɔ̄tʌ̄ŋ ŋɔ́ɔɲ rɪ̀ɪŋ ɲàmá", "1PL.A-FUT-eat lion meat today", "“We will eat lion meat today.”"),
+]
+# lines clipped as utterances (1-based), with the lemmas (by gloss) each is linked to
+CLIPS = {3: ["lion", "big"], 4: ["lion", "eat", "goat", "two"], 10: ["eat", "lion", "meat", "today"]}
+TIERS = ["Phonetic", "Phonemic", "Pitch", "Morphemes", "Translation", "Comment"]
+CONSENT = "Documentation/DML consent form.pdf"
+
+
+def add_text(db) -> bool:
+    """T001, Josh's recording of the text with its TextGrid, and its lines 3, 4 and 10 clipped as
+    utterances (as Clip as utterance does). Nothing is added unless both files are in Soundfiles/Texts."""
+    from lemmatrix import textgrid as tgmod
+    from lemmatrix.model import ClipSource, Text, TierMapping, TierRule
+    if db.text_by_ref("T001"):
+        return False
+    text = Text(ref="T001", file_label=TEXT_TITLE, date=TEXT_DATE, participants=[SPEAKER],
+                researchers=["JJA"], locations=["NOWH"])
+    text.set("Title", TEXT_TITLE)
+    text.set("Genre", "folktale")
+    text.set("Status", "analyzed")
+    text.tiers = TierMapping("Phonetic", [TierRule(n, n, "en" if n == "Translation" else "") for n in TIERS])
+    text.file = db.expected_text_name(text, ".wav")
+    text.textgrid = db.expected_text_name(text, ".TextGrid")
+    folder = storage.text_folder(db)
+    wav, grid = folder / text.file, folder / text.textgrid
+    if not (wav.exists() and grid.exists()):
+        return False
+    db.texts.append(text)
+    lines = tgmod.read_lines(grid, text.tiers, SPEAKER)
+    modified = tgmod.modified(grid)
+    out = storage.utterance_folder(db)
+    out.mkdir(parents=True, exist_ok=True)
+    pad = db.settings.clip_padding / 1000.0
+    length = audio.duration(wav)
+    by_gloss = {e.multi.get("Gloss", {}).get("en"): e for e in db.entries}
+    for number, glosses in CLIPS.items():
+        ln = lines[number - 1]
+        words = ln.values.get("Translation:en", "")
+        u = db.new_utterance(db.suggest_utterance_reference("U"),
+                             " ".join(words.strip("“”.").split()[:6]), SPEAKER, TEXT_DATE)
+        for key, value in ln.values.items():
+            name, _, lang = key.partition(":")
+            f = db.settings.token_field(name)
+            if f is not None:
+                u.token.set(name, value, (lang or "en") if f.multilingual else None, f.multilingual)
+        u.source = ClipSource(text.id, ln.start, ln.end, dict(ln.copied), modified)
+        u.lemmas = [by_gloss[g].id for g in glosses]
+        u.token.file = db.expected_filename(u, u.token)
+        if not (out / u.token.file).exists():
+            audio.clip_wav(wav, out / u.token.file, max(0.0, ln.start - pad), min(length, ln.end + pad),
+                           SPEAKER, TEXT_DATE)
+        db.utterances.append(u)
+    return True
+
+
+def consent_form(db) -> None:
+    """Dzosho Mofo Lakanoro's (invented) signed consent form, as a PDF in Documentation."""
+    path = Path(db.path).parent / CONSENT
+    db.metadata.participant(SPEAKER).consent = CONSENT
+    if path.exists():
+        return
+    import os
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtCore import QMarginsF, QSizeF
+    from PySide6.QtGui import QPageLayout, QPageSize, QPdfWriter, QTextDocument
+    from PySide6.QtWidgets import QApplication
+    app = QApplication.instance() or QApplication([])  # noqa: F841 (fonts need an application)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    box = "&#9746;"
+    html = f"""
+<div style="font-family:'DejaVu Serif'; font-size:10.5pt">
+<p style="text-align:center; color:#a33; font-size:9pt"><b>SAMPLE DATA. Invented for the Lemmatrix sample
+database: no real person, place or institution.</b></p>
+<h2 style="text-align:center; margin-bottom:0">University of Wagandha</h2>
+<p style="text-align:center; margin-top:2px">Department of Language Documentation</p>
+<h3 style="text-align:center">Informed consent: recording the Sample language (LXX, Sample variety VXX)</h3>
+<p><b>Researcher:</b> Joshua J Alexander (JJA)<br><b>Participant:</b> Dzosho Mofo Lakanoro (DML)<br>
+<b>Place:</b> Nowhero, Whero State, Wagandha<br><b>Funded by:</b> University of Wagandha</p>
+<p>The researcher has explained, in a language I understand, that this project records words, sentences
+and stories in my language so that they can be studied and kept for the future. I understand that taking
+part is my choice, that I may stop at any time, and that I may ask for my recordings to be withdrawn.</p>
+<p>{box} I agree to be recorded saying words, sentences and stories.<br>
+{box} I agree that my name may be given with the recordings and the data (<i>identifiable</i>).<br>
+{box} I agree that my recordings may be shared with other researchers and in an archive (<i>audio sharing</i>).<br>
+{box} I agree that the transcriptions and translations may be published.</p>
+<br>
+<table width="100%" cellpadding="4">
+<tr><td width="50%">Participant's signature:<br><span style="font-family:'DejaVu Serif'; font-style:italic;
+font-size:20pt; color:#1d3b8f">Dzosho M. Lakanoro</span><br>Date: 20 October 2026</td>
+<td width="50%">Researcher's signature:<br><span style="font-family:'DejaVu Serif'; font-style:italic;
+font-size:20pt; color:#1d3b8f">J. J. Alexander</span><br>Date: 20 October 2026</td></tr></table>
+<br><p style="font-size:8pt; color:#666">Lemmatrix sample data © 2026 Joshua A. G. Smolders, all rights
+reserved (SAMPLES.md). Any resemblance to any real person, place or institution is a complete coincidence.</p>
+</div>"""
+    writer = QPdfWriter(str(path))
+    writer.setPageLayout(QPageLayout(QPageSize(QPageSize.A4), QPageLayout.Portrait, QMarginsF(20, 20, 20, 20),
+                                     QPageLayout.Millimeter))
+    writer.setResolution(96)
+    writer.setTitle("Consent form: Dzosho Mofo Lakanoro (sample data)")
+    writer.setCreator("Lemmatrix sample (samples/make_sample.py)")
+    doc = QTextDocument()
+    doc.setHtml(html)
+    doc.setPageSize(QSizeF(writer.width(), writer.height()))
+    doc.print_(writer)
+
+
+# ---------------------------------------------------------------------------------------------
 # Building the database
 # ---------------------------------------------------------------------------------------------
 
@@ -499,6 +628,8 @@ class Builder:
         for gloss, form in ADVERBS:
             self.simple("N", gloss, form, "ADVERB")
         wl.link_as_eacw(self.db)
+        add_text(self.db)
+        consent_form(self.db)
         self.matrices()
         storage.save(self.db, HERE / "Sample.xml", backup=False)
         workspace.save(workspace.Workspace(), self.db)        # the saved matrices are in its workspace
