@@ -22,11 +22,11 @@ along the bottom with the buttons at its left, Josh's duster and his four marker
 
 from __future__ import annotations
 
-from PySide6.QtCore import QPoint, QPointF, QRectF, QSize, Qt, Signal
+from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import (QColor, QImage, QKeySequence, QLinearGradient, QPainter,
                            QPainterPath, QPen, QShortcut, QTransform)
 from PySide6.QtWidgets import (QApplication, QDialog, QHBoxLayout, QMenu, QMessageBox, QScrollArea,
-                               QToolButton, QToolTip, QVBoxLayout, QWidget)
+                               QToolButton, QVBoxLayout, QWidget)
 
 from .. import hypotheses as hy
 from .. import whiteboard as wb
@@ -583,13 +583,42 @@ class WhiteboardWindow(QDialog):
         self.board.saved = wb.relative(self.doc.db.path, path)
         self.board.changed = False
         self._keep()
-        QToolTip.showText(self.save_btn.mapToGlobal(QPoint(0, -30)),
-                          f"Saved as {path.name} in the Whiteboard folder", self.save_btn)
+        self.notice(f"✓  Saved as {path.name} in the Whiteboard folder")
         return path
 
     def copy(self):
         QApplication.clipboard().setImage(self.image())
-        QToolTip.showText(self.copy_btn.mapToGlobal(QPoint(0, -30)), "Copied to the clipboard", self.copy_btn)
+        self.notice("✓  Copied to the clipboard")
+
+    def notice(self, text: str):
+        """A confirmation over the top of the board (Josh, 25 October: a tooltip didn't show, e.g. after
+        Ctrl+S): white on the theme colour, held 2.5 s, then fading out; a new one replaces it."""
+        from PySide6.QtCore import QPropertyAnimation, QTimer
+        from PySide6.QtWidgets import QGraphicsOpacityEffect, QLabel
+        old = getattr(self, "_notice", None)
+        if old is not None:
+            try:
+                old.deleteLater()
+            except RuntimeError:
+                pass
+        lab = QLabel(text, self)
+        c = theme.colour("pitch").name()
+        lab.setStyleSheet(f"background: {c}; color: white; font-weight: bold; padding: 8px 16px; border-radius: 8px;")
+        lab.setAttribute(Qt.WA_TransparentForMouseEvents)
+        lab.adjustSize()
+        lab.move((self.width() - lab.width()) // 2, 16)
+        fade = QGraphicsOpacityEffect(lab)
+        fade.setOpacity(1.0)
+        lab.setGraphicsEffect(fade)
+        lab.show()
+        lab.raise_()
+        self._notice = lab
+        anim = QPropertyAnimation(fade, b"opacity", lab)
+        anim.setDuration(600)
+        anim.setStartValue(1.0)
+        anim.setEndValue(0.0)
+        anim.finished.connect(lab.deleteLater)
+        QTimer.singleShot(2500, lab, anim.start)
 
     def link_to_hypothesis(self):
         """Link to hypothesis…: the drawing as saved (saved now if it has new strokes)."""

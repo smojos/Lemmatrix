@@ -263,6 +263,16 @@ def test_save_png_and_jpeg_into_the_whiteboard_folder(win):
     assert "Whiteboard" in [x[0] for x in win.FOLDERS if x] and layout.WHITEBOARD in win.MADE_ON_DEMAND
 
 
+def test_save_and_copy_show_a_notice_on_the_board(win):
+    """Josh, 25 October: no visible confirmation on saving (the tooltip didn't show)."""
+    w = win.open_whiteboard()
+    _draw(w, "red", [(10, 10), (50, 50)], 8)
+    p = w.save("png")
+    assert w._notice.isVisible() and p.name in w._notice.text() and "Whiteboard folder" in w._notice.text()
+    w.copy()
+    assert w._notice.text().endswith("Copied to the clipboard")
+
+
 def test_save_needs_a_saved_database(win, monkeypatch):
     w = win.open_whiteboard()
     monkeypatch.setattr(win.doc.db, "path", "")
