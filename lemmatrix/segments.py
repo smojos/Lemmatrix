@@ -104,6 +104,29 @@ def native(sequence: str) -> Voice | None:
     return native_index().get(key(sequence))
 
 
+@lru_cache(maxsize=1)
+def callers() -> dict[str, str]:
+    """The alternative callers (`ipa/alternatives.tsv`, Josh's list of 25 October): an easily typed
+    sequence (its key) → the IPA symbol it calls: `sh` → ʃ, `b'` → ɓ, `!` → ǃ."""
+    out: dict[str, str] = {}
+    tsv = NATIVE_FOLDER / "alternatives.tsv"
+    if not tsv.exists():
+        return out
+    with open(tsv, encoding="utf-8", newline="") as f:
+        rows = csv.DictReader((ln for ln in f if not ln.startswith("#")), delimiter="\t")
+        for row in rows:
+            ipa, alt = norm(row.get("ipa", "")), norm(row.get("alternative", ""))
+            if ipa and alt and key(alt) != key(ipa):
+                out.setdefault(key(alt), ipa)
+    return out
+
+
+def called(sequence: str) -> str:
+    """The IPA symbol a sequence typed on its own stands for (`sh` → `ʃ`), or "" when it is none.
+    Only the whole sequence counts: `sha` calls nothing of ʃ's (Josh, 25 October)."""
+    return callers().get(key(sequence), "")
+
+
 def folder(db) -> Path:
     """The database's `Soundfiles/Segments`."""
     return layout.segments_folder(db.path)
@@ -207,7 +230,12 @@ def voices(db, sequence: str, session_speaker: str = "") -> list[Voice]:
             return (1, 0, v.path.name)
         return (2, order.get(v.speaker, len(order)), v.path.name)
     out = sorted(own, key=rank)
-    nat = native(seq)
+    # An alternative caller (`sh`) also calls the IPA symbol's soundfiles (ʃ), after any recording
+    # of the sequence as typed: a recording named `th` (an aspirated t) is never taken for θ.
+    ipa = called(sequence)
+    if ipa:
+        out += sorted((v for v in recordings(db) if key(v.sequence) == key(ipa)), key=rank)
+    nat = native(seq) or (native(ipa) if ipa else None)
     if nat is not None:
         out.append(nat)
     return out

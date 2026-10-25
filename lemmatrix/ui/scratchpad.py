@@ -254,7 +254,10 @@ class SegmentPad(QWidget):
                               "Type the sequence to record first.", self.edit)
             return
         from .. import segments
-        bad = segments.problem(self.sequence())
+        sequence = self.sequence()
+        if segments.problem(sequence) and segments.called(sequence):
+            sequence = segments.called(sequence)  # `?` records as ʔ: ? can't be in a file name
+        bad = segments.problem(sequence)
         if bad:
             self.edit.setFocus()
             QToolTip.showText(self.edit.mapToGlobal(self.edit.rect().bottomLeft()),
@@ -266,7 +269,7 @@ class SegmentPad(QWidget):
                                     "Soundfiles/Segments folder.")
             return
         from .segment_record import SegmentRecordDialog
-        dlg = SegmentRecordDialog(self.main, self.sequence(), self)
+        dlg = SegmentRecordDialog(self.main, sequence, self)
         dlg.exec()
         self.chosen = None
         self.changed.emit()

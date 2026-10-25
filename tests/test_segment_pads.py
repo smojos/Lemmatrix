@@ -304,3 +304,14 @@ def test_tab_loops_round_the_pads_without_playing(win, area, monkeypatch):
     ev = QKeyEvent(QEvent.KeyPress, Qt.Key_Tab, Qt.NoModifier)
     assert area.eventFilter(a, ev)                                    # the Tab key itself goes round
     assert played == []                                               # for typing: nothing plays
+
+
+def test_question_mark_calls_and_records_the_glottal_stop(win, area, monkeypatch):
+    area.seg_alpha.edit.setText("?")                              # Josh's alternative for ʔ
+    assert area.seg_alpha.voice().path.name == "Glottal_stop.ogg"
+    from lemmatrix.ui import segment_record
+    opened = []
+    monkeypatch.setattr(segment_record, "SegmentRecordDialog",
+                        lambda main, seq, parent: opened.append(seq) or type("D", (), {"exec": lambda s: 0})())
+    area.seg_alpha.record()
+    assert opened == ["ʔ"]                                        # ? can't be in a file name

@@ -139,3 +139,27 @@ def test_an_ordinary_g_calls_the_same_as_the_ipa_g(tmp_path):
     assert segments.key("g") == segments.key("ɡ") == "ɡ"
     assert segments.key("ga") == segments.key("ɡa")
     assert segments.native("g").sequence == "ɡ"
+
+
+def test_alternative_callers_call_the_ipa_symbols_soundfile():
+    """Josh's list (25 October, lemmatrix/ipa/alternatives.tsv): the whole sequence only."""
+    assert sg.called("sh") == "ʃ" and sg.native("ʃ") is not None
+    assert sg.called("sha") == ""                              # only on its own
+    for alt, ipa in (("b'", "ɓ"), ("!", "ǃ"), ("?", "ʔ"), ("ny", "ɲ"), ("gh", "ɣ"), ("tr'", "ʈʼ"),
+                     ("ch", "t͡ʃ"), ("(.)", "ʘ"), ("G'", "ʛ"), ("J", "d͡ʒ"), ("X", "q")):
+        assert sg.called(alt) == ipa, alt
+        assert sg.native(ipa) is not None, ipa                 # every target is a built-in sound
+    assert sg.called("rr") == ""                               # waiting: given for both ɻ and ɽ
+    for alt in sg.callers():                                   # no alternative is itself a built-in
+        assert sg.native(alt) is None or sg.key(sg.native(alt).sequence) == sg.key(sg.called(alt)), alt
+
+
+def test_a_recording_of_the_sequence_as_typed_comes_before_the_alternative(tmp_path):
+    db = _db(tmp_path)
+    folder = layout.segments_folder(db.path)
+    folder.mkdir(parents=True)
+    _wav(folder / "LXX-VXX_th.wav")                                     # an aspirated t, say
+    _wav(folder / "LXX-VXX_θ.wav")
+    found = sg.voices(db, "th")
+    assert [v.sequence for v in found] == ["th", "θ", "θ"] and found[-1].native
+    assert [v.sequence for v in sg.voices(db, "θ")] == ["θ", "θ"]      # θ never finds the th recording
