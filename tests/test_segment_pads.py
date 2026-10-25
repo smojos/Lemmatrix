@@ -94,11 +94,23 @@ def test_ts_without_a_tie_bar_plays_tʃs_soundfile(win, area, monkeypatch):
     assert pads == [True]                                             # played with silence round it
 
 
-def test_forbidden_characters_are_refused(win, area):
+def test_forbidden_characters_are_said_and_refused_for_recording(win, area, monkeypatch):
     from PySide6.QtGui import QValidator
     v = area.seg_alpha.edit.validator()
-    assert v.validate("a|", 2)[0] == QValidator.Invalid
+    # not refused while typing: Keyman types g< and then replaces it (the g vanished; Josh, 25 October)
+    assert v.validate("g<", 2)[0] == QValidator.Intermediate
     assert v.validate("ǀ", 1)[0] == QValidator.Acceptable          # the click letter is fine
+    from lemmatrix.ui import segment_record
+    opened = []
+    monkeypatch.setattr(segment_record, "SegmentRecordDialog", lambda *a, **k: opened.append(a))
+    area.seg_alpha.edit.setText("a|")
+    area.seg_alpha.record()
+    assert not opened                                             # never a file name with |
+
+
+def test_an_ordinary_g_calls_the_ipa_g(win, area):
+    area.seg_alpha.edit.setText("g")                              # U+0067, not the IPA's U+0261
+    assert area.seg_alpha.voice().path.name == "Voiced_velar_plosive.ogg"
 
 
 def test_the_record_button_is_outside_the_box(win, area):

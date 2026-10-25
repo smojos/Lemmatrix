@@ -4,7 +4,8 @@
 
 Whatever is typed in a Segments pad is a **sequence**, and any string is a sequence of its own
 (Josh: questions of segmental equivalency belong to the analysis phase), normalised (NFC) and
-trimmed; the one exception is the tie bar: t͡s and ts call the same thing (Josh, 24 October). Two kinds of soundfile answer to a sequence:
+trimmed; the exceptions are the tie bar (t͡s and ts call the same thing; Josh, 24 October) and a few
+easily typed alternatives (g calls ɡ; ALTERNATIVES, Josh, 25 October). Two kinds of soundfile answer to a sequence:
 
 - **The database's own**, recorded in the phonetics scratchpad into `Soundfiles/Segments` and found by
   their names alone (like Images: nothing in the database file), named
@@ -60,11 +61,20 @@ def norm(text: str) -> str:
 TIE_BARS = "\u0361\u035c"      # ◌͡◌ above and ◌͜◌ below: t͡s and ts call the same thing (Josh, 24 October)
 
 
+# Characters typed for an IPA one that is hard to type: each calls the same soundfiles as its IPA
+# symbol, in Lemmatrix's own and in recordings named either way (Josh, 25 October: hardly any
+# linguist types the IPA's ɡ, U+0261, so the ordinary g, U+0067, calls it). Names keep what was typed.
+ALTERNATIVES = {
+    "g": "\u0261",            # g → ɡ
+}
+
+
 def key(text: str) -> str:
     """What a sequence is looked up by: as typed (normalised), but with tie bars left out, so
     `ts` finds Lemmatrix's `t͡s` and a recording named either way (Josh: the tie bar doesn't type
-    easily). Names keep what was typed."""
-    return "".join(c for c in norm(text) if c not in TIE_BARS)
+    easily), and each ALTERNATIVES character as its IPA symbol (`g` finds `ɡ`). Names keep what
+    was typed."""
+    return "".join(ALTERNATIVES.get(c, c) for c in norm(text) if c not in TIE_BARS)
 
 
 def problem(text: str) -> str:

@@ -109,8 +109,10 @@ class PitchScratchpad(QWidget):
 
 
 class _SequenceValidator(QValidator):
-    """No characters Windows forbids in file names (the sequence names its soundfile); a short
-    message says why, at the box."""
+    """Characters Windows forbids in file names (the sequence names its soundfile) are said at the
+    box, but not refused while typing: Keyman's IPA keyboards type < or > and then replace the
+    letter before it (g< for ɢ), and refusing the < made the letter vanish (Josh, 25 October).
+    Recording refuses such a sequence (SegmentPad.record)."""
 
     def __init__(self, edit, parent=None):
         super().__init__(parent)
@@ -122,7 +124,7 @@ class _SequenceValidator(QValidator):
         if bad:
             QToolTip.showText(self.edit.mapToGlobal(self.edit.rect().bottomLeft()),
                               f"{bad} can't be in a sequence: it names its soundfile.", self.edit)
-            return QValidator.Invalid, text, pos
+            return QValidator.Intermediate, text, pos
         return QValidator.Acceptable, text, pos
 
 
@@ -250,6 +252,13 @@ class SegmentPad(QWidget):
             self.edit.setFocus()
             QToolTip.showText(self.edit.mapToGlobal(self.edit.rect().bottomLeft()),
                               "Type the sequence to record first.", self.edit)
+            return
+        from .. import segments
+        bad = segments.problem(self.sequence())
+        if bad:
+            self.edit.setFocus()
+            QToolTip.showText(self.edit.mapToGlobal(self.edit.rect().bottomLeft()),
+                              f"{bad} can't be in a sequence: it names its soundfile.", self.edit)
             return
         db = self._db()
         if db is None or not db.path:

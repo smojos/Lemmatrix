@@ -44,7 +44,7 @@ def test_native_lookup_and_credit():
     assert sg.native(" ɛ ").credit.startswith("Terfili")               # trimmed; the actual recorder
     assert sg.native("ts") is sg.native("t͡s") is not None            # tie bar or not: the same (Josh)
     assert sg.native("t͜s") is sg.native("t͡s")                        # the tie bar below too
-    assert sg.native("ɡ") is not None and sg.native("g") is None
+    assert sg.native("ɡ") is not None and sg.native("g") is sg.native("ɡ")   # the ordinary g too (Josh, 25 October)
     assert sg.native("ɸʼ").credit.endswith("CC0 · Wikimedia Commons")
 
 
@@ -132,3 +132,10 @@ def test_ethical_archive_takes_only_shared_participants(tmp_path):
     out = tmp_path / "archive" / "Soundfiles" / "Segments"
     assert sg.copy_shared(db, out) == (1, 3)
     assert [p.name for p in out.iterdir()] == ["LXX-VXX-SP1_ʌ.wav"]
+
+
+def test_an_ordinary_g_calls_the_same_as_the_ipa_g(tmp_path):
+    from lemmatrix import segments
+    assert segments.key("g") == segments.key("ɡ") == "ɡ"
+    assert segments.key("ga") == segments.key("ɡa")
+    assert segments.native("g").sequence == "ɡ"
