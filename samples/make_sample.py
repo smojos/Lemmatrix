@@ -632,7 +632,8 @@ class Builder:
         consent_form(self.db)
         self.matrices()
         storage.save(self.db, HERE / "Sample.xml", backup=False)
-        workspace.save(workspace.Workspace(), self.db)        # the saved matrices are in its workspace
+        if not workspace.path_for(HERE / "Sample.xml").exists():    # Josh's own setup is kept (25 October)
+            workspace.save(workspace.Workspace(), self.db)
         shutil.rmtree(HERE / "Backups", ignore_errors=True)
         return self.db
 
