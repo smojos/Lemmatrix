@@ -10,10 +10,8 @@ as their own.
 
 ## How the sample language was made
 
-The sample database's language (LXX, variety VXX) is invented. Its word forms and its example text
-were generated at random by Claude AI, using a phoneme inventory the author fed it plus
-Lemmatrix's tag system; the author chose the design and records the text in his own voice.
-Any resemblance to any living language is a complete coincidence.
+The sample database's language (LXX, variety VXX) is invented, and its recordings are the
+author's own voice. Any resemblance to any living language is a complete coincidence.
 The ɛλicit test database is a little Italian, with the author's own recordings.
 
 ## What counts as the samples

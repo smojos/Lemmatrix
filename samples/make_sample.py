@@ -5,16 +5,15 @@
     python samples/make_sample.py        ->  samples/Sample.xml and samples/Soundfiles/
 
 The language (LXX, variety VXX) is made up for trying out Lemmatrix: it is not a real language.
-Its word forms (and its text) were generated at random by Claude AI, from a phoneme inventory
-Josh fed it and Lemmatrix's tag system. Any resemblance to any living language is a complete coincidence.
+Any resemblance to any living language is a complete coincidence.
 The database uses the program's defaults (fields,
 tags, lists, people and places); only the frames' carrier sentences are filled in.
 
 Phonology
   Consonants  p pʼ pʰ b ɓ t tʼ tʰ t̪ t̪ʰ t̪ʼ d̪ d ɗ c cʰ cʼ ɟ k kʼ kʰ g ʔ β s z ʃ t͡s d͡z n m ŋ ɲ l r w j ɥ
   Vowels      a i ɪ u ʊ e ɛ o ɔ ʌ ə, and long aa ii ɪɪ uu ʊʊ ee ɛɛ oo ɔɔ ʌʌ
-  Tones       v́ H, v̄ M, v̀ L, v̂ HL, v̌ LH, ꜜ downstep (Phonemic only); Pitch: H 5, M 3, L 1,
-              a downstepped H 4. A long vowel's tone is marked on its first half (áa);
+  Tones       v́ H, v̄ M, v̀ L, v̂ HL, v̌ LH, ꜜ downstep (Phonemic only); Pitch: H 55, M 33, L 11,
+              a downstepped H 44; a final L falls to 10 (final lowering). A long vowel's tone is marked on its first half (áa);
               a contour on a long vowel is split between the halves (áà).
   Syllables   CVN CVVN CV CVV CVCV CVVCV CVNCV CVVNCV CVCVCV CVNCVCV; a nasal before a
               consonant shares its place.
@@ -238,7 +237,22 @@ def pitch_of(form: str) -> str:
                 sylls.append(f"{a[0]}:{b[-1]}")
             else:
                 sylls.append("".join(map(str, tone_points(tone))))
-    return pitch.normalise(" ".join(sylls))
+    return phonetic_pitch(pitch.normalise(" ".join(sylls)))
+
+
+def phonetic_pitch(text: str) -> str:
+    """Josh's phonetic detail (25 October): a short syllable's level is written twice (5 -> 55),
+    and an utterance ending on a low (1 or 2) falls a step further at the end (1 -> 10, 2 -> 21)."""
+    sylls = text.split()
+    for i, s in enumerate(sylls):
+        if s.isdigit() and len(s) == 1:
+            sylls[i] = s * 2
+    if sylls and sylls[-1][-1] in "12":
+        last = sylls[-1]
+        if len(last) == 2 and last[0] == last[1]:           # a doubled level: the fall replaces the copy
+            last = last[0]
+        sylls[-1] = last + str(int(last[-1]) - 1)
+    return " ".join(sylls)
 
 
 def tone_melody(form: str) -> str:
@@ -312,9 +326,8 @@ class Builder:
         md.language_code, md.language_name = "LXX", "Sample language"
         md.variety_code, md.variety_name = "VXX", "Sample variety"
         md.name = "Sample"
-        md.description = ("Invented sample data for trying out Lemmatrix: not a real language. Its word forms were "
-                          "generated at random by Claude AI, from a phoneme inventory Josh fed it and "
-                          "Lemmatrix's tag system. Any resemblance to any living language is a complete coincidence. "
+        md.description = ("Invented sample data for trying out Lemmatrix: not a real language. "
+                          "Any resemblance to any living language is a complete coincidence. "
                           "© Joshua A. G. Smolders, all rights reserved (SAMPLES.md). "
                           "Built by samples/make_sample.py.")
         for name, carrier in FRAMES.items():
@@ -341,7 +354,8 @@ class Builder:
             e.tokens.append(t)
         if record:
             t.file = self.db.expected_filename(e, t)
-            audio.write_wav(self.folder / t.file, hum(t.get("Pitch")), RATE, 16, artist=t.speaker, date=t.collected)
+            if not (self.folder / t.file).exists():   # Josh's own recordings are kept; a hum only fills a gap
+                audio.write_wav(self.folder / t.file, hum(t.get("Pitch")), RATE, 16, artist=t.speaker, date=t.collected)
         return t
 
     def entry(self, ref, form, gloss, wc, classes=True):
@@ -425,7 +439,7 @@ class Builder:
         ]
 
     def build(self):
-        shutil.rmtree(HERE / "Soundfiles", ignore_errors=True)
+        # Soundfiles/ is never deleted: it holds Josh's recordings of the sample (SAMPLES.md)
         for letter, gloss, form in NOUNS:
             self.noun(letter, gloss, form)
         for v in VERBS:

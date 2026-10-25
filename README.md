@@ -84,8 +84,7 @@ deliberate, part of the author's personal campaign to make it a compound, like *
 3. On the first start the welcome window asks; choose **Yes, load the sample** to try it with invented data
    (later: Help → Sample databases): a made-up language
    (LXX) with 98 lemmas, saved matrices and synthetic recordings, built by
-   `samples/make_sample.py`. It isn't a real language: its word forms were generated at random by Claude AI from a phoneme inventory
-   I fed it, plus Lemmatrix's tag system. Any resemblance to any living language is a complete coincidence. The copy goes to
+   `samples/make_sample.py`. It isn't a real language. Any resemblance to any living language is a complete coincidence. The copy goes to
    `Documents\Lemmatrix Sample`, so the sample in the repository stays untouched.
 
 4. Once it has run, double-click **`Make desktop shortcut.bat`** to put a Lemmatrix shortcut,
