@@ -606,7 +606,12 @@ class MatrixView(QTableView):
         self.model_.db = db
         self.defaults = mx.default_names(db)
 
-    def set_layout(self, layout: mx.Layout, cell_fields: list[str]):
+    def set_layout(self, layout: mx.Layout, cell_fields: list[str], changed=None):
+        """Show a layout, its columns and rows sized to their cells. changed: the ids of the
+        lemmas edited since the last layout (Lemma/Tag after an edit): every other lemma's cells
+        keep the sizes measured before, if nothing else that sizes them has changed (fields,
+        zoom, fonts, display conventions…); None measures every cell (the audit, section 8: an
+        edit to one lemma measured all 2,400 again, about 2 s at full size)."""
         self.cell_fields = list(cell_fields)
         self.defaults = mx.default_names(self.db)
         self.selected = None
@@ -620,11 +625,18 @@ class MatrixView(QTableView):
         widths = [0] * len(layout.cols)
         z = getattr(self, "zoom", 1.0)
         heights = [round(40 * z)] * len(layout.rows)
+        sizes = self._sizes_kept(layout, changed)
         d.begin_pass()
         try:
             for (r, c), hits in layout.cells.items():
-                widths[c] = max(widths[c], d.cell_width(r, c, hits))
-                heights[r] = max(heights[r], d.cell_height(r, c, hits))
+                entry, _ = layout.target(r, c)
+                key = (layout.spec_at(r, c), tuple(id(t) for _, t in hits))
+                kept = sizes.setdefault((id(entry), entry.id if entry is not None else None), {})
+                wh = kept.get(key)
+                if wh is None:
+                    wh = kept[key] = (d.cell_width(r, c, hits), d.cell_height(r, c, hits))
+                widths[c] = max(widths[c], wh[0])
+                heights[r] = max(heights[r], wh[1])
         finally:
             d.end_pass()
         hh, vh = self.horizontalHeader(), self.verticalHeader()
@@ -635,6 +647,24 @@ class MatrixView(QTableView):
         if layout.cols:                    # its height follows the widths just set (one line or two)
             hh.headerDataChanged(Qt.Horizontal, 0, len(layout.cols) - 1)
         self._place_switch()
+
+    def _sizes_kept(self, layout: mx.Layout, changed) -> dict:
+        """The cells' sizes measured before, by lemma, then by the cell's tags and tokens: what
+        set_layout may use again. Forgotten when anything that sizes a cell other than the lemma's
+        own tokens may have changed, and for the lemmas edited since."""
+        from dataclasses import astuple
+        context = (id(self.db), getattr(self, "zoom", 1.0), self.font().pointSizeF(),
+                   tuple(self.cell_fields), frozenset(self.aligned), frozenset(self.defaults),
+                   layout.entry is None, widgets.IPA_SIZE, widgets.SHOW_UNUSUAL,
+                   astuple(conventions.CURRENT))
+        sizes = getattr(self, "_sizes", None)
+        if changed is None or sizes is None or context != getattr(self, "_sizes_context", None):
+            sizes = self._sizes = {}
+            self._sizes_context = context
+        else:
+            for k in [k for k in sizes if k[0] in changed]:
+                del sizes[k]
+        return sizes
 
     def _place_switch(self):
         w = self.verticalHeader().width() or 90

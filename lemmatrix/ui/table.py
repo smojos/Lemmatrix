@@ -58,12 +58,23 @@ def _text(value) -> str:
     return value or ""
 
 
+RESET = object()     # set_rows: start the table again (the default), whatever changed
+
+
+def _row_key(row):
+    """What makes a row the same row when the rows are made again: the object itself (a lemma,
+    an utterance), or the lemma and position of a token (All data's rows are made anew)."""
+    entry = getattr(row, "entry", None)
+    return (id(row), None) if entry is None else (id(entry), getattr(row, "index", None))
+
+
 class RowModel(QAbstractTableModel):
     edited = Signal(object, str, str)            # row, column key, new text
 
     def __init__(self):
         super().__init__()
         self.rows: list = []
+        self._keys: list = []                    # _row_key of each row, as last set
         self.all_columns: list[Column] = []
         self.columns: list[Column] = []
         self.ipa = ipa_font()
@@ -75,10 +86,36 @@ class RowModel(QAbstractTableModel):
         self.columns = [by_key[k] for k in visible if k in by_key] or all_columns[:1]
         self.endResetModel()
 
-    def set_rows(self, rows):
-        self.beginResetModel()
+    def set_rows(self, rows, touched=RESET) -> bool:
+        """New rows. With `touched` (the ids of the lemmas changed in place, or None for any of
+        them), when the rows are the same rows as before, in the same order, only those rows'
+        cells are redrawn (dataChanged): the table isn't started again, so a selection, the
+        scroll position and the filters' work stay (the audit, section 8; an edit reset the
+        whole lemma list and All data). True when the table was started again."""
+        keys = [_row_key(r) for r in rows]
+        if touched is RESET or keys != self._keys:
+            self.beginResetModel()
+            self.rows, self._keys = rows, keys
+            self.endResetModel()
+            return True
         self.rows = rows
-        self.endResetModel()
+        if not rows or not self.columns:
+            return False
+        last = len(self.columns) - 1
+        if touched is None:
+            self.dataChanged.emit(self.index(0, 0), self.index(len(rows) - 1, last))
+            return False
+        start = None                             # each run of touched rows, one signal
+        for i, (k, _) in enumerate(keys):
+            if k in touched:
+                if start is None:
+                    start = i
+            elif start is not None:
+                self.dataChanged.emit(self.index(start, 0), self.index(i - 1, last))
+                start = None
+        if start is not None:
+            self.dataChanged.emit(self.index(start, 0), self.index(len(rows) - 1, last))
+        return False
 
     def rowCount(self, parent=QModelIndex()):
         return 0 if parent.isValid() else len(self.rows)
@@ -162,21 +199,37 @@ class RowFilter(QSortFilterProxyModel):
     def setSourceModel(self, model):
         old = self.sourceModel()
         if old is not None:
-            for sig in (old.modelReset, old.dataChanged, old.layoutChanged, old.rowsInserted,
-                        old.rowsRemoved, old.rowsMoved, old.columnsInserted, old.columnsRemoved):
+            for sig, slot in self._hay_signals(old):
                 try:
-                    sig.disconnect(self._forget_hay)
+                    sig.disconnect(slot)
                 except (RuntimeError, TypeError):
                     pass
-        super().setSourceModel(model)
+        # connected before the proxy's own handlers, so a changed row's text is let go before the
+        # proxy filters it again (Qt calls slots in the order they were connected)
         if model is not None:
-            for sig in (model.modelReset, model.dataChanged, model.layoutChanged, model.rowsInserted,
-                        model.rowsRemoved, model.rowsMoved, model.columnsInserted, model.columnsRemoved):
-                sig.connect(self._forget_hay)
+            for sig, slot in self._hay_signals(model):
+                sig.connect(slot)
+        super().setSourceModel(model)
         self._hay = {}
+
+    def _hay_signals(self, m):
+        return [(m.dataChanged, self._forget_rows)] + [
+            (sig, self._forget_hay) for sig in (m.modelReset, m.layoutChanged, m.rowsInserted,
+                                                m.rowsRemoved, m.rowsMoved, m.columnsInserted,
+                                                m.columnsRemoved)]
 
     def _forget_hay(self, *_):
         self._hay = {}
+
+    def _forget_rows(self, top, bottom, *_):
+        """Cells changed: only those rows' text is put together again (an edit to one lemma
+        forgot every row's, so the next keystroke in the search took a second at full size)."""
+        a, b = top.row(), bottom.row()
+        if b - a + 1 >= len(self._hay):
+            self._hay = {}
+            return
+        for r in range(a, b + 1):
+            self._hay.pop(r, None)
 
     def _row_hay(self, m, r: int, row) -> list[str]:
         hay = self._hay.get(r)
@@ -596,14 +649,17 @@ class FilterTable(QTableView):
     def visible_keys(self) -> list[str]:
         return [c.key for c in self.model_.columns]
 
-    def set_rows(self, rows):
-        """New rows, keeping what was selected: every selected row (several in the lemma list,
+    def set_rows(self, rows, touched=RESET):
+        """New rows, keeping what was selected (`touched`: RowModel.set_rows; only those rows
+        redrawn when the rows are the same, and the selection is left as it is): every selected row (several in the lemma list,
         All data, Utterances…), and a row clicked to unselect it stays unselected (before, any
         edit collapsed a selection to its current row, and selected an unselected one again:
         the audit, 25 October)."""
         current = self.current_row()
         selected = self.selected_rows()
-        self.model_.set_rows(rows)
+        if not self.model_.set_rows(rows, touched):
+            self.viewport().update()              # cells that show other rows' data (From, suggestions)
+            return
         if len(selected) > 1:
             keep = [r for r in self.model_.rows if any(_same_row(r, x) for x in selected)]
             cur = next((r for r in keep if _same_row(r, current)), None)

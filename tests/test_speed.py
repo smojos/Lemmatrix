@@ -100,8 +100,12 @@ def test_the_search_follows_new_rows_and_edited_cells(win):
     win.refresh()
     proxy.set_search("zzqx")
     assert proxy.rowCount() == 1                                    # the cached text was let go
+    proxy._hay[0], proxy._hay[1] = ["stale"], ["kept"]
     m.dataChanged.emit(m.index(0, 0), m.index(0, 0))
-    assert proxy._hay == {}                                         # and is on any change of the table
+    assert proxy._hay.get(0) != ["stale"]                           # a changed row's text is let go
+    assert proxy._hay[1] == ["kept"]                                # (and read again), the others' kept
+    m.set_rows(list(m.rows))                                        # (section 8); all of it when the
+    assert ["kept"] not in proxy._hay.values()                      # table starts again
 
 
 # ---------------------------------------------------------------- the soundfile folder
@@ -301,3 +305,166 @@ def test_the_matrix_measures_the_same_with_its_memory(win):
     d.end_pass()
     assert remembered == plain and d._memo is None
     assert mw.LEMMA_TAG is not None
+
+
+# ---------------------------------------------------------------- section 8, step 1 (25 October)
+# An edit redraws only the rows of the lemmas it changed; the Lemma/Tag matrix measures only
+# their cells again. The same answers as starting again, and never out of date.
+
+def _resets(model):
+    seen = []
+    model.modelReset.connect(lambda: seen.append(1))
+    return seen
+
+
+def _edit(win, entry, text):
+    tr = win.doc.db.settings.token_field("translation").name
+    lang = win.doc.db.settings.primary_gloss
+    win.doc.edit_entry(entry, lambda x: x.tokens[0].set(tr, text, lang), "Edit")
+
+
+def _after_edit(win):
+    """What the refresh timer does after an edit (its timeout, at once)."""
+    assert win._refresh_timer.isActive()
+    win._refresh_timer.stop()
+    win.refresh(after_edit=True)
+
+
+def test_an_edit_redraws_only_its_rows_in_all_data(win):
+    from lemmatrix.ui.main_window import ALL_DATA
+    db = win.doc.db
+    win.tabs.setCurrentIndex(ALL_DATA)
+    win.refresh()
+    t = win.all_table
+    t.set_multi_select(True)
+    picked = [r for r in t.visible_rows() if r.entry is db.entries[3]][:1] + \
+             [r for r in t.visible_rows() if r.entry is db.entries[5]][:1]
+    t.select_rows(picked)
+    resets = _resets(t.model_)
+    changed = []
+    t.model_.dataChanged.connect(lambda a, b, *_: changed.append((a.row(), b.row())))
+    _edit(win, db.entries[3], "zzqx edited")
+    _after_edit(win)
+    assert not resets                                               # started again before
+    rows = {r for a, b in changed for r in range(a, b + 1)}
+    assert rows and all(t.model_.rows[r].entry is db.entries[3] for r in rows)
+    assert len(t.selected_rows()) == 2                              # the selection is untouched
+    shown = [t.model_.data(t.model_.index(r, c)) for r in rows for c in range(t.model_.columnCount())]
+    assert any("zzqx edited" in (x or "") for x in shown)
+    win.doc.undo.undo()                                             # undo: the same
+    _after_edit(win)
+    assert not resets
+    # a token added changes the rows: the table starts again
+    win.doc.edit_entry(db.entries[3], lambda x: x.tokens.append(x.tokens[0].copy()), "Add token")
+    _after_edit(win)
+    assert resets
+
+
+def test_the_search_drops_an_edited_row_that_no_longer_matches(win):
+    from lemmatrix.ui.main_window import ALL_DATA
+    db = win.doc.db
+    win.tabs.setCurrentIndex(ALL_DATA)
+    _edit(win, db.entries[2], "zzqx one")
+    _after_edit(win)
+    proxy = win.all_table.proxy
+    proxy.set_search("zzqx")
+    assert proxy.rowCount() == 1
+    _edit(win, db.entries[2], "something else")
+    _after_edit(win)
+    assert proxy.rowCount() == 0                                    # filtered again, without a reset
+    _edit(win, db.entries[4], "zzqx two")
+    _after_edit(win)
+    assert proxy.rowCount() == 1
+
+
+def test_an_edit_redraws_only_its_row_in_the_lemma_list(win):
+    from lemmatrix.model import Entry
+    db = win.doc.db
+    resets = _resets(win.lemmas.model_)
+    win.doc.edit_entry(db.entries[4], lambda x: x.set("Gloss", "edited", "en"), "Edit")
+    assert not resets
+    win.doc.undo.undo()
+    assert not resets
+    win.doc.add_entry(Entry(ref="D998"))                            # a lemma added: started again
+    assert resets
+    assert len(win.lemmas.model_.rows) == len(db.entries)
+
+
+def test_a_lemma_naming_the_edited_one_in_from_is_redrawn_too(win):
+    db = win.doc.db
+    a, b = db.entries[1], db.entries[4]
+    b.from_lemmas = [a.id]
+    assert win._with_dependants(frozenset([id(a)])) == frozenset([id(a), id(b)])
+    assert win._with_dependants(None) is None
+
+
+def test_other_changes_still_redraw_everything(win):
+    from lemmatrix.ui.main_window import ALL_DATA
+    win.tabs.setCurrentIndex(ALL_DATA)
+    win.refresh()
+    t = win.all_table
+    changed = []
+    t.model_.dataChanged.connect(lambda a, b, *_: changed.append((a.row(), b.row())))
+    win.doc.changed.emit()                                          # a settings change, a list…
+    _after_edit(win)
+    assert (0, t.model_.rowCount() - 1) in changed
+
+
+def _matrix(win):
+    from lemmatrix import matrix as mx
+    from lemmatrix.ui.main_window import LEMMA_TAG
+    db = win.doc.db
+    win.tabs.setCurrentIndex(LEMMA_TAG)
+    cfg = win.config_for(LEMMA_TAG)
+    cfg.x = mx.auto_specs(db, db.entries)[:6]
+    win.refresh()
+    return win.lt_view
+
+
+def _sizes(v):
+    hh, vh = v.horizontalHeader(), v.verticalHeader()
+    return ([hh.sectionSize(i) for i in range(hh.count())], [vh.sectionSize(i) for i in range(vh.count())])
+
+
+def test_lemma_tag_measures_only_the_edited_lemma_again(win, monkeypatch):
+    v = _matrix(win)
+    db = win.doc.db
+    lay = v.model_.layout_
+    r0 = next(r for (r, c) in lay.cells)
+    entry = lay.rows[r0].entry
+    measured = []
+    real = type(v.delegate).cell_width
+    monkeypatch.setattr(type(v.delegate), "cell_width",
+                        lambda d, r, c, hits: (measured.append(v.model_.layout_.rows[r].entry), real(d, r, c, hits))[1])
+    tr = db.settings.token_field("translation").name
+    long = "a much longer translation than any other in the sample database " * 3
+    win.doc.edit_entry(entry, lambda x: x.tokens[0].set(tr, long, db.settings.primary_gloss), "Edit")
+    _after_edit(win)
+    assert measured and all(e is entry for e in measured)          # every lemma measured again before
+    after_edit = _sizes(v)
+    measured.clear()
+    win.refresh()                                                   # measured from scratch
+    assert len({id(e) for e in measured}) > 1
+    assert _sizes(v) == after_edit                                  # the same sizes as starting again
+    win.doc.undo.undo()
+    _after_edit(win)
+    undone = _sizes(v)
+    win.refresh()
+    assert _sizes(v) == undone
+
+
+def test_lemma_tag_measures_everything_when_its_look_changes(win, monkeypatch):
+    v = _matrix(win)
+    db = win.doc.db
+    measured = []
+    real = type(v.delegate).cell_width
+    monkeypatch.setattr(type(v.delegate), "cell_width",
+                        lambda d, r, c, hits: (measured.append(r), real(d, r, c, hits))[1])
+    v.set_zoom(1.5)                                                 # zoom: every cell again
+    n = len(measured)
+    assert n == len(v.model_.layout_.cells)
+    measured.clear()
+    win.doc.edit_entry(db.entries[0], lambda x: x.set("Gloss", "edited", "en"), "Edit")
+    _after_edit(win)
+    assert len(measured) < n                                        # zoomed sizes kept for the rest
+    v.set_zoom(1.0)

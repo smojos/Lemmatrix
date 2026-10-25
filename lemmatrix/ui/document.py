@@ -61,8 +61,10 @@ class EntryCommand(QUndoCommand):
         elif snap_from is None:                 # insert
             _restore(self.entry, snap_to)
             items.insert(min(self.index, len(items)), self.entry)
-        else:                                   # replace in place
+        else:                                   # replace in place: the grids redraw only its rows
             _restore(self.entry, snap_to)
+            self.doc.emit_changed([self.entry])
+            return
         self.doc.changed.emit()
 
     def redo(self):
@@ -101,14 +103,14 @@ class BulkCommand(QUndoCommand):
             self.doc.move_file(old, new)
         for entry, _, after in self.changes:
             _restore(entry, after)
-        self.doc.changed.emit()
+        self.doc.emit_changed([e for e, _, _ in self.changes])
 
     def undo(self):
         for old, new in reversed(self.renames):
             self.doc.move_file(new, old)
         for entry, before, _ in self.changes:
             _restore(entry, before)
-        self.doc.changed.emit()
+        self.doc.emit_changed([e for e, _, _ in self.changes])
 
 
 class EntriesCommand(QUndoCommand):
@@ -452,6 +454,20 @@ class Document(QObject):
         self._ws_timer.setInterval(400)         # a moment after the last change
         self._ws_timer.timeout.connect(self.write_workspace)
         self.changed.connect(self._ws_timer.start)   # e.g. a rerecord flag set in an edit
+        # While `changed` is being emitted: the ids (id()) of the entries (lemmas, utterances)
+        # changed in place, or None when anything may have changed (rows added, removed or moved,
+        # settings, lists…). The grids then redraw only those rows rather than starting again
+        # (the audit, section 8).
+        self.last_touched: frozenset | None = None
+
+    def emit_changed(self, entries):
+        """`changed`, saying which entries were changed in place (nothing added, removed or
+        moved). Every other `changed.emit()` means anything may have changed."""
+        self.last_touched = frozenset(map(id, entries))
+        try:
+            self.changed.emit()
+        finally:
+            self.last_touched = None
 
     # ---- texts' lines (edited in their TextGrids) -------------------------
     def buffer(self, text, reload_if_saved_elsewhere: bool = True):
@@ -553,7 +569,10 @@ class Document(QObject):
         items = self.db.list_for(entry)
         idx = items.index(entry) if entry in items else len(items)
         self.undo.push(EntryCommand(self, label, entry, before, after, idx, renames=renames))
-        self.changed.emit()
+        if entry in items:
+            self.emit_changed([entry])
+        else:
+            self.changed.emit()
 
     def apply_changes(self, label: str, pairs, renames=(), stamp: bool = True) -> list[str]:
         """Change many entries at once as one undo step (bulk edit, word class changes).
@@ -595,7 +614,7 @@ class Document(QObject):
             self._note_rename(old, new)
         if changes or done:
             self.undo.push(BulkCommand(self, label, changes, done))
-            self.changed.emit()
+            self.emit_changed([e for e, _, _ in changes])
         return []
 
     def restructure(self, label: str, order, pairs=(), renames=()) -> list[str]:

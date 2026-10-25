@@ -408,7 +408,10 @@ class MainWindow(QMainWindow):
         # ---- signals -----------------------------------------------------
         self._refresh_timer = QTimer(self)
         self._refresh_timer.setSingleShot(True)
-        self._refresh_timer.timeout.connect(self.refresh)
+        self._refresh_timer.timeout.connect(lambda: self.refresh(after_edit=True))
+        # The lemmas changed in place since All data and Lemma/Tag last showed them (ids), or None
+        # for anything: what they redraw or measure again after an edit (_doc_changed)
+        self._touched = {ALL_DATA: None, LEMMA_TAG: None}
         self._search_timers = {}
         for name, edit, fn in (("lemma", self.lemma_search, self.lemmas.proxy.set_search),
                                ("all", self.all_search, self.all_table.proxy.set_search)):
@@ -2707,7 +2710,10 @@ class MainWindow(QMainWindow):
 
     def _doc_changed(self):
         self._suggestions_stale = True
-        self.lemmas.set_rows(self.doc.db.entries)
+        touched = self._with_dependants(self.doc.last_touched)
+        for k, was in self._touched.items():
+            self._touched[k] = None if was is None or touched is None else was | touched
+        self.lemmas.set_rows(self.doc.db.entries, touched)
         # All data's rows point at tokens by position: a token just deleted (the last of its
         # lemma, e.g. one just added) would be painted before the refresh below and crash.
         rows = self.all_table.model_.rows
@@ -2715,6 +2721,22 @@ class MainWindow(QMainWindow):
             self.all_table.set_rows([r for r in rows if r.index < len(r.entry.tokens)])
         self.schedule_refresh()
         self._update_title()
+
+    def _with_dependants(self, touched):
+        """The lemmas changed (ids), with those whose From names one of them (its form shows in
+        their From column), or None."""
+        if not touched:
+            return touched
+        ids = {e.id for e in self.doc.db.entries if id(e) in touched}
+        more = {id(e) for e in self.doc.db.entries if ids.intersection(e.from_lemmas)}
+        return touched | more if more else touched
+
+    def _take_touched(self, tab, after_edit: bool):
+        """What `tab` needs to redraw: the lemmas edited since it last showed them, after an edit;
+        None (everything) otherwise. Starts counting again."""
+        touched = self._touched.get(tab)
+        self._touched[tab] = frozenset()
+        return touched if after_edit and touched else None
 
     def schedule_refresh(self, delay: int = 0):
         self._refresh_timer.start(delay)
@@ -2960,19 +2982,25 @@ class MainWindow(QMainWindow):
             key = (str(folder), folder.stat().st_mtime_ns)
         except OSError:
             key = (str(folder), None)
-        if force or key != getattr(self, "_scan_key", None) or not hasattr(self, "sound_files"):
+        scanned = force or key != getattr(self, "_scan_key", None) or not hasattr(self, "sound_files")
+        if scanned:
             self.sound_files, self.cloud_files = storage.scan_sound_folder(folder)
             self._scan_key = key
         for v in (self.lt_view, self.tt_view):
             v.sound_files = self.sound_files
             v.cloud_files = self.cloud_files
+        return scanned
 
-    def refresh(self):
+    def refresh(self, after_edit: bool = False):
+        """The tab shown, again. after_edit: called for an edit (_doc_changed), so All data
+        redraws, and Lemma/Tag measures again, only the lemmas it changed."""
         if hasattr(self, "_view_timer"):
             self._view_timer.start()              # the lemma or matrix shown may have changed
         db = self.doc.db
         tab = self.tabs.currentIndex()
-        self._scan_sound_folder()
+        touched = self._take_touched(tab, after_edit)
+        if self._scan_sound_folder():
+            touched = None                        # a recording's colour may have changed anywhere
         visible = self.lemmas.visible_rows()
         pin = self.lemmas.pinned_row()
         pins = self.lemmas.pinned_rows() if pin is None and self.lemmas.proxy.pinned else []
@@ -2988,7 +3016,7 @@ class MainWindow(QMainWindow):
             rows = [TokenRow(e, i) for e in db.entries if id(e) in vis
                     and (not only_data or any(t.has_content() for t in e.tokens))
                     for i in range(len(e.tokens))]
-            self.all_table.set_rows(rows)
+            self.all_table.set_rows(rows, touched)
             if not getattr(self, "_all_sized", False) and rows:
                 self.all_table.resizeColumnsToContents()
                 self._all_sized = True
@@ -3031,7 +3059,8 @@ class MainWindow(QMainWindow):
         self.layouts[tab] = lay
         view.aligned = self.aligned_set()
         from .. import pitchview                  # pitch hidden: no drawing or Pitch line (idea 9)
-        view.set_layout(lay, pitchview.visible(cfg.cell, db.settings, pitchview.TOKENS))
+        view.set_layout(lay, pitchview.visible(cfg.cell, db.settings, pitchview.TOKENS),
+                        changed=touched if tab == LEMMA_TAG else None)
 
     def _update_counts(self):
         shown = self.all_table.proxy.rowCount()
