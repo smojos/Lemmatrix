@@ -1183,9 +1183,8 @@ class UtteranceDialog(TokenDialog):
     def _build(self):
         super()._build()
         outer = self.layout()
-        outer.removeWidget(self.header)
-        head = QHBoxLayout()
-        head.addWidget(self.header)
+        head = self.head_row                      # the header, the file label, then Cogitate
+        head.setStretchFactor(self.header, 0)
         from .dialogs import NoForbidden
         self.label_edit = NoForbidden()
         self.label_edit.setFont(ipa_font(14))
@@ -1193,8 +1192,7 @@ class UtteranceDialog(TokenDialog):
         self.label_edit.setToolTip("A short label for the recording's file name. Changing it renames the "
                                    "recording when you leave the utterance.")
         self.label_edit.textChanged.connect(self._fields_changed)
-        head.addWidget(self.label_edit, 1)
-        outer.insertLayout(0, head)
+        head.insertWidget(1, self.label_edit, 1)
 
         box = QGroupBox("Lemmas")
         bl = QVBoxLayout(box)

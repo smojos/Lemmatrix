@@ -129,7 +129,12 @@ class TokenDialog(QDialog):
         self.header = QLabel()
         self.header.setFont(ipa_font(15))
         self.header.setStyleSheet("font-weight: 600; padding: 2px 0 6px 0;")
-        outer.addWidget(self.header)
+        # The header row: the token, then Cogitate at the top right (Josh's mockup, 25 October: it
+        # links the whole token or utterance, not its comment, so it doesn't belong among the fields)
+        self.head_row = QHBoxLayout()
+        self.head_row.setContentsMargins(0, 0, 0, 0)
+        self.head_row.addWidget(self.header, 1)
+        outer.addLayout(self.head_row)
 
         top = QHBoxLayout()
         self._top_layout = top                    # the part that stretches (_scroll_body)
@@ -217,9 +222,7 @@ class TokenDialog(QDialog):
         self.pitch_note.setVisible(pitch_on)
         row += 1
         # Cogitate: a 48 px button with Josh's icon (Link to hypothesis…; Josh, 22 October: it
-        # replaced the words), then "In hypotheses: H3 (evidence)…"
-        hyp_row = QHBoxLayout()
-        hyp_row.setContentsMargins(0, 0, 0, 0)
+        # replaced the words), with "In hypotheses: H3 (evidence)…" before it, in the header row
         self.hyp_btn = QToolButton()
         self.hyp_btn.setIconSize(QSize(48, 48))
         self.hyp_btn.setAutoRaise(True)
@@ -228,18 +231,18 @@ class TokenDialog(QDialog):
                                 "evidence, counterevidence or relevant")
         self.hyp_btn.clicked.connect(lambda *_: self.link_to_hypothesis())
         self._hyp_icon()
-        hyp_row.addWidget(self.hyp_btn, 0, Qt.AlignVCenter)
         self.hyp_line = QLabel()
         self.hyp_line.setTextFormat(Qt.RichText)
         self.hyp_line.setWordWrap(True)
+        self.hyp_line.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.hyp_line.linkActivated.connect(self._hypothesis_link)
-        hyp_row.addWidget(self.hyp_line, 1)
-        left.addLayout(hyp_row, row, 1)
+        self.head_row.addWidget(self.hyp_line, 0, Qt.AlignVCenter)
+        self.head_row.addWidget(self.hyp_btn, 0, Qt.AlignVCenter)
         try:
             self.doc.hypothesesChanged.connect(self._show_hypotheses)
         except (AttributeError, RuntimeError):
             pass
-        left.setRowStretch(row + 1, 1)
+        left.setRowStretch(row, 1)
         lw = QWidget()
         lw.setLayout(left)
         top.addWidget(lw, 3)

@@ -556,3 +556,20 @@ def test_utterance_dialogue_scrolls_rather_than_outgrowing_the_screen(win, tmp_p
     assert dlg.frameGeometry().height() <= a.height()          # never taller than the screen
     assert not body.isAncestorOf(dlg.next_btn)                 # Back, Next, OK, Cancel always in view
     dlg.reject()
+
+
+def test_cogitate_sits_at_the_top_right(win, tmp_path, monkeypatch):
+    """Josh's mockup, 25 October: the Cogitate button in the header row, not among the fields."""
+    from lemmatrix.ui.token_dialog import Slot, TokenDialog
+    from lemmatrix.ui.utterances import UtteranceDialog
+    dlg = TokenDialog(win, [Slot(win.doc.db.entries[0], 0)], 0)
+    row = dlg.head_row
+    assert row.indexOf(dlg.header) == 0 and row.indexOf(dlg.hyp_btn) == row.count() - 1
+    dlg.reject()
+    uw, t = _add_text(win, tmp_path, monkeypatch)
+    uw.texts.lines.select_row(uw.texts.lines.rows[0])
+    u = uw.texts.clip()[0]
+    dlg = UtteranceDialog(win, [Slot(u, 0)], 0, uw)
+    row = dlg.head_row
+    assert [row.indexOf(w) for w in (dlg.header, dlg.label_edit, dlg.hyp_btn)] == [0, 1, row.count() - 1]
+    dlg.reject()
