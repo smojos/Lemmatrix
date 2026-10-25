@@ -687,13 +687,21 @@ def waiting_reviews(db: Database) -> list[tuple[Stored, int]]:
 
 
 def read_response_zip(path) -> tuple[dict, zipfile.ZipFile]:
+    """The response and the open zip; the zip is closed again when it isn't one (left open, it
+    stayed locked on Windows until Lemmatrix closed: the audit, 25 October)."""
+    zf = None
     try:
         zf = zipfile.ZipFile(path)
         data = json.loads(zf.read("response.json").decode("utf-8"))
+        if data.get("format") != RESPONSE_FORMAT:
+            raise ElicitError("This isn't a file of ɛλicit recordings.")
     except (OSError, KeyError, ValueError, zipfile.BadZipFile) as exc:
+        if zf is not None:
+            zf.close()
         raise ElicitError("This isn't a file of ɛλicit recordings (there's no response.json in it).") from exc
-    if data.get("format") != RESPONSE_FORMAT:
-        raise ElicitError("This isn't a file of ɛλicit recordings.")
+    except ElicitError:
+        zf.close()
+        raise
     return data, zf
 
 
@@ -722,6 +730,7 @@ def receive(db: Database, path) -> Stored:
     rid = data.get("request", "")
     st = next((s for s in stored_requests(db.path) if s.request.id == rid), None)
     if st is None:
+        zf.close()
         raise ElicitError("These recordings answer a request that isn't one of this database's "
                           "(it may have been made from another database).")
     tmp = st.folder / "received.part"

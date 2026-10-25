@@ -241,11 +241,14 @@ class WindowsKeyboards:
             raise OSError("TSF not available")
         self._profiles = p
         m = c_void_p()
-        if self._call(p, 0, ctypes.HRESULT, [POINTER(GUID), POINTER(c_void_p)], byref(iid_mgr), byref(m)) != 0:
+        if self._call(p, 0, ctypes.c_long, [POINTER(GUID), POINTER(c_void_p)], byref(iid_mgr), byref(m)) != 0:
             raise OSError("no ITfInputProcessorProfileMgr")
         self._mgr = m
 
     def _call(self, obj, index, restype, argtypes, *args):
+        # restype c_long for the COM methods, never ctypes.HRESULT: HRESULT raises OSError on a
+        # failing result, so the "!= 0" checks after every call could never fire, and one keyboard
+        # whose name couldn't be read hid every Keyman keyboard from Settings (the audit, 25 October)
         ct = self._ct
         vtbl = ct.cast(obj, ct.POINTER(ct.POINTER(ct.c_void_p))).contents
         fn = ct.WINFUNCTYPE(restype, ct.c_void_p, *argtypes)(vtbl[index])
@@ -264,13 +267,13 @@ class WindowsKeyboards:
     def _enum(self):
         ct = self._ct
         e = ct.c_void_p()
-        if self._call(self._mgr, 6, ct.HRESULT, [ct.c_ushort, ct.POINTER(ct.c_void_p)], 0, ct.byref(e)) != 0:
+        if self._call(self._mgr, 6, ct.c_long, [ct.c_ushort, ct.POINTER(ct.c_void_p)], 0, ct.byref(e)) != 0:
             return []
         out = []
         while True:
             pr = self._PROFILE()
             got = ct.c_ulong(0)
-            hr = self._call(e, 4, ct.HRESULT, [ct.c_ulong, ct.POINTER(self._PROFILE), ct.POINTER(ct.c_ulong)],
+            hr = self._call(e, 4, ct.c_long, [ct.c_ulong, ct.POINTER(self._PROFILE), ct.POINTER(ct.c_ulong)],
                             1, ct.byref(pr), ct.byref(got))
             if hr != 0 or got.value == 0:
                 break
@@ -321,7 +324,7 @@ class WindowsKeyboards:
             ct = self._ct
             from ctypes import POINTER, byref
             bstr = ct.c_void_p()                  # a BSTR, freed once read
-            hr = self._call(self._profiles, 12, ct.HRESULT,
+            hr = self._call(self._profiles, 12, ct.c_long,
                             [POINTER(self._GUID), ct.c_ushort, POINTER(self._GUID), POINTER(ct.c_void_p)],
                             byref(pr.clsid), pr.langid, byref(pr.guidProfile), byref(bstr))
             desc = ""
@@ -335,9 +338,20 @@ class WindowsKeyboards:
     def list(self) -> list[Keyboard]:
         if self._mgr is not None:
             try:
-                return [Keyboard(self._id(p), self._name(p)) for p in self._enum()]
+                profiles = self._enum()
             except Exception:
-                pass
+                profiles = None
+            if profiles is not None:
+                out = []
+                for p in profiles:                # one profile that fails is named plainly, never
+                    try:                          # loses the others
+                        out.append(Keyboard(self._id(p), self._name(p)))
+                    except Exception:
+                        try:
+                            out.append(Keyboard(self._id(p), f"Keyboard {p.langid:04x}"))
+                        except Exception:
+                            pass
+                return out
         return [Keyboard(f"hkl:{h & 0xFFFF:04x}:{h:x}", self._hkl_name(h)) for h in self._hkls()]
 
     def active(self) -> str:
@@ -345,14 +359,17 @@ class WindowsKeyboards:
             try:
                 ct = self._ct
                 pr = self._PROFILE()
-                if self._call(self._mgr, 10, ct.HRESULT, [ct.POINTER(self._GUID), ct.POINTER(self._PROFILE)],
+                if self._call(self._mgr, 10, ct.c_long, [ct.POINTER(self._GUID), ct.POINTER(self._PROFILE)],
                               ct.byref(self._cat_keyboard), ct.byref(pr)) == 0:
                     return self._id(pr)
             except Exception:
                 pass
         try:
             import ctypes
-            h = ctypes.windll.user32.GetKeyboardLayout(0) & 0xFFFFFFFF
+            u = ctypes.windll.user32
+            u.GetKeyboardLayout.restype = ctypes.c_void_p      # a handle: all 64 bits, as TSF's
+            u.GetKeyboardLayout.argtypes = [ctypes.c_ulong]
+            h = u.GetKeyboardLayout(0) or 0
             return f"hkl:{h & 0xFFFF:04x}:{h:x}"
         except Exception:
             return ""
@@ -365,7 +382,7 @@ class WindowsKeyboards:
                 if self._id(pr) == kid:
                     ct = self._ct
                     flags = 0x10000000 | 0x4      # TF_IPPMF_FORPROCESS | DONTCARECURRENTINPUTLANGUAGE
-                    return self._call(self._mgr, 3, ct.HRESULT,
+                    return self._call(self._mgr, 3, ct.c_long,
                                       [ct.c_ulong, ct.c_ushort, ct.POINTER(self._GUID), ct.POINTER(self._GUID),
                                        ct.c_void_p, ct.c_ulong],
                                       pr.dwProfileType, pr.langid, ct.byref(pr.clsid),
@@ -374,7 +391,10 @@ class WindowsKeyboards:
             try:
                 import ctypes
                 h = int(kid.rsplit(":", 1)[1], 16)
-                return bool(ctypes.windll.user32.ActivateKeyboardLayout(ctypes.c_void_p(h), 0))
+                u = ctypes.windll.user32
+                u.ActivateKeyboardLayout.restype = ctypes.c_void_p
+                u.ActivateKeyboardLayout.argtypes = [ctypes.c_void_p, ctypes.c_uint]
+                return bool(u.ActivateKeyboardLayout(h, 0))
             except Exception:
                 return False
         return False
@@ -387,7 +407,8 @@ class WindowsKeyboards:
             n = u.GetKeyboardLayoutList(0, None)
             arr = (ctypes.c_void_p * n)()
             u.GetKeyboardLayoutList(n, arr)
-            return [(a or 0) & 0xFFFFFFFF for a in arr]
+            return [a or 0 for a in arr]          # whole handles (custom and IME layouts were cut to
+                                                  # 32 bits, so one layout had two ids: audit, 25 October)
         except Exception:
             return []
 

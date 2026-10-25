@@ -150,7 +150,8 @@ class LinesView(QAbstractScrollArea):
     # ---- zoom (Ctrl + mouse wheel) ------------------------------------------------
     def _apply_fonts(self):
         z = self.zoom
-        self.ipa = ipa_font(round(15 * z))
+        from . import widgets                   # a size above the IPA size of Settings → Display
+        self.ipa = ipa_font(round((widgets.IPA_SIZE + 2) * z))
         self.plain = QFont(self.font())
         self.plain.setPointSizeF(self._base_pt * 1.1 * z)
         self.small = QFont(self.font())

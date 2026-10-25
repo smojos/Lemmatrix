@@ -315,6 +315,30 @@ class LineEditCommand(QUndoCommand):
         self._apply(True)
 
 
+class ItemStateCommand(QUndoCommand):
+    """A question's or To Do's resolved date and pin, before and after, as an undo step (used where
+    they change as part of a larger step, e.g. Convert to hypothesis resolving the question).
+    Applied once already."""
+
+    def __init__(self, doc: "Document", label: str, item, before: tuple, after: tuple):
+        super().__init__(label)
+        self.doc, self.item, self.before, self.after = doc, item, before, after
+        self._skip = True
+
+    def _set(self, state):
+        self.item.resolved, self.item.pinned = state
+        self.doc.notebook_changed()
+
+    def redo(self):
+        if self._skip:
+            self._skip = False
+            return
+        self._set(self.after)
+
+    def undo(self):
+        self._set(self.before)
+
+
 def _hyp_state(nb) -> tuple:
     """What a hypothesis change can alter, besides the lines in the notes (the Journal's)."""
     # each day's list kept with the day itself, not its date (a date can change outside undo)
@@ -758,11 +782,20 @@ class Document(QObject):
         self.changed.emit()
 
     # ---- settings ------------------------------------------------------
-    def settings_changed(self):
-        self._settings_dirty = True
-        self.dirtyChanged.emit(True)
+    def settings_changed(self, before: str | None = None):
+        """The settings or metadata changed: every view follows, and the database is unsaved.
+        before: the database as it would be saved before the change (settings_snapshot()); when
+        it is the same now (OK with nothing changed), the views still follow but the database
+        isn't marked unsaved (the audit, 25 October)."""
+        if before is None or before != self.settings_snapshot():
+            self._settings_dirty = True
+            self.dirtyChanged.emit(True)
         self.settingsChanged.emit()
         self.changed.emit()
+
+    def settings_snapshot(self) -> str:
+        """The database as it would be saved (to tell whether a dialogue changed anything)."""
+        return storage.to_string(self.db)
 
     # ---- the workspace (idea 36) ---------------------------------------------
     @property

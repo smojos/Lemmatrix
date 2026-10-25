@@ -551,6 +551,18 @@ class FilterTable(QTableView):
             if c.key == key:
                 self.setItemDelegateForColumn(i, delegate)
                 self._delegates.append(delegate)
+                if hasattr(delegate, "set_zoom") and abs(self.zoom - 1.0) > 1e-6:
+                    delegate.set_zoom(self.zoom)  # a new delegate (Configure columns) at the grid's
+                                                  # zoom: pitch drawings lost it (audit, 25 October)
+
+    def apply_ipa_size(self):
+        """The IPA size of Settings → Display, at this grid's zoom."""
+        from . import widgets
+        self.model_.ipa.setPointSizeF(max(4.0, widgets.IPA_SIZE * self.zoom))
+        n = self.model_.rowCount()
+        if n:
+            self.model_.dataChanged.emit(self.model_.index(0, 0),
+                                         self.model_.index(n - 1, max(0, self.model_.columnCount() - 1)))
 
     def visible_keys(self) -> list[str]:
         return [c.key for c in self.model_.columns]

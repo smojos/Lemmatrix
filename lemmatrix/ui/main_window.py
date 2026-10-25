@@ -142,6 +142,7 @@ class MainWindow(QMainWindow):
     def __init__(self, db: Database | None = None):
         super().__init__()
         self.prefs = Prefs()
+        widgets.set_ipa_size(self.prefs.ipa_size)   # before any view is built (audit, 25 October)
         from . import conventions                 # the cell views' display conventions (idea 26)
         conventions.load(self.prefs)
         self.player = audio.Player()
@@ -999,11 +1000,18 @@ class MainWindow(QMainWindow):
             return None
         link = hy.question_link(session, q)          # gives the question an id, if it had none
         book, date = self.doc.notebook, self.work_date()
+        # the hypothesis and the question's resolving are one undo step (Undo left the question
+        # resolved before: the audit, 25 October)
+        from .document import ItemStateCommand
+        self.doc.undo.beginMacro("Convert to hypothesis")
         h = self.doc.change_hypotheses(
             "Convert to hypothesis",
             lambda j: hy.make(book, j, date, summary=q.text, links=[link], db=self.doc.db))
         if not q.resolved:
+            before = (q.resolved, q.pinned)
             q.set_resolved(today())
+            self.doc.undo.push(ItemStateCommand(self.doc, "Resolve the question", q, before, (q.resolved, q.pinned)))
+        self.doc.undo.endMacro()
         self.doc.notebook_changed()
         if self.notebook_dialog is not None and self.notebook_dialog.isVisible():
             self.notebook_dialog.reload()
@@ -3288,11 +3296,15 @@ class MainWindow(QMainWindow):
         renames = []
         if self.prefs.delete_recordings_with_tokens:
             self.player.stop()
+            # each recording held once, though several of the selected tokens share it (the second
+            # hold failed and rolled the whole delete back: the audit, 25 October)
+            held = set()
             for e, t in pairs_:
                 shared = bool(t.file) and any(o.file == t.file and id(o) not in gone
                                               for en in db.entries for o in en.tokens)
                 path = folder / t.file if t.file else None
-                if path is not None and not shared and path.exists():
+                if path is not None and not shared and path.exists() and str(path).lower() not in held:
+                    held.add(str(path).lower())
                     renames.append((path, self.doc.hold_recording(path)))
         changed = []
         for e in db.entries:
@@ -3855,12 +3867,13 @@ class MainWindow(QMainWindow):
         dlg = MetadataDialog(self, self.doc.db)
         if focus == "pitch kind":
             dlg.pitch_kind.setFocus()
+        before = self.doc.settings_snapshot()     # OK with nothing changed: not unsaved
         if dlg.exec():
             dlg.apply()
             new = dlg.pitch_kind.currentData()
             if new != pitchkind.kind(self.doc.db):
                 self.convert_pitch_kind(new)      # its own undo step (idea 9)
-            self.doc.settings_changed()
+            self.doc.settings_changed(before)
             self._fill_session()
             self._fill_db_title()
             self._setup_columns()
@@ -3893,6 +3906,7 @@ class MainWindow(QMainWindow):
 
     def edit_fields(self):
         dlg = FieldsDialog(self, self.doc.db)
+        before = self.doc.settings_snapshot()     # OK with nothing changed: not unsaved
         if dlg.exec():
             from .dialogs import MORE_KEY, default_more
             more = dlg.more_names()                  # the lemma dialogue's More arrow (idea 60): the workspace's
@@ -3902,7 +3916,7 @@ class MainWindow(QMainWindow):
                 self.doc.undo.clear()             # renamed fields can't be undone safely
                 self._follow_field_renames(dlg.renames)
             self._setup_columns()
-            self.doc.settings_changed()
+            self.doc.settings_changed(before)
 
     def _follow_field_renames(self, renames: dict):
         """A renamed field keeps its place everywhere the workspace names it (columns, Line up,
@@ -4059,6 +4073,7 @@ class MainWindow(QMainWindow):
 
     def edit_settings(self):
         dlg = PreferencesDialog(self, self.doc.db, self.prefs)
+        before = self.doc.settings_snapshot()     # OK with nothing changed: not unsaved
         if dlg.exec():
             names_changed = dlg.apply()
             self.set_unusual_warning(self.prefs.warn_unusual_tags)
@@ -4069,10 +4084,9 @@ class MainWindow(QMainWindow):
             self._sync_pitch_view()               # Show the pitch system (Settings → Pitch)
             self.update_badges()                  # each badge switched on or off (Settings → Display)
             self._setup_columns()                 # Stem type and From shown or hidden
-            self.all_table.model_.ipa.setPointSize(self.prefs.ipa_size)
-            self.lemmas.model_.ipa.setPointSize(self.prefs.ipa_size)
+            self.apply_ipa_size()
             self.conventions_changed()
-            self.doc.settings_changed()
+            self.doc.settings_changed(before)
             s = self.doc.db.settings
             self.comparison.set_range(s.pitch_low, s.pitch_high)
             if self.notebook_dialog is not None:  # its history ticks follow Settings
@@ -4081,6 +4095,27 @@ class MainWindow(QMainWindow):
                 self._maybe_update_names()
             if dlg.change_kind_requested:         # Settings → Pitch → Change the pitch kind…
                 self.edit_metadata(focus="pitch kind")
+
+    def apply_ipa_size(self):
+        """Settings → Display → IPA font size, in every open view at its own zoom: the grids (lemma
+        list, All data, Utterances, texts, Bulk edit, Cogitate), the matrices and the text lines."""
+        from PySide6.QtWidgets import QApplication
+
+        from .lines_view import LinesView
+        from .matrix_view import MatrixView
+        from .table import FilterTable
+        widgets.set_ipa_size(self.prefs.ipa_size)
+        for w in QApplication.allWidgets():
+            if isinstance(w, FilterTable):
+                w.apply_ipa_size()
+            elif isinstance(w, MatrixView):
+                w.delegate.set_zoom(w.zoom)
+                selected = w.selected
+                w.set_layout(w.model_.layout_, w.cell_fields)
+                w.selected = selected
+            elif isinstance(w, LinesView):
+                w._apply_fonts()
+                w._relayout()
 
     def _maybe_update_names(self):
         db = self.doc.db

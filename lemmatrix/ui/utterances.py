@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (QCheckBox, QCompleter, QDialog, QSplitter, QGroup
                                QVBoxLayout, QWidget, QFileDialog)
 
 from .. import spelling, audio, layout, matrix as mx, pitch as pitchmod, pull, storage
-from ..model import FORBIDDEN_CHARS, SEQUENCE, UTTERANCES, Token, Utterance, nfc
+from ..model import FORBIDDEN_CHARS, SEQUENCE, UTTERANCES, Text, Token, Utterance, nfc
 from . import theme
 from .filter_dialogs import ConfigureColumnsDialog
 from .icons import icon, ink_icon, themed_icon
@@ -691,7 +691,7 @@ class TextsUtterancesWindow(QDialog):
             if choice is None:
                 continue
             if choice[0] == "text":               # several lines: added as a text instead
-                t = self._as_text(w, problems)
+                t = self._as_text(w, problems, {x.ref for x in items if isinstance(x, Text)})
                 if t is not None:
                     items.append(t[0])
                     renames += t[1]
@@ -725,8 +725,9 @@ class TextsUtterancesWindow(QDialog):
         if items:
             n = len(items)
             self.doc.add_many(f"Import {n} recording{'s' if n != 1 else ''}", items, renames)
-            self.table.select_row(items[0])
             items = [u for u in items if isinstance(u, Utterance)]
+            if items:                             # (the grid has only utterances, not texts)
+                self.table.select_row(items[0])
             if not items:
                 return []
         if problems:
@@ -795,14 +796,21 @@ class TextsUtterancesWindow(QDialog):
         if lines and lines[0].speaker:
             u.token.speaker = lines[0].speaker
 
-    def _as_text(self, wav: Path, problems) -> tuple | None:
-        """The recording (and its TextGrid) added as a text: (text, renames) or None."""
+    def _as_text(self, wav: Path, problems, taken: set | None = None) -> tuple | None:
+        """The recording (and its TextGrid) added as a text: (text, renames) or None. taken: the
+        references given to texts earlier in the same import, which aren't in the database yet (every
+        one got T001, and the second failed to copy in: the audit, 25 October)."""
         from ..model import TEXTS, Text
         cats = self.db.settings.categories(TEXTS)
         if not cats:
             problems.append(f"{wav.name}: there is no text category to add it to")
             return None
-        t = Text(ref=self.db.suggest_utterance_reference(cats[0].letter), file_label=clean_label(wav.stem),
+        letter = cats[0].letter
+        ref = self.db.suggest_utterance_reference(letter)
+        digits = len(ref) - len(letter)
+        while taken and ref in taken:
+            ref = f"{letter}{int(ref[len(letter):]) + 1:0{digits}d}"
+        t = Text(ref=ref, file_label=clean_label(wav.stem),
                  date=self.main.session_date(), participants=list(self.main.session_keys().get("participants", [])))
         f = self.db.settings.text_field("title")
         if f is not None:
@@ -899,7 +907,11 @@ class TextsUtterancesWindow(QDialog):
         if not letter or (old and letter == old.letter):
             return
         ref = self.db.suggest_utterance_reference(letter)
-        what = f" and its recording renamed to match" if u.token.file else ""
+        # the recording is renamed only when soundfile names update automatically (Settings →
+        # Sound); the question promised it either way (the audit, 25 October)
+        what = ("" if not u.token.file else " and its recording renamed to match"
+                if self.db.settings.auto_update_names else
+                " (its recording keeps its name until Tools → Update all soundfile names)")
         if QMessageBox.question(self, "Move utterance", f"Move {u.ref} to {category_title(self.db, ref)}? "
                                 f"Its reference becomes {ref}{what}.") != QMessageBox.Yes:
             return

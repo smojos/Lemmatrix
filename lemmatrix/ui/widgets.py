@@ -30,17 +30,31 @@ from .icons import funnel
 # Fonts
 # --------------------------------------------------------------------------
 
-def ipa_font(size: int = 13) -> QFont:
-    """Charis SIL if it's installed, otherwise a font with good IPA coverage."""
-    families = set(QFontDatabase.families())
-    for name in ("Charis SIL", "Charis", "Doulos SIL", "Gentium Plus", "DejaVu Serif",
-                 "Segoe UI", "DejaVu Sans"):
-        if name in families:
-            f = QFont(name)
-            f.setPointSize(size)
-            return f
-    f = QFont()
-    f.setPointSize(size)
+# Settings → Display → IPA font size (this computer): the size every grid, matrix cell and text
+# line starts from, at its own zoom. Set at start-up and when Settings changes (set_ipa_size); it
+# was applied only to the lemma list and All data, and only after Settings, so a restart put them
+# back to 13 and the other views never followed (the audit, 25 October).
+IPA_SIZE = 13
+_IPA_FAMILY: list = []                    # the family found, once (the system's fonts are many)
+
+
+def set_ipa_size(size) -> None:
+    global IPA_SIZE
+    try:
+        IPA_SIZE = max(6, int(size))
+    except (TypeError, ValueError):
+        IPA_SIZE = 13
+
+
+def ipa_font(size: int | None = None) -> QFont:
+    """Charis SIL if it's installed, otherwise a font with good IPA coverage; at the IPA size
+    (Settings → Display) unless a size is given."""
+    if not _IPA_FAMILY:
+        families = set(QFontDatabase.families())
+        _IPA_FAMILY.append(next((n for n in ("Charis SIL", "Charis", "Doulos SIL", "Gentium Plus",
+                                             "DejaVu Serif", "Segoe UI", "DejaVu Sans") if n in families), ""))
+    f = QFont(_IPA_FAMILY[0]) if _IPA_FAMILY[0] else QFont()
+    f.setPointSize(IPA_SIZE if size is None else size)
     return f
 
 

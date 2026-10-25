@@ -171,3 +171,25 @@ def test_recording_asks_the_same_box(win, monkeypatch):
     assert dlg2.recorder is not None
     dlg2.recorder = None
     dlg.reject(); dlg2.reject()
+
+
+def test_cancel_adds_no_example_tag(win, monkeypatch):
+    """The audit, 25 October (S3): the new Example tag was added before the question, so Cancel
+    left it in the tag structure and the database unsaved; now only Add adds it."""
+    from lemmatrix.defaults import EXAMPLES, INSTANCES
+    ts = win.doc.db.settings.tags
+    top = next(g for g in ts.groups if g.name.lower() == INSTANCES.lower())
+    top.groups = [g for g in top.groups if g.name.lower() != EXAMPLES.lower()]   # an older structure
+    win.doc._settings_dirty = False
+    lion = win.doc.db.entry_by_ref("D002")
+    pl = lion.tokens[3]
+    dlg = _new(win, lion, pl.tags)
+    dlg.edits["Comment"].setText("again")
+    seen = _answers(monkeypatch, dlg, "cancel")
+    dlg._ok()
+    assert seen and seen[0][1] == "x1"            # offered as x1 all the same
+    assert not ts.find("Example 1") and not win.doc._settings_dirty
+    seen = _answers(monkeypatch, dlg, "add")
+    dlg._ok()
+    assert ts.find("Example 1") and "Example 1" in lion.tokens[-1].tags
+    dlg.reject()

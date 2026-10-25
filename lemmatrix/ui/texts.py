@@ -770,8 +770,9 @@ class TextsPanel(QObject):
         if buf is not None and buf.changed:
             box = QMessageBox(QMessageBox.Warning, "Refresh text",
                               f"{t.ref} has line edits that aren't saved into its TextGrid yet.", parent=self.win)
-            box.setInformativeText("Save and refresh: the database is saved (with the edits written into "
-                                   "the TextGrid), then the TextGrid is read again.\nRefresh without saving: "
+            box.setInformativeText("Save and refresh: the edits are written into the TextGrid (backed up "
+                                   "first), then it is read again. The database itself isn't saved, as with "
+                                   "Ctrl+S here.\nRefresh without saving: "
                                    "the edits to this text's lines are dropped, and the TextGrid is read as it "
                                    "is in the file.")
             save = box.addButton("Save and refresh", QMessageBox.AcceptRole)
@@ -780,8 +781,8 @@ class TextsPanel(QObject):
             box.setDefaultButton(save)
             box.exec()
             hit = box.clickedButton()
-            if hit is save:
-                if not self.main.save():
+            if hit is save:                       # this text's TextGrid only, as Ctrl+S here (it saved
+                if not self.save_textgrid():      # the whole database: the audit, 25 October)
                     return
             elif hit is not drop:
                 return
@@ -1289,8 +1290,8 @@ class TextsPanel(QObject):
             box.setDefaultButton(save)
             box.exec()
             hit = box.clickedButton()
-            if hit not in (save, plain) or (hit is save and not self.main.save()):
-                return
+            if hit not in (save, plain) or (hit is save and not self.save_textgrid()):
+                return                            # (the TextGrid only, as Ctrl+S here: audit, 25 October)
         grid = self.grid_path(t)
         lines = self.selected_lines()                 # opened at the selected line(s)
         select = (min(l.start for l in lines), max(l.end for l in lines)) if lines else None

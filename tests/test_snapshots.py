@@ -89,13 +89,19 @@ def test_the_window_renames_pins_and_deletes(win, monkeypatch):
     dlg = win.open_snapshots()
     assert isinstance(dlg, nd.SnapshotsDialog) and dlg.tree.topLevelItemCount() >= 1
     dlg.fill(snap.id)
-    monkeypatch.setattr(nd, "ask_text", lambda *a, **k: "My plurals")
+    asked = []
+    monkeypatch.setattr(nd, "ask_text", lambda *a, **k: asked.append(k) or "My plurals")
     dlg.rename()
+    assert asked[-1].get("one_line")                               # a name: one line (audit, 25 October)
     hit = win.doc.notebook.snapshot(snap.id)
     assert hit[1].name == "My plurals"
     dlg.fill(snap.id)
     dlg.toggle_pin()
     assert win.doc.notebook.snapshot(snap.id)[1].pinned
+    dlg.fill(snap.id)
+    dlg.toggle_pin()
+    assert win.doc.undo.undoText() == "Unpin snapshot"              # it said Pin either way
+    win.doc.undo.undo()
     assert win.doc.notebook.all_snapshots()[0][1].id == snap.id     # pinned on top
     dlg.fill(snap.id)
     monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.Yes)

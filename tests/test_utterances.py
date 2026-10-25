@@ -377,3 +377,19 @@ def test_tag_editor_counts_utterance_tokens(win, tmp_path):
     dlg = TagStructureDialog(win, db)
     before = sum(1 for e in db.entries for t in e.tokens if "before H" in t.tags)
     assert dlg._used({"before H"}) == before + 1
+
+
+def test_move_question_says_when_the_recording_keeps_its_name(win, tmp_path, monkeypatch):
+    """The audit, 25 October (S9): with automatic renaming off, the question promised a rename."""
+    from PySide6.QtWidgets import QInputDialog, QMessageBox
+    db = win.doc.db
+    uw = win.open_utterances()
+    uw.import_files([str(_wav(tmp_path / "hello.wav"))])
+    u = db.utterances[0]
+    db.settings.auto_update_names = False
+    asked = []
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: asked.append(a[2]) or QMessageBox.No)
+    monkeypatch.setattr(QInputDialog, "getItem", lambda parent, title, label, items, *a, **k:
+                        (next(i for i in items if i.startswith("U")), True))
+    uw.move_category(u)
+    assert "keeps its name" in asked[-1] and "renamed to match" not in asked[-1]

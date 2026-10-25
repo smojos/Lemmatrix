@@ -301,8 +301,8 @@ class FieldsDialog(QDialog):
         self.closed_rb.setEnabled(not fixed_type)
         self.name.setReadOnly(f.builtin)
         if f.role == "word-class":
-            self.note.setText("Word Class is built in and always closed. Its list is the word classes "
-                              "in Edit → Tag structure.")
+            self.note.setText("Word Class is built in and always closed. Its list of word classes is "
+                              "in Edit → Lists → Field lists → Word Class.")
             self.list_editor.setVisible(False)
         else:
             self.note.setText("Needed by Lemmatrix: it can be renamed (Label) and moved, but not deleted."

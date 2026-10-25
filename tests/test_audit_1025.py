@@ -421,3 +421,115 @@ def test_undecodable_workspace_is_unreadable(tmp_path):
     p.write_bytes(b"<workspace>\xff\xfe\x00broken</workspace>")
     with pytest.raises(wsmod.WorkspaceError):    # was a UnicodeDecodeError past the handler
         wsmod.load(p, defaults.new_database())
+
+
+# ---- small bugs (claude/AUDIT.md, section 1, Small) ---------------------------------------
+
+def test_push_to_question_from_a_new_token_keeps_the_comment_out_of_it(win):
+    """S2: the comment was saved into the new token, so Cancel left it there as well as in the notebook."""
+    from lemmatrix.ui.token_dialog import Slot, TokenDialog
+    e = win.doc.db.entry_by_ref("D002")
+    n = len(e.tokens)
+    dlg = TokenDialog(win, [Slot(e, None, ("Plural", "Accusative"), explicit=True)], 0)   # not there yet
+    dlg.comment.setText("Ask about the plural")
+    dlg.push_to_question()
+    dlg.reject()
+    assert len(e.tokens) == n + 1                 # the new token exists, for the link
+    new = next(t for t in e.tokens if "Accusative" in t.tags)
+    assert not any("Ask about the plural" in v for v in new.values.values())
+    q = win.doc.notebook.session(win.work_date()).questions[-1]
+    assert q.text == "Ask about the plural" and q.token_id == new.id
+
+
+def test_delete_several_tokens_sharing_a_recording(win):
+    """S5: two selected tokens with one recording: it was held twice and the delete rolled back."""
+    from lemmatrix import storage
+    from lemmatrix.ui.main_window import TokenRow
+    db = win.doc.db
+    e = next(e for e in db.entries if sum(1 for t in e.tokens if t.file) >= 1 and len(e.tokens) >= 2)
+    i = next(i for i, t in enumerate(e.tokens) if t.file)
+    j = next(j for j in range(len(e.tokens)) if j != i)
+    e.tokens[j].file = e.tokens[i].file           # two tokens, one recording (an old Keep as it is)
+    path = storage.sound_folder(db) / e.tokens[i].file
+    assert path.exists()
+    win.prefs.delete_recordings_with_tokens = True
+    n = len(e.tokens)
+    assert win.delete_tokens([TokenRow(e, i), TokenRow(e, j)])
+    assert len(e.tokens) == n - 2 and not path.exists()
+    win.doc.undo.undo()
+    assert len(e.tokens) == n and path.exists()
+
+
+def test_ok_with_nothing_changed_leaves_the_database_saved(win, monkeypatch):
+    """S7: OK in Settings, Edit → Metadata or Edit → Fields always marked the database unsaved."""
+    from PySide6.QtWidgets import QDialog
+    monkeypatch.setattr(QDialog, "exec", lambda self: 1)          # OK, nothing touched
+    win.doc.undo.setClean()
+    win.doc._settings_dirty = False
+    win.doc.notebook.dirty = False
+    for open_it in (win.edit_settings, win.edit_metadata, win.edit_fields):
+        open_it()
+        assert not win.doc.dirty, open_it.__name__
+
+    def rename(dlg):                              # a real change still counts
+        next(f for f in dlg.lists["lemma"] if f.name == "ToneClass").name = "Tone"
+        return 1
+    from lemmatrix.ui import fields_dialog
+    monkeypatch.setattr(fields_dialog.FieldsDialog, "exec", rename)
+    win.edit_fields()
+    assert win.doc.dirty
+
+
+def test_receive_closes_a_zip_it_turns_down(tmp_path, monkeypatch):
+    """S10: a zip that isn't a response, or answers another database's request, stayed open
+    (locked on Windows)."""
+    import json
+    import zipfile
+
+    import pytest
+    from lemmatrix import defaults
+    from lemmatrix import elicit as el
+    opened = []
+
+    class Tracked(zipfile.ZipFile):
+        def __init__(self, *a, **k):
+            super().__init__(*a, **k)
+            opened.append(self)
+    db = defaults.new_database()
+    db.path = str(tmp_path / "LXX-VXX.xml")
+    other = tmp_path / "other.zip"
+    with zipfile.ZipFile(other, "w") as zf:
+        zf.writestr("response.json", json.dumps({"format": el.RESPONSE_FORMAT, "request": "nope", "cards": []}))
+    wrong = tmp_path / "wrong.zip"
+    with zipfile.ZipFile(wrong, "w") as zf:
+        zf.writestr("response.json", json.dumps({"format": "something else"}))
+    monkeypatch.setattr(el.zipfile, "ZipFile", Tracked)
+    for path in (other, wrong):
+        with pytest.raises(el.ElicitError):
+            el.receive(db, path)
+    assert len(opened) == 2 and all(z.fp is None for z in opened)   # closed
+
+
+def test_ipa_size_applies_at_start_and_everywhere(win):
+    """S11: the IPA size reached the lemma list and All data only after Settings, and nothing else."""
+    from lemmatrix.ui import widgets
+    from lemmatrix.ui.main_window import MainWindow
+    old = win.prefs.ipa_size
+    try:
+        win.prefs.ipa_size = 17
+        fresh = MainWindow()                      # a new start
+        assert fresh.lemmas.model_.ipa.pointSize() == 17 and fresh.all_table.model_.ipa.pointSize() == 17
+        assert fresh.lt_view.delegate.ipa.pointSize() == 17
+        uw = fresh.open_utterances()
+        assert uw.table.model_.ipa.pointSize() == 17
+        fresh.all_table.set_zoom(1.5)
+        fresh.prefs.ipa_size = 12                 # Settings → Display, then OK
+        fresh.apply_ipa_size()
+        assert uw.table.model_.ipa.pointSize() == 12
+        assert round(fresh.all_table.model_.ipa.pointSizeF()) == 18           # 12 at its zoom
+        fresh.doc.undo.setClean()
+        fresh.doc._settings_dirty = False
+        fresh.close()
+    finally:
+        win.prefs.ipa_size = old
+        widgets.set_ipa_size(old)

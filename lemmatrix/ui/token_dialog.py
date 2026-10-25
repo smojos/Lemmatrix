@@ -907,10 +907,40 @@ class TokenDialog(QDialog):
         return out
 
     def _free_example(self) -> str:
-        """The first Example tag that gives this token a file name of its own (a new one if needed)."""
+        """The first Example tag that gives this token a file name of its own, or the name a new
+        one would have. Nothing is added here: the tag (and its group, in an older structure) is
+        added only when the researcher chooses Add (_ensure_example). It used to be added before
+        the question, so Cancel left a new tag behind and the database unsaved (the audit, 25 October)."""
+        from ..defaults import EXAMPLES
+        ts = self.db.settings.tags
+        group = next((g for _, g in ts.leaf_groups() if g.name.lower() == EXAMPLES.lower()), None)
+        tags = group.tags if group is not None else []
+        mine = {x.name for x in tags}
+        base = [x for x in self.token.tags if x not in mine]
+        for tag in tags:
+            if not self._clashes(base + [tag.name]):
+                return tag.name
+        names, codes = {x.name for x, _ in ts.tags()}, {x.code.lower() for x, _ in ts.tags()}
+        n = len(tags) + 1
+        while f"Example {n}" in names or f"x{n}" in codes or self._clashes(base + [f"Example {n}"]):
+            n += 1
+        return f"Example {n}"
+
+    def _example_chip(self, tag: str) -> str:
+        """How an Example tag is shown (its code, x3), whether it exists yet or not."""
+        found = self.db.settings.tags.find(tag)
+        if found:
+            return found[0].display()
+        from ..model import Tag
+        return Tag(tag, "x" + tag.rsplit(" ", 1)[-1]).display()
+
+    def _ensure_example(self, tag: str):
+        """Add the Example tag (and the Instances › Examples groups if missing), once chosen."""
         from ..defaults import EXAMPLES, INSTANCES
         from ..model import Group, Tag
         ts = self.db.settings.tags
+        if ts.find(tag):
+            return
         group = next((g for _, g in ts.leaf_groups() if g.name.lower() == EXAMPLES.lower()), None)
         if group is None:                         # an older structure without it: add it
             top = next((g for g in ts.groups if g.name.lower() == INSTANCES.lower()), None)
@@ -919,18 +949,8 @@ class TokenDialog(QDialog):
                 ts.groups.append(top)
             group = Group(EXAMPLES)
             top.groups.append(group)
-        mine = {x.name for x in group.tags}
-        base = [x for x in self.token.tags if x not in mine]
-        for tag in group.tags:
-            if not self._clashes(base + [tag.name]):
-                return tag.name
-        names, codes = {x.name for x, _ in ts.tags()}, {x.code for x, _ in ts.tags()}
-        n = len(group.tags) + 1
-        while f"Example {n}" in names or f"x{n}" in {c.lower() for c in codes} or self._clashes(base + [f"Example {n}"]):
-            n += 1
-        group.tags.append(Tag(f"Example {n}", f"x{n}"))
+        group.tags.append(Tag(tag, "x" + tag.rsplit(" ", 1)[-1]))
         self.doc.settings_changed()
-        return f"Example {n}"
 
     def _offer_example(self, recording: bool) -> bool:
         """Two recordings would share a name: offer a free Example tag. True if one was added."""
@@ -939,8 +959,7 @@ class TokenDialog(QDialog):
         name = self._expected()
         what = " + ".join(mx.chips(self.db, o.tags)) or "citation"
         tag = self._free_example()
-        found = self.db.settings.tags.find(tag)
-        code = found[0].display() if found else tag
+        code = self._example_chip(tag)
         box = QMessageBox(self)
         box.setIcon(QMessageBox.Question)
         box.setWindowTitle("Same recording name")
@@ -960,6 +979,7 @@ class TokenDialog(QDialog):
 
     def _apply_example(self, tag: str):
         """Give the working token this Example tag in place of any other Example tag."""
+        self._ensure_example(tag)
         mine = {x.name for _, g in self.db.settings.tags.leaf_groups()
                 if g.name.lower() == "examples" for x in g.tags}
         tags = [x for x in self.token.tags if x not in mine] + [tag]
@@ -1004,8 +1024,7 @@ class TokenDialog(QDialog):
         is on the token and saving carries on as before)."""
         from .duplicate_token import DuplicateBox
         tag = self._free_example()
-        found = self.db.settings.tags.find(tag)
-        chip = found[0].display() if found else tag
+        chip = self._example_chip(tag)
         while True:
             choice = self._ask_duplicate(o, chip)
             if choice == DuplicateBox.ADD:
@@ -1297,8 +1316,12 @@ class TokenDialog(QDialog):
         text = self.comment.text().strip()
         main = self.main
         if self.original is None:                 # a new token: it exists now, so the link works
+            # saved without the comment: it goes to the notebook, not into the token (it stayed in
+            # the token if the dialogue was then cancelled: the audit, 25 October)
+            self.comment.clear()
             self._collect()
             if not self._commit(keep_empty=True):
+                self.comment.setText(text)
                 return
         date = main.work_date()
         keys = main.session_keys()

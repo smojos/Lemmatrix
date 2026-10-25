@@ -122,24 +122,30 @@ def pick_date(parent, title: str, start: str, taken=(), allow_taken: bool = True
     return cal.selectedDate().toString("yyyy-MM-dd")
 
 
-def ask_text(parent, title: str, label: str, text: str = "") -> str | None:
-    """A few lines of text (Charis, for IPA); None if cancelled."""
+def ask_text(parent, title: str, label: str, text: str = "", one_line: bool = False) -> str | None:
+    """A few lines of text (Charis, for IPA); None if cancelled. one_line: a name (a snapshot's),
+    one line, Enter for OK (a line break got into names before: the audit, 25 October)."""
+    from PySide6.QtWidgets import QLineEdit
     dlg = QDialog(parent)
     dlg.setWindowTitle(title)
-    dlg.resize(520, 220)
+    dlg.resize(520, 120 if one_line else 220)
     lay = QVBoxLayout(dlg)
     lay.addWidget(QLabel(label))
-    ed = QPlainTextEdit(text)
+    ed = QLineEdit(text) if one_line else QPlainTextEdit(text)
     ed.setFont(ipa_font(parent.window().main.prefs.ipa_size if hasattr(parent.window(), "main") else 13))
-    lay.addWidget(ed, 1)
+    lay.addWidget(ed, 0 if one_line else 1)
     buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
     buttons.accepted.connect(dlg.accept)
     buttons.rejected.connect(dlg.reject)
     lay.addWidget(buttons)
+    if one_line:
+        lay.addStretch(1)
+        ed.returnPressed.connect(dlg.accept)
+        ed.selectAll()
     ed.setFocus()
     if not dlg.exec():
         return None
-    return ed.toPlainText().strip()
+    return (ed.text() if one_line else ed.toPlainText()).strip()
 
 
 class DateLabel(QLabel):
@@ -298,7 +304,7 @@ class NotebookDialog(QDialog):
             box.setToolTip(f"Write a line under {nbmod.HISTORY_HEADINGS[section]} in the day's notes for each "
                            f"{nbmod.HISTORY_WHAT[section]}"
                            ". Switching it off leaves what is written; nothing is written later for the days "
-                           "it was off. The same as Edit → Settings → General (this database).")
+                           "it was off. The same as File → Settings → General (this database).")
             box.toggled.connect(lambda on, sec=section: self._history_toggled(sec, on))
             self.history_ticks[section] = box
             hist.addWidget(box)
@@ -1329,7 +1335,7 @@ class SnapshotActions:
             return
         snap = cur[1]
         text = ask_text(self, "Rename snapshot", f"Snapshot (taken {cur[0].date}"
-                        f"{' ' + snap.time if snap.time else ''}):", snap.name)
+                        f"{' ' + snap.time if snap.time else ''}):", snap.name, one_line=True)
         if text and text.strip() and text.strip() != snap.name:
             ident, new = snap.id, text.strip()
 
@@ -1345,12 +1351,13 @@ class SnapshotActions:
         if cur is None:
             return
         ident = cur[1].id
+        label = "Unpin snapshot" if cur[1].pinned else "Pin snapshot"   # (Undo said Pin either way)
 
         def change():
             hit = self._main().doc.notebook.snapshot(ident)
             if hit is not None:
                 hit[1].pinned = not hit[1].pinned
-        self._main().doc.change_snapshots("Pin snapshot", change)
+        self._main().doc.change_snapshots(label, change)
         self._after(ident)
 
     def delete(self):

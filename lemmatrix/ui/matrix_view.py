@@ -276,7 +276,8 @@ class TokenCellDelegate(QStyledItemDelegate):
 
     def set_zoom(self, zoom: float):
         """Fonts and the pitch drawing at the view's zoom (Ctrl + mouse wheel)."""
-        self.ipa = ipa_font(round(13 * zoom))
+        from . import widgets                   # the IPA size of Settings → Display, zoomed
+        self.ipa = ipa_font(round(widgets.IPA_SIZE * zoom))
         self.plain = QFont(self.view.font())
         self.plain.setPointSizeF(self._base_pt * zoom)
         self.small = QFont(self.view.font())

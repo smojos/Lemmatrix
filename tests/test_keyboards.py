@@ -237,3 +237,28 @@ def test_not_windows_greys_the_section(app, win):
         assert not sec.on.isEnabled() and sec.note is not None
     finally:
         app.removeEventFilter(sw)
+
+
+def test_one_unreadable_keyboard_does_not_hide_the_others():
+    """The audit, 25 October (S13): a profile whose name couldn't be read made the whole TSF list
+    fall back to plain layouts, so the Keyman keyboards disappeared from Settings."""
+    from types import SimpleNamespace
+
+    from lemmatrix.ui.keyboards import WindowsKeyboards
+    kb = WindowsKeyboards.__new__(WindowsKeyboards)
+    kb._mgr = object()
+    kb._profiles = object()
+    a = SimpleNamespace(langid=0x0409, name="English")
+    b = SimpleNamespace(langid=0x0000, name=None)          # its description can't be read
+    c = SimpleNamespace(langid=0x045e, name="Amharic – Keyman")
+    kb._enum = lambda: [a, b, c]
+    kb._id = lambda p: f"tip:{p.langid:04x}"
+
+    def name(p):
+        if p.name is None:
+            raise OSError("no description")
+        return p.name
+    kb._name = name
+    kb._hkls = lambda: []
+    got = kb.list()
+    assert [k.name for k in got] == ["English", "Keyboard 0000", "Amharic – Keyman"]

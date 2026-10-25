@@ -395,6 +395,13 @@ def test_import_a_wav_with_a_textgrid_beside_it(win, tmp_path, monkeypatch):
     t = win.doc.db.texts[-1]
     assert t.ref == "T001" and t.textgrid.endswith(".TextGrid")
     assert (tmp_path / "Soundfiles" / "Texts" / t.textgrid).exists()
+    # several at once: each its own reference (all got T002, and the second failed: audit, 25 October)
+    three = _recording(src / "three.wav")
+    _grid(src / "three.TextGrid")
+    warned = []
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: warned.append(a[2]))
+    assert uw.import_files([str(two), str(three)]) == []
+    assert [x.ref for x in win.doc.db.texts[-2:]] == ["T002", "T003"] and not warned
 
 
 def test_clipped_utterance_shows_its_source(win, tmp_path, monkeypatch):
@@ -1002,7 +1009,10 @@ def test_refresh_text_reads_the_textgrid_again_and_asks_about_unsaved_edits(win,
     win.doc.undo.undo()                                  # undoing the dropped edit leaves the file's text
     assert p.lines.rows[0].values["Translation:en"] == "the hare ran"
     p.set_line_field(p.lines.rows[0], "Translation:en", "the hare fled")
+    saved = []
+    monkeypatch.setattr(win, "save", lambda: saved.append(1) or True)
     pick = "Save and refresh"
     p.refresh_text()
+    assert saved == []                                   # the TextGrid only, not the database (audit, 25 October)
     assert tgmod.read_lines(path, win.doc.db.mapping_for(t))[0].values["Translation:en"] == "the hare fled"
     assert p.lines.rows[0].values["Translation:en"] == "the hare fled"

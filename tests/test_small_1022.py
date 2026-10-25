@@ -100,6 +100,9 @@ def test_convert_question_to_hypothesis(win):
     assert w is not None and w.isVisible() and w.summary.text() == h.summary
     win.doc.undo.undo()                                           # the hypothesis is one undo step
     assert h.id not in [x.id for x in win.doc.notebook.hypotheses]
+    assert not q.resolved                                         # and the question open again (audit, 25 October)
+    win.doc.undo.redo()
+    assert q.resolved and h.id in [x.id for x in win.doc.notebook.hypotheses]
     assert TodoDialog(win).hypothesis_btn is None                 # questions only
     w.close()
 
