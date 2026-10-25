@@ -12,6 +12,7 @@ Every column filter is one of:
 
 from __future__ import annotations
 
+import functools
 import re
 import unicodedata
 from dataclasses import dataclass, field
@@ -24,7 +25,30 @@ CITATION_ITEM = "Citation (no tags)"
 
 
 def fold_diacritics(text: str) -> str:
-    """Remove combining marks and modifier letters (ʰ ʷ ʲ ː …), keep base letters."""
+    """Remove combining marks and modifier letters (ʰ ʷ ʲ ː …), keep base letters. Plain ASCII
+    has none, so it comes back as it is; anything else is remembered (the quick search folds
+    every cell of every row on each keystroke: at 58,000 tokens that took seconds; 25 October)."""
+    if not text or text.isascii():
+        return text
+    return _fold(text)
+
+
+def search_form(text: str) -> str:
+    """A cell's text as the quick search compares it: diacritics folded, any case."""
+    if not text:
+        return ""
+    if text.isascii():
+        return text.lower()
+    return _search_form(text)
+
+
+@functools.lru_cache(maxsize=1 << 18)
+def _search_form(text: str) -> str:
+    return _fold(text).casefold()
+
+
+@functools.lru_cache(maxsize=1 << 18)
+def _fold(text: str) -> str:
     out = []
     for ch in unicodedata.normalize("NFD", text):
         if unicodedata.combining(ch):

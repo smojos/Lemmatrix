@@ -655,6 +655,9 @@ def test_online_only_recordings_are_marked_and_explained(win, monkeypatch):
     cloudy = "LXX-VXX_D001_goat_SG.wav"
     real_scan = storage.scan_sound_folder
     monkeypatch.setattr(storage, "scan_sound_folder", lambda f: (real_scan(f)[0], {cloudy}))
+    # a file made online-only in Explorer doesn't change the folder; coming back to Lemmatrix from
+    # Explorer makes the folder be listed again (25 October), as here
+    win._scan_key = None                      # what becoming the active window again does
     win.lemmas.select_row(db.entry_by_ref("D001"))
     win.tabs.setCurrentIndex(mw.LEMMA_TAG)
     win.config_for(mw.LEMMA_TAG).x = mx.auto_specs(db, db.entries)

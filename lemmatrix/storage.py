@@ -653,8 +653,49 @@ def to_element(db: Database) -> ET.Element:
 def to_string(db: Database) -> str:
     root = to_element(db)
     ET.indent(root, space="  ")
-    text = '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(root, encoding="unicode") + "\n"
+    text = '<?xml version="1.0" encoding="utf-8"?>\n' + _tostring(root) + "\n"
     return xml_safe(text)                 # a pasted control character would make the file unreadable
+
+
+def _tostring(root) -> str:
+    """ET.tostring(root, encoding="unicode"), byte for byte, about twice as fast (25 October: at
+    58,000 tokens the general writer, which also looks for namespaces Lemmatrix never uses, took
+    most of every save and autosave). It uses ElementTree's own escaping; a tree with anything
+    unusual in it (a comment, a namespace, a non-text tag) goes to ElementTree itself."""
+    esc_text, esc_attr = ET._escape_cdata, ET._escape_attrib
+    out: list[str] = []
+    write = out.append
+
+    def ser(elem):
+        tag = elem.tag
+        if not isinstance(tag, str) or tag.startswith("{"):
+            raise _Unusual
+        write("<" + tag)
+        for k, v in elem.items():
+            if not isinstance(k, str) or not isinstance(v, str) or k.startswith("{"):
+                raise _Unusual
+            write(f' {k}="{esc_attr(v)}"')
+        text = elem.text
+        if text or len(elem):
+            write(">")
+            if text:
+                write(esc_text(text))
+            for child in elem:
+                ser(child)
+            write("</" + tag + ">")
+        else:
+            write(" />")
+        if elem.tail:
+            write(esc_text(elem.tail))
+    try:
+        ser(root)
+    except _Unusual:
+        return ET.tostring(root, encoding="unicode")
+    return "".join(out)
+
+
+class _Unusual(Exception):
+    pass
 
 
 def backup_folder(path: str | os.PathLike) -> Path:

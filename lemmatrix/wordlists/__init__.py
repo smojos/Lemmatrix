@@ -526,9 +526,11 @@ def peek(db, entry) -> str:
 _STEM = re.compile(r"^([A-Z]\d{3,4})([a-z]*)$")
 
 
+@lru_cache(maxsize=1)
 def _places():
     """The EACW's items by position, by family (A030 → [(position, ""), (…, "a"), …]) and the last
-    position of each section letter."""
+    position of each section letter. Worked out once (the list doesn't change while Lemmatrix runs):
+    it was worked out again for every lemma compared (the audit, 25 October)."""
     items = get(EACW).items
     pos = {i.number: k for k, i in enumerate(items)}
     families: dict[str, list[tuple[int, str]]] = {}
@@ -547,7 +549,16 @@ def place(ref: str, places=None) -> tuple | None:
     alphabetical order of its letters, as the list orders its families (B001, B001b, B001f, B001m);
     any other reference with a section's letter (an ethnic group's C + ISO code, RC3) at the end of
     that section, alphabetically. None if it has no place (no section letter)."""
-    pos, families, section_end = places or _places()
+    return _place(ref) if places is None or places is _places() else _place_in(ref, places)
+
+
+@lru_cache(maxsize=1 << 16)
+def _place(ref: str) -> tuple | None:
+    return _place_in(ref, _places())
+
+
+def _place_in(ref: str, places) -> tuple | None:
+    pos, families, section_end = places
     item = canon(EACW, ref)
     if item is not None:
         return (pos[item], 0, "")

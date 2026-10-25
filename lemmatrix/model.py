@@ -111,8 +111,59 @@ def new_id() -> str:
 # level) is usual for every lemma.
 
 
+# The tag structure's lookups (by name, in order, the usual-for hints) are cached, since every
+# soundfile name, chip and save asks them: at 58,000 tokens rebuilding them for each question took
+# most of the time spent opening a database (25 October). Any change to a tag, a group or their
+# lists bumps a counter, which makes every cached index out of date, so a change made anywhere,
+# in any way, is never missed.
+_TAG_GENERATION = [0]
+
+
+def _bump():
+    _TAG_GENERATION[0] += 1
+
+
+class _Watched(list):
+    """A list that bumps the tag structure's counter whenever it changes."""
+
+    def __init__(self, items=()):
+        super().__init__(items)
+        _bump()
+
+    def _changed(name):
+        def f(self, *a, **k):
+            out = getattr(list, name)(self, *a, **k)
+            _bump()
+            return out
+        f.__name__ = name
+        return f
+
+    for _n in ("append", "extend", "insert", "remove", "pop", "clear", "sort", "reverse",
+               "__setitem__", "__delitem__", "__iadd__", "__imul__"):
+        locals()[_n] = _changed(_n)
+    del _n, _changed
+
+    def __deepcopy__(self, memo):
+        import copy as _copy
+        return type(self)(_copy.deepcopy(list(self), memo))
+
+    def __reduce_ex__(self, protocol):
+        return (type(self), (list(self),))
+
+
+class _Bumping:
+    """Setting any attribute of a tag or group bumps the counter (lists become watched)."""
+    _LISTS: tuple = ()
+
+    def __setattr__(self, name, value):
+        if name in self._LISTS and not isinstance(value, _Watched):
+            value = _Watched(value)
+        object.__setattr__(self, name, value)
+        _bump()
+
+
 @dataclass
-class Tag:
+class Tag(_Bumping):
     name: str
     code: str = ""
     default: bool = False        # a group's default: real tag, no file-name code
@@ -127,7 +178,8 @@ class Tag:
 
 
 @dataclass
-class Group:
+class Group(_Bumping):
+    _LISTS = ("tags", "groups", "usual")
     name: str
     tags: list[Tag] = field(default_factory=list)
     groups: list["Group"] = field(default_factory=list)
@@ -156,26 +208,54 @@ class Group:
 
 
 @dataclass
-class TagStructure:
+class TagStructure(_Bumping):
+    _LISTS = ("groups",)
     groups: list[Group] = field(default_factory=list)
+
+    def __deepcopy__(self, memo):
+        import copy as _copy
+        return TagStructure(_copy.deepcopy(list(self.groups), memo))    # without the cache
+
+    # ---- the cached index (see _TAG_GENERATION) --------------------------------------
+    def _index(self) -> dict:
+        c = self.__dict__.get("_cache")
+        if c is not None and c["gen"] == _TAG_GENERATION[0]:
+            return c
+        leaves = [x for g in self.groups for x in g.leaf_groups()]
+        tags = [(t, g) for _, g in leaves for t in g.tags]
+        by_name: dict = {}
+        for t, g in tags:
+            by_name.setdefault(t.name, (t, g))
+        usual: dict[int, tuple[str, ...]] = {}
+        only: dict[int, bool] = {}
+
+        def walk(g: Group, inherited: tuple[str, ...], inherited_only: bool):
+            mine = tuple(g.usual) or inherited
+            usual[id(g)] = mine
+            only[id(g)] = g.utterances_only or inherited_only
+            for sub in g.groups:
+                walk(sub, mine, only[id(g)])
+        for g in self.groups:
+            walk(g, (), False)
+        c = {"gen": _TAG_GENERATION[0], "leaves": leaves, "tags": tags, "by_name": by_name,
+             "order": {t.name: i for i, (t, _) in enumerate(tags)}, "usual": usual, "only": only}
+        object.__setattr__(self, "_cache", c)     # not a change: no bump
+        return c
 
     # ---- lookups -------------------------------------------------------
     def leaf_groups(self) -> list[tuple[tuple[str, ...], Group]]:
         """(path, group) for every group that holds tags, in tag order."""
-        return [x for g in self.groups for x in g.leaf_groups()]
+        return list(self._index()["leaves"])
 
     def all_groups(self):
         for g in self.groups:
             yield from g.walk()
 
     def tags(self) -> list[tuple[Tag, Group]]:
-        return [(t, g) for _, g in self.leaf_groups() for t in g.tags]
+        return list(self._index()["tags"])
 
     def find(self, name: str) -> tuple[Tag, Group] | None:
-        for t, g in self.tags():
-            if t.name == name:
-                return t, g
-        return None
+        return self._index()["by_name"].get(name)
 
     def tag(self, name: str) -> Tag | None:
         hit = self.find(name)
@@ -190,29 +270,11 @@ class TagStructure:
     # ---- usual-for hints -----------------------------------------------
     def usual_map(self) -> dict[int, tuple[str, ...]]:
         """id(group) -> the word classes it is usual for, inherited ((): every lemma)."""
-        out: dict[int, tuple[str, ...]] = {}
-
-        def walk(g: Group, inherited: tuple[str, ...]):
-            mine = tuple(g.usual) or inherited
-            out[id(g)] = mine
-            for sub in g.groups:
-                walk(sub, mine)
-        for g in self.groups:
-            walk(g, ())
-        return out
+        return dict(self._index()["usual"])
 
     def only_map(self) -> dict[int, bool]:
         """id(group) -> whether it is for utterances only (marked on it or on a group above it)."""
-        out: dict[int, bool] = {}
-
-        def walk(g: Group, inherited: bool):
-            mine = g.utterances_only or inherited
-            out[id(g)] = mine
-            for sub in g.groups:
-                walk(sub, mine)
-        for g in self.groups:
-            walk(g, False)
-        return out
+        return dict(self._index()["only"])
 
     def for_utterances_only(self, group: Group, only: dict | None = None) -> bool:
         return (only or self.only_map()).get(id(group), False)
@@ -253,7 +315,7 @@ class TagStructure:
     # ---- ordering and checking ----------------------------------------
     def sort(self, names) -> list[str]:
         """Sort tag names into tag order. Unknown names keep their order, last."""
-        order = {t.name: i for i, (t, _) in enumerate(self.tags())}
+        order = self._index()["order"]
         names = list(dict.fromkeys(names))  # drop duplicates, keep first
         known = sorted((n for n in names if n in order), key=order.get)
         unknown = [n for n in names if n not in order]

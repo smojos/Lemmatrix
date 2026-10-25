@@ -545,6 +545,8 @@ def plan(db: Database, level: str, rows: list[Row], op, opts: Options | None = N
         if not (tgt.role == "translation" and tgt.lang == predict.LANG):
             raise BulkError("Predicted translations are only for the English translation.")
         predictor = predictor or predict.Predictor()
+        predictor.refresh(db)                     # once: each suggestion re-checked the whole database
+                                                  # before (26 s for 4,800 tokens; the audit, 25 October)
     if isinstance(op, ClearField) and (tgt.kind == "tags" or tgt.role == "word-class"):
         raise BulkError(f"{tgt.title} can't be cleared here: use Set value.")
     word_class_change = isinstance(op, SetValue) and tgt.role == "word-class"
@@ -596,7 +598,7 @@ def plan(db: Database, level: str, rows: list[Row], op, opts: Options | None = N
                 if old.strip():
                     p.kept += 1
                 else:
-                    sug = predictor.suggest(db, e, e.tokens[i].tags)
+                    sug = predictor.suggest(db, e, e.tokens[i].tags, refresh=False)
                     if sug is None:
                         p.unpredicted += 1
                     else:

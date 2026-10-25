@@ -62,6 +62,19 @@ def _speller():
     return _checker
 
 
+def warm() -> None:
+    """Load the word lists now (in a background thread, at start-up): loaded the first time a
+    gloss or translation was checked, they paused the window for about half a second, the
+    first keystroke of a search often (25 October). Never raises."""
+    try:
+        _speller()
+        if _lemmas is not None:
+            _lemmas("dogs")
+            _inflections("dog")
+    except Exception:                             # noqa: BLE001 (a warm-up only: loaded later if need be)
+        pass
+
+
 @lru_cache(maxsize=100000)
 def _known_word(w: str) -> bool:
     """w: lower case, one word (no hyphen)."""

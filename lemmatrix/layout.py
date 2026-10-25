@@ -51,20 +51,35 @@ def main_folder(db_path) -> Path:
     return Path(db_path).parent if db_path else Path.cwd()
 
 
+_FOLDERS: dict = {}                         # (database path, name) -> the folder (paths never change)
+
+
+def _folder(db_path, *parts) -> Path:
+    """main_folder / parts, remembered per database path: asked once per token on opening, it
+    was a measurable part of opening 58,000 tokens (25 October)."""
+    if not db_path:
+        return main_folder(db_path).joinpath(*parts)          # the current folder may change
+    key = (str(db_path), parts)
+    out = _FOLDERS.get(key)
+    if out is None:
+        out = _FOLDERS[key] = main_folder(db_path).joinpath(*parts)
+    return out
+
+
 def soundfiles(db_path) -> Path:
-    return main_folder(db_path) / SOUNDFILES
+    return _folder(db_path, SOUNDFILES)
 
 
 def tokens_folder(db_path) -> Path:
-    return soundfiles(db_path) / TOKENS
+    return _folder(db_path, SOUNDFILES, TOKENS)
 
 
 def texts_folder(db_path) -> Path:
-    return soundfiles(db_path) / TEXTS
+    return _folder(db_path, SOUNDFILES, TEXTS)
 
 
 def utterances_folder(db_path) -> Path:
-    return soundfiles(db_path) / UTTERANCES
+    return _folder(db_path, SOUNDFILES, UTTERANCES)
 
 
 def segments_folder(db_path) -> Path:
@@ -73,7 +88,7 @@ def segments_folder(db_path) -> Path:
 
 
 def held_folder(db_path) -> Path:
-    return soundfiles(db_path) / HELD
+    return _folder(db_path, SOUNDFILES, HELD)
 
 
 def backups_folder(db_path) -> Path:

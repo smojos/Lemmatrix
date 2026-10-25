@@ -210,6 +210,13 @@ class MainWindow(QMainWindow):
         self.heartbeat.setInterval(5 * 60_000)
         self.heartbeat.timeout.connect(lambda: self._locked_path and lockmod.claim(self._locked_path))
         self._apply_autosave()
+        # The English word lists, loaded quietly once opening is done, rather than on the first gloss
+        # checked (25 October); in a thread, so the window never waits for them
+        def _warm():
+            import threading
+            from .. import spelling
+            threading.Thread(target=spelling.warm, daemon=True).start()
+        QTimer.singleShot(3000, _warm)
         self._view_timer = QTimer(self)           # the view, filters and searches into the workspace,
         self._view_timer.setSingleShot(True)      # a moment after they change (idea 36)
         self._view_timer.setInterval(800)
@@ -2090,6 +2097,9 @@ class MainWindow(QMainWindow):
                                  lambda name, t=t, attr=attr: setattr(t, attr, name)))
         for e, tok in db.all_tokens():
             if tok.file:
+                stem = tok.file.rsplit(".", 1)[0]
+                if praat_name(stem) == stem:      # already as Praat writes it: nothing to rename (the
+                    continue                      # common case; building every expected name took seconds)
                 want = build_filename(db, e, tok, Path(tok.file).suffix or ".wav")
                 jobs.append((e.ref, storage.folder_for(db, e), tok.file, want,
                              lambda name, tok=tok: setattr(tok, "file", name)))
@@ -2931,13 +2941,28 @@ class MainWindow(QMainWindow):
         on = self.hide_empty.isChecked()
         self.lemmas.proxy.extra = (lambda e: any(t.has_content() for t in e.tokens)) if on else None
 
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() == QEvent.ActivationChange and self.isActiveWindow():
+            self._scan_key = None                 # back from another program: list the folder again
+
     def _only_data_toggled(self, on):
         self.doc.ws_set("only_with_data", bool(on))
         self.refresh()
 
-    def _scan_sound_folder(self):
+    def _scan_sound_folder(self, force: bool = False):
+        """Which recordings are in Soundfiles/Tokens (and online-only). Listed again only when the
+        folder has changed (a file added, removed or renamed: every recording is saved by renaming)
+        or Lemmatrix has just become the active window again (Explorer, Praat, OneDrive may have
+        changed something); every refresh listed all 58,000 files before (25 October)."""
         folder = storage.sound_folder(self.doc.db)
-        self.sound_files, self.cloud_files = storage.scan_sound_folder(folder)
+        try:
+            key = (str(folder), folder.stat().st_mtime_ns)
+        except OSError:
+            key = (str(folder), None)
+        if force or key != getattr(self, "_scan_key", None) or not hasattr(self, "sound_files"):
+            self.sound_files, self.cloud_files = storage.scan_sound_folder(folder)
+            self._scan_key = key
         for v in (self.lt_view, self.tt_view):
             v.sound_files = self.sound_files
             v.cloud_files = self.cloud_files

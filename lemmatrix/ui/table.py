@@ -155,6 +155,35 @@ class RowFilter(QSortFilterProxyModel):
         self.extra: Callable | None = None         # row -> False to leave it out (Hide empty lemmas, idea 55)
         self.setSortCaseSensitivity(Qt.CaseInsensitive)
         self.setSortRole(Qt.DisplayRole)
+        # Each row's searchable text, put together once (25 October: asking every cell again on each
+        # keystroke took seconds at 58,000 tokens); forgotten whenever the table's contents change
+        self._hay: dict[int, list[str]] = {}
+
+    def setSourceModel(self, model):
+        old = self.sourceModel()
+        if old is not None:
+            for sig in (old.modelReset, old.dataChanged, old.layoutChanged, old.rowsInserted,
+                        old.rowsRemoved, old.rowsMoved, old.columnsInserted, old.columnsRemoved):
+                try:
+                    sig.disconnect(self._forget_hay)
+                except (RuntimeError, TypeError):
+                    pass
+        super().setSourceModel(model)
+        if model is not None:
+            for sig in (model.modelReset, model.dataChanged, model.layoutChanged, model.rowsInserted,
+                        model.rowsRemoved, model.rowsMoved, model.columnsInserted, model.columnsRemoved):
+                sig.connect(self._forget_hay)
+        self._hay = {}
+
+    def _forget_hay(self, *_):
+        self._hay = {}
+
+    def _row_hay(self, m, r: int, row) -> list[str]:
+        hay = self._hay.get(r)
+        if hay is None:
+            hay = self._hay[r] = [fl.search_form(_text(col.get(row))) for col in m.columns
+                                  if col.kind != "drawing"]
+        return hay
 
     def refilter(self):
         if hasattr(self, "beginFilterChange"):          # Qt 6.10 and later
@@ -165,6 +194,7 @@ class RowFilter(QSortFilterProxyModel):
 
     def set_search(self, text):
         self.search = fl.fold_diacritics(text).casefold()
+        self._items = (self.search, terms(self.search))   # parsed once, not for every row
         self.refilter()
         self.searchChanged.emit()
 
@@ -182,7 +212,7 @@ class RowFilter(QSortFilterProxyModel):
             return False
         if self.extra is not None and not self.extra(row):
             return False
-        by_key = {c.key: c for c in m.all_columns}
+        by_key = {c.key: c for c in m.all_columns} if self.filters else {}
         for key, flt in self.filters.items():
             col = by_key.get(key)
             if col is None:
@@ -193,7 +223,8 @@ class RowFilter(QSortFilterProxyModel):
             elif not fl.matches(flt, col.get(row), col.unmarked):
                 return False
         if self.search:
-            items = terms(self.search)
+            cached = self.__dict__.get("_items")
+            items = list(cached[1]) if cached and cached[0] == self.search else terms(self.search)
             if self.term_match is not None:
                 plain = []
                 for t in items:
@@ -203,14 +234,12 @@ class RowFilter(QSortFilterProxyModel):
                     elif hit:
                         return True
                 items = plain
-            for col in m.columns:
-                if not items:
-                    break
-                if col.kind == "drawing":
-                    continue
-                hay = fl.fold_diacritics(_text(col.get(row))).casefold()
-                if any(t in hay for t in items):
-                    return True
+            if not items:
+                return False
+            for hay in self._row_hay(m, r, row):
+                for t in items:
+                    if t in hay:
+                        return True
             return False
         return True
 

@@ -14,8 +14,8 @@ from __future__ import annotations
 import re
 
 from PySide6.QtCore import QRect, QSize, Qt, QTimer
-from PySide6.QtGui import (QColor, QFont, QFontDatabase, QPainter, QSyntaxHighlighter, QTextCharFormat,
-                           QTextCursor, QTextFormat)
+from PySide6.QtGui import (QColor, QFont, QFontDatabase, QPainter, QTextCharFormat,
+                           QTextCursor, QTextFormat, QTextLayout)
 from PySide6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QLineEdit, QPlainTextEdit, QTextEdit,
                                QToolButton, QVBoxLayout, QWidget)
 
@@ -36,15 +36,24 @@ def _mono_font() -> QFont:
     return f
 
 
-class _Highlighter(QSyntaxHighlighter):
-    """Element names in the theme colour, attribute names muted, attribute values in ink."""
+class _Highlighter:
+    """Element names in the theme colour, attribute names muted, attribute values in ink.
+
+    Lines are coloured as they come into view (style_visible, from the text's paintEvent), not all
+    at once: a QSyntaxHighlighter coloured all ~600,000 lines of a 58,000-token database before
+    the viewer could show anything (several seconds; 25 October)."""
 
     TAG = re.compile(r"</?([\w:.-]+)|/?>|<\?xml|\?>")
     ATTR = re.compile(r'([\w:.-]+)(=)("[^"]*")')
 
-    def __init__(self, doc):
-        super().__init__(doc)
+    def __init__(self, edit: "XmlText"):
+        self.edit = edit
+        self.done: set[int] = set()               # block numbers coloured since the text was set
+        edit.highlighter = self
         self.restyle()
+
+    def reset(self):
+        self.done = set()
 
     def restyle(self):
         def fmt(c: QColor, bold=False):
@@ -58,14 +67,42 @@ class _Highlighter(QSyntaxHighlighter):
         self.f_value = fmt(QColor("#c8c8c8") if theme.dark() else QColor("#5a5a5a"))
         self.rehighlight()
 
-    def highlightBlock(self, text: str):
+    def rehighlight(self):
+        self.reset()
+        self.edit.viewport().update()
+
+    def ranges(self, text: str) -> list:
+        """The colours of one line, as the layout takes them (later ranges win)."""
         if "<" not in text:
-            return
+            return []
+        out = []
+
+        def add(start, length, f):
+            r = QTextLayout.FormatRange()
+            r.start, r.length, r.format = start, length, f
+            out.append(r)
         for m in self.ATTR.finditer(text):
-            self.setFormat(m.start(1), len(m.group(1)), self.f_name)
-            self.setFormat(m.start(3), len(m.group(3)), self.f_value)
+            add(m.start(1), len(m.group(1)), self.f_name)
+            add(m.start(3), len(m.group(3)), self.f_value)
         for m in self.TAG.finditer(text):
-            self.setFormat(m.start(), m.end() - m.start(), self.f_tag)
+            add(m.start(), m.end() - m.start(), self.f_tag)
+        return out
+
+    def style_visible(self):
+        """Colour the lines on screen that aren't coloured yet."""
+        e = self.edit
+        block = e.firstVisibleBlock()
+        top = e.blockBoundingGeometry(block).translated(e.contentOffset()).top()
+        height = e.viewport().height()
+        doc = e.document()
+        while block.isValid() and top <= height:
+            n = block.blockNumber()
+            if block.isVisible() and n not in self.done:
+                self.done.add(n)
+                block.layout().setFormats(self.ranges(block.text()))
+                doc.markContentsDirty(block.position(), block.length())
+            top += e.blockBoundingRect(block).height()
+            block = block.next()
 
 
 class _LineNumbers(QWidget):
@@ -123,6 +160,16 @@ class XmlText(QPlainTextEdit):
         self.blockCountChanged.connect(lambda *_: self.setViewportMargins(self.number_width(), 0, 0, 0))
         self.updateRequest.connect(self._update_numbers)
         self.setViewportMargins(self.number_width(), 0, 0, 0)
+
+    def setPlainText(self, text: str):
+        if getattr(self, "highlighter", None) is not None:
+            self.highlighter.reset()              # new lines: coloured again as they come into view
+        super().setPlainText(text)
+
+    def paintEvent(self, event):
+        if getattr(self, "highlighter", None) is not None:
+            self.highlighter.style_visible()
+        super().paintEvent(event)
 
     def number_width(self) -> int:
         digits = len(str(max(1, self.blockCount())))
@@ -273,7 +320,7 @@ class XmlViewerWindow(QDialog):
         lay.addLayout(bar)
 
         self.text = XmlText()
-        self.highlighter = _Highlighter(self.text.document())
+        self.highlighter = _Highlighter(self.text)
         lay.addWidget(self.text, 1)
         keep(self, main.prefs, "window/xml")
         self._restyle()
@@ -281,6 +328,8 @@ class XmlViewerWindow(QDialog):
     # ---- content ------------------------------------------------------
     def refresh(self, keep_place: bool = True):
         """Show the database as it is now (what Save would write)."""
+        import time
+        self._refreshed = time.monotonic()
         text = storage.to_string(self.doc.db)
         from pathlib import Path
         name = Path(self.doc.db.path).name if self.doc.db.path else "not saved yet"
@@ -442,4 +491,6 @@ class XmlViewerWindow(QDialog):
     def changeEvent(self, event):
         super().changeEvent(event)
         if event.type() == event.Type.ActivationChange and self.isActiveWindow() and self.isVisible():
-            self.refresh()                       # back from the main window: any changes made there
+            import time                          # back from the main window: any changes made there
+            if time.monotonic() - getattr(self, "_refreshed", 0.0) > 1.0:   # (not again straight after
+                self.refresh()                   # opening: the database was written out twice, 25 October)
