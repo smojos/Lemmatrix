@@ -16,7 +16,8 @@ The ɛλicit test database is a little Italian, with the author's own recordings
 
 ## What counts as the samples
 
-- **The sample database:** `samples/Sample.xml`, `samples/Sample.workspace`, everything in
+- **The sample database:** `samples/Sample.xml`, `samples/Sample.workspace`, `samples/Sample.notebook`
+  (its questions, To Dos, snapshots and hypotheses), `samples/Whiteboard/`, everything in
   `samples/Soundfiles/` (the tokens, the text *The man and the lion* with its TextGrid, and the
   utterances clipped from it) and in `samples/Documentation/` (the invented consent form);
 - **the ɛλicit test database:** everything in `samples/Elicit test/` (the database, its workspace,

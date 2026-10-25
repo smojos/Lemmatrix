@@ -4691,14 +4691,19 @@ class MainWindow(QMainWindow):
             shutil.copy2(SAMPLE, dst)
             if wsmod.path_for(SAMPLE).exists():   # its saved matrices are in its workspace
                 shutil.copy2(wsmod.path_for(SAMPLE), wsmod.path_for(dst))
+            from .. import notebook as nbmod      # questions, To Dos, snapshots, hypotheses (Josh, 25 October)
+            if nbmod.path_for(SAMPLE).exists():
+                shutil.copy2(nbmod.path_for(SAMPLE), nbmod.path_for(dst))
+            elif nbmod.path_for(dst).exists():    # a fresh copy has no notebook of an older one
+                nbmod.path_for(dst).unlink()
             sounds = SAMPLE.parent / "Soundfiles"
             if sounds.exists():
                 if (target / "Soundfiles").exists():
                     shutil.rmtree(target / "Soundfiles", ignore_errors=True)
                 shutil.copytree(sounds, target / "Soundfiles")
-            docs = SAMPLE.parent / "Documentation"           # DML's consent form (25 October)
-            if docs.exists():
-                shutil.copytree(docs, target / "Documentation", dirs_exist_ok=True)
+            for folder in ("Documentation", "Whiteboard"):   # DML's consent form; drawings linked to hypotheses
+                if (SAMPLE.parent / folder).exists():
+                    shutil.copytree(SAMPLE.parent / folder, target / folder, dirs_exist_ok=True)
         except OSError as exc:
             QMessageBox.warning(self, "Sample", f"The sample couldn't be copied to {target}: {exc}")
             return
