@@ -9,7 +9,7 @@ import pytest
 
 from lemmatrix import audio, matrix, pitch, storage
 from lemmatrix.defaults import new_database
-from lemmatrix.model import ListItem, Participant, Token, forbidden_in
+from lemmatrix.model import ListItem, Person, Token, forbidden_in
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def db():
     d.metadata.language_code = "LXX"
     d.metadata.language_name = "Sample language"
     d.metadata.variety_code = "VXX"
-    d.metadata.participants = [Participant("SP1", "Speaker one")]
+    d.metadata.participants = [Person("SP1", "Speaker one")]
     e = d.new_entry("D009", "ɗæær", "goat", "NOUN", speaker="SP1", date="2026-10-16")
     e.tokens[0].set("Phonetic", "ɗæær")
     e.tokens[0].set("Pitch", "21")

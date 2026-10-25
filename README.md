@@ -81,7 +81,8 @@ deliberate, part of the author's personal campaign to make it a compound, like *
 2. Double-click **`Run Lemmatrix.bat`**.
    The first run creates its own Python 3.13 environment (`py -3.13`) and installs the
    packages, which takes a few minutes. Later runs start straight away.
-3. Choose **Open a copy of the sample** to try it with invented data: a made-up language
+3. On the first start the welcome window asks; choose **Yes, load the sample** to try it with invented data
+   (later: Help → Sample databases): a made-up language
    (LXX) with 98 lemmas, saved matrices and synthetic recordings, built by
    `samples/make_sample.py`. It isn't a real language; any resemblance to one is coincidental. The copy goes to
    `Documents\Lemmatrix Sample`, so the sample in the repository stays untouched.
@@ -96,14 +97,14 @@ On Mac or Linux, run `./run_lemmatrix.sh` instead.
 The icon is drawn in `lemmatrix/resources/lemmatrix.svg`; `tools/make_icons.py` makes the
 PNG sizes and `lemmatrix.ico` from it (needs `cairosvg` and Pillow).
 
-**ɛλicit** (remote elicitation, stage 1) has its own test database: **File → Open a copy of the
-ɛλicit test database** opens a little Italian, with Danish as the second gloss language
+**ɛλicit** (remote elicitation) has its own test database: **Help → Sample databases → Open a copy of
+the ɛλicit test database** opens a little Italian, with Danish as the second gloss language
 (`samples/Elicit test`, built by `samples/make_elicit_test.py`; each lemma's Comment says how to
-ask for it). The ɛλicit button, left of Texts and utterances, makes a request: a zip to send to a
-speaker with a link to the web page in `docs/elicit/`, served by GitHub Pages at
+ask for it). The ɛλicit button, left of Texts and utterances, makes a request: a link through your own Google Drive, or a zip to send to a
+speaker, for the web page in `docs/elicit/`, served by GitHub Pages at
 <https://smojos.github.io/Lemmatrix/elicit/> (Settings → Pages → Deploy from a branch → `main`,
-`/docs`). The speaker records on their phone or computer and sends the recordings back as a zip;
-**Receive ɛλicitation** reviews them. No soundfile goes through GitHub: the page is only the page,
+`/docs`). The speaker records on their phone or computer; the recordings come back through the Drive
+(or as a zip they send), and **Receive ɛλicitation** reviews them. No soundfile goes through GitHub: the page is only the page,
 and the recordings stay on the speaker's device until they send them.
 
 For heavier testing there's also **`samples/Test-300.xml`**: 300 invented lemmas with about
@@ -200,7 +201,7 @@ ever closes by itself with no message, `lemmatrix-crash.log` in this folder says
   Sound (file-name pattern, recording, deleting recordings with their tokens,
   path to Praat), Display (light or dark theme, accent colour for highlights, chips and pitch
   traces, IPA font size), Pitch (display range, playback voice).
-- **Bulk edit** (Edit → Bulk edit…, Ctrl+E): a window of its own with a Lemmas tab and a
+- **Bulk edit** (Edit → Bulk edit…, Ctrl+Shift+B): a window of its own with a Lemmas tab and a
   Tokens tab, which start with the main window's filters, and a checkbox on every row. Operations:
   Replace (plain text or a regular expression), Shortcuts (y / j, tie bars on affricates,
   raise or lower pitch), Set value (a field, a tag added or removed, the speaker, the date,

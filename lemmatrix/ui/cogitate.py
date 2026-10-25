@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtGui import QFont, QKeySequence, QShortcut
-from PySide6.QtWidgets import (QAbstractItemView, QButtonGroup, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
+from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
                                QFormLayout, QHBoxLayout, QHeaderView, QInputDialog, QLabel, QLineEdit, QMenu,
                                QMessageBox, QPlainTextEdit, QPushButton, QRadioButton, QSplitter,
                                QStackedWidget, QTabBar, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout,

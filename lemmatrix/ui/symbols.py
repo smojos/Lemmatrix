@@ -13,7 +13,7 @@ import math
 
 from PySide6.QtCore import QEvent, QObject, Qt
 from PySide6.QtGui import QAction
-from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QDialog, QLayout, QLineEdit, QMenu,
+from PySide6.QtWidgets import (QAbstractSpinBox, QDialog, QLayout, QLineEdit, QMenu,
                                QPlainTextEdit, QTableWidget, QTableWidgetItem, QTextEdit, QVBoxLayout)
 
 DEFAULT = ["⟶", "⟵", "∅", "σ", "μ", "ω", "φ", "ι", "α", "β", "∴"]

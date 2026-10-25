@@ -251,4 +251,3 @@ class ArchiveExportDialog(QDialog):
         super().accept()
 
 
-AnonymousExportDialog = ArchiveExportDialog       # the older name

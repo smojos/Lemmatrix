@@ -301,12 +301,6 @@ class TagStructure:
         d = self.descriptions(names)
         return tip + ("\n" + d if d else "")
 
-    def duplicate_names(self) -> list[str]:
-        seen: dict[str, int] = {}
-        for t, _ in self.tags():
-            seen[t.name] = seen.get(t.name, 0) + 1
-        return [n for n, k in seen.items() if k > 1]
-
     def duplicate_codes(self) -> list[str]:
         """Codes shared by two tags: their file names couldn't be told apart."""
         problems = []
@@ -571,7 +565,6 @@ class Person:
         return cls(code, name, **kw)
 
 
-Participant = Person              # the older name
 
 
 @dataclass
@@ -1043,5 +1036,3 @@ class Database:
     def participant_codes(self) -> list[str]:
         return [p.code for p in self.metadata.participants]
 
-    def researcher_codes(self) -> list[str]:
-        return [p.code for p in self.metadata.researchers]

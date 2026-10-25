@@ -23,7 +23,7 @@ from .. import filters as fl
 from ..model import ListItem
 from . import spellui, theme
 from .filter_dialogs import ChooseDialog, FilterForDialog
-from .searchmark import SearchDelegate, found, keep_colour, paint_cell, terms
+from .searchmark import SearchDelegate, keep_colour, paint_cell, terms
 from .spellui import SpellDelegate
 from .widgets import FilterHeader, chips_width, draw_pitch, ipa_font, paint_chips, underscore_unit
 

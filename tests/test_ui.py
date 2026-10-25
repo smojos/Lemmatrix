@@ -352,7 +352,7 @@ def test_renamed_tags_follow_into_matrices(win, monkeypatch):
                         t.name = "Many"
             return ts
     _tag_editor(monkeypatch, lambda dlg: Fake())
-    win.edit_tags()
+    win.edit_lists("tags")
     assert db.settings.matrices[-1].x == [mx.Spec(frozenset({"Many"}), mx.LOOSE)]
     assert win.configs[mx.TAG_TAG].y == [mx.Spec(frozenset({"Many"}), mx.LOOSE)]
     assert any("Many" in t.tags for e in db.entries for t in e.tokens)
@@ -556,7 +556,7 @@ def _set_singular_code(win, monkeypatch, code):
                 if it.text(0) == "Singular":
                     it.setText(1, code)
     _tag_editor(monkeypatch, change)
-    win.edit_tags()
+    win.edit_lists("tags")
 
 
 def _missing(win):
@@ -880,7 +880,7 @@ def test_notebook_window_edits_and_links(win, tmp_path):
     d.session.questions.append(nb.Question("Why?", _today()))
     d._fill_questions()
     d.questions.setCurrentItem(d.questions.topLevelItem(0))
-    d.toggle_resolved()
+    d.q_panel.toggle()
     assert d.session.questions[0].resolved == _today()
     # the link goes to the token
     d._follow(d.comments.topLevelItem(0))

@@ -23,14 +23,13 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog,
                                QVBoxLayout, QWidget)
 
 from .. import audio, layout, lines as lmod, notebook as nbmod, storage, textgrid as tgmod
-from ..model import SPEAKER_FIELD, TEXTS, ClipSource, ListItem, Text, TierMapping, TierRule, nfc, tier_base
+from ..model import SPEAKER_FIELD, TEXTS, ClipSource, Text, TierMapping, TierRule, nfc, tier_base
 from . import keyboards
 from . import chiprow as chips, theme
 from .filter_dialogs import ConfigureColumnsDialog
 from .icons import icon, themed_icon
 from .lines_view import ConfigureViewDialog, FieldSpec, LinesView
 from .table import Column, FilterTable
-from .widgets import ipa_font
 
 CONTEXT = 2.0            # seconds of the text played either side of a line ("in context")
 
@@ -564,9 +563,9 @@ class TextsPanel(QObject):
         """The phonetics scratchpad: two pitch scratchpads, α and β (IDEAS.md idea 33; Josh, 22 October).
         A trace typed in one is drawn and played (Ctrl+Shift+Space anywhere in the lines plays α), and
         saved nowhere: they go when the window closes."""
-        from .scratchpad import ComparisonPads
+        from .scratchpad import PhoneticsScratchpad
         s = self.db.settings
-        self.comparison = ComparisonPads(self.main, s.pitch_low, s.pitch_high,
+        self.comparison = PhoneticsScratchpad(self.main, s.pitch_low, s.pitch_high,
                                          "Pitch scratchpad: type a pitch trace to see and hear it (Ctrl+Shift+"
                                          "Space plays α from anywhere in the lines). Nothing is saved: it's "
                                          "cleared when the window is closed")

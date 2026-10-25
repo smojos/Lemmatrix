@@ -22,7 +22,6 @@ from .. import audio, segments
 from . import theme
 from .icons import icon
 
-RESEARCHERS_DIVIDER = "── researchers ──"
 
 
 class SegmentRecordDialog(QDialog):

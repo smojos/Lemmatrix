@@ -36,10 +36,10 @@ def _right_shift_windows() -> bool | None:
 
 def comparison_in(win):
     """The visible phonetics scratchpad of a window, if it has one."""
-    from .scratchpad import ComparisonPads
+    from .scratchpad import PhoneticsScratchpad
     if win is None:
         return None
-    for c in win.findChildren(ComparisonPads):
+    for c in win.findChildren(PhoneticsScratchpad):
         if c.isVisible():
             return c
     return None

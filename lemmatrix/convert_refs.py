@@ -152,7 +152,7 @@ def file_renames(db: Database, pairs) -> tuple[list[tuple[Path, Path]], list[str
     """The recordings and pictures to rename for the changed lemmas: (old, new) through temporary
     names, so names can swap. A recording is renamed only when its name was up to date; one already
     out of date is left (Update all soundfile names deals with it) and listed."""
-    from . import filenames, layout, storage
+    from . import filenames, storage
     moves, notes = [], []
     if not db.path:
         return [], []

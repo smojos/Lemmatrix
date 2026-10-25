@@ -143,32 +143,6 @@ class WordlistChoice(QWidget):
         return b.property("list") if b is not None else BLANK
 
 
-class StartListDialog(QDialog):
-    """The wordlist choice on its own (kept for callers that ask only that)."""
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("New database")
-        lay = QVBoxLayout(self)
-        lay.addWidget(QLabel("Start the new database with:"))
-        self.lists = WordlistChoice(self)
-        self.group = self.lists.group
-        lay.addWidget(self.lists)
-        bb = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        bb.accepted.connect(self.accept)
-        bb.rejected.connect(self.reject)
-        lay.addWidget(bb)
-
-    def choice(self) -> str:
-        return self.lists.choice()
-
-
-def ask_start_list(parent) -> str | None:
-    """The list a new database starts from ("" for blank), or None if cancelled."""
-    d = StartListDialog(parent)
-    return d.choice() if d.exec() == QDialog.Accepted else None
-
-
 # --------------------------------------------------------------------------
 # File → Export → Wordlist…
 # --------------------------------------------------------------------------
@@ -349,7 +323,6 @@ def pdf_details(db, lid: str) -> list[str]:
 
 
 def pdf_html(db, lid: str, header, data) -> str:
-    md = db.metadata
     esc = html.escape
     rows = "".join("<tr>" + "".join(f"<td>{esc(str(c))}</td>" for c in r) + "</tr>" for r in data)
     doi = f"<br/>DOI: {esc(wl.DOIS[lid])}" if wl.DOIS.get(lid) else ""

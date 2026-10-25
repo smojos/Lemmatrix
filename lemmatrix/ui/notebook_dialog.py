@@ -354,8 +354,6 @@ class NotebookDialog(QDialog):
         self.q_panel = ItemsPanel(self, nbmod.QUESTION)    # the Questions tab, then To Do (21 October)
         self.t_panel = ItemsPanel(self, nbmod.TODO)
         self.questions, self.todos = self.q_panel.tree, self.t_panel.tree
-        self.q_delete, self.q_edit, self.q_resolve = self.q_panel.delete_btn, self.q_panel.edit_btn, \
-            self.q_panel.resolve_btn
         self.tabs.addTab(self.q_panel, "Questions")       # first (Josh, 18 October), then To Do, Comments…
         self.tabs.addTab(self.t_panel, "To Do")
         self.s_panel = SnapshotsPanel(self)               # Snapshots, after To Do (Josh, 24 October)
@@ -766,25 +764,9 @@ class NotebookDialog(QDialog):
             self.main.go_to(*data)
 
     # ---- questions (the ItemsPanel does the work; these names are kept for the Questions tab) --
-    def _current_question(self) -> nbmod.Question | None:
-        return self.q_panel.current()
-
     def _question_buttons(self):
         for panel in (self.q_panel, self.t_panel):
             panel.buttons()
-
-    def add_question(self):
-        self.q_panel.add()
-
-    def edit_question(self):
-        self.q_panel.edit()
-
-    def delete_question(self):
-        self.q_panel.delete()
-
-    def toggle_resolved(self):
-        self.q_panel.toggle()
-
 
 class ItemsPanel(QWidget):
     """A notebook tab of questions or to dos (Josh, 21 October: To Do is the same as Questions):

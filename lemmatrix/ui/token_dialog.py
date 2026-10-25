@@ -12,7 +12,7 @@ from pathlib import Path
 from PySide6.QtCore import QDir, QEvent, QRegularExpression, Qt, QTimer
 from PySide6.QtGui import QFont, QKeySequence, QRegularExpressionValidator, QShortcut, QValidator
 from PySide6.QtWidgets import (QComboBox, QDialog, QFrame, QGridLayout, QGroupBox, QHBoxLayout,
-                               QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton,
+                               QLabel, QLineEdit, QMenu, QMessageBox, QPushButton,
                                QScrollArea, QToolButton, QVBoxLayout, QWidget)
 from PySide6.QtCore import QFile
 

@@ -37,7 +37,6 @@ HERE = Path(__file__).parent
 
 EACW, CAWL, SWADESH = "EACW", "CAWL", "SWADESH"
 LIST_IDS = (EACW, CAWL, SWADESH)
-ATTRS = {EACW: "eacw", CAWL: "cawl", SWADESH: "swadesh"}    # the entry attribute for each list
 
 # Citations and DOIs, shown in New database's hovers, the exports and the documentation. The EACW's
 # DOI is added once it has one (Josh, 22 October: "Once I get a DOI that can be added").
@@ -426,12 +425,6 @@ def ensure_word_classes(db) -> list[str]:
             have.add(i.word_class)
             added.append(i.word_class)
     return added
-
-
-def item_for(db, entry) -> Item | None:
-    """The EACW item a lemma is: its reference in an EACW database, else its stored EACW number."""
-    n = canon(EACW, entry.ref) if is_eacw(db) else (entry.lists.get(EACW) or [None])[0]
-    return get(EACW).by_number.get(n) if n else None
 
 
 def fill_item(db, entry, item: Item, overwrite: bool = False):

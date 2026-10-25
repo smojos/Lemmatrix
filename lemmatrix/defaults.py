@@ -172,7 +172,6 @@ def tier_mapping() -> TierMapping:
                               TierRule("ft", "Translation", "en"), TierRule("mb", "")])
 
 
-STEM_TYPE_DEFAULT = "simple"     # what a new lemma's Stem type starts as (Josh, 23 October)
 
 
 def stem_types() -> list[ListItem]:

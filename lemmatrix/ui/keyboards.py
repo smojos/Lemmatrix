@@ -32,7 +32,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from PySide6.QtCore import QEvent, QObject, Qt, QTimer
-from PySide6.QtWidgets import QAbstractSpinBox, QApplication, QComboBox, QLineEdit, QPlainTextEdit, QTextEdit
+from PySide6.QtWidgets import QAbstractSpinBox, QComboBox, QLineEdit, QPlainTextEdit, QTextEdit
 
 PROPERTY = "lemmatrix_keyboard_field"      # set on a text box by tag(): the field it edits
 SEGMENT = "segment"                        # the Segments pads: typed as transcriptions
@@ -523,10 +523,6 @@ def install(app, keyboards=None) -> KeyboardSwitcher:
     global _SWITCHER
     _SWITCHER = KeyboardSwitcher(app, keyboards)
     app.installEventFilter(_SWITCHER)
-    return _SWITCHER
-
-
-def switcher() -> KeyboardSwitcher | None:
     return _SWITCHER
 
 

@@ -49,10 +49,6 @@ class Line:
     def id(self):                       # for the grid
         return (round(self.start, 4), round(self.end, 4), self.speaker)
 
-    def overlaps(self, start: float, end: float) -> bool:
-        return min(self.end, end) - max(self.start, start) > 1e-6
-
-
 def _open(path):
     try:
         from praatio import textgrid

@@ -12,7 +12,7 @@ first runs (`requirements.txt`), each under its own licence.
 | [SoundCard](https://pypi.org/project/SoundCard/) | recording computer audio | BSD-3-Clause |
 | [lemminflect](https://pypi.org/project/lemminflect/) | predicted translations, spelling | MIT |
 | [pyspellchecker](https://pypi.org/project/pyspellchecker/) | spelling | MIT |
-| [pyzipper](https://pypi.org/project/pyzipper/) | password-protected zips (anonymous backup) | MIT |
+| [pyzipper](https://pypi.org/project/pyzipper/) | password-protected zips (the archives' consent forms) | MIT |
 | [praatio](https://pypi.org/project/praatio/) | reading and writing Praat TextGrids | MIT |
 | [Pillow](https://pypi.org/project/pillow/) | shrinking pictures for ɛλicit requests (GIFs keep their animation) | MIT-CMU (HPND) |
 | [soundfile](https://pypi.org/project/soundfile/) (with libsndfile) | reading ɛλicit's FLAC recordings and playing the IPA soundfiles (Ogg Vorbis) | BSD-3-Clause (libsndfile: LGPL-2.1-or-later) |

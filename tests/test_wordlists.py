@@ -364,9 +364,11 @@ def test_link_to_wordlists_is_one_undo_step(app, tmp_path, monkeypatch):
     w.close()
 
 
-def test_start_list_dialog_hovers(app):
-    from lemmatrix.ui.wordlist_dialogs import StartListDialog
-    d = StartListDialog()
+def test_the_wordlist_choice_hovers(app):
+    """The New database window's lists give their citations on hover (the old start-list box,
+    removed 25 October as dead code, had this test)."""
+    from lemmatrix.ui.wordlist_dialogs import WordlistChoice
+    d = WordlistChoice()
     assert d.choice() == wl.EACW                                 # recommended
     tips = {b.property("list"): b.toolTip() for b in d.group.buttons()}
     assert tips[wl.EACW].startswith("Smolders, Joshua. 2026. The Extended African Comparative Wordlist: A lexical organization system for field linguists.")

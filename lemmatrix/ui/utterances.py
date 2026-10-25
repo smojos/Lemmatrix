@@ -19,17 +19,17 @@ import re
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import QDir, QSize, QStringListModel, Qt, Signal
+from PySide6.QtCore import QDir, QStringListModel, Qt, Signal
 from PySide6.QtGui import QFont, QKeySequence
 from PySide6.QtWidgets import (QCheckBox, QCompleter, QDialog, QSplitter, QGroupBox, QHBoxLayout, QInputDialog, QLabel, QLineEdit,
                                QMenu, QMessageBox, QPushButton, QStackedWidget, QTabBar, QToolButton,
                                QVBoxLayout, QWidget, QFileDialog)
 
-from .. import spelling, audio, layout, matrix as mx, pitch as pitchmod, pull, storage
+from .. import spelling, audio, matrix as mx, pitch as pitchmod, pull, storage
 from ..model import FORBIDDEN_CHARS, SEQUENCE, UTTERANCES, Text, Token, Utterance, nfc
 from . import theme
 from .filter_dialogs import ConfigureColumnsDialog
-from .icons import icon, ink_icon, themed_icon
+from .icons import icon, themed_icon
 from .spellui import SpellDelegate
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, ListEditDelegate
 from .token_dialog import Slot, TokenDialog
@@ -281,7 +281,7 @@ class TextsUtterancesWindow(QDialog):
         self.cell_config_btn.setToolButtonStyle(Qt.ToolButtonIconOnly)
         head.addWidget(self.cell_edit_btn)
         head.addWidget(self.cell_config_btn)
-        head.addWidget(main_conv := self.main.conventions_button())
+        head.addWidget(self.main.conventions_button())
         head.addWidget(self.cell_title, 1)
         lay.addLayout(head)
         v = self.cell = LinesView()

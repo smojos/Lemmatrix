@@ -27,11 +27,10 @@ is an ordinary translation and counts as evidence for further suggestions (agree
 from __future__ import annotations
 
 import re
-from collections import Counter
 from dataclasses import dataclass, field
 from functools import lru_cache
 
-from .model import Database, Entry, Token
+from .model import Database, Entry
 
 LANG = "en"
 
@@ -331,11 +330,3 @@ class Predictor:
                     return Suggestion(text, tpl, count, list(sources), level)
         return None
 
-    def suggest_for(self, db: Database, e: Entry, t: Token) -> Suggestion | None:
-        fname = translation_field(db)
-        return self.suggest(db, e, t.tags, t.get(fname, LANG) if fname else "")
-
-    def templates(self, db: Database) -> dict:
-        """(word class or "", tag key) -> {Template: count}: for checking and tests."""
-        self.refresh(db)
-        return {k: Counter({t: v[0] for t, v in b.items()}) for k, b in self._index.items()}

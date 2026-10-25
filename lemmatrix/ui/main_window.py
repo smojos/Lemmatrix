@@ -55,7 +55,7 @@ from .dialogs import EntryDialog, MetadataDialog, PreferencesDialog
 from .document import Document
 from .fields_dialog import FieldsDialog
 from .filter_dialogs import ConfigureColumnsDialog
-from .icons import THEMED, elicit_icon, icon, icon_size, ink_icon, themed_icon
+from .icons import THEMED, elicit_icon, icon, icon_size, themed_icon
 from .matrix_dialogs import ConfigureCellDialog, ConfigureMatrixDialog, ask_matrix_name
 from .matrix_view import MatrixView
 from .prefs import Prefs
@@ -96,7 +96,6 @@ class TokenRow:
         return hash((id(self.entry), self.index))
 
 
-INK_ICONS = THEMED                 # drawn in the theme's colours, so they follow the theme
 ICON_ONLY = {"add", "delete", "edit", "play", "reset-filters",   # obvious, shared actions: the name is in the tooltip
              "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token", "lemma-token", "hide-empty", "tick",
              "camera", "xml-viewer"}
@@ -497,11 +496,9 @@ class MainWindow(QMainWindow):
     def _camera_button(self) -> QToolButton:
         """The camera, in every tab's options: a click takes a snapshot of the complete setup into the
         Snapshots list (Josh, 24 October); right-click for the menu it used to open."""
-        b = tool("Snapshot", "camera", lambda: None,
+        b = tool("Snapshot", "camera", self.take_snapshot,
                  "Take a snapshot: the complete setup (tab, lemma, filters, matrix), into the Snapshots "
                  "list (Ctrl+Shift+P). Right-click: link it to a hypothesis")
-        b.clicked.disconnect()
-        b.clicked.connect(lambda *_: self.take_snapshot())
         b.setContextMenuPolicy(Qt.CustomContextMenu)
         b.customContextMenuRequested.connect(lambda pos, b=b: self.snapshot_menu(b.mapToGlobal(pos)))
         return b
@@ -1102,10 +1099,6 @@ class MainWindow(QMainWindow):
                 "todo": sum(1 for _, q in book.all_items(nbmod.TODO) if q.is_open),
                 "snapshots": len(s.snapshots) if s is not None else 0}
 
-    def open_todo_count(self) -> int:
-        book = getattr(self.doc, "notebook", None)
-        return 0 if book is None else sum(1 for _, q in book.all_items(nbmod.TODO) if q.is_open)
-
     def update_todo_badge(self):
         """Every badge (the name is older: the To Do badge came first)."""
         self.update_badges()
@@ -1192,10 +1185,10 @@ class MainWindow(QMainWindow):
         """The phonetics scratchpad (Josh, 22 October; named 24 October): α and β, with the Pitch and Segments tabs (IDEAS.md
         ideas 33 and 46), as under a text's lines, for every tab of the Matrix, against Current
         Session. Nothing typed is saved: they're empty each time Lemmatrix opens."""
-        from .scratchpad import ComparisonPads
+        from .scratchpad import PhoneticsScratchpad
         panel, pl = self._bar()
         s = self.doc.db.settings
-        self.comparison = ComparisonPads(self, s.pitch_low, s.pitch_high,
+        self.comparison = PhoneticsScratchpad(self, s.pitch_low, s.pitch_high,
                                          "Pitch scratchpad: type a pitch trace to see and hear it (Enter, or "
                                          "click its letter). Nothing is saved")
         self.scratchpad = self.comparison.alpha
@@ -1453,7 +1446,6 @@ class MainWindow(QMainWindow):
         m.addSeparator()
         self._act(m, "Take sna&pshot", self.take_snapshot)                   # every tab (24 October)
         self._act(m, "Link snapshot to &hypothesis…", self.link_snapshot)
-        self.matrix_menu_items = items
 
         def update(*_):
             on = tab() in (LEMMA_TAG, TAG_TAG)
@@ -1892,7 +1884,7 @@ class MainWindow(QMainWindow):
         self.hide_empty.blockSignals(False)
         self._apply_hide_empty()
         self._setup_columns()
-        self.lemmas.proxy.pinned = None           # a Ctrl+click pin belongs to the database closed
+        self.lemmas.proxy.pinned = None           # an Alt+click pin belongs to the database closed
         self.all_table.proxy.pinned = None
         self.lemmas.proxy.filters.clear()         # so do the filters (this one's come back with its view)
         self.all_table.proxy.filters.clear()
@@ -2467,7 +2459,7 @@ class MainWindow(QMainWindow):
             self.tick_action.setIcon(themed_icon("tick", 16))
         for w in QApplication.topLevelWidgets():         # icons in the theme's colours follow it, every window
             for b in w.findChildren(QToolButton):
-                if b.property("icon_name") in INK_ICONS:
+                if b.property("icon_name") in THEMED:
                     b.setIcon(themed_icon(b.property("icon_name"), b.iconSize().height() or 20))
         for v in (self.lt_view, self.tt_view):           # the accent, lighter on dark
             v.switch.setIcon(icon("switch-plain" if theme.dark() else "switch", 22,   # no white edge on dark
@@ -3937,9 +3929,6 @@ class MainWindow(QMainWindow):
         if rename_fields(self.doc.ws, renames) or moved:
             self.doc.write_workspace()
 
-    def edit_tags(self):
-        self.edit_lists("tags")
-
     def _symbols(self) -> list[str]:
         """The Σymbols list (Edit → Lists → Symbols): the workspace's, or the defaults."""
         v = self.doc.ws.get("symbols", None)
@@ -4397,11 +4386,6 @@ class MainWindow(QMainWindow):
         QMessageBox.warning(self, "Duplicate file names",
                             "These tokens would get the same file name:\n\n" + "\n".join(lines))
 
-    def open_sound_folder(self):
-        folder = storage.sound_folder(self.doc.db)
-        folder.mkdir(parents=True, exist_ok=True)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
-
     def about(self):
         QMessageBox.about(self, "About Lemmatrix", about_text())
 
@@ -4479,7 +4463,6 @@ class MainWindow(QMainWindow):
         from .export_dialog import ArchiveExportDialog
         ArchiveExportDialog(self, kind).exec()
 
-    export_anonymous = export_archive             # the older name
 
     def _select_wordlist_hit(self):
         """A wordlist search (CAWL 345) that finds one lemma selects it."""
@@ -4694,7 +4677,7 @@ class MainWindow(QMainWindow):
         self.open_file(str(dst))
 
     def open_elicit_test(self):
-        """File → Open a copy of the ɛλicit test database: the Italian one (samples/Elicit test),
+        """Help → Sample databases → Open a copy of the ɛλicit test database: the Italian one (samples/Elicit test),
         copied to Documents\\Lemmatrix Elicit Test with its recordings and pictures."""
         if not ELICIT_TEST.exists():
             QMessageBox.warning(self, "ɛλicit test database", "The test database isn't in this copy of Lemmatrix.")

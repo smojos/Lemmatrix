@@ -263,13 +263,12 @@ class SegmentPad(QWidget):
         self.changed.emit()
 
 
-class ComparisonPads(QWidget):
+class PhoneticsScratchpad(QWidget):
     """The phonetics scratchpad: the Pitch and Segments tabs over α and β. Each letter is on its pad's
     left, large, bold, in the theme colour (grey with nothing to play), centred on the box."""
 
     def __init__(self, main, low: int, high: int, tip: str, parent=None):
         super().__init__(parent)
-        from .icons import icon
         self.main = main
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)

@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from PySide6.QtCore import QEvent, QPointF, QRect, QRectF, Qt, Signal
 from PySide6.QtGui import QAction, QColor, QFont, QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import (QAbstractItemView, QAbstractScrollArea, QDialog, QDialogButtonBox, QLabel,
-                               QLineEdit, QMenu, QPlainTextEdit, QTreeWidget, QTreeWidgetItem, QVBoxLayout)
+                               QLineEdit, QPlainTextEdit, QTreeWidget, QTreeWidgetItem, QVBoxLayout)
 
 from ..interlinear import bare, split_units
 from . import conventions, searchmark, theme

@@ -17,7 +17,6 @@ Recycle Bin, as when a recording is replaced).
 
 from __future__ import annotations
 
-from pathlib import Path
 
 from PySide6.QtCore import QFile, Qt
 from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QDialog, QDialogButtonBox, QHBoxLayout, QLabel,

@@ -8,7 +8,7 @@ sizes survive however the window goes: closed, or taken down with the main windo
 
 from __future__ import annotations
 
-from PySide6.QtCore import QEvent, QObject, QRect, QTimer
+from PySide6.QtCore import QEvent, QObject, QTimer
 from PySide6.QtWidgets import QSplitter
 
 

@@ -23,10 +23,10 @@ from .model import (LEMMAS, TEXTS, UTTERANCES, ClipSource, Database, Entry, Fiel
 
 FORMAT_VERSION = "12"
 WORDLIST_ATTRS = {"EACW": "eacw", "CAWL": "cawl", "SWADESH": "swadesh"}   # format 9 (idea 40)
-# Until version 1.0 only the current format is read (Josh, 18 October 2026: his database is the
-# only one, so there is no compatibility code for older formats). When the format changes, a
-# provisional upgrade from the format before is written for his database and taken out again
-# once it has been saved in the new one.
+# Until version 1.0 the current format is read and the formats before it upgraded, from format 5 on
+# (Josh, 18 October 2026: no compatibility code for older formats; the upgrades are kept, 25 October,
+# so an older backup still opens, until v1 fixes the format). When the format changes, an upgrade
+# from the format before is written.
 READABLE = ("5", "6", "7", "8", "9", "10", "11", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
 # 7: before researchers had the Identifiable? tick and both ticks were always written; 8: before the
 # comparative wordlists (format 9, 22 October: no base and no numbers yet, so nothing to change);
@@ -295,7 +295,7 @@ def load(path: str | os.PathLike) -> Database:
     version = root.get("format", FORMAT_VERSION)
     if version not in READABLE:
         raise FormatError(f"This database uses format {root.get('format')}; this version of Lemmatrix "
-                          f"reads format {FORMAT_VERSION} only.")
+                          f"reads formats {READABLE[0]} to {FORMAT_VERSION}.")
 
     md = _load_metadata(root.find("metadata"))
 
@@ -790,7 +790,6 @@ def in_folder(path: Path, folder: Path) -> bool:
         return False
 
 
-HELD = "_Deleted recordings"
 
 
 def held_folder(db: Database) -> Path:

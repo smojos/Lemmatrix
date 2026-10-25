@@ -192,16 +192,6 @@ def best(db, sequence: str, session_speaker: str = "") -> Voice | None:
     return found[0] if found else None
 
 
-def kind_of(db, speaker: str) -> str:
-    """"participant", "researcher" or "" (no speaker, or a code in neither list)."""
-    md = db.metadata
-    if speaker and md.participant(speaker):
-        return "participant"
-    if speaker and md.researcher(speaker):
-        return "researcher"
-    return ""
-
-
 def archived(db, v: Voice) -> bool:
     """Whether a segment soundfile goes into the Ethical archive: a participant's, with Audio
     sharing? selected. A researcher's isn't data (Josh: it survives a backup but not an archive),
@@ -244,5 +234,5 @@ def copy_shared(db, target_folder: Path) -> tuple[int, int]:
 
 
 __all__ = ["Voice", "norm", "problem", "native", "native_index", "folder", "filename", "parse",
-           "recordings", "voices", "best", "kind_of", "archived", "rename_speakers", "copy_shared",
+           "recordings", "voices", "best", "archived", "rename_speakers", "copy_shared",
            "FORBIDDEN_CHARS"]

@@ -50,7 +50,6 @@ from .model import Database, Location, tier_base
 ANONYMOUS, ETHICAL = "anonymous", "ethical"
 TITLES = {ANONYMOUS: "Anonymous archive", ETHICAL: "Ethical archive"}
 SUFFIX = {ANONYMOUS: " (anonymous)", ETHICAL: " (ethical)"}
-ANON = SUFFIX[ANONYMOUS]                  # the older name
 HIDDEN_LANGUAGE, HIDDEN_VARIETY = "LXX", "VXX"
 AI_NOTE = ("This completely anonymised archive is the one to use when you feed your data to AI for help "
            "or analysis: nobody is named in it, and codes are renumbered.")
@@ -127,15 +126,6 @@ class Report:
     thanks_in: int = 0                                        # personal thank-yous kept (ethical, chosen)
     thanks_out: int = 0                                       # left out
     scrubber: "Scrubber | None" = field(default=None, repr=False, compare=False)
-
-    @property
-    def renumbered(self) -> dict[str, str]:
-        """old -> new for every row of the key (a code in both lists: its participant row)."""
-        out: dict[str, str] = {}
-        for _, old, new in self.key:
-            out.setdefault(old, new)
-        return out
-
 
 def zip_available() -> bool:
     try:
@@ -243,30 +233,6 @@ class Scrubber:
             return {self.value(k, where, None) if isinstance(k, str) else k: self.value(v, where, report)
                     for k, v in obj.items()}
         return obj
-
-
-def name_patterns(people) -> list[tuple[re.Pattern, str]]:
-    """(pattern, code) for each person's full name, then each part of it: kept for older callers."""
-    out = []
-    for p in people:
-        s = Scrubber()
-        s.add_name(p.name, p.code)
-        s.compile()
-        if s:
-            out.append((s.rx, p.code))
-    return out
-
-
-def replace_names(text: str, patterns, where: str, report: Report) -> str:
-    """Older callers' replacement, one person at a time."""
-    if not text:
-        return text
-    for rx, code in patterns:
-        def sub(m, code=code):
-            report.replaced.append(f"{where}: “{m.group()}” → {code}")
-            return code
-        text = rx.sub(sub, text)
-    return text
 
 
 # --------------------------------------------------------------------------

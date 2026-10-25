@@ -490,13 +490,6 @@ class Plan:
     def rows_changed(self) -> int:
         return len({row_key(c.row) for c in self.changes})
 
-    def changes_by_row(self) -> dict:
-        return {(row_key(c.row), c.key): c for c in self.changes}
-
-    def problems_by_row(self) -> dict:
-        return {(row_key(p.row), p.key): p for p in self.problems if p.row is not None}
-
-
 def new_duplicates(orig: Entry, after: Entry) -> list[tuple[int, int]]:
     """Pairs of token indexes (in after) with the same tags, that didn't have the same tags before.
 

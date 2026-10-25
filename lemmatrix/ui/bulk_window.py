@@ -27,7 +27,7 @@ from .. import bulk, matrix as mx, storage
 from ..model import ListItem
 from . import theme
 from .filter_dialogs import ConfigureColumnsDialog
-from .icons import icon, icon_size, ink_icon, themed_icon
+from .icons import icon_size, ink_icon, themed_icon
 from .searchmark import paint_cell
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, RowModel
 from .widgets import ipa_font
@@ -76,7 +76,6 @@ class BulkModel(RowModel):
         self.win = win
         self.preview: dict = {}           # (row key, column key) -> bulk.Change
         self.errors: dict = {}            # (row key, column key) -> bulk.Problem
-        self.error_rows: set = set()      # row keys with a problem (whatever the column)
 
     def data(self, index, role=Qt.DisplayRole):
         if not index.isValid() or index.row() >= len(self.rows) or index.column() >= len(self.columns):
@@ -877,7 +876,6 @@ class BulkEditWindow(QDialog):
         m = self.tables[self.level].model_
         m.preview = {(row_key_of(c.row), c.key): c for c in plan.changes}
         m.errors = {(row_key_of(p.row), p.key or op.target): p for p in plan.problems if p.row is not None}
-        m.error_rows = {row_key_of(p.row) for p in plan.problems if p.row is not None}
         m.refresh_all()
         noun = "lemma" if self.level == bulk.LEMMAS else "token"
         ticked = len(self.chosen_rows())
@@ -967,7 +965,7 @@ class BulkEditWindow(QDialog):
         for t in self.tables.values():
             m = t.model_
             if m.preview or m.errors:
-                m.preview, m.errors, m.error_rows = {}, {}, set()
+                m.preview, m.errors = {}, {}
                 m.refresh_all()
         if hasattr(self, "summary") and not self._applying:
             self._show("Choose an operation, then Preview to see what would change.")

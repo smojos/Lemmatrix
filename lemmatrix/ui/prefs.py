@@ -55,13 +55,6 @@ class Prefs:
 
     # playback and safety
     @property
-    def auto_play(self) -> bool:
-        return self._get("playback/autoplay", False, bool)
-
-    @auto_play.setter
-    def auto_play(self, v): self.q.setValue("playback/autoplay", bool(v))
-
-    @property
     def delete_recordings_with_tokens(self) -> bool:
         return self._get("safety/delete_recordings_with_tokens", True, bool)
 
@@ -245,10 +238,6 @@ class Prefs:
         key = self._view_key(path).replace("views/", "fullbackup/")
         return {k: self._get(f"{key}/{k}", "") for k in ("last", "snoozed", "first_seen")}
 
-    def set_full_backup_date(self, path: str, which: str, day: str):
-        key = self._view_key(path).replace("views/", "fullbackup/")
-        self.q.setValue(f"{key}/{which}", day)
-
     @property
     def pitch_volume(self) -> int:
         return self._get("pitch/volume", 70, int)
@@ -319,11 +308,6 @@ class Prefs:
         except ValueError:
             return {}
 
-    def set_session_for(self, path: str, session: dict):
-        import json
-        self.q.setValue(self._view_key(path).replace("views/", "sessions/"),
-                        json.dumps(session, ensure_ascii=False))
-
     def move_database(self, old: str, new: str):
         """A renamed database keeps its view, session and full-backup dates (File → Rename database)."""
         a, b = self._view_key(old), self._view_key(new)
@@ -376,13 +360,6 @@ class Prefs:
         return self.q.value(key)
 
     # session and files
-    @property
-    def speaker(self) -> str:
-        return self._get("session/speaker", "")
-
-    @speaker.setter
-    def speaker(self, v): self.q.setValue("session/speaker", v)
-
     @property
     def last_file(self) -> str:
         return self._get("files/last", "")

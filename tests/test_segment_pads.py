@@ -225,10 +225,10 @@ def test_file_open_folder_has_segments(win, monkeypatch):
 
 
 def test_both_areas_are_the_same(win):
-    from lemmatrix.ui.scratchpad import ComparisonPads
+    from lemmatrix.ui.scratchpad import PhoneticsScratchpad
     win.open_utterances()
     t = win.utterances_window.texts.comparison
-    assert type(t) is ComparisonPads and t.tabs.count() == 2 and len(t.seg_pads) == 3
+    assert type(t) is PhoneticsScratchpad and t.tabs.count() == 2 and len(t.seg_pads) == 3
     win.utterances_window.close()
 
 

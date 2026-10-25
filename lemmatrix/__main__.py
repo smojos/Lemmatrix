@@ -56,7 +56,7 @@ def _install_crash_log(log: Path):
 def main() -> int:
     from PySide6.QtWidgets import QApplication, QMessageBox
 
-    from .ui.main_window import SAMPLE, MainWindow
+    from .ui.main_window import MainWindow
 
     if sys.platform.startswith("win"):
         # Lets Windows show Lemmatrix's own icon on the taskbar instead of Python's.

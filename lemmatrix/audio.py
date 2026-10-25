@@ -342,11 +342,6 @@ class Recorder:
             return np.zeros(0, dtype=np.float32)
         return np.concatenate(self._blocks)
 
-    @property
-    def running(self) -> bool:
-        return self._running
-
-
 # --------------------------------------------------------------------------
 # Playback
 # --------------------------------------------------------------------------

@@ -72,9 +72,6 @@ class Buffer:
         speaker = text.participants[0] if len(text.participants) == 1 else ""
         return tgmod.lines_from(self.tg, db.mapping_for(text), speaker)
 
-    def raw_names(self) -> dict[str, str]:
-        return {nfc(n): n for n in self.tg.tierNames}
-
     def apply(self, edits: list[TierEdit], undo: bool = False):
         from praatio import textgrid
         for e in (reversed(edits) if undo else edits):

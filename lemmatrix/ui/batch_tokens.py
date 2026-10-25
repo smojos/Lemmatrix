@@ -11,7 +11,6 @@ request, filter All data to them, and set up the Lemma/Tag and Tag/Tag matrices.
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QDialog, QDialogButtonBox, QFrame, QLabel,
                                QMessageBox, QPushButton, QRadioButton, QScrollArea, QVBoxLayout)
 

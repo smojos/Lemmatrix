@@ -22,10 +22,9 @@ along the bottom with the buttons at its left, Josh's duster and his four marker
 
 from __future__ import annotations
 
-from PySide6.QtCore import QByteArray, QPoint, QPointF, QRectF, QSize, Qt, Signal
-from PySide6.QtGui import (QAction, QColor, QIcon, QImage, QKeySequence, QLinearGradient, QPainter,
-                           QPainterPath, QPen, QPixmap, QShortcut, QTransform)
-from PySide6.QtSvg import QSvgRenderer
+from PySide6.QtCore import QPoint, QPointF, QRectF, QSize, Qt, Signal
+from PySide6.QtGui import (QColor, QImage, QKeySequence, QLinearGradient, QPainter,
+                           QPainterPath, QPen, QShortcut, QTransform)
 from PySide6.QtWidgets import (QApplication, QDialog, QHBoxLayout, QMenu, QMessageBox, QScrollArea,
                                QToolButton, QToolTip, QVBoxLayout, QWidget)
 

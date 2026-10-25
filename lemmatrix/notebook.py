@@ -229,9 +229,6 @@ class Notebook:
     def all_questions(self) -> list[tuple[Session, Question]]:
         return self.all_items(QUESTION)
 
-    def all_todos(self) -> list[tuple[Session, Question]]:
-        return self.all_items(TODO)
-
     def all_items(self, kind: str) -> list[tuple[Session, Question]]:
         """Every question (or To Do), newest day first, the pinned ones above the rest."""
         every = [(s, q) for s in self.newest_first() for q in items(s, kind)]
@@ -464,15 +461,6 @@ def push_question(nb: Notebook, db: Database, date: str, text: str, e: Entry, t:
     items(s, kind).append(q)
     nb.dirty = True
     return q
-
-
-def add_note_line(nb: Notebook, date: str, line: str) -> Session:
-    """A line at the end of a day's notes (after whatever is written); the day gets a session if it
-    has none (no people or places: those are the panel's to give)."""
-    s = nb.add_session(date)
-    s.notes = (s.notes.rstrip("\n") + "\n" if s.notes.strip() else "") + line
-    nb.dirty = True
-    return s
 
 
 # --------------------------------------------------------------------------
