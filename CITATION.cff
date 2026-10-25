@@ -11,8 +11,8 @@ abstract: >-
 authors:
   - family-names: Smolders
     given-names: Joshua A. G.
-version: 0.2.0
-date-released: 2026-10-23
+version: 0.3.0
+date-released: 2026-10-25
 doi: 10.5281/zenodo.23512411
 identifiers:
   - type: doi

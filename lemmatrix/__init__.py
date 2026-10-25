@@ -2,7 +2,7 @@
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Lemmatrix: a phonology fieldwork database of lemmas and their tokens."""
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __author__ = "Joshua A. G. Smolders"
 __license__ = "AGPL-3.0-or-later"
 COPYRIGHT = "© 2026 Joshua A. G. Smolders"

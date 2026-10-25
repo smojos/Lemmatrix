@@ -36,14 +36,19 @@ def test_release_metadata():
     for name in ("README.md", "CITATION.cff"):           # the 0.1.1 record is being deleted
         assert "23512412" not in (ROOT / name).read_text(encoding="utf-8"), name
     cff = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
-    assert "date-released: 2026-10-23" in cff and "version: 0.2.0" in cff
+    import lemmatrix                                     # every release: one version, one date
+    assert f"version: {lemmatrix.__version__}" in cff
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert f"*Lemmatrix* (version {lemmatrix.__version__})" in readme
+    z = json.loads((ROOT / ".zenodo.json").read_text(encoding="utf-8"))
+    assert f"date-released: {z['publication_date']}" in cff
     assert not list(ROOT.glob("*.workspace"))           # no workspace left in the repository
 
 
 def test_zenodo_record_agrees_with_citation():
     import lemmatrix
     z = json.loads((ROOT / ".zenodo.json").read_text(encoding="utf-8"))
-    assert z["version"] == lemmatrix.__version__ == "0.2.0"
+    assert z["version"] == lemmatrix.__version__
     assert z["license"] == "agpl-3.0-or-later" and z["upload_type"] == "software"
     assert z["creators"] == [{"name": "Smolders, Joshua A. G."}]
     assert "ARTWORK.md" in z["notes"] and "CC BY 4.0" in z["notes"]
