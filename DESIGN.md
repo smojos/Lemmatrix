@@ -52,6 +52,7 @@
 - **Running it on Windows:** `Run Lemmatrix.bat` creates the program's own Python 3.13 environment with `py -3.13` (a plain `python` may be an older version) and installs the packages on the first run.
 - **Development:** the author designs and specifies Lemmatrix and tests every version on his own data; the code is written with an AI coding assistant (Claude, by Anthropic), which also writes and runs the automated tests. The code is kept on GitHub and pulled with GitHub Desktop.
 - **Data safety:** readable XML, version history, and automated tests (especially for import and save).
+- **Running the tests:** `Run tests.bat` (or `python -m pytest tests`). Its first run installs the test tools in **`requirements-dev.txt`** (pytest, and `praat-parselmouth` to check that Praat reads the TextGrids Lemmatrix writes; the ɛλicit page's own tests also need Playwright and skip without it); Lemmatrix itself doesn't install them (25 October, the audit). **Each run has settings of its own**, an .ini file in a temporary folder removed afterwards (`LEMMATRIX_SETTINGS_FILE`, read by `ui/prefs.settings_store`), so no run inherits another's settings and the real preferences are never touched. **`tests/conftest.py`** holds what the tests share: the sample database, the prototype tag structure, and the `app`, `make_win` and `win` fixtures (one copy; there were six).
 
 ## 3. Data design
 
