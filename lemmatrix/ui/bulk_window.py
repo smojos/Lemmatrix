@@ -283,7 +283,6 @@ class BulkEditWindow(QDialog):
         broom.setToolTip("Clear all filters")
         broom.setAutoRaise(True)
         broom.clicked.connect(lambda *_, lv=level: self._clear_filters(lv))
-        bar.addWidget(broom)
         gear = QToolButton()
         gear.setProperty("icon_name", "gear-columns")
         gear.setIcon(themed_icon("gear-columns", 20))
@@ -292,6 +291,7 @@ class BulkEditWindow(QDialog):
         gear.setAutoRaise(True)
         gear.clicked.connect(lambda *_, lv=level: self._configure_columns(lv))
         bar.addWidget(gear)
+        bar.addWidget(broom)                                # after Configure columns, as everywhere else
         search = QLineEdit()
         search.setPlaceholderText("quick search of the visible columns")
         search.setClearButtonEnabled(True)

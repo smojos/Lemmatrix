@@ -275,7 +275,7 @@ class TextsUtterancesWindow(QDialog):
         self.cell_edit_btn.setToolButtonStyle(Qt.ToolButtonIconOnly)
         self.cell_edit_btn.setCheckable(True)
         self.cell_title = QLabel("")
-        self.cell_config_btn = tool("Configure view", "gear", lambda: self.texts.configure_view(),
+        self.cell_config_btn = tool("Configure view", "gear-cells", lambda: self.texts.configure_view(),
                                     "Configure view: which fields the cell shows, in what order, and which "
                                     "line up word by word (the same setting as a text's lines)")
         self.cell_config_btn.setToolButtonStyle(Qt.ToolButtonIconOnly)

@@ -527,7 +527,7 @@ class TextsPanel(QObject):
                        icon_tool("refresh-text", self.refresh_text,
                                  "Refresh text: read the text's TextGrid again from its file and find all its "
                                  "lines again (asks first if there are line edits not yet saved)"),
-                       icon_tool("gear", self.configure_view, "Configure view: which fields each line shows, "
+                       icon_tool("gear-cells", self.configure_view, "Configure view: which fields each line shows, "
                                  "in what order, and which line up word by word"),
                        self.main.conventions_button())
         self.restyle_icons()

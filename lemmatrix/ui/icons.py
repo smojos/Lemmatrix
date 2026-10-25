@@ -662,6 +662,21 @@ def elicit_icon(size: int, waiting: bool = False) -> QIcon:
     return icon("elicit-waiting" if waiting else "elicit", size, theme.colour("pitch").name())
 
 
+SNAPSHOT_TEALS = ("#1c9694", "#20acaa", "#25c0be")   # the Snapshots icon's photos, back to front
+
+
+def _shade_teals(svg: str, teals, colour: str) -> str:
+    """Each of Josh's teals as the theme colour made as much lighter as the teal is than his #198583."""
+    from .. import elicit_art
+    base, target = QColor(elicit_art.TEAL), QColor(colour)
+    h, s_, l, _ = target.getHslF()
+    for t in teals:
+        dl = QColor(t).lightnessF() - base.lightnessF()
+        c = QColor.fromHslF(max(h, 0.0), s_, min(1.0, max(0.0, l + dl)))
+        svg = re.sub(re.escape(t), c.name(), svg, flags=re.IGNORECASE)
+    return svg
+
+
 def icon_size(name: str, size: int):
     """The QSize to show an icon at: wide icons keep their proportions."""
     from PySide6.QtCore import QSize
@@ -686,7 +701,9 @@ def icon(name: str, size: int = 22, colour: str | None = None) -> QIcon:
         from .. import elicit_art
         svg = {"xml-viewer": XML_VIEWER_FILE, "questions": QUESTIONS_FILE,
                "cogitate": COGITATE_FILE, "todo": TODO_FILE, "snapshots": SNAPSHOTS_FILE}[name].read_text(encoding="utf-8")
-        if colour:
+        if colour and name == "snapshots":         # his three teals (25 October): shades of the theme colour
+            svg = _shade_teals(svg, SNAPSHOT_TEALS, colour)
+        elif colour:
             svg = re.sub(re.escape(elicit_art.TEAL), colour, svg, flags=re.IGNORECASE)
         QSvgRenderer(QByteArray(svg.encode("utf-8"))).render(p, QRectF(0, 0, size, size))
         p.end()
