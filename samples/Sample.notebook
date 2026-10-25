@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<notebook format="4" database="Sample.xml">
+  <session date="2026-10-24">
+    <comment entry="ea8a89d4b1" token="fd83a36d72" ref="B002" about="B002 man · 1SG.POSS" field="Comment">new</comment>
+  </session>
+  <session date="2026-10-25" researchers="JJA" participants="DML">
+    <location key="LANG" />
+    <location key="NOWH" />
+    <notes>=====ACTIVITY=====
+Worked on the text "The man and the lion", checking tone.
+
+=====COGITATE HISTORY=====
+H1 made: Phonation quality conditioned by implosion and aspiration.
+H1 Phonation quality conditioned by implosion and aspiration.: confidence initial → developing
+H1 Phonation quality conditioned by implosion and aspiration.: counterevidence linked, D009 goat · F1 dʌːm ɗɪ̰ː
+H1 Phonation quality conditioned by implosion and aspiration.: evidence linked, D026 milk · citation cʰʌ̤ː
+H1 Phonation quality conditioned by implosion and aspiration.: now evidence, D009 goat · F1 dʌːm ɗɪ̰ː
+H1 Phonation quality conditioned by implosion and aspiration.: evidence linked, Question: Should nasality be considered parallel…
+H1 Phonation quality conditioned by implosion and aspiration.: evidence linked, A031 mouth · citation ɓʌ̰ŋ
+H1 Phonation quality conditioned by implosion and aspiration.: evidence linked, Lemma/Tag · Verbs: imperatives · 4 lemmas · filte…
+H1 Phonation quality conditioned by implosion and aspiration.: counterevidence linked, Tag/Tag · Nouns: number and possession · D034 ɟɪ̀…
+H1 Phonation quality conditioned by implosion and aspiration.: linked as relevant, Drawing: Whiteboard 2026-10-25 13-37 (2).png
+
+=====SNAPSHOT HISTORY=====
+Snapshot taken 13:29: Tag/Tag · Nouns: number and possession · D034 ɟɪ̀ŋ · filtered
+Snapshot taken 13:30: Lemma/Tag · Verbs: imperatives · 4 lemmas · filtered</notes>
+    <comment entry="900531aa23" token="5c39730aad" ref="A031" about="A031 mouth · citation" field="Comment">Creakiness is dubious.</comment>
+    <question id="63dfbd909e" created="2026-10-25" entry="3a0c5efb9e" token="a451d70a2a" ref="C001f" about="C001f mother · citation">Should nasality be considered parallel to phonation quality?</question>
+    <question created="2026-10-25">What am I doing with my life?</question>
+    <todo created="2026-10-25">Finish recording the imperative paradigm for four CVVC verbs.</todo>
+    <todo created="2026-10-25" pinned="yes">Ask DML if he got the funds transfer.</todo>
+    <text id="048c3c0405" />
+    <hypothesis id="1ed44f7b46" />
+    <snapshot id="6fd9fcde26" name="Tag/Tag · Nouns: number and possession · D034 ɟɪ̀ŋ · filtered" taken="2026-10-25" time="13:29" about="Tag/Tag · Nouns: number and possession · D034 ɟɪ̀ŋ · filtered">
+      <view>{"configs": [{"blank": false, "cell": ["drawing", "Phonetic", "Phonemic", "Translation"], "kind": "tag-tag", "name": "Nouns: number and possession", "x": [{"m": "exact", "t": ["1SG.POSS"]}, {"m": "exact", "t": ["2SG.POSS"]}, {"m": "exact", "t": ["3SG.POSS"]}, {"m": "exact", "t": ["1PL.POSS"]}, {"m": "exact", "t": ["2PL.POSS"]}, {"m": "exact", "t": ["3PL.POSS"]}], "y": [{"m": "exact", "t": ["Singular"]}, {"m": "exact", "t": ["Plural"]}]}], "filters": {"alldata": {"filters": {"file": {"kind": "non-blanks"}}}, "lemma": {"filters": {}}}, "lemma": "D034", "lemma_id": "a383dd4d2c", "search": {"alldata": "", "lemma": ""}, "switched": {"lemma-tag": false, "tag-tag": false}, "tab": 2}</view>
+    </snapshot>
+    <snapshot id="7aae896651" name="Lemma/Tag · Verbs: imperatives · 4 lemmas · filtered" taken="2026-10-25" time="13:30" about="Lemma/Tag · Verbs: imperatives · 4 lemmas · filtered">
+      <view>{"configs": [{"blank": false, "cell": ["drawing", "Phonetic", "Phonemic", "Translation"], "kind": "tag-tag", "name": "Nouns: number and possession", "x": [{"m": "exact", "t": ["1SG.POSS"]}, {"m": "exact", "t": ["2SG.POSS"]}, {"m": "exact", "t": ["3SG.POSS"]}, {"m": "exact", "t": ["1PL.POSS"]}, {"m": "exact", "t": ["2PL.POSS"]}, {"m": "exact", "t": ["3PL.POSS"]}], "y": [{"m": "exact", "t": ["Singular"]}, {"m": "exact", "t": ["Plural"]}]}, {"blank": false, "cell": ["drawing", "Phonetic", "Phonemic", "Translation"], "kind": "lemma-tag", "name": "Verbs: imperatives", "x": [{"m": "citation", "t": []}, {"m": "exact", "t": ["2SG.A", "Imperative"]}, {"m": "exact", "t": ["2PL.A", "Imperative"]}, {"m": "exact", "t": ["2SG.A", "Imperative", "Negative"]}, {"m": "exact", "t": ["2PL.A", "Imperative", "Negative"]}], "y": []}], "filters": {"alldata": {"filters": {"file": {"kind": "non-blanks"}}}, "lemma": {"filters": {}, "pinned": ["92047fd9cf", "9346f70d95", "961d5de04d", "da75f42ffa"]}}, "lemma": "V194", "lemma_id": "961d5de04d", "search": {"alldata": "", "lemma": ""}, "switched": {"lemma-tag": false, "tag-tag": false}, "tab": 1}</view>
+    </snapshot>
+  </session>
+  <hypotheses next="2">
+    <hypothesis id="1ed44f7b46" number="1" confidence="developing" made="2026-10-25" edited="2026-10-25">
+      <summary>Phonation quality conditioned by implosion and aspiration.</summary>
+      <formulation>Creaky voice is a phonetic effect, occuring on vowels following implosives.
+Breathy voice is a phonetic effect, occuring on vowels following aspiration.</formulation>
+      <link kind="token" mark="evidence" linked="2026-10-25" entry="f788fc94c3" token="1210f68be2" about="D009 goat · F1" />
+      <link kind="token" mark="evidence" linked="2026-10-25" entry="8416e8d900" token="f971255409" about="D026 milk · citation" />
+      <link kind="question" mark="evidence" linked="2026-10-25" target="63dfbd909e" date="2026-10-25" about="Question of 2026-10-25">
+        <text>Should nasality be considered parallel to phonation quality?</text>
+      </link>
+      <link kind="token" mark="evidence" linked="2026-10-25" entry="900531aa23" token="5c39730aad" about="A031 mouth · citation" />
+      <link kind="snapshot" mark="evidence" linked="2026-10-25" target="7aae896651" date="2026-10-25" about="Lemma/Tag · Verbs: imperatives · 4 lemmas · filtered">
+        <view>{"configs": [{"blank": false, "cell": ["drawing", "Phonetic", "Phonemic", "Translation"], "kind": "tag-tag", "name": "Nouns: number and possession", "x": [{"m": "exact", "t": ["1SG.POSS"]}, {"m": "exact", "t": ["2SG.POSS"]}, {"m": "exact", "t": ["3SG.POSS"]}, {"m": "exact", "t": ["1PL.POSS"]}, {"m": "exact", "t": ["2PL.POSS"]}, {"m": "exact", "t": ["3PL.POSS"]}], "y": [{"m": "exact", "t": ["Singular"]}, {"m": "exact", "t": ["Plural"]}]}, {"blank": false, "cell": ["drawing", "Phonetic", "Phonemic", "Translation"], "kind": "lemma-tag", "name": "Verbs: imperatives", "x": [{"m": "citation", "t": []}, {"m": "exact", "t": ["2SG.A", "Imperative"]}, {"m": "exact", "t": ["2PL.A", "Imperative"]}, {"m": "exact", "t": ["2SG.A", "Imperative", "Negative"]}, {"m": "exact", "t": ["2PL.A", "Imperative", "Negative"]}], "y": []}], "filters": {"alldata": {"filters": {"file": {"kind": "non-blanks"}}}, "lemma": {"filters": {}, "pinned": ["92047fd9cf", "9346f70d95", "961d5de04d", "da75f42ffa"]}}, "lemma": "V194", "lemma_id": "961d5de04d", "search": {"alldata": "", "lemma": ""}, "switched": {"lemma-tag": false, "tag-tag": false}, "tab": 1}</view>
+      </link>
+      <link kind="snapshot" mark="counterevidence" linked="2026-10-25" target="6fd9fcde26" date="2026-10-25" about="Tag/Tag · Nouns: number and possession · D034 ɟɪ̀ŋ · filtered">
+        <view>{"configs": [{"blank": false, "cell": ["drawing", "Phonetic", "Phonemic", "Translation"], "kind": "tag-tag", "name": "Nouns: number and possession", "x": [{"m": "exact", "t": ["1SG.POSS"]}, {"m": "exact", "t": ["2SG.POSS"]}, {"m": "exact", "t": ["3SG.POSS"]}, {"m": "exact", "t": ["1PL.POSS"]}, {"m": "exact", "t": ["2PL.POSS"]}, {"m": "exact", "t": ["3PL.POSS"]}], "y": [{"m": "exact", "t": ["Singular"]}, {"m": "exact", "t": ["Plural"]}]}], "filters": {"alldata": {"filters": {"file": {"kind": "non-blanks"}}}, "lemma": {"filters": {}}}, "lemma": "D034", "lemma_id": "a383dd4d2c", "search": {"alldata": "", "lemma": ""}, "switched": {"lemma-tag": false, "tag-tag": false}, "tab": 2}</view>
+      </link>
+      <link kind="drawing" mark="relevant" linked="2026-10-25" target="Whiteboard/Whiteboard 2026-10-25 13-37 (2).png" date="2026-10-25" about="Whiteboard 2026-10-25 13-37 (2).png" />
+    </hypothesis>
+  </hypotheses>
+</notebook>

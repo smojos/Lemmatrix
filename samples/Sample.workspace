@@ -33,4 +33,22 @@
       <x match="exact" tags="Future" />
     </matrix>
   </matrices>
+  <state>
+    <value name="bookmarks">{"048c3c0405": 12.58}</value>
+    <value name="elicit/draft">{"audio": "flac", "l2": "", "l2_name": "", "l2_people": {}, "repeat": true, "researcher": "JJA", "send_by": "drive", "speaker": "DML"}</value>
+    <value name="fullbackup">{"first_seen": "2026-10-25", "last": "", "snoozed": ""}</value>
+    <value name="lines/aligned">["Morphemes", "Phonemic"]</value>
+    <value name="lines/fields">["Phonetic", "Phonemic", "Morphemes", "Translation:en"]</value>
+    <value name="notebook/cogitate_history">true</value>
+    <value name="notebook/elicit_history">true</value>
+    <value name="notebook/snapshot_history">true</value>
+    <value name="only_with_data">true</value>
+    <value name="origin/shown">true</value>
+    <value name="session">{"locations": ["LANG", "NOWH"], "participants": ["DML"], "researchers": ["JJA"]}</value>
+    <value name="session/day">"2026-10-25"</value>
+    <value name="session/speaker">"DML"</value>
+    <value name="view">{"configs": [{"blank": false, "cell": ["drawing", "Phonetic", "Phonemic", "Translation"], "kind": "tag-tag", "name": "Nouns: number and possession", "x": [{"m": "exact", "t": ["1SG.POSS"]}, {"m": "exact", "t": ["2SG.POSS"]}, {"m": "exact", "t": ["3SG.POSS"]}, {"m": "exact", "t": ["1PL.POSS"]}, {"m": "exact", "t": ["2PL.POSS"]}, {"m": "exact", "t": ["3PL.POSS"]}], "y": [{"m": "exact", "t": ["Singular"]}, {"m": "exact", "t": ["Plural"]}]}, {"blank": false, "cell": ["drawing", "Phonetic", "Phonemic", "Translation"], "kind": "lemma-tag", "name": "Verbs: imperatives", "x": [{"m": "citation", "t": []}, {"m": "exact", "t": ["2SG.A", "Imperative"]}, {"m": "exact", "t": ["2PL.A", "Imperative"]}, {"m": "exact", "t": ["2SG.A", "Imperative", "Negative"]}, {"m": "exact", "t": ["2PL.A", "Imperative", "Negative"]}], "y": []}], "filters": {"alldata": {"filters": {"file": {"kind": "non-blanks"}}}, "lemma": {"filters": {}, "pinned": ["92047fd9cf", "9346f70d95", "961d5de04d", "da75f42ffa"]}}, "lemma": "V194", "lemma_id": "961d5de04d", "search": {"alldata": "", "lemma": ""}, "switched": {"lemma-tag": false, "tag-tag": false}, "tab": 1}</value>
+    <value name="view/texts-utterances">{"search": {"texts": "", "utterances": ""}, "texts": {"filters": {}}, "utterances": {"filters": {}}}</value>
+    <value name="whiteboard">{"blackboard": false, "changed": true, "saved": "Whiteboard/Whiteboard 2026-10-25 13-37 (2).png", "sizes": {"black": 4, "blue": 4, "eraser": 40, "green": 4, "red": 4}, "strokes": [], "tool": "red"}</value>
+  </state>
 </workspace>

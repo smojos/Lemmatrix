@@ -253,7 +253,7 @@
       <category letter="S" for="texts">Songs</category>
     </references>
     <sounds pattern="{language}-{variety}_{reference}_{gloss}_{tags}" utterance-pattern="{language}-{variety}_{reference}_{label}" text-pattern="{language}-{variety}_{reference}_{title}" clip-padding="100" tag-separator="-" auto-update-names="yes" />
-    <pitch display-range="1-5" />
+    <pitch display-range="0-5" />
   </settings>
   <entry ref="A009" file-gloss="head" id="f52dc98aa2" cawl="0003" swadesh="72">
     <Lemma>tʊ́ʊm</Lemma>
@@ -507,6 +507,7 @@
       <Morphemes>mouth</Morphemes>
       <Pitch>33</Pitch>
       <Translation lang="en">mouth</Translation>
+      <Comment changed="2026-10-25">Creakiness is dubious.</Comment>
     </token>
     <token tags="Plural, Nominative, isolation" speaker="DML" collected="2026-10-20" id="39e4fcc727">
       <Phonetic>ɓʌ̰ŋã</Phonetic>
