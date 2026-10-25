@@ -361,6 +361,15 @@ class DrawingDelegate(QStyledItemDelegate):
         return QSize(int(pitch_width(index.data(Qt.UserRole) or "", self.unit)) + 14, max(24, option.fontMetrics.height() + 8))
 
 
+def _same_row(a, b) -> bool:
+    """The same row after the rows were made again: the same object (a lemma, an utterance), or
+    the same token of the same lemma (All data's and Bulk edit's rows are made anew each time)."""
+    if a is b:
+        return True
+    ea, eb = getattr(a, "entry", None), getattr(b, "entry", None)
+    return ea is not None and ea is eb and getattr(a, "index", None) == getattr(b, "index", None)
+
+
 class FilterTable(QTableView):
     """A sortable table whose column headers each have a filter menu."""
 
@@ -547,9 +556,26 @@ class FilterTable(QTableView):
         return [c.key for c in self.model_.columns]
 
     def set_rows(self, rows):
+        """New rows, keeping what was selected: every selected row (several in the lemma list,
+        All data, Utterances…), and a row clicked to unselect it stays unselected (before, any
+        edit collapsed a selection to its current row, and selected an unselected one again:
+        the audit, 25 October)."""
         current = self.current_row()
+        selected = self.selected_rows()
         self.model_.set_rows(rows)
-        self.select_row(current)
+        if len(selected) > 1:
+            keep = [r for r in self.model_.rows if any(_same_row(r, x) for x in selected)]
+            cur = next((r for r in keep if _same_row(r, current)), None)
+            self.select_rows(([cur] if cur is not None else []) + [r for r in keep if r is not cur])
+        elif selected or current is None:
+            self.select_row(current)
+        else:                                     # current but unselected: stays unselected
+            from PySide6.QtCore import QItemSelectionModel
+            match = next((i for i, r in enumerate(self.model_.rows) if _same_row(r, current)), None)
+            if match is not None:
+                idx = self.proxy.mapFromSource(self.model_.index(match, 0))
+                if idx.isValid():
+                    self.selectionModel().setCurrentIndex(idx, QItemSelectionModel.NoUpdate)
 
     # ---- access ----------------------------------------------------------
     def row_at(self, idx):

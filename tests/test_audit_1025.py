@@ -231,3 +231,193 @@ def test_full_backup_skips_half_written_files(tmp_path):
     (tokens / "D002.wav.lemmatrix-renaming").write_text("the only copy")
     got = {p.name for p in layout.backup_files(db)}
     assert got == {"LXX-VXX.xml", "D002.wav.lemmatrix-renaming"}
+
+
+# ---- B10: a field renamed in Edit → Fields keeps its place in the workspace ---------------
+
+def test_renamed_field_keeps_its_columns_cells_and_lines(win, monkeypatch):
+    from lemmatrix.ui import fields_dialog
+    doc = win.doc
+    doc.ws_set("columns/alldata", ["ref", "f:Phonemic", "f:Translation", "f:Translation:ar"])
+    doc.ws_set("columns/lemma", ["ref", "ToneClass", "Gloss"])
+    doc.ws_set("lines/aligned", ["Phonemic", "Morphemes"])
+    cfg = next(iter(win.configs.values()), None) or win.config_for(1)
+    cfg.cell = ["drawing", "Phonemic", "Translation:ar"]
+
+    def fake_exec(dlg):
+        for f in dlg.lists["token"]:
+            if f.name == "Phonemic":
+                f.name = "Phonemes"
+        for f in dlg.lists["lemma"]:
+            if f.name == "ToneClass":
+                f.name = "Tone"
+        return 1
+    monkeypatch.setattr(fields_dialog.FieldsDialog, "exec", fake_exec)
+    win.edit_fields()
+    ws = doc.ws
+    assert ws.get("columns/alldata") == ["ref", "f:Phonemes", "f:Translation", "f:Translation:ar"]
+    assert ws.get("columns/lemma") == ["ref", "Tone", "Gloss"]
+    assert ws.get("lines/aligned") == ["Phonemes", "Morphemes"]
+    assert cfg.cell == ["drawing", "Phonemes", "Translation:ar"]
+    assert any(c.key == "f:Phonemes" for c in win.all_table.model_.columns)
+
+
+def test_renamed_key_leaves_other_keys():
+    from lemmatrix.workspace import renamed_key
+    m = {"Translation": "Free translation"}
+    assert renamed_key("f:Translation:ar", m) == "f:Free translation:ar"
+    assert renamed_key("Translation", m) == "Free translation"
+    assert renamed_key("TranslationNote", m) == "TranslationNote"
+    assert renamed_key("ref", m) == "ref"
+
+
+# ---- B11: a deleted field that isn't a core field stays deleted ---------------------------
+
+def test_deleted_tone_and_inflection_class_stay_deleted(tmp_path):
+    from lemmatrix import defaults, storage
+    db = defaults.new_database()
+    s = db.settings
+    s.entry_fields = [f for f in s.entry_fields if f.name not in ("ToneClass", "InflectionClass")]
+    s.text_fields = [f for f in s.text_fields if f.name != "Description"]
+    assert defaults.ensure_core_fields(s) == []
+    p = tmp_path / "LXX-VXX.xml"
+    storage.save(db, p, backup=False)
+    back = storage.load(p)
+    names = [f.name for f in back.settings.entry_fields]
+    assert "ToneClass" not in names and "InflectionClass" not in names
+    assert "Description" not in [f.name for f in back.settings.text_fields]
+
+
+def test_a_missing_core_field_still_comes_back():
+    from lemmatrix import defaults
+    s = defaults.new_database().settings
+    s.token_fields = [f for f in s.token_fields if f.role != "morphemes"]
+    assert "Morphemes" in defaults.ensure_core_fields(s)
+
+
+# ---- B12: the next reference goes on past D999 --------------------------------------------
+
+def test_next_reference_past_999():
+    from lemmatrix import defaults
+    db = defaults.new_database()
+    db.entries += [db.new_entry(r) for r in ("D998", "D999", "D1000")]
+    assert db.suggest_reference("D") == "D1001"
+    db.entries.pop()
+    assert db.suggest_reference("D") == "D1000"
+
+
+# ---- B15: Bulk edit starts on the lemmas the lemma list shows -----------------------------
+
+def test_bulk_edit_copies_wordlist_search_and_hide_empty(win):
+    from lemmatrix import bulk
+    for e in win.doc.db.entries[:6]:              # (the prototype sample has no wordlist numbers)
+        e.lists["SWADESH"] = ["42"]
+    win.doc.db.entries[0].tokens = []             # one of them empty: Hide empty lemmas leaves it out
+    win.lemmas.set_rows(win.doc.db.entries)
+    win.lemma_search.setText("SWADESH")
+    win._search_timers["lemma"].timeout.emit()
+    win.hide_empty.setChecked(True)
+    shown = win.lemmas.proxy.rowCount()
+    assert 0 < shown < len(win.doc.db.entries)
+    win.open_bulk_edit()
+    w = win.bulk_window
+    assert w.tables[bulk.LEMMAS].proxy.rowCount() == shown   # the search was plain text before
+    w.close()
+    win.hide_empty.setChecked(False)
+    win.lemma_search.clear()
+
+
+# ---- B17: the EACW's Q families are found -------------------------------------------------
+
+def test_q_families():
+    from lemmatrix import wordlists as wl
+    assert [i.number for i in wl.family("Q002")] == ["Q002", "Q002b"]     # second
+    assert [i.number for i in wl.family("Q001")] == ["Q001", "Q001b", "Q001c"]
+    assert wl.family("Q1736") == []                 # the number itself, no family
+
+
+# ---- B18: a day's date changed outside undo; undoing a snapshot step keeps its snapshots --
+
+def test_snapshot_undo_after_the_days_date_changed(win):
+    from lemmatrix import notebook as nbmod
+    doc = win.doc
+    nb = doc.notebook
+    doc.change_snapshots("Take snapshot", lambda: nbmod.take_snapshot(nb, "2026-10-20", {"tab": 0}, "first"))
+    s = nb.session("2026-10-20")
+    doc.change_snapshots("Take snapshot", lambda: nbmod.take_snapshot(nb, "2026-10-20", {"tab": 1}, "second"))
+    s.date = "2026-10-19"                        # Change date… in the notebook (not an undo step)
+    nb.sort()
+    doc.undo.undo()                               # the second snapshot
+    assert [x.about for x in s.snapshots] == ["first"]   # wiped altogether before
+    doc.undo.redo()
+    assert [x.about for x in s.snapshots] == ["first", "second"]
+
+
+# ---- B19: a link to a lemma Hide empty lemmas hides still shows it ------------------------
+
+def test_go_to_an_empty_lemma_with_hide_empty_on(win):
+    e = win.doc.db.entries[3]
+    e.tokens = []                                 # empty
+    win.lemmas.set_rows(win.doc.db.entries)
+    win.hide_empty.setChecked(True)
+    assert not any(r is e for r in win.lemmas.visible_rows())
+    assert win.go_to(e)
+    assert win.lemmas.current_row() is e          # selected nothing before
+    assert not win.hide_empty.isChecked()
+
+
+# ---- B20: an edit keeps a multi-selection, and an unselected row unselected ---------------
+
+def test_an_edit_keeps_the_selection(win):
+    from PySide6.QtWidgets import QApplication
+    from lemmatrix.ui.main_window import ALL_DATA
+    db = win.doc.db
+    picked = db.entries[2:5]
+    win.lemmas.select_rows(picked)
+    assert [r.ref for r in win.lemmas.selected_rows()] == [e.ref for e in picked]
+    win.doc.edit_entry(picked[1], lambda x: x.set("Gloss", "edited", "en"), "Edit")
+    QApplication.processEvents()
+    assert [r.ref for r in win.lemmas.selected_rows()] == [e.ref for e in picked]   # collapsed to one before
+    # All data: a token clicked to unselect it stays unselected after an edit
+    win.tabs.setCurrentIndex(ALL_DATA)
+    win.refresh()
+    t = win.all_table
+    t.select_row(t.visible_rows()[0])
+    t.selectionModel().clearSelection()           # as a click on the selected token does
+    assert t.selected_row() is None and t.current_row() is not None
+    win.doc.edit_entry(db.entries[0], lambda x: x.set("Gloss", "again", "en"), "Edit")
+    win.refresh()
+    assert t.selected_row() is None               # selected again before
+
+
+# ---- B21: replacing the sample asks about unsaved changes before copying over it ----------
+
+def test_fresh_sample_asks_before_copying(win, tmp_path, monkeypatch):
+    from pathlib import Path
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path / "home"))
+    dst = tmp_path / "home" / "Documents" / "Lemmatrix Sample" / "Sample.xml"
+    seen = []
+
+    def confirm():                                # the unsaved-changes question: what's on disk then
+        seen.append(dst.read_text(encoding="utf-8")[:20] if dst.exists() else "")
+        return True
+    monkeypatch.setattr(win, "_confirm_discard", confirm)
+    win.open_sample()                             # the first copy, opened
+    assert dst.exists() and win.doc.db.path == str(dst)
+    seen.clear()
+    dst.write_text("as it was on disk", encoding="utf-8")
+    win.open_sample()                             # QMessageBox.question says Yes: replace
+    assert seen[0] == "as it was on disk"         # asked before the copy (it was asked after)
+    assert dst.read_text(encoding="utf-8").startswith("<?xml")
+
+
+# ---- B22: a workspace with bytes that aren't text is unreadable, not a crash ---------------
+
+def test_undecodable_workspace_is_unreadable(tmp_path):
+    import pytest
+    from lemmatrix import defaults
+    from lemmatrix import workspace as wsmod
+    p = tmp_path / "LXX-VXX.workspace"
+    p.write_bytes(b"<workspace>\xff\xfe\x00broken</workspace>")
+    with pytest.raises(wsmod.WorkspaceError):    # was a UnicodeDecodeError past the handler
+        wsmod.load(p, defaults.new_database())

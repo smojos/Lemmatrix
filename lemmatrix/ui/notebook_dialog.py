@@ -647,6 +647,10 @@ class NotebookDialog(QDialog):
             what.append(f"{len(s.todos)} To Do(s)")
         if s.comments:
             what.append(f"the record of {len(s.comments)} comment(s)")
+        if s.snapshots:                            # (deleted with the day without a word before:
+            what.append(f"{len(s.snapshots)} snapshot(s)")   # the audit, 25 October)
+        if s.hypotheses:
+            what.append(f"the record of {len(s.hypotheses)} hypothesis(es) worked on that day (the hypotheses stay)")
         if QMessageBox.question(self, "Delete note", f"Delete the note for {s.date}" +
                                 (f", with {', '.join(what)}" if what else "") +
                                 "?\n\nThe lemmas, tokens and their comments stay in the database.") \

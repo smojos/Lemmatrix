@@ -166,6 +166,9 @@ def load(path: str | os.PathLike, db: Database) -> Workspace:
         text = Path(path).read_text(encoding="utf-8")
     except OSError as exc:
         raise WorkspaceError(f"Couldn't read {Path(path).name}: {exc}") from exc
+    except UnicodeError as exc:                   # a damaged file: the database opens with the
+        # default workspace and the file is never written over, as for unreadable XML (audit, 25 October)
+        raise WorkspaceError(f"The workspace {Path(path).name} isn't readable text: {exc}") from exc
     return from_string(text, db, path)
 
 
@@ -198,3 +201,39 @@ def backup(db: Database):
     p = path_for(db.path) if db.path else None
     if p is not None and p.exists():
         make_backup(p)
+
+
+# ---- following a field renamed in Edit → Fields (the audit, 25 October) -----------------------
+# Where the workspace names fields, and which kind of field (lemma, token, text) each list holds.
+# A key is the field's name, Name:lang for one language of a multilingual field, or f:Name[:lang]
+# in the grids whose columns mix fields with other things (All data, Utterances, texts, Bulk edit).
+FIELD_LISTS = {"lemma": ("columns/lemma", "columns/bulk-lemmas", "lemma_dialog/more"),
+               "token": ("columns/alldata", "columns/utterances", "columns/bulk-tokens",
+                         "lines/fields", "lines/aligned"),
+               "text": ("columns/texts",)}
+
+
+def renamed_key(key: str, mapping: dict) -> str:
+    """A workspace key with a renamed field's name changed in it, anything else as it was."""
+    prefix = "f:" if key.startswith("f:") else ""
+    name, sep, lang = key[len(prefix):].partition(":")
+    return prefix + mapping.get(name, name) + sep + lang if name in mapping else key
+
+
+def rename_fields(ws: "Workspace", renames: dict) -> bool:
+    """Rename fields in every list of the workspace that names them; renames: {"lemma": {old: new},
+    "token": {...}, "text": {...}}. True if anything changed."""
+    changed = False
+    for kind, keys in FIELD_LISTS.items():
+        mapping = renames.get(kind) or {}
+        if not mapping:
+            continue
+        for name in keys:
+            old = ws.get(name, None)
+            if not isinstance(old, list):
+                continue
+            new = [renamed_key(k, mapping) if isinstance(k, str) else k for k in old]
+            if new != old:
+                ws.set(name, new)
+                changed = True
+    return changed

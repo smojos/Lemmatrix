@@ -119,6 +119,19 @@ def test_the_peek_and_insert_eacw_items(win):
     assert db.entry_by_ref("B033f") is f
 
 
+def test_insert_deselect_all_deselects_items_not_shown(win):
+    """Deselect all left the items the search hid selected, and they were inserted (the audit,
+    25 October, B16); the count says how many selected aren't shown."""
+    from lemmatrix.ui.wordlist_dialogs import InsertItemsDialog
+    d = InsertItemsDialog(win, win.doc.db.entry_by_ref("B033m"))
+    assert {i.number for i in d.chosen()} == {"B033", "B033f"}
+    d.only_near.setChecked(False)
+    d.search.setText("excision")                # B033 and B033f no longer shown
+    assert d.unseen_note.text() == "2 selected not shown"
+    d._untick_everything()
+    assert d.chosen() == [] and d.unseen_note.text() == ""
+
+
 def _entry_dialog(win, ref, gloss, answers, monkeypatch):
     """The lemma dialogue for a new lemma, with the buttons clicked in turn."""
     from lemmatrix.ui import dialogs

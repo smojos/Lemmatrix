@@ -490,4 +490,5 @@ class FieldsDialog(QDialog):
         for m in [s.tier_mapping] + [t.tiers for t in self.db.texts if t.tiers is not None]:
             for r in m.rules:                         # the tiers follow renamed token fields
                 r.field = renames["token"].get(r.field, r.field)
+        self.renames = renames                    # for the workspace to follow (the audit, 25 October)
         return bool(renames["lemma"] or renames["token"] or renames["text"])

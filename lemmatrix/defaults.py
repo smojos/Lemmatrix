@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from .model import (TEXTS, UTTERANCES, Database, FieldDef, Group, ListItem, Location, Metadata, Person,
+from .model import (CORE_ROLES, TEXTS, UTTERANCES, Database, FieldDef, Group, ListItem, Location, Metadata, Person,
                     RefCategory, Settings, Tag, TagStructure, TierMapping, TierRule)
 from .tagdefs import tag_description
 
@@ -224,6 +224,8 @@ def ensure_core_fields(s: Settings, skip_roles: tuple = ()) -> list[str]:
         if attr == "text_fields" and not have:
             continue                                    # (a database without texts' fields yet)
         for pos, d in enumerate(want):
+            if d.role not in CORE_ROLES:                # Tone Class, Description…: deletable, never
+                continue                                # brought back (the audit, 25 October)
             if any(f.role == d.role for f in have) or d.role in skip_roles:
                 continue
             if d.role == "comment":

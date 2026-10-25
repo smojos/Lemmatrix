@@ -467,6 +467,8 @@ class InsertItemsDialog(QDialog):
     def __init__(self, win, near=None):
         super().__init__(win)
         from PySide6.QtWidgets import QCheckBox, QLineEdit
+
+        from . import theme
         self.win, self.db, self.near = win, win.doc.db, near
         self.setWindowTitle("Insert EACW items")
         self.resize(820, 600)
@@ -503,9 +505,12 @@ class InsertItemsDialog(QDialog):
         bar = QHBoxLayout()
         tick_all, untick = QPushButton("Select all shown"), QPushButton("Deselect all")
         tick_all.clicked.connect(lambda: self._tick_all(True))
-        untick.clicked.connect(lambda: self._tick_all(False))
+        untick.clicked.connect(lambda: self._untick_everything())
         bar.addWidget(tick_all)
         bar.addWidget(untick)
+        self.unseen_note = QLabel()               # selected items the search or version hides
+        self.unseen_note.setStyleSheet(f"color: {theme.muted()};")
+        bar.addWidget(self.unseen_note)
         bar.addStretch(1)
         self.insert_btn = QPushButton("Insert")
         self.insert_btn.setDefault(True)
@@ -566,10 +571,20 @@ class InsertItemsDialog(QDialog):
             (self.ticked.add if on else self.ticked.discard)(i.number)
         self._fill()
 
+    def _untick_everything(self):
+        """Deselect all: every item, shown or not (it deselected only the rows shown, so items
+        hidden by the search or the version stayed selected and were inserted: the audit, 25 October)."""
+        self.ticked.clear()
+        self._fill()
+
     def _count(self):
         n = len(self.ticked)
+        unseen = n - len({i.number for i in self.shown} & self.ticked)
         self.insert_btn.setText(f"Insert {n:,}" if n else "Insert")
         self.insert_btn.setEnabled(bool(n))
+        self.insert_btn.setToolTip(f"{unseen:,} of them not shown (selected before the list was narrowed)"
+                                   if unseen else "")
+        self.unseen_note.setText(f"{unseen:,} selected not shown" if unseen else "")
 
     def chosen(self) -> list:
         return [i for i in wl.get(wl.EACW).items if i.number in self.ticked]

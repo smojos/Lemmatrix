@@ -932,6 +932,7 @@ class ReviewDialog(QDialog):
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.table.installEventFilter(self)       # Space, A and R: the table has the focus (audit, 25 October)
         hh = self.table.horizontalHeader()
         for c, w in enumerate((36, 300, 110, 150, 160)):
             self.table.setColumnWidth(c, w)
@@ -1094,7 +1095,10 @@ class ReviewDialog(QDialog):
             self.decisions.setdefault(n, el.APPROVED)
         self._fill()
 
-    def keyPressEvent(self, event):
+    def _review_key(self, event) -> bool:
+        """Space plays the new recording, A approves, R rejects (no Ctrl, Alt or Shift). True if handled."""
+        if event.modifiers() & (Qt.ControlModifier | Qt.AltModifier | Qt.ShiftModifier | Qt.MetaModifier):
+            return False
         k = event.key()
         if k == Qt.Key_Space:
             self.play_new()
@@ -1103,6 +1107,19 @@ class ReviewDialog(QDialog):
         elif k == Qt.Key_R:
             self.decide(el.REJECTED)
         else:
+            return False
+        return True
+
+    def eventFilter(self, obj, event):
+        # The table has the focus and would take Space (selecting) and letters (jumping to a row)
+        # before the dialogue saw them, so the keys never worked (the audit, 25 October).
+        from PySide6.QtCore import QEvent
+        if obj is self.table and event.type() == QEvent.KeyPress and self._review_key(event):
+            return True
+        return super().eventFilter(obj, event)
+
+    def keyPressEvent(self, event):
+        if not self._review_key(event):
             super().keyPressEvent(event)
 
     # ---- applying -----------------------------------------------------
@@ -1169,7 +1186,14 @@ class ReviewDialog(QDialog):
         self.main.player.stop()
         self.new_utterances = []
         if not self.apply():
-            return
+            # Close and Esc both come here: never trap the researcher in the review when applying
+            # keeps failing, e.g. a file locked by another program (the audit, 25 October).
+            if not widgets.ask(self, f"Review {NAME} recordings",
+                               "The decisions couldn't be put in. Close the review anyway? The "
+                               "recordings stay waiting for review, so you can review them again later.",
+                               "Close the review", "Keep reviewing", QMessageBox.Warning):
+                return
+            self.decisions.clear()
         super().done(result)
         self.main.refresh_elicit_icon()
         if self.new_utterances:                   # new sentences live with the utterances, not in All data

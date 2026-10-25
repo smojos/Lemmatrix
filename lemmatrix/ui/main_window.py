@@ -797,8 +797,9 @@ class MainWindow(QMainWindow):
         self._elicit_checking = True
         path = db.path
 
-        def keep(tok):
-            self.prefs.google_token = tok
+        def keep(tok):                            # a refreshed sign-in: stored by the main thread in
+            self._elicit_new_token = tok          # _elicit_checked, never here (QSettings isn't
+                                                  # thread-safe: the audit, 25 October)
 
         def work():
             found = {}
@@ -816,6 +817,9 @@ class MainWindow(QMainWindow):
 
     def _elicit_checked(self, path, found):
         self._elicit_checking = False
+        tok, self._elicit_new_token = getattr(self, "_elicit_new_token", None), None
+        if tok is not None:                       # a sign-in refreshed in the background check
+            self.prefs.google_token = tok
         if found is None or path != self.doc.db.path:
             return
         new = set(found) - set(self.elicit_drive_ready)
@@ -2614,6 +2618,12 @@ class MainWindow(QMainWindow):
             return False
         if entry not in self.lemmas.visible_rows():
             self._clear_lemma_filters()
+        # Hide empty lemmas and Show only lemmas with token data aren't filters, so clearing the
+        # filters left an empty lemma hidden and the link selected nothing (the audit, 25 October)
+        shown = []
+        if not any(r is entry for r in self.lemmas.visible_rows()) and self.hide_empty.isChecked():
+            self.hide_empty.setChecked(False)
+            shown.append("Hide empty lemmas")
         self.lemmas.select_row(entry)
         if index is not None:
             self.tabs.setCurrentIndex(ALL_DATA)
@@ -2621,7 +2631,13 @@ class MainWindow(QMainWindow):
             if row not in self.all_table.visible_rows():
                 self._clear_all_filters()
                 self.refresh()
+            if row not in self.all_table.visible_rows() and self.only_data.isChecked():
+                self.only_data.setChecked(False)
+                shown.append("Show only lemmas with token data")
+                self.refresh()
             self.all_table.select_row(row)
+        if shown:
+            self.statusBar().showMessage(f"Turned off {' and '.join(shown)} to show {entry.ref}.", 8000)
         self.raise_()
         self.activateWindow()
         return True
@@ -3884,8 +3900,24 @@ class MainWindow(QMainWindow):
                 self.doc.ws_set(MORE_KEY, more)
             if dlg.apply():
                 self.doc.undo.clear()             # renamed fields can't be undone safely
+                self._follow_field_renames(dlg.renames)
             self._setup_columns()
             self.doc.settings_changed()
+
+    def _follow_field_renames(self, renames: dict):
+        """A renamed field keeps its place everywhere the workspace names it (columns, Line up,
+        Configure view, the More arrow) and in every matrix's cell lines, saved or on screen:
+        before, it silently dropped out of them (the audit, 25 October)."""
+        from ..workspace import rename_fields, renamed_key
+        tokens = renames.get("token") or {}
+        cfgs = list(self.doc.db.settings.matrices) + list(self.configs.values())
+        moved = False
+        for c in cfgs:
+            new = [renamed_key(k, tokens) for k in c.cell]
+            if new != c.cell:
+                c.cell, moved = new, True
+        if rename_fields(self.doc.ws, renames) or moved:
+            self.doc.write_workspace()
 
     def edit_tags(self):
         self.edit_lists("tags")
@@ -4564,20 +4596,32 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Sample", "The sample database isn't in this copy of Lemmatrix.")
             return
         dst = target / "Sample.xml"
-        if dst.exists() and QMessageBox.question(
-                self, "Sample", f"{dst} already exists. Replace it with a fresh copy?") != QMessageBox.Yes:
-            self.open_file(str(dst))
-            return
-        target.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(SAMPLE, dst)
+        if dst.exists():
+            if QMessageBox.question(self, "Sample", f"{dst} already exists. Replace it with a fresh "
+                                    "copy?") != QMessageBox.Yes:
+                self.open_file(str(dst))
+                return
+            # first the unsaved changes, and let go of the sample if it is the one open: Save could
+            # otherwise write the old data over the fresh copy (the audit, 25 October), as the
+            # ɛλicit test database already does
+            if not self._confirm_discard():
+                return
+            if self.doc.db.path and Path(self.doc.db.path).parent == target:
+                self.load_database(new_database())
         from .. import workspace as wsmod
-        if wsmod.path_for(SAMPLE).exists():       # its saved matrices are in its workspace
-            shutil.copy2(wsmod.path_for(SAMPLE), wsmod.path_for(dst))
-        sounds = SAMPLE.parent / "Soundfiles"
-        if sounds.exists():
-            if (target / "Soundfiles").exists():
-                shutil.rmtree(target / "Soundfiles", ignore_errors=True)
-            shutil.copytree(sounds, target / "Soundfiles")
+        try:
+            target.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(SAMPLE, dst)
+            if wsmod.path_for(SAMPLE).exists():   # its saved matrices are in its workspace
+                shutil.copy2(wsmod.path_for(SAMPLE), wsmod.path_for(dst))
+            sounds = SAMPLE.parent / "Soundfiles"
+            if sounds.exists():
+                if (target / "Soundfiles").exists():
+                    shutil.rmtree(target / "Soundfiles", ignore_errors=True)
+                shutil.copytree(sounds, target / "Soundfiles")
+        except OSError as exc:
+            QMessageBox.warning(self, "Sample", f"The sample couldn't be copied to {target}: {exc}")
+            return
         self.open_file(str(dst))
 
     def open_elicit_test(self):

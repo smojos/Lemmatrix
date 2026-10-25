@@ -317,7 +317,8 @@ class LineEditCommand(QUndoCommand):
 
 def _hyp_state(nb) -> tuple:
     """What a hypothesis change can alter, besides the lines in the notes (the Journal's)."""
-    return (copy.deepcopy(nb.hypotheses), nb.next_number, {s.date: list(s.hypotheses) for s in nb.sessions})
+    # each day's list kept with the day itself, not its date (a date can change outside undo)
+    return (copy.deepcopy(nb.hypotheses), nb.next_number, [(s, list(s.hypotheses)) for s in nb.sessions])
 
 
 class HypothesisCommand(QUndoCommand):
@@ -336,7 +337,7 @@ class HypothesisCommand(QUndoCommand):
         nb.hypotheses = copy.deepcopy(hyps)
         nb.next_number = number
         for s in nb.sessions:
-            s.hypotheses = list(days.get(s.date, []))
+            s.hypotheses = list(nbmod.day_state(days, s, nb.sessions))
 
     def redo(self):
         if self._skip:

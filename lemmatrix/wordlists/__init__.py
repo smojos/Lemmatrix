@@ -266,7 +266,7 @@ def _order(lid: str, numbers) -> list[str]:
     return sorted(set(numbers), key=lambda n: pos.get(n, 10 ** 9))
 
 
-_FAMILY = re.compile(r"([A-PV]\d{3})([a-z]?)")
+_FAMILY = re.compile(r"([A-QV]\d{3})([a-z]?)")   # Q too: Q001b first, Q002b second (the audit, 25 October)
 
 
 def family(number: str) -> list[Item]:

@@ -604,14 +604,26 @@ def snapshot_line(snap: Snapshot) -> str:
     return f"Snapshot taken{(' ' + snap.time) if snap.time else ''}: {snap.name}"
 
 
-def snapshot_state(nb: Notebook) -> dict:
-    """Every day's snapshots, copied (an undo step's before and after)."""
-    return {s.date: copy.deepcopy(s.snapshots) for s in nb.sessions if s.snapshots}
+def snapshot_state(nb: Notebook) -> list:
+    """Every day's snapshots, copied (an undo step's before and after), kept with the day itself
+    rather than its date: a day's date can change (or the day be deleted) outside the undo steps,
+    and undoing by date then wiped that day's snapshots (the audit, 25 October)."""
+    return [(s, copy.deepcopy(s.snapshots)) for s in nb.sessions if s.snapshots]
 
 
-def set_snapshot_state(nb: Notebook, state: dict):
+def day_state(state: list, s, sessions) -> list:
+    """A day's part of an undo state kept by day ([(session, value)]): the day itself, else (a day
+    undo took out and redo made again) the one of that date no longer in the notebook."""
+    hit = next((v for day, v in state if day is s), None)
+    if hit is None:
+        live = {id(x) for x in sessions}
+        hit = next((v for day, v in state if id(day) not in live and day.date == s.date), [])
+    return hit
+
+
+def set_snapshot_state(nb: Notebook, state: list):
     for s in nb.sessions:
-        s.snapshots = copy.deepcopy(state.get(s.date, []))
+        s.snapshots = copy.deepcopy(day_state(state, s, nb.sessions))
     nb.dirty = True
 
 

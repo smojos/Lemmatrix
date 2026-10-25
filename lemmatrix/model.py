@@ -986,7 +986,7 @@ class Database:
             from . import wordlists
             refs += [i.number for i in wordlists.get(wordlists.EACW).items]
         for r in refs:
-            if r.startswith(letter) and r[len(letter):].isdigit() and len(r) - len(letter) == digits:
+            if r.startswith(letter) and r[len(letter):].isdigit():   # D1000 counts too (the audit, 25 October)
                 highest = max(highest, int(r[len(letter):]))
         return f"{letter}{highest + 1:0{digits}d}"
 

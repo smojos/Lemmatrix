@@ -638,6 +638,10 @@ class BulkEditWindow(QDialog):
         lt, tt = self.tables[bulk.LEMMAS], self.tables[bulk.TOKENS]
         lt.proxy.filters = dict(m.lemmas.proxy.filters)
         lt.proxy.pinned = m.lemmas.proxy.pinned
+        # the wordlist searches (CAWL 345, SWADESH, a taxon) and Hide empty lemmas, as the lemma
+        # list has them, so Bulk edit starts on the same lemmas (the audit, 25 October)
+        lt.proxy.term_match = m.lemmas.proxy.term_match
+        lt.proxy.extra = m.lemmas.proxy.extra
         tt.proxy.filters = dict(m.all_table.proxy.filters)
         for level, text in ((bulk.LEMMAS, m.lemma_search.text()), (bulk.TOKENS, m.all_search.text())):
             self.searches[level].setText(text)
