@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <notebook format="4" database="Sample.xml">
-  <session date="2026-10-24">
-    <comment entry="ea8a89d4b1" token="fd83a36d72" ref="B002" about="B002 man · 1SG.POSS" field="Comment">new</comment>
-  </session>
   <session date="2026-10-25" researchers="JJA" participants="DML">
     <location key="LANG" />
     <location key="NOWH" />
