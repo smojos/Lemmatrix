@@ -234,7 +234,7 @@ def test_search_matches():
 
 def test_export_every_item_in_order_with_blanks():
     db = _eacw_db_with_forms()
-    header, rows = wl.table(db, wl.SWADESH)
+    header, rows = wl.table(db, wl.SWADESH, template="{Lemma>Phonetic>Phonemic}")
     assert header == ["Swadesh", "Lemma", "Gloss"]
     assert len(rows) == 207 and [r[0] for r in rows] == [str(n) for n in range(1, 208)]
     assert rows[41] == ["42", "mar", "mother"]
@@ -254,7 +254,7 @@ def test_gloss_matches_for_lemmas_of_ones_own():
     db.entry_by_ref("042").lists = {}
     m = wl.gloss_matches(db, wl.EACW)
     assert ("C001f", e) in m
-    header, rows = wl.table(db, wl.EACW, [("C001f", e)])
+    header, rows = wl.table(db, wl.EACW, [("C001f", e)], template="{Lemma>Phonetic>Phonemic}")
     row = next(r for r in rows if r[0] == "C001f")
     assert row[1] == "kʊɲ"
 
@@ -312,6 +312,8 @@ def test_export_dialog_remembers_ticked_matches(win, monkeypatch):
     db.entries.append(own)
     d = WordlistExportDialog(win)
     d.which.setCurrentIndex(d.which.findData(wl.SWADESH))
+    d.preset.setCurrentIndex(d.preset.findData("{Lemma>Phonetic>Phonemic}"))
+    d._preset_chosen(d.preset.currentIndex())                  # the Lemma field first (the old rule)
     d.copy()
     text = QGuiApplication.clipboard().text()
     assert text.splitlines()[0] == "Swadesh\tLemma\tGloss" and "42\tmar\tmother" in text
@@ -322,7 +324,7 @@ def test_export_dialog_remembers_ticked_matches(win, monkeypatch):
 
 def test_export_pdf(win, tmp_path):
     from lemmatrix.ui.wordlist_dialogs import write_pdf
-    header, rows = wl.table(win.doc.db, wl.SWADESH)
+    header, rows = wl.table(win.doc.db, wl.SWADESH, template="{Lemma>Phonetic>Phonemic}")
     p = tmp_path / "s.pdf"
     write_pdf(str(p), win.doc.db, wl.SWADESH, header, rows)
     assert p.read_bytes()[:4] == b"%PDF" and p.stat().st_size > 2000

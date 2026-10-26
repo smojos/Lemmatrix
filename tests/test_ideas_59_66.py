@@ -39,7 +39,7 @@ def test_acknowledgements_are_saved_and_read(tmp_path):
     db.path = str(p)
     storage.save(db, p, backup=False)
     text = p.read_text(encoding="utf-8")
-    assert '<database format="12">' in text and "<acknowledgements>" in text
+    assert f'<database format="{storage.FORMAT_VERSION}">' in text and "<acknowledgements>" in text
     assert '<support organisation="Leverhulme Trust" grant="ECF-2026-001">fieldwork in 2026</support>' in text
     assert '<thanks who="Amina Yusuf">hosting the team</thanks>' in text
     back = storage.load(p).metadata
@@ -51,7 +51,7 @@ def test_a_format_11_database_opens(tmp_path):
     p = tmp_path / "B.xml"
     db.path = str(p)
     storage.save(db, p, backup=False)
-    p.write_text(p.read_text(encoding="utf-8").replace('format="12"', 'format="11"'), encoding="utf-8")
+    p.write_text(p.read_text(encoding="utf-8").replace(f'format="{storage.FORMAT_VERSION}"', 'format="11"'), encoding="utf-8")
     back = storage.load(p)
     assert back.upgraded and back.metadata.support == [] and back.metadata.thanks == []
 

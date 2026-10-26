@@ -158,9 +158,11 @@ class FieldsDialog(QDialog):
         s = db.settings
         self.lists = {"lemma": copy.deepcopy(s.entry_fields), "token": copy.deepcopy(s.token_fields),
                       "text": copy.deepcopy(s.text_fields)}
+        from .. import fieldkeys
         for kind in self.lists:                      # remember original names to follow renames
             for f in self.lists[kind]:
                 f._orig = f.name
+                f._keys = fieldkeys.keys(f)          # what it answered to when the dialogue opened
         from .dialogs import ALWAYS_SHOWN, more_fields
         self._always = ALWAYS_SHOWN
         under = more_fields(parent, db)              # the lemma dialogue's More arrow (idea 60)
@@ -197,6 +199,16 @@ class FieldsDialog(QDialog):
         self.label = QLineEdit()
         self.name = QLineEdit()
         self.name.setToolTip("The XML element name: letters, digits, _ . -; no spaces")
+        self.abbr = QLineEdit()
+        self.abbr.setMaxLength(12)
+        self.abbr.setToolTip("A short name (pht for Phonetic), shown in the edit dialogues when Settings → "
+                             "Display → Abbreviate field names is on, and usable in templates ({pht}). A "
+                             "field answers to its name, label and abbreviation in any case, with or "
+                             "without spaces, so no two fields may share one (Josh, 26 October)")
+        self.problem = QLabel()                      # a name that would call another field, or bad characters
+        self.problem.setWordWrap(True)
+        self.problem.setStyleSheet(f"color: {theme.colour('error').name()};")
+        self.problem.hide()
         self.open_rb = QRadioButton("Open (free text)")
         self.closed_rb = QRadioButton("Closed (values from a list)")
         grp = QButtonGroup(self)
@@ -217,6 +229,8 @@ class FieldsDialog(QDialog):
         self.more_cb.toggled.connect(self._more_toggled)
         form.addRow("Label", self.label)
         form.addRow("Element name", self.name)
+        form.addRow("Abbreviation", self.abbr)
+        form.addRow(self.problem)
         form.addRow("Type", tw)
         form.addRow("", self.more_cb)
         form.addRow(self.note)
@@ -241,6 +255,7 @@ class FieldsDialog(QDialog):
 
         self.label.textEdited.connect(self._edited)
         self.name.textEdited.connect(self._edited)
+        self.abbr.textEdited.connect(self._edited)
         self.open_rb.toggled.connect(self._edited)
         self.list_editor.changed = self._edited
         for kind in self.lists:
@@ -253,7 +268,7 @@ class FieldsDialog(QDialog):
         bits = ["closed" if f.closed else "open"]
         if f.builtin:
             bits.append("built in")
-        return f"{f.title}   ({f.name}; {', '.join(bits)})"
+        return f"{f.title}   ({f.name}{'; ' + f.abbr if f.abbr else ''}; {', '.join(bits)})"
 
     def _fill(self, kind):
         lw = self.widgets[kind]
@@ -283,14 +298,16 @@ class FieldsDialog(QDialog):
         b.setToolTip(f"{f.title} is needed by Lemmatrix: it can be renamed or moved, but not deleted"
                      if f.builtin else "Delete the selected field")
         self.detail.setTitle(f"{kind.capitalize()} field: {f.title}")
-        for w in (self.label, self.name, self.open_rb, self.closed_rb):
+        for w in (self.label, self.name, self.abbr, self.open_rb, self.closed_rb):
             w.blockSignals(True)
         self.label.setText(f.label)
         self.name.setText(f.name)
+        self.abbr.setText(f.abbr)
         self.open_rb.setChecked(not f.closed)
         self.closed_rb.setChecked(f.closed)
-        for w in (self.label, self.name, self.open_rb, self.closed_rb):
+        for w in (self.label, self.name, self.abbr, self.open_rb, self.closed_rb):
             w.blockSignals(False)
+        self._show_problem(kind, f)
         self.more_cb.blockSignals(True)
         self.more_cb.setVisible(kind == "lemma")
         self.more_cb.setEnabled(f.role not in self._always)
@@ -338,6 +355,7 @@ class FieldsDialog(QDialog):
         kind, row = self.current
         f = self.lists[kind][row]
         f.label = self.label.text().strip()
+        f.abbr = self.abbr.text().strip()
         if not f.builtin:
             f.name = self.name.text().strip()
             f.closed = self.closed_rb.isChecked()
@@ -350,7 +368,24 @@ class FieldsDialog(QDialog):
             elif f.closed:
                 f.items = self.list_editor.items()
         self.widgets[kind].item(row).setText(self._describe(f))
+        self._show_problem(kind, f)
         self._preview()
+
+    # ---- names that would call another field (ideas 72 and 73, Josh, 26 October) -----------
+    def problem_for(self, kind, f) -> str:
+        """Why a field's label, abbreviation or name can't be used, or ""."""
+        from .. import fieldkeys
+        for what, text in (("label", f.label), ("abbreviation", f.abbr)):
+            bad = fieldkeys.label_problem(text)
+            if bad:
+                return (f"The {what} can't have {bad}: they are a template's own characters, or can't "
+                        "be in file names.")
+        return fieldkeys.clash(self.lists, kind, f, getattr(f, "_keys", set()))
+
+    def _show_problem(self, kind, f):
+        why = self.problem_for(kind, f)
+        self.problem.setText(why)
+        self.problem.setVisible(bool(why))
 
     def _add(self, kind):
         name, ok = QInputDialog.getText(self, "Add field", "Name (letters and digits, no spaces), "
@@ -366,6 +401,12 @@ class FieldsDialog(QDialog):
                                       "values chosen from a list?") == QMessageBox.Yes
         f = FieldDef(name, closed=closed)
         f._orig = None
+        f._keys = set()
+        from .. import fieldkeys
+        why = fieldkeys.clash(self.lists, kind, f)
+        if why:
+            QMessageBox.warning(self, "Fields", why)
+            return
         self.lists[kind].append(f)
         self._fill(kind)
         self.widgets[kind].setCurrentRow(len(self.lists[kind]) - 1)
@@ -453,6 +494,11 @@ class FieldsDialog(QDialog):
                     QMessageBox.warning(self, "Fields", f"Two {kind} fields are called “{f.name}”.")
                     return
                 seen.add(f.name)
+                why = self.problem_for(kind, f)
+                if why:
+                    QMessageBox.warning(self, "Fields", f"{f.title}: {why}")
+                    self.widgets[kind].setCurrentRow(self.lists[kind].index(f))
+                    return
         super().accept()
 
     def apply(self):
@@ -466,6 +512,8 @@ class FieldsDialog(QDialog):
                     renames[kind][orig] = f.name
                 if hasattr(f, "_orig"):
                     del f._orig
+                if hasattr(f, "_keys"):
+                    del f._keys
         s.entry_fields = self.lists["lemma"]
         s.token_fields = self.lists["token"]
         s.text_fields = self.lists["text"]

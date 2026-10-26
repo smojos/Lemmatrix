@@ -32,6 +32,40 @@ IPA_SIZE = 13
 _IPA_FAMILY: list = []                    # the family found, once (the system's fonts are many)
 
 
+# Settings → Display → Abbreviate field names (this computer; IDEAS.md idea 73, Josh, 26 October):
+# the edit dialogues label each field by its abbreviation (pht, phm…), its name in the hover; the
+# grids' column headers keep the full names.
+ABBREVIATE = False
+
+
+def set_abbreviate(on) -> None:
+    global ABBREVIATE
+    ABBREVIATE = bool(on)
+
+
+def caption(f, suffix: str = "") -> str:
+    """A field's label in an edit dialogue: its abbreviation while Abbreviate field names is on and
+    it has one, else its title."""
+    text = f.abbr if (ABBREVIATE and getattr(f, "abbr", "")) else f.title
+    return text + suffix
+
+
+def tip_abbreviated(form, fields) -> None:
+    """In a form, each label showing an abbreviation gets the field's full title as its hover."""
+    if not ABBREVIATE:
+        return
+    from PySide6.QtWidgets import QFormLayout
+    by_abbr = {f.abbr: f.title for f in fields if getattr(f, "abbr", "")}
+    for i in range(form.rowCount()):
+        item = form.itemAt(i, QFormLayout.LabelRole)
+        lbl = item.widget() if item is not None else None
+        if lbl is None or not hasattr(lbl, "text"):
+            continue
+        head, _, lang = lbl.text().partition(" (")
+        if head in by_abbr:
+            lbl.setToolTip(by_abbr[head] + (f" ({lang}" if lang else ""))
+
+
 def set_ipa_size(size) -> None:
     global IPA_SIZE
     try:

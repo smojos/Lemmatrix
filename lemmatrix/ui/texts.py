@@ -30,6 +30,7 @@ from .filter_dialogs import ConfigureColumnsDialog
 from .icons import icon, themed_icon
 from .lines_view import ConfigureViewDialog, FieldSpec, LinesView
 from .table import Column, FilterTable
+from .widgets import caption
 
 CONTEXT = 2.0            # seconds of the text played either side of a line ("in context")
 
@@ -105,7 +106,7 @@ class TextDialog(QDialog):
                 w = keyboards.tag(QLineEdit(text.get(f.name) if text else ""), f.name)   # idea 43
                 if f.role == "title":
                     w.textChanged.connect(self._title_changed)
-            form.addRow(f.title, w)
+            form.addRow(caption(f), w)
             self.fields[f.name] = w
         self.label = NoForbidden(text.file_label if text else "")
         self.label.setPlaceholderText("copied from the title when the text is added")

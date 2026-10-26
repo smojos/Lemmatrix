@@ -164,6 +164,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.prefs = Prefs()
         widgets.set_ipa_size(self.prefs.ipa_size)   # before any view is built (audit, 25 October)
+        widgets.set_abbreviate(self.prefs.abbreviate_fields)   # the edit dialogues' labels (idea 73)
         from . import conventions                 # the cell views' display conventions (idea 26)
         conventions.load(self.prefs)
         self.player = audio.Player()
@@ -4187,6 +4188,7 @@ class MainWindow(QMainWindow):
             self.update_badges()                  # each badge switched on or off (Settings → Display)
             self._setup_columns()                 # Stem type and From shown or hidden
             self.apply_ipa_size()
+            widgets.set_abbreviate(self.prefs.abbreviate_fields)
             self.conventions_changed()
             self.doc.settings_changed(before)
             s = self.doc.db.settings

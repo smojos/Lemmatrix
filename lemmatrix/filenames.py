@@ -12,6 +12,11 @@ when a part is empty its separator goes too:
     LXX-VXX-SP1_D009_goat_PL-GEN-xH.wav
     LXX_D009_goat.wav                      (no variety, no speaker, no tags)
     LXX-VXX_D010_big_dog.wav               (spaces and punctuation as Praat writes them)
+
+A placeholder may name several things with `>`, the first one that isn't empty being used
+(`{Phonemic>Phonetic}`: the Phonemic, else the Phonetic), and a field by its element name, its
+label or its abbreviation, in any case, with or without spaces (`{Tone Class}`, `{toneclass}`,
+`{tnc}`; IDEAS.md ideas 71–73, Josh, 26 October). The same notation serves the Wordlist export.
 """
 
 from __future__ import annotations
@@ -41,6 +46,45 @@ def split_pattern(pattern: str) -> tuple[str, list[tuple[str, str]]]:
     return lead, parts
 
 
+def render(pattern: str, value_of) -> str:
+    """A pattern filled in: value_of(name) gives one name's value ("" when it has none). A
+    separator written before a placeholder goes with it when it is empty; `a>b>c` takes the first
+    of them that isn't empty."""
+    lead, parts = split_pattern(pattern)
+    out = lead
+    for sep, name in parts:
+        if not name:                       # trailing literal
+            out += sep
+            continue
+        value = ""
+        for alt in name.split(">"):
+            value = value_of(alt.strip()) if alt.strip() else ""
+            if value:
+                break
+        if value:
+            out += (sep if out else "") + value
+    return out
+
+
+def lookup(values: dict, fields: list) -> "callable":
+    """value_of for render: the template's own words and the values by element name exactly (as
+    patterns always worked), else a field by anything it answers to (fieldkeys)."""
+    from . import fieldkeys
+    folded = {}
+    for k in values:
+        folded.setdefault(fieldkeys.fold(k), k)
+
+    def value_of(name: str) -> str:
+        if name in values:
+            return values[name] or ""
+        f = fieldkeys.find(fields, name)
+        if f is not None and f.name in values:
+            return values[f.name] or ""
+        k = folded.get(fieldkeys.fold(name))
+        return (values.get(k) or "") if k is not None else ""
+    return value_of
+
+
 def placeholder_values(db: Database, e: Entry, t: Token) -> dict[str, str]:
     md = db.metadata
     s = db.settings
@@ -66,16 +110,8 @@ def build_filename(db: Database, e: Entry, t: Token, extension: str = ".wav") ->
     """The name a token's recording should have; utterances have a pattern of their own."""
     from .model import is_utterance
     pattern = db.settings.utterance_pattern if is_utterance(e) else db.settings.filename_pattern
-    lead, parts = split_pattern(pattern)
-    values = placeholder_values(db, e, t)
-    out = lead
-    for sep, name in parts:
-        if not name:                       # trailing literal
-            out += sep
-            continue
-        value = values.get(name, "")
-        if value:
-            out += (sep if out else "") + value
+    s = db.settings
+    out = render(pattern, lookup(placeholder_values(db, e, t), list(s.entry_fields) + list(s.token_fields)))
     # Written as Praat names it (D009_big_dog, not D009_big dog), so saving an edited recording in
     # Praat with the name it suggests overwrites this file instead of making a second one (19 October).
     return praat_name(out.strip(_EDGE_SEPARATORS)) + extension
@@ -97,15 +133,7 @@ def build_text_filename(db: Database, text, extension: str = ".wav") -> str:
               "title": text.file_label, "label": text.file_label, "date": text.date}
     for name, v in text.values.items():
         values.setdefault(name, v)
-    lead, parts = split_pattern(db.settings.text_pattern)
-    out = lead
-    for sep, name in parts:
-        if not name:
-            out += sep
-            continue
-        value = values.get(name, "")
-        if value:
-            out += (sep if out else "") + value
+    out = render(db.settings.text_pattern, lookup(values, list(db.settings.text_fields)))
     return praat_name(out.strip(_EDGE_SEPARATORS)) + extension
 
 

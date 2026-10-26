@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (QCheckBox, QColorDialog, QComboBox, QDialog, QDia
 from ..model import (SEQUENCE, Database, Entry, Group, Tag, forbidden_in, nfc)
 from . import keyboards
 from . import spellui, theme
-from .widgets import ipa_font
+from .widgets import caption, ipa_font, tip_abbreviated
 
 
 def _buttons(dlg) -> QDialogButtonBox:
@@ -197,9 +197,9 @@ class EntryDialog(QDialog):
                     if f.role == "gloss" and lang == "en":           # red lines under unknown words
                         spellui.attach(ed, getattr(parent, "speller", None))
                     if lang == s.primary_gloss:
-                        primary_row = (f"{f.title} ({lang})", ed)
+                        primary_row = (caption(f, f" ({lang})"), ed)
                     else:
-                        others.append((f"{f.title} ({lang})", ed))
+                        others.append((caption(f, f" ({lang})"), ed))
                     self.fields[(f.name, lang)] = ed
                 if primary_row is not None and others and self.others_btn is None:
                     primary_row = (primary_row[0], self._with_plus(primary_row[1], [l for l, _ in others]))
@@ -218,7 +218,7 @@ class EntryDialog(QDialog):
                 cb.addItems(extra)
                 cb.setCurrentText(entry.get(f.name) if entry else
                                   ("simple" if f.role == "stem-type" and "simple" in listed else ""))
-                rows.append((f.title, cb))
+                rows.append((caption(f), cb))
                 self.fields[(f.name, "")] = cb
                 if f.role == "stem-type":
                     self._add_from(rows, db, entry, parent)
@@ -226,7 +226,7 @@ class EntryDialog(QDialog):
                 ed = keyboards.tag(QLineEdit(entry.get(f.name) if entry else ""), f.name)
                 if f.role == "lemma":
                     ed.setFont(ipa_font(14))
-                rows.append((f.title, ed))
+                rows.append((caption(f), ed))
                 self.fields[(f.name, "")] = ed
         self.file_gloss = NoForbidden(entry.file_gloss if entry else "")
         self.file_gloss.setPlaceholderText("copied from the gloss when the entry is created")
@@ -238,6 +238,7 @@ class EntryDialog(QDialog):
             form.addRow(label, w)
         self._form = form
         self._more_rows(form, more_rows, parent)
+        tip_abbreviated(form, s.entry_fields)      # the full name in the hover (idea 73)
         if self.others_btn is not None:            # the + beside the gloss (Josh, 24 October)
             prefs = getattr(parent, "prefs", None)
             filled = sum(1 for w in self.other_rows if w.text().strip())
@@ -853,6 +854,11 @@ class PreferencesDialog(QDialog):
         self.ipa = QSpinBox()
         self.ipa.setRange(8, 30)
         self.ipa.setValue(prefs.ipa_size)
+        self.abbreviate = QCheckBox("Abbreviate field names in the edit dialogues (pht, phm, trs…)")
+        self.abbreviate.setChecked(prefs.abbreviate_fields)
+        self.abbreviate.setToolTip("The token, utterance, lemma and text dialogues label each field by its "
+                                   "abbreviation (Edit → Fields), the full name in the hover; the grids' "
+                                   "column headers keep the full names")
         self.theme = QComboBox()
         self.theme.addItem("Light", "light")
         self.theme.addItem("Dark", "dark")
@@ -971,7 +977,7 @@ class PreferencesDialog(QDialog):
             self.badges[key] = box
         page("Display", [("This computer", [("Theme", self.theme), ("Accent colour", self.accent),
                                             ("IPA font size", self.ipa),
-                                            ("Splash screen", self.splash)]),
+                                            ("Splash screen", self.splash), (None, self.abbreviate)]),
                          ("Badges on the app bar (this computer)", [(None, b) for b in self.badges.values()]),
                          ("Display conventions: matrix cells, text lines, the utterance cell (this computer)",
                           [(None, self.conv_on), (None, self.conv_brackets), (None, self.conv_slashes),
@@ -1070,6 +1076,7 @@ class PreferencesDialog(QDialog):
         p.underline_spelling = self.spelling.isChecked()
         p.autosave_minutes = self.autosave.value()
         p.ipa_size = self.ipa.value()
+        p.abbreviate_fields = self.abbreviate.isChecked()
         p.splash_seconds = self.splash.value()
         if self.welcome.isChecked() != p.show_welcome:      # unchanged leaves the first start alone
             p.show_welcome = self.welcome.isChecked()

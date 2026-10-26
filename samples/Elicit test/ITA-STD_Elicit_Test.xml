@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<database format="12">
+<database format="13">
   <metadata>
     <language code="ITA">Italian</language>
     <variety code="STD">Standard Italian</variety>
@@ -75,12 +75,12 @@
       <field name="Taxon" role="taxon" />
     </entry-fields>
     <token-fields>
-      <field name="Phonetic" role="phonetic" />
-      <field name="Phonemic" role="phonemic" />
-      <field name="Morphemes" role="morphemes" />
-      <field name="Pitch" role="pitch" />
-      <field name="Translation" role="translation" />
-      <field name="Comment" role="comment" />
+      <field name="Phonetic" role="phonetic" abbr="pht" />
+      <field name="Phonemic" role="phonemic" abbr="phm" />
+      <field name="Morphemes" role="morphemes" abbr="mph" />
+      <field name="Pitch" role="pitch" abbr="pch" />
+      <field name="Translation" role="translation" abbr="trs" />
+      <field name="Comment" role="comment" abbr="com" />
     </token-fields>
     <text-fields>
       <field name="Title" role="title" />

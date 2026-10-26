@@ -46,7 +46,7 @@ def test_format_11_keeps_the_version(tmp_path):
     db.path = str(p)
     storage.save(db, p, backup=False)
     text = p.read_text(encoding="utf-8")
-    assert '<database format="12">' in text
+    assert f'<database format="{storage.FORMAT_VERSION}">' in text
     assert f'<wordlist base="EACW" items="expanded" region="W" version="{wl.EACW_VERSION}" />' in text
     back = storage.load(p)
     assert (back.metadata.wordlist_items, back.metadata.wordlist_region) == (wl.EXPANDED, "W")
@@ -59,7 +59,7 @@ def test_a_format_10_database_opens(tmp_path):
     p = tmp_path / "S.xml"
     db.path = str(p)
     storage.save(db, p, backup=False)
-    p.write_text(p.read_text(encoding="utf-8").replace('format="12"', 'format="10"'), encoding="utf-8")
+    p.write_text(p.read_text(encoding="utf-8").replace(f'format="{storage.FORMAT_VERSION}"', 'format="10"'), encoding="utf-8")
     back = storage.load(p)
     assert back.upgraded and back.metadata.wordlist_base == wl.SWADESH and not back.metadata.wordlist_items
 
@@ -373,7 +373,7 @@ def test_the_wordlist_pdf_names_the_language_and_researcher(app, tmp_path):
     assert any(x.startswith("EACW version: ") for x in lines)
     assert not any(x.startswith("EACW version") for x in pdf_details(db, wl.SWADESH))
     db.path = str(tmp_path / "T.xml")
-    header, data = wl.table(db, wl.SWADESH)
+    header, data = wl.table(db, wl.SWADESH, template="{Lemma>Phonetic>Phonemic}")
     write_pdf(str(tmp_path / "t.pdf"), db, wl.SWADESH, header, data)
     raw = (tmp_path / "t.pdf").read_bytes()
     assert raw.count(b"/Type /Page\n") + raw.count(b"/Type /Page\r") + raw.count(b"/Type /Page ") > 1 \
@@ -395,12 +395,12 @@ def test_the_export_falls_back_to_the_citation_tokens_phonetic():
     db = defaults.new_database(wl.SWADESH)
     s = db.settings
     e = db.entries[0]
-    assert wl.export_form(db, e) == ""
+    assert wl.export_form(db, e, "{Lemma>Phonetic>Phonemic}") == ""
     e.tokens[0].set(s.token_field("phonetic").name, "ʔàbɔ̀")
-    assert wl.export_form(db, e) == "ʔàbɔ̀"
-    assert wl.table(db, wl.SWADESH)[1][0][1] == "ʔàbɔ̀"
+    assert wl.export_form(db, e, "{Lemma>Phonetic>Phonemic}") == "ʔàbɔ̀"
+    assert wl.table(db, wl.SWADESH, template="{Lemma>Phonetic>Phonemic}")[1][0][1] == "ʔàbɔ̀"
     e.set(s.entry_field("lemma").name, "abo")
-    assert wl.export_form(db, e) == "abo"
+    assert wl.export_form(db, e, "{Lemma>Phonetic>Phonemic}") == "abo"
 
 
 def test_link_warns_when_the_glosses_dont_match(app, tmp_path, monkeypatch):

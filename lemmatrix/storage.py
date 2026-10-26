@@ -21,19 +21,20 @@ from .model import (LEMMAS, TEXTS, UTTERANCES, ClipSource, Database, Entry, Fiel
                     Location, Metadata, Person, RefCategory, Settings, Support, Tag, TagStructure, Text,
                     Thanks, TierMapping, TierRule, Token, Utterance, is_utterance, new_id, nfc, write_atomically, xml_safe)
 
-FORMAT_VERSION = "12"
+FORMAT_VERSION = "13"
 WORDLIST_ATTRS = {"EACW": "eacw", "CAWL": "cawl", "SWADESH": "swadesh"}   # format 9 (idea 40)
 # Until version 1.0 the current format is read and the formats before it upgraded, from format 5 on
 # (Josh, 18 October 2026: no compatibility code for older formats; the upgrades are kept, 25 October,
 # so an older backup still opens, until v1 fixes the format). When the format changes, an upgrade
 # from the format before is written.
-READABLE = ("5", "6", "7", "8", "9", "10", "11", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
+READABLE = ("5", "6", "7", "8", "9", "10", "11", "12", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
 # 7: before researchers had the Identifiable? tick and both ticks were always written; 8: before the
 # comparative wordlists (format 9, 22 October: no base and no numbers yet, so nothing to change);
 # 9: before the <typology> block (format 10, 23 October: an older file is tonal, as every database was);
 # 10: before the EACW's version on <wordlist> (format 11, 23 October: items and region, none in an
 # older file, so nothing to change); 11: before the acknowledgements and the EACW's version number
-# (format 12, 24 October: none in an older file, so nothing to change)
+# (format 12, 24 October: none in an older file, so nothing to change); 12: before fields'
+# abbreviations (format 13, 26 October: the token fields get pht, phm, mph, pch, trs, com)
 BACKUPS_KEPT = 10
 
 
@@ -61,7 +62,7 @@ def _load_item(el) -> ListItem:
 
 def _load_field(el) -> FieldDef:
     f = FieldDef(name=el.get("name", ""), label=el.get("label", ""), role=el.get("role", ""),
-                 closed=_bool(el.get("closed")))
+                 closed=_bool(el.get("closed")), abbr=nfc(el.get("abbr", "")))
     f.items = [_load_item(i) for i in el.findall("item")]
     if f.role == "word-class":
         f.closed = True
@@ -371,6 +372,9 @@ def load(path: str | os.PathLike) -> Database:
         _upgrade_5_to_6(db)
     if version in ("5", "6"):            # format 7 (21 October): the working state moves to the workspace
         db.workspace_from_file = True
+    if version != FORMAT_VERSION:        # format 13 (26 October): the token fields' abbreviations
+        from .fieldkeys import give_defaults
+        give_defaults(db.settings.token_fields)
     if version != FORMAT_VERSION:        # format 8 (22 October): researchers ticked Identifiable?, read
                                          # above; format 9: wordlist numbers, none in an older file;
         db.upgraded = True               # above; quietly, so saving writes the new format
@@ -437,6 +441,8 @@ def _save_field(parent, f: FieldDef):
         el.set("label", f.label)
     if f.role:
         el.set("role", f.role)
+    if f.abbr:
+        el.set("abbr", f.abbr)
     if f.closed:
         el.set("closed", "yes")
         for item in f.items:

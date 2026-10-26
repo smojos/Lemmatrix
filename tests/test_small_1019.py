@@ -46,7 +46,7 @@ def test_missing_core_fields_come_back_and_comments_get_their_role(tmp_path):
     again = storage.load(db.path)
     assert not again.load_notes and again.settings.token_field("comment").name == "Comments"
     # deleted outside Lemmatrix (or before it was protected): restored on opening, with a note
-    text = open(db.path, encoding="utf-8").read().replace('<field name="Morphemes" role="morphemes" />', "")
+    text = open(db.path, encoding="utf-8").read().replace('<field name="Morphemes" role="morphemes" abbr="mph" />', "")
     open(db.path, "w", encoding="utf-8").write(text)
     db3 = storage.load(db.path)
     assert db3.settings.token_field("morphemes") is not None

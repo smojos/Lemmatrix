@@ -25,7 +25,7 @@ from . import spellui, theme
 from .icons import icon
 from .table import show_suggestion
 from .tagpanel import TagPanel
-from .widgets import PitchCanvas, ipa_font, meaning
+from .widgets import PitchCanvas, caption, ipa_font, meaning
 
 
 def _esc(text: str) -> str:
@@ -182,8 +182,11 @@ class TokenDialog(QDialog):
                 self.translation = ed
                 spellui.attach(ed, getattr(self.main, "speller", None))   # red lines under unknown words
                 ed.textChanged.connect(lambda *_: self._update_suggestion())
-            label = f.title + (f" ({s.primary_gloss})" if f.multilingual and len(s.gloss_languages) > 1 else "")
-            left.addWidget(QLabel(label), row, 0)
+            label = caption(f, f" ({s.primary_gloss})" if f.multilingual and len(s.gloss_languages) > 1 else "")
+            lbl = QLabel(label)
+            if label != f.title and not label.startswith(f.title + " "):
+                lbl.setToolTip(f.title)           # an abbreviation shown (idea 73): the name in the hover
+            left.addWidget(lbl, row, 0)
             if self.comment is None and f.is_comment:
                 self.comment = ed
                 self.push_btn = QToolButton()
@@ -642,7 +645,9 @@ class TokenDialog(QDialog):
         row += 1
         for f in fields:
             for lang in others:
-                label = QLabel(f"{f.title} ({lang})")
+                label = QLabel(caption(f, f" ({lang})"))
+                if getattr(f, "abbr", "") and label.text().startswith(f.abbr + " ("):
+                    label.setToolTip(f"{f.title} ({lang})")
                 ed = keyboards.tag(QLineEdit(), f"{f.name}:{lang}")
                 ed.setFont(ipa_font(self.main.prefs.ipa_size + 1))
                 ed.textChanged.connect(self._fields_changed)

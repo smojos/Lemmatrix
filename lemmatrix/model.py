@@ -457,6 +457,7 @@ class FieldDef:
     role: str = ""               # lemma, gloss, word-class, phonetic, phonemic, pitch, translation
     closed: bool = False         # values come from a list kept in settings
     items: list[ListItem] = field(default_factory=list)
+    abbr: str = ""               # its abbreviation, e.g. pht (format 13; ideas 72 and 73, Josh, 26 October)
 
     @property
     def title(self) -> str:

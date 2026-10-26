@@ -210,6 +210,14 @@ class Prefs:
 
     # display
     @property
+    def abbreviate_fields(self) -> bool:
+        """Settings → Display → Abbreviate field names in the edit dialogues (idea 73)."""
+        return self._get("display/abbreviate_fields", False, bool)
+
+    @abbreviate_fields.setter
+    def abbreviate_fields(self, v): self.q.setValue("display/abbreviate_fields", bool(v))
+
+    @property
     def ipa_size(self) -> int:
         return self._get("display/ipa_size", 13, int)
 

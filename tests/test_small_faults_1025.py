@@ -88,15 +88,15 @@ def test_the_export_never_takes_a_plural_as_the_form(win):
     pl = Token(tags=[plural])
     pl.set(ph, "plural-form")
     e.tokens = [pl]
-    assert wl.export_form(db, e) == ""                              # was "plural-form"
+    assert wl.export_form(db, e, "{Lemma>Phonetic>Phonemic}") == ""                              # was "plural-form"
     sg = Token(tags=[default])
     sg.set(ph, "default-form")
     e.tokens = [pl, sg]
-    assert wl.export_form(db, e) == "default-form"                  # only default tags: the citation
+    assert wl.export_form(db, e, "{Lemma>Phonetic>Phonemic}") == "default-form"                  # only default tags: the citation
     bare = Token()
     bare.set(ph, "citation-form")
     e.tokens = [pl, sg, bare]
-    assert wl.export_form(db, e) == "citation-form"                 # no tags at all comes first
+    assert wl.export_form(db, e, "{Lemma>Phonetic>Phonemic}") == "citation-form"                 # no tags at all comes first
 
 
 # ---------------------------------------------------------------- TextGrid stamps

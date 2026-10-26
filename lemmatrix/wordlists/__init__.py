@@ -826,29 +826,74 @@ def gloss_matches(db, lid: str) -> list[tuple[str, object]]:
     return out
 
 
-def export_form(db, entry) -> str:
-    """A lemma's form in a wordlist export: its Lemma field, else its citation token's Phonetic
-    (Josh, 23 October), else its citation token's Phonemic. The citation token is the one with no
-    tags, else one with only its groups' default tags (SG where SG is the default); never just the
-    first token, which may be a plural or a possessed form (25 October: it could export one)."""
-    form = db.lemma(entry)
-    if form:
-        return form
+# The form column of File → Export → Wordlist…, written as a template (IDEAS.md idea 71, Josh,
+# 26 October): the Soundfiles notation, `>` for else, fields by name, label or abbreviation.
+DEFAULT_TEMPLATE = "{Phonemic>Phonetic} {Word Class}"
+TEMPLATE_PRESETS = [("Phonemic, else Phonetic, and the word class", DEFAULT_TEMPLATE),
+                    ("Lemma, else Phonemic, else Phonetic", "{Lemma>Phonemic>Phonetic}"),
+                    ("Lemma, else Phonetic, else Phonemic", "{Lemma>Phonetic>Phonemic}"),
+                    ("Phonetic", "{Phonetic}"),
+                    ("Phonemic", "{Phonemic}")]
+TEMPLATE_KEY = "wordlist/template"        # the database's workspace
+
+
+def citation_token(db, entry):
+    """The token that stands for a lemma: the one with no tags, else one with only its groups'
+    default tags (SG where SG is the default); never just the first token, which may be a plural
+    or a possessed form (25 October: the export could take one)."""
     tags = db.settings.tags
 
     def plain(tok) -> bool:
         return all(tags.tag(n) is not None and tags.tag(n).default for n in tok.tags)
-    t = next((x for x in entry.tokens if x.is_citation), None) or next((x for x in entry.tokens if plain(x)), None)
-    if t is None:
-        return ""
-    for role in ("phonetic", "phonemic"):
-        f = db.settings.token_field(role)
-        if f is not None and t.get(f.name):
-            return t.get(f.name)
-    return ""
+    return next((x for x in entry.tokens if x.is_citation), None) or next((x for x in entry.tokens if plain(x)), None)
 
 
-def table(db, lid: str, extra=()) -> tuple[list[str], list[list[str]]]:
+def template_values(db, entry) -> dict:
+    """What a wordlist template can name: the lemma's fields, its citation token's fields (the
+    lemma's win where both have one of a name, as Comment), and its reference."""
+    s = db.settings
+    values = {"reference": entry.ref}
+    for f in s.entry_fields:
+        values.setdefault(f.name, entry.get(f.name))
+    t = citation_token(db, entry)
+    if t is not None:
+        for f in s.token_fields:
+            values.setdefault(f.name, t.get(f.name))
+    return values
+
+
+def export_form(db, entry, template: str = DEFAULT_TEMPLATE) -> str:
+    """A lemma's row in a wordlist export, from the template: by default its citation token's
+    Phonemic, else its Phonetic, then its word class (Josh, 26 October; until then the Lemma
+    field, then the citation token's Phonetic, then its Phonemic, a preset now). The template's
+    first placeholder is the form: when it is empty the lemma gives nothing, so a word not yet
+    collected leaves its row blank, never just its word class."""
+    from ..filenames import lookup, render, split_pattern
+    s = db.settings
+    template = template or DEFAULT_TEMPLATE
+    value_of = lookup(template_values(db, entry), list(s.entry_fields) + list(s.token_fields))
+    first = next((name for _, name in split_pattern(template)[1] if name), "")
+    if first and not any(value_of(a.strip()) for a in first.split(">") if a.strip()):
+        return ""                                 # no form: not collected yet, the row stays blank
+    return " ".join(render(template, value_of).split())
+
+
+def template_unknown(db, template: str) -> list[str]:
+    """The names in a template that call nothing (no field answers to them), for the dialogue."""
+    from .. import fieldkeys
+    from ..filenames import split_pattern
+    s = db.settings
+    fields = list(s.entry_fields) + list(s.token_fields)
+    out = []
+    for _, name in split_pattern(template or "")[1]:
+        for alt in (name.split(">") if name else []):
+            alt = alt.strip()
+            if alt and alt.casefold() != "reference" and fieldkeys.find(fields, alt) is None:
+                out.append(alt)
+    return out
+
+
+def table(db, lid: str, extra=(), template: str = DEFAULT_TEMPLATE) -> tuple[list[str], list[list[str]]]:
     """The export's header and rows: number, lemma, gloss. `extra` adds (number, lemma) pairs (the
     ticked gloss matches) before they are stored. Several lemmas on one number are joined with ; ."""
     header = [SHORT[lid], "Lemma", "Gloss"]
@@ -858,7 +903,7 @@ def table(db, lid: str, extra=()) -> tuple[list[str], list[list[str]]]:
     out = []
     for r in rows(db, lid):
         es = r.entries + [e for e in add.get(r.number, []) if e not in r.entries]
-        out.append([r.number, "; ".join(f for f in (export_form(db, e) for e in es) if f), r.gloss])
+        out.append([r.number, "; ".join(f for f in (export_form(db, e, template) for e in es) if f), r.gloss])
     return header, out
 
 

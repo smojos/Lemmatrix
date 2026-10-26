@@ -13,11 +13,13 @@ from pathlib import Path
 from PySide6.QtCore import QMarginsF, QSizeF, Qt
 from PySide6.QtGui import QGuiApplication, QPageLayout, QPageSize, QPdfWriter, QTextDocument
 from PySide6.QtWidgets import (QButtonGroup, QComboBox, QDialog, QDialogButtonBox, QFileDialog,
-                               QHBoxLayout, QHeaderView, QLabel, QMessageBox, QPushButton, QRadioButton,
+                               QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton,
+                               QRadioButton,
                                QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
 from .. import layout
 from .. import wordlists as wl
+from . import theme
 
 BLANK = ""
 
@@ -165,6 +167,37 @@ class WordlistExportDialog(QDialog):
             self.which.setItemData(self.which.count() - 1, citation_tip(lid), Qt.ToolTipRole)
         row.addWidget(self.which, 1)
         lay.addLayout(row)
+        # What each lemma's row shows (IDEAS.md idea 71, Josh, 26 October): a preset, or a template
+        # in the Soundfiles notation, `>` for else, kept in the database's workspace
+        trow = QHBoxLayout()
+        trow.addWidget(QLabel("Form:"))
+        self.preset = QComboBox()
+        for title, tpl in wl.TEMPLATE_PRESETS:
+            self.preset.addItem(title, tpl)
+        self.preset.addItem("Custom…", None)
+        trow.addWidget(self.preset)
+        self.template = QLineEdit()
+        self.template.setToolTip("What each lemma's row shows, in the Soundfiles notation: a field in "
+                                 "braces by its name, label or abbreviation ({Phonemic}, {phm}, "
+                                 "{Word Class}); > for else ({Phonemic>Phonetic}: the Phonemic, else the "
+                                 "Phonetic); a space or other text written before a field goes with it "
+                                 "when it is empty. The first field is the form: a lemma with none "
+                                 "leaves its row blank. Token fields are the citation token's.")
+        trow.addWidget(self.template, 1)
+        lay.addLayout(trow)
+        self.example = QLabel()
+        self.example.setWordWrap(True)
+        self.example.setTextFormat(Qt.RichText)
+        lay.addWidget(self.example)
+        saved = ""
+        try:
+            saved = str(win.doc.ws.get(wl.TEMPLATE_KEY, "") or "")
+        except Exception:                             # noqa: BLE001 (no workspace: the default)
+            saved = ""
+        self.template.setText(saved or wl.DEFAULT_TEMPLATE)
+        self._sync_preset()
+        self.preset.activated.connect(self._preset_chosen)
+        self.template.textChanged.connect(self._template_changed)
         self.summary = QLabel()
         self.summary.setWordWrap(True)
         lay.addWidget(self.summary)
@@ -199,6 +232,48 @@ class WordlistExportDialog(QDialog):
 
     def lid(self) -> str:
         return self.which.currentData()
+
+    # ---- the form's template ----------------------------------------------
+    def template_text(self) -> str:
+        return self.template.text().strip() or wl.DEFAULT_TEMPLATE
+
+    def _sync_preset(self):
+        i = self.preset.findData(self.template.text().strip())
+        self.preset.blockSignals(True)
+        self.preset.setCurrentIndex(i if i >= 0 else self.preset.count() - 1)
+        self.preset.blockSignals(False)
+        self._show_example()
+
+    def _preset_chosen(self, i):
+        tpl = self.preset.itemData(i)
+        if tpl is None:                               # Custom…: type in the box
+            self.template.setFocus()
+            return
+        self.template.setText(tpl)
+
+    def _template_changed(self, *_):
+        self._sync_preset()
+        try:
+            self.win.doc.ws_set(wl.TEMPLATE_KEY, self.template.text().strip())
+        except Exception:                             # noqa: BLE001 (no workspace)
+            pass
+
+    def _show_example(self):
+        """A live example row, from the first lemma with a form; a name that calls nothing in red."""
+        import html as _html
+        tpl = self.template_text()
+        unknown = wl.template_unknown(self.db, tpl)
+        sample = next((f for f in (wl.export_form(self.db, e, tpl) for e in self.db.entries) if f), "")
+        bits = []
+        if sample:
+            bits.append(f"Example: <b>{_html.escape(sample)}</b>")
+        else:
+            bits.append("Example: no lemma has a form for this template yet.")
+        if unknown:
+            red = theme.colour("error").name()
+            bits.append(f"<span style='color:{red}'>No field answers to "
+                        + ", ".join(f"{{{_html.escape(u)}}}" for u in unknown) + ".</span>")
+        self.example.setText("  ".join(bits))
 
     def _fill(self):
         lid = self.lid()
@@ -256,7 +331,7 @@ class WordlistExportDialog(QDialog):
 
     def _table(self):
         ticked = self._ticked()
-        header, data = wl.table(self.db, self.lid(), ticked)
+        header, data = wl.table(self.db, self.lid(), ticked, template=self.template_text())
         self._remember(ticked)
         return header, data
 

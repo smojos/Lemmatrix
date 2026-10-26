@@ -192,13 +192,13 @@ def default_settings() -> Settings:
         FieldDef("StemType", "Stem type", role="stem-type", closed=True, items=stem_types()),   # 22–23 October
         FieldDef("Comment", role="comment"),
     ]
-    s.token_fields = [
-        FieldDef("Phonetic", role="phonetic"),
-        FieldDef("Phonemic", role="phonemic"),
-        FieldDef("Morphemes", role="morphemes"),      # the morpheme gloss line (ideas 2 and 7)
-        FieldDef("Pitch", role="pitch"),
-        FieldDef("Translation", role="translation"),
-        FieldDef("Comment", role="comment"),
+    s.token_fields = [                                # abbreviations: Josh, 26 October (ideas 72, 73)
+        FieldDef("Phonetic", role="phonetic", abbr="pht"),
+        FieldDef("Phonemic", role="phonemic", abbr="phm"),
+        FieldDef("Morphemes", role="morphemes", abbr="mph"),   # the morpheme gloss line (ideas 2 and 7)
+        FieldDef("Pitch", role="pitch", abbr="pch"),
+        FieldDef("Translation", role="translation", abbr="trs"),
+        FieldDef("Comment", role="comment", abbr="com"),
     ]
     s.gloss_languages = ["en"]
     s.primary_gloss = "en"
