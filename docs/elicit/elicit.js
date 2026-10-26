@@ -251,12 +251,22 @@ function vars(lang) {
   };
 }
 
+// Prompts added on 26 October: a request made before then doesn't carry them, so its page shows
+// them in English (the request's own prompts always win).
+const FALLBACK = {
+  keep_open: "Please keep this page open until all your recordings are sent.",
+  try_now: "Try again now",
+  expired_keep: "This request has expired, but your recordings are safe on this device. " +
+    "Please send them to {researcher} as a file.",
+};
+
 function text(key, extra) {        // [english, second language or null]
   const out = [];
   for (const lang of [en(), l2()]) {
     if (!lang) { out.push(null); continue; }
     const p = S.req.prompts[lang] || (lang === en() ? S.req.prompts.en : null);
-    out.push(p && p[key] ? fill(p[key], Object.assign(vars(lang), extra || {})) : null);
+    const t = (p && p[key]) || (lang === en() ? FALLBACK[key] : null);
+    out.push(t ? fill(t, Object.assign(vars(lang), extra || {})) : null);
   }
   if (out[1] === out[0]) out[1] = null;
   return out;
@@ -342,7 +352,9 @@ async function openLink(id, key) {
   if (prior) {                                       // opened before on this device: carry on
     await load(prior.zip, prior.answers);
     S.driveId = id;
-    return begin();
+    begin();
+    sendOthers();
+    return;
   }
   show(h("div", { class: "panel" }, h("div", { class: "say" }, h("div", { class: "en" }, "Opening the request…"))));
   try {
@@ -367,10 +379,19 @@ async function openLink(id, key) {
   persist();
   await save();
   begin();
+  sendOthers();
 }
 
 let uploading = null;
 let lastError = "";                  // shown small on the waiting screen, for whoever tests it
+let onUploaded = null;               // the sending screen's bar
+let sendingNow = false;              // the sending screen is up and hasn't finished
+
+function unsent() {                  // recordings that are good but haven't reached Drive yet
+  if (!byDrive()) return 0;
+  return S.req.cards.filter(c => { const a = S.answers[c.n]; return a && a.status === "recorded" && !a.uploaded; })
+    .length;
+}
 
 async function uploadPending() {
   // Every recording that is good but not uploaded yet, in order; false if one couldn't go now.
@@ -387,6 +408,7 @@ async function uploadPending() {
         if (!r.ok) throw new Error("upload " + r.status);
         a.uploaded = true;
         await save();
+        if (onUploaded) onUploaded();
       } catch (e) {
         lastError = String(e && e.message || e) + (navigator.onLine ? " (online)" : " (offline)");
         console.error("ɛλicit upload", c.n, e);
@@ -400,7 +422,53 @@ async function uploadPending() {
   return uploading;
 }
 
-window.addEventListener("online", () => { if (byDrive()) uploadPending(); });
+let othersRunning = false;
+
+async function sendOthers() {
+  // The other requests on this device whose recordings haven't all reached Drive (Josh, 26 October:
+  // opening a second link never sent the first one's). Only the recordings go: the request is
+  // finished, as before, when the speaker presses Send in it (until then Lemmatrix sees "11 of 11
+  // recorded so far" and can take them). An expired one is left for Send as a file.
+  if (othersRunning) return;
+  othersRunning = true;
+  try {
+    let saved = [];
+    try { saved = await store.all(); } catch (e) { saved = []; }
+    const today = new Date().toISOString().slice(0, 10);
+    for (const rec of saved) {
+      if (!rec.drive || (S && rec.id === S.req.id)) continue;
+      try {
+        const files = await readZip(await rec.zip.arrayBuffer());
+        const req = JSON.parse(new TextDecoder().decode(files["request.json"]));
+        if (req.transport !== "drive" || (req.expires && today > req.expires)) continue;
+        const answers = rec.answers || {};
+        for (const c of req.cards || []) {
+          const a = answers[c.n];
+          if (!a || a.status !== "recorded" || a.uploaded || !c.upload) continue;
+          const r = await fetch(c.upload, { method: "PUT", headers: { "Content-Type": a.wav.type || "audio/wav" },
+                                            body: a.wav });
+          if (!r.ok) throw new Error("upload " + r.status);
+          a.uploaded = true;
+          await store.put(Object.assign({}, rec, { answers, saved: new Date().toISOString() }));
+        }
+      } catch (e) {
+        console.error("ɛλicit: an earlier request's recordings", rec.id, e);   // tried again next time
+      }
+    }
+  } finally {
+    othersRunning = false;
+  }
+}
+
+window.addEventListener("online", () => { if (byDrive()) uploadPending(); sendOthers(); });
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && byDrive()) uploadPending();
+});
+// Closing the page stops the uploads (Josh, 26 October: 3 of 11 recordings came back): the
+// browser asks first while any are unsent. Phones don't always ask, so the sending screen says it too.
+window.addEventListener("beforeunload", e => {
+  if (byDrive() && (unsent() || sendingNow)) { e.preventDefault(); e.returnValue = ""; }
+});
 
 async function putJSON(url, data) {
   const r = await fetch(url, { method: "PUT", headers: { "Content-Type": "application/json" },
@@ -416,23 +484,41 @@ async function tellResearcher(reason) {
 }
 
 async function sendDrive() {
+  sendingNow = true;
   const total = S.req.cards.filter(c => (S.answers[c.n] || {}).status === "recorded").length;
-  const line = h("div", { class: "note" });
-  const panel = h("div", { class: "panel" }, say("goodbye"), line);
-  show(panel);
-  for (;;) {
+  const line = h("div", { class: "progress" });
+  const fillBar = h("div", {});
+  const status = h("div", { class: "note" });
+  let wake = null;
+  const tryNow = btn("try_now", () => { if (wake) wake(); }, "quiet");
+  tryNow.hidden = true;
+  const update = () => {
     const done = S.req.cards.filter(c => (S.answers[c.n] || {}).uploaded).length;
-    line.replaceChildren(...text("sending", { n: done, total }).filter(Boolean).map(t => h("div", {}, t)));
+    line.textContent = text("sending", { n: done, total }).filter(Boolean).join(" · ");
+    fillBar.style.width = (total ? Math.round(100 * done / total) : 100) + "%";
+  };
+  show(h("div", { class: "panel" }, say("keep_open"), line, h("div", { class: "bar" }, fillBar), status,
+    h("div", { class: "buttons" }, tryNow)));
+  onUploaded = update;
+  for (;;) {
+    update();
     if (await uploadPending()) {
       try {
         await putJSON(S.req.drive.response, responseData());
         break;
       } catch (e) { lastError = "response: " + String(e && e.message || e); }
     }
-    line.replaceChildren(...text("waiting_net").filter(Boolean).map(t => h("div", {}, t)),
+    update();
+    status.replaceChildren(...text("waiting_net").filter(Boolean).map(t => h("div", {}, t)),
       lastError ? h("div", { class: "note" }, lastError) : "");
-    await new Promise(res => setTimeout(res, 8000));
+    tryNow.hidden = false;
+    await new Promise(res => { wake = res; setTimeout(res, 8000); });
+    wake = null;
+    tryNow.hidden = true;
+    status.replaceChildren();
   }
+  onUploaded = null;
+  sendingNow = false;
   await destroy();
   show(h("div", { class: "panel" }, say("sent_done"), say("closing", null, "small")));
 }
@@ -440,6 +526,7 @@ async function sendDrive() {
 async function start() {
   const link = linkParams();
   if (link.id && link.key) return openLink(link.id, link.key);
+  sendOthers();
   let saved = [];
   try { saved = await store.all(); } catch (e) { saved = []; }
   const input = h("input", { type: "file", accept: ".zip,application/zip", onchange: () => openFile(input) });
@@ -488,6 +575,10 @@ async function reopen(rec) {
 
 function begin() {
   if (expired()) {
+    // Never throw away recordings that haven't reached the researcher (26 October): through Drive
+    // the upload links are dead by now, so they go as a file (Receive ɛλicitation → From a zip file).
+    const kept = byDrive() ? unsent() : S.req.cards.filter(c => (S.answers[c.n] || {}).status === "recorded").length;
+    if (kept) return sendScreen(say("expired_keep", null, "danger"));
     destroy();
     show(h("div", { class: "panel" }, say("expired", null, "danger")));
     return;
@@ -527,7 +618,8 @@ function contact() {
 
 function speak() {
   show(h("div", { class: "panel" }, say("speak"),
-    h("div", { class: "buttons row" }, btn("yes", opener, "main"), btn("no", async () => {
+    h("div", { class: "buttons row" }, btn("yes", () => (S.req.cards.some(c => !S.answers[c.n]) ? opener() : finished()),
+      "main"), btn("no", async () => {
       await tellResearcher("doesn't speak the language");
       await destroy();
       show(h("div", { class: "panel" }, say("goodbye"), say("wrong_language_end", null, "small")));
@@ -673,7 +765,8 @@ async function answer(card, result) {
 function finished() {
   stopMic();
   show(h("div", { class: "panel" }, say("finished"),
-    h("div", { class: "buttons" }, btn("goodbye", () => (byDrive() ? sendDrive() : sendScreen()), "main"))));
+    h("div", { class: "buttons" },
+      byDrive() ? btn("send", sendDrive, "main") : btn("goodbye", () => sendScreen(), "main"))));
 }
 
 function responseData() {
@@ -707,7 +800,7 @@ function fileName() {
   return `Elicit_recordings_${S.req.speaker.code.replace(/[^\w-]/g, "_")}_${S.req.created.slice(0, 10)}.zip`;
 }
 
-async function sendScreen() {
+async function sendScreen(lead) {
   const blob = await responseZip();
   const name = fileName();
   const file = new File([blob], name, { type: "application/zip" });
@@ -727,7 +820,7 @@ async function sendScreen() {
     await destroy();
     show(h("div", { class: "panel" }, say("closing")));
   }, "quiet"));
-  show(h("div", { class: "panel" }, say("send_title"),
+  show(h("div", { class: "panel" }, lead || null, say("send_title"),
     h("div", { class: "note" }, name, " · ", (blob.size / 1048576).toFixed(1), " MB"),
     h("div", { class: "buttons" }, ...buttons)));
 }

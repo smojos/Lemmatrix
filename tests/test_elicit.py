@@ -714,7 +714,7 @@ def test_the_page_through_a_drive_link(db, tmp_path):
                 page.wait_for_timeout(500)
                 page.locator("button.rec").click()
                 click("It's good")
-            click("Goodbye")
+            click("Send")
             page.get_by_text("Your recordings have reached Researcher 1").wait_for(timeout=15000)
             assert not errors, errors
             # a second request, turned down on the phone
@@ -735,6 +735,217 @@ def test_the_page_through_a_drive_link(db, tmp_path):
     assert [c.n for c in el.waiting(db, got)] == [1, 2, 3]
     st2 = next(s for s in el.outstanding_drive(db) if s.request.id == req2.id)
     assert el.drive_state(drive, st2).turned_down == "not around"
+
+
+class _DrivePage:
+    """The web page served from docs/ (and any other folders given, on the same origin, so they
+    share the phone's storage), Google stood in for by a FakeDrive. Uploads can be made to fail,
+    as on a phone with no signal."""
+
+    def __init__(self, drive, tmp_path, extra=None):
+        import functools
+        import http.server
+        import shutil as _shutil
+        import threading
+        self.drive = drive
+        self.fail = False
+        root = tmp_path / "site"
+        _shutil.copytree(ROOT / "docs", root)
+        for name, folder in (extra or {}).items():
+            _shutil.copytree(folder, root / name)
+        handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(root))
+        handler.log_message = lambda *a: None
+        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+        self.fake = tmp_path / "voice.wav"
+        audio.write_wav(self.fake, 0.3 * np.sin(np.arange(48000 * 2) / 7), 48000, 16)
+
+    def url(self, link, page="elicit"):
+        return link.replace(el.WEB_PAGE, f"http://127.0.0.1:{self.server.server_port}/{page}/")
+
+    def google(self, route):
+        cors = {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, PUT, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type"}
+        r = route.request
+        if r.method == "OPTIONS":
+            return route.fulfill(status=200, headers=cors)
+        if r.url.startswith("https://upload.example/"):
+            if self.fail:
+                return route.fulfill(status=503, headers=cors, body="no signal")
+            self.drive.put(r.url, r.post_data_buffer or b"")
+            return route.fulfill(status=200, headers=cors, body="{}")
+        fid = r.url.split("/files/")[1].split("?")[0]
+        return route.fulfill(status=200, headers=cors, body=self.drive.files[fid]["data"])
+
+    def browser(self, p):
+        try:
+            b = p.chromium.launch(args=["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream",
+                                        f"--use-file-for-fake-audio-capture={self.fake}"])
+        except Exception as exc:                                      # noqa: BLE001
+            pytest.skip(f"no Chromium for Playwright: {exc}")
+        ctx = b.new_context(accept_downloads=True)
+        ctx.route("https://www.googleapis.com/**", self.google)
+        ctx.route("https://upload.example/**", self.google)
+        return b, ctx
+
+    def close(self):
+        self.server.shutdown()
+
+
+def _click(page, text):
+    page.locator("button:visible", has_text=text).first.click()
+
+
+def _record(page, n):
+    for _ in range(n):
+        page.locator("button.rec").click()
+        page.wait_for_timeout(400)
+        page.locator("button.rec").click()
+        _click(page, "It's good")
+
+
+def _uploaded(drive, db, req):
+    st = next(s for s in el.outstanding_drive(db) if s.request.id == req.id)
+    return el.drive_state(drive, st)
+
+
+def test_sending_waits_with_a_bar_and_the_page_asks_before_closing(db, tmp_path):
+    """Josh, 26 October: a speaker closed the page and only 3 of 11 recordings came back. The last
+    card's button is Send; the sending screen says to keep the page open, with a bar and Try again
+    now; the browser asks before leaving while anything is unsent."""
+    pw = pytest.importorskip("playwright.sync_api")
+    drive = FakeDrive()
+    items = _items(db)[:3]
+    req = el.new_request(db, items, "SP1", "RS1", "da")
+    link = el.publish_drive(db, req, items, drive, "KEY")
+    site = _DrivePage(drive, tmp_path)
+    try:
+        with pw.sync_playwright() as p:
+            browser, ctx = site.browser(p)
+            page = ctx.new_page()
+            errors = []
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            page.goto(site.url(link))
+            site.fail = True                                          # no signal from here on
+            for _ in range(3):
+                _click(page, "Yes")
+            _click(page, "I'm ready")
+            _record(page, 3)
+            assert page.evaluate("unsent()") == 3
+            assert page.evaluate("""() => { const e = new Event('beforeunload', {cancelable: true});
+                                     window.dispatchEvent(e); return e.defaultPrevented; }""")
+            _click(page, "Send")
+            page.get_by_text("Please keep this page open until all your recordings are sent.").wait_for()
+            page.get_by_text("Sending the recordings… 0 of 3").wait_for()
+            page.locator("button:visible", has_text="Try again now").wait_for(timeout=10000)
+            assert page.locator(".bar > div").evaluate("e => e.style.width") == "0%"
+            site.fail = False                                         # the signal comes back
+            _click(page, "Try again now")
+            page.get_by_text("Your recordings have reached Researcher 1").wait_for(timeout=15000)
+            assert page.evaluate("unsent()") == 0
+            assert not page.evaluate("""() => { const e = new Event('beforeunload', {cancelable: true});
+                                         window.dispatchEvent(e); return e.defaultPrevented; }""")
+            assert not errors, errors
+            browser.close()
+    finally:
+        site.close()
+    state = _uploaded(drive, db, req)
+    assert state.finished and state.uploaded == 3
+
+
+def test_opening_another_link_sends_an_earlier_requests_recordings(db, tmp_path):
+    """Josh, 26 October: a second request to the same phone arrived, the first stayed pending. Any
+    link opened now sends the recordings other requests left on the phone (not their response:
+    the speaker still finishes each one); a finished request opens with no microphone."""
+    pw = pytest.importorskip("playwright.sync_api")
+    drive = FakeDrive()
+    items = _items(db)[:3]
+    req1 = el.new_request(db, items, "SP1", "RS1", "da")
+    link1 = el.publish_drive(db, req1, items, drive, "KEY")
+    req2 = el.new_request(db, items[:1], "SP1", "RS1", "da")
+    link2 = el.publish_drive(db, req2, items[:1], drive, "KEY")
+    site = _DrivePage(drive, tmp_path)
+    try:
+        with pw.sync_playwright() as p:
+            browser, ctx = site.browser(p)
+            page = ctx.new_page()
+            page.goto(site.url(link1))
+            site.fail = True
+            for _ in range(3):
+                _click(page, "Yes")
+            _click(page, "I'm ready")
+            _record(page, 3)                                          # all done, nothing sent, page closed
+            page.get_by_text("Are you finished?").wait_for()
+            page.goto("about:blank")
+            assert _uploaded(drive, db, req1).uploaded == 0
+            site.fail = False
+            page.goto(site.url(link2))                                # the newer link, with signal
+            for _ in range(50):
+                if _uploaded(drive, db, req1).uploaded == 3:
+                    break
+                page.wait_for_timeout(100)
+            state1 = _uploaded(drive, db, req1)
+            assert state1.uploaded == 3 and not state1.finished       # recordings only
+            page.goto(site.url(link1))                                # the first again: all answered
+            page.reload()                                             # only the # differs
+            for _ in range(3):
+                _click(page, "Yes")
+            page.locator("button:visible", has_text="Send").wait_for()   # no "I'm ready", no microphone
+            _click(page, "Send")
+            page.get_by_text("Your recordings have reached Researcher 1").wait_for(timeout=15000)
+            browser.close()
+    finally:
+        site.close()
+    assert _uploaded(drive, db, req1).finished
+
+
+def test_an_expired_request_keeps_unsent_recordings_and_offers_a_file(db, tmp_path):
+    """Opening an expired request deleted its recordings from the phone. Now, with recordings that
+    never reached Drive, it offers them as a file, which Receive ɛλicitation takes."""
+    pw = pytest.importorskip("playwright.sync_api")
+    drive = FakeDrive()
+    items = _items(db)[:2]
+    req = el.new_request(db, items, "SP1", "RS1", "da")
+    link = el.publish_drive(db, req, items, drive, "KEY")
+    site = _DrivePage(drive, tmp_path)
+    later = """(() => { const D = Date, shift = 30 * 864e5;
+      class Later extends D { constructor(...a) { a.length ? super(...a) : super(D.now() + shift); }
+                              static now() { return D.now() + shift; } }
+      window.Date = Later; })();"""
+    try:
+        with pw.sync_playwright() as p:
+            browser, ctx = site.browser(p)
+            page = ctx.new_page()
+            page.goto(site.url(link))
+            site.fail = True
+            for _ in range(3):
+                _click(page, "Yes")
+            _click(page, "I'm ready")
+            _record(page, 2)
+            page.get_by_text("Are you finished?").wait_for()            # saved on the phone
+            page.close()
+            page = ctx.new_page()
+            page.add_init_script(later)                               # a month later
+            page.goto(site.url(link))
+            page.get_by_text("This request has expired, but your recordings are safe on this device").wait_for()
+            with page.expect_download() as dl:
+                _click(page, "Save the file")
+            path = tmp_path / "recordings.zip"
+            dl.value.save_as(path)
+            browser.close()
+    finally:
+        site.close()
+    st = el.receive(db, path)
+    assert [c.n for c in el.waiting(db, st)] == [1, 2]
+
+
+def test_the_page_falls_back_to_english_for_prompts_older_requests_lack():
+    """A request made before 26 October carries no keep_open, try_now or expired_keep: the page's
+    English must say what the built-in English says."""
+    js = (ROOT / "docs" / "elicit" / "elicit.js").read_text(encoding="utf-8")
+    block = js[js.index("const FALLBACK = {"):js.index("};", js.index("const FALLBACK = {"))]
+    for key in ("keep_open", "try_now", "expired_keep"):
+        assert elicit_prompts.PROMPTS["en"][key] in block.replace('" +\n    "', ""), key
 
 
 def test_the_button_rains_when_recordings_are_ready_in_drive(win, monkeypatch):

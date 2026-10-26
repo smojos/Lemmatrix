@@ -18,7 +18,8 @@ KEYS = ("yes", "no", "ok", "are_you", "give_device", "not_around", "not_around_e
         "contact", "speak", "goodbye", "wrong_language_end", "opener", "ready", "mic_allow", "new_card",
         "say_repeat", "rerecord", "listen", "record", "stop", "recording", "its_good", "try_again",
         "cant_say", "progress", "finished", "send_title", "send", "save", "sent", "closing", "expired",
-        "mic_error", "resume", "message", "message_link", "sending", "waiting_net", "sent_done")
+        "mic_error", "resume", "message", "message_link", "sending", "waiting_net", "sent_done",
+        "keep_open", "try_now", "expired_keep")
 
 PROMPTS: dict[str, dict[str, str]] = {
     "en": {
@@ -54,6 +55,9 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message_link": 'Hello {name}! {researcher} would like you to record some words. Please open this link on your phone or computer:',
         "sending": 'Sending the recordings… {n} of {total}',
         "waiting_net": 'Waiting for the internet. Your recordings are safe on this device: keep this page open, or open the link again later.',
+        "keep_open": "Please keep this page open until all your recordings are sent.",
+        "try_now": "Try again now",
+        "expired_keep": "This request has expired, but your recordings are safe on this device. Please send them to {researcher} as a file.",
         "sent_done": 'Your recordings have reached {researcher}. Thank you very much!',
     },
     "da": {
@@ -89,6 +93,9 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message_link": 'Hej {name}! {researcher} vil gerne have dig til at optage nogle ord. Åbn venligst dette link på din telefon eller computer:',
         "sending": 'Sender optagelserne… {n} af {total}',
         "waiting_net": 'Venter på internettet. Dine optagelser er gemt sikkert på denne enhed: lad siden være åben, eller åbn linket igen senere.',
+        "keep_open": "Lad venligst denne side være åben, indtil alle dine optagelser er sendt.",
+        "try_now": "Prøv igen nu",
+        "expired_keep": "Denne anmodning er udløbet, men dine optagelser er gemt sikkert på denne enhed. Send dem venligst til {researcher} som en fil.",
         "sent_done": 'Dine optagelser er nået frem til {researcher}. Mange tak!',
     },
     "it": {
@@ -124,6 +131,9 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message_link": 'Ciao {name}! {researcher} vorrebbe che tu registrassi alcune parole. Apri questo link sul telefono o sul computer:',
         "sending": 'Invio delle registrazioni… {n} di {total}',
         "waiting_net": 'In attesa di internet. Le tue registrazioni sono al sicuro su questo dispositivo: tieni aperta questa pagina, oppure riapri il link più tardi.',
+        "keep_open": "Tieni aperta questa pagina finché tutte le tue registrazioni non sono state inviate.",
+        "try_now": "Riprova ora",
+        "expired_keep": "Questa richiesta è scaduta, ma le tue registrazioni sono al sicuro su questo dispositivo. Inviale a {researcher} come file.",
         "sent_done": 'Le tue registrazioni sono arrivate a {researcher}. Grazie mille!',
     },
     "fr": {
@@ -160,6 +170,9 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message_link": 'Bonjour {name} ! {researcher} aimerait que vous enregistriez quelques mots. Veuillez ouvrir ce lien sur votre téléphone ou votre ordinateur :',
         "sending": 'Envoi des enregistrements… {n} sur {total}',
         "waiting_net": "En attente d'Internet. Vos enregistrements sont en sécurité sur cet appareil : gardez cette page ouverte, ou rouvrez le lien plus tard.",
+        "keep_open": "Veuillez garder cette page ouverte jusqu'à ce que tous vos enregistrements soient envoyés.",
+        "try_now": "Réessayer maintenant",
+        "expired_keep": "Cette demande a expiré, mais vos enregistrements sont en sécurité sur cet appareil. Veuillez les envoyer à {researcher} sous forme de fichier.",
         "sent_done": 'Vos enregistrements sont bien arrivés chez {researcher}. Merci beaucoup !',
     },
     "es": {
@@ -196,6 +209,9 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message_link": '¡Hola, {name}! A {researcher} le gustaría que grabara algunas palabras. Por favor, abra este enlace en su teléfono u ordenador:',
         "sending": 'Enviando las grabaciones… {n} de {total}',
         "waiting_net": 'Esperando conexión a internet. Sus grabaciones están seguras en este dispositivo: mantenga esta página abierta o vuelva a abrir el enlace más tarde.',
+        "keep_open": "Mantenga esta página abierta hasta que se hayan enviado todas sus grabaciones.",
+        "try_now": "Intentar de nuevo ahora",
+        "expired_keep": "Esta solicitud ha caducado, pero sus grabaciones están seguras en este dispositivo. Envíelas a {researcher} como archivo.",
         "sent_done": 'Sus grabaciones han llegado a {researcher}. ¡Muchas gracias!',
     },
     "pt": {
@@ -231,6 +247,9 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message_link": 'Olá, {name}! {researcher} gostaria que gravasse algumas palavras. Por favor, abra este link no seu telefone ou computador:',
         "sending": 'A enviar as gravações… {n} de {total}',
         "waiting_net": 'À espera da internet. As suas gravações estão seguras neste dispositivo: mantenha esta página aberta ou volte a abrir o link mais tarde.',
+        "keep_open": "Mantenha esta página aberta até que todas as suas gravações sejam enviadas.",
+        "try_now": "Tentar novamente agora",
+        "expired_keep": "Este pedido expirou, mas as suas gravações estão seguras neste dispositivo. Envie-as a {researcher} como ficheiro.",
         "sent_done": 'As suas gravações chegaram a {researcher}. Muito obrigado!',
     },
     "de": {
@@ -268,6 +287,9 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message_link": 'Hallo {name}! {researcher} möchte Sie bitten, einige Wörter aufzunehmen. Bitte öffnen Sie diesen Link auf Ihrem Telefon oder Computer:',
         "sending": 'Die Aufnahmen werden gesendet … {n} von {total}',
         "waiting_net": 'Warten auf Internet. Ihre Aufnahmen sind auf diesem Gerät sicher: Lassen Sie diese Seite offen oder öffnen Sie den Link später noch einmal.',
+        "keep_open": "Bitte lassen Sie diese Seite geöffnet, bis alle Ihre Aufnahmen gesendet sind.",
+        "try_now": "Jetzt erneut versuchen",
+        "expired_keep": "Diese Anfrage ist abgelaufen, aber Ihre Aufnahmen sind auf diesem Gerät sicher. Bitte senden Sie sie als Datei an {researcher}.",
         "sent_done": 'Ihre Aufnahmen sind bei {researcher} angekommen. Vielen Dank!',
     },
     "nl": {
@@ -304,6 +326,9 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message_link": 'Hallo {name}! {researcher} wil u vragen een paar woorden op te nemen. Open deze link alstublieft op uw telefoon of computer:',
         "sending": 'De opnames worden verstuurd… {n} van {total}',
         "waiting_net": 'Wachten op internet. Uw opnames zijn veilig op dit apparaat: laat deze pagina open, of open de link later opnieuw.',
+        "keep_open": "Houd deze pagina open totdat al uw opnames zijn verzonden.",
+        "try_now": "Nu opnieuw proberen",
+        "expired_keep": "Dit verzoek is verlopen, maar uw opnames zijn veilig op dit apparaat. Stuur ze als bestand naar {researcher}.",
         "sent_done": 'Uw opnames zijn bij {researcher} aangekomen. Hartelijk dank!',
     },
     "sw": {
@@ -340,6 +365,9 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message_link": 'Habari {name}! {researcher} angependa urekodi maneno kadhaa. Tafadhali fungua kiungo hiki kwenye simu au kompyuta yako:',
         "sending": 'Inatuma rekodi… {n} kati ya {total}',
         "waiting_net": 'Inasubiri intaneti. Rekodi zako ziko salama kwenye kifaa hiki: acha ukurasa huu wazi, au fungua kiungo tena baadaye.',
+        "keep_open": "Tafadhali acha ukurasa huu wazi hadi rekodi zako zote zitumwe.",
+        "try_now": "Jaribu tena sasa",
+        "expired_keep": "Ombi hili limekwisha muda wake, lakini rekodi zako ziko salama kwenye kifaa hiki. Tafadhali zitume kwa {researcher} kama faili.",
         "sent_done": 'Rekodi zako zimemfikia {researcher}. Asante sana!',
     },
     "ar": {
@@ -375,6 +403,9 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message_link": 'مرحبًا {name}! يرغب {researcher} في أن تسجّل بعض الكلمات. من فضلك افتح هذا الرابط على هاتفك أو حاسوبك:',
         "sending": 'جارٍ إرسال التسجيلات… {n} من {total}',
         "waiting_net": 'في انتظار الاتصال بالإنترنت. تسجيلاتك محفوظة بأمان على هذا الجهاز: أبقِ هذه الصفحة مفتوحة، أو افتح الرابط مرة أخرى لاحقًا.',
+        "keep_open": "يُرجى إبقاء هذه الصفحة مفتوحة حتى يتم إرسال جميع تسجيلاتك.",
+        "try_now": "حاول مرة أخرى الآن",
+        "expired_keep": "انتهت صلاحية هذا الطلب، لكن تسجيلاتك محفوظة بأمان على هذا الجهاز. يُرجى إرسالها إلى {researcher} كملف.",
         "sent_done": 'وصلت تسجيلاتك إلى {researcher}. شكرًا جزيلًا!',
     },
     "am": {
@@ -411,6 +442,9 @@ PROMPTS: dict[str, dict[str, str]] = {
         "message_link": 'ሰላም {name}! {researcher} አንዳንድ ቃላትን እንዲቀዱ ይፈልጋሉ። እባክዎ ይህንን ሊንክ በስልክዎ ወይም በኮምፒውተርዎ ይክፈቱ፦',
         "sending": 'ቅጂዎቹ እየተላኩ ነው… {n} ከ{total}',
         "waiting_net": 'ኢንተርኔት እየተጠበቀ ነው። ቅጂዎችዎ በዚህ መሣሪያ ላይ ደህና ናቸው፤ ይህንን ገጽ ክፍት ይተዉት፣ ወይም ሊንኩን በኋላ እንደገና ይክፈቱ።',
+        "keep_open": "እባክዎ ሁሉም ቅጂዎችዎ እስኪላኩ ድረስ ይህንን ገጽ ክፍት ይተዉት።",
+        "try_now": "አሁን እንደገና ይሞክሩ",
+        "expired_keep": "ይህ ጥያቄ ጊዜው አልፏል፣ ነገር ግን ቅጂዎችዎ በዚህ መሣሪያ ላይ ደህና ናቸው። እባክዎ ለ{researcher} እንደ ፋይል ይላኩላቸው።",
         "sent_done": 'ቅጂዎችዎ {researcher} ዘንድ ደርሰዋል። በጣም እናመሰግናለን!',
     },
 }
