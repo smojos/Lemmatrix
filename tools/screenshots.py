@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
-"""Render the main windows and dialogues offscreen to PNG files (for checking layouts).
+"""Render the main windows and dialogues offscreen to PNG files (for checking layouts). A tool for
+the developer (Claude checks layouts with it): nothing in Lemmatrix uses it. It works on the
+sample database as it is now (an EACW database since 23 October: D009 goat, E132 duck, V148 see;
+fixed 26 October, the audit's section 8, step 9).
 
     QT_QPA_PLATFORM=offscreen python tools/screenshots.py OUTPUT_FOLDER
 """
@@ -40,6 +43,14 @@ def main(out: Path):
     from PySide6.QtWidgets import QInputDialog, QMessageBox
     for name in ("information", "warning"):     # no message box may wait for a click here
         setattr(QMessageBox, name, staticmethod(lambda *a, **k: None))
+
+    def exec_(box):                              # any other box takes its default button at once
+        b = box.defaultButton() or (box.buttons()[0] if box.buttons() else None)
+        box._shot_answer = b
+        return int(box.standardButton(b)) if b is not None else 0
+    QMessageBox.exec = exec_
+    QMessageBox.clickedButton = lambda box: getattr(box, "_shot_answer", None)
+    QMessageBox.question = staticmethod(lambda *a, **k: QMessageBox.No)
     QInputDialog.getItem = staticmethod(lambda p, t, l, items, *a, **k: (items[0], True))
     win = MainWindow()
     win.resize(1500, 900)
@@ -52,7 +63,7 @@ def main(out: Path):
 
     win.load_database(storage.load(work / "Sample.xml"))
     shot(win, "01-all-data.png")
-    win.lemmas.select_row(win.doc.db.entry_by_ref("D001"))
+    win.lemmas.select_row(win.doc.db.entry_by_ref("D009"))
     win.tabs.setCurrentIndex(LEMMA_TAG)
     shot(win, "02-lemma-tag-blank.png")
     cfg = win.config_for(LEMMA_TAG)
@@ -63,12 +74,12 @@ def main(out: Path):
     win.switch_axes(LEMMA_TAG)
     shot(win, "04-lemma-tag-switched.png")
     win.switch_axes(LEMMA_TAG)
-    win.lemmas.select_row(win.doc.db.entry_by_ref("V001"))
+    win.lemmas.select_row(win.doc.db.entry_by_ref("V148"))
     win.tabs.setCurrentIndex(TAG_TAG)
     shot(win, "05-tag-tag-unconfigured.png")
     tcfg = win.config_for(TAG_TAG)
-    tcfg.y = [mx.Spec(frozenset({"1SG.A"})), mx.Spec(frozenset({"3SG.A"}), mx.LOOSE)]
-    tcfg.x = [mx.Spec(frozenset({"1SG.O"})), mx.Spec(frozenset({"3SG.O"})), mx.Spec(frozenset({"3SG.A"}))]
+    tcfg.y = [mx.Spec(frozenset({"2SG.A"})), mx.Spec(frozenset({"3SG.A"}), mx.LOOSE)]
+    tcfg.x = [mx.Spec(frozenset({"Future"})), mx.Spec(frozenset({"Imperative"})), mx.Spec(frozenset({"Indicative"}))]
     win.refresh()
     shot(win, "06-tag-tag.png")
 
@@ -81,8 +92,8 @@ def main(out: Path):
     shot(dlg, "08-matrix-column.png")
     dlg.close()
 
-    goat = win.doc.db.entry_by_ref("D001")
-    idx = next(i for i, t in enumerate(goat.tokens) if "f2" in t.tags)
+    goat = win.doc.db.entry_by_ref("D009")
+    idx = next(i for i, t in enumerate(goat.tokens) if "Frame 2" in t.tags)
     d = TokenDialog(win, [Slot(goat, idx)], 0)
     d.show()
     shot(d, "09-token-dialog.png")
@@ -120,7 +131,7 @@ def main(out: Path):
     b.r_field.setCurrentIndex(b.r_field.findData("f:Phonetic"))
     b.r_find.setText("ee")
     b.r_repl.setText("ææ")
-    b.set_ticked([r for r in b.tables[bulk.TOKENS].visible_rows() if r.entry.ref == "D002"], False)
+    b.set_ticked([r for r in b.tables[bulk.TOKENS].visible_rows() if r.entry.ref == "D011"], False)
     b.preview()
     shot(b, "15-bulk-replace.png")
     b.set_ticked(b.tables[bulk.TOKENS].visible_rows(), True)
@@ -132,7 +143,7 @@ def main(out: Path):
     b.ops.setCurrentIndex(bw.SET)
     shot(b, "17-bulk-lemmas.png")
     db = win.doc.db
-    for ref in ("D002", "E001"):                 # empty some translations, for Predict to fill
+    for ref in ("D011", "E132"):                 # empty some translations, for Predict to fill
         e = db.entry_by_ref(ref)
         win.doc.edit_entry(e, lambda en: [t.set("Translation", "", "en") for t in en.tokens[1:]],
                            "clear translations")
@@ -142,7 +153,7 @@ def main(out: Path):
     shot(b, "23-bulk-predict.png")
     win.refresh()
     shot(win, "24-all-data-suggestions.png")
-    goat = db.entry_by_ref("D001")              # a few typos, for the spelling views
+    goat = db.entry_by_ref("D009")              # a few typos, for the spelling views
     win.doc.edit_entry(goat, lambda en: (en.tokens[2].set("Translation", "of teh goat", "en"),
                                          en.tokens[4].set("Translation", "of the goatss", "en"),
                                          en.set("Gloss", "goatt", "en", True)), "typos")
@@ -161,7 +172,7 @@ def main(out: Path):
     win.doc.undo.undo()
     b.close()
     from lemmatrix.ui.dialogs import PreferencesDialog, TagStructureDialog
-    goat = win.doc.db.entry_by_ref("D001")
+    goat = win.doc.db.entry_by_ref("D009")
     d = TokenDialog(win, [Slot(goat, 1)], 0)
     d.show()
     shot(d, "18-token-usual-tags.png")
@@ -169,7 +180,7 @@ def main(out: Path):
     d.tags.buttons["Past"].setChecked(True)
     shot(d, "19-token-all-tags-unusual.png")
     d.reject()
-    duck = win.doc.db.entry_by_ref("E001")
+    duck = win.doc.db.entry_by_ref("E132")
     d = TokenDialog(win, [Slot(duck, None, ("Singular", "Genitive"), explicit=True, defaults=True)], 0)
     d.show()
     d.translation.setFocus()
@@ -205,8 +216,11 @@ def main(out: Path):
     uw.close()
 
     big = HERE / "samples" / "Test-300.xml"
-    if big.exists():
-        win.load_database(storage.load(big))
+    if big.exists():                             # a copy: opening it writes its workspace
+        (work / "big").mkdir()
+        for f in big.parent.glob("Test-300.*"):
+            shutil.copy2(f, work / "big" / f.name)
+        win.load_database(storage.load(work / "big" / big.name))
         win.lemmas.select_row(win.doc.db.entries[0])
         win.tabs.setCurrentIndex(LEMMA_TAG)
         shot(win, "14-test-300-lemma-tag.png")
