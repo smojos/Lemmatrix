@@ -93,11 +93,8 @@ def item_label(db: Database, it: Item) -> str:
 
 
 def _form(db: Database, t: Token) -> str:
-    for role in ("phonemic", "phonetic"):
-        f = db.settings.token_field(role)
-        if f and t.get(f.name):
-            return t.get(f.name)
-    return ""
+    from .model import token_form
+    return token_form(db, t)
 
 
 def _translation_field(db: Database):

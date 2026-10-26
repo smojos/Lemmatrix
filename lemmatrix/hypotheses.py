@@ -323,16 +323,6 @@ def rename_confidence(nb, renames: dict[str, str]):
 # Links: making them, finding what they point at, how they read
 # --------------------------------------------------------------------------
 
-def _form(db: Database, t) -> str:
-    s = db.settings
-    for role in ("phonetic", "phonemic"):
-        f = s.token_field(role)
-        v = t.get(f.name) if f is not None else ""
-        if v:
-            return v
-    return ""
-
-
 def token_link(db: Database, e, t, mark: str = RELEVANT, note: str = "") -> Link:
     """A link to a token, or (an utterance's only token) to the utterance."""
     from .notebook import describe
@@ -448,7 +438,7 @@ def gone_text(link: Link) -> str:
 
 
 def label(db: Database | None, nb, link: Link) -> str:
-    """How a link's item reads now: "D001 goat · PL  dʌːmã", "W004 hare ran (utterance)",
+    """How a link's item reads now: "D001 dʌ́ʌmã ‘goats’ · PL", "U004 … ‘The hare ran.’",
     "T001 Hyena and Hare · 0:12.30", the question's text, "H3 Tone spreads rightward"…"""
     from .notebook import describe
     k = link.kind
@@ -458,19 +448,16 @@ def label(db: Database | None, nb, link: Link) -> str:
         hit = None
     if k == TOKEN and hit is not None:
         e, i = hit
-        t = e.tokens[i]
-        form = _form(db, t)
-        return describe(db, e, t) + (f"  {form}" if form else "")
+        return describe(db, e, e.tokens[i])
     if k == UTTERANCE and hit is not None:
-        form = _form(db, hit.tokens[0]) if hit.tokens else ""
-        return describe(db, hit) + (f"  {form}" if form else "")
+        return describe(db, hit)
     if k == LINE:
         return (link.about or "Text line") + (f"  {_short(link.text, 50)}" if link.text else "")
     if k == QUESTION:
         if hit is not None:
             s, q = hit
-            return f"{'To Do' if q.is_todo else 'Question'}: {q.text}"
-        return f"Question: {link.text}" if link.text else "Question"
+            return f"{'To Do' if q.is_todo else 'Q'}: {q.text}"        # Q: … (Josh, 25 October)
+        return f"Q: {link.text}" if link.text else "Question"
     if k == COMMENT:
         return f"Comment on {link.about}: {link.text}" if link.about else f"Comment: {link.text}"
     if k == HYPOTHESIS:

@@ -83,7 +83,7 @@ def test_notebook_counts_utterance_comments_and_recordings(tmp_path):
     db.utterances.append(u)
     db.stamp_comments(None, u, "2026-10-18")
     comments = nbmod.dated_comments(db, "2026-10-18")
-    assert [c.about for c in comments] == ["U001 greeting (utterance)"]
+    assert [c.about for c in comments] == ["U001 greeting"]       # the reference says it is an utterance (25 October)
     assert nbmod.find(db, comments[0]) == (u, 0)
     assert nbmod.recordings(db, "2026-10-18") == [(u, 0)]
     assert nbmod.speakers(db, "2026-10-18") == ["SP1"]

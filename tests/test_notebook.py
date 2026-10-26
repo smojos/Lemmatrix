@@ -82,7 +82,7 @@ def test_record_of_comments_follows_the_rules(db):
     edit(db, e, lambda x: x.set("Comment", "first"), "2026-10-15")
     s15 = nb.write_session(book, db, "2026-10-15", ["JS"], ["SP1"], ["VXX-V"])
     assert [c.text for c in s15.comments] == ["first"]
-    assert s15.comments[0].about == "D009 goat"
+    assert s15.comments[0].about == "D009 ɗæær ‘goat’"           # reference, form, meaning (Josh, 25 October)
     # changed again the same day: written over
     edit(db, e, lambda x: x.set("Comment", "first, better"), "2026-10-15")
     nb.refresh_comments(db, s15)
@@ -97,7 +97,7 @@ def test_record_of_comments_follows_the_rules(db):
     edit(db, e, lambda x: x.tokens[1].set("Comment", "plural?"), "2026-10-16")
     nb.refresh_comments(db, s16)
     assert [c.text for c in s16.comments] == ["second", "plural?"]
-    assert s16.comments[1].about == "D009 goat · PL"
+    assert s16.comments[1].about == "D009 ‘goat’ · PL"            # no form typed yet: reference, meaning, tags
     plural_note = s16.comments[1]
     edit(db, e, lambda x: x.tokens.pop(1), "2026-10-16")
     nb.refresh_comments(db, s16)

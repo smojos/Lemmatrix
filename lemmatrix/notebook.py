@@ -280,18 +280,44 @@ def path_for(db_path: str | os.PathLike) -> Path:
 # --------------------------------------------------------------------------
 
 def describe(db: Database, e: Entry, t: Token | None = None) -> str:
-    """How a link reads: "C001a father", or "C001a father · PL + f1" for a token; an utterance's
-    is its reference and label: "W001 hare ran (utterance)"."""
-    from .model import is_utterance
+    """How a link reads (its preview in Cogitate, the notebook and the lists; Josh, 25 October):
+    {reference} {form} {meaning} · {tags}. The form is the token's Phonemic, else its Phonetic
+    (a lemma's: its Lemma field, else its citation token's); the meaning the token's translation,
+    else the lemma's gloss, in quotes. "C001f mʊ̀ɔ̀ ‘mother’ · citation", "D009 jɔ̀dʌ́ʌm ‘your (sg)
+    goat’ · 2SG.POSS", "U003 tʌ́dɔ̄tʌ̄ŋ … ‘We will eat lion meat today.’"; a lemma: "D009 dʌ́ʌm ‘goat’"."""
+    from .model import is_utterance, meaning, token_form
+    s = db.settings
     if is_utterance(e):
-        return " ".join(x for x in (e.ref, e.label) if x) + " (utterance)"
-    base = " ".join(x for x in (e.ref, db.gloss(e)) if x)
+        t = t if t is not None else (e.tokens[0] if e.tokens else None)
+        tr = s.token_field("translation")
+        mean = t.get(tr.name, s.primary_gloss) if (t is not None and tr is not None) else ""
+        form = token_form(db, t) or e.label
+        return " ".join(x for x in (e.ref, form, meaning(mean)) if x)
     if t is None:
-        return base
+        cit = next((x for x in e.tokens if x.is_citation), None)
+        form = db.lemma(e) or token_form(db, cit)
+        return " ".join(x for x in (e.ref, form, meaning(db.gloss(e))) if x)
+    tr = s.token_field("translation")
+    mean = (t.get(tr.name, s.primary_gloss) if tr is not None else "") or db.gloss(e)
+    base = " ".join(x for x in (e.ref, token_form(db, t), meaning(mean)) if x)
     from .matrix import chips, default_names
     names = [x for x in t.tags if x not in default_names(db)]
     label = " + ".join(chips(db, names)) or "citation"
     return f"{base} · {label}"
+
+
+def about_now(db: Database, q) -> str:
+    """What a question or to do is about, as its link reads now (the lemma or token may have
+    changed since it was pushed); what was written then when it can't be found."""
+    if not getattr(q, "entry_id", ""):
+        return q.about
+    e = db.item_by_id(q.entry_id)
+    if e is None:
+        return q.about
+    t = next((x for x in e.tokens if x.id == q.token_id), None) if q.token_id else None
+    if q.token_id and t is None:
+        return q.about
+    return describe(db, e, t)
 
 
 def dated_comments(db: Database, date: str) -> list[NoteComment]:
@@ -447,17 +473,21 @@ def write_session(nb: Notebook, db: Database, date: str, researchers, participan
     return s
 
 
-def push_question(nb: Notebook, db: Database, date: str, text: str, e: Entry, t: Token | None,
+def push_question(nb: Notebook, db: Database, date: str, text: str, e: Entry | None, t: Token | None,
                   researchers=(), participants=(), locations=(), kind: str = QUESTION) -> Question:
     """Push to question (or, with kind TODO, Push to To Do): an open item on a day, linked to a
-    token (or lemma).
+    token (or lemma); with no entry, an item of its own (the + in View → Questions and View → To
+    Do; Josh, 25 October).
 
     A day without notes yet gets them, with these people and places."""
     s = nb.session(date)
     if s is None:
         s = write_session(nb, db, date, researchers, participants, locations)
-    q = Question(text, today(), entry_id=e.id, token_id=t.id if t is not None else "", ref=e.ref,
-                 about=describe(db, e, t), kind=kind)
+    if e is None:
+        q = Question(text, today(), kind=kind)
+    else:
+        q = Question(text, today(), entry_id=e.id, token_id=t.id if t is not None else "", ref=e.ref,
+                     about=describe(db, e, t), kind=kind)
     items(s, kind).append(q)
     nb.dirty = True
     return q

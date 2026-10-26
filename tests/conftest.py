@@ -141,6 +141,25 @@ def _prototype_tags(request, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _message_boxes_never_wait(monkeypatch):
+    """A message box a test hasn't answered takes its default button at once, as if Enter were
+    pressed (26 October: the sample's workspace was last used the day before, so opening it asked
+    "It's a new day…" and the test waited for ever). Tests that answer a box themselves patch exec
+    or clickedButton as before, which wins over this."""
+    try:
+        from PySide6.QtWidgets import QMessageBox
+    except ImportError:
+        return
+
+    def exec_(box):
+        b = box.defaultButton() or (box.buttons()[0] if box.buttons() else None)
+        box._test_answer = b
+        return int(box.standardButton(b)) if b is not None else 0
+    monkeypatch.setattr(QMessageBox, "exec", exec_)
+    monkeypatch.setattr(QMessageBox, "clickedButton", lambda box: getattr(box, "_test_answer", None))
+
+
+@pytest.fixture(autouse=True)
 def _ask_through_question(monkeypatch):
     """widgets.ask (a question with buttons named for what they do) answers as the test's
     QMessageBox.question does, so tests set one answer for both kinds of question."""

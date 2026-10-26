@@ -89,6 +89,30 @@ def today() -> str:
     return _dt.date.today().isoformat()
 
 
+_QUOTES = "\"'“”‘’"
+
+
+def meaning(text: str) -> str:
+    """A gloss or translation as shown: in single quotes, ‘goat’ (the Leipzig convention), the
+    same everywhere (Josh, 20 October). Quotes already round it aren't doubled."""
+    t = (text or "").strip()
+    while len(t) >= 2 and t[0] in _QUOTES and t[-1] in _QUOTES:
+        t = t[1:-1].strip()
+    return f"‘{t}’" if t else ""
+
+
+def token_form(db: "Database", t, order=("phonemic", "phonetic")) -> str:
+    """A token's form where one stands for it: Phonemic, else Phonetic (Josh, 25 October: the
+    analysed form before the raw one), or the order given; "" when both are empty."""
+    if t is None:
+        return ""
+    for role in order:
+        f = db.settings.token_field(role)
+        if f is not None and t.get(f.name):
+            return t.get(f.name)
+    return ""
+
+
 def new_id() -> str:
     """A short unique id for an entry or token: notebook links point at it, so they
     survive changes to the reference or the tags."""

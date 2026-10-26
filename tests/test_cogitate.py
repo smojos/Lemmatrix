@@ -312,7 +312,7 @@ def test_questions_and_comments_can_be_linked(win, monkeypatch):
     panel.link_to_hypothesis()
     h = doc.notebook.hypotheses[-1]
     assert h.links[0].kind == hy.QUESTION and h.links[0].target == q.id and q.id
-    assert hy.label(doc.db, doc.notebook, h.links[0]) == "Question: Is it regular?"
+    assert hy.label(doc.db, doc.notebook, h.links[0]) == "Q: Is it regular?"                  # Q: (Josh, 25 October)
     nb.convert(s, q)                                          # converted since: still found
     assert hy.label(doc.db, doc.notebook, h.links[0]) == "To Do: Is it regular?"
     c = nb.NoteComment("tone?", e.id, e.tokens[0].id, e.ref, "D002 · citation")

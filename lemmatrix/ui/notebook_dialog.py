@@ -836,7 +836,7 @@ class ItemsPanel(QWidget):
         muted = QBrush(QColor(theme.muted()))
         lst = nbmod.items(s, self.kind)
         for q in [x for x in lst if x.pinned] + [x for x in lst if not x.pinned]:   # pinned on top
-            it = QTreeWidgetItem([q.text, q.about, q.status, q.dated, q.resolved])
+            it = QTreeWidgetItem([q.text, nbmod.about_now(self.dlg.main.doc.db, q), q.status, q.dated, q.resolved])
             it.setData(0, Qt.UserRole, q)
             if q.pinned:
                 it.setIcon(0, pin_icon())
@@ -1066,6 +1066,10 @@ class ItemsDialog(QDialog):
         self.tree.customContextMenuRequested.connect(self._menu)
         lay.addWidget(self.tree, 1)
         row = QHBoxLayout()
+        # Add, at the bottom left (Josh, 25 October): onto the Current Session's day in the notebook
+        self.add_btn = QPushButton(icon("add", 18), "")
+        self.add_btn.setToolTip(f"Add a {one}, on the Current Session's day in the notebook")
+        self.add_btn.clicked.connect(lambda *_: self.add())
         self.resolve_btn = QPushButton(icon("resolve", 18), "Resolve")
         self.resolve_btn.clicked.connect(lambda *_: self.toggle())
         self.edit_btn = QPushButton(icon("edit", 18), "")
@@ -1093,8 +1097,8 @@ class ItemsDialog(QDialog):
         self.count.setStyleSheet(f"color: {theme.muted()};")
         close = QPushButton("Close")
         close.clicked.connect(self.accept)
-        for w in (self.resolve_btn, self.edit_btn, self.pin_btn, self.convert_btn, self.hypothesis_btn,
-                  self.open_btn, self.token_btn):
+        for w in (self.add_btn, self.resolve_btn, self.edit_btn, self.pin_btn, self.convert_btn,
+                  self.hypothesis_btn, self.open_btn, self.token_btn):
             if w is not None:
                 row.addWidget(w)
         row.addWidget(self.count)
@@ -1134,7 +1138,7 @@ class ItemsDialog(QDialog):
                 continue
             if text and text not in q.text.lower() and text not in s.date:
                 continue
-            it = QTreeWidgetItem([s.date, q.text, q.about, q.status, q.dated, q.resolved])
+            it = QTreeWidgetItem([s.date, q.text, nbmod.about_now(self.main.doc.db, q), q.status, q.dated, q.resolved])
             it.setData(0, Qt.UserRole, (s, q))
             if q.pinned:
                 it.setIcon(1, pin_icon())
@@ -1231,6 +1235,27 @@ class ItemsDialog(QDialog):
         self.main.doc.notebook_changed()
         self._fill(q)
         self._notebook_follows()
+
+    def add(self):
+        """A new open question (or to do), linked to nothing, on the Current Session's day: the
+        day gets its notes, with the session's people and places, if it has none yet."""
+        one = nbmod.name(self.kind)
+        text = ask_text(self, f"Add {one if self.kind == nbmod.TODO else one.lower()}", f"{one}:")
+        text = (text or "").strip()
+        if not text:
+            return
+        from . import chiprow as chips
+        keys = self.main.session_keys()
+        q = nbmod.push_question(self.main.doc.notebook, self.main.doc.db, self.main.work_date(), text,
+                                None, None, keys[chips.RESEARCHERS], keys[chips.PARTICIPANTS],
+                                keys[chips.LOCATIONS], self.kind)
+        self.main.doc.notebook_changed()
+        if self.show_which.currentData() == RESOLVED:
+            self.show_which.setCurrentIndex(self.show_which.findData(OPEN))
+        self._fill(q)
+        self._notebook_follows()
+        if callable(getattr(self.main, "update_badges", None)):
+            self.main.update_badges()
 
     def edit(self):
         cur = self._current()

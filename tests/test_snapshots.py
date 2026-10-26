@@ -152,3 +152,21 @@ def test_archives_scrub_listed_snapshots():
     book = nb.Notebook()
     nb.take_snapshot(book, "2026-10-16", {"search": "SP1"}, "SP1 words")
     assert book.all_snapshots()[0][1].view == {"search": "SP1"}
+
+
+def test_questions_and_to_do_windows_add_with_the_green_plus(win, monkeypatch):
+    """Josh, 25 October: a green circle-plus at the bottom left of View → Questions and To Do."""
+    from lemmatrix import notebook as nbmod
+    from lemmatrix.ui import notebook_dialog as nd
+    for kind, opener, text in ((nbmod.QUESTION, win.open_questions, "Is the H tone lexical?"),
+                               (nbmod.TODO, win.open_todos, "Rerecord the goat paradigm")):
+        dlg = opener()
+        row = dlg.layout().itemAt(dlg.layout().count() - 1).layout()
+        assert row.itemAt(0).widget() is dlg.add_btn                 # bottom left
+        monkeypatch.setattr(nd, "ask_text", lambda *a, t=text, **k: t)
+        dlg.add_btn.click()
+        day = win.doc.notebook.session(win.work_date())
+        q = next(x for x in nbmod.items(day, kind) if x.text == text)
+        assert not q.resolved and not q.entry_id                     # open, linked to nothing
+        assert dlg._current() is not None and dlg._current()[1] is q  # shown and selected
+        dlg.close()
