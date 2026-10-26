@@ -2,7 +2,7 @@
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Hiding the pitch system (IDEAS.md idea 9; DESIGN.md section 3.5).
 
-Settings → Pitch → **Show the pitch system** (and View → Show pitch system) hides everything to do
+Settings → Pitch → **Hide the pitch system** (and View → Hide pitch system) hides everything to do
 with the pitch trace data: the Pitch field, the pitch drawing, pitch playback, Raise and Lower pitch,
 Bulk edit's Pitch shortcut, the pitch-looking-text warning and the pitch scratchpads. It never hides
 tone data (Tone Class and the like), and it **never changes the data**: Pitch stays in the file as it

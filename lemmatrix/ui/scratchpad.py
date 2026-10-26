@@ -447,7 +447,7 @@ class PhoneticsScratchpad(QWidget):
         self.tabs.setTabText(0, "Pitch" if on else "no pitch")
         kind_has = pitchview.has(pitchview.SCRATCHPADS)
         self.tabs.setTabToolTip(0, "" if on else (
-            "The pitch system is hidden. Right-click to unhide it (or View → Show pitch system, or "
+            "The pitch system is hidden. Right-click to unhide it (or deselect View → Hide pitch system, or "
             "File → Settings → Pitch)" if kind_has else
             "This database's pitch kind has no pitch scratchpads (Edit → Metadata → Pitch kind)"))
         try:                                      # switched for the pitch system: not remembered

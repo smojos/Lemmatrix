@@ -1015,7 +1015,7 @@ class PreferencesDialog(QDialog):
                                    "Raise and Lower pitch, Bulk edit's Pitch shortcut and the pitch scratchpads "
                                    "everywhere, to declutter: the data is kept exactly as it is (tone fields such "
                                    "as Tone Class stay), and everything comes back as it was when it is "
-                                   "deselected. Also View → Show pitch system.")
+                                   "deselected. Also View → Hide pitch system.")
         from .. import pitchkind
         kind = pitchkind.kind(db)                    # the database's pitch kind (idea 9)
         # "{language and variety} is Tonal", the kind bold, in the theme colour, a little larger;

@@ -849,7 +849,7 @@ class Document(QObject):
         self.changed.emit()
 
     def set_pitch_shown(self, on: bool):
-        """Show or hide the pitch system (Settings → Pitch, View → Show pitch system; idea 9): a view
+        """Show or hide the pitch system (Settings → Pitch, View → Hide pitch system; idea 9): a view
         setting in the workspace, so the database stays as saved or unsaved as it was, with no undo
         step. Every window listening to settingsChanged shows or hides its pitch."""
         from .. import pitchview

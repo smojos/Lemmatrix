@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Hiding the pitch system (IDEAS.md idea 9; DESIGN.md 3.5): Settings → Pitch → Show the pitch
-system and View → Show pitch system. Hiding is a view of the open database, in its workspace: it
+system and View → Hide pitch system. Hiding is a view of the open database, in its workspace: it
 never changes the data, and everything comes back as it was (Josh, 23 October: preserve and
 protect the data)."""
 
@@ -69,7 +69,7 @@ def test_keys_hidden_and_kept_where_they_were():
 
 def _hide(win):
     win.set_pitch_shown(False)
-    assert not pitchview.shown() and not win.pitch_view_action.isChecked()
+    assert not pitchview.shown() and win.pitch_view_action.isChecked()
 
 
 def test_hiding_never_changes_the_data(win):
@@ -229,5 +229,5 @@ def test_kept_when_the_database_is_opened_again(win, tmp_path):
     path = win.doc.db.path
     pitchview.load(None)
     win.load_database(storage.load(path))
-    assert not pitchview.shown() and not win.pitch_view_action.isChecked()
+    assert not pitchview.shown() and win.pitch_view_action.isChecked()
     assert win.comparison.alpha.isHidden()

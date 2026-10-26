@@ -1453,11 +1453,12 @@ class MainWindow(QMainWindow):
         self._act(v, "&Cogitate (hypotheses)", lambda *_: self.open_cogitate())
         v.addSeparator()
         self._build_matrix_menu(v.addMenu("&Matrix"))
-        # Settings → Pitch → Show the pitch system, here too (idea 9; no shortcut)
-        self.pitch_view_action = self._act(v, "Show &pitch system", lambda *_: self.set_pitch_shown(
-            self.pitch_view_action.isChecked()))
+        # Settings → Pitch → Hide the pitch system, here too (idea 9; no shortcut). Selected hides it
+        # (Josh, 26 October: Hide, as in Settings; it was Show pitch system)
+        self.pitch_view_action = self._act(v, "Hide &pitch system", lambda *_: self.set_pitch_shown(
+            not self.pitch_view_action.isChecked()))
         self.pitch_view_action.setCheckable(True)
-        self.pitch_view_action.setChecked(True)
+        self.pitch_view_action.setChecked(False)
         self._act(v, "Hide or show the working panels", self.toggle_panels)
         # the same keys as in the token dialogue
         self.play_action = self._act(None, "Play the selected token", self.play_selected, "Ctrl+Space")
@@ -4213,7 +4214,7 @@ class MainWindow(QMainWindow):
         a = getattr(self, "pitch_view_action", None)
         if a is not None:
             a.blockSignals(True)
-            a.setChecked(pitchview.tick())
+            a.setChecked(not pitchview.tick())     # Hide pitch system: selected while hidden
             a.setEnabled(pitchview.has())          # an unspecified database has no pitch to show
             a.blockSignals(False)
         if hasattr(self, "comparison"):
