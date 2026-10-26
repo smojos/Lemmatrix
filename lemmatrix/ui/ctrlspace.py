@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
-"""Ctrl+Space plays (Ctrl+Shift+Space: the pitch) from inside any text field, whatever the keyboard.
+"""Ctrl+Space plays (Ctrl+Shift+Space: the pitch; Ctrl+Alt+Space opens in Praat) from inside any text
+field, whatever the keyboard.
 
 Josh, 19 October: with an IPA keyboard (Keyman's SIL IPA) Ctrl+Space typed a space in the
 fields and search bars instead of playing. Keyman lets go of Ctrl for a moment while it sends
@@ -26,6 +27,7 @@ from PySide6.QtWidgets import QAbstractSpinBox, QComboBox, QLineEdit, QPlainText
 TEXT_WIDGETS = (QLineEdit, QTextEdit, QPlainTextEdit, QAbstractSpinBox, QComboBox)
 PLAY = QKeySequence("Ctrl+Space")
 PLAY_PITCH = QKeySequence("Ctrl+Shift+Space")
+PRAAT = QKeySequence("Ctrl+Alt+Space")      # Open in Praat (26 October: a field ate it too)
 
 _VK_SHIFT, _VK_CONTROL, _VK_MENU = 0x10, 0x11, 0x12
 
@@ -56,10 +58,11 @@ def _live(owner, win) -> bool:
     return isinstance(owner, QWidget) and owner.window() is win and owner.isVisible()
 
 
-def find_shortcut(widget: QWidget, pitch: bool):
-    """The Ctrl+Space (pitch: Ctrl+Shift+Space) shortcut or action of `widget`'s window, or None."""
+def find_shortcut(widget: QWidget, pitch: bool, praat: bool = False):
+    """The Ctrl+Space (pitch: Ctrl+Shift+Space; praat: Ctrl+Alt+Space) shortcut or action of
+    `widget`'s window, or None."""
     win = widget.window()
-    seq = PLAY_PITCH if pitch else PLAY
+    seq = PRAAT if praat else PLAY_PITCH if pitch else PLAY
     for sc in win.findChildren(QShortcut):
         if sc.key() == seq and sc.isEnabled() and _live(sc.parent(), win):
             return sc
@@ -69,9 +72,9 @@ def find_shortcut(widget: QWidget, pitch: bool):
     return None
 
 
-def run_shortcut(widget: QWidget, pitch: bool) -> bool:
-    """Run the Ctrl+Space (pitch: Ctrl+Shift+Space) shortcut of `widget`'s window."""
-    found = find_shortcut(widget, pitch)
+def run_shortcut(widget: QWidget, pitch: bool, praat: bool = False) -> bool:
+    """Run the Ctrl+Space (pitch: Ctrl+Shift+Space; praat: Ctrl+Alt+Space) shortcut of `widget`'s window."""
+    found = find_shortcut(widget, pitch, praat)
     if found is None:
         return False
     if isinstance(found, QShortcut):
@@ -107,10 +110,13 @@ class CtrlSpaceFilter(QObject):
         elif not (event.key() == Qt.Key_Space or event.text() == " "):
             return False
         ctrl, shift, alt = self._modifiers(event)
-        if not ctrl or alt:                       # Ctrl+Alt is AltGr on Windows: leave it be
+        if not ctrl:
             return False
-        if find_shortcut(obj, shift) is None:     # nothing to play in this window: the key is left to
-            return False                          # the field (it used to be swallowed; 25 October)
+        praat = alt and not shift                 # Ctrl+Alt+Space: Open in Praat (26 October). Ctrl+Alt is
+        if alt and not praat:                     # also AltGr on Windows, so it is only taken where the
+            return False                          # window has the Praat key; elsewhere left to the field
+        if find_shortcut(obj, shift, praat) is None:   # nothing to play in this window: the key is left
+            return False                          # to the field (it used to be swallowed; 25 October)
         if t == QEvent.ShortcutOverride:          # handled on the key press, so only once
             event.accept()
             return True
@@ -119,7 +125,7 @@ class CtrlSpaceFilter(QObject):
         now = time.monotonic()
         if now - self._last > 0.12:               # the same press reaching us twice
             self._last = now
-            run_shortcut(obj, shift)
+            run_shortcut(obj, shift, praat)
         event.accept()
         return True
 

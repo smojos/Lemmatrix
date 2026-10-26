@@ -69,6 +69,7 @@ class SegmentRecordDialog(QDialog):
         cancel.clicked.connect(self.reject)
         QShortcut(QKeySequence("Ctrl+R"), self, self._record)
         QShortcut(QKeySequence("Ctrl+Space"), self, self._play)
+        QShortcut(QKeySequence("Ctrl+Alt+Space"), self, self._praat)       # as in the token dialogue
 
         self._fill_speakers(main.session_speaker())
         self.file: Path | None = None             # the recording this dialogue shows

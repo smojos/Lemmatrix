@@ -65,7 +65,7 @@ class RecordingPanel(QGroupBox):
         self.play_btn = icon_button("play", "Play (Ctrl+Space)")
         self.delete_btn = icon_button("delete-recording", "Delete recording")
         self.update_btn = icon_button("update", "Update file name")
-        self.praat_btn = icon_button("praat", "Open in Praat")
+        self.praat_btn = icon_button("praat", "Open in Praat (Ctrl+Alt+Space)")
         if stretch_before_source:
             buttons.addStretch(1)
         # the recording source (Josh, 21 October): the same setting as Settings → Sound

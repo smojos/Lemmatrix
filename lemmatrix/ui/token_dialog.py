@@ -370,6 +370,7 @@ class TokenDialog(QDialog):
         QShortcut(QKeySequence("Ctrl+R"), self, self._record)
         QShortcut(QKeySequence("Ctrl+Space"), self, self._play)
         QShortcut(QKeySequence("Ctrl+Shift+Space"), self, self._play_pitch)
+        QShortcut(QKeySequence("Ctrl+Alt+Space"), self, self._praat_key)   # as in All data (26 October)
         QShortcut(QKeySequence("Alt+Left"), self, lambda: self._move(-1))
         QShortcut(QKeySequence("Alt+Right"), self, lambda: self._move(1))
 
@@ -1377,6 +1378,11 @@ class TokenDialog(QDialog):
         if self.recorder or not self.pitch_shown():
             return
         self.main.play_pitch(self.canvas.text)
+
+    def _praat_key(self):
+        """Ctrl+Alt+Space: Open in Praat, when the button would (a recording to open)."""
+        if self.praat_btn.isEnabled():
+            self._open_in_praat()
 
     def _open_in_praat(self):
         t = self.token

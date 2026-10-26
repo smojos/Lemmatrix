@@ -1557,6 +1557,7 @@ class MainWindow(QMainWindow):
                                        ("Alt+click a lemma", "Show only that lemma"))),
         ("Token and utterance dialogues", (("Ctrl+R", "Record / stop"), ("Ctrl+Space", "Play"),
                                            ("Ctrl+Shift+Space", "Play the pitch"),
+                                           ("Ctrl+Alt+Space", "Open the recording in Praat"),
                                            ("Alt+← / Alt+→", "Back / Next"),
                                            ("→", "Accept the predicted translation"),
                                            ("Ctrl+click a tag", "More than one tag in a group"))),
