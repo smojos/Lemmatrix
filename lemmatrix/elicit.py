@@ -24,6 +24,7 @@ No Qt in this module.
 from __future__ import annotations
 
 import datetime as _dt
+import hashlib
 import io
 import json
 import os
@@ -714,21 +715,43 @@ def stored_requests(db_path) -> list[Stored]:
     return out
 
 
+def _fingerprint(path) -> dict | None:
+    """A recording's size and SHA-1, or None when there is no file."""
+    try:
+        data = Path(path).read_bytes()
+    except OSError:
+        return None
+    return {"size": len(data), "sha1": hashlib.sha1(data).hexdigest()}
+
+
 def applied_in(db: Database, card: Card, entry: dict) -> bool:
     """Whether an approved card's recording is (still) in the database: undoing the review, or
-    closing without saving, takes it out again, and then the card is waiting once more."""
+    closing without saving, takes it out again, and then the card is waiting once more.
+
+    It counts as gone only when the token no longer has the recording's name, the file is
+    missing, or the file is the recording it replaced (put back by undo). A recording edited
+    afterwards (saved over in Praat) is still the approved one (Josh, 26 October: the size check
+    used before offered an edited recording again, with the edit as the "old" one)."""
     applied = (entry or {}).get("applied") or {}
 
-    def same_file(item, t) -> bool:               # the name, and the size noted (a rerecord keeps the name)
+    def same_file(item, t) -> bool:
         if t.file != applied.get("file"):
             return False
-        size = applied.get("size")
-        if size is None or not db.path:
+        if not db.path:
+            return True
+        path = storage.folder_for(db, item) / t.file
+        if not path.exists():
+            return False
+        old = applied.get("replaced")
+        if not old:
             return True
         try:
-            return (storage.folder_for(db, item) / t.file).stat().st_size == size
+            if path.stat().st_size != old.get("size"):
+                return True                       # not the old recording: no need to read it
         except OSError:
             return False
+        now = _fingerprint(path)
+        return now is None or now.get("sha1") != old.get("sha1")
     if card.kind == NEW_UTTERANCE:
         u = db.utterance_by_id(applied.get("utterance", ""))
         return u is not None and same_file(u, u.token)
@@ -927,6 +950,7 @@ def plan(db: Database, st: Stored, numbers) -> Plan:
         t.rerecord = False
         name = db.expected_filename(base, t)
         folder = storage.folder_for(db, base)
+        replaced = _fingerprint(folder / name)    # what was there under the name, if anything
         for old in dict.fromkeys(x for x in (t.file, name) if x):
             if (folder / old).exists():           # the recording replaced (or a stray file in the way)
                 p.renames.append((folder / old, _held(db, old, taken)))
@@ -937,6 +961,8 @@ def plan(db: Database, st: Stored, numbers) -> Plan:
         t.file = name
         changed[c.entry] = base
         p.applied[n] = {"file": name}
+        if replaced:
+            p.applied[n]["replaced"] = replaced
     p.pairs = [(db.item_by_id(i), e) for i, e in changed.items()]
     return p
 

@@ -340,6 +340,60 @@ def test_review_puts_recordings_in_and_undo_takes_them_out(win, tmp_path):
     assert [(i.kind, i.entry.ref) for i in again] == [(el.NEW, "J114"), (el.NEW, "K220")]
 
 
+def test_an_approved_recording_edited_afterwards_is_not_waiting_again(win, tmp_path):
+    """Debug, 26 October (Josh): approve, save over the soundfile (Praat), save, reopen: the card
+    was waiting again, the edit offered as the "old" recording. Only the old recording put back
+    (undo) makes a card wait again; an edited one is still the approved one."""
+    from lemmatrix.ui import elicit_dialogs as ed
+    db = win.doc.db
+    items = _items(db)
+    req = el.new_request(db, items, "SP1", "RS1", "da")
+    el.write_request(db, req, items)
+    st = el.receive(db, _response(el.stored_requests(db.path)[0], tmp_path / "r.zip", skip={3}))
+    rerecord = storage.sound_folder(db) / db.entry_by_ref("L062").tokens[0].file
+    old_bytes = rerecord.read_bytes()
+    dlg = ed.ReviewDialog(win, st)
+    dlg.autoplay.setChecked(False)
+    dlg.approve_all()
+    dlg.accept()
+    st = el.load_stored(st.folder)
+    assert el.waiting(db, st) == []
+    new_token = storage.sound_folder(db) / db.entry_by_ref("D035").tokens[0].file
+    for path in (rerecord, new_token):                               # saved over in Praat
+        path.write_bytes(path.read_bytes() + b"\0" * 4410)
+    assert el.waiting(db, el.load_stored(st.folder)) == []
+    rerecord.write_bytes(old_bytes)                                  # the old recording back
+    assert [c.label for c in el.waiting(db, st)] == [c.label for c in st.request.cards
+                                                     if c.entry == db.entry_by_ref("L062").id]
+    rerecord.unlink()                                                # gone altogether
+    assert len(el.waiting(db, st)) == 1
+
+
+def test_an_older_review_without_the_replaced_recording(win, tmp_path):
+    """A review.json written before 26 October noted only the size: a file of another size (an
+    edit) no longer makes its card wait; a missing one still does."""
+    from lemmatrix.ui import elicit_dialogs as ed
+    db = win.doc.db
+    items = _items(db)[:2]
+    req = el.new_request(db, items, "SP1", "RS1", "da")
+    el.write_request(db, req, items)
+    st = el.receive(db, _response(el.stored_requests(db.path)[0], tmp_path / "r.zip"))
+    dlg = ed.ReviewDialog(win, st)
+    dlg.autoplay.setChecked(False)
+    dlg.approve_all()
+    dlg.accept()
+    st = el.load_stored(st.folder)
+    for entry in st.review.values():
+        entry["applied"].pop("replaced", None)
+        entry["applied"]["size"] = 1                                # as an older review noted it
+    assert el.waiting(db, st) == []
+    card = st.request.cards[0]
+    item = db.item_by_id(card.entry)
+    t = next(t for t in item.tokens if t.id == card.token)
+    (storage.folder_for(db, item) / t.file).unlink()
+    assert [c.n for c in el.waiting(db, st)] == [card.n]
+
+
 def test_undecided_recordings_wait_for_later(win, tmp_path):
     from lemmatrix.ui import elicit_dialogs as ed
     db = win.doc.db
