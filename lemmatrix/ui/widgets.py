@@ -446,6 +446,20 @@ def choose(parent, title: str, text: str, choices: list[str], cancel: str | None
     return escape if stop is None else None
 
 
+def ask_with_checkbox(parent, title: str, text: str, go: str, check: str,
+                      stop: str = "Cancel") -> tuple[bool, bool]:
+    """ask() with a checkbox under the text (e.g. Don't ask again…): (go clicked, checkbox selected)."""
+    from PySide6.QtWidgets import QCheckBox, QMessageBox
+    box = QMessageBox(QMessageBox.Question, title, text, parent=parent)
+    yes = box.addButton(go, QMessageBox.AcceptRole)
+    box.addButton(stop, QMessageBox.RejectRole)
+    box.setDefaultButton(yes)
+    cb = QCheckBox(check)
+    box.setCheckBox(cb)
+    box.exec()
+    return box.clickedButton() is yes, cb.isChecked()
+
+
 def ask(parent, title: str, text: str, go: str, stop: str = "Cancel", icon=None) -> bool:
     """A question whose buttons say what they do ("Reset to defaults" / "Cancel"), for when the
     text doesn't read as a plain yes-or-no question. True if `go` was clicked (Josh, 20 October:

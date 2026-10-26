@@ -53,6 +53,11 @@ class Column:
 
 
 
+def is_date(col) -> bool:
+    """A Date column (tokens', utterances', texts'): searched as a date, not as text (idea 69)."""
+    return col.key == "date" and not col.closed
+
+
 def _text(value) -> str:
     if isinstance(value, (list, tuple, set, frozenset)):
         return ", ".join(value)
@@ -834,6 +839,10 @@ class FilterTable(WheelZoom, ClickUnselect, QTableView):
             special = menu.addAction("Choose…")
             special.setCheckable(True)
             special.setChecked(isinstance(current, fl.ChoiceFilter))
+        elif is_date(col):                        # a date column: a day or a range (idea 69)
+            special = menu.addAction("Filter by date…")
+            special.setCheckable(True)
+            special.setChecked(isinstance(current, fl.DateFilter))
         else:
             special = menu.addAction("Filter for…")
             special.setCheckable(True)
@@ -882,6 +891,11 @@ class FilterTable(WheelZoom, ClickUnselect, QTableView):
                 f.selected.discard("(other values)")
                 return f
             return None
+        if is_date(col):
+            from .filter_dialogs import DateFilterDialog
+            dlg = DateFilterDialog(self, col.title, current if isinstance(current, fl.DateFilter) else None,
+                                   [col.get(r) for r in self.model_.rows])
+            return dlg.result_filter() if dlg.exec() else None
         dlg = FilterForDialog(self, col.title, current if isinstance(current, fl.TextFilter) else None)
         return dlg.result_filter() if dlg.exec() else None
 

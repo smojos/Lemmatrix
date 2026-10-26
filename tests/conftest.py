@@ -189,6 +189,9 @@ def _ask_through_question(monkeypatch):
             return 1
         return escape if not cancel else None
     monkeypatch.setattr(widgets, "choose", choose)
+    monkeypatch.setattr(widgets, "real_ask_with_checkbox", widgets.ask_with_checkbox, raising=False)
+    monkeypatch.setattr(widgets, "ask_with_checkbox", lambda parent, title, text, go, check, stop="Cancel": (
+        QMessageBox.question(parent, title, text) in (QMessageBox.Yes, QMessageBox.Save, QMessageBox.Ok), False))
 
 
 @pytest.fixture(autouse=True)

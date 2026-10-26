@@ -1432,6 +1432,7 @@ class MainWindow(QMainWindow):
         self._act(t, "Check wordlist integrity…", self.check_wordlist_integrity)   # idea 66, 24 October
         self._act(t, "Check &spelling…", self.check_spelling, "F7")
         self._act(t, "Give every lemma its citation token…", self.give_citation_tokens)   # idea 64
+        self._act(t, "Copy citation forms to empty lemmas…", self.copy_citation_forms)   # idea 67
         t.addSection("Soundfiles")
         self._act(t, "Update all soundfile names", self.update_all_names)
         self._act(t, "Fill in recording dates from the soundfiles…", self.fill_recording_dates)
@@ -4652,6 +4653,25 @@ class MainWindow(QMainWindow):
             return
         self.doc.apply_changes(f"Citation tokens for {len(pairs)} lemmas", pairs, stamp=False)
         self.statusBar().showMessage(f"Gave {len(pairs)} lemma(s) an empty citation token.", 8000)
+
+    def copy_citation_forms(self):
+        """Tools → Copy citation forms to empty lemmas… (idea 67, Josh): each lemma with an empty
+        Lemma takes its citation token's form (Phonemic, else Phonetic, or as chosen); one undo step."""
+        from .. import citation_copy as cc
+        from .citation_copy_dialog import CopyCitationDialog
+        if self.doc.db.settings.entry_field("lemma") is None:
+            return
+        dlg = CopyCitationDialog(self, self.doc.db, self.prefs.ipa_size)
+        if not dlg.plan.copies and not dlg.plan.no_form:
+            QMessageBox.information(self, "Copy citation forms", "Every lemma has its Lemma filled.")
+            return
+        if not dlg.exec() or not dlg.chosen():
+            return
+        chosen = dlg.chosen()
+        self.doc.apply_changes(f"Copy {len(chosen)} citation forms to lemmas",
+                               cc.changed_copies(self.doc.db, chosen), stamp=False)
+        self.statusBar().showMessage(f"Copied {len(chosen)} citation form(s) into empty Lemma fields.", 8000)
+        self._maybe_update_names()               # a soundfile pattern with the Lemma in it follows
 
     def check_reference_order(self):
         """Tools → Check reference order… (Josh, 23 October): lemmas out of the EACW's order."""

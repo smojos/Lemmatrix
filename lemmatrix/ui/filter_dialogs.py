@@ -252,3 +252,95 @@ class ConfigureColumnsDialog(QDialog):
 
     def chosen(self) -> list[str]:
         return [self.current.item(i).data(Qt.UserRole) for i in range(self.current.count())]
+
+
+class DateFilterDialog(QDialog):
+    """Filter by date (IDEAS.md idea 69, Josh, 26 October): a Date column searched as a date, a day
+    or a range, with no text options (case, diacritics). Blanks in the column's menu finds the rows
+    with no date."""
+
+    ON, BETWEEN, AFTER, BEFORE = "on", "between", "after", "before"
+
+    def __init__(self, parent, title: str, current: fl.DateFilter | None = None, values=()):
+        from PySide6.QtCore import QDate
+        from PySide6.QtWidgets import QDateEdit, QHBoxLayout, QPushButton
+        super().__init__(parent)
+        self.setWindowTitle(f"Filter {title} by date")
+        lay = QVBoxLayout(self)
+        dates = sorted(v.strip()[:10] for v in values if isinstance(v, str) and v.strip())
+        first = QDate.fromString(dates[0], "yyyy-MM-dd") if dates else QDate.currentDate()
+        last = QDate.fromString(dates[-1], "yyyy-MM-dd") if dates else QDate.currentDate()
+
+        def edit(d):
+            e = QDateEdit(d if d.isValid() else QDate.currentDate())
+            e.setCalendarPopup(True)
+            e.setDisplayFormat("yyyy-MM-dd")
+            return e
+        self.group = QButtonGroup(self)
+        self.radios = {}
+        grid = QGridLayout()
+        for r, (key, text) in enumerate(((self.ON, "On the day"), (self.BETWEEN, "From … to"),
+                                         (self.AFTER, "On or after"), (self.BEFORE, "On or before"))):
+            rb = QRadioButton(text)
+            self.group.addButton(rb)
+            self.radios[key] = rb
+            grid.addWidget(rb, r, 0)
+        self.start, self.end = edit(first), edit(last)
+        grid.addWidget(self.start, 0, 1, 3, 1, Qt.AlignVCenter)
+        grid.addWidget(QLabel("to"), 1, 2)
+        grid.addWidget(self.end, 1, 3, 3, 1, Qt.AlignVCenter)
+        lay.addLayout(grid)
+        quick = QHBoxLayout()                     # quick choices
+        today = QDate.currentDate()
+        monday = today.addDays(1 - today.dayOfWeek())
+        month = QDate(today.year(), today.month(), 1)
+        for text, a, b in (("Today", today, today), ("This week", monday, monday.addDays(6)),
+                           ("This month", month, month.addMonths(1).addDays(-1))):
+            btn = QPushButton(text)
+            btn.clicked.connect(lambda *_, a=a, b=b: self._set(self.ON if a == b else self.BETWEEN, a, b))
+            quick.addWidget(btn)
+        quick.addStretch(1)
+        lay.addLayout(quick)
+        if dates:
+            note = QLabel(f"The dates in this column run from {dates[0]} to {dates[-1]}.")
+            note.setStyleSheet(f"color: {theme.muted()};")
+            lay.addWidget(note)
+        for rb in self.radios.values():
+            rb.toggled.connect(lambda *_: self._enable())
+        if current is not None and (current.start or current.end):
+            s = QDate.fromString(current.start, "yyyy-MM-dd")
+            e = QDate.fromString(current.end, "yyyy-MM-dd")
+            how = (self.ON if current.start == current.end else self.BETWEEN if current.start and current.end
+                   else self.AFTER if current.start else self.BEFORE)
+            self._set(how, s if s.isValid() else first, e if e.isValid() else last)
+        else:
+            self._set(self.BETWEEN if dates and dates[0] != dates[-1] else self.ON, first, last)
+        b = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        b.accepted.connect(self.accept)
+        b.rejected.connect(self.reject)
+        lay.addWidget(b)
+
+    def _set(self, how, a, b):
+        self.radios[how].setChecked(True)
+        self.start.setDate(a)
+        self.end.setDate(b)
+        self._enable()
+
+    def _enable(self):
+        how = self.how()
+        self.start.setEnabled(how != self.BEFORE)
+        self.end.setEnabled(how in (self.BETWEEN, self.BEFORE))
+
+    def how(self) -> str:
+        return next((k for k, rb in self.radios.items() if rb.isChecked()), self.ON)
+
+    def result_filter(self) -> fl.DateFilter:
+        a, b = self.start.date().toString("yyyy-MM-dd"), self.end.date().toString("yyyy-MM-dd")
+        how = self.how()
+        if how == self.ON:
+            return fl.DateFilter(a, a)
+        if how == self.AFTER:
+            return fl.DateFilter(a, "")
+        if how == self.BEFORE:
+            return fl.DateFilter("", b)
+        return fl.DateFilter(min(a, b), max(a, b))

@@ -125,6 +125,32 @@ class TextFilter:
 
 
 @dataclass
+class DateFilter:
+    """A Date column searched as a date (IDEAS.md idea 69, Josh, 26 October): a day, or from a day
+    to a day, either end open (before, after). Dates are written YYYY-MM-DD, so they compare as
+    text; a row with no date never matches (Blanks finds those)."""
+    start: str = ""          # "" : no lower end
+    end: str = ""            # "" : no upper end
+
+    def matches(self, value: str) -> bool:
+        v = (value or "").strip()[:10]
+        if not v:
+            return False
+        return (not self.start or v >= self.start) and (not self.end or v <= self.end)
+
+    def describe(self) -> str:
+        if self.start and self.start == self.end:
+            return f"on {self.start}"
+        if self.start and self.end:
+            return f"from {self.start} to {self.end}"
+        if self.start:
+            return f"on or after {self.start}"
+        if self.end:
+            return f"on or before {self.end}"
+        return "any date"
+
+
+@dataclass
 class ChoiceFilter:
     selected: set = field(default_factory=set)
     mode: str = ANY                 # any, none, exactly (exactly: tags only)
@@ -159,6 +185,8 @@ def matches(flt, value, unmarked: set = frozenset()) -> bool:
         if multi:
             return any(flt.matches(v) for v in value)
         return flt.matches(value)
+    if isinstance(flt, DateFilter):
+        return flt.matches(value if not multi else "")
     if isinstance(flt, ChoiceFilter):
         vals = set(value) if multi else ({value} if value else set())
         if multi and not vals:
@@ -182,6 +210,8 @@ def encode(flt) -> dict | None:
                 "diacritics": flt.match_diacritics}
     if isinstance(flt, ChoiceFilter):
         return {"kind": "choice", "selected": sorted(flt.selected), "mode": flt.mode}
+    if isinstance(flt, DateFilter):
+        return {"kind": "date", "start": flt.start, "end": flt.end}
     return None
 
 
@@ -200,6 +230,8 @@ def decode(d):
         mode = d.get("mode", ANYWHERE)
         return TextFilter(d["text"], mode if mode in (ANYWHERE, WHOLE, START, END, REGEX) else ANYWHERE,
                           bool(d.get("case")), bool(d.get("diacritics")))
+    if kind == "date":
+        return DateFilter(str(d.get("start") or ""), str(d.get("end") or ""))
     if kind == "choice" and isinstance(d.get("selected"), list):
         mode = d.get("mode", ANY)
         return ChoiceFilter({str(x) for x in d["selected"]}, mode if mode in (ANY, NONE, EXACTLY) else ANY)
