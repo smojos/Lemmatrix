@@ -38,7 +38,7 @@ DEFAULT_CELL = ["drawing", "Phonetic", "Phonemic", "Morphemes", "Translation", "
 
 def cell_text(db, t, key: str) -> str:
     """A cell line's text: a token field by name, or Name:lang for a second language's
-    translation (Translation:ar; idea 19), shown only when Configure cell ticks it."""
+    translation (Translation:ar; idea 19), shown only when Configure cell selects it."""
     name, _, lang = key.partition(":")
     f = db.settings.token_field(name)
     if f is not None and f.multilingual:
@@ -64,7 +64,7 @@ def is_aligned(db, key: str, aligned) -> bool:
 
 def cell_options(db) -> list[tuple[str, str]]:
     """(key, title) of every line a cell can show, in their usual order: the pitch drawing, then
-    the token fields, each translation followed by its second languages' (not ticked by default)."""
+    the token fields, each translation followed by its second languages' (not selected by default)."""
     s = db.settings
     out = [("drawing", "Pitch drawing")]
     for f in s.token_fields:

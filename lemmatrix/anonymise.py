@@ -19,9 +19,9 @@ thoughts. So both archives leave the notebook out by default and always write a 
   others see your setup, e.g. when feeding the data to AI for help or analysis. The key (old
   code → new code) only ever goes inside the password-protected zip with the consent forms.
 * **Ethical archive** (``ETHICAL``): the people who agreed to be identified stay named. A
-  participant ticked Identifiable? keeps name and description; a researcher ticked Identifiable?
+  participant selected Identifiable? keeps name and description; a researcher selected Identifiable?
   keeps name, description and email; everyone else is reduced to their code. Codes stay as
-  they are. Only the recordings of speakers who ticked Audio sharing? go in. For sharing the raw
+  they are. Only the recordings of speakers who selected Audio sharing? go in. For sharing the raw
   data and the basic analysis that describes it (the tone classes, the tags) with an archive or
   a colleague.
 
@@ -73,7 +73,7 @@ class Options:
     kind: str = ETHICAL
     notebook: bool = False             # include the notebook (the researcher's own work: off by default)
     replace_names: bool = True         # names in free text -> codes (always, in the anonymous archive)
-    recordings: bool = True            # ethical only: the recordings of speakers who ticked Audio sharing?
+    recordings: bool = True            # ethical only: the recordings of speakers who selected Audio sharing?
     place_levels: int = 0              # 0: keep every place; n: keep the top n levels only
     consent_password: str = ""         # "": consent forms left out; else a password-protected zip
     hide_language_code: bool = False   # anonymous only: the language code becomes LXX

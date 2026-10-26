@@ -2,13 +2,13 @@
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """The Bulk edit window (Edit → Bulk edit…, Ctrl+Shift+B): change many lemmas or tokens at once.
 
-Like FLEx's Bulk Edit: a filtered grid with a tick on every row, and an operation underneath.
+Like FLEx's Bulk Edit: a filtered grid with a checkbox on every row, and an operation underneath.
 The Lemmas and Tokens tabs work like the lemma list and All data in the main window, and
 start with their filters: the Tokens tab shows the tokens of the lemmas the Lemmas tab
 shows. In the Tokens tab the lemma columns are greyed: only token fields change there.
 
 Preview shows the changes in the grid (new value highlighted, the old one struck through)
-before anything happens. A problem in any ticked row cancels the whole operation. Apply
+before anything happens. A problem in any selected row cancels the whole operation. Apply
 makes the change as one undo step, recordings renamed included.
 """
 
@@ -69,7 +69,7 @@ def row_key(row):
 
 
 class BulkModel(RowModel):
-    """The grid's rows, with a tick column and the preview's changes and problems."""
+    """The grid's rows, with a checkbox column and the preview's changes and problems."""
 
     def __init__(self, win: "BulkEditWindow"):
         super().__init__()
@@ -203,7 +203,7 @@ class BulkEditWindow(QDialog):
         self.doc = main.doc
         self.db = main.doc.db
         self.setWindowTitle("Bulk edit")
-        self.unticked: set = set()          # row keys left out (new rows start ticked)
+        self.unticked: set = set()          # row keys left out (new rows start selected)
         self.plan: bulk.Plan | None = None
         self._op = None                     # the operation the preview was made for
         self._applying = False
@@ -669,7 +669,7 @@ class BulkEditWindow(QDialog):
         self.clear_preview()
         self._update_count()
 
-    # ---- ticks -------------------------------------------------------
+    # ---- checkboxes -------------------------------------------------------
     def is_ticked(self, row) -> bool:
         return row_key(row) not in self.unticked
 
@@ -697,7 +697,7 @@ class BulkEditWindow(QDialog):
         return LEVELS[self.levels.currentIndex()]
 
     def chosen_rows(self) -> list:
-        """The rows to change: shown and ticked, in the grid's order, as (entry, token index)."""
+        """The rows to change: shown and selected, in the grid's order, as (entry, token index)."""
         out = []
         for r in self.tables[self.level].visible_rows():
             if not self.is_ticked(r):

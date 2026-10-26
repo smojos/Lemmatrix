@@ -31,8 +31,8 @@ def _buttons(dlg) -> QDialogButtonBox:
 # ==========================================================================
 
 def cell_order(cell: list[str], natural: list[str]) -> list[str]:
-    """The ticked lines in their order, each unticked one in its usual place among them (the
-    token fields' order), so ticking Morphemes puts it above Translation, not at the end."""
+    """The selected lines in their order, each deselected one in its usual place among them (the
+    token fields' order), so selecting Morphemes puts it above Translation, not at the end."""
     rank = {k: i for i, k in enumerate(natural)}
     order = [k for k in cell if k in rank]
     for k in natural:
@@ -45,7 +45,7 @@ def cell_order(cell: list[str], natural: list[str]) -> list[str]:
 
 class ConfigureCellDialog(QDialog):
     """Which lines a matrix cell shows, in what order, and which line up word by word (idea 2:
-    the text lines' glossing rules; the Line up ticks are one setting for every cell view)."""
+    the text lines' glossing rules; the Line up checkboxes are one setting for every cell view)."""
 
     def __init__(self, parent, db: Database, cell: list[str], aligned: set | None = None,
                  part: str = "tokens"):
@@ -94,7 +94,7 @@ class ConfigureCellDialog(QDialog):
         return pitchview.keep_hidden(self._cell, out, self._db.settings, self._part)
 
     def aligned(self) -> dict[str, bool]:
-        """Each line's Line up tick (key -> ticked), to merge into the shared setting."""
+        """Each line's Line up checkbox (key -> selected), to merge into the shared setting."""
         out = {}
         for i in range(self.list.topLevelItemCount()):
             it = self.list.topLevelItem(i)

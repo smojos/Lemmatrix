@@ -13,7 +13,7 @@ It is a view setting of the open database, kept in its workspace (``pitch/shown`
 marks the database unsaved and is not an undo step.
 
 Underneath, the system is in three parts. The database's **pitch kind** (``pitchkind``: tonal,
-intonational, unspecified) says which parts it has at all; the tick hides the parts it has. No Qt
+intonational, unspecified) says which parts it has at all; the checkbox hides the parts it has. No Qt
 here.
 """
 from __future__ import annotations
@@ -32,7 +32,7 @@ _parts = set(PARTS)            # the parts its pitch kind has (pitchkind.PARTS; 
 
 
 def load(ws) -> None:
-    """Take the open database's tick from its workspace (None: shown)."""
+    """Take the open database's checkbox from its workspace (None: shown)."""
     global _tick
     _tick = True if ws is None else ws.get_bool(KEY, True)
 
@@ -55,7 +55,7 @@ def store(ws, on: bool) -> None:
 
 
 def tick() -> bool:
-    """Settings → Pitch → Show the pitch system, as ticked."""
+    """Settings → Pitch → Show the pitch system, as selected."""
     return _tick
 
 
@@ -65,7 +65,7 @@ def has(part: str | None = None) -> bool:
 
 
 def shown(part: str | None = None) -> bool:
-    """Whether a part of the pitch system is shown: the kind has it and the tick is on. With no
+    """Whether a part of the pitch system is shown: the kind has it and the checkbox is on. With no
     part, whether any of it is shown."""
     if part is None:
         return _tick and bool(_parts)

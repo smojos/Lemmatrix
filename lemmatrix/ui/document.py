@@ -828,7 +828,7 @@ class Document(QObject):
             self._ws_timer.start()
 
     def convert_pitch_kind(self, new: str, delete=frozenset()) -> list[str]:
-        """Make the database the new pitch kind (idea 9), deleting only the data ticked for it:
+        """Make the database the new pitch kind (idea 9), deleting only the data selected for it:
         one undo step. Returns what was done, in words."""
         from .. import pitchkind
         before = PitchKindCommand.capture(self.db)

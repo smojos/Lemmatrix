@@ -63,9 +63,9 @@ def _note(text) -> QLabel:
 
 class PeopleEditor(QWidget):
     """Researchers (code, name, Identifiable?, email, description) or participants (code, name,
-    the Identifiable? and Audio sharing? ticks from their consent form, description, consent
-    file). Identifiable? decides who is named in an Ethical archive (idea 44): ticked for a new
-    researcher, unticked for a new participant."""
+    the Identifiable? and Audio sharing? checkboxes from their consent form, description, consent
+    file). Identifiable? decides who is named in an Ethical archive (idea 44): selected for a new
+    researcher, deselected for a new participant."""
 
     def __init__(self, db: Database, people: list[Person], consent: bool, used, parent=None):
         super().__init__(parent)

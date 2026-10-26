@@ -667,12 +667,12 @@ class Person:
     consent: str = ""             # participants: the file documenting informed consent
     email: str = ""               # researchers: where ɛλicit tells them recordings are in (idea 19)
     identifiable: bool = False    # may be named in an Ethical archive (idea 44): a participant agreed to it in
-                                  # the consent form (unticked for a new one); a researcher is ticked when added
+                                  # the consent form (deselected for a new one); a researcher is selected when added
     audio_sharing: bool = False   # participants: agreed in the consent form that their recordings be shared
 
     @classmethod
     def researcher(cls, code: str, name: str = "", **kw) -> "Person":
-        """A new researcher: Identifiable? ticked (Josh, 22 October)."""
+        """A new researcher: Identifiable? selected (Josh, 22 October)."""
         kw.setdefault("identifiable", True)
         return cls(code, name, **kw)
 

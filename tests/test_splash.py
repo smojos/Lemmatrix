@@ -23,10 +23,10 @@ def test_splash_stays_for_its_minimum_time(app):
     s = splash.show(app)
     w = QWidget()
     w.show()
-    splash.finish(app, s, w, 1.0)
+    splash.finish(app, s, w, 0.3)
     QApplication.processEvents()
     assert s.isVisible()                                         # still up: the time isn't over
-    end = time.monotonic() + 4
+    end = time.monotonic() + 3
     while s.isVisible() and time.monotonic() < end:
         QApplication.processEvents()
         time.sleep(0.02)

@@ -873,8 +873,8 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(f"ɛλicit: {names} — recordings ready in Google Drive "
                                          "(Receive ɛλicitation).", 15000)
 
-    # ɛλicit's next request, kept in the database's workspace (idea 36): the tokens ticked for it
-    # (right-click Add to ɛλicit request, or left ticked), and its settings and new sentences
+    # ɛλicit's next request, kept in the database's workspace (idea 36): the tokens selected for it
+    # (right-click Add to ɛλicit request, or left selected), and its settings and new sentences
     @property
     def elicit_basket(self) -> list[str]:
         return self.doc.ws.get_list("elicit/basket")
@@ -900,15 +900,15 @@ class MainWindow(QMainWindow):
         self.doc.ws_set("spelling/ignored", sorted(self.spelling_ignored | {word.lower()}))
 
     def _elicit_preselect(self) -> list[str]:
-        """The tokens added with the right-click Add to ɛλicit request (and those left ticked when
-        the request dialogue was last closed): ticked to begin with in Make ɛλicit request."""
+        """The tokens added with the right-click Add to ɛλicit request (and those left selected when
+        the request dialogue was last closed): selected to begin with in Make ɛλicit request."""
         return list(self.elicit_basket)
 
     def in_elicit_request(self, token) -> bool:
         return token is not None and token.id in self.elicit_basket
 
     def toggle_elicit(self, token):
-        """Right-click → Add to ɛλicit request (or Remove from it): ticked when Make ɛλicit
+        """Right-click → Add to ɛλicit request (or Remove from it): selected when Make ɛλicit
         request opens next."""
         if token is None:
             return
@@ -927,12 +927,12 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(f"{msg} ({n} selected for Make ɛλicit request).", 5000)
 
     def add_citations_to_elicit(self, entries):
-        """The lemma list's right-click (idea 64): the selected lemmas' citation tokens, ticked for
+        """The lemma list's right-click (idea 64): the selected lemmas' citation tokens, selected for
         the next ɛλicit request."""
         self.add_to_elicit([t for e in entries if (t := next((x for x in e.tokens if x.is_citation), None))])
 
     def add_to_elicit(self, tokens):
-        """Tick these tokens for the next ɛλicit request (those already ticked stay)."""
+        """Select these tokens for the next ɛλicit request (those already selected stay)."""
         basket = self.elicit_basket
         new = [t.id for t in tokens if t.id not in basket]
         self.elicit_basket = basket + new
@@ -1101,7 +1101,7 @@ class MainWindow(QMainWindow):
         return b
 
     def _todo_button(self) -> QToolButton:
-        """Beside the ?: View → To Do (Josh's ticks, 48 px; 21 October, icon 22 October)."""
+        """Beside the ?: View → To Do (Josh's checkmarks, 48 px; 21 October, icon 22 October)."""
         b = self.todo_btn = QToolButton()
         b.setIconSize(QSize(self.TEXTS_ICON, self.TEXTS_ICON))
         b.setAutoRaise(True)
@@ -3945,7 +3945,7 @@ class MainWindow(QMainWindow):
 
     def convert_pitch_kind(self, new: str) -> bool:
         """Convert the database's pitch kind (idea 9). Data the new kind doesn't show is kept hidden
-        unless ticked for deleting (after the full-backup question); one undo step."""
+        unless selected for deleting (after the full-backup question); one undo step."""
         from .. import pitchkind
         from .pitchkind_dialog import BACKUP_FIRST, CANCEL, DELETE, ConvertDialog, ask_backup
         db = self.doc.db
@@ -4180,7 +4180,7 @@ class MainWindow(QMainWindow):
             self.doc.settings_changed(before)
             s = self.doc.db.settings
             self.comparison.set_range(s.pitch_low, s.pitch_high)
-            if self.notebook_dialog is not None:  # its history ticks follow Settings
+            if self.notebook_dialog is not None:  # its history checkboxes follow Settings
                 self.notebook_dialog._show_history_ticks()
             if names_changed:
                 self._maybe_update_names()
@@ -4527,7 +4527,7 @@ class MainWindow(QMainWindow):
 
     def export_archive(self, kind: str = "ethical"):
         """File → Export → Anonymous archive / Ethical archive (idea 44): a copy of the data to share,
-        with nobody named (anonymous) or only the people ticked Identifiable? (ethical)."""
+        with nobody named (anonymous) or only the people selected Identifiable? (ethical)."""
         from .export_dialog import ArchiveExportDialog
         ArchiveExportDialog(self, kind).exec()
 

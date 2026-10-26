@@ -6,7 +6,7 @@ dialogue, and Tools → Audits → Give every lemma its citation token…"""
 
 from PySide6.QtCore import Qt
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QAbstractItemView, QMessageBox
+from PySide6.QtWidgets import QAbstractItemView, QApplication, QMessageBox
 
 from lemmatrix import batch, matrix as mx
 from lemmatrix.model import Token
@@ -234,7 +234,7 @@ def test_a_plain_click_inside_several_selected_keeps_one(win):
     t.select_rows(rows)
     idx = t.proxy.index(0, 0)
     QTest.mouseClick(t.viewport(), Qt.LeftButton, Qt.NoModifier, t.visualRect(idx).center())
-    QTest.qWait(400)
+    QTest.qWait(QApplication.doubleClickInterval() + 100)
     assert len(t.selected_rows()) == 1                       # not unselected: just that one
     t.hide()
 

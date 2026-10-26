@@ -794,7 +794,7 @@ def rows(db, lid: str) -> list[Row]:
 
 def gloss_matches(db, lid: str) -> list[tuple[str, object]]:
     """(number, lemma) for each list item no lemma carries, matched to lemmas with a filled Lemma
-    whose English gloss matches the list's (Josh, 22 October: shown with ticks; the ticked ones are
+    whose English gloss matches the list's (Josh, 22 October: shown with checkboxes; the selected ones are
     exported and their number stored). A lemma that already carries a number of this list isn't
     offered another."""
     if lid == CAWL and not get(CAWL).has_glosses:
@@ -898,7 +898,7 @@ def template_unknown(db, template: str) -> list[str]:
 
 def table(db, lid: str, extra=(), template: str = DEFAULT_TEMPLATE) -> tuple[list[str], list[list[str]]]:
     """The export's header and rows: number, lemma, gloss. `extra` adds (number, lemma) pairs (the
-    ticked gloss matches) before they are stored. Several lemmas on one number are joined with ; ."""
+    selected gloss matches) before they are stored. Several lemmas on one number are joined with ; ."""
     header = [SHORT[lid], "Lemma", "Gloss"]
     add: dict[str, list] = {}
     for n, e in extra:

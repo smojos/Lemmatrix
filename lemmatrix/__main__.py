@@ -100,7 +100,7 @@ def main() -> int:
     if not win.doc.db.path:
         dlg = welcome_box(win)
         dlg.exec()
-        win.prefs.show_welcome = dlg.every_start.isChecked()   # after the first start: "never" unless ticked
+        win.prefs.show_welcome = dlg.every_start.isChecked()   # after the first start: "never" unless selected
         if dlg.choice == "sample":
             win.open_sample()
         elif dlg.choice == "open":
@@ -114,7 +114,7 @@ def main() -> int:
 
 def start_path(args: list[str], prefs) -> str:
     """The database to open at start-up: one given on the command line; otherwise the most recent,
-    unless the welcome window comes first, on the very first start and, when ticked, on every
+    unless the welcome window comes first, on the very first start and, when selected, on every
     start (Josh, 23 October)."""
     if args:
         return args[0]

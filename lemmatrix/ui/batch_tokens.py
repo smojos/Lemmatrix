@@ -185,7 +185,7 @@ class BatchDialog(QDialog):
 
 
 class ClosingDialog(QDialog):
-    """Made N tokens: four ticks for what comes next (Josh, 24 October: all four)."""
+    """Made N tokens: four checkboxes for what comes next (Josh, 24 October: all four)."""
 
     def __init__(self, main, p: batch.Plan, has_tag_tag: bool):
         super().__init__(main)
@@ -219,7 +219,7 @@ class ClosingDialog(QDialog):
 
 
 def follow_up(main, p: batch.Plan, picked, elicit=True, filter_all=True, lemma_tag=True, tag_tag=True) -> list[str]:
-    """Do the closing box's ticks. Returns what was done, for the status bar."""
+    """Do the closing box's checkboxes. Returns what was done, for the status bar."""
     from .main_window import ALL_DATA, LEMMA_TAG, TAG_TAG
     db = main.doc.db
     done = []

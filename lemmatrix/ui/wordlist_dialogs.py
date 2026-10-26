@@ -150,7 +150,7 @@ class WordlistChoice(QWidget):
 # --------------------------------------------------------------------------
 class WordlistExportDialog(QDialog):
     """Every item of the chosen list in its order (blank where the database has nothing), with the
-    lemma and the list's own gloss; gloss matches for the rest shown with ticks first."""
+    lemma and the list's own gloss; gloss matches for the rest shown with checkboxes first."""
 
     def __init__(self, win):
         super().__init__(win)
@@ -309,7 +309,7 @@ class WordlistExportDialog(QDialog):
                 if self.table.item(r, 0).checkState() == Qt.Checked]
 
     def _remember(self, ticked):
-        """Store the ticked matches' numbers on their lemmas: one undo step."""
+        """Store the selected matches' numbers on their lemmas: one undo step."""
         if not ticked:
             return
         lid = self.lid()
@@ -508,7 +508,7 @@ def link_to_wordlists(win):
 # Insert EACW items… (Josh, 23 October: a hidden item can always be inserted later)
 # --------------------------------------------------------------------------
 class InsertItemsDialog(QDialog):
-    """The EACW items an EACW database doesn't have, to tick and insert: those beside a lemma (its
+    """The EACW items an EACW database doesn't have, to select and insert: those beside a lemma (its
     hidden letters) or any, by version (Base, Expanded) and region, with a search. Each goes in
     after the lemma of the item before it in the list; one undo step."""
 
@@ -574,7 +574,7 @@ class InsertItemsDialog(QDialog):
                     self.search.textChanged):
             sig.connect(lambda *_: self._fill())
         self.table.itemChanged.connect(self._ticked_changed)
-        if near is not None:                       # what is beside the lemma starts ticked
+        if near is not None:                       # what is beside the lemma starts selected
             self.ticked = {i.number for i in wl.missing_family(self.db, near)}
         self._fill()
 

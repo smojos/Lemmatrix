@@ -117,7 +117,7 @@ PADE_NOTE = "Not a known location; any resemblance is coincidental."
 
 
 def default_researchers() -> list[Person]:
-    return [Person.researcher(c, n) for c, n in RESEARCHERS]     # Identifiable? ticked (idea 44)
+    return [Person.researcher(c, n) for c, n in RESEARCHERS]     # Identifiable? selected (idea 44)
 
 
 def default_participants() -> list[Person]:

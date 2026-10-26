@@ -214,7 +214,7 @@ def test_add_token_goes_to_the_selected_tokens_lemma_or_the_selected_lemma(win, 
     win.add_token_to_lemma()
     assert opened[-1] is lemma                         # λ→τ: the lemma list's lemma
     _click(t, row, key)                                # a click on the selected token...
-    time.sleep(0.6)
+    time.sleep(QApplication.doubleClickInterval() / 1000 + 0.1)
     _settle()
     assert t.selected_row() is None                    # ...unselects it
     win.add_token()

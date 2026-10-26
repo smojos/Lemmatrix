@@ -89,7 +89,12 @@ def pytest_unconfigure(config):
 def app():
     pytest.importorskip("PySide6")
     from PySide6.QtWidgets import QApplication
-    return QApplication.instance() or QApplication([])
+    a = QApplication.instance() or QApplication([])
+    # A short double-click interval: the click-to-unselect waits for it before unselecting, and the
+    # tests wait with it (the audit, section 8, step 8: real waits cut). Long enough for Qt to
+    # still see a double-click sent at once.
+    a.styleHints().setMouseDoubleClickInterval(120)
+    return a
 
 
 @pytest.fixture

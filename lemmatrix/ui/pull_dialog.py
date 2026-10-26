@@ -2,7 +2,7 @@
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Pull from source and Push to source (idea 7, stage 4): the dialogues.
 
-PushDialog lists each field edited in Lemmatrix that differs from its tier, with a tick box
+PushDialog lists each field edited in Lemmatrix that differs from its tier, with a checkbox
 each, warns when a push merges several segments of a tier, and says to close the TextGrid in
 Praat first; push_utterances() writes it (a copy of the TextGrid goes to Backups first).
 

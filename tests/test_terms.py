@@ -57,3 +57,25 @@ def test_tick_means_a_bug_only():
                 if word.search(bug.sub("", line)) and "A tick is a bug" not in line:
                     found.append(f"{rel}:{n}: {line.strip()[:100]}")
     assert not found, "Say selected / deselected (a tick is a bug):\n" + "\n".join(found)
+
+
+def test_tick_means_a_bug_in_comments_too():
+    """The same rule in the code's comments and docstrings (the audit, section 8, step 8;
+    26 October). Names in the code (`ticked()`, `self.unticked`, `tick_button`, the bug's) stay."""
+    import io
+    import tokenize
+    word = re.compile(r"\b(un)?tick(s|ed|ing)?\b", re.I)
+    bug = re.compile(r"I found a tick!?|a tick is a bug|tick is a bug|a tick drawn in", re.I)
+    found = []
+    for f in tracked_text_files():
+        rel = f.relative_to(ROOT)
+        if f.suffix != ".py" or rel.parts[0] != "lemmatrix":
+            continue
+        toks = list(tokenize.generate_tokens(io.StringIO(f.read_text(encoding="utf-8")).readline))
+        for i, t in enumerate(toks):
+            doc = (t.type == tokenize.STRING and t.string.lstrip("rbuRBU").startswith(('"""', "'''"))
+                   and (i == 0 or toks[i - 1].type in (tokenize.NEWLINE, tokenize.NL, tokenize.INDENT,
+                                                       tokenize.DEDENT)))
+            if (t.type == tokenize.COMMENT or doc) and word.search(bug.sub("", t.string)):
+                found.append(f"{rel}:{t.start[0]}: {t.string.strip()[:100]}")
+    assert not found, "Say selected / deselected / checkbox in comments too:\n" + "\n".join(found)

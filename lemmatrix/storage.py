@@ -27,7 +27,7 @@ WORDLIST_ATTRS = {"EACW": "eacw", "CAWL": "cawl", "SWADESH": "swadesh"}   # form
 # so an older backup still opens, until v1 fixes the format). When the format changes, an upgrade
 # from the format before is written.
 READABLE = ("5", "6", "7", "8", "9", "10", "11", "12", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
-# 7: before researchers had the Identifiable? tick and both ticks were always written; 8: before the
+# 7: before researchers had the Identifiable? checkbox and both checkboxes were always written; 8: before the
 # comparative wordlists (format 9, 22 October: no base and no numbers yet, so nothing to change);
 # 9: before the <typology> block (format 10, 23 October: an older file is tonal, as every database was);
 # 10: before the EACW's version on <wordlist> (format 11, 23 October: items and region, none in an
@@ -200,7 +200,7 @@ def _load_values(el, target, multilingual_names: set[str], skip=("token",)):
 def _load_person(el, researcher: bool = False) -> Person:
     """<participant code="SP1" name="..." identifiable="no" audio-sharing="no">description</participant>;
     researchers have identifiable= too, and can have an email="...". Since format 8 (22 October,
-    idea 44) the ticks are always written, yes or no; a tick that isn't there (an older file) is
+    idea 44) the checkboxes are always written, yes or no; a checkbox that isn't there (an older file) is
     the default: a researcher is identifiable, a participant isn't, and nobody has agreed to
     audio sharing."""
     ident = el.get("identifiable")
@@ -374,7 +374,7 @@ def load(path: str | os.PathLike) -> Database:
     if version != FORMAT_VERSION:        # format 13 (26 October): the token fields' abbreviations
         from .fieldkeys import give_defaults
         give_defaults(db.settings.token_fields)
-    if version != FORMAT_VERSION:        # format 8 (22 October): researchers ticked Identifiable?, read
+    if version != FORMAT_VERSION:        # format 8 (22 October): researchers selected Identifiable?, read
                                          # above; format 9: wordlist numbers, none in an older file;
         db.upgraded = True               # above; quietly, so saving writes the new format
     if repaired:

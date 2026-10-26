@@ -248,7 +248,7 @@ class PushChange:
     old: str                   # the tier's text in the line now
     new: str                   # the utterance's field
     segments: int              # how many segments of the tier the line spans (merged if > 1)
-    edited: bool = True        # edited here; False: changed only in Praat (offered, not ticked)
+    edited: bool = True        # edited here; False: changed only in Praat (offered, not selected)
 
     @property
     def merges(self) -> bool:

@@ -751,7 +751,7 @@ class TokenDialog(QDialog):
         elif t.file and not self._path(t.file).exists():
             self.name_note.setText(f"The recording {t.file} isn't in the sound folder.")
         else:
-            self.name_note.setText("" if t.file else "<span style='color:#666'>Not recorded yet.</span>")
+            self.name_note.setText("" if t.file else f"<span style='color:{theme.muted()}'>Not recorded yet.</span>")   # the theme's grey
         has_file = bool(t.file) and self._path(t.file).exists()
         self.play_btn.setEnabled(has_file)
         self.delete_btn.setEnabled(has_file)

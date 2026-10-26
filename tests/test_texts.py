@@ -683,11 +683,12 @@ def test_an_edit_saved_in_praat_is_seen(win, tmp_path, monkeypatch):
     parselmouth = pytest.importorskip("parselmouth")
     from lemmatrix.ui import pull_dialog
     uw, t, u, grid = _clipped(win, tmp_path, monkeypatch)
-    time.sleep(1.1)                                       # Praat saves a second later at least
     script = (f'grid = Read from file: "{grid}"\n'
               'Set interval text: 1, 2, "ʔəŋ kɒ ɗæær"\n'
               f'Save as text file: "{grid.parent}/" + selected$("TextGrid") + ".TextGrid"\n')
     parselmouth.praat.run(script)
+    later = time.time() + 2                               # as Praat saving a moment later (no real wait)
+    os.utime(grid, (later, later))
     assert sorted(f.name for f in grid.parent.iterdir()) == sorted([t.file, t.textgrid])   # no second TextGrid
     assert uw.recheck() and uw._flagged(u)
     monkeypatch.setattr(pull_dialog.PullDialog, "exec", lambda d: 1)

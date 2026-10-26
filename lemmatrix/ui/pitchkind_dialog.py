@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """Converting a database's pitch kind (IDEAS.md idea 9; Josh, 23 October): data the new kind
-doesn't show is kept hidden by default; ticked data can be deleted, after the question about a
+doesn't show is kept hidden by default; selected data can be deleted, after the question about a
 full backup, for researchers who want a clean XML."""
 
 from __future__ import annotations
@@ -15,8 +15,8 @@ KEEP, DELETE, CANCEL = "keep", "delete", "cancel"
 
 
 class ConvertDialog(QDialog):
-    """What holds data the new kind won't show, with a tick each: Keep it hidden (the default),
-    Delete the ticked data…, Cancel."""
+    """What holds data the new kind won't show, with a checkbox each: Keep it hidden (the default),
+    Delete the selected data…, Cancel."""
 
     def __init__(self, parent, db, new: str, holding: list[pitchkind.Holding]):
         super().__init__(parent)

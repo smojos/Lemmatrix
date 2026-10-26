@@ -193,7 +193,7 @@ class Prefs:
     def welcome_mode(self) -> str:
         """The welcome window at start-up (Josh, 23 October): "" until it has been shown once
         (the first start), then "never" (the most recent database opens straight away); "always"
-        once ticked in Settings → General or in the window itself."""
+        once selected in Settings → General or in the window itself."""
         v = self._get("start/welcome", "", str)
         return v if v in ("", "always", "never") else ""
 
@@ -202,7 +202,7 @@ class Prefs:
 
     @property
     def show_welcome(self) -> bool:
-        """Settings → General → Show the welcome window at every start (ticked: "always")."""
+        """Settings → General → Show the welcome window at every start (selected: "always")."""
         return self.welcome_mode == "always"
 
     @show_welcome.setter

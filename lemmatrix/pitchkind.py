@@ -12,7 +12,7 @@ The kind is **data** about the language (Josh, 23 October): it is kept in the me
     | unspecified  | no                  | no                | no          | no         | no          |
 
 Converting adds what a kind needs, empty, and never loses data unasked: a field that holds data
-stays in the file, hidden by the kind, unless the researcher ticks it for deleting (after the
+stays in the file, hidden by the kind, unless the researcher selects it for deleting (after the
 question about a full backup). Emptied fields go, so the XML is clean. No Qt here.
 """
 from __future__ import annotations
@@ -65,7 +65,7 @@ def tone_class_field(db: Database) -> FieldDef | None:
 
 @dataclass
 class Holding:
-    """Data a kind wouldn't show: kept hidden, or deleted when ticked."""
+    """Data a kind wouldn't show: kept hidden, or deleted when selected."""
     key: str                          # TOKEN_PITCH, UTTERANCE_PITCH, TONE_CLASS
     label: str                        # "Pitch on 1,048 lemma tokens"
     count: int

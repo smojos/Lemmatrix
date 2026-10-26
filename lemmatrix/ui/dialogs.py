@@ -1022,7 +1022,7 @@ class PreferencesDialog(QDialog):
         lay.addWidget(_buttons(self))
         under = (self.low, self.high, self.voice, listen, self.volume, vol_label, self.pitch_own)
         self.pitch_on.toggled.connect(lambda on: [w.setEnabled(on) for w in under])
-        for w in under:                           # greyed under the tick while it is off
+        for w in under:                           # greyed under the checkbox while it is off
             w.setEnabled(self.pitch_on.isChecked())
         if not pitchkind.has_pitch_field(kind):   # unspecified: no pitch at all, only Change…
             self.pitch_on.setEnabled(False)
@@ -1137,7 +1137,7 @@ ONLY_ROLE = Qt.UserRole + 3                   # a group marked "utterances only"
 
 
 class UsualDialog(QDialog):
-    """Which word classes a tag group is usual for (none ticked: its parent's, or every lemma)."""
+    """Which word classes a tag group is usual for (none selected: its parent's, or every lemma)."""
 
     def __init__(self, parent, group: str, classes: list, chosen: list[str], inherited: tuple,
                  only: bool = False, inherited_only: bool = False):

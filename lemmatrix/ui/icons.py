@@ -212,7 +212,7 @@ def _draw(name: str, s: int, p: QPainter, colour: QColor | None = None, colour2:
         p.setPen(QPen(BLACK, max(1.2, s * 0.07), Qt.SolidLine, Qt.RoundCap))
         p.drawLine(QPointF(s * 0.32, s * 0.10), QPointF(s * 0.32, s * 0.26))
         p.drawLine(QPointF(s * 0.68, s * 0.10), QPointF(s * 0.68, s * 0.26))
-    elif name == "resolve":                      # a purple square with a white tick
+    elif name == "resolve":                      # a purple square with a white checkmark
         _rounded(p, s, PURPLE)
         p.setPen(QPen(WHITE, max(1.6, s * 0.10), Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
         p.setBrush(Qt.NoBrush)
@@ -571,7 +571,7 @@ def _draw(name: str, s: int, p: QPainter, colour: QColor | None = None, colour2:
         inner.addEllipse(QPointF(s * 0.5, s * 0.57), s * 0.11, s * 0.11)
         p.drawPath(body.united(hump).subtracted(lens).united(inner))
         p.drawEllipse(QRectF(s * 0.74, s * 0.37, s * 0.08, s * 0.08).adjusted(0, 0, 0, 0))
-    elif name == "tick":                         # "I found a tick!": a tick (the bug) in the theme colour
+    elif name == "tick":                         # "I found a tick!": a checkbox (the bug) in the theme colour
         c = QColor(colour or GREEN)
         cx = s * 0.5
         p.setPen(QPen(c, max(1.1, s * 0.065), Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
