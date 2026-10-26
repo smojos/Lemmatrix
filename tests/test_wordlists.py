@@ -360,5 +360,14 @@ def test_the_wordlist_choice_hovers(app):
     d = WordlistChoice()
     assert d.choice() == wl.EACW                                 # recommended
     tips = {b.property("list"): b.toolTip() for b in d.group.buttons()}
-    assert tips[wl.EACW].startswith("Smolders, Joshua. 2026. The Extended African Comparative Wordlist: A digital lexical organization system for field linguists.")
+    assert tips[wl.EACW].startswith("Smolders, Joshua A. G. 2026. The Extended African Comparative Wordlist (EACW) [dataset]. Zenodo.")
+    assert "DOI: 10.5281/zenodo.23677135" in tips[wl.EACW]
     assert "Snider" in tips[wl.CAWL] and "Swadesh" in tips[wl.SWADESH]
+
+
+def test_eacw_dataset_dois():
+    """The EACW is cited as its own dataset (26 October): all editions, and each edition's own DOI."""
+    assert wl.DOIS[wl.EACW] == "10.5281/zenodo.23677135"
+    assert wl.edition("2026-10-24").doi == "10.5281/zenodo.23677136"
+    assert wl.edition(wl.EACW_VERSION) is wl.EDITIONS[-1]
+    assert wl.edition("1999-01-01") is None

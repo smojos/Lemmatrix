@@ -394,6 +394,10 @@ def pdf_details(db, lid: str) -> list[str]:
         lines.append("Researcher: " + " ".join(x for x in (name, f"<{email}>" if email else "") if x))
     if lid == wl.EACW and md.wordlist_items:
         lines.append(f"EACW version: {wl.version_name(md.wordlist_items, md.wordlist_region)}")
+    if lid == wl.EACW:
+        ed = wl.edition(md.wordlist_version or wl.EDITIONS[0].version)   # none recorded: the first
+        if ed:
+            lines.append(f"EACW edition: {ed.version}" + (f" (doi:{ed.doi})" if ed.doi else ""))
     lines.append(f"Exported: {_dt.date.today().isoformat()}")
     return lines
 

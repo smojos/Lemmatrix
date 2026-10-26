@@ -39,7 +39,8 @@ def about_text() -> str:
             "The icons, the splash screen and the ɛλicit drawings are the author's artwork, "
             "all rights reserved (ARTWORK.md), and so are the sample databases, the author's creative work "
             "(SAMPLES.md). The Extended African Comparative Wordlist is the "
-            "author's data under CC BY 4.0 (lemmatrix/wordlists/LICENSE-EACW.md). "
+            "author's data under CC BY 4.0 (lemmatrix/wordlists/LICENSE-EACW.md), "
+            '<a href="https://doi.org/10.5281/zenodo.23677135">doi:10.5281/zenodo.23677135</a>. '
             "The IPA soundfiles are from Wikimedia Commons, recorded by Peter Isotalo, Denelson83, "
             "Adamsa123, Halibutt and others, each under its own licence (lemmatrix/ipa/CREDITS.md). "
             "Lemmatrix™ (also written λemmatriχ™) and ɛλicit™ are trademarks of "

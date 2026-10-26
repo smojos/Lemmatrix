@@ -36,7 +36,7 @@ not under the AGPL:
 
 | List | Source | Terms |
 |---|---|---|
-| Extended African Comparative Wordlist (`eacw.tsv`) | Smolders, Joshua. 2026. *The Extended African Comparative Wordlist: A digital lexical organization system for field linguists.* (in preparation; DOI to come) | © 2026 Joshua A. G. Smolders; **CC BY 4.0** (`lemmatrix/wordlists/LICENSE-EACW.md`), with its links to the CAWL and Swadesh (the `eacw` columns) |
+| Extended African Comparative Wordlist (`eacw.tsv`) | Smolders, Joshua A. G. 2026. *The Extended African Comparative Wordlist (EACW)* [dataset]. Zenodo. https://doi.org/10.5281/zenodo.23677135 (a copy of its newest edition; its home is https://github.com/smojos/EACW) | © 2026 Joshua A. G. Smolders; **CC BY 4.0** (`lemmatrix/wordlists/LICENSE-EACW.md`), with its links to the CAWL and Swadesh (the `eacw` columns) |
 | SIL Comparative African Wordlist (`cawl.tsv`) | Snider, Keith & James Roberts. 2006. SIL Electronic Working Papers 2006-005. | Only the item numbers, section numbers and the mapping are included; its glosses are to be added once SIL International grants permission |
 | Swadesh list, 207 items (`swadesh.tsv`) | Swadesh, Morris. 1952; 1955 (see the README's References) | the list of English glosses as commonly used |
 

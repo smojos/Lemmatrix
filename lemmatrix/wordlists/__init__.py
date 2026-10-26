@@ -38,10 +38,11 @@ HERE = Path(__file__).parent
 EACW, CAWL, SWADESH = "EACW", "CAWL", "SWADESH"
 LIST_IDS = (EACW, CAWL, SWADESH)
 
-# Citations and DOIs, shown in New database's hovers, the exports and the documentation. The EACW's
-# DOI is added once it has one (Josh, 22 October: "Once I get a DOI that can be added").
+# Citations and DOIs, shown in New database's hovers, the exports and the documentation. The EACW is
+# cited as its own dataset (Josh, 26 October): https://github.com/smojos/EACW, archived on Zenodo, whose
+# DOI for all editions always points to the newest; each edition's own DOI is on its Edition below.
 CITATIONS = {
-    EACW: "Smolders, Joshua. 2026. The Extended African Comparative Wordlist: A digital lexical organization system for field linguists.",
+    EACW: "Smolders, Joshua A. G. 2026. The Extended African Comparative Wordlist (EACW) [dataset]. Zenodo.",
     CAWL: "Snider, Keith & James Roberts. 2006. SIL Comparative African Wordlist (SILCAWL). "
           "SIL Electronic Working Papers 2006-005. Dallas: SIL International. "
           "(First published in Journal of West African Languages 31(2): 73–122.)",
@@ -51,7 +52,7 @@ CITATIONS = {
              "International Journal of American Linguistics 21(2): 121–137. "
              "(The 207-item list combining his 100- and 200-word lists.)",
 }
-DOIS = {EACW: "", CAWL: "", SWADESH: ""}
+DOIS = {EACW: "10.5281/zenodo.23677135", CAWL: "", SWADESH: ""}
 NAMES = {EACW: "Extended African Comparative Wordlist",
          CAWL: "SIL Comparative African Wordlist",
          SWADESH: "Swadesh list"}
@@ -96,16 +97,28 @@ class Edition:
     note: str
     made_default: frozenset = frozenset()
     hidden: frozenset = frozenset()
+    doi: str = ""          # the edition's own Zenodo DOI (blank: not released on its own)
 
 
+# The EACW's home is the repository smojos/EACW (Josh, 26 October); eacw.tsv, cawl.tsv and swadesh.tsv
+# here are copies of its newest edition. A new edition: release it there (the tag is its date,
+# YYYY-MM-DD, and Zenodo gives it a DOI), copy the three files here, add its Edition at the end with
+# what it made default or hid and its DOI, and keep the note in step with the EACW's EDITIONS.md.
+# Databases on an older edition are then offered the update (Check wordlist integrity).
 EDITIONS = (
     Edition("2026-10-23", "The final list (2,281 published items)"),
     Edition("2026-10-24", "B044f the default, B044 hidden; C009 hidden; C012–C024 hidden, all their f and m "
             "the default (2,274 published)",
             made_default=frozenset({"B044f", "C015f", "C015m", "C019f", "C019m"}),
-            hidden=frozenset({"B044", "C009", *(f"C0{n}" for n in range(12, 25))})),
+            hidden=frozenset({"B044", "C009", *(f"C0{n}" for n in range(12, 25))}),
+            doi="10.5281/zenodo.23677136"),
 )
 EACW_VERSION = EDITIONS[-1].version
+
+
+def edition(version: str) -> "Edition | None":
+    """The edition of that date, if it is one of the EACW's."""
+    return next((e for e in EDITIONS if e.version == version), None)
 
 
 def editions_since(version: str) -> list[Edition]:

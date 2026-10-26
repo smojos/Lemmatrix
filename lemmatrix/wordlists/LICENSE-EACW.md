@@ -24,8 +24,14 @@ Swadesh list's glosses: see `THIRD-PARTY.md` for those.
 You may share and adapt the EACW for any purpose, including in other wordlists, compilations and
 software, as long as you give credit, link to the licence and say if you changed it. Credit it as:
 
-> Smolders, Joshua. 2026. *The Extended African Comparative Wordlist: A digital lexical organization system for field linguists.* Licensed under CC BY 4.0.
+> Smolders, Joshua A. G. 2026. *The Extended African Comparative Wordlist (EACW)* [dataset]. Zenodo.
+> https://doi.org/10.5281/zenodo.23677135. Licensed under CC BY 4.0.
 
-Until the EACW's own publication and DOI, it can also be cited through Lemmatrix:
-https://doi.org/10.5281/zenodo.23512411. Once the EACW has its own DOI, that one is the one to
-cite.
+That DOI covers all editions and always points to the newest; each edition also has its own
+(2026-10-24: https://doi.org/10.5281/zenodo.23677136).
+
+## Where the EACW lives
+
+The EACW's own home is **https://github.com/smojos/EACW**, archived on Zenodo. The files in this
+folder are copies of one of its editions (the newest in `wordlists.EDITIONS`), shipped so that
+Lemmatrix works offline; corrections and suggestions go to that repository.
