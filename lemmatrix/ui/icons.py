@@ -31,6 +31,7 @@ BLACK = QColor("#1b1b1b")
 
 WIDE = {"gear-cells": 1.6, "gear-columns": 1.6, "gear-matrix": 1.6, "move-token": 1.6, "lemma-token": 1.6, "text-token": 1.3, "hide-empty": 1.6}   # icons wider than tall: width as a multiple of height
 PRAAT_BEIGE = QColor("#909068")
+GREEN_, RED_, PURPLE_, BLUE_, PRAAT_BEIGE_ = GREEN, RED, PURPLE, BLUE, PRAAT_BEIGE   # as they are
 
 
 # Josh's Texts and utterances icon (Inkscape, 20 October), its letters (Charis SIL Bold) as outlines
@@ -114,6 +115,7 @@ def funnel(box: QRectF) -> QPolygonF:
 
 
 def _draw(name: str, s: int, p: QPainter, colour: QColor | None = None, colour2: QColor | None = None):
+    GREEN, RED, PURPLE, BLUE, PRAAT_BEIGE = _universal()   # (theme coloured if the setting says so)
     w = max(1.6, s * 0.11)
     if name == "notebook":                       # a notepad in the theme colour
         _notepad(p, s, colour or BLUE)
@@ -683,9 +685,58 @@ def icon_size(name: str, size: int):
     return QSize(round(size * WIDE.get(name, 1.0)), size)
 
 
-@lru_cache(maxsize=None)
+def _universal():
+    """The universal buttons' colours (Add green, Delete red, Record purple, Update blue, Praat
+    beige), or theme-coloured versions of them (Settings → Display → All buttons theme coloured)."""
+    cs = (GREEN_, RED_, PURPLE_, BLUE_, PRAAT_BEIGE_)
+    from . import theme
+    return tuple(theme.as_theme(c) for c in cs) if theme.themed_buttons() else cs
+
+
 def icon(name: str, size: int = 22, colour: str | None = None) -> QIcon:
     """A drawn icon; some (the notebook's) take a colour, e.g. the theme's ("a;b" gives a second)."""
+    from . import theme
+    ic = _icon(name, size, colour, theme.accent().name() if theme.themed_buttons() else "")
+    _SPECS[ic.cacheKey()] = (name, size, colour)
+    return ic
+
+
+_drawn_as = None            # (themed buttons, accent) the open windows' icons were drawn with
+_SPECS: dict = {}           # an icon's cache key → how it was drawn, to draw it again (refresh_all)
+
+
+def refresh_all():
+    """Draw every drawn icon on a button or menu item again (All buttons theme coloured switched
+    on or off, or the accent changed): open windows follow at once, not only new ones."""
+    from PySide6.QtGui import QAction
+    from PySide6.QtWidgets import QAbstractButton, QApplication
+    global _drawn_as
+    from . import theme
+    now = (theme.themed_buttons(), theme.accent().name())
+    if _drawn_as is None or now == _drawn_as:  # nothing to draw again (first look, or no change)
+        _drawn_as = now
+        return
+    _drawn_as = now
+    app = QApplication.instance()
+    if app is None:
+        return
+    for top in app.topLevelWidgets():
+        for w in [top, *top.findChildren(QAbstractButton), *top.findChildren(QAction)]:
+            get = getattr(w, "icon", None)
+            if not callable(get):
+                continue
+            try:
+                ic = get()
+            except TypeError:
+                continue
+            spec = _SPECS.get(ic.cacheKey()) if isinstance(ic, QIcon) else None   # (a message box's
+            if spec is not None:                                                  #  icon() is its kind)
+                w.setIcon(icon(*spec))
+
+
+@lru_cache(maxsize=None)
+def _icon(name: str, size: int, colour: str | None, themed: str) -> QIcon:
+    """icon(), remembered; `themed` (the accent, or "") keeps the theme-coloured buttons apart."""
     pm, p = _pixmap(size, round(size * WIDE[name]) if name in WIDE else None)
     if name in ("elicit", "elicit-waiting"):     # Josh's drawings; colour: the theme colour for his teal
         from PySide6.QtCore import QByteArray

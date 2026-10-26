@@ -2745,6 +2745,8 @@ class MainWindow(QMainWindow):
     # ========================================================= theme, view
     def _restyle(self):
         """Colours that follow the theme and accent (the data views stay black on white)."""
+        from . import icons as _icons
+        _icons.refresh_all()                      # the drawn icons (All buttons theme coloured, the accent)
         self._notebook_icons()
         self.comparison.restyle()
         self.theme_btn.setIcon(icon("lightbulb", 22, "#e8e8e8" if theme.dark() else "#1b1b1b"))

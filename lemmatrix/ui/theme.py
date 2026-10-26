@@ -15,7 +15,10 @@ from PySide6.QtWidgets import QApplication
 LIGHT, DARK = "light", "dark"
 DEFAULT_ACCENT = "#198583"          # the teal of the Lemmatrix icon (Josh, 20 October; #198768 before)
 
-_state = {"mode": LIGHT, "accent": QColor(DEFAULT_ACCENT), "search": None, "pitch": None}
+_state = {"mode": LIGHT, "accent": QColor(DEFAULT_ACCENT), "search": None, "pitch": None,
+          "buttons": False, "bookmark": None}
+
+DEFAULT_BOOKMARK = "#d4a017"                      # a text's bookmark: golden (idea 32)
 
 # The search marks' yellow (Settings → Display → Search highlight; Josh, 26 October): the light
 # theme's, multiplied under the text; on the dark theme a darker one, screened.
@@ -225,7 +228,8 @@ def as_data(widget):
 
 # ---- applying ----------------------------------------------------------------
 
-def configure(theme_mode: str, accent_colour: str, search_colour: str = "", pitch_colour: str = ""):
+def configure(theme_mode: str, accent_colour: str, search_colour: str = "", pitch_colour: str = "",
+              themed_buttons: bool = False, bookmark_colour: str = ""):
     """The theme, the accent, and two colours of one's own ("" = the default): the search marks
     and the pitch traces (Settings → Display and → Pitch, this computer; Josh, 26 October)."""
     _state["mode"] = DARK if theme_mode == DARK else LIGHT
@@ -235,6 +239,27 @@ def configure(theme_mode: str, accent_colour: str, search_colour: str = "", pitc
     _state["search"] = s if s.isValid() and s.name().lower() != DEFAULT_SEARCH else None
     t = QColor(pitch_colour) if pitch_colour else QColor()
     _state["pitch"] = t if t.isValid() else None
+    _state["buttons"] = bool(themed_buttons)
+    b = QColor(bookmark_colour) if bookmark_colour else QColor()
+    _state["bookmark"] = b if b.isValid() else None
+
+
+def themed_buttons() -> bool:
+    """Settings → Display → All buttons theme coloured (Josh, 26 October)."""
+    return _state["buttons"]
+
+
+def as_theme(c: QColor) -> QColor:
+    """A colour made the theme colour's hue and saturation, keeping its own lightness: Add's green,
+    Delete's red, Update's blue, Record's purple and Praat's beige as theme-coloured versions of
+    themselves."""
+    a = accent()
+    return QColor.fromHslF(max(0.0, a.hslHueF()), a.hslSaturationF(), c.lightnessF())
+
+
+def bookmark() -> QColor:
+    """A text's bookmark (Settings → Display → Bookmark colour; golden by default)."""
+    return QColor(_state["bookmark"]) if _state["bookmark"] is not None else QColor(DEFAULT_BOOKMARK)
 
 
 def apply(app: QApplication | None = None):
@@ -252,5 +277,6 @@ def apply(app: QApplication | None = None):
 
 def from_prefs(prefs, app: QApplication | None = None):
     configure(prefs.theme, prefs.accent, getattr(prefs, "search_colour", ""),
-              prefs.pitch_colour if getattr(prefs, "pitch_colour_on", False) else "")
+              prefs.pitch_colour if getattr(prefs, "pitch_colour_on", False) else "",
+              getattr(prefs, "themed_buttons", False), getattr(prefs, "bookmark_colour", ""))
     apply(app)

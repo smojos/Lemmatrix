@@ -37,7 +37,6 @@ from .widgets import ipa_font
 
 MARGIN = 40              # the buffer on the left, with room for the bookmark (idea 32; 24 before)
 BOOKMARK_W = 14          # the bookmark ribbon in the margin
-GOLD = "#d4a017"
 SIDE_W = 260             # time and Comment, pinned at the right
 PAD = 8                  # inside a cell, above and below
 GAP = 16                 # between aligned columns
@@ -422,7 +421,7 @@ class LinesView(WheelZoom, QAbstractScrollArea):
                            QPointF(r.right(), r.bottom()), QPointF(r.center().x(), r.bottom() - notch),
                            QPointF(r.left(), r.bottom())])
         if golden:
-            gold = QColor(GOLD)
+            gold = theme.bookmark()                 # Settings → Display → Bookmark colour
             p.setPen(QPen(gold.darker(130), 1))
             p.setBrush(gold)
         else:

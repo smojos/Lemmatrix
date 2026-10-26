@@ -871,6 +871,12 @@ class PreferencesDialog(QDialog):
         self.search_colour = ColourButton(prefs.search_colour, theme.DEFAULT_SEARCH,
                                           "What every search bar marks in the cells, lines and the XML "
                                           "viewer (darker on the dark theme). Default: yellow")
+        self.bookmark_colour = ColourButton(prefs.bookmark_colour, theme.DEFAULT_BOOKMARK,
+                                            "A text's bookmark in the margin of its lines (golden by default)")
+        self.themed_buttons = QCheckBox("All buttons theme coloured")
+        self.themed_buttons.setChecked(prefs.themed_buttons)
+        self.themed_buttons.setToolTip("Add and Play's green, Delete's red, Update's blue, Record's purple and "
+                                       "Praat's beige become theme-coloured versions of themselves")
         self.pitch_own = QCheckBox("Pitch traces in a colour of their own")
         self.pitch_own.setChecked(prefs.pitch_colour_on)
         self.pitch_own.setToolTip("Deselected, the pitch traces are drawn in the accent colour "
@@ -993,6 +999,8 @@ class PreferencesDialog(QDialog):
             self.badges[key] = box
         page("Display", [("This computer", [("Theme", self.theme), ("Accent colour", self.accent),
                                             ("Search highlight", self.search_colour),
+                                            ("Bookmark colour", self.bookmark_colour),
+                                            (None, self.themed_buttons),
                                             ("IPA font size", self.ipa),
                                             ("Splash screen", self.splash), (None, self.abbreviate)]),
                          ("Badges on the app bar (this computer)", [(None, b) for b in self.badges.values()]),
@@ -1120,6 +1128,8 @@ class PreferencesDialog(QDialog):
         p.theme = self.theme.currentData()
         p.accent = self.accent.colour()
         p.search_colour = self.search_colour.colour()
+        p.bookmark_colour = self.bookmark_colour.colour()
+        p.themed_buttons = self.themed_buttons.isChecked()
         p.pitch_colour_on = self.pitch_own.isChecked()
         p.pitch_colour = self.pitch_colour.colour()
         p.praat_path = self.praat.text().strip()

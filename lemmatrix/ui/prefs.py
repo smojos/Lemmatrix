@@ -252,6 +252,21 @@ class Prefs:
     def search_colour(self, v): self.q.setValue("display/search_colour", v)
 
     @property
+    def bookmark_colour(self) -> str:
+        from .theme import DEFAULT_BOOKMARK
+        return self._get("display/bookmark_colour", DEFAULT_BOOKMARK)
+
+    @bookmark_colour.setter
+    def bookmark_colour(self, v): self.q.setValue("display/bookmark_colour", v)
+
+    @property
+    def themed_buttons(self) -> bool:
+        return self.get_bool("display/themed_buttons", False)
+
+    @themed_buttons.setter
+    def themed_buttons(self, v): self.q.setValue("display/themed_buttons", bool(v))
+
+    @property
     def pitch_colour_on(self) -> bool:
         return self.get_bool("pitch/own_colour", False)
 
