@@ -374,7 +374,7 @@ See also [CITATION.cff](CITATION.cff) (GitHub's "Cite this repository" button us
 - Dixon, R. M. W. 2010. *Basic Linguistic Theory*, Vol. 1: *Methodology*. Oxford: Oxford
   University Press. The default reference categories (A Human body … V Verbs) are inspired by
   p. 296. They are the categories of the Extended African Comparative Wordlist.
-- Smolders, Joshua. 2026. *The Extended African Comparative Wordlist: A lexical organization system for field linguists.* The wordlist Lemmatrix's
+- Smolders, Joshua. 2026. *The Extended African Comparative Wordlist: A digital lexical organization system for field linguists.* The wordlist Lemmatrix's
   reference categories come from, inspired by Dixon (2010), Snider & Roberts (2006) and Swadesh
   (1952, 1955).
 - Snider, Keith & James Roberts. 2006. *SIL Comparative African Wordlist (SILCAWL).* SIL

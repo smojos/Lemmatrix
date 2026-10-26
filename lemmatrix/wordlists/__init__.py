@@ -41,7 +41,7 @@ LIST_IDS = (EACW, CAWL, SWADESH)
 # Citations and DOIs, shown in New database's hovers, the exports and the documentation. The EACW's
 # DOI is added once it has one (Josh, 22 October: "Once I get a DOI that can be added").
 CITATIONS = {
-    EACW: "Smolders, Joshua. 2026. The Extended African Comparative Wordlist: A lexical organization system for field linguists.",
+    EACW: "Smolders, Joshua. 2026. The Extended African Comparative Wordlist: A digital lexical organization system for field linguists.",
     CAWL: "Snider, Keith & James Roberts. 2006. SIL Comparative African Wordlist (SILCAWL). "
           "SIL Electronic Working Papers 2006-005. Dallas: SIL International. "
           "(First published in Journal of West African Languages 31(2): 73–122.)",

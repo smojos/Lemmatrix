@@ -360,5 +360,5 @@ def test_the_wordlist_choice_hovers(app):
     d = WordlistChoice()
     assert d.choice() == wl.EACW                                 # recommended
     tips = {b.property("list"): b.toolTip() for b in d.group.buttons()}
-    assert tips[wl.EACW].startswith("Smolders, Joshua. 2026. The Extended African Comparative Wordlist: A lexical organization system for field linguists.")
+    assert tips[wl.EACW].startswith("Smolders, Joshua. 2026. The Extended African Comparative Wordlist: A digital lexical organization system for field linguists.")
     assert "Snider" in tips[wl.CAWL] and "Swadesh" in tips[wl.SWADESH]
