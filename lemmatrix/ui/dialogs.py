@@ -1668,4 +1668,15 @@ class TagStructureDialog(QDialog):
                                          "couldn't be told apart:\n" + "\n".join(dups) +
                                          "\n\nKeep them anyway?", "Keep them", "Go back"):
             return False
+        # Two tokens of a lemma that would get one soundfile name (a new default has no code; Josh,
+        # 26 October): Add Example tags, Choose for each (merge where nothing is lost), or Cancel
+        from .. import tagclash
+        from . import tagclash_dialog
+        self.clash_plan = None
+        clashes = tagclash.find(self.db, ts, self.renames(), self.deleted_tags())
+        if clashes:
+            choice = tagclash_dialog.ask(self, self.db, clashes)
+            if choice is None:
+                return False
+            self.clash_plan = (clashes, choice)
         return True

@@ -4167,7 +4167,18 @@ class MainWindow(QMainWindow):
             for t in e.tokens:
                 if any(x in tag_renames for x in t.tags):
                     t.tags = s.tags.sort([tag_renames.get(x, x) for x in t.tags])
-        if tag_renames or deleted or any(value_renames.values()):
+        fixed = (0, 0)
+        plan = getattr(dlg, "clash_plan", None)     # tokens that would share a name (tagclash)
+        if plan:
+            from .. import tagclash
+            fixed = tagclash.apply(db, *plan)
+            dlg.clash_plan = None
+            tagged, merged = fixed
+            self.statusBar().showMessage(
+                "Same soundfile names avoided: " + ", ".join(x for x in (
+                    f"{tagged} Example tag{'s' if tagged != 1 else ''} added" if tagged else "",
+                    f"{merged} pair{'s' if merged != 1 else ''} merged" if merged else "") if x) + ".", 8000)
+        if tag_renames or deleted or any(value_renames.values()) or any(fixed):
             self.doc.undo.clear()     # renames can't be undone safely
             for m in s.matrices:                      # saved matrices follow too
                 m.rename(tag_renames)
