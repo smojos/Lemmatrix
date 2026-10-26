@@ -20,7 +20,8 @@ head words, and on matrices that let you look at them in meaningful paradigms an
 It has a second spelling, **λemmatriχ**, with a lambda at the beginning and a chi at the end.
 Replacing the letters L and X with these letters gives the idea of the Y and the X axes: a
 lowercase lambda (λ) looks like an upside-down Y, and the chi (χ) is the X. And in Lemmatrix
-you can flip the matrices, swapping the X and Y axes, conveniently.
+you can flip the matrices, swapping the X and Y axes, conveniently. That is the Easter egg:
+the Y is already upside down, as if its table had just been flipped.
 
 ## Your data, and your own work
 
