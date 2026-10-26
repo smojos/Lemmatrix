@@ -59,3 +59,23 @@ def test_the_view_windows_and_the_notebook_dock_too(win):
 
 def test_the_strip_is_under_the_working_panels(win):
     assert win.dock.height() == 30 and win.dock.isVisibleTo(win)
+
+
+def test_it_comes_back_as_it_was_maximised_or_at_its_own_size(win):
+    """Debug, 26 October (Josh): the dock brought a maximised window back small."""
+    from PySide6.QtCore import QRect
+    w = win.open_cogitate()
+    w.showMaximized()
+    QApplication.processEvents()
+    _minimise(w)
+    win.dock.buttons[id(w)].click()
+    QApplication.processEvents()
+    assert w.isMaximized() and not w.isMinimized()
+    w.showNormal()
+    w.setGeometry(QRect(140, 120, 777, 600))
+    QApplication.processEvents()
+    was = w.geometry()
+    _minimise(w)
+    win.dock.restore(w)
+    QApplication.processEvents()
+    assert not w.isMaximized() and w.geometry() == was

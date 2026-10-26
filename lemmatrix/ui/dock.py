@@ -143,7 +143,18 @@ class MinimiseDock(QWidget):
             b.deleteLater()
 
     def restore(self, window: QWidget):
-        window.showNormal()
+        """Back as it was when minimised (Josh, 26 October: showNormal brought a maximised or full
+        screen window back small, and on its own screen at its plain size): maximised, full screen,
+        or at its own size and place, on whichever screen it was."""
+        state, normal = self._filter.before.get(id(window), (Qt.WindowNoState, QRect()))
+        if state & Qt.WindowFullScreen:
+            window.showFullScreen()
+        elif state & Qt.WindowMaximized:
+            window.showMaximized()
+        else:
+            window.showNormal()
+            if normal.isValid():
+                window.setGeometry(normal)
         window.raise_()
         window.activateWindow()
         self.remove(window)
@@ -199,6 +210,7 @@ class _StateFilter(QObject):
         super().__init__(dock)
         self.dock = dock
         self.last: dict[int, QRect] = {}          # each window's place before it was minimised
+        self.before: dict[int, tuple] = {}        # its state (maximised, full screen) and normal size then
 
     def eventFilter(self, obj, event):
         t = event.type()
@@ -206,6 +218,8 @@ class _StateFilter(QObject):
             self.last[id(obj)] = obj.frameGeometry()
         elif t == QEvent.WindowStateChange and isinstance(obj, QWidget):
             if obj.isMinimized():
+                old = event.oldState() if hasattr(event, "oldState") else Qt.WindowNoState
+                self.before[id(obj)] = (old & ~Qt.WindowMinimized, QRect(obj.normalGeometry()))
                 self.dock.add(obj, self.last.get(id(obj)) or obj.frameGeometry())
             else:
                 self.dock.remove(obj)
