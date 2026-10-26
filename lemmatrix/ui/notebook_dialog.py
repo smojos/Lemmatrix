@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCalendarWidget, QCheckBox, QC
 from .. import matrix as mx, notebook as nbmod
 from ..model import today
 from . import chiprow as chips
+from . import widgets as _w  # (ask: buttons that say what they do)
 from . import searchmark, theme
 from .icons import icon
 from .widgets import ipa_font, meaning
@@ -655,10 +656,9 @@ class NotebookDialog(QDialog):
             what.append(f"{len(s.snapshots)} snapshot(s)")   # the audit, 25 October)
         if s.hypotheses:
             what.append(f"the record of {len(s.hypotheses)} hypothesis(es) worked on that day (the hypotheses stay)")
-        if QMessageBox.question(self, "Delete note", f"Delete the note for {s.date}" +
+        if not _w.ask(self, "Delete note", f"Delete the note for {s.date}" +
                                 (f", with {', '.join(what)}" if what else "") +
-                                "?\n\nThe lemmas, tokens and their comments stay in the database.") \
-                != QMessageBox.Yes:
+                                "?\n\nThe lemmas, tokens and their comments stay in the database.", "Delete note"):
             return
         self.book.remove(s)
         self._changed()
@@ -672,8 +672,8 @@ class NotebookDialog(QDialog):
         if date in taken:
             self.search.clear()
             self._fill_days(date)
-        elif QMessageBox.question(self, "Notebook", f"There are no notes for {date}. Add a note for "
-                                  "that day?") == QMessageBox.Yes:
+        elif _w.ask(self, "Notebook", f"There are no notes for {date}. Add a note for "
+                                  "that day?", "Add a note"):
             self.add_note(date)
 
     def _fill_texts(self):
@@ -875,7 +875,7 @@ class ItemActions:
             return
         s, q = cur
         one = nbmod.name(self.kind, title=False)
-        if QMessageBox.question(self, f"Delete {one}", f"Delete this {one}?\n\n{q.text}") != QMessageBox.Yes:
+        if not _w.ask(self, f"Delete {one}", f"Delete this {one}?\n\n{q.text}", f"Delete {nbmod.name(self.kind, title=self.kind == nbmod.TODO)}"):
             return
         nbmod.items(s, self.kind).remove(q)
         self._after()
@@ -1397,7 +1397,7 @@ class SnapshotActions:
         if citing:
             msg += (f"\n\nIt is cited by {', '.join(dict.fromkeys(citing))}. Those links keep their own "
                     "copy, so they still restore the view (shown grey: deleted from the list).")
-        if QMessageBox.question(self, "Delete snapshot", msg) != QMessageBox.Yes:
+        if not _w.ask(self, "Delete snapshot", msg, "Delete snapshot"):
             return
         ident = snap.id
 

@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (QComboBox, QDialog, QHBoxLayout, QLabel, QLineEdi
 
 from .. import audio, segments
 from . import theme
+from . import widgets as _w  # (ask: buttons that say what they do)
 
 
 
@@ -151,8 +152,8 @@ class SegmentRecordDialog(QDialog):
             return
         target = segments.folder(self.db) / self.expected()
         # only ever over the same sequence by the same speaker, after asking (Josh)
-        if target.exists() and QMessageBox.question(
-                self, "Record", f"Replace {target.name}? The old one goes to the Recycle Bin.") != QMessageBox.Yes:
+        if target.exists() and not _w.ask(
+                self, "Record", f"Replace {target.name}? The old one goes to the Recycle Bin.", "Replace it"):
             return
         self.rec_panel.start()
 
@@ -196,9 +197,9 @@ class SegmentRecordDialog(QDialog):
     def _delete(self, ask: bool = True) -> bool:
         if self.file is None or not self.file.exists():
             return False
-        if ask and self.main.prefs.confirm_delete and QMessageBox.question(
+        if ask and self.main.prefs.confirm_delete and not _w.ask(
                 self, "Delete recording", f"Delete {self.file.name}? It will go to the Recycle Bin. "
-                "Lemmatrix's own soundfile plays again where there is one.") != QMessageBox.Yes:
+                "Lemmatrix's own soundfile plays again where there is one.", "Delete recording"):
             return False
         self.main.player.stop()
         if not QFile.moveToTrash(str(self.file)):
@@ -219,9 +220,9 @@ class SegmentRecordDialog(QDialog):
         if self.file == target:
             return True
         if target.exists():
-            if ask and QMessageBox.question(self, "Update file name",
+            if ask and not _w.ask(self, "Update file name",
                                             f"{target.name} is already there. Replace it? (It goes to the "
-                                            "Recycle Bin.)") != QMessageBox.Yes:
+                                            "Recycle Bin.)", "Replace it"):
                 return False
             QFile.moveToTrash(str(target))
         try:

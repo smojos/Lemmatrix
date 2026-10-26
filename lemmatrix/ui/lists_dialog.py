@@ -26,6 +26,7 @@ from ..model import (LEMMAS, TEXTS, UTTERANCES, Database, ListItem, Location, Pe
                      forbidden_in, nfc)
 from .. import defaults, resets
 from . import theme
+from . import widgets as _w  # (ask: buttons that say what they do)
 from .chiprow import LOCATIONS, PARTICIPANTS, RESEARCHERS, consent_path
 from .dialogs import TagStructureDialog
 from .fields_dialog import ListEditor
@@ -185,8 +186,8 @@ class PeopleEditor(QWidget):
         code = self._text(r, 0)
         original = self.table.item(r, 0).data(ORIGINAL) or ""
         n = self.used(original) if original else ""
-        if n and QMessageBox.question(self, "Remove", f"{code} is {n}.\n\nRemove them from the list anyway? "
-                                      "Those keep the code.") != QMessageBox.Yes:
+        if n and not _w.ask(self, "Remove", f"{code} is {n}.\n\nRemove them from the list anyway? "
+                                      "Those keep the code.", "Remove anyway"):
             return
         self.table.removeRow(r)
 
@@ -382,9 +383,9 @@ class LocationEditor(QWidget):
         if cur is None:
             return
         n = sum(self.used(k) for k in self._keys_under(cur))
-        if n and QMessageBox.question(self, "Remove", f"{cur.text(0)} (or a place in it) is in {n} "
+        if n and not _w.ask(self, "Remove", f"{cur.text(0)} (or a place in it) is in {n} "
                                       "notebook session(s), which keep it.\n\nRemove it from the list "
-                                      "anyway?") != QMessageBox.Yes:
+                                      "anyway?", "Remove anyway"):
             return
         self._current = None
         (cur.parent() or self.tree.invisibleRootItem()).removeChild(cur)

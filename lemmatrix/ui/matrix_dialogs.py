@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QButtonGroup, QDialog, QDialog
 from .. import matrix as mx
 from ..model import Database
 from . import theme
+from . import widgets as _w  # (ask: buttons that say what they do)
 from .icons import icon
 from .tagpanel import TagPanel
 from .widgets import chip_metrics, paint_chips
@@ -397,6 +398,6 @@ def ask_matrix_name(parent, existing: list[str], current: str = "", title: str =
         if not replace:
             QMessageBox.information(parent, title, f"There is already a matrix called “{name}”.")
             return None
-        if QMessageBox.question(parent, title, f"Replace the saved matrix “{name}”?") != QMessageBox.Yes:
+        if not _w.ask(parent, title, f"Replace the saved matrix “{name}”?", "Replace matrix"):
             return None
     return name

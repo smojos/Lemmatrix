@@ -427,6 +427,25 @@ class FilterHeader(QHeaderView):
         super().mousePressEvent(event)
 
 
+def choose(parent, title: str, text: str, choices: list[str], cancel: str | None = "Cancel",
+           escape: int | None = None) -> int | None:
+    """A question with several answers, each a button that says what it does (the audit, section 8,
+    step 8; Josh, 26 October): the index of the one clicked, or None for Cancel (or Esc, unless
+    `escape` names the answer Esc gives, for an either/or with no Cancel). The first is the default."""
+    from PySide6.QtWidgets import QMessageBox
+    box = QMessageBox(QMessageBox.Question, title, text, parent=parent)
+    buttons = [box.addButton(c, QMessageBox.AcceptRole) for c in choices]
+    stop = box.addButton(cancel, QMessageBox.RejectRole) if cancel else None
+    box.setDefaultButton(buttons[0])
+    if stop is None and escape is not None:
+        box.setEscapeButton(buttons[escape])
+    box.exec()
+    clicked = box.clickedButton()
+    if clicked in buttons:
+        return buttons.index(clicked)
+    return escape if stop is None else None
+
+
 def ask(parent, title: str, text: str, go: str, stop: str = "Cancel", icon=None) -> bool:
     """A question whose buttons say what they do ("Reset to defaults" / "Cancel"), for when the
     text doesn't read as a plain yes-or-no question. True if `go` was clicked (Josh, 20 October:

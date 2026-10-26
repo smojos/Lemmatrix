@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QDialog, QDialogBut
 
 from .. import audio, pull, storage
 from . import theme
+from . import widgets as _w  # (ask: buttons that say what they do)
 from .widgets import ipa_font
 
 STATUS_LABELS = {pull.OK: "the same", pull.CHANGED: "changed", pull.MOVED: "times moved",
@@ -186,9 +187,9 @@ def unlink_utterances(main, parent, checks: list[pull.Check]) -> bool:
         return False
     n = len(checks)
     which = checks[0].utterance.ref if n == 1 else f"these {n} utterances"
-    if QMessageBox.question(parent, "Unlink from the text",
+    if not _w.ask(parent, "Unlink from the text",
                             f"Unlink {which} from the text? The fields and recordings stay; Play in context, "
-                            "Show the text and Pull from source won't be there any more.") != QMessageBox.Yes:
+                            "Show the text and Pull from source won't be there any more.", "Unlink"):
         return False
     pairs = [(c.utterance, pull.unlinked(c)) for c in checks]
     main.doc.apply_changes(f"Unlink {checks[0].utterance.ref}" if n == 1 else f"Unlink {n} utterances",

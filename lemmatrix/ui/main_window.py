@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QF
 
 from .. import __version__, audio, filters as fl, layout, lock as lockmod, matrix as mx, storage
 from . import theme
+from . import widgets as _w  # (ask: buttons that say what they do)
 
 
 def about_text() -> str:
@@ -2228,10 +2229,9 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Full backup", "Save the database first.")
             return False
         if self.doc.dirty:
-            r = QMessageBox.question(self, "Full backup", "Save the database first, so the backup has "
-                                     "your latest changes?",
-                                     QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
-            if r == QMessageBox.Cancel or (r == QMessageBox.Yes and not self.save()):
+            r = _w.choose(self, "Full backup", "Save the database first, so the backup has your latest "
+                          "changes?", ["Save, then back up", "Back up without saving"])
+            if r is None or (r == 0 and not self.save()):
                 return False
         main = layout.main_folder(db.path)
         start = Path(self.prefs.full_backup_folder) if self.prefs.full_backup_folder else \
@@ -3242,8 +3242,7 @@ class MainWindow(QMainWindow):
         if not cfg.name:
             QMessageBox.information(self, "Delete matrix", "Choose a saved matrix first.")
             return
-        if QMessageBox.question(self, "Delete matrix", f"Delete the saved matrix “{cfg.name}”?") \
-                != QMessageBox.Yes:
+        if not _w.ask(self, "Delete matrix", f"Delete the saved matrix “{cfg.name}”?", "Delete matrix"):
             return
         mats = self.doc.db.settings.matrices
         mats[:] = [m for m in mats if not (m.kind == cfg.kind and m.name == cfg.name)]
@@ -3421,10 +3420,10 @@ class MainWindow(QMainWindow):
             return False
         gone = {id(t) for _, t in pairs_}
         lemmas = {id(e) for e, _ in pairs_}
-        if QMessageBox.question(self, "Delete tokens",
+        if not _w.ask(self, "Delete tokens",
                                 f"Delete {len(pairs_)} tokens of {len(lemmas)} lemma(s)?\n"
                                 "Their recordings go to the Recycle Bin when the database is closed; "
-                                "until then, undo brings them back.") != QMessageBox.Yes:
+                                "until then, undo brings them back.", f"Delete {len(pairs_)} tokens"):
             return False
         folder = storage.sound_folder(db)
         renames = []
@@ -3471,7 +3470,7 @@ class MainWindow(QMainWindow):
                    "until then, undo brings it back."
         elif shared:
             msg += f"\nIts recording ({t.file}) stays: another token uses it too."
-        if QMessageBox.question(self, "Delete token", msg) != QMessageBox.Yes:
+        if not _w.ask(self, "Delete token", msg, "Delete token"):
             return
         renames = []
         if with_file:
@@ -3971,10 +3970,9 @@ class MainWindow(QMainWindow):
         if len(sel) > 1:                          # several selected (idea 64): asked once, one undo step
             n = sum(len(e.tokens) for e in sel)
             refs = ", ".join(e.ref for e in sel[:8]) + (" …" if len(sel) > 8 else "")
-            if QMessageBox.question(self, "Delete lemmas",
+            if not _w.ask(self, "Delete lemmas",
                                     f"Delete {len(sel)} lemmas ({refs}) and their {n} token(s)?\n"
-                                    "Their recordings stay in the sound folder. You can undo this.") \
-                    != QMessageBox.Yes:
+                                    "Their recordings stay in the sound folder. You can undo this.", f"Delete {len(sel)} lemmas"):
                 return
             gone = set(map(id, sel))
             self.doc.restructure(f"Delete {len(sel)} lemmas", [e for e in self.doc.db.entries if id(e) not in gone])
@@ -3983,10 +3981,9 @@ class MainWindow(QMainWindow):
         if e is None:
             return
         n = len(e.tokens)
-        if QMessageBox.question(self, "Delete lemma",
+        if not _w.ask(self, "Delete lemma",
                                 f"Delete {e.ref} {self.doc.db.lemma(e)} and its {n} token(s)?\n"
-                                "Its recordings stay in the sound folder. You can undo this.") \
-                != QMessageBox.Yes:
+                                "Its recordings stay in the sound folder. You can undo this.", "Delete lemma"):
             return
         self.doc.delete_entry(e)
 
@@ -4299,8 +4296,8 @@ class MainWindow(QMainWindow):
             if ask:
                 QMessageBox.information(self, "Soundfile names", "All soundfile names are up to date.")
             return
-        if ask and QMessageBox.question(self, "Soundfile names",
-                                        f"Rename {len(stale)} recordings to match their tokens?") != QMessageBox.Yes:
+        if ask and not _w.ask(self, "Soundfile names",
+                                        f"Rename {len(stale)} recordings to match their tokens?", f"Rename {len(stale)} recording{'s' if len(stale) != 1 else ''}"):
             return
         # One undo step for the lot. Every recording first moves to a temporary name, then to its
         # new one, so names can swap or chain (A → B while B → C) without getting in the way.
@@ -4446,8 +4443,8 @@ class MainWindow(QMainWindow):
         if not found:
             QMessageBox.information(self, "Missing recordings", msg)
             return
-        if QMessageBox.question(self, "Missing recordings",
-                                msg + "\n\nLink the tokens to these recordings?") != QMessageBox.Yes:
+        if not _w.ask(self, "Missing recordings",
+                                msg + "\n\nLink the tokens to these recordings?", "Link them"):
             return
         for e, i, name, _ in found:
             self.doc.edit_entry(e, lambda en, i=i, name=name: setattr(en.tokens[i], "file", name),
@@ -4493,8 +4490,8 @@ class MainWindow(QMainWindow):
         return plan, problems
 
     def _rename_texts(self, texts, ask: bool):
-        if ask and QMessageBox.question(self, "Soundfile names", f"Rename the files of {len(texts)} "
-                                        "text(s) to match the pattern?") != QMessageBox.Yes:
+        if ask and not _w.ask(self, "Soundfile names", f"Rename the files of {len(texts)} "
+                                        "text(s) to match the pattern?", (f"Rename {len(texts)} texts' files" if len(texts) != 1 else "Rename the text's files")):
             return
         plan, problems = self._text_plan(texts, set())
         renames = [m for _, rn in plan for m in rn]
@@ -4637,10 +4634,10 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Citation tokens", "Every lemma has its citation token.")
             return
         refs = ", ".join(e.ref for e, _ in pairs[:10]) + (" …" if len(pairs) > 10 else "")
-        if QMessageBox.question(self, "Citation tokens",
+        if not _w.ask(self, "Citation tokens",
                                 f"{len(pairs)} lemma{'s have' if len(pairs) != 1 else ' has'} no citation token "
                                 f"(a token without tags): {refs}\n\nGive each an empty one? It has no speaker "
-                                "or date until it is recorded. You can undo this.") != QMessageBox.Yes:
+                                "or date until it is recorded. You can undo this.", f"Add {len(pairs)} citation token{'s' if len(pairs) != 1 else ''}"):
             return
         self.doc.apply_changes(f"Citation tokens for {len(pairs)} lemmas", pairs, stamp=False)
         self.statusBar().showMessage(f"Gave {len(pairs)} lemma(s) an empty citation token.", 8000)
@@ -4739,12 +4736,10 @@ class MainWindow(QMainWindow):
             others.append(p)
         if others:
             target = p.parent / p.stem / p.name
-            r = QMessageBox.question(
-                self, title, f"{p.parent.name} already has a database in it ({others[0].name}). Each "
-                "database needs a folder of its own, since its recordings, backups and documentation "
-                f"go in it.\n\nMake a folder called “{p.stem}” there for the new database?",
-                QMessageBox.Yes | QMessageBox.Cancel)
-            if r != QMessageBox.Yes:
+            if not _w.ask(self, title, f"{p.parent.name} already has a database in it ({others[0].name}). Each "
+                          "database needs a folder of its own, since its recordings, backups and documentation "
+                          f"go in it.\n\nMake a folder called “{p.stem}” there for the new database?",
+                          "Make the folder"):
                 return ""
             if target.exists():
                 QMessageBox.warning(self, title, f"{target} already exists.")
@@ -4782,8 +4777,8 @@ class MainWindow(QMainWindow):
             return
         dst = target / "Sample.xml"
         if dst.exists():
-            if QMessageBox.question(self, "Sample", f"{dst} already exists. Replace it with a fresh "
-                                    "copy?") != QMessageBox.Yes:
+            if not _w.ask(self, "Sample", f"{dst} already exists. Replace it with a fresh "
+                                    "copy?", "Replace with a fresh copy", "Open the one there"):
                 self.open_file(str(dst))
                 return
             # first the unsaved changes, and let go of the sample if it is the one open: Save could
@@ -4826,8 +4821,8 @@ class MainWindow(QMainWindow):
         target = Path.home() / "Documents" / "Lemmatrix Elicit Test"
         dst = target / ELICIT_TEST.name
         if dst.exists():
-            if QMessageBox.question(self, "ɛλicit test database", f"{dst} already exists. Replace it with a fresh "
-                                    "copy? (Its requests and recordings in Elicit go too.)") != QMessageBox.Yes:
+            if not _w.ask(self, "ɛλicit test database", f"{dst} already exists. Replace it with a fresh "
+                                    "copy? (Its requests and recordings in Elicit go too.)", "Replace with a fresh copy", "Open the one there"):
                 self.open_file(str(dst))
                 return
             if not self._confirm_discard():

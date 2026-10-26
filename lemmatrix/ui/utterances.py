@@ -28,6 +28,7 @@ from PySide6.QtWidgets import (QCheckBox, QCompleter, QDialog, QSplitter, QGroup
 from .. import spelling, audio, matrix as mx, pitch as pitchmod, pull, storage
 from ..model import FORBIDDEN_CHARS, SEQUENCE, UTTERANCES, Text, Token, Utterance, nfc
 from . import theme
+from . import widgets as _w  # (ask: buttons that say what they do)
 from .filter_dialogs import ConfigureColumnsDialog
 from .icons import icon, themed_icon
 from .spellui import SpellDelegate
@@ -920,8 +921,8 @@ class TextsUtterancesWindow(QDialog):
         what = ("" if not u.token.file else " and its recording renamed to match"
                 if self.db.settings.auto_update_names else
                 " (its recording keeps its name until Tools → Update all soundfile names)")
-        if QMessageBox.question(self, "Move utterance", f"Move {u.ref} to {category_title(self.db, ref)}? "
-                                f"Its reference becomes {ref}{what}.") != QMessageBox.Yes:
+        if not _w.ask(self, "Move utterance", f"Move {u.ref} to {category_title(self.db, ref)}? "
+                                f"Its reference becomes {ref}{what}.", "Move it"):
             return
         after = u.copy()
         after.ref = ref
@@ -936,11 +937,10 @@ class TextsUtterancesWindow(QDialog):
     def delete(self):
         many = self.table.selected_rows()
         if len(many) > 1:                         # several (Josh, 24 October): asked once, one undo step
-            if QMessageBox.question(self, "Delete utterances",
+            if not _w.ask(self, "Delete utterances",
                                     f"Delete {len(many)} utterances ({', '.join(u.ref for u in many[:8])}"
                                     f"{' …' if len(many) > 8 else ''})?\nTheir recordings go to the Recycle "
-                                    "Bin when the database is closed; until then, undo brings them back.") \
-                    != QMessageBox.Yes:
+                                    "Bin when the database is closed; until then, undo brings them back.", f"Delete {len(many)} utterances"):
                 return
             self.doc.undo.beginMacro(f"Delete {len(many)} utterances")
             try:
@@ -960,7 +960,7 @@ class TextsUtterancesWindow(QDialog):
         if with_file:
             msg += (f"\nIts recording ({t.file}) goes to the Recycle Bin when the database is closed; "
                     "until then, undo brings it back.")
-        if QMessageBox.question(self, "Delete utterance", msg) != QMessageBox.Yes:
+        if not _w.ask(self, "Delete utterance", msg, "Delete utterance"):
             return
         self._delete(u)
 

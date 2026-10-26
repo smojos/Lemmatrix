@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QDialog, QDialogButtonBo
 from .. import storage
 from ..model import Database, Entry, FieldDef, ListItem, Token, nfc
 from . import theme
+from . import widgets as _w  # (ask: buttons that say what they do)
 from .icons import icon
 
 NAME_RX = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]*$")
@@ -397,8 +398,8 @@ class FieldsDialog(QDialog):
             QMessageBox.warning(self, "Fields", f"“{name}” can't be used as a field name. Use letters, "
                                 "digits and _ only, starting with a letter.")
             return
-        closed = QMessageBox.question(self, "Add field", "Should this be a closed field, with its "
-                                      "values chosen from a list?") == QMessageBox.Yes
+        closed = _w.choose(self, "Add field", "Should this be a closed field, with its values chosen "
+                           "from a list?", ["Closed: from a list", "Open: free text"], escape=1) == 0
         f = FieldDef(name, closed=closed)
         f._orig = None
         f._keys = set()
@@ -421,8 +422,8 @@ class FieldsDialog(QDialog):
         if f.builtin:
             QMessageBox.information(self, "Fields", f"{f.title} is built in and can't be deleted.")
             return
-        if QMessageBox.question(self, "Delete field", f"Delete the field “{f.title}”? Data already in it "
-                                "stays in the file but is no longer shown.") != QMessageBox.Yes:
+        if not _w.ask(self, "Delete field", f"Delete the field “{f.title}”? Data already in it "
+                                "stays in the file but is no longer shown.", "Delete field"):
             return
         del self.lists[kind][r]
         self._fill(kind)

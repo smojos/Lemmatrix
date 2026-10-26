@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDialog, QDia
 
 from .. import hypotheses as hy
 from . import theme
+from . import widgets as _w  # (ask: buttons that say what they do)
 from .icons import icon, themed_icon
 from .table import Column, FilterTable
 
@@ -705,9 +706,9 @@ class CogitateWindow(QDialog):
         if h is None:
             return
         h = hy.by_id(self.book, h.id)
-        if QMessageBox.question(self, "Delete hypothesis",
+        if not _w.ask(self, "Delete hypothesis",
                                 f"Delete {h.title()}?\n\nIts number isn't given out again; hypotheses that "
-                                "link to it keep the link, marked as no longer existing.") != QMessageBox.Yes:
+                                "link to it keep the link, marked as no longer existing.", f"Delete {h.label}"):
             return
         date = self._date()
         self.doc.change_hypotheses(f"Delete {h.label}", lambda j: hy.delete(self.book, j, date, h))

@@ -178,6 +178,17 @@ def _ask_through_question(monkeypatch):
     monkeypatch.setattr(widgets, "ask", lambda parent, title, text, go, stop="Cancel", icon=None:
                         QMessageBox.question(parent, title, text) in (QMessageBox.Yes, QMessageBox.Save,
                                                                      QMessageBox.Ok))
+    monkeypatch.setattr(widgets, "real_choose", widgets.choose, raising=False)
+
+    def choose(parent, title, text, choices, cancel="Cancel", escape=None):
+        """Yes (Save, Ok) the first answer, No the second, anything else Cancel (or Esc's)."""
+        r = QMessageBox.question(parent, title, text)
+        if r in (QMessageBox.Yes, QMessageBox.Save, QMessageBox.Ok):
+            return 0
+        if r == QMessageBox.No and len(choices) > 1:
+            return 1
+        return escape if not cancel else None
+    monkeypatch.setattr(widgets, "choose", choose)
 
 
 @pytest.fixture(autouse=True)

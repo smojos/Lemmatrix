@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (QCheckBox, QColorDialog, QComboBox, QDialog, QDia
 
 from ..model import (SEQUENCE, Database, Entry, Group, Tag, forbidden_in, nfc)
 from . import keyboards
+from . import widgets as _w  # (ask: buttons that say what they do)
 from . import spellui, theme
 from .widgets import caption, ipa_font, tip_abbreviated
 
@@ -1612,7 +1613,7 @@ class TagStructureDialog(QDialog):
                    f"{'them' if n != 1 else 'it'}?\n\nTheir recordings' names change with their tags.")
         else:
             msg = f"Delete {what}?"
-        if QMessageBox.question(self, "Delete", msg) != QMessageBox.Yes:
+        if not _w.ask(self, "Delete", msg, f"Delete and take it off {n} token{'s' if n != 1 else ''}" if n else f"Delete {cur.data(NAME, Qt.UserRole)}"):
             return
         if n:
             self._deleted = self.deleted_tags() | {x for x in names if self._used({x})}
@@ -1663,8 +1664,8 @@ class TagStructureDialog(QDialog):
                                     f"“{t.name}” needs a code. Only a group's default can be without one.")
                 return False
         dups = ts.duplicate_codes()
-        if dups and QMessageBox.question(self, "Tag structure", "Some codes are shared, so file names "
+        if dups and not _w.ask(self, "Tag structure", "Some codes are shared, so file names "
                                          "couldn't be told apart:\n" + "\n".join(dups) +
-                                         "\n\nKeep them anyway?") != QMessageBox.Yes:
+                                         "\n\nKeep them anyway?", "Keep them", "Go back"):
             return False
         return True

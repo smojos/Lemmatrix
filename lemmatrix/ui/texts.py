@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog,
 from .. import audio, layout, lines as lmod, notebook as nbmod, storage, textgrid as tgmod
 from ..model import SPEAKER_FIELD, TEXTS, ClipSource, Text, TierMapping, TierRule, nfc, tier_base
 from . import keyboards
+from . import widgets as _w  # (ask: buttons that say what they do)
 from . import chiprow as chips, theme
 from .filter_dialogs import ConfigureColumnsDialog
 from .icons import icon, themed_icon
@@ -364,8 +365,8 @@ class TextDialog(QDialog):
             QMessageBox.warning(self, "Text", "Select the main tier: its intervals are the text's lines.")
             return
         if self.new_wav is None and self.text is None:
-            if QMessageBox.question(self, "Text", "Add the text without a recording? It can be chosen "
-                                    "later with Edit.") != QMessageBox.Yes:
+            if not _w.ask(self, "Text", "Add the text without a recording? It can be chosen "
+                                    "later with Edit.", "Add without a recording"):
                 return
         super().accept()
 
@@ -1152,8 +1153,8 @@ class TextsPanel(QObject):
                 continue
             if dst.exists() and not (old and old == name and storage.same_file(src, dst)):
                 if old == name:                   # replacing this text's own file
-                    if QMessageBox.question(self.win, "Text", f"Replace {name}? The one there now goes "
-                                            "to the Recycle Bin.") != QMessageBox.Yes:
+                    if not _w.ask(self.win, "Text", f"Replace {name}? The one there now goes "
+                                            "to the Recycle Bin.", "Replace it"):
                         return None
                     from PySide6.QtCore import QFile
                     QFile.moveToTrash(str(dst))
@@ -1227,11 +1228,11 @@ class TextsPanel(QObject):
     def delete(self):
         many = self.table.selected_rows()
         if len(many) > 1:                         # several (Josh, 24 October): asked once, one undo step
-            if QMessageBox.question(self.win, "Delete texts",
+            if not _w.ask(self.win, "Delete texts",
                                     f"Delete {len(many)} texts ({', '.join(t.ref for t in many[:8])}"
                                     f"{' …' if len(many) > 8 else ''})?\nTheir recordings and TextGrids go to "
                                     "the Recycle Bin when the database is closed; until then, undo brings them "
-                                    "back. Utterances clipped from them stay.") != QMessageBox.Yes:
+                                    "back. Utterances clipped from them stay.", f"Delete {len(many)} texts"):
                 return
             self.doc.undo.beginMacro(f"Delete {len(many)} texts")
             try:
@@ -1251,7 +1252,7 @@ class TextsPanel(QObject):
         if clips:
             msg += (f"\nThe {len(clips)} utterance(s) clipped from it ({', '.join(u.ref for u in clips[:6])}) "
                     "stay, with their own recordings.")
-        if QMessageBox.question(self.win, "Delete text", msg) != QMessageBox.Yes:
+        if not _w.ask(self.win, "Delete text", msg, "Delete text"):
             return
         self._delete(t)
 

@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (QButtonGroup, QComboBox, QDialog, QDialogButtonBo
 from .. import layout
 from .. import wordlists as wl
 from . import theme
+from . import widgets as _w  # (ask: buttons that say what they do)
 
 BLANK = ""
 
@@ -485,7 +486,7 @@ def link_to_wordlists(win):
         msg += (" They also get the list's Clarification and Taxon where theirs are empty (two lemma "
                 "fields, added if the database doesn't have them), and the list's word classes join the "
                 "Word Class list.")
-    if QMessageBox.question(win, "Link to wordlists", msg + "\n\nLink them?") != QMessageBox.Yes:
+    if not _w.ask(win, "Link to wordlists", msg + "\n\nLink them?", "Link them"):
         return
     if base == wl.EACW and (wl.ensure_fields(db) + wl.ensure_word_classes(db)):
         win.doc.settings_changed()

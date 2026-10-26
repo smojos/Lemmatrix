@@ -21,6 +21,7 @@ from ..model import Entry, Token, new_id
 from PySide6.QtCore import QSize
 
 from . import keyboards
+from . import widgets as _w  # (ask: buttons that say what they do)
 from . import spellui, theme
 from .icons import icon
 from .table import show_suggestion
@@ -1223,7 +1224,7 @@ class TokenDialog(QDialog):
             ask = ("Replace this token's recording?" if self.token.file in own else
                    f"A file called {exp} is already in the sound folder, though no token uses it. "
                    "Replace it? (It goes to the Recycle Bin.)")
-            if QMessageBox.question(self, "Record", ask) != QMessageBox.Yes:
+            if not _w.ask(self, "Record", ask, "Record over it" if self.token.file in own else "Replace it"):
                 return
         self.rec_panel.start()
 
@@ -1418,8 +1419,8 @@ class TokenDialog(QDialog):
         if not t.file:
             return
         if self.main.prefs.confirm_delete:
-            if QMessageBox.question(self, "Delete recording",
-                                    f"Delete {t.file}? It will go to the Recycle Bin.") != QMessageBox.Yes:
+            if not _w.ask(self, "Delete recording",
+                                    f"Delete {t.file}? It will go to the Recycle Bin.", "Delete recording"):
                 return
         self.main.player.stop()
         path = self._path(t.file)

@@ -22,6 +22,7 @@ from .. import elicit_prompts, filenames, layout, storage
 from .. import notebook as nbmod
 from ..model import is_utterance, today
 from . import theme, widgets
+from . import widgets as _w  # (ask: buttons that say what they do)
 from .winstate import fit_to_screen
 
 NAME = "ɛλicit"
@@ -852,9 +853,9 @@ class ReceiveDialog(QDialog):
         if st is None or state is None or not (state.uploaded or state.finished):
             return
         if not state.finished:
-            if QMessageBox.question(self, RECEIVE, f"{st.request.speaker['code']} hasn't finished: {state.uploaded} "
+            if not _w.ask(self, RECEIVE, f"{st.request.speaker['code']} hasn't finished: {state.uploaded} "
                                     f"of {len(st.request.cards)} cards have come so far. Take those and end the "
-                                    "request? Its link then stops working.") != QMessageBox.Yes:
+                                    "request? Its link then stops working.", "Take them and end the request"):
                 return
         drive = self._drive()
         if drive is None:
@@ -879,7 +880,7 @@ class ReceiveDialog(QDialog):
                 "with anything recorded so far, and the link stops working.")
         if state is not None and state.turned_down:
             what = (f"The request was {state.summary(st.request)}. Delete its folder in your Google Drive?")
-        if QMessageBox.question(self, RECEIVE, what) != QMessageBox.Yes:
+        if not _w.ask(self, RECEIVE, what, "Delete the folder" if state is not None and state.turned_down else "Withdraw the request"):
             return
         drive = self._drive()
         if drive is None:

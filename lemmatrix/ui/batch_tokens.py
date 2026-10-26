@@ -12,10 +12,11 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QDialog, QDialogButtonBox, QFrame, QLabel,
-                               QMessageBox, QPushButton, QRadioButton, QScrollArea, QVBoxLayout)
+                               QPushButton, QRadioButton, QScrollArea, QVBoxLayout)
 
 from .. import batch, filters as fl, matrix as mx
 from . import theme
+from . import widgets as _w  # (ask: buttons that say what they do)
 from .tagpanel import TagPanel
 
 PREF_TRANSLATE = "batch/fill_predicted"
@@ -176,8 +177,8 @@ class BatchDialog(QDialog):
         p = self.plan_
         if p is None or not p.made:
             return
-        if len(p.made) > batch.LIMIT and QMessageBox.question(
-                self, "Create tokens", f"This makes {len(p.made)} tokens. Make them all?") != QMessageBox.Yes:
+        if len(p.made) > batch.LIMIT and not _w.ask(
+                self, "Create tokens", f"This makes {len(p.made)} tokens. Make them all?", f"Make {len(p.made)} tokens"):
             return
         self.main.prefs.set_value(PREF_TRANSLATE, self.translate.isChecked())
         self.main.doc.apply_changes(batch.label(p), batch.pairs(p), stamp=False)
