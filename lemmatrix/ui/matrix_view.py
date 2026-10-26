@@ -18,6 +18,7 @@ from .. import matrix as mx
 from ..model import Database, is_utterance
 from .icons import icon
 from . import conventions, theme, widgets
+from .viewmixins import ClickUnselect, WheelZoom
 from .widgets import meaning
 from .widgets import (chip_metrics, chips_width, draw_pitch, ipa_font, paint_chips,
                       pitch_width, underscore_unit)
@@ -513,7 +514,7 @@ class TokenCellDelegate(QStyledItemDelegate):
                      self.cell_height(index.row(), index.column(), hits))
 
 
-class MatrixView(QTableView):
+class MatrixView(WheelZoom, ClickUnselect, QTableView):
     tokenClicked = Signal(int, int, int)      # row, column, token number in cell (-1: none)
     fieldEdited = Signal(object, object, str, str)   # entry, token, line key, new text (edit mode)
     cellActivated = Signal(int, int, int)     # double-click / Enter
@@ -571,10 +572,9 @@ class MatrixView(QTableView):
             self.columnMoved.emit(old, new)
 
     # ---- zoom (Ctrl + mouse wheel, Ctrl+0; Josh, 21 October) -------------
-    ZOOM_MIN, ZOOM_MAX, ZOOM_STEP = 0.6, 2.5, 1.1
-
+    # (the wheel, Ctrl+0 and the limits: viewmixins.WheelZoom)
     def set_zoom(self, zoom: float):
-        zoom = max(self.ZOOM_MIN, min(self.ZOOM_MAX, zoom))
+        zoom = self.clamp_zoom(zoom)
         if abs(zoom - self.zoom) < 1e-6:
             return
         self.zoom = zoom
@@ -586,15 +586,6 @@ class MatrixView(QTableView):
         self.set_layout(self.model_.layout_, self.cell_fields)   # sizes from the content again
         self.selected = selected
         self.viewport().update()
-
-    def wheelEvent(self, event):
-        if event.modifiers() & Qt.ControlModifier:
-            d = event.angleDelta().y() or event.angleDelta().x()
-            if d:
-                self.set_zoom(self.zoom * (self.ZOOM_STEP ** (d / 120)))
-            event.accept()
-            return
-        super().wheelEvent(event)
 
     def _header_activated(self, lines: str, i: int):
         items = getattr(self.model_.layout_, lines, [])
@@ -696,7 +687,7 @@ class MatrixView(QTableView):
         hit = self._hit(pos)
         # A plain click on the selected token unselects it, as in All data (IDEAS.md idea 14, Josh,
         # 24 October); not in edit mode, and not when the click is the first of a double-click.
-        self._unselect_on_release = bool(
+        self._arm_unselect(
             hit and hit[2] >= 0 and hit == self.selected and not self.edit_mode
             and event.button() == Qt.LeftButton and not event.modifiers())
         super().mousePressEvent(event)
@@ -792,24 +783,17 @@ class MatrixView(QTableView):
                 return True
         return super().eventFilter(obj, event)
 
-    def mouseReleaseEvent(self, event):
-        super().mouseReleaseEvent(event)
-        if getattr(self, "_unselect_on_release", False):
-            self._unselect_on_release = False
-            from PySide6.QtCore import QTimer
-            from PySide6.QtWidgets import QApplication
-            self._pending_unselect = self.selected
-            QTimer.singleShot(QApplication.doubleClickInterval() + 10, self._unselect_if_still)
+    # (a click on the selected token unselects it: viewmixins.ClickUnselect)
+    def _unselect_key(self):
+        return self.selected
 
-    def _unselect_if_still(self):
-        pending, self._pending_unselect = getattr(self, "_pending_unselect", None), None
-        if pending is not None and pending == self.selected:
-            self.selected = None
-            self.clearSelection()
-            self.viewport().update()
+    def _unselect(self):
+        self.selected = None
+        self.clearSelection()
+        self.viewport().update()
 
     def mouseDoubleClickEvent(self, event):
-        self._pending_unselect = None             # a double-click opens; it never unselects
+        self._cancel_unselect()                   # a double-click opens; it never unselects
         hit = self._hit(event.position().toPoint())
         if hit:
             self.cellActivated.emit(*hit)
@@ -826,8 +810,7 @@ class MatrixView(QTableView):
         """No type-to-jump: IPA takes several keystrokes per symbol, so jumping only confuses (Josh, 19 October)."""
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_0 and event.modifiers() & Qt.ControlModifier:   # the zoom back to normal
-            self.set_zoom(1.0)
+        if self.zoom_key(event):                  # Ctrl+0: the zoom back to normal
             return
         if event.key() in (Qt.Key_Return, Qt.Key_Enter):
             idx = self.currentIndex()

@@ -15,7 +15,12 @@ from PySide6.QtWidgets import QApplication
 LIGHT, DARK = "light", "dark"
 DEFAULT_ACCENT = "#198583"          # the teal of the Lemmatrix icon (Josh, 20 October; #198768 before)
 
-_state = {"mode": LIGHT, "accent": QColor(DEFAULT_ACCENT)}
+_state = {"mode": LIGHT, "accent": QColor(DEFAULT_ACCENT), "search": None, "pitch": None}
+
+# The search marks' yellow (Settings → Display → Search highlight; Josh, 26 October): the light
+# theme's, multiplied under the text; on the dark theme a darker one, screened.
+DEFAULT_SEARCH = "#ffdd55"
+_DEFAULT_SEARCH_DARK = "#7a5e00"
 
 # Fixed colours for each theme. The accent-based ones are worked out in colour().
 _FIXED = {
@@ -103,9 +108,27 @@ def ink(t: float) -> QColor:
     return mix(accent(), QColor(_FIXED[mode()]["text"]), t)
 
 
+def search_mark() -> QColor:
+    """The search marks' colour for the current theme (multiplied on light, screened on dark)."""
+    c = _state["search"]
+    if c is None:
+        return QColor(_DEFAULT_SEARCH_DARK if dark() else DEFAULT_SEARCH)
+    return mix(c, QColor("black"), 0.52) if dark() else QColor(c)
+
+
+def search_mark_strong() -> QColor:
+    """The current match (the XML viewer): the search colour, stronger."""
+    if _state["search"] is None:
+        return QColor("#b58900" if dark() else "#ffb300")
+    return mix(search_mark(), QColor("#ff8c00"), 0.45)
+
+
 def _bright_accent() -> QColor:
     """The accent, lightened on the dark theme until it shows clearly against dark grey."""
-    a = accent()
+    return _brightened(accent())
+
+
+def _brightened(a: QColor) -> QColor:
     if not dark():
         return a
     t = 0.0
@@ -117,8 +140,10 @@ def _bright_accent() -> QColor:
 def colour(name: str) -> QColor:
     """A named colour for the current theme."""
     d = dark()
-    if name == "pitch":                       # pitch traces use the accent colour
+    if name == "pitch":                       # the bright accent (icons, links…; pitch traces' default)
         return _bright_accent()
+    if name == "pitch_trace":                 # the pitch drawings: the accent, or their own colour
+        return _brightened(_state["pitch"]) if _state["pitch"] is not None else _bright_accent()
     if name == "chip_fill":
         return wash(0.62 if d else 0.80)
     if name == "chip_on":
@@ -200,10 +225,16 @@ def as_data(widget):
 
 # ---- applying ----------------------------------------------------------------
 
-def configure(theme_mode: str, accent_colour: str):
+def configure(theme_mode: str, accent_colour: str, search_colour: str = "", pitch_colour: str = ""):
+    """The theme, the accent, and two colours of one's own ("" = the default): the search marks
+    and the pitch traces (Settings → Display and → Pitch, this computer; Josh, 26 October)."""
     _state["mode"] = DARK if theme_mode == DARK else LIGHT
     a = QColor(accent_colour)
     _state["accent"] = a if a.isValid() else QColor(DEFAULT_ACCENT)
+    s = QColor(search_colour) if search_colour else QColor()
+    _state["search"] = s if s.isValid() and s.name().lower() != DEFAULT_SEARCH else None
+    t = QColor(pitch_colour) if pitch_colour else QColor()
+    _state["pitch"] = t if t.isValid() else None
 
 
 def apply(app: QApplication | None = None):
@@ -220,5 +251,6 @@ def apply(app: QApplication | None = None):
 
 
 def from_prefs(prefs, app: QApplication | None = None):
-    configure(prefs.theme, prefs.accent)
+    configure(prefs.theme, prefs.accent, getattr(prefs, "search_colour", ""),
+              prefs.pitch_colour if getattr(prefs, "pitch_colour_on", False) else "")
     apply(app)

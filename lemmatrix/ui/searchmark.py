@@ -10,7 +10,7 @@ marks "dɪɪtʰ" with its ʰ.
 from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRectF, Qt
-from PySide6.QtGui import QBrush, QColor, QFont, QPainter, QPalette, QTextLayout, QTextOption
+from PySide6.QtGui import QBrush, QFont, QPainter, QPalette, QTextLayout, QTextOption
 from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem
 
 from .. import filters as fl
@@ -104,10 +104,9 @@ def mark(painter: QPainter, rect: QRectF):
     painter.save()
     if theme.dark():
         painter.setCompositionMode(QPainter.CompositionMode_Screen)
-        painter.fillRect(rect, QColor("#7a5e00"))
     else:
         painter.setCompositionMode(QPainter.CompositionMode_Multiply)
-        painter.fillRect(rect, QColor("#ffdd55"))
+    painter.fillRect(rect, theme.search_mark())       # Settings → Display → Search highlight
     painter.restore()
 
 

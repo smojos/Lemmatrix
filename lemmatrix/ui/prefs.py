@@ -241,6 +241,31 @@ class Prefs:
     @accent.setter
     def accent(self, v): self.q.setValue("display/accent", v)
 
+    # Two colours of one's own (Josh, 26 October; this computer): the search marks
+    # (Settings → Display), and the pitch traces instead of the accent (Settings → Pitch).
+    @property
+    def search_colour(self) -> str:
+        from .theme import DEFAULT_SEARCH
+        return self._get("display/search_colour", DEFAULT_SEARCH)
+
+    @search_colour.setter
+    def search_colour(self, v): self.q.setValue("display/search_colour", v)
+
+    @property
+    def pitch_colour_on(self) -> bool:
+        return self.get_bool("pitch/own_colour", False)
+
+    @pitch_colour_on.setter
+    def pitch_colour_on(self, v): self.q.setValue("pitch/own_colour", bool(v))
+
+    @property
+    def pitch_colour(self) -> str:
+        from .theme import DEFAULT_ACCENT
+        return self._get("pitch/colour", DEFAULT_ACCENT)
+
+    @pitch_colour.setter
+    def pitch_colour(self, v): self.q.setValue("pitch/colour", v)
+
     @property
     def full_backup_folder(self) -> str:
         """Where File → Full backup offers to save ("" = Documents). Local backups always go in

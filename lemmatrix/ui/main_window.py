@@ -159,6 +159,15 @@ class DbTitle(QLabel):
         self.on_double_click()
 
 
+
+def bring_forward(w):
+    """Show a window of its own and bring it to the front (out of the taskbar if minimised)."""
+    if w.isMinimized():
+        w.showNormal()
+    w.show()
+    w.raise_()
+    w.activateWindow()
+
 class MainWindow(QMainWindow):
     def __init__(self, db: Database | None = None):
         super().__init__()
@@ -636,8 +645,7 @@ class MainWindow(QMainWindow):
         dlg = self.items_dialogs.get("snapshots")
         if dlg is not None and dlg.isVisible():
             dlg.refresh()
-        if self.notebook_dialog is not None and self.notebook_dialog.isVisible():
-            self.notebook_dialog.reload()
+        self.refresh_notebook()
         if self.cogitate_window is not None and self.cogitate_window.isVisible():
             self.cogitate_window.refill()
 
@@ -990,15 +998,12 @@ class MainWindow(QMainWindow):
     def open_cogitate(self, hypothesis_id: str | None = None, focus_summary: bool = False):
         """View → Cogitate: the List, or one hypothesis in the Hypothesis tab."""
         from .cogitate import CogitateWindow
-        if self.cogitate_window is None:
-            self.cogitate_window = CogitateWindow(self)
-        w = self.cogitate_window
+        w = self._window("cogitate_window", CogitateWindow)
         w.show()
         w.refill()
         if hypothesis_id is not None:
             w.show_hypothesis(hypothesis_id, focus_summary)
-        w.raise_()
-        w.activateWindow()
+        bring_forward(w)
         return w
 
     def link_to_hypothesis(self, link, parent=None):
@@ -1020,8 +1025,7 @@ class MainWindow(QMainWindow):
             return None
         self.doc.change_hypotheses(f"Link to {h.label}", lambda j: hy.add_link(book, j, date, h, link, self.doc.db))
         self.statusBar().showMessage(f"Linked to {h.title()} as {link.mark}", 6000)
-        if self.notebook_dialog is not None and self.notebook_dialog.isVisible():
-            self.notebook_dialog.reload()
+        self.refresh_notebook()
         return h
 
     def question_to_hypothesis(self, session, q):
@@ -1047,8 +1051,7 @@ class MainWindow(QMainWindow):
             self.doc.undo.push(ItemStateCommand(self.doc, "Resolve the question", q, before, (q.resolved, q.pinned)))
         self.doc.undo.endMacro()
         self.doc.notebook_changed()
-        if self.notebook_dialog is not None and self.notebook_dialog.isVisible():
-            self.notebook_dialog.reload()
+        self.refresh_notebook()
         w = self.open_cogitate(h.id)
         w.formulation.setFocus()
         self.statusBar().showMessage(f"{h.label} made from the question, which is now resolved", 6000)
@@ -1182,26 +1185,18 @@ class MainWindow(QMainWindow):
     def open_whiteboard(self):
         """Tools → Whiteboard (idea 45): a cheap drawing tool, kept in the workspace until wiped."""
         from .whiteboard import WhiteboardWindow
-        if self.whiteboard_window is None:
-            self.whiteboard_window = WhiteboardWindow(self)
-        w = self.whiteboard_window
-        w.show()
-        w.raise_()
-        w.activateWindow()
+        w = self._window("whiteboard_window", WhiteboardWindow)
+        bring_forward(w)
         return w
 
     def open_xml_viewer(self, target=None):
         """View → XML viewer: the database file, read-only, at the selected token or lemma, or at
         target: ("utterance" or "text", id), from Texts and utterances' options panel."""
         from .xml_viewer import XmlViewerWindow
-        if self.xml_window is None:
-            self.xml_window = XmlViewerWindow(self)
-        w = self.xml_window
+        w = self._window("xml_window", XmlViewerWindow)
         w.refresh(keep_place=False)
         w.go_to(target or self.xml_target())
-        w.show()
-        w.raise_()
-        w.activateWindow()
+        bring_forward(w)
         return w
 
     def _texts_button(self) -> QToolButton:
@@ -1935,8 +1930,7 @@ class MainWindow(QMainWindow):
         self._restore_view()
         self._update_title()
         self._report_missing()
-        if self.notebook_dialog is not None:
-            self.notebook_dialog.reload()
+        self.refresh_notebook()
         for dlg in self.items_dialogs.values():      # another database's notebook
             dlg.refresh()
         self.update_todo_badge()
@@ -2335,8 +2329,7 @@ class MainWindow(QMainWindow):
         for s in days:
             self.doc.notebook.remove(s)
         self.doc.notebook_changed()
-        if self.notebook_dialog is not None:
-            self.notebook_dialog.reload()
+        self.refresh_notebook()
         self.statusBar().showMessage(f"Cleared {n} empty notebook day{'s' if n != 1 else ''}.", 6000)
 
     def _remind_new_day(self):
@@ -2602,17 +2595,19 @@ class MainWindow(QMainWindow):
             n = len(s.comments)
             self.statusBar().showMessage(
                 f"Written to the notebook for {date}" + (f", with {n} comment(s)." if n else "."), 6000)
-        if self.notebook_dialog is not None:
+        self.refresh_notebook(date)
+
+    def refresh_notebook(self, date: str | None = None):
+        """The notebook changed: an open notebook window shows it; a hidden one is filled when it
+        is next opened (open_notebook). The one place that reloads it (the audit, 26 October)."""
+        if self.notebook_dialog is not None and self.notebook_dialog.isVisible():
             self.notebook_dialog.reload(date)
 
     def open_notebook(self, date: str | None = None):
         from .notebook_dialog import NotebookDialog
-        if self.notebook_dialog is None:
-            self.notebook_dialog = NotebookDialog(self)
-        self.notebook_dialog.reload(date or self.session_date() or None)
-        self.notebook_dialog.show()
-        self.notebook_dialog.raise_()
-        self.notebook_dialog.activateWindow()
+        w = self._window("notebook_dialog", NotebookDialog)
+        w.reload(date or self.session_date() or None)
+        bring_forward(w)
 
     def open_questions(self):
         from .notebook_dialog import QuestionsDialog
@@ -2628,21 +2623,26 @@ class MainWindow(QMainWindow):
         from .notebook_dialog import SnapshotsDialog
         return self._open_items("snapshots", SnapshotsDialog)
 
+    def _window(self, attr: str, cls):
+        """A window of its own, made the first time (then kept in self.<attr>, or set back to None
+        by the windows freed when closed: Bulk edit, Check spelling, Texts and utterances)."""
+        w = getattr(self, attr, None)
+        if w is None:
+            w = cls(self)
+            setattr(self, attr, w)
+        return w
+
     def _open_items(self, key, cls):
         """View → Questions / To Do: a window beside the main one, not modal, so the main window
         stays usable while it is open; one of each, brought forward if already open (Josh, 22 October)."""
         dlg = self.items_dialogs.get(key)
         if dlg is None:
             dlg = cls(self)
-            dlg.finished.connect(lambda *_: self.notebook_dialog is not None and self.notebook_dialog.reload())
+            dlg.finished.connect(lambda *_: self.refresh_notebook())
             self.items_dialogs[key] = dlg
         else:
             dlg.refresh()
-        if dlg.isMinimized():
-            dlg.showNormal()
-        dlg.show()
-        dlg.raise_()
-        dlg.activateWindow()
+        bring_forward(dlg)
         return dlg
 
     def go_to(self, entry, index=None):
@@ -3615,11 +3615,7 @@ class MainWindow(QMainWindow):
     def check_spelling(self):
         """Tools → Check spelling…: a window of its own, beside the main one."""
         from .spelling_dialog import SpellingWindow
-        if self.spelling_window is None:
-            self.spelling_window = SpellingWindow(self)
-        self.spelling_window.show()
-        self.spelling_window.raise_()
-        self.spelling_window.activateWindow()
+        bring_forward(self._window("spelling_window", SpellingWindow))
 
     def _spelling_items(self, table, pos, row) -> list:
         """Right-click on an underlined gloss or translation: its corrections and Add to the word list."""
@@ -3889,17 +3885,13 @@ class MainWindow(QMainWindow):
     def open_utterances(self, select=None):
         """View → Texts and utterances (Ctrl+U): a window of its own beside the main one."""
         from .utterances import TextsUtterancesWindow
-        if self.utterances_window is None:
-            self.utterances_window = TextsUtterancesWindow(self)
-        w = self.utterances_window
+        w = self._window("utterances_window", TextsUtterancesWindow)
         if isinstance(select, bool):              # a menu's "checked" flag, not an utterance
             select = None
         if not w.isVisible() and select is None:  # opened afresh: on the Texts tab
             from .utterances import TEXTS
             w.tabs.setCurrentIndex(TEXTS)
-        w.show()
-        w.raise_()
-        w.activateWindow()
+        bring_forward(w)
         if select is not None:
             w.select(select)
         return w
@@ -3907,11 +3899,7 @@ class MainWindow(QMainWindow):
     def open_bulk_edit(self):
         """Edit → Bulk edit…: change many lemmas or tokens at once, in a window of its own."""
         from .bulk_window import BulkEditWindow
-        if self.bulk_window is None:
-            self.bulk_window = BulkEditWindow(self)
-        self.bulk_window.show()
-        self.bulk_window.raise_()
-        self.bulk_window.activateWindow()
+        bring_forward(self._window("bulk_window", BulkEditWindow))
 
     def delete_entry(self):
         sel = self.lemmas.selected_rows()
@@ -4054,8 +4042,7 @@ class MainWindow(QMainWindow):
             self.doc.notebook_changed()
             self.doc.hypothesesChanged.emit()
         self._fill_session()
-        if self.notebook_dialog is not None:
-            self.notebook_dialog.reload()
+        self.refresh_notebook()
 
     def _follow_people_renames(self, people: dict[str, str]):
         """Renamed codes outside the records (the audit, P7): TextGrid tier names (tx@SP1),

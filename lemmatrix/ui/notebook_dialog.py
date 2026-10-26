@@ -768,225 +768,6 @@ class NotebookDialog(QDialog):
         for panel in (self.q_panel, self.t_panel):
             panel.buttons()
 
-class ItemsPanel(QWidget):
-    """A notebook tab of questions or to dos (Josh, 21 October: To Do is the same as Questions):
-    Add, Delete, Edit, Resolve and Convert at the top, then the list; right-click for the same."""
-
-    def __init__(self, dlg: "NotebookDialog", kind: str):
-        super().__init__()
-        self.dlg, self.kind = dlg, kind
-        one = nbmod.name(kind, title=False)
-        ql = QVBoxLayout(self)
-        ql.setContentsMargins(0, 0, 0, 0)
-        qb = QHBoxLayout()
-
-        def qbutton(name, tip, fn, size=30, ic=None):
-            b = QToolButton()
-            b.setIcon(ic or icon(name, size))
-            b.setIconSize(QSize(size, size))
-            b.setAutoRaise(True)
-            b.setToolTip(tip)
-            b.clicked.connect(lambda *_: fn())
-            qb.addWidget(b)
-            return b
-        self.add_btn = qbutton("add", f"Add a {one}", self.add)
-        self.delete_btn = qbutton("delete", f"Delete the selected {one}", self.delete)
-        self.edit_btn = qbutton("edit", f"Edit the selected {one}", self.edit)
-        self.resolve_btn = qbutton("resolve", f"Resolve the selected {one}", self.toggle)
-        to = nbmod.other(kind)
-        self.convert_btn = qbutton("", f"{convert_label(kind)}: the selected {one} moves to the "
-                                   f"{nbmod.name(to, True)} tab, keeping its dates and link", self.convert,
-                                   ic=kind_icon(to, 30))
-        self.hypothesis_btn = None
-        if kind == nbmod.QUESTION:                    # Convert to hypothesis (Josh, 22 October)
-            self.hypothesis_btn = qbutton("", HYPOTHESIS_TIP, self.to_hypothesis, ic=_cogitate_icon(30))
-        self.pin_btn = qbutton("", f"Pin the selected {one} to the top of the list (resolving it unpins it)",
-                               self.toggle_pin, ic=pin_icon(30))
-        qb.addStretch(1)
-        ql.addLayout(qb)
-        self.tree = QTreeWidget()
-        self.tree.setColumnCount(5)
-        self.tree.setHeaderLabels([nbmod.name(kind), "Token", "Status", "Created / edited", "Resolved"])
-        self.tree.setRootIsDecorated(False)
-        wrapping(self.tree, lambda: dlg.search.text())
-        self.tree.setFont(ipa_font(dlg.main.prefs.ipa_size))
-        h = self.tree.header()
-        h.setSectionResizeMode(0, QHeaderView.Stretch)
-        for c in (1, 2, 3, 4):
-            h.setSectionResizeMode(c, QHeaderView.ResizeToContents)
-        h.setStretchLastSection(False)
-        self.tree.itemDoubleClicked.connect(self._double_clicked)
-        self.tree.currentItemChanged.connect(lambda *_: self.buttons())
-        self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tree.customContextMenuRequested.connect(self._menu)
-        ql.addWidget(self.tree, 1)
-
-    @property
-    def session(self):
-        return self.dlg.session
-
-    def _changed(self):
-        self.dlg._changed()
-
-    def fill(self, select: nbmod.Question | None = None):
-        self.tree.clear()
-        s = self.session
-        if s is None:
-            return
-        muted = QBrush(QColor(theme.muted()))
-        lst = nbmod.items(s, self.kind)
-        for q in [x for x in lst if x.pinned] + [x for x in lst if not x.pinned]:   # pinned on top
-            it = QTreeWidgetItem([q.text, nbmod.about_now(self.dlg.main.doc.db, q), q.status, q.dated, q.resolved])
-            it.setData(0, Qt.UserRole, q)
-            if q.pinned:
-                it.setIcon(0, pin_icon())
-            it.setToolTip(0, q.text)
-            link_look(it, 1, q)
-            if not q.is_open:
-                for c in (0, 2, 3, 4):
-                    it.setForeground(c, muted)
-            self.tree.addTopLevelItem(it)
-            if q is select:
-                self.tree.setCurrentItem(it)
-        open_ = sum(1 for q in lst if q.is_open)
-        title = "Questions" if self.kind == nbmod.QUESTION else "To Do"
-        self.dlg.tabs.setTabText(QUESTIONS_TAB if self.kind == nbmod.QUESTION else TODO_TAB,
-                                 f"{title} ({open_} open)" if lst else title)
-        self.buttons()
-        QTimer.singleShot(0, self.tree.doItemsLayout)
-
-    def current(self) -> nbmod.Question | None:
-        it = self.tree.currentItem()
-        return it.data(0, Qt.UserRole) if it is not None and self.session is not None else None
-
-    def buttons(self):
-        q = self.current()
-        for b in (self.delete_btn, self.edit_btn, self.resolve_btn, self.convert_btn, self.pin_btn) + \
-                ((self.hypothesis_btn,) if self.hypothesis_btn is not None else ()):
-            b.setEnabled(q is not None)
-        self.pin_btn.setToolTip("Unpin the selected item" if q is not None and q.pinned else
-                                f"Pin the selected {nbmod.name(self.kind, title=False)} to the top of the "
-                                "list (resolving it unpins it)")
-        one = nbmod.name(self.kind, title=False)
-        self.resolve_btn.setToolTip(f"Mark the selected {one} as open again" if q and not q.is_open
-                                    else f"Resolve the selected {one}")
-
-    def _double_clicked(self, item, column):
-        q = item.data(0, Qt.UserRole)
-        if column == 1 and q.link is not None:          # the token's link: go to it
-            follow_link(self.dlg, self.dlg.main, q.link)
-        else:
-            self.edit()
-
-    def _menu(self, pos):
-        it = self.tree.itemAt(pos)
-        if it is not None:
-            self.tree.setCurrentItem(it)
-        q = self.current()
-        one = nbmod.name(self.kind, title=False)
-        m = QMenu(self.tree)
-        on = q is not None
-        for text, ic, fn, enabled in (
-                (f"Add a {one}…", icon("add", 16), self.add, self.session is not None),
-                (f"Edit {one}…", icon("edit", 16), self.edit, on),
-                ("Mark as open" if on and not q.is_open else "Resolve", icon("resolve", 16), self.toggle, on),
-                (pin_label(q), pin_icon(), self.toggle_pin, on),
-                (convert_label(self.kind), kind_icon(nbmod.other(self.kind), 16), self.convert, on),
-                *((("Convert to hypothesis", _cogitate_icon(), self.to_hypothesis, on),)
-                  if self.kind == nbmod.QUESTION else ()),
-                ("Go to token", None, lambda: follow_link(self.dlg, self.dlg.main, q.link),
-                 on and q.link is not None),
-                ("Link to hypothesis…", _cogitate_icon(), self.link_to_hypothesis, on),
-                (f"Delete {one}", icon("delete", 16), self.delete, on)):
-            a = m.addAction(ic, text) if ic is not None else m.addAction(text)
-            a.setEnabled(enabled)
-            a.triggered.connect(lambda *_, fn=fn: fn())
-        m.exec(self.tree.viewport().mapToGlobal(pos))
-
-    def toggle_pin(self):
-        """Pin to the top / Unpin (Josh, 22 October)."""
-        q = self.current()
-        if q is None:
-            return
-        q.pinned = not q.pinned
-        self._changed()
-        self.fill(q)
-
-    def to_hypothesis(self):
-        """Convert to hypothesis: a new hypothesis from this question (the question stays, resolved)."""
-        q = self.current()
-        if q is None or self.session is None:
-            return
-        self.dlg.main.question_to_hypothesis(self.session, q)
-        self.dlg.reload()
-
-    def link_to_hypothesis(self):
-        """Link to hypothesis…: this question or To Do (it gets an id, kept after)."""
-        from .. import hypotheses as hy
-        q = self.current()
-        if q is None or self.session is None:
-            return
-        had = q.id
-        link = hy.question_link(self.session, q)
-        if not had:
-            self.dlg.main.doc.notebook_changed()     # the id is written with the notebook
-        self.dlg.main.link_to_hypothesis(link, self.dlg)
-        self.dlg.reload()
-
-    def add(self):
-        if self.session is None:
-            return
-        one = nbmod.name(self.kind)
-        text = ask_text(self, f"Add {one if self.kind == nbmod.TODO else one.lower()}", f"{one}:")
-        if text:
-            q = nbmod.Question(text, today(), kind=self.kind)
-            nbmod.items(self.session, self.kind).append(q)
-            self._changed()
-            self.fill(q)
-
-    def edit(self):
-        q = self.current()
-        if q is None:
-            return
-        one = nbmod.name(self.kind)
-        text = ask_text(self, f"Edit {one if self.kind == nbmod.TODO else one.lower()}", f"{one}:", q.text)
-        if text and text != q.text:
-            q.text, q.edited = text, today()
-            self._changed()
-            self.fill(q)
-
-    def delete(self):
-        q = self.current()
-        if q is None:
-            return
-        one = nbmod.name(self.kind, title=False)
-        if QMessageBox.question(self, f"Delete {one}", f"Delete this {one}?\n\n{q.text}") != QMessageBox.Yes:
-            return
-        nbmod.items(self.session, self.kind).remove(q)
-        self._changed()
-        self.fill()
-
-    def toggle(self):
-        q = self.current()
-        if q is None:
-            return
-        q.set_resolved("" if q.resolved else today())
-        self._changed()
-        self.fill(q)
-
-    def convert(self):
-        """Convert to To Do / Convert to question: it moves to the other tab, dates and link kept."""
-        q = self.current()
-        if q is None:
-            return
-        nbmod.convert(self.session, q)
-        self._changed()
-        self.dlg._fill_days(self.session.date)        # the day's tooltip counts
-        self.dlg._fill_questions()
-        QToolTip.showText(self.tree.viewport().mapToGlobal(self.tree.viewport().rect().topLeft()),
-                          f"Moved to {'To Do' if q.is_todo else 'Questions'}", self.tree)
-
-
 # ==========================================================================
 # View → Questions and View → To Do
 # ==========================================================================
@@ -1022,11 +803,353 @@ def follow_link(parent, main, link):
     main.go_to(*where)
 
 
-class ItemsDialog(QDialog):
-    """Every question (or to do) in the notebook, newest day first."""
+class ItemActions:
+    """What the notebook's Questions and To Do tabs and View → Questions and View → To Do share
+    (Josh, 26 October: the same capabilities in both; the tab is the window filtered to its day).
+    current() gives (session, item); each action is written once, here."""
+
+    kind = nbmod.QUESTION
+
+    def _main(self):
+        raise NotImplementedError
+
+    def current(self):
+        it = self.tree.currentItem()
+        return it.data(0, Qt.UserRole) if it is not None else None
+
+    _current = current
+
+    def _add_day(self):
+        """The day a new item goes on: None for the Current Session's (the View windows)."""
+        return None
+
+    def _after(self, select=None):
+        """The notebook changed: unsaved, this list filled again, the other places following."""
+        main = self._main()
+        main.doc.notebook_changed()
+        self._fill(select)
+        notebook_items_changed(main, self)
+
+    # ---- the actions -------------------------------------------------------
+    def add(self):
+        """A new open item, linked to nothing: on the tab's day, or (the View windows) on the
+        Current Session's day, which gets its notes with the session's people and places if it has
+        none yet."""
+        one = nbmod.name(self.kind)
+        text = ask_text(self, f"Add {one if self.kind == nbmod.TODO else one.lower()}", f"{one}:")
+        text = (text or "").strip()
+        if not text:
+            return
+        main = self._main()
+        day = self._add_day()
+        if day is not None:
+            q = nbmod.Question(text, today(), kind=self.kind)
+            nbmod.items(day, self.kind).append(q)
+        else:
+            from . import chiprow as chips
+            keys = main.session_keys()
+            q = nbmod.push_question(main.doc.notebook, main.doc.db, main.work_date(), text, None, None,
+                                    keys[chips.RESEARCHERS], keys[chips.PARTICIPANTS],
+                                    keys[chips.LOCATIONS], self.kind)
+            self._show_open()
+        self._after(q)
+
+    def _show_open(self):
+        pass
+
+    def edit(self):
+        cur = self.current()
+        if cur is None:
+            return
+        s, q = cur
+        one = nbmod.name(self.kind)
+        text = ask_text(self, f"Edit {one if self.kind == nbmod.TODO else one.lower()}",
+                        f"{one} (from {s.date}):", q.text)
+        if text and text != q.text:
+            q.text, q.edited = text, today()
+            self._after(q)
+
+    def delete(self):
+        cur = self.current()
+        if cur is None:
+            return
+        s, q = cur
+        one = nbmod.name(self.kind, title=False)
+        if QMessageBox.question(self, f"Delete {one}", f"Delete this {one}?\n\n{q.text}") != QMessageBox.Yes:
+            return
+        nbmod.items(s, self.kind).remove(q)
+        self._after()
+
+    def toggle(self):
+        """Resolve / Mark as open."""
+        cur = self.current()
+        if cur is None:
+            return
+        q = cur[1]
+        q.set_resolved("" if q.resolved else today())
+        self._after(q)
+
+    def toggle_pin(self):
+        """Pin to the top / Unpin (Josh, 22 October)."""
+        cur = self.current()
+        if cur is None:
+            return
+        q = cur[1]
+        q.pinned = not q.pinned
+        self._after(q)
+
+    def convert(self):
+        """Convert to To Do / Convert to question: it moves to the other list, its day, dates and
+        link kept."""
+        cur = self.current()
+        if cur is None:
+            return
+        s, q = cur
+        nbmod.convert(s, q)
+        self._after()
+        self._moved(q)
+
+    def _moved(self, q):
+        pass
+
+    def to_hypothesis(self):
+        """Convert to hypothesis: a new hypothesis from the question (it stays, resolved)."""
+        cur = self.current()
+        if cur is None:
+            return
+        self._main().question_to_hypothesis(*cur)
+        self._everywhere(cur[1])
+
+    def link_to_hypothesis(self):
+        """Link to hypothesis…: this question or To Do (it gets an id, kept after)."""
+        from .. import hypotheses as hy
+        cur = self.current()
+        if cur is None:
+            return
+        s, q = cur
+        main = self._main()
+        had = q.id
+        link = hy.question_link(s, q)
+        if not had:
+            main.doc.notebook_changed()     # the id is written with the notebook
+        main.link_to_hypothesis(link, self)
+        self._everywhere(q)
+
+    def _everywhere(self, select=None):
+        """After a hypothesis was made or linked: this list and the other places."""
+        self._fill(select)
+        notebook_items_changed(self._main(), self)
+
+    def go_to_token(self):
+        cur = self.current()
+        if cur is not None and cur[1].link is not None:
+            follow_link(self, self._main(), cur[1].link)
+
+    # ---- the menu ----------------------------------------------------------
+    def _menu_items(self, cur):
+        on = cur is not None
+        q = cur[1] if on else None
+        one = nbmod.name(self.kind, title=False)
+        return [(f"Add a {one}…", icon("add", 16), self.add, self._can_add()),
+                (f"Edit {one}…", icon("edit", 16), self.edit, on),
+                ("Mark as open" if on and not q.is_open else "Resolve", icon("resolve", 16), self.toggle, on),
+                (pin_label(q), pin_icon(), self.toggle_pin, on),
+                (convert_label(self.kind), kind_icon(nbmod.other(self.kind), 16), self.convert, on),
+                *((("Convert to hypothesis", _cogitate_icon(), self.to_hypothesis, on),)
+                  if self.kind == nbmod.QUESTION else ()),
+                ("Go to token", None, self.go_to_token, on and q.link is not None),
+                ("Link to hypothesis…", _cogitate_icon(), self.link_to_hypothesis, on),
+                *self._extra_menu_items(cur),
+                (f"Delete {one}", icon("delete", 16), self.delete, on)]
+
+    def _can_add(self):
+        return True
+
+    def _extra_menu_items(self, cur):
+        return ()
+
+    def _menu(self, pos):
+        it = self.tree.itemAt(pos)
+        if it is not None:
+            self.tree.setCurrentItem(it)
+        m = QMenu(self.tree)
+        for text, ic, fn, enabled in self._menu_items(self.current()):
+            a = m.addAction(ic, text) if ic is not None else m.addAction(text)
+            a.setEnabled(enabled)
+            a.triggered.connect(lambda *_, fn=fn: fn())
+        m.exec(self.tree.viewport().mapToGlobal(pos))
+
+    def _double_clicked(self, item, column):
+        q = item.data(0, Qt.UserRole)[1]
+        if column == self.LINK_COLUMN and q.link is not None:      # the token's link: go to it
+            self.go_to_token()
+        else:
+            self.edit()
+
+    def _item(self, cols, s, q):
+        it = QTreeWidgetItem(cols)
+        it.setData(0, Qt.UserRole, (s, q))
+        col = self.LINK_COLUMN - 1
+        if q.pinned:
+            it.setIcon(col, pin_icon())
+        it.setToolTip(col, q.text)
+        link_look(it, self.LINK_COLUMN, q)
+        if not q.is_open:
+            muted = QBrush(QColor(theme.muted()))
+            for c in range(self.tree.columnCount()):
+                if c != self.LINK_COLUMN:
+                    it.setForeground(c, muted)
+        return it
+
+
+def refresh_notebook(main, date=None):
+    """An open notebook window shows a change (main.refresh_notebook; a stand-in main may not have it)."""
+    fn = getattr(main, "refresh_notebook", None)
+    if callable(fn):
+        fn(date)
+
+
+def notebook_items_changed(main, origin=None):
+    """A question or To Do changed in one place: the notebook window, the View windows that are
+    open (not the one it changed in) and the badges follow. A hidden notebook is filled when next
+    opened (open_notebook reloads it)."""
+    nb = getattr(main, "notebook_dialog", None)
+    if nb is not None and nb is not origin and getattr(origin, "dlg", None) is not nb and nb.isVisible():
+        nb.reload()
+    for dlg in getattr(main, "items_dialogs", {}).values():
+        if dlg is not origin and dlg.isVisible() and callable(getattr(dlg, "refresh", None)):
+            dlg.refresh()
+    if callable(getattr(main, "update_badges", None)):
+        main.update_badges()
+
+
+class ItemsPanel(QWidget, ItemActions):
+    """A notebook tab of questions or to dos (Josh, 21 October: To Do is the same as Questions):
+    the day's items, with the View window's actions (Josh, 26 October); buttons at the top, the
+    same and more on right-click."""
+
+    LINK_COLUMN = 1
+
+    def __init__(self, dlg: "NotebookDialog", kind: str):
+        QWidget.__init__(self)
+        self.dlg, self.kind = dlg, kind
+        one = nbmod.name(kind, title=False)
+        ql = QVBoxLayout(self)
+        ql.setContentsMargins(0, 0, 0, 0)
+        qb = QHBoxLayout()
+
+        def qbutton(name, tip, fn, size=30, ic=None):
+            b = QToolButton()
+            b.setIcon(ic or icon(name, size))
+            b.setIconSize(QSize(size, size))
+            b.setAutoRaise(True)
+            b.setToolTip(tip)
+            b.clicked.connect(lambda *_: fn())
+            qb.addWidget(b)
+            return b
+        self.add_btn = qbutton("add", f"Add a {one}", self.add)
+        self.delete_btn = qbutton("delete", f"Delete the selected {one}", self.delete)
+        self.edit_btn = qbutton("edit", f"Edit the selected {one}", self.edit)
+        self.resolve_btn = qbutton("resolve", f"Resolve the selected {one}", self.toggle)
+        to = nbmod.other(kind)
+        self.convert_btn = qbutton("", f"{convert_label(kind)}: the selected {one} moves to the "
+                                   f"{nbmod.name(to, True)} tab, keeping its dates and link", self.convert,
+                                   ic=kind_icon(to, 30))
+        self.hypothesis_btn = None
+        if kind == nbmod.QUESTION:                    # Convert to hypothesis (Josh, 22 October)
+            self.hypothesis_btn = qbutton("", HYPOTHESIS_TIP, self.to_hypothesis, ic=_cogitate_icon(30))
+        self.pin_btn = qbutton("", f"Pin the selected {one} to the top of the list (resolving it unpins it)",
+                               self.toggle_pin, ic=pin_icon(30))
+        self.link_btn = qbutton("", f"Link the selected {one} to a hypothesis", self.link_to_hypothesis,
+                                ic=_cogitate_icon(30)) if kind == nbmod.TODO else None
+        qb.addStretch(1)
+        ql.addLayout(qb)
+        self.tree = QTreeWidget()
+        self.tree.setColumnCount(5)
+        self.tree.setHeaderLabels([nbmod.name(kind), "Token", "Status", "Created / edited", "Resolved"])
+        self.tree.setRootIsDecorated(False)
+        wrapping(self.tree, lambda: dlg.search.text())
+        self.tree.setFont(ipa_font(dlg.main.prefs.ipa_size))
+        h = self.tree.header()
+        h.setSectionResizeMode(0, QHeaderView.Stretch)
+        for c in (1, 2, 3, 4):
+            h.setSectionResizeMode(c, QHeaderView.ResizeToContents)
+        h.setStretchLastSection(False)
+        self.tree.itemDoubleClicked.connect(self._double_clicked)
+        self.tree.currentItemChanged.connect(lambda *_: self.buttons())
+        self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self._menu)
+        ql.addWidget(self.tree, 1)
+
+    def _main(self):
+        return self.dlg.main
+
+    @property
+    def session(self):
+        return self.dlg.session
+
+    def _add_day(self):
+        return self.session
+
+    def _can_add(self):
+        return self.session is not None
+
+    def _fill(self, select=None):
+        self.fill(select)
+
+    def _everywhere(self, select=None):
+        self.dlg.reload()                              # the Hypotheses tab and the notes too
+        self.fill(select)
+        notebook_items_changed(self.dlg.main, self)
+
+    def _moved(self, q):
+        self.dlg._fill_days(self.session.date)        # the day's tooltip counts
+        self.dlg._fill_questions()
+        QToolTip.showText(self.tree.viewport().mapToGlobal(self.tree.viewport().rect().topLeft()),
+                          f"Moved to {'To Do' if q.is_todo else 'Questions'}", self.tree)
+
+    def fill(self, select: nbmod.Question | None = None):
+        self.tree.clear()
+        s = self.session
+        if s is None:
+            return
+        lst = nbmod.items(s, self.kind)
+        for q in [x for x in lst if x.pinned] + [x for x in lst if not x.pinned]:   # pinned on top
+            it = self._item([q.text, nbmod.about_now(self.dlg.main.doc.db, q), q.status, q.dated, q.resolved], s, q)
+            self.tree.addTopLevelItem(it)
+            if q is select:
+                self.tree.setCurrentItem(it)
+        open_ = sum(1 for q in lst if q.is_open)
+        title = "Questions" if self.kind == nbmod.QUESTION else "To Do"
+        self.dlg.tabs.setTabText(QUESTIONS_TAB if self.kind == nbmod.QUESTION else TODO_TAB,
+                                 f"{title} ({open_} open)" if lst else title)
+        self.buttons()
+        QTimer.singleShot(0, self.tree.doItemsLayout)
+
+    def buttons(self):
+        cur = self.current()
+        q = cur[1] if cur is not None else None
+        for b in (self.delete_btn, self.edit_btn, self.resolve_btn, self.convert_btn, self.pin_btn,
+                  self.hypothesis_btn, self.link_btn):
+            if b is not None:
+                b.setEnabled(q is not None)
+        self.add_btn.setEnabled(self.session is not None)
+        self.pin_btn.setToolTip("Unpin the selected item" if q is not None and q.pinned else
+                                f"Pin the selected {nbmod.name(self.kind, title=False)} to the top of the "
+                                "list (resolving it unpins it)")
+        one = nbmod.name(self.kind, title=False)
+        self.resolve_btn.setToolTip(f"Mark the selected {one} as open again" if q and not q.is_open
+                                    else f"Resolve the selected {one}")
+
+
+class ItemsDialog(QDialog, ItemActions):
+    """Every question (or to do) in the notebook, newest day first; the same actions as the
+    notebook's tab (Josh, 26 October)."""
+
+    LINK_COLUMN = 2
 
     def __init__(self, main, kind: str = nbmod.QUESTION):
-        super().__init__(main)
+        QDialog.__init__(self, main)
         self.main, self.kind = main, kind
         one, many = nbmod.name(kind, title=False), nbmod.name(kind, True, title=False)
         self.setWindowTitle("Questions" if kind == nbmod.QUESTION else "To Do")
@@ -1085,9 +1208,17 @@ class ItemsDialog(QDialog):
             self.hypothesis_btn = QPushButton(_cogitate_icon(18), "")
             self.hypothesis_btn.setToolTip(HYPOTHESIS_TIP)
             self.hypothesis_btn.clicked.connect(lambda *_: self.to_hypothesis())
+        self.link_btn = None
+        if kind == nbmod.TODO:                        # (a question's Cogitate button converts it)
+            self.link_btn = QPushButton(_cogitate_icon(18), "")
+            self.link_btn.setToolTip(f"Link the selected {one} to a hypothesis")
+            self.link_btn.clicked.connect(lambda *_: self.link_to_hypothesis())
         self.pin_btn = QPushButton(pin_icon(18), "")
         self.pin_btn.setToolTip(f"Pin the selected {one} to the top of the list (resolving it unpins it)")
         self.pin_btn.clicked.connect(lambda *_: self.toggle_pin())
+        self.delete_btn = QPushButton(icon("delete", 18), "")
+        self.delete_btn.setToolTip(f"Delete the selected {one}")
+        self.delete_btn.clicked.connect(lambda *_: self.delete())
         self.open_btn = QPushButton(icon("notebook", 18, theme.accent().name()), "Open in notebook")
         self.open_btn.clicked.connect(lambda *_: self.open_day())
         self.token_btn = QPushButton("Go to token")
@@ -1098,7 +1229,7 @@ class ItemsDialog(QDialog):
         close = QPushButton("Close")
         close.clicked.connect(self.accept)
         for w in (self.add_btn, self.resolve_btn, self.edit_btn, self.pin_btn, self.convert_btn,
-                  self.hypothesis_btn, self.open_btn, self.token_btn):
+                  self.hypothesis_btn, self.link_btn, self.delete_btn, self.open_btn, self.token_btn):
             if w is not None:
                 row.addWidget(w)
         row.addWidget(self.count)
@@ -1106,6 +1237,9 @@ class ItemsDialog(QDialog):
         row.addWidget(close)
         lay.addLayout(row)
         self._fill()
+
+    def _main(self):
+        return self.main
 
     def _all(self):
         return self.main.doc.notebook.all_items(self.kind)
@@ -1117,36 +1251,34 @@ class ItemsDialog(QDialog):
         self._fill(cur[1] if cur is not None else None)
 
     def _notebook_follows(self):
-        """An open notebook window shows the change straight away (both can be open now)."""
-        nb = getattr(self.main, "notebook_dialog", None)
-        if nb is not None and nb.isVisible():
-            nb.reload()
+        notebook_items_changed(self.main, self)
 
     def changeEvent(self, event):
         super().changeEvent(event)
         if event.type() == QEvent.ActivationChange and self.isActiveWindow():
             self.refresh()
 
+    def _show_open(self):
+        if self.show_which.currentData() == RESOLVED:
+            self.show_which.setCurrentIndex(self.show_which.findData(OPEN))
+
+    def _moved(self, q):
+        self.count.setText(self.count.text() + f" · moved to {'To Do' if q.is_todo else 'Questions'}")
+
+    def _extra_menu_items(self, cur):
+        return (("Open in notebook", icon("notebook", 16, theme.accent().name()), self.open_day, cur is not None),)
+
     def _fill(self, select=None):
         which = self.show_which.currentData()
         text = self.search.text().strip().lower()
         self.tree.clear()
-        muted = QBrush(QColor(theme.muted()))
         shown = 0
         for s, q in self._all():
             if (which == OPEN and not q.is_open) or (which == RESOLVED and q.is_open):
                 continue
             if text and text not in q.text.lower() and text not in s.date:
                 continue
-            it = QTreeWidgetItem([s.date, q.text, nbmod.about_now(self.main.doc.db, q), q.status, q.dated, q.resolved])
-            it.setData(0, Qt.UserRole, (s, q))
-            if q.pinned:
-                it.setIcon(1, pin_icon())
-            it.setToolTip(1, q.text)
-            link_look(it, 2, q)
-            if not q.is_open:
-                for c in (0, 1, 3, 4, 5):
-                    it.setForeground(c, muted)
+            it = self._item([s.date, q.text, nbmod.about_now(self.main.doc.db, q), q.status, q.dated, q.resolved], s, q)
             self.tree.addTopLevelItem(it)
             shown += 1
             if q is select:
@@ -1157,14 +1289,10 @@ class ItemsDialog(QDialog):
         self._buttons()
         QTimer.singleShot(0, self.tree.doItemsLayout)      # wrapped items get their height
 
-    def _current(self):
-        it = self.tree.currentItem()
-        return it.data(0, Qt.UserRole) if it is not None else None
-
     def _buttons(self):
         cur = self._current()
         for b in (self.resolve_btn, self.edit_btn, self.convert_btn, self.open_btn, self.hypothesis_btn,
-                  self.pin_btn):
+                  self.pin_btn, self.link_btn, self.delete_btn):
             if b is not None:
                 b.setEnabled(cur is not None)
         self.pin_btn.setToolTip("Unpin the selected item" if cur is not None and cur[1].pinned else
@@ -1172,117 +1300,6 @@ class ItemsDialog(QDialog):
                                 "list (resolving it unpins it)")
         self.resolve_btn.setText("Mark as open" if cur and not cur[1].is_open else "Resolve")
         self.token_btn.setEnabled(cur is not None and cur[1].link is not None)
-
-    def _double_clicked(self, item, column):
-        if column == 2 and item.data(0, Qt.UserRole)[1].link is not None:
-            self.go_to_token()
-        else:
-            self.edit()
-
-    def _menu(self, pos):
-        it = self.tree.itemAt(pos)
-        if it is not None:
-            self.tree.setCurrentItem(it)
-        cur = self._current()
-        if cur is None:
-            return
-        q = cur[1]
-        m = QMenu(self.tree)
-        for text, ic, fn, enabled in (
-                (f"Edit {nbmod.name(self.kind, title=False)}…", icon("edit", 16), self.edit, True),
-                ("Mark as open" if not q.is_open else "Resolve", icon("resolve", 16), self.toggle, True),
-                (pin_label(q), pin_icon(), self.toggle_pin, True),
-                (convert_label(self.kind), kind_icon(nbmod.other(self.kind), 16), self.convert, True),
-                *((("Convert to hypothesis", _cogitate_icon(), self.to_hypothesis, True),)
-                  if self.kind == nbmod.QUESTION else ()),
-                ("Open in notebook", icon("notebook", 16, theme.accent().name()), self.open_day, True),
-                ("Go to token", None, self.go_to_token, q.link is not None)):
-            a = m.addAction(ic, text) if ic is not None else m.addAction(text)
-            a.setEnabled(enabled)
-            a.triggered.connect(lambda *_, fn=fn: fn())
-        m.exec(self.tree.viewport().mapToGlobal(pos))
-
-    def toggle_pin(self):
-        """Pin to the top / Unpin (Josh, 22 October)."""
-        cur = self._current()
-        if cur is None:
-            return
-        cur[1].pinned = not cur[1].pinned
-        self.main.doc.notebook_changed()
-        self._fill(cur[1])
-        if getattr(self.main, "notebook_dialog", None) is not None:
-            self.main.notebook_dialog.reload()
-
-    def to_hypothesis(self):
-        """Convert to hypothesis: a new hypothesis from the selected question (it stays, resolved)."""
-        cur = self._current()
-        if cur is None:
-            return
-        self.main.question_to_hypothesis(*cur)
-        self._fill(cur[1])
-
-    def go_to_token(self):
-        cur = self._current()
-        if cur is not None and cur[1].link is not None:
-            follow_link(self, self.main, cur[1].link)
-
-    def toggle(self):
-        cur = self._current()
-        if cur is None:
-            return
-        q = cur[1]
-        q.set_resolved("" if q.resolved else today())
-        self.main.doc.notebook_changed()
-        self._fill(q)
-        self._notebook_follows()
-
-    def add(self):
-        """A new open question (or to do), linked to nothing, on the Current Session's day: the
-        day gets its notes, with the session's people and places, if it has none yet."""
-        one = nbmod.name(self.kind)
-        text = ask_text(self, f"Add {one if self.kind == nbmod.TODO else one.lower()}", f"{one}:")
-        text = (text or "").strip()
-        if not text:
-            return
-        from . import chiprow as chips
-        keys = self.main.session_keys()
-        q = nbmod.push_question(self.main.doc.notebook, self.main.doc.db, self.main.work_date(), text,
-                                None, None, keys[chips.RESEARCHERS], keys[chips.PARTICIPANTS],
-                                keys[chips.LOCATIONS], self.kind)
-        self.main.doc.notebook_changed()
-        if self.show_which.currentData() == RESOLVED:
-            self.show_which.setCurrentIndex(self.show_which.findData(OPEN))
-        self._fill(q)
-        self._notebook_follows()
-        if callable(getattr(self.main, "update_badges", None)):
-            self.main.update_badges()
-
-    def edit(self):
-        cur = self._current()
-        if cur is None:
-            return
-        q = cur[1]
-        one = nbmod.name(self.kind)
-        text = ask_text(self, f"Edit {one if self.kind == nbmod.TODO else one.lower()}",
-                        f"{one} (from {cur[0].date}):", q.text)
-        if text and text != q.text:
-            q.text, q.edited = text, today()
-            self.main.doc.notebook_changed()
-            self._fill(q)
-            self._notebook_follows()
-
-    def convert(self):
-        """Convert to To Do / Convert to question: it leaves this list for the other one."""
-        cur = self._current()
-        if cur is None:
-            return
-        s, q = cur
-        nbmod.convert(s, q)
-        self.main.doc.notebook_changed()
-        self._fill()
-        self.count.setText(self.count.text() + f" · moved to {'To Do' if q.is_todo else 'Questions'}")
-        if getattr(self.main, "notebook_dialog", None) is not None:
-            self.main.notebook_dialog.reload()
 
     def open_day(self):
         cur = self._current()

@@ -357,8 +357,8 @@ class TextsUtterancesWindow(QDialog):
         nbmod.push_question(self.doc.notebook, self.db, date, text, u, u.token,
                             keys[chips.RESEARCHERS], keys[chips.PARTICIPANTS], keys[chips.LOCATIONS], kind)
         self.doc.notebook_changed()
-        if getattr(main, "notebook_dialog", None) is not None:
-            main.notebook_dialog.reload()
+        from .notebook_dialog import refresh_notebook
+        refresh_notebook(main)
         self._edited(u, "f:" + key, "")
         self.show_cell(u)
         main.statusBar().showMessage(f"Added to the {nbmod.name(kind, True, title=False)} of {date}", 5000)

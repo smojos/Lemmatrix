@@ -265,6 +265,9 @@ def _order(lid: str, numbers) -> list[str]:
     return sorted(set(numbers), key=lambda n: pos.get(n, 10 ** 9))
 
 
+# Two patterns on purpose (the audit, 26 October): _FAMILY is a list item's family (a section's
+# letter, three digits, at most one letter: B033f), _STEM any reference's family for sorting, the
+# researcher's own too (D1000, B001bc; see _places).
 _FAMILY = re.compile(r"([A-QV]\d{3})([a-z]?)")   # Q too: Q001b first, Q002b second (the audit, 25 October)
 
 
@@ -523,7 +526,7 @@ def peek(db, entry) -> str:
     return "\n".join(lines)
 
 
-_STEM = re.compile(r"^([A-Z]\d{3,4})([a-z]*)$")
+_STEM = re.compile(r"^([A-Z]\d{3,4})([a-z]*)$")   # any reference, for sorting (see _FAMILY)
 
 
 @lru_cache(maxsize=1)

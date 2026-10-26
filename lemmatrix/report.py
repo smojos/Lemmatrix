@@ -10,9 +10,7 @@ from __future__ import annotations
 import platform
 from urllib.parse import quote
 
-from . import __version__
-
-SUPPORT_EMAIL = "lemmatrix.support@gmail.com"
+from . import SUPPORT_EMAIL, __version__  # noqa: F401  (SUPPORT_EMAIL: one copy, in __init__)
 
 
 def system() -> str:

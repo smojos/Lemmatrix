@@ -668,8 +668,8 @@ def note_in_notebook(main, line: str):
     except nbmod.NotebookError:
         return
     doc.notebook_changed()
-    if getattr(main, "notebook_dialog", None) is not None:
-        main.notebook_dialog.reload()
+    from .notebook_dialog import refresh_notebook
+    refresh_notebook(main)
 
 
 class SentDialog(QDialog):

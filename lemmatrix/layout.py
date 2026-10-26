@@ -316,7 +316,7 @@ class RenameError(Exception):
     pass
 
 
-BAD_IN_FILE_NAMES = '/\\:*?"<>|'
+from .model import FORBIDDEN_CHARS as BAD_IN_FILE_NAMES  # noqa: E402  (one list: model.FORBIDDEN_CHARS)
 
 
 def suggested_stem(old_stem: str, old_name: str, new_name: str, language: str = "", variety: str = "") -> str:
@@ -342,9 +342,16 @@ def stem_problem(stem: str) -> str:
     return ""
 
 
-def _backup_pattern(stem: str):
+def backup_name_pattern(stem: str, suffixes=(".xml", ".notebook", ".workspace")):
+    """A dated automatic backup's name: {stem}_2026-10-26_071500.xml, or …_071500_2.xml for a second
+    in the same second. Group 1 is the date part, group 2 the ending. The one pattern for the backups'
+    names: renaming the database (here) and clearing out old backups (storage.backup) use it."""
     import re
-    return re.compile(re.escape(stem) + r"(_\d{4}-\d{2}-\d{2}_\d{6}(?:_\d+)?)(\.xml|\.notebook|\.workspace)$")
+    ends = "|".join(re.escape(s) for s in suffixes)
+    return re.compile(re.escape(stem) + r"(_\d{4}-\d{2}-\d{2}_\d{6}(?:_\d+)?)(" + ends + ")$")
+
+
+_backup_pattern = backup_name_pattern
 
 
 def rename_plan(db_path, new_stem: str) -> list[tuple[Path, Path]]:

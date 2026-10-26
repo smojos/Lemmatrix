@@ -133,7 +133,7 @@ def draw_pitch(p: QPainter, rect: QRectF, text: str, low: int = 1, high: int = 5
     items = pitchmod.parse(text)
     if not items:
         return
-    color = color or theme.colour("pitch")
+    color = color or theme.colour("pitch_trace")   # Settings → Pitch → own colour, else the accent
     span = max(high - low, 1)
     top, bottom = rect.top() + 2, rect.bottom() - 2
 

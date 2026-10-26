@@ -32,6 +32,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QAbstractScrollArea, QDialog, 
 from ..interlinear import bare, split_units
 from . import conventions, searchmark, theme
 from .icons import icon, themed_icon
+from .viewmixins import WheelZoom
 from .widgets import ipa_font
 
 MARGIN = 40              # the buffer on the left, with room for the bookmark (idea 32; 24 before)
@@ -43,7 +44,7 @@ GAP = 16                 # between aligned columns
 ROW_EXTRA = 6            # a field row's height beyond its font's
 TIME_H = 20
 PUSH = 20                # the Push to question and Push to To Do buttons in a Comment box (each)
-ZOOM_MIN, ZOOM_MAX, ZOOM_STEP = 0.6, 2.5, 1.1     # Ctrl + mouse wheel
+ZOOM_MIN, ZOOM_MAX, ZOOM_STEP = WheelZoom.ZOOM_MIN, WheelZoom.ZOOM_MAX, WheelZoom.ZOOM_STEP   # Ctrl + mouse wheel
 DRAG = 4                 # pixels the mouse moves before a press becomes a drag over words
 EDGE_PUNCT = "‘’“”'\"«».,;:!?"   # stripped from the ends of words taken from a translation
 
@@ -102,7 +103,7 @@ def shown(text: str) -> str:
     return " ".join(b for b in (bare(u) for u in split_units(text)) if b)
 
 
-class LinesView(QAbstractScrollArea):
+class LinesView(WheelZoom, QAbstractScrollArea):
     playRequested = Signal()
     contextRequested = Signal(object, object)     # the line (or None), global position
     clipActivated = Signal(object)                # double-click on a line's utterances
@@ -162,8 +163,8 @@ class LinesView(QAbstractScrollArea):
         """The pinned side's width (time and Comment), growing with the zoom; none with the Comment below."""
         return 0 if self.comment_below else round(SIDE_W * max(1.0, self.zoom))
 
-    def set_zoom(self, zoom: float):
-        zoom = max(ZOOM_MIN, min(ZOOM_MAX, zoom))
+    def set_zoom(self, zoom: float):              # (the wheel and Ctrl+0: viewmixins.WheelZoom)
+        zoom = self.clamp_zoom(zoom)
         if abs(zoom - self.zoom) < 1e-6:
             return
         self.zoom = zoom
@@ -175,15 +176,6 @@ class LinesView(QAbstractScrollArea):
         self._relayout()
         if self._current is not None:
             self._scroll_to(self._current)
-
-    def wheelEvent(self, event):
-        if event.modifiers() & Qt.ControlModifier:
-            d = event.angleDelta().y() or event.angleDelta().x()
-            if d:
-                self.set_zoom(self.zoom * (ZOOM_STEP ** (d / 120)))
-            event.accept()
-            return
-        super().wheelEvent(event)
 
     # ---- data ---------------------------------------------------------------
     def set_fields(self, specs: list[FieldSpec], comment_key: str = ""):
@@ -768,8 +760,7 @@ class LinesView(QAbstractScrollArea):
         if k == Qt.Key_A and mods & Qt.ControlModifier:
             self.selectAll()
             return
-        if k == Qt.Key_0 and mods & Qt.ControlModifier:      # the zoom back to normal
-            self.set_zoom(1.0)
+        if self.zoom_key(event):                  # Ctrl+0: the zoom back to normal
             return
         if k == Qt.Key_Escape and self._text_sel is not None:
             self.clear_text_selection()

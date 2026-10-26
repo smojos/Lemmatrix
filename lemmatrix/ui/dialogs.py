@@ -866,6 +866,18 @@ class PreferencesDialog(QDialog):
         self.theme.setToolTip("Light or dark, for the whole program")
         self.accent = ColourButton(prefs.accent, theme.DEFAULT_ACCENT,
                                    "Selected tabs, highlights, tag chips and pitch traces")
+        # Two colours of one's own (Josh, 26 October): the search marks, and (Settings → Pitch) the
+        # pitch traces; Default (or deselecting) goes back
+        self.search_colour = ColourButton(prefs.search_colour, theme.DEFAULT_SEARCH,
+                                          "What every search bar marks in the cells, lines and the XML "
+                                          "viewer (darker on the dark theme). Default: yellow")
+        self.pitch_own = QCheckBox("Pitch traces in a colour of their own")
+        self.pitch_own.setChecked(prefs.pitch_colour_on)
+        self.pitch_own.setToolTip("Deselected, the pitch traces are drawn in the accent colour "
+                                  "(Settings → Display), as before")
+        self.pitch_colour = ColourButton(prefs.pitch_colour, theme.DEFAULT_ACCENT,
+                                         "The pitch drawings' colour (lightened on the dark theme)")
+
         from .. import pitchsound
         self.voice = QComboBox()
         for key, label in pitchsound.VOICES.items():
@@ -976,6 +988,7 @@ class PreferencesDialog(QDialog):
             box.setToolTip(tip)
             self.badges[key] = box
         page("Display", [("This computer", [("Theme", self.theme), ("Accent colour", self.accent),
+                                            ("Search highlight", self.search_colour),
                                             ("IPA font size", self.ipa),
                                             ("Splash screen", self.splash), (None, self.abbreviate)]),
                          ("Badges on the app bar (this computer)", [(None, b) for b in self.badges.values()]),
@@ -1004,9 +1017,10 @@ class PreferencesDialog(QDialog):
                        ("This database", [("Lowest pitch digit", self.low),
                                           ("Highest pitch digit", self.high)]),
                        ("This computer", [("Pitch playback", voice_row),
-                                          ("Playback volume", volume_row)])])
+                                          ("Playback volume", volume_row),
+                                          (None, self.pitch_own), ("Pitch trace colour", self.pitch_colour)])])
         lay.addWidget(_buttons(self))
-        under = (self.low, self.high, self.voice, listen, self.volume, vol_label)
+        under = (self.low, self.high, self.voice, listen, self.volume, vol_label, self.pitch_own)
         self.pitch_on.toggled.connect(lambda on: [w.setEnabled(on) for w in under])
         for w in under:                           # greyed under the tick while it is off
             w.setEnabled(self.pitch_on.isChecked())
@@ -1014,6 +1028,12 @@ class PreferencesDialog(QDialog):
             self.pitch_on.setEnabled(False)
             for w in under:
                 w.setEnabled(False)
+
+        def colour_row(*_):                       # the colour only with its checkbox selected
+            self.pitch_colour.setEnabled(self.pitch_own.isEnabled() and self.pitch_own.isChecked())
+        self.pitch_on.toggled.connect(colour_row)
+        self.pitch_own.toggled.connect(colour_row)
+        colour_row()
 
     def _change_kind(self):
         """Change the pitch kind…: closes Settings (its changes kept) and opens Edit → Metadata."""
@@ -1082,6 +1102,9 @@ class PreferencesDialog(QDialog):
             p.show_welcome = self.welcome.isChecked()
         p.theme = self.theme.currentData()
         p.accent = self.accent.colour()
+        p.search_colour = self.search_colour.colour()
+        p.pitch_colour_on = self.pitch_own.isChecked()
+        p.pitch_colour = self.pitch_colour.colour()
         p.praat_path = self.praat.text().strip()
         p.pitch_voice = self.voice.currentData()
         p.pitch_volume = self.volume.value()

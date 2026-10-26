@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QLineEdit, QMenu, Q
                                QTableView, QToolTip)
 
 from .. import filters as fl
+from .viewmixins import ClickUnselect, WheelZoom
 from ..model import ListItem
 from . import spellui, theme
 from .filter_dialogs import ChooseDialog, FilterForDialog
@@ -452,7 +453,7 @@ def _same_row(a, b) -> bool:
     return ea is not None and ea is eb and getattr(a, "index", None) == getattr(b, "index", None)
 
 
-class FilterTable(QTableView):
+class FilterTable(WheelZoom, ClickUnselect, QTableView):
     """A sortable table whose column headers each have a filter menu."""
 
     filtersChanged = Signal()
@@ -512,10 +513,9 @@ class FilterTable(QTableView):
     # ---- zoom (Ctrl + mouse wheel, Ctrl+0; IDEAS.md idea 14, Josh, 24 October) ----------------
     # As in the matrices and a text's lines: each grid its own zoom, the text, the IPA font,
     # the chips, the pitch drawings, the rows' height and the columns' widths together.
-    ZOOM_MIN, ZOOM_MAX, ZOOM_STEP = 0.6, 2.5, 1.1
-
+    # (the wheel, Ctrl+0 and the limits: viewmixins.WheelZoom)
     def set_zoom(self, zoom: float):
-        zoom = max(self.ZOOM_MIN, min(self.ZOOM_MAX, zoom))
+        zoom = self.clamp_zoom(zoom)
         old = self.zoom
         if abs(zoom - old) < 1e-6:
             return
@@ -543,15 +543,6 @@ class FilterTable(QTableView):
             self.model_.dataChanged.emit(self.model_.index(0, 0),
                                          self.model_.index(n - 1, self.model_.columnCount() - 1))
         self.viewport().update()
-
-    def wheelEvent(self, event):
-        if event.modifiers() & Qt.ControlModifier:
-            d = event.angleDelta().y() or event.angleDelta().x()
-            if d:
-                self.set_zoom(self.zoom * (self.ZOOM_STEP ** (d / 120)))
-            event.accept()
-            return
-        super().wheelEvent(event)
 
     # ---- tooltips ----------------------------------------------------------
     # Twice Qt's usual wait before a cell's tooltip appears (Josh, 18 October: it came too
@@ -904,32 +895,23 @@ class FilterTable(QTableView):
                 return
         # click_unselects (All data, 21 October): a plain click on the selected row unselects it.
         # Not when the click edits a cell in place, or is the first of a double-click.
-        self._unselect_on_release = False
+        self._arm_unselect(False)
         if self.click_unselects and event.button() == Qt.LeftButton and not event.modifiers():
             idx = self.indexAt(event.position().toPoint())
             if idx.isValid() and self.selectionModel().isRowSelected(idx.row(), QModelIndex()) \
                     and len(self.selectionModel().selectedRows()) <= 1 \
                     and not (self.model_.columns[self.proxy.mapToSource(idx).column()].edit
                              and idx == self.currentIndex()):
-                self._unselect_on_release = True
+                self._arm_unselect(True)
         super().mousePressEvent(event)
 
-    def mouseReleaseEvent(self, event):
-        super().mouseReleaseEvent(event)
-        if getattr(self, "_unselect_on_release", False):
-            self._unselect_on_release = False
-            from PySide6.QtWidgets import QApplication
-            QTimer.singleShot(QApplication.doubleClickInterval() + 10, self._unselect_if_still)
-            self._pending_unselect = True
+    # (the wait and the double-click: viewmixins.ClickUnselect)
+    def _unselect(self):
+        self.clearSelection()
 
     def mouseDoubleClickEvent(self, event):
-        self._pending_unselect = False             # a double-click opens; it never unselects
+        self._cancel_unselect()                   # a double-click opens; it never unselects
         super().mouseDoubleClickEvent(event)
-
-    def _unselect_if_still(self):
-        if getattr(self, "_pending_unselect", False):
-            self._pending_unselect = False
-            self.clearSelection()
 
     def _double(self, idx):
         col = self.model_.columns[idx.column()]
@@ -944,9 +926,7 @@ class FilterTable(QTableView):
         """No type-to-jump: IPA takes several keystrokes per symbol, so jumping only confuses (Josh, 19 October)."""
 
     def keyPressEvent(self, event):
-        if (event.key() == Qt.Key_0 and event.modifiers() & Qt.ControlModifier
-                and self.state() != QAbstractItemView.EditingState):
-            self.set_zoom(1.0)                  # the zoom back to normal
+        if self.state() != QAbstractItemView.EditingState and self.zoom_key(event):   # Ctrl+0
             return
         if event.key() in (Qt.Key_Return, Qt.Key_Enter) and self.state() != QAbstractItemView.EditingState:
             row = self.current_row()

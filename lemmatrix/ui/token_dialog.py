@@ -1309,8 +1309,8 @@ class TokenDialog(QDialog):
         nbmod.push_question(self.doc.notebook, self.db, date, text, self.slot.entry, self.token,
                             keys[chips.RESEARCHERS], keys[chips.PARTICIPANTS], keys[chips.LOCATIONS], kind)
         self.doc.notebook_changed()
-        if getattr(main, "notebook_dialog", None) is not None:
-            main.notebook_dialog.reload()
+        from .notebook_dialog import refresh_notebook
+        refresh_notebook(main)
         self.comment.clear()
         from PySide6.QtWidgets import QToolTip
         b = self.todo_btn if kind == nbmod.TODO else self.push_btn

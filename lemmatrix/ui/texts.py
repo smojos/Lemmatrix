@@ -963,8 +963,8 @@ class TextsPanel(QObject):
         if nbmod.note_text_worked_on(self.doc.notebook, self.db, main.work_date(), t, k.get("researchers", []),
                                      k.get("participants", []), k.get("locations", [])):
             self.doc.notebook_changed()
-            if getattr(main, "notebook_dialog", None) is not None:
-                main.notebook_dialog.reload()
+            from .notebook_dialog import refresh_notebook
+            refresh_notebook(main)
 
     def _lines_edited(self, text_id: str):
         t = self.current()
@@ -1352,8 +1352,8 @@ class TextsPanel(QObject):
                                  k.get("researchers", []), k.get("participants", []), k.get("locations", []),
                                  kind)
         self.doc.notebook_changed()
-        if getattr(main, "notebook_dialog", None) is not None:
-            main.notebook_dialog.reload()
+        from .notebook_dialog import refresh_notebook
+        refresh_notebook(main)
         self.set_line_field(line, key, "")
         main.statusBar().showMessage(f"Added to the {nbmod.name(kind, True, title=False)} of {date}", 5000)
 

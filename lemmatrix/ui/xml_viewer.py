@@ -457,8 +457,8 @@ class XmlViewerWindow(QDialog):
             sel.cursor = QTextCursor(self.text.document().findBlockByNumber(self.target_line))
             sels.append(sel)
         doc = self.text.document()
-        yellow = QColor("#fff176") if not theme.dark() else QColor("#7a6a00")
-        strong = QColor("#ffb300") if not theme.dark() else QColor("#b58900")
+        yellow = theme.search_mark()                 # one search yellow (Settings → Display)
+        strong = theme.search_mark_strong()
         for i, (s, e) in enumerate(self.matches[:MAX_MARKS]):
             sel = QTextEdit.ExtraSelection()
             sel.format.setBackground(strong if i == self.current else yellow)

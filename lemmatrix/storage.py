@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import datetime as _dt
 import os
-import re
 import shutil
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -724,7 +723,8 @@ def make_backup(path: str | os.PathLike, keep: int = BACKUPS_KEPT) -> Path | Non
         n += 1
         target = folder / f"{p.stem}_{stamp}_{n}{p.suffix}"
     shutil.copy2(p, target)
-    pattern = re.compile(re.escape(p.stem) + r"_\d{4}-\d{2}-\d{2}_\d{6}(_\d+)?" + re.escape(p.suffix) + "$")
+    from .layout import backup_name_pattern
+    pattern = backup_name_pattern(p.stem, (p.suffix,))
     mine = [f for f in folder.glob(f"{p.stem}_*{p.suffix}") if pattern.match(f.name)]   # not X_old's
     keepers = backups_to_keep(mine, keep)
     for f in mine:
