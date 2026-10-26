@@ -10,11 +10,12 @@ The icons, the splash screen and the ɛλicit drawings are the author's own artw
 - every image in `lemmatrix/resources/`: the program icon (`lemmatrix.svg`, `lemmatrix.ico` and
   the PNGs in `icons/`), the splash screen (`splash.svg`), the χμλ, Questions, Cogitate, To Do and
   Snapshots icons, and the ɛλicit drawings in `elicit/`;
-- the ɛλicit web page's images in `docs/elicit/`: `favicon.svg`, `logo.svg`, `icon-180.png` and
-  `icon-512.png`;
+- every image in `docs/elicit/` (the ɛλicit web page's): today `favicon.svg`, `logo.svg`,
+  `icon-180.png` and `icon-512.png`;
 - the icons drawn in code: `lemmatrix/ui/icons.py` (every icon in the program, including the
   Texts and utterances bubbles) and `lemmatrix/ui/whiteboard_art.py` (the whiteboard's markers,
   duster and Blackboard icon);
+- **anything new the author adds to these folders or modules**, as soon as it is there;
 - the designs themselves, in any form, size or colour: the λχ program icon, the λemmatriχ splash
   screen, the ɛλicit cloud and logo, and the other icons.
 

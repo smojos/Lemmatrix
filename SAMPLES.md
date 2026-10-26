@@ -26,6 +26,7 @@ The ɛλicit test database is a little Italian, with the author's own recordings
   because they hold the samples' content (the invented language's sounds, words, grammar and
   texts, and the ɛλicit test's words and instructions); their SPDX line is
   `LicenseRef-Lemmatrix-Samples`;
+- **anything new the author adds to these files and folders,** as soon as it is there;
 - **the samples' content itself,** in any form: the invented language (its lexicon, its
   morphology and the texts written in it), the selection and wording of the entries, and the
   recordings, whether copied, rebuilt from the scripts, transcribed or re-recorded.
