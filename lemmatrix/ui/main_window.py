@@ -406,7 +406,16 @@ class MainWindow(QMainWindow):
         bot.addWidget(self.options, 1)
         bot.addWidget(self._scratch_panel())      # the pitch scratchpad, left of Current Session (22 October)
         bot.addWidget(self._session_panel())      # as wide as its chips need (_fit_session)
-        right.addWidget(bottom)
+        # the dock for minimised windows, a strip along the bottom of the working panels (idea 78)
+        from .dock import MinimiseDock
+        panels = QWidget()
+        pl = QVBoxLayout(panels)
+        pl.setContentsMargins(0, 0, 0, 0)
+        pl.setSpacing(0)
+        pl.addWidget(bottom, 1)
+        self.dock = MinimiseDock()
+        pl.addWidget(self.dock)
+        right.addWidget(panels)
         right.setSizes([720, 150])
         right.installEventFilter(self)            # Current Session follows the pane's width
         main.addWidget(right)
@@ -2651,7 +2660,35 @@ class MainWindow(QMainWindow):
         if w is None:
             w = cls(self)
             setattr(self, attr, w)
+            self._watch_minimise(w, attr)
         return w
+
+    # The dock's icon for each window of its own (idea 78): the app bar's where it has one
+    DOCK_ICONS = {"utterances_window": "texts_btn", "cogitate_window": "cogitate_btn", "xml_window": "xml_btn",
+                  "notebook_dialog": "notebook_btn", "questions": "questions_btn", "todo": "todo_btn",
+                  "snapshots": "snapshots_btn"}
+
+    def _watch_minimise(self, w, key: str):
+        """Dock this window when it is minimised (idea 78, Josh, 26 October)."""
+        dock = getattr(self, "dock", None)
+        if dock is None:
+            return
+
+        def icon_fn():
+            btn = getattr(self, self.DOCK_ICONS.get(key, ""), None)
+            if btn is not None and not btn.icon().isNull():
+                return btn.icon()
+            if key == "whiteboard_window":
+                from .whiteboard_art import blackboard_icon
+                return blackboard_icon(22)
+            if key == "bulk_window":
+                return icon("edit", 22)
+            if key == "spelling_window":
+                from .dock import letters_icon
+                return letters_icon("abc")
+            ic = w.windowIcon()
+            return ic if not ic.isNull() else self.windowIcon()
+        dock.watch(w, icon_fn)
 
     def _open_items(self, key, cls):
         """View → Questions / To Do: a window beside the main one, not modal, so the main window
@@ -2661,6 +2698,7 @@ class MainWindow(QMainWindow):
             dlg = cls(self)
             dlg.finished.connect(lambda *_: self.refresh_notebook())
             self.items_dialogs[key] = dlg
+            self._watch_minimise(dlg, key)
         else:
             dlg.refresh()
         bring_forward(dlg)
