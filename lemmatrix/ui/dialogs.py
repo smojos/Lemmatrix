@@ -916,10 +916,13 @@ class PreferencesDialog(QDialog):
         vr.addStretch(1)
 
         def page(title, sections):
+            """A tab of headed boxes; returns the boxes by heading (to grey a whole box)."""
+            boxes = {}
             w = QWidget()
             v = QVBoxLayout(w)
             for heading, rows in sections:
                 box = QGroupBox(heading)
+                boxes[heading] = box
                 f = QFormLayout(box)
                 for label, widget in rows:
                     if label:
@@ -933,6 +936,7 @@ class PreferencesDialog(QDialog):
             area.setFrameShape(QFrame.NoFrame)
             area.setWidget(w)
             tabs.addTab(area, title)
+            return boxes
 
         from .. import notebook as nbmod             # the notebook's history sections (this database)
         ws = getattr(getattr(parent, "doc", None), "workspace", None)
@@ -996,44 +1000,57 @@ class PreferencesDialog(QDialog):
                           [(None, self.conv_on), (None, self.conv_brackets), (None, self.conv_slashes),
                            (None, self.conv_caps), ("Translations in", self.conv_quotes)])])
         from .. import pitchview                     # Show the pitch system (idea 9; this database's workspace)
-        self.pitch_on = QCheckBox("Show the pitch system")
-        self.pitch_on.setChecked(pitchview.tick())
-        self.pitch_on.setToolTip("The Pitch field, the pitch drawing, pitch playback (Ctrl+Shift+Space), "
-                                 "Raise and Lower pitch, Bulk edit's Pitch shortcut and the pitch scratchpads. "
-                                 "Off hides them everywhere, to declutter: the data is kept exactly as it is "
-                                 "(tone fields such as Tone Class stay), and everything comes back as it was "
-                                 "when it is selected again. Also View → Show pitch system.")
+        # Hide the pitch system (Josh, 26 October: was "Show the pitch system"; selected hides it)
+        self.pitch_hide = QCheckBox("Hide the pitch system")
+        self.pitch_hide.setChecked(not pitchview.tick())
+        self.pitch_hide.setToolTip("Hides the Pitch field, the pitch drawing, pitch playback (Ctrl+Shift+Space), "
+                                   "Raise and Lower pitch, Bulk edit's Pitch shortcut and the pitch scratchpads "
+                                   "everywhere, to declutter: the data is kept exactly as it is (tone fields such "
+                                   "as Tone Class stay), and everything comes back as it was when it is "
+                                   "deselected. Also View → Show pitch system.")
         from .. import pitchkind
         kind = pitchkind.kind(db)                    # the database's pitch kind (idea 9)
-        self.kind_note = QLabel(f"Pitch kind: {pitchkind.LABELS[kind]}. {pitchkind.TIPS[kind]}.")
+        # "{language and variety} is Tonal", the kind bold, in the theme colour, a little larger;
+        # what it means for the data and the views under it in italics (Josh, 26 October)
+        md = db.metadata
+        lang = md.language_name.strip() or "This database"
+        if md.variety_name.strip():
+            lang += f" ({md.variety_name.strip()})"
+        self.kind_note = QLabel(f"{lang} is <span style='color:{theme.colour('pitch').name()}; "
+                                f"font-weight:bold; font-size:large'>{pitchkind.LABELS[kind]}</span>")
+        self.kind_note.setTextFormat(Qt.RichText)
         self.kind_note.setWordWrap(True)
         self.kind_note.setToolTip(pitchkind.CONVERT_NOTE)
+        self.kind_tip = QLabel(f"<i>{pitchkind.TIPS[kind]}.</i>")
+        self.kind_tip.setTextFormat(Qt.RichText)
+        self.kind_tip.setWordWrap(True)
         self.kind_btn = QPushButton("Change the pitch kind…")
         self.kind_btn.setToolTip("Edit → Metadata → Pitch kind. " + pitchkind.CONVERT_NOTE)
         self.kind_btn.clicked.connect(lambda *_: self._change_kind())
         self.change_kind_requested = False
-        page("Pitch", [("Pitch kind (this database)", [(None, self.kind_note), (None, self.kind_btn)]),
-                       ("Show (this database)", [(None, self.pitch_on)]),
+        boxes = page("Pitch", [("Pitch kind (this database)", [(None, self.kind_note), (None, self.kind_tip),
+                                                               (None, self.kind_btn)]),
+                       ("Show (this database)", [(None, self.pitch_hide)]),
                        ("This database", [("Lowest pitch digit", self.low),
                                           ("Highest pitch digit", self.high)]),
                        ("This computer", [("Pitch playback", voice_row),
                                           ("Playback volume", volume_row),
                                           (None, self.pitch_own), ("Pitch trace colour", self.pitch_colour)])])
         lay.addWidget(_buttons(self))
-        under = (self.low, self.high, self.voice, listen, self.volume, vol_label, self.pitch_own)
-        self.pitch_on.toggled.connect(lambda on: [w.setEnabled(on) for w in under])
-        for w in under:                           # greyed under the checkbox while it is off
-            w.setEnabled(self.pitch_on.isChecked())
-        if not pitchkind.has_pitch_field(kind):   # unspecified: no pitch at all, only Change…
-            self.pitch_on.setEnabled(False)
-            for w in under:
-                w.setEnabled(False)
+        # Hidden: the boxes under it grey out whole, their headings and labels too (Josh, 26 October:
+        # a bigger visual cue that something is turned off)
+        under = [boxes["This database"], boxes["This computer"]]
+        has = pitchkind.has_pitch_field(kind)     # unspecified: no pitch at all, only Change…
 
-        def colour_row(*_):                       # the colour only with its checkbox selected
-            self.pitch_colour.setEnabled(self.pitch_own.isEnabled() and self.pitch_own.isChecked())
-        self.pitch_on.toggled.connect(colour_row)
-        self.pitch_own.toggled.connect(colour_row)
-        colour_row()
+        def grey(*_):
+            on = has and not self.pitch_hide.isChecked()
+            for box in under:
+                box.setEnabled(on)
+            self.pitch_colour.setEnabled(on and self.pitch_own.isChecked())   # with its checkbox
+        self.pitch_hide.toggled.connect(grey)
+        self.pitch_own.toggled.connect(grey)
+        self.pitch_hide.setEnabled(has)
+        grey()
 
     def _change_kind(self):
         """Change the pitch kind…: closes Settings (its changes kept) and opens Edit → Metadata."""
@@ -1118,7 +1135,7 @@ class PreferencesDialog(QDialog):
             for section, box in self.history.items():
                 doc.ws_set(nbmod.HISTORY_SETTINGS[section], box.isChecked())
             doc.ws_set(ORIGIN_KEY, self.origin_on.isChecked())
-            doc.set_pitch_shown(self.pitch_on.isChecked())   # a view setting: never marks it unsaved
+            doc.set_pitch_shown(not self.pitch_hide.isChecked())   # a view setting: never marks it unsaved
         from . import conventions as conv
         conv.save(p, conv.Conventions(on=self.conv_on.isChecked(), brackets=self.conv_brackets.isChecked(),
                                       slashes=self.conv_slashes.isChecked(), small_caps=self.conv_caps.isChecked(),

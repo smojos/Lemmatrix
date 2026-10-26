@@ -172,8 +172,8 @@ def test_settings_for_an_unspecified_database(win):
     from lemmatrix.ui.dialogs import PreferencesDialog
     win.doc.db.metadata.typology["tone"] = pk.UNSPECIFIED
     dlg = PreferencesDialog(win, win.doc.db, win.prefs)
-    assert not dlg.pitch_on.isEnabled() and not dlg.low.isEnabled()
-    assert "Unspecified" in dlg.kind_note.text()
+    assert not dlg.pitch_hide.isEnabled() and not dlg.low.isEnabled()
+    assert "Unspecified" in dlg.kind_note.text() and " is " in dlg.kind_note.text()
     win.doc.db.metadata.typology["tone"] = pk.TONAL
 
 

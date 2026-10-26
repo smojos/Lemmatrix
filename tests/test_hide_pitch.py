@@ -203,9 +203,11 @@ def test_comparison_area_keeps_alpha_and_beta(win):
 def test_settings_tick(win):
     from lemmatrix.ui.dialogs import PreferencesDialog
     dlg = PreferencesDialog(win, win.doc.db, win.prefs)
-    assert dlg.pitch_on.isChecked() and dlg.low.isEnabled()
-    dlg.pitch_on.setChecked(False)
-    assert not dlg.low.isEnabled() and not dlg.voice.isEnabled()  # greyed under the tick
+    assert not dlg.pitch_hide.isChecked() and dlg.low.isEnabled()
+    dlg.pitch_hide.setChecked(True)                                # Hide the pitch system (26 October)
+    assert not dlg.low.isEnabled() and not dlg.voice.isEnabled()  # greyed under it
+    box = dlg.low.parentWidget()
+    assert not box.isEnabled() and box.title() == "This database"  # the whole box, its heading and labels
     dlg.apply()
     assert not pitchview.shown() and win.doc.workspace.get(pitchview.KEY) is False
 
