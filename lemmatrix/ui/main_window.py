@@ -56,7 +56,7 @@ from .dialogs import EntryDialog, MetadataDialog, PreferencesDialog
 from .document import Document
 from .fields_dialog import FieldsDialog
 from .filter_dialogs import ConfigureColumnsDialog
-from .icons import THEMED, elicit_icon, icon, icon_size, themed_icon
+from .icons import toggle_icon, THEMED, elicit_icon, icon, icon_size, themed_icon
 from .matrix_dialogs import ConfigureCellDialog, ConfigureMatrixDialog, ask_matrix_name
 from .matrix_view import MatrixView
 from .prefs import Prefs
@@ -98,7 +98,7 @@ class TokenRow:
 
 
 ICON_ONLY = {"add", "delete", "edit", "play", "reset-filters",   # obvious, shared actions: the name is in the tooltip
-             "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token", "lemma-token", "hide-empty", "tick",
+             "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token", "lemma-token", "hide-empty", "hide-empty-tokens", "tick",
              "camera", "xml-viewer"}
 
 
@@ -306,8 +306,10 @@ class MainWindow(QMainWindow):
                         tool("Clear all filters", "reset-filters", self._clear_lemma_filters, "Clear all filters"))
         self.hide_empty = tool("Hide empty lemmas", "hide-empty", lambda: None,
                                "Hide empty lemmas: leave out the lemmas with no token data (no tokens, or "
-                               "only tokens with nothing typed and no recording). Click again to show them.")
+                               "only tokens with nothing typed and no recording). Click again to show them; "
+                               "Clear all filters shows them too.")
         self.hide_empty.setCheckable(True)        # this database's, in its workspace (idea 55, Josh, 24 October)
+        self.hide_empty.setIcon(toggle_icon("hide-empty"))   # grey λ, a red line across while on (idea 74)
         self.hide_empty.toggled.connect(self._hide_empty_toggled)
         row.insertWidget(row.count() - 1 if row.count() else 0, self.hide_empty)
         row.addWidget(self.lemma_count)
@@ -369,16 +371,16 @@ class MainWindow(QMainWindow):
         self.autoplay.setToolTip("Play a token's recording when you click it (in any tab) and when "
                                  "the token dialogue opens on it")
         self.autoplay.toggled.connect(lambda on: self.doc.ws_set("autoplay", bool(on)))   # each database its own
-        self.only_data = QCheckBox("Show only lemmas with token data")
-        self.only_data.setToolTip("All data: leave out lemmas whose tokens are all empty. Lemma/Tag: "
-                                  "leave out lemmas with nothing in any of the matrix's columns. "
-                                  "Tag/Tag: show nothing for a lemma without token data.")
+        # Hide empty tokens (idea 74, Josh, 26 October; was the checkbox "Show only lemmas with token
+        # data" here): a τ toggle in each tab's options bar, the three kept in step (one setting)
+        self.hide_tokens_btns = [self._hide_tokens_button() for _ in range(3)]
+        self.only_data = self.hide_tokens_btns[0]          # All data's (the name kept for the code)
         self.only_data.toggled.connect(self._only_data_toggled)
+        for b in self.hide_tokens_btns[1:]:
+            b.toggled.connect(self.only_data.setChecked)
         opts = QHBoxLayout()
         opts.setContentsMargins(4, 0, 0, 0)
         opts.addWidget(self.autoplay)
-        opts.addSpacing(16)
-        opts.addWidget(self.only_data)
         opts.addStretch(1)
         self.panels_btn = QToolButton()          # hides or shows the option panels below
         self.panels_btn.setAutoRaise(True)
@@ -388,7 +390,7 @@ class MainWindow(QMainWindow):
         bxl.addLayout(opts)
         normal = QFont(box.font())
         normal.setBold(False)              # set explicitly, or it would be inherited bold
-        for w in (self.tabs, self.views, self.autoplay, self.only_data):
+        for w in (self.tabs, self.views, self.autoplay):
             w.setFont(normal)
         right.addWidget(box)
 
@@ -480,7 +482,7 @@ class MainWindow(QMainWindow):
                              "Find missing or unlinked recordings…"),
                         tool("Configure columns", "gear-columns", self.configure_all_columns),
                         tool("Clear all filters", "reset-filters", self._clear_all_filters),
-                        self._camera_button())
+                        self.hide_tokens_btns[0], self._camera_button())
         top.addWidget(self.all_count)
         self.all_search = QLineEdit()
         self.all_search.setPlaceholderText("quick search of the visible columns")
@@ -512,6 +514,7 @@ class MainWindow(QMainWindow):
                        "Configure matrix: choose the rows and columns"),
                   tool("Clear matrix", "reset-filters", lambda tab=tab: self.clear_matrix(tab),
                        "Clear matrix: empty the view, no rows or columns"),
+                  self.hide_tokens_btns[1 if tab == LEMMA_TAG else 2],
                   self.conventions_button(), self._camera_button())
         d["saved"] = QComboBox()
         d["saved"].setMinimumWidth(170)
@@ -533,6 +536,23 @@ class MainWindow(QMainWindow):
         bl.addWidget(d["count"])
         bl.addStretch(1)
         return d
+
+    def _hide_tokens_button(self) -> QToolButton:
+        b = tool("Hide empty tokens", "hide-empty-tokens", lambda: None,
+                 "Hide empty tokens: All data leaves out the lemmas whose tokens are all empty; Lemma/Tag "
+                 "the lemmas with nothing in any of the matrix's columns; Tag/Tag shows nothing for a lemma "
+                 "without token data. Click again to show them; All data's Clear all filters shows them too.")
+        b.setCheckable(True)
+        b.setIcon(toggle_icon("hide-empty-tokens"))   # grey τ, a red line across while on (idea 74)
+        return b
+
+    def _only_data_toggled(self, on):
+        for b in self.hide_tokens_btns[1:]:       # the other tabs' toggles follow
+            b.blockSignals(True)
+            b.setChecked(on)
+            b.blockSignals(False)
+        self.doc.ws_set("only_with_data", bool(on))
+        self.refresh()
 
     # ---- snapshots (Cogitate, IDEAS.md ideas 16 and 35) -----------------------------------------
     def _camera_button(self) -> QToolButton:
@@ -2657,8 +2677,8 @@ class MainWindow(QMainWindow):
         if entry not in self.doc.db.entries:
             return False
         if entry not in self.lemmas.visible_rows():
-            self._clear_lemma_filters()
-        # Hide empty lemmas and Show only lemmas with token data aren't filters, so clearing the
+            self._clear_lemma_filters(toggles=False)    # the toggles only if needed, said below
+        # Hide empty lemmas and Hide empty tokens aren't filters, so clearing the
         # filters left an empty lemma hidden and the link selected nothing (the audit, 25 October)
         shown = []
         if not any(r is entry for r in self.lemmas.visible_rows()) and self.hide_empty.isChecked():
@@ -2669,11 +2689,11 @@ class MainWindow(QMainWindow):
             self.tabs.setCurrentIndex(ALL_DATA)
             row = TokenRow(entry, index)
             if row not in self.all_table.visible_rows():
-                self._clear_all_filters()
+                self._clear_all_filters(toggles=False)
                 self.refresh()
             if row not in self.all_table.visible_rows() and self.only_data.isChecked():
                 self.only_data.setChecked(False)
-                shown.append("Show only lemmas with token data")
+                shown.append("Hide empty tokens")
                 self.refresh()
             self.all_table.select_row(row)
         if shown:
@@ -2970,10 +2990,6 @@ class MainWindow(QMainWindow):
         super().changeEvent(event)
         if event.type() == QEvent.ActivationChange and self.isActiveWindow():
             self._scan_key = None                 # back from another program: list the folder again
-
-    def _only_data_toggled(self, on):
-        self.doc.ws_set("only_with_data", bool(on))
-        self.refresh()
 
     def _scan_sound_folder(self, force: bool = False):
         """Which recordings are in Soundfiles/Tokens (and online-only). Listed again only when the
@@ -3829,13 +3845,20 @@ class MainWindow(QMainWindow):
             e.tokens[i].set(f.name, new)
         self.doc.edit_entry(entry, change, "Raise pitch" if step > 0 else "Lower pitch")
 
-    def _clear_lemma_filters(self):
+    def _clear_lemma_filters(self, toggles: bool = True):
+        """Clear all filters (the lemma list): the search, the column filters, the pin, and Hide
+        empty lemmas (idea 74, Josh, 26 October)."""
         self.lemma_search.clear()
         self.lemmas.clear_filters()
+        if toggles and self.hide_empty.isChecked():
+            self.hide_empty.setChecked(False)
 
-    def _clear_all_filters(self):
+    def _clear_all_filters(self, toggles: bool = True):
+        """Clear all filters (All data): the search, the column filters, and Hide empty tokens (idea 74)."""
         self.all_search.clear()
         self.all_table.clear_filters()
+        if toggles and self.only_data.isChecked():
+            self.only_data.setChecked(False)
 
     # ============================================================= entries
     def add_entry(self):

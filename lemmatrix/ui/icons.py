@@ -11,7 +11,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from PySide6.QtCore import QPointF, QRectF, Qt
-from PySide6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPen, QPixmap, QPolygonF
+from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPainterPath, QPen, QPixmap, QPolygonF
 
 # Josh's χμλ for the XML viewer (21 October), his Inkscape file as it is; its teal becomes the theme colour
 XML_VIEWER_FILE = Path(__file__).resolve().parent.parent / "resources" / "xml_viewer.svg"
@@ -29,7 +29,7 @@ WHITE = QColor("white")
 BLACK = QColor("#1b1b1b")
 
 
-WIDE = {"gear-cells": 1.6, "gear-columns": 1.6, "gear-matrix": 1.6, "move-token": 1.6, "lemma-token": 1.6, "text-token": 1.3, "hide-empty": 1.6}   # icons wider than tall: width as a multiple of height
+WIDE = {"gear-cells": 1.6, "gear-columns": 1.6, "gear-matrix": 1.6, "move-token": 1.6, "lemma-token": 1.6, "text-token": 1.3}   # icons wider than tall: width as a multiple of height
 PRAAT_BEIGE = QColor("#909068")
 GREEN_, RED_, PURPLE_, BLUE_, PRAAT_BEIGE_ = GREEN, RED, PURPLE, BLUE, PRAAT_BEIGE   # as they are
 
@@ -305,21 +305,26 @@ def _draw(name: str, s: int, p: QPainter, colour: QColor | None = None, colour2:
         stem.lineTo(sx, s * 0.72)
         stem.quadTo(sx, s * 0.84, sx + s * 0.13, s * 0.80)
         p.drawPath(stem)
-    elif name == "hide-empty":                   # λ∅: hide the lemmas with no token data (idea 55, 24 October)
-        c = colour or GREEN
+    elif name in ("hide-empty", "hide-empty-on", "hide-empty-tokens", "hide-empty-tokens-on"):
+        # The empty-data toggles (IDEAS.md idea 74, Josh, 26 October): a grey λ (lemmas) or τ
+        # (tokens) inside a dotted grey box; switched on, a red line across it, low left to high right
+        grey = QColor("#8a8a8a")
+        m = s * 0.12
+        box = QRectF(m, m, s - 2 * m, s - 2 * m)
+        pen = QPen(grey, max(1.0, s * 0.06))
+        pen.setStyle(Qt.DotLine)
         p.setBrush(Qt.NoBrush)
-        p.setPen(QPen(c, max(1.6, s * 0.10), Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-        w, top, bottom = s * 0.42, s * 0.18, s * 0.84
-        x0 = s * 0.06                             # λ, as in λ→τ
-        hook = QPainterPath()
-        hook.moveTo(x0, top)
-        hook.lineTo(x0 + w * 0.22, top)
-        hook.lineTo(x0 + w, bottom)
-        p.drawPath(hook)
-        p.drawLine(QPointF(x0 + w * 0.56, s * 0.50), QPointF(x0 + w * 0.02, bottom))
-        r, cx, cy = s * 0.26, s * 1.18, s * 0.52  # ∅: an empty set
-        p.drawEllipse(QPointF(cx, cy), r, r)
-        p.drawLine(QPointF(cx - r * 1.15, cy + r * 1.15), QPointF(cx + r * 1.15, cy - r * 1.15))
+        p.setPen(pen)
+        p.drawRoundedRect(box, s * 0.08, s * 0.08)
+        f = QFont("Doulos SIL")
+        f.setPixelSize(max(6, round(s * 0.72)))
+        f.setBold(True)
+        p.setFont(f)
+        p.setPen(QColor("#707070"))
+        p.drawText(box, Qt.AlignCenter, "τ" if "tokens" in name else "λ")
+        if name.endswith("-on"):
+            p.setPen(QPen(QColor("#d93030"), max(1.6, s * 0.10), Qt.SolidLine, Qt.RoundCap))
+            p.drawLine(QPointF(s * 0.10, s * 0.90), QPointF(s * 0.90, s * 0.10))
     elif name == "text-token":                   # ➜τ: a token made from a text's line (Josh, 21 October)
         c = colour or GREEN
         p.setPen(Qt.NoPen)
@@ -620,6 +625,15 @@ def app_icon() -> QIcon:
     return ic
 
 
+def toggle_icon(name: str, size: int = 20) -> QIcon:
+    """An on/off button's icon: `name` while off, `name`-on (the red line) while on."""
+    ic = QIcon()
+    for mode in (QIcon.Normal, QIcon.Active, QIcon.Disabled):
+        ic.addPixmap(icon(name, size).pixmap(size, size), mode, QIcon.Off)
+        ic.addPixmap(icon(name + "-on", size).pixmap(size, size), mode, QIcon.On)
+    return ic
+
+
 def ink_icon(name: str, size: int = 22) -> QIcon:
     """An icon drawn in the theme's text colour: dark on the light theme, light on the dark one."""
     from . import theme
@@ -630,7 +644,7 @@ def ink_icon(name: str, size: int = 22) -> QIcon:
 
 
 THEMED = {"reset-filters", "gear-cells", "gear-columns", "gear-matrix", "find-missing", "move-token",
-          "lemma-token", "text-token", "tick", "refresh-text", "camera", "xml-viewer", "hide-empty"}   # follow the theme: redrawn on a change
+          "lemma-token", "text-token", "tick", "refresh-text", "camera", "xml-viewer"}   # follow the theme: redrawn on a change
 
 
 def themed_icon(name: str, size: int = 22) -> QIcon:
