@@ -88,3 +88,12 @@ def test_the_source_choice_is_this_computers_in_all_three(win, monkeypatch):
         dlg.source_box.setCurrentIndex(dlg.source_box.findData(old))
         dlg.reject()
     win.prefs.record_source = old
+
+
+def test_a_new_matrix_cell_shows_the_fields_in_josh_s_order():
+    """Josh, 25 October: Phonetic, Phonemic, Morphemes, Translation, Comment (under the drawing)."""
+    from lemmatrix import defaults, matrix as mx
+    assert mx.DEFAULT_CELL == ["drawing", "Phonetic", "Phonemic", "Morphemes", "Translation", "Comment"]
+    names = [f.name for f in defaults.new_database().settings.token_fields if f.name != "Pitch"]
+    assert names == ["Phonetic", "Phonemic", "Morphemes", "Translation", "Comment"]
+    assert mx.MatrixConfig().cell == mx.DEFAULT_CELL

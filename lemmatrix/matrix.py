@@ -31,7 +31,9 @@ from .model import Database, Entry, Token
 CITATION, EXACT, LOOSE = "citation", "exact", "loose"
 LEMMA_TAG, TAG_TAG = "lemma-tag", "tag-tag"
 
-DEFAULT_CELL = ["drawing", "Phonetic", "Phonemic", "Translation"]
+# A new matrix's cell: the pitch drawing, then Phonetic, Phonemic, Morphemes, Translation, Comment
+# (Josh, 25 October: every default view in that order; Morphemes and Comment were left out)
+DEFAULT_CELL = ["drawing", "Phonetic", "Phonemic", "Morphemes", "Translation", "Comment"]
 
 
 def cell_text(db, t, key: str) -> str:
