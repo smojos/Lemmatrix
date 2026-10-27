@@ -322,7 +322,7 @@ def _drop_clarification(db: Database):
     if own:                              # said in the upgrade's message, so nothing goes unseen
         db.load_notes = list(db.load_notes) + [
             "The Clarification field is gone: the EACW's clarifications now come from the list itself, as an "
-            "ⓘ beside each gloss. These clarifications weren't the list's and are no longer kept:\n"
+            "ⓘ beside each gloss. These clarifications differed from the list's present wording (an earlier edition's, or one of your own) and are no longer kept:\n"
             + "\n".join(own[:30]) + (f"\n… and {len(own) - 30} more" if len(own) > 30 else "")]
     db.upgraded = True
 
