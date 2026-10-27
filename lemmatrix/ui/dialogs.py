@@ -1099,6 +1099,9 @@ class PreferencesDialog(QDialog):
         row.addStretch(1)
         av.addSpacing(6)
         av.addLayout(row)
+        hot_note = QLabel("overwrite soundfiles without warning")
+        hot_note.setStyleSheet(f"color: {theme.muted()}; margin-left: 22px;")
+        av.addWidget(hot_note)
         self.fast_paste_box = QCheckBox(advanced.FAST_PASTE)  # idea 79 (Josh, 27 October)
         self.fast_paste_box.setChecked(prefs.get_bool(advanced.FAST_PASTE_KEY, False))
         self.fast_paste_box.setToolTip("Typing in Phonetic or Phonemic: Shift+Down copies it into the other "
