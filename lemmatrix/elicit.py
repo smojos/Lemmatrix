@@ -44,6 +44,8 @@ VERSION = 1
 ELICIT = "Elicit"
 EXPIRY_DAYS = 14
 SIZE_WARNING = 50 * 1024 * 1024          # bytes: warn before sending a bigger request
+MANY_ITEMS = 15                          # more and the request is warned about (Josh, 26 October: 10 to 15
+                                         # at most for speakers with poor internet; IDEAS.md idea 75)
 IMAGE_MAX = 500                          # px: longer sides are shrunk
 WEB_PAGE = "https://smojos.github.io/Lemmatrix/elicit/"
 # What the web page reads of a person and of a card (docs/elicit/elicit.js): the speaker's copy
@@ -440,12 +442,25 @@ def write_request(db: Database, req: Request, items) -> Path:
     return target
 
 
+def request_date(req: Request, lang: str) -> str:
+    """The day the request was made, for the line that tells requests apart: 26 October 2026 in
+    English, 2026-10-26 in the other languages (no month names to translate)."""
+    day = (req.created or "")[:10]
+    try:
+        d = _dt.date.fromisoformat(day)
+    except ValueError:
+        return day
+    return f"{d.day} {d.strftime('%B')} {d.year}" if lang.split("-")[0] == "en" else day
+
+
 def message_text(req: Request) -> str:
     """The message to paste into WhatsApp, Signal or an email: with a Drive request just the link
-    (in the last line, on its own, so phones make it tappable); otherwise with the request's file."""
+    (in the last line, on its own, so phones make it tappable); otherwise with the request's file.
+    A line before the link says whose request, of which day and how many items, since every link
+    looks the same in a chat (idea 75, 27 October)."""
     by_link = req.transport == "drive"
     key = "message_link" if by_link else "message"
-    out = []
+    out, lines = [], []
     for lang in req.languages:
         values = {"name": person_name(req.speaker, lang), "researcher": person_name(req.researcher, lang),
                   "link": "" if by_link else req.page}
@@ -455,6 +470,14 @@ def message_text(req: Request) -> str:
             text = text.format(**values).strip()
             if text not in out:
                 out.append(text)
+        line = p.get("request_line") if p else ""
+        if line:
+            line = line.format(researcher=person_name(req.researcher, lang), date=request_date(req, lang),
+                               total=len(req.cards)).strip()
+            if line not in lines:
+                lines.append(line)
+    if lines:
+        out.append("\n".join(lines))
     if by_link:
         out.append(req.drive.get("link", ""))
     return "\n\n".join(out)
@@ -722,6 +745,72 @@ def _fingerprint(path) -> dict | None:
     except OSError:
         return None
     return {"size": len(data), "sha1": hashlib.sha1(data).hexdigest()}
+
+
+_GAPS: dict = {}
+
+
+def take_gaps(st: "Stored", n: int) -> list[float]:
+    """Where sound was lost while a take was recorded (idea 88): what the page found, or, for a
+    take from a page older than 27 October, the same test run here (remembered while Lemmatrix is open)."""
+    a = st.answer(n) or {}
+    if isinstance(a.get("gaps"), list):
+        return [float(t) for t in a["gaps"]]
+    path = st.recording(n)
+    if path is None:
+        return []
+    key = (str(path), path.stat().st_mtime_ns)
+    if key not in _GAPS:
+        from . import glitches
+        try:
+            _GAPS[key] = glitches.find_in_file(path, offset=0)     # a received take: as the page made it
+        except Exception:                                          # noqa: BLE001 (an unreadable file)
+            _GAPS[key] = []
+    return _GAPS[key]
+
+
+def approved_recordings(db: Database) -> list[tuple]:
+    """Every ɛλicit recording approved and still in the database: (item, token, path, request)."""
+    out, seen = [], set()
+    for st in stored_requests(db.path):
+        for c in st.request.cards:
+            entry = st.review.get(str(c.n)) or {}
+            if entry.get("decision") != APPROVED or not applied_in(db, c, entry):
+                continue
+            applied = entry.get("applied") or {}
+            if c.kind == NEW_UTTERANCE:
+                item = db.utterance_by_id(applied.get("utterance", ""))
+                token = item.token if item is not None else None
+            else:
+                item = db.item_by_id(c.entry)
+                token = next((t for t in item.tokens if t.id == c.token), None) if item is not None else None
+            if item is None or token is None or not token.file or token.file != applied.get("file"):
+                continue
+            path = storage.folder_for(db, item) / token.file
+            if path.exists() and (str(path) not in seen):
+                seen.add(str(path))
+                out.append((item, token, path, st.request))
+    return out
+
+
+def gap_audit(db: Database, progress=None) -> list[tuple]:
+    """Tools → Audits → Find gaps in ɛλicit recordings… (idea 88): the approved recordings with sound
+    lost while they were made, (item, token, path, gaps). The recording may have been trimmed since
+    (✂ auto-snip, Praat): the chunk boundary as recorded is tried first, then any (glitches.find,
+    offset "auto")."""
+    from . import glitches
+    found = []
+    recs = approved_recordings(db)
+    for k, (item, token, path, req) in enumerate(recs, 1):
+        if progress is not None and progress(k, len(recs)) is False:
+            break
+        try:
+            gaps = glitches.find_in_file(path, offset="auto")
+        except Exception:                                          # noqa: BLE001
+            continue
+        if gaps:
+            found.append((item, token, path, gaps))
+    return found
 
 
 def applied_in(db: Database, card: Card, entry: dict) -> bool:

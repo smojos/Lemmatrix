@@ -944,8 +944,211 @@ def test_the_page_falls_back_to_english_for_prompts_older_requests_lack():
     English must say what the built-in English says."""
     js = (ROOT / "docs" / "elicit" / "elicit.js").read_text(encoding="utf-8")
     block = js[js.index("const FALLBACK = {"):js.index("};", js.index("const FALLBACK = {"))]
-    for key in ("keep_open", "try_now", "expired_keep"):
+    for key in ("keep_open", "try_now", "expired_keep", "glitch", "level_clipped", "level_quiet", "keep_anyway",
+                "cant_play", "request_line"):
         assert elicit_prompts.PROMPTS["en"][key] in block.replace('" +\n    "', ""), key
+
+
+# ---- idea 88 and 89: the take's checks, Listen, and the request line (27 October) ----------
+
+def _voice_pcm(seconds=2.0, rate=48000, drop=None):
+    """Something like a vowel, 16-bit; with `drop`, chunk number `drop` of 128 samples lost."""
+    t = np.arange(int(rate * seconds)) / rate
+    x = sum(a * np.sin(2 * np.pi * 120 * k * t + k) for k, a in ((1, .3), (2, .2), (3, .15), (5, .08)))
+    x = x + np.random.default_rng(4).normal(0, 0.002, len(t))
+    if drop is not None:
+        x = np.concatenate([x[:drop * 128], x[(drop + 1) * 128:]])
+    return (x * 32767).astype("<i2")
+
+
+def test_the_message_says_whose_request_of_which_day_and_how_many_items(db):
+    items = _items(db)[:3]
+    req = el.new_request(db, items, "SP1", "RS1", "da")
+    text = el.message_text(req)
+    day = req.created[:10]
+    import datetime
+    d = datetime.date.fromisoformat(day)
+    assert f"Researcher 1's request of {d.day} {d.strftime('%B')} {d.year}: 3 items" in text
+    assert f"anmodning fra {day}: 3 ord" in text
+    assert el.MANY_ITEMS == 15
+
+
+def test_the_review_shows_what_the_take_checks_found(win, tmp_path):
+    from lemmatrix.ui import elicit_dialogs as ed
+    db = win.doc.db
+    items = _items(db)[:3]
+    req = el.new_request(db, items, "SP1", "RS1", "da")
+    el.write_request(db, req, items)
+    st = el.receive(db, _response(el.stored_requests(db.path)[0], tmp_path / "r.zip"))
+    resp = json.loads((st.received / "response.json").read_text(encoding="utf-8"))
+    resp["cards"][0]["gaps"] = [0.53]                                 # the page found one
+    resp["cards"][1].update(gaps=[], level="clipped", peak=0.0, kept_anyway=True)
+    (st.received / "response.json").write_text(json.dumps(resp), encoding="utf-8")
+    import soundfile
+    third = st.received / resp["cards"][2]["file"]                    # an older page: no gaps noted
+    soundfile.write(str(third), _voice_pcm(drop=200), 48000, subtype="PCM_16")
+    st = el.load_stored(st.folder)
+    dlg = ed.ReviewDialog(win, st)
+    dlg.autoplay.setChecked(False)
+    c1, c2, c3 = st.request.cards
+    assert "⚠ sound lost at 0.53 s" in dlg._status(c1)
+    assert "⚠ clipped" in dlg._status(c2) and "kept anyway" in dlg._status(c2) and "sound lost" not in dlg._status(c2)
+    assert f"⚠ sound lost at {200 * 128 / 48000:.2f} s" in dlg._status(c3)    # found here
+    dlg.decisions.clear()
+    dlg.reject()
+
+
+def test_find_gaps_in_approved_recordings(win, tmp_path):
+    from lemmatrix.ui import elicit_dialogs as ed
+    db = win.doc.db
+    items = _items(db)[:2]
+    req = el.new_request(db, items, "SP1", "RS1", "da")
+    el.write_request(db, req, items)
+    st = el.receive(db, _response(el.stored_requests(db.path)[0], tmp_path / "r.zip"))
+    dlg = ed.ReviewDialog(win, st)
+    dlg.autoplay.setChecked(False)
+    dlg.approve_all()
+    dlg.accept()
+    assert el.gap_audit(db) == []
+    gatto = db.entry_by_ref("D035")
+    t = gatto.tokens[0]
+    import soundfile
+    path = storage.folder_for(db, gatto) / t.file
+    soundfile.write(str(path), _voice_pcm(drop=150), 48000, subtype="PCM_16")     # lost sound
+    found = el.gap_audit(db)
+    assert [(f[0].ref, f[1].id) for f in found] == [("D035", t.id)]
+    assert found[0][3] == [round(150 * 128 / 48000, 3)]
+    two = _voice_pcm(drop=150)
+    two = np.concatenate([two[:600 * 128], two[601 * 128:]])[500:]                 # two, then trimmed in Praat
+    soundfile.write(str(path), two, 48000, subtype="PCM_16")
+    found = el.gap_audit(db)
+    assert found[0][3] == [round((150 * 128 - 500) / 48000, 3), round((600 * 128 - 500) / 48000, 3)]
+    win.elicit_basket = []
+    audit = ed.GapAuditDialog(win, found)
+    assert "D035" in audit.table.item(0, 0).text()
+    audit._add()
+    assert win.elicit_basket == [t.id]
+    audit.reject()
+
+
+def test_the_take_is_checked_in_the_page(db, tmp_path):
+    """The page (in a real browser): the request line on the first screen; a take with sound lost
+    or clipped warns, with Try again first and Keep it anyway; a clean take plays back through Web
+    Audio; the checks run in the worker; uploads wait while the microphone records; and what was
+    found reaches Lemmatrix."""
+    pw = pytest.importorskip("playwright.sync_api")
+    drive = FakeDrive()
+    items = _items(db)[:3]
+    req = el.new_request(db, items, "SP1", "RS1", "da")
+    link = el.publish_drive(db, req, items, drive, "KEY")
+    site = _DrivePage(drive, tmp_path)
+    fake = """([drop, clip]) => {
+      const rate = mic.ctx.sampleRate, n = 2 * rate, x = new Float64Array(n);
+      for (let i = 0; i < n; i++) { const t = i / rate; let v = 0;
+        for (const [k, a] of [[1, .3], [2, .2], [3, .15], [5, .08]]) v += a * Math.sin(2 * Math.PI * 120 * k * t + k);
+        x[i] = clip ? Math.max(-1, Math.min(1, v * 4)) : v; }
+      let samples = Array.from(x);
+      if (drop) samples.splice(drop * 128, 128);
+      const pcm = new Int16Array(samples.length);
+      for (let i = 0; i < pcm.length; i++) pcm[i] = Math.max(-32768, Math.min(32767, Math.round(samples[i] * 32767)));
+      const area = document.querySelector("#app .panel").lastElementChild;
+      afterRecording(S.req.cards.find(c => !S.answers[c.n]), area,
+        { blob: wav(pcm, rate, {}), pcm, rate, seconds: pcm.length / rate, recorded: new Date().toISOString(),
+          date: "2026-10-27" });
+      return rate;
+    }"""
+    try:
+        with pw.sync_playwright() as p:
+            browser, ctx = site.browser(p)
+            page = ctx.new_page()
+            errors = []
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            page.goto(site.url(link))
+            page.get_by_text("Researcher 1's request of").first.wait_for()
+            for _ in range(3):
+                _click(page, "Yes")
+            _click(page, "I'm ready")
+            page.locator("button.rec").wait_for()
+            rate = page.evaluate(fake, [300, False])                  # card 1: sound lost
+            page.get_by_text("Some of the sound was lost while recording").wait_for()
+            assert page.locator("button:visible", has_text="It's good").count() == 0
+            assert page.evaluate("worker !== null")                   # checked in the background
+            _click(page, "Keep it anyway")
+            page.locator("button.rec").wait_for()
+            page.evaluate(fake, [0, True])                            # card 2: clipped
+            page.get_by_text("That was too loud").wait_for()
+            _click(page, "Try again")                                 # the speaker tries again for real
+            site.fail = True                                          # card 2's upload can't go yet
+            page.locator("button.rec").click()
+            page.wait_for_timeout(400)
+            page.locator("button.rec").click()
+            page.locator("button:visible", has_text="It's good").wait_for()
+            assert page.evaluate("playing !== null && playing instanceof AudioBufferSourceNode")
+            _click(page, "Listen")
+            assert page.get_by_text("can't be played back").count() == 0
+            _click(page, "It's good")
+            page.locator("button.rec").wait_for()
+            site.fail = False
+            page.locator("button.rec").click()                       # card 3: recording...
+            page.evaluate("() => { uploadPending(); }")               # ...uploads wait for it
+            page.wait_for_timeout(1500)
+            assert _uploaded(drive, db, req).uploaded == 1            # card 1 only (before the failure)
+            page.locator("button.rec").click()
+            page.locator("button:visible", has_text="It's good").wait_for()
+            for _ in range(50):
+                if _uploaded(drive, db, req).uploaded == 2:
+                    break
+                page.wait_for_timeout(100)
+            assert _uploaded(drive, db, req).uploaded == 2            # card 2 went once the take was over
+            _click(page, "It's good")
+            _click(page, "Send")
+            page.get_by_text("Your recordings have reached Researcher 1").wait_for(timeout=15000)
+            assert not errors, errors
+            browser.close()
+    finally:
+        site.close()
+    st = next(s for s in el.outstanding_drive(db) if s.request.id == req.id)
+    got = el.receive_drive(db, st, drive, el.drive_state(drive, st))
+    a1, a2, a3 = (got.answer(n) for n in (1, 2, 3))
+    assert a1["gaps"] == [round(300 * 128 / rate, 3)] and a1["kept_anyway"]
+    assert a2["gaps"] == [] and "level" not in a2 and "kept_anyway" not in a2
+    assert a3["gaps"] == []
+
+
+def test_i_cant_say_this_one_during_a_take_doesnt_leave_sending_stuck(db, tmp_path):
+    """The review of 27 October: Record, then I can't say this one on the last card, then Send. The
+    take was never ended, so uploads waited for it for good and the sending screen sat at 0 of 1."""
+    pw = pytest.importorskip("playwright.sync_api")
+    drive = FakeDrive()
+    items = _items(db)[:2]
+    req = el.new_request(db, items, "SP1", "RS1", "da")
+    link = el.publish_drive(db, req, items, drive, "KEY")
+    site = _DrivePage(drive, tmp_path)
+    try:
+        with pw.sync_playwright() as p:
+            browser, ctx = site.browser(p)
+            page = ctx.new_page()
+            errors = []
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            page.goto(site.url(link))
+            for _ in range(3):
+                _click(page, "Yes")
+            _click(page, "I'm ready")
+            site.fail = True
+            _record(page, 1)                                          # card 1: not sent yet
+            page.locator("button.rec").click()                        # card 2: recording...
+            page.wait_for_timeout(300)
+            _click(page, "I can't say this one")                      # ...and skipped mid-take
+            assert not page.evaluate("micBusy")
+            site.fail = False
+            _click(page, "Send")
+            page.get_by_text("Your recordings have reached Researcher 1").wait_for(timeout=20000)
+            assert not errors, errors
+            browser.close()
+    finally:
+        site.close()
+    state = _uploaded(drive, db, req)
+    assert state.finished and state.uploaded == 1
 
 
 def test_the_button_rains_when_recordings_are_ready_in_drive(win, monkeypatch):

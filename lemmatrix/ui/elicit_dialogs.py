@@ -562,6 +562,8 @@ class RequestDialog(QDialog):
         text += f" · about {_mb(size)} with the recordings coming back"
         if size > el.SIZE_WARNING:
             text += " · over 50 MB: consider a smaller request"
+        if len(items) > el.MANY_ITEMS:
+            text += f" · over {el.MANY_ITEMS} items: 10–15 is recommended for poor internet"
         self.count.setText(text if items else "")
         self.make_btn.setEnabled(bool(items) and self.speaker.count() > 0)
 
@@ -581,6 +583,10 @@ class RequestDialog(QDialog):
         if size > el.SIZE_WARNING:
             problems.append(f"The request comes to about {_mb(size)} with the recordings coming back: a lot for "
                             "a phone's storage and the speaker's data. A smaller request may be better.")
+        if len(items) > el.MANY_ITEMS:
+            problems.append(f"The request has {len(items)} items. For a speaker with poor internet, 10–15 items at "
+                            "most is recommended: the page only sends while it is open, and a long request "
+                            "is more likely to be left half sent.")
         if problems:
             box = QMessageBox(QMessageBox.Warning, f"Make {NAME} request", "\n\n".join(problems), parent=self)
             go = box.addButton("Make it anyway", QMessageBox.AcceptRole)
@@ -997,7 +1003,24 @@ class ReviewDialog(QDialog):
         if self.st.recording(c.n) is None:
             return "Recording missing"
         secs = a.get("seconds")
-        return f"Recorded{f' ({secs:.1f} s)' if isinstance(secs, (int, float)) else ''}"
+        out = f"Recorded{f' ({secs:.1f} s)' if isinstance(secs, (int, float)) else ''}"
+        return out + "".join(f" · {w}" for w in self._take_warnings(c))
+
+    def _take_warnings(self, c) -> list[str]:
+        """What the take's checks found (idea 88): sound lost while recording, clipped, very quiet,
+        and whether the speaker kept it anyway."""
+        a = self.st.answer(c.n) or {}
+        out = []
+        gaps = el.take_gaps(self.st, c.n)
+        if gaps:
+            out.append(f"⚠ sound lost at {', '.join(f'{g:.2f}' for g in gaps)} s")
+        if a.get("level") == "clipped":
+            out.append("⚠ clipped")
+        elif a.get("level") == "quiet":
+            out.append("⚠ very quiet")
+        if a.get("kept_anyway"):
+            out.append("kept anyway")
+        return out
 
     def _decision_text(self, c) -> str:
         d = self.decisions.get(c.n)
@@ -1258,3 +1281,88 @@ def review_waiting(main):
     waiting = el.waiting_reviews(main.doc.db)
     if waiting:
         ReviewDialog(main, waiting[0][0]).exec()
+
+
+class GapAuditDialog(QDialog):
+    """Tools → Audits → Find gaps in ɛλicit recordings… (IDEAS.md idea 88, 27 October): the approved
+    ɛλicit recordings in which sound was lost while they were made (a phone too busy to record every
+    chunk), where, and **Add to the ɛλicit request**, to ask for them again (as rerecords)."""
+
+    def __init__(self, main, found):
+        super().__init__(main)
+        self.main, self.found = main, found
+        self.setWindowTitle(f"Find gaps in {NAME} recordings")
+        lay = QVBoxLayout(self)
+        n = len(found)
+        head = QLabel(f"<b>{n} approved {NAME} recording{'' if n == 1 else 's'}</b> lost some sound while "
+                      "being recorded: a pop or click where a few milliseconds are missing. Listen before "
+                      "using them for duration or pitch, or ask for them again.")
+        head.setWordWrap(True)
+        lay.addWidget(head)
+        self.table = QTableWidget(n, 3)
+        self.table.setHorizontalHeaderLabels(["Item", "Soundfile", "Sound lost at (s)"])
+        self.table.verticalHeader().hide()
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        hh = self.table.horizontalHeader()
+        hh.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        hh.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        hh.setSectionResizeMode(2, QHeaderView.Stretch)
+        for row, (item, token, path, gaps) in enumerate(found):
+            label = el.item_label(self.main.doc.db, el.Item(el.RERECORD, item, token))
+            for col, text in enumerate((label, path.name, ", ".join(f"{g:.2f}" for g in gaps))):
+                self.table.setItem(row, col, QTableWidgetItem(text))
+        self.table.cellDoubleClicked.connect(self._go)
+        lay.addWidget(self.table)
+        buttons = QDialogButtonBox()
+        self.add_btn = buttons.addButton(f"Add to the {NAME} request", QDialogButtonBox.ActionRole)
+        self.add_btn.setToolTip("The highlighted ones (all, if none) go onto the next request as rerecords.")
+        self.add_btn.clicked.connect(self._add)
+        close = buttons.addButton(QDialogButtonBox.Close)
+        close.clicked.connect(self.reject)
+        lay.addWidget(buttons)
+        self.resize(760, 420)
+
+    def _rows(self) -> list[int]:
+        rows = sorted({i.row() for i in self.table.selectedIndexes()})
+        return rows or list(range(len(self.found)))
+
+    def _go(self, row, _col=0):
+        item, token = self.found[row][0], self.found[row][1]
+        main = self.main
+        if hasattr(item, "tokens") and token in item.tokens and hasattr(main, "go_to"):
+            main.go_to(item, item.tokens.index(token))
+
+    def _add(self):
+        basket = list(getattr(self.main, "elicit_basket", []))
+        ids = [self.found[r][1].id for r in self._rows()]
+        added = [t for t in ids if t not in basket]
+        self.main.elicit_basket = basket + added
+        self.add_btn.setText(f"Added {len(added)} to the {NAME} request")
+        self.add_btn.setEnabled(False)
+
+
+def find_gaps(main):
+    """Tools → Audits → Find gaps in ɛλicit recordings…"""
+    db = main.doc.db
+    if not db.path:
+        return
+    from PySide6.QtWidgets import QApplication, QProgressDialog
+    progress = QProgressDialog(f"Listening through the {NAME} recordings…", "Stop", 0, 0, main)
+    progress.setWindowTitle(f"Find gaps in {NAME} recordings")
+    progress.setMinimumDuration(400)
+
+    def step(k, total):
+        progress.setMaximum(total)
+        progress.setValue(k)
+        QApplication.processEvents()
+        return not progress.wasCanceled()
+    found = el.gap_audit(db, step)
+    progress.close()
+    if not found:
+        n = len(el.approved_recordings(db))
+        QMessageBox.information(main, f"Find gaps in {NAME} recordings",
+                                f"No sound lost in the {n} approved {NAME} recording{'' if n == 1 else 's'}."
+                                if n else f"There are no approved {NAME} recordings in this database yet.")
+        return
+    GapAuditDialog(main, found).exec()

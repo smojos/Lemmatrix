@@ -258,6 +258,12 @@ const FALLBACK = {
   try_now: "Try again now",
   expired_keep: "This request has expired, but your recordings are safe on this device. " +
     "Please send them to {researcher} as a file.",
+  glitch: "Some of the sound was lost while recording (the phone was busy). Please try again.",
+  level_clipped: "That was too loud. Please hold the phone a little further away and try again.",
+  level_quiet: "That was very quiet. Please hold the phone a little closer and try again.",
+  keep_anyway: "Keep it anyway",
+  cant_play: "It can't be played back here, but it has been recorded.",
+  request_line: "{researcher}'s request of {date}: {total} items",
 };
 
 function text(key, extra) {        // [english, second language or null]
@@ -382,6 +388,11 @@ async function openLink(id, key) {
   sendOthers();
 }
 
+let micBusy = false;                 // a take is being recorded
+const idleWaiters = [];
+function whenIdle() { return micBusy ? new Promise(res => idleWaiters.push(res)) : Promise.resolve(); }
+function micIdle() { micBusy = false; idleWaiters.splice(0).forEach(f => f()); }
+
 let uploading = null;
 let lastError = "";                  // shown small on the waiting screen, for whoever tests it
 let onUploaded = null;               // the sending screen's bar
@@ -402,6 +413,7 @@ async function uploadPending() {
     for (const c of S.req.cards) {
       const a = S.answers[c.n];
       if (!a || a.status !== "recorded" || a.uploaded || !c.upload) continue;
+      await whenIdle();
       try {
         const r = await fetch(c.upload, { method: "PUT", headers: { "Content-Type": a.wav.type || "audio/wav" },
                                           body: a.wav });
@@ -445,6 +457,7 @@ async function sendOthers() {
         for (const c of req.cards || []) {
           const a = answers[c.n];
           if (!a || a.status !== "recorded" || a.uploaded || !c.upload) continue;
+          await whenIdle();
           const r = await fetch(c.upload, { method: "PUT", headers: { "Content-Type": a.wav.type || "audio/wav" },
                                             body: a.wav });
           if (!r.ok) throw new Error("upload " + r.status);
@@ -586,8 +599,17 @@ function begin() {
   areYou();
 }
 
+function requestLine() {
+  let date = (S.req.created || "").slice(0, 10);
+  try {
+    const d = new Date(date + "T12:00:00");
+    if (!isNaN(d)) date = d.toLocaleDateString(en(), { day: "numeric", month: "long", year: "numeric" });
+  } catch (e) { /* the date as it is */ }
+  return h("div", { class: "progress" }, text("request_line", { date, total: S.req.cards.length }).filter(Boolean).join(" · "));
+}
+
 function areYou() {
-  show(h("div", { class: "panel" }, say("are_you"),
+  show(h("div", { class: "panel" }, requestLine(), say("are_you"),
     h("div", { class: "buttons row" }, btn("yes", agreement, "main"), btn("no", giveDevice))));
 }
 
@@ -679,11 +701,10 @@ function showCard(card) {
   const prompt = h("div", { class: "prompt" });
   if (card.kind === "rerecord") {
     prompt.append(say("rerecord"));
-    const url = card.original ? mediaURL(card.original, "audio/wav") : null;
-    if (url) {
-      const audio = new Audio(url);
+    const bytes = card.original ? S.files[card.original] : null;
+    if (bytes) {
       prompt.append(h("button", { class: "ear", "aria-label": text("listen")[0], onclick: () => {
-        audio.currentTime = 0; audio.play();
+        playBytes(bytes, "audio/wav");
       } }, svg(EAR)));
     }
   } else {
@@ -727,32 +748,164 @@ function recordArea(card, area) {
     }
   });
   area.replaceChildren(rec, label, meter,
-    h("div", { class: "buttons" }, btn("cant_say", () => answer(card, { status: "skipped" }), "quiet")));
+    h("div", { class: "buttons" }, btn("cant_say", () => {
+      if (recording) mic.cancel();      // pressed during a take: it ends here
+      answer(card, { status: "skipped" });
+    }, "quiet")));
 }
 
 function afterRecording(card, area, result) {
-  const url = URL.createObjectURL(result.blob);
-  const audio = new Audio(url);
-  audio.play().catch(() => {});
-  area.replaceChildren(
-    h("div", { class: "buttons" },
-      btn("listen", () => { audio.currentTime = 0; audio.play(); }, "quiet"),
-      btn("its_good", () => {
-        audio.pause();
-        answer(card, { status: "recorded", wav: keep(result), recorded: result.recorded, date: result.date,
-                       seconds: result.seconds, rate: result.rate });
-      }, "main"),
-      btn("try_again", () => { audio.pause(); recordArea(card, area); }),
-      btn("cant_say", () => { audio.pause(); answer(card, { status: "skipped" }); }, "quiet")));
+  const note = h("div", { class: "error" });
+  const cantPlay = () => note.replaceChildren(...text("cant_play").filter(Boolean).map(t => h("div", {}, t)));
+  const listen = () => playPcm(result.pcm, result.rate, result.blob).then(ok => { if (!ok) cantPlay(); });
+  listen();
+  area.replaceChildren(h("div", { class: "note" }, "…"));
+  checkTake(result).catch(() => ({})).then(checked => {
+    const gaps = checked.gaps || [], level = (checked.level || {}).verdict || "";
+    const warn = level === "clipped" ? "level_clipped" : gaps.length ? "glitch" : level === "quiet" ? "level_quiet" : "";
+    const keepIt = anyway => {
+      stopPlaying();
+      answer(card, { status: "recorded", wav: keep(result, checked), recorded: result.recorded, date: result.date,
+                     seconds: result.seconds, rate: result.rate, gaps, level, peak: (checked.level || {}).db,
+                     kept_anyway: anyway || undefined });
+    };
+    const again = () => { stopPlaying(); recordArea(card, area); };
+    const buttons = warn
+      ? [btn("try_again", again, "main"), btn("listen", listen, "quiet"), btn("keep_anyway", () => keepIt(true), "quiet")]
+      : [btn("listen", listen, "quiet"), btn("its_good", () => keepIt(false), "main"), btn("try_again", again)];
+    area.replaceChildren(warn ? say(warn, null, "danger small") : "", note,
+      h("div", { class: "buttons" }, ...buttons,
+        btn("cant_say", () => { stopPlaying(); answer(card, { status: "skipped" }); }, "quiet")));
+  });
 }
 
-function keep(result) {
+// After Stop: the gaps and the level are checked and the take encoded as FLAC when asked for
+// (takes.js), in a background worker so the phone stays free; on the page if there is no worker.
+let worker = null, workerTried = false, jobs = 0;
+const waiting = {};
+
+function takeWorker() {
+  if (!workerTried) {
+    workerTried = true;
+    try {
+      worker = new Worker("takes.js");
+      worker.onmessage = ev => { const done = waiting[ev.data.id]; delete waiting[ev.data.id]; if (done) done(ev.data); };
+      worker.onerror = () => {
+        worker = null;
+        for (const id of Object.keys(waiting)) { const done = waiting[id]; delete waiting[id]; done({ error: "worker" }); }
+      };
+    } catch (e) { worker = null; }
+  }
+  return worker;
+}
+
+function checkTake(result) {
+  const flac = S.req.audio === "flac";
+  const here = () => {                  // on the page: never left without an answer
+    try {
+      const r = processTake(result.pcm, result.rate, flac);
+      return { gaps: r.gaps, level: r.level, flac: r.flac };
+    } catch (e) {
+      return {};
+    }
+  };
+  const w = takeWorker();
+  if (!w) return Promise.resolve(here());
+  return new Promise(resolve => {
+    const id = ++jobs;
+    const limit = Math.max(20000, 2000 * (result.seconds || 0));   // a slow phone, a long take
+    const timer = setTimeout(() => {
+      delete waiting[id];
+      try { w.terminate(); } catch (e) { /* gone already */ }
+      if (worker === w) worker = null;    // stalled: the next takes are done on the page
+      resolve(here());
+    }, limit);
+    waiting[id] = data => { clearTimeout(timer); resolve(data && !data.error ? data : here()); };
+    w.postMessage({ id, pcm: result.pcm, rate: result.rate, flac });
+  });
+}
+
+function keep(result, checked) {
   // What is kept and sent: the WAV as recorded (it plays back), or the same sound as FLAC when the
   // request asks for it (lossless, about 60% of the size: flac.js).
-  if (S.req.audio === "flac" && typeof encodeFlac === "function") {
-    return new Blob([encodeFlac(result.pcm, result.rate)], { type: "audio/flac" });
+  if (S.req.audio === "flac") {
+    if (checked && checked.flac) return new Blob([checked.flac], { type: "audio/flac" });
+    if (typeof encodeFlac === "function") return new Blob([encodeFlac(result.pcm, result.rate)], { type: "audio/flac" });
   }
   return result.blob;
+}
+
+// Playing back through the page's own audio (Web Audio) rather than a WAV in an <audio> element
+// (idea 89: Listen didn't play on some MacBooks); the <audio> element if that can't be done.
+let playing = null, playSeq = 0;
+
+function stopPlaying() {
+  playSeq++;                            // a playback still starting is called off too
+  if (playing) { try { playing.stop ? playing.stop() : playing.pause(); } catch (e) { /* done already */ } }
+  playing = null;
+}
+
+async function runningContext() {      // iOS reports "interrupted" after a call or Siri, not "suspended"
+  const ctx = mic.ctx;
+  if (!ctx) throw new Error("no audio");
+  if (ctx.state !== "running") await ctx.resume();
+  if (ctx.state !== "running") throw new Error("audio not running");
+  return ctx;
+}
+
+async function playPcm(pcm, rate, fallbackBlob) {
+  stopPlaying();
+  const my = playSeq;
+  try {
+    const ctx = await runningContext();
+    if (my !== playSeq) return true;      // another tap came first
+    const buf = ctx.createBuffer(1, pcm.length, rate);
+    const ch = buf.getChannelData(0);
+    for (let i = 0; i < pcm.length; i++) ch[i] = pcm[i] / 32768;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start();
+    playing = src;
+    return true;
+  } catch (e) {
+    return playElement(fallbackBlob);
+  }
+}
+
+async function playBytes(bytes, type) {   // a recording from the request (the ear button)
+  stopPlaying();
+  const my = playSeq;
+  try {
+    const ctx = await runningContext();
+    const buf = await new Promise((resolve, reject) => {         // the callback form too (older Safari)
+      const p = ctx.decodeAudioData(bytes.slice().buffer, resolve, reject);
+      if (p && p.then) p.then(resolve, reject);
+    });
+    if (my !== playSeq) return true;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start();
+    playing = src;
+    return true;
+  } catch (e) {
+    return playElement(new Blob([bytes], { type }));
+  }
+}
+
+async function playElement(blob) {
+  if (!blob) return false;
+  const my = playSeq;
+  try {
+    const audio = new Audio(URL.createObjectURL(blob));
+    if (my !== playSeq) return true;
+    playing = audio;
+    await audio.play();
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 async function answer(card, result) {
@@ -781,6 +934,10 @@ function responseData() {
       item.date = a.date;               // the day on the device (the recording's date in Lemmatrix)
       item.seconds = a.seconds;
       item.rate = a.rate;
+      if (a.gaps) item.gaps = a.gaps;             // idea 88: sound lost while recording (seconds)
+      if (a.level) item.level = a.level;          // "clipped" or "quiet"
+      if (a.peak !== undefined) item.peak = a.peak;
+      if (a.kept_anyway) item.kept_anyway = true;
     }
     cards.push(item);
   }
@@ -832,6 +989,8 @@ async function sendScreen(lead) {
 const mic = {
   stream: null, ctx: null, node: null, chunks: null, onLevel: null, started: 0,
   begin(onLevel) {
+    if (!this.ctx) throw new Error("the microphone isn't open");
+    micBusy = true;                   // uploads wait until the take is over (the phone stays free)
     this.chunks = [];
     this.onLevel = onLevel;
     this.started = Date.now();
@@ -846,9 +1005,14 @@ const mic = {
       this.onLevel(Math.sqrt(sum / samples.length));
     }
   },
+  cancel() {                          // a take abandoned (I can't say this one, the page ending)
+    this.chunks = null;
+    micIdle();
+  },
   end(speaker) {
     const chunks = this.chunks || [];
     this.chunks = null;
+    micIdle();
     const rate = this.ctx.sampleRate;
     const now = new Date();
     const day = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -872,26 +1036,64 @@ async function startMic() {
     audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 },
   });
   const Ctx = window.AudioContext || window.webkitAudioContext;
-  mic.ctx = new Ctx();
-  const source = mic.ctx.createMediaStreamSource(mic.stream);
-  if (mic.ctx.audioWorklet) {
-    const url = URL.createObjectURL(new Blob([WORKLET], { type: "application/javascript" }));
-    await mic.ctx.audioWorklet.addModule(url);
-    mic.node = new AudioWorkletNode(mic.ctx, "tap");
-    mic.node.port.onmessage = e => mic.push(e.data);
-    source.connect(mic.node);
-    const silent = mic.ctx.createGain();          // keeps the node running; nothing is heard
-    silent.gain.value = 0;
-    mic.node.connect(silent).connect(mic.ctx.destination);
-  } else {                                       // older browsers
-    mic.node = mic.ctx.createScriptProcessor(4096, 1, 1);
-    mic.node.onaudioprocess = e => mic.push(new Float32Array(e.inputBuffer.getChannelData(0)));
-    source.connect(mic.node);
-    mic.node.connect(mic.ctx.destination);
+  try {
+    // A bigger buffer ("playback"), so a busy moment on the phone costs no sound (idea 88); if the
+    // browser refuses it, as before. (Asking for the microphone's own sample rate was left out:
+    // WebKit has had bugs with a context at a rate other than the hardware's.)
+    let source = null;
+    for (const opts of [{ latencyHint: "playback" }, null]) {
+      try {
+        mic.ctx = opts ? new Ctx(opts) : new Ctx();
+        source = mic.ctx.createMediaStreamSource(mic.stream);
+        break;
+      } catch (e) {
+        if (mic.ctx) mic.ctx.close().catch(() => {});
+        mic.ctx = null;
+        if (!opts) throw e;
+      }
+    }
+    keepAwake();
+    takeWorker();                       // fetched now, while there is a connection, not at the first Stop
+    if (mic.ctx.audioWorklet) {
+      const url = URL.createObjectURL(new Blob([WORKLET], { type: "application/javascript" }));
+      await mic.ctx.audioWorklet.addModule(url);
+      mic.node = new AudioWorkletNode(mic.ctx, "tap");
+      mic.node.port.onmessage = e => mic.push(e.data);
+      source.connect(mic.node);
+      const silent = mic.ctx.createGain();          // keeps the node running; nothing is heard
+      silent.gain.value = 0;
+      mic.node.connect(silent).connect(mic.ctx.destination);
+    } else {                                       // older browsers
+      mic.node = mic.ctx.createScriptProcessor(4096, 1, 1);
+      mic.node.onaudioprocess = e => mic.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+      source.connect(mic.node);
+      mic.node.connect(mic.ctx.destination);
+    }
+  } catch (e) {
+    stopMic();                            // nothing half open: I'm ready can be pressed again
+    throw e;
   }
 }
 
+let wakeLock = null;
+
+async function keepAwake() {            // the screen stays on while the page records (idea 88)
+  try {
+    if (navigator.wakeLock && !wakeLock && document.visibilityState === "visible") {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => { wakeLock = null; });
+    }
+  } catch (e) { wakeLock = null; }       // not allowed or not there: the phone decides
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && mic.stream) keepAwake();
+});
+
 function stopMic() {
+  mic.cancel();
+  if (wakeLock) wakeLock.release().catch(() => {});
+  wakeLock = null;
   if (mic.stream) mic.stream.getTracks().forEach(t => t.stop());
   if (mic.ctx) mic.ctx.close().catch(() => {});
   mic.stream = mic.ctx = mic.node = null;

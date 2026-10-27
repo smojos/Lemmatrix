@@ -1444,6 +1444,7 @@ class MainWindow(QMainWindow):
         self._act(t, "Give every lemma its citation token…", self.give_citation_tokens)   # idea 64
         self._act(t, "Copy citation forms to empty lemmas…", self.copy_citation_forms)   # idea 67
         self._act(t, "Find precomposed characters…", self.find_precomposed)     # ideas 18, 21
+        self._act(t, "Find gaps in ɛλicit recordings…", self.find_elicit_gaps)   # idea 88, 27 October
         t.addSection("Soundfiles")
         self._act(t, "Update all soundfile names", self.update_all_names)
         self._act(t, "Fill in recording dates from the soundfiles…", self.fill_recording_dates)
@@ -4708,6 +4709,12 @@ class MainWindow(QMainWindow):
                                cc.changed_copies(self.doc.db, chosen), stamp=False)
         self.statusBar().showMessage(f"Copied {len(chosen)} citation form(s) into empty Lemma fields.", 8000)
         self._maybe_update_names()               # a soundfile pattern with the Lemma in it follows
+
+    def find_elicit_gaps(self):
+        """Tools → Audits → Find gaps in ɛλicit recordings… (idea 88): approved recordings that lost
+        sound while they were made, to listen to or ask for again."""
+        from .elicit_dialogs import find_gaps
+        find_gaps(self)
 
     def find_precomposed(self):
         """Tools → Audits → Find precomposed characters… (ideas 18 and 21, Josh, 27 October)."""
