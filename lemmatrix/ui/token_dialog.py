@@ -402,6 +402,7 @@ class TokenDialog(QDialog):
         e = sl.entry
         s = self.db.settings
         self.level_note.hide()                    # the level check belongs to the last recording
+        self.rec_panel.snip_note.hide()           # and ✂ auto-snip's note
         self.meter.reset()
         if sl.index is not None and sl.index < len(e.tokens):
             self.original = e.tokens[sl.index]
@@ -1284,7 +1285,7 @@ class TokenDialog(QDialog):
         if self.recorder or not t.file or not self._path(t.file).exists():
             return
         from .autosnip import proselytize
-        if proselytize(self.main, self, self._path(t.file), self.SNIP_GAPS):
+        if proselytize(self.main, self, self._path(t.file), self.SNIP_GAPS, self.rec_panel):
             self._refresh_name()
 
     # ------------------------------------------------------- rerecord flag

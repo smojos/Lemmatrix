@@ -121,6 +121,11 @@ class RecordingPanel(QGroupBox):
         self.level_note.setStyleSheet(f"color: {theme.colour('error').name()};")
         self.level_note.hide()
         rl.addWidget(self.level_note, 6, 0, 1, 5)
+        self.snip_note = QLabel()                     # ✂ auto-snip: what it cut (Josh: "no visual cue")
+        self.snip_note.setWordWrap(True)
+        self.snip_note.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.snip_note.hide()
+        rl.addWidget(self.snip_note, 7, 0, 1, 5)
         rl.setColumnStretch(2, 1)
 
         self.timer = QTimer(self)
@@ -138,6 +143,7 @@ class RecordingPanel(QGroupBox):
         """Start the microphone (or computer audio); False, after saying why, if it can't."""
         prefs = self.main.prefs
         self.source_changed()
+        self.snip_note.hide()
         self.recorder = audio.Recorder(prefs.record_source, prefs.sample_rate)
         try:
             self.recorder.start()
@@ -159,8 +165,9 @@ class RecordingPanel(QGroupBox):
         self.record_btn.setIcon(icon(record_icon(), 40))
         self.record_btn.setToolTip(record_tip())
 
-    def _snip_icon(self):
-        self.snip_btn.setIcon(icon("snip-fire", 40, theme.colour("window_text").name()))
+    def _snip_icon(self, glow: bool = False):
+        self.snip_btn.setIcon(icon("snip-fire-glow" if glow else "snip-fire", 40,
+                                   theme.colour("window_text").name()))
 
     def auto_snip(self, samples, rate: int):
         """✂ auto-snip on a fresh take: (the take to save, the untrimmed take to hold, or None)."""
@@ -171,7 +178,35 @@ class RecordingPanel(QGroupBox):
             out, rep = snip.snip(samples, rate, gaps=self.snip_gaps, **advanced.snip_margins())
         except Exception:                         # never lose a take over trimming it
             return samples, None
+        if rep.changed:
+            self.show_snip(rep)                   # said only when it cut something
         return (out, samples) if rep.changed else (samples, None)
+
+    def flash_snip(self):
+        """The ✂ button's flame flashes bright a few times (Josh: a light cue, no heavy animation)."""
+        for i in range(6):
+            QTimer.singleShot(i * 110, self, lambda glow=(i % 2 == 0): self._snip_icon(glow))
+
+    def show_snip(self, rep, original: str = ""):
+        """✂ auto-snip's result under the meter: what was cut and where the original is kept."""
+        from . import theme as _theme
+        if rep is None:
+            self.snip_note.hide()
+            return
+        if rep.changed:
+            text = f"✂ Snipped {rep.length:.2f} s → {rep.new_length:.2f} s"
+            tip = ((f"The original is kept as {original}" if original else "The take as recorded is kept")
+                   + " in Soundfiles › _Deleted recordings until the database closes.")
+            colour = _theme.accent().name()
+            self.flash_snip()
+        else:
+            text = f"✂ {rep.describe()[0].upper()}{rep.describe()[1:]}: the soundfile is as it was."
+            tip = ""
+            colour = _theme.muted()
+        self.snip_note.setText(text)
+        self.snip_note.setToolTip(tip)
+        self.snip_note.setStyleSheet(f"color: {colour};")
+        self.snip_note.show()
 
     def stop(self):
         """Stop and give back (samples, sample rate); None, after saying so, if nothing came in."""

@@ -42,8 +42,9 @@ def _bits(path: Path, fallback: int) -> int:
         return fallback
 
 
-def proselytize(main, parent, path: Path, gaps: bool) -> bool:
-    """Snip the soundfile at `path` once (the ✂ button). True when it changed."""
+def proselytize(main, parent, path: Path, gaps: bool, panel=None) -> bool:
+    """Snip the soundfile at `path` once (the ✂ button). True when it changed. With the recording
+    `panel`, what happened is said under its meter (what was cut, or why nothing was)."""
     path = Path(path)
     if not path.exists():
         return False
@@ -61,7 +62,10 @@ def proselytize(main, parent, path: Path, gaps: bool) -> bool:
         return False
     out, rep = snip.snip(data, rate, gaps=gaps, **advanced.snip_margins())
     if not rep.changed:
-        QMessageBox.information(parent, advanced.AUTO_SNIP, f"{path.name}: {rep.describe()}.")
+        if panel is not None:
+            panel.show_snip(rep)
+        else:
+            QMessageBox.information(parent, advanced.AUTO_SNIP, f"{path.name}: {rep.describe()}.")
         return False
     info = {}
     try:
@@ -86,4 +90,6 @@ def proselytize(main, parent, path: Path, gaps: bool) -> bool:
             pass
         QMessageBox.warning(parent, advanced.AUTO_SNIP, f"Couldn't save the snipped {path.name}: {exc}")
         return False
+    if panel is not None:
+        panel.show_snip(rep, held.name)
     return True

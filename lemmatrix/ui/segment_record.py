@@ -176,7 +176,7 @@ class SegmentRecordDialog(QDialog):
         if self.recorder or self.file is None or not self.file.exists():
             return
         from .autosnip import proselytize
-        if proselytize(self.main, self, self.file, gaps=False):
+        if proselytize(self.main, self, self.file, gaps=False, panel=self.rec_panel):
             self._refresh()
 
     def save(self, samples, rate: int) -> bool:

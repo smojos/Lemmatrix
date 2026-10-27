@@ -184,3 +184,27 @@ def test_proselytize_keeps_the_original(win, tmp_path, monkeypatch):
     assert original.exists() and abs(len(audio.read_any(original)[0]) / R - 2.5) < 0.01
     assert not autosnip.proselytize(win, None, path, gaps=True)   # nothing left to trim: unchanged
     assert advanced.SNIP_BUTTON_TIP == "proselytize this soundfile"
+
+
+def test_the_button_says_what_it_did(win, tmp_path, monkeypatch):
+    """Josh, 27 October: "there is no visual cue that the snip occurred"."""
+    from lemmatrix import audio, advanced
+    from lemmatrix.ui import autosnip
+    from lemmatrix.ui.recording_panel import RecordingPanel
+    advanced.set_on(advanced.AUTO_SNIP_KEY, True)
+    panel = RecordingPanel(win)
+    held = tmp_path / "held"
+    held.mkdir()
+    monkeypatch.setattr(win.doc, "hold_recording", lambda p: held / p.name)
+    path = tmp_path / "D009.wav"
+    audio.write_wav(path, take(np.zeros(R), vowel(0.5), np.zeros(R)), R, 16)
+    assert autosnip.proselytize(win, None, path, gaps=True, panel=panel)
+    text = panel.snip_note.text()
+    assert not panel.snip_note.isHidden() and text.startswith("✂ Snipped 2.50 s →")
+    assert "D009 (unsnipped).wav" in panel.snip_note.toolTip()
+    assert not autosnip.proselytize(win, None, path, gaps=True, panel=panel)
+    assert panel.snip_note.text() == "✂ Nothing to trim: the soundfile is as it was."
+    y, untrimmed = panel.auto_snip(take(np.zeros(R), vowel(0.5), np.zeros(R)), R)
+    assert "The take as recorded is kept" in panel.snip_note.toolTip()
+    from lemmatrix.ui.icons import icon
+    assert not icon("snip-fire-glow", 40).isNull()

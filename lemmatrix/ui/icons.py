@@ -172,9 +172,13 @@ def _draw(name: str, s: int, p: QPainter, colour: QColor | None = None, colour2:
         p.setPen(Qt.NoPen)
         p.setBrush(BLACK if ink_colour.lightnessF() > 0.5 else WHITE)
         p.drawEllipse(QPointF(s * 0.505, s * 0.585), s * 0.03, s * 0.03)      # the pivot
-    elif name == "snip-fire":                    # ✂ auto-snip's button (Josh, 27 October): Clip as utterance's
-        # scissors with Josh's flame right behind them, a clear edge between the two so the scissors read
-        _flame(p, QRectF(s * 0.30, s * 0.04, s * 0.58, s * 0.92))
+    elif name in ("snip-fire", "snip-fire-glow"):   # ✂ auto-snip's button (Josh, 27 October): Clip as
+        # utterance's scissors with Josh's flame right behind them, a clear edge between the two so the
+        # scissors read; -glow, the flame flaring yellow, flashes when a soundfile has been snipped
+        if name == "snip-fire-glow":
+            _flame(p, QRectF(s * 0.26, s * 0.00, s * 0.66, s * 1.00), QColor("#ffd23f"), QColor("#ffffff"))
+        else:
+            _flame(p, QRectF(s * 0.30, s * 0.04, s * 0.58, s * 0.92))
         ink_colour = colour or BLACK                 # the scissors: the theme's text colour (white on dark)
 
         def scissors(pen):
