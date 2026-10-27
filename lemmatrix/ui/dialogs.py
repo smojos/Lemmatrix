@@ -1048,13 +1048,30 @@ class PreferencesDialog(QDialog):
                                           ("Playback volume", volume_row),
                                           (None, self.pitch_own), ("Pitch trace colour", self.pitch_colour)])])
         # Settings → Advanced (IDEAS.md ideas 79 and 86, Josh, 27 October): Fire, women, and dangerous
-        # things, three blocks. Reached only here, never from the menus at the top; everything in it
-        # starts off on a new computer (Josh: "don't make them easy to access").
+        # things, one list with no boxes. Reached only here, never from the menus at the top; everything
+        # in it starts off on a new computer (Josh: "don't make them easy to access").
         from .. import search
-        intro = QLabel("<i>Fire, women, and dangerous things.</i> Options for experienced users. "
-                       "Each changes how something familiar behaves; all are off on a new computer.")
-        intro.setTextFormat(Qt.RichText)
-        intro.setWordWrap(True)
+        adv = QWidget()
+        av = QVBoxLayout(adv)
+        av.setContentsMargins(0, 0, 0, 0)
+        head = QHBoxLayout()
+        title = QLabel(f"<b style='color:{theme.accent().name()}'>Fire, women, and dangerous things</b>")
+        title.setTextFormat(Qt.RichText)
+        info = QLabel("ⓘ")
+        info.setStyleSheet(f"color: {theme.muted()};")
+        info.setToolTip("After George Lakoff's book, its title reordered:\nLakoff, George. 1987. Women, Fire, and "
+                        "Dangerous Things: What Categories Reveal about the Mind.\nChicago: University of "
+                        "Chicago Press.")
+        head.addWidget(title)
+        head.addWidget(info)
+        head.addStretch(1)
+        av.addLayout(head)
+        sub = QLabel("<i>Options for experienced users who want to work fast and smart; all off by default "
+                     "(this computer).</i>")
+        sub.setTextFormat(Qt.RichText)
+        sub.setWordWrap(True)
+        av.addWidget(sub)
+        av.addSpacing(8)
         self.power_search = QCheckBox(search.PLACEHOLDER)
         self.power_search.setChecked(prefs.get_bool(search.POWER_KEY, False))
         self.power_search.setToolTip(
@@ -1065,12 +1082,11 @@ class PreferencesDialog(QDialog):
             "\\  before a double searches for it (\\--)\n"
             "In the lemma searches also: CAWL 345, SWADESH, EACW C001f, --CAWL, and a taxon.\n"
             "Off: what's typed is found as typed.")
+        av.addWidget(self.power_search)
         example = QLabel("goat ++ PL ;; sheep --kid")
         example.setStyleSheet(f"color: {theme.muted()}; margin-left: 22px;")
-        empty = lambda: QLabel(f"<span style='color:{theme.muted()}'>Nothing here yet.</span>")  # noqa: E731
-        page("Advanced", [("Fire (this computer)", [(None, self.power_search), (None, example)]),
-                          ("Women", [(None, empty())]),
-                          ("Dangerous things", [(None, empty())])], intro=intro)
+        av.addWidget(example)
+        page("Advanced", [], intro=adv)
         lay.addWidget(_buttons(self))
         # Hidden: the boxes under it grey out whole, their headings and labels too (Josh, 26 October:
         # a bigger visual cue that something is turned off)
@@ -1166,7 +1182,7 @@ class PreferencesDialog(QDialog):
         for key, box in self.badges.items():
             p.set_value(key, box.isChecked())
         self.kb.apply()
-        from .. import search                     # ⚡ Power search (idea 86; this computer)
+        from .. import search                     # ⚡ power search (idea 86; this computer)
         p.set_value(search.POWER_KEY, self.power_search.isChecked())
         search.set_power(self.power_search.isChecked())
         doc = getattr(self.parent(), "doc", None)

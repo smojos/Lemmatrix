@@ -179,7 +179,7 @@ class MainWindow(QMainWindow):
         widgets.set_abbreviate(self.prefs.abbreviate_fields)   # the edit dialogues' labels (idea 73)
         from . import conventions                 # the cell views' display conventions (idea 26)
         conventions.load(self.prefs)
-        from .. import search                     # ⚡ Power search (idea 86): this computer's, off at first
+        from .. import search                     # ⚡ power search (idea 86): this computer's, off at first
         search.set_power(self.prefs.get_bool(search.POWER_KEY, False))
         self.player = audio.Player()
         self.doc = Document(db or new_database())
@@ -320,7 +320,7 @@ class MainWindow(QMainWindow):
         row.addWidget(self.lemma_count)
         self.lemma_search = QLineEdit()
         self.lemma_search.setPlaceholderText("quick search of the visible columns")
-        _power_placeholder(self.lemma_search)          # ⚡ Power search (idea 86)
+        _power_placeholder(self.lemma_search)          # ⚡ power search (idea 86)
         self.lemma_search.setClearButtonEnabled(True)
         bl.addWidget(self.lemma_search)
         cv = QLineEdit()
@@ -501,7 +501,7 @@ class MainWindow(QMainWindow):
         top.addWidget(self.all_count)
         self.all_search = QLineEdit()
         self.all_search.setPlaceholderText("quick search of the visible columns")
-        _power_placeholder(self.all_search)          # ⚡ Power search (idea 86)
+        _power_placeholder(self.all_search)          # ⚡ power search (idea 86)
         self.all_search.setClearButtonEnabled(True)
         cv = QLineEdit()
         cv.setPlaceholderText("CV shape filter (Phonetic) — Stage 2")

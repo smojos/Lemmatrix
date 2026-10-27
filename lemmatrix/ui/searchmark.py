@@ -24,7 +24,7 @@ def _fold(ch: str) -> str:
 
 def terms(query: str) -> list[str]:
     """The items of a search to mark (IDEAS.md idea 86, `lemmatrix/search.py`): the whole search,
-    plain; with ⚡ Power search on, every item that isn't left out (`--`)."""
+    plain; with ⚡ power search on, every item that isn't left out (`--`)."""
     return search.parse(query).marked
 
 
@@ -54,7 +54,7 @@ def spans(text: str, query: str) -> list[tuple[int, int]]:
 
 
 def power_placeholder(edit):
-    """A search bar says *⚡ Power search* while Power search is on (Josh, 27 October), its own
+    """A search bar says *⚡ power search* while Power search is on (Josh, 27 October), its own
     placeholder otherwise."""
     own = edit.placeholderText()
     edit.setProperty("lemmatrix_placeholder", own)

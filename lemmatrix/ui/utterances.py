@@ -243,7 +243,7 @@ class TextsUtterancesWindow(QDialog):
                             "Show the selected utterance in the XML viewer"))
         self.search = QLineEdit()
         self.search.setPlaceholderText("quick search of the visible columns")
-        _power_placeholder(self.search)          # ⚡ Power search (idea 86)
+        _power_placeholder(self.search)          # ⚡ power search (idea 86)
         self.search.setClearButtonEnabled(True)
         bl.addWidget(self.search)
         self.count = QLabel()

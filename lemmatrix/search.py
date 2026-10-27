@@ -5,7 +5,7 @@ search bars all be one code?").
 
 **Plain** (the default): what's typed is found as typed, one string, nothing is an operator.
 
-**⚡ Power search** (Settings → Advanced → Fire; this computer, off on a new computer): doubles, so a
+**⚡ power search** (Settings → Advanced; this computer, off on a new computer): doubles, so a
 single character is never disturbed (Josh: "so as not to disrupt the regular users experience";
 a single `-`, `+`, `,`, `/` or `;` is always text):
 - `--` leaves an item out of the whole search (`goat ;; sheep --kid`; `--kid` alone: all but kid);
@@ -29,14 +29,14 @@ from . import filters as fl
 
 POWER_KEY = "search/power"           # prefs (this computer): Settings → Advanced → Fire
 OR, AND, NOT = ";;", "++", "--"
-PLACEHOLDER = "⚡ Power search"
+PLACEHOLDER = "⚡ power search"
 
 _power = False
 _listeners: list[Callable[[bool], None]] = []
 
 
 def power() -> bool:
-    """Whether ⚡ Power search is on (this computer's setting)."""
+    """Whether ⚡ power search is on (this computer's setting)."""
     return _power
 
 

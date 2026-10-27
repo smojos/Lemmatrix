@@ -297,7 +297,7 @@ class XmlViewerWindow(QDialog):
         bar.setSpacing(4)
         self.search = QLineEdit()
         self.search.setPlaceholderText("search the XML (diacritics and capitals ignored)")
-        _power_placeholder(self.search)          # ⚡ Power search (idea 86)
+        _power_placeholder(self.search)          # ⚡ power search (idea 86)
         self.search.setClearButtonEnabled(True)
         self.search.returnPressed.connect(self._enter)
         self._typing = QTimer(self)

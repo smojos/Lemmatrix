@@ -368,7 +368,7 @@ _SMOLDER = ("josh", "joshua")                 # Josh, 23 October: his name finds
 
 
 def search_term(term: str) -> tuple[str, str | None] | None:
-    """A lemma search's item read as a wordlist search (⚡ Power search only, IDEAS.md idea 86):
+    """A lemma search's item read as a wordlist search (⚡ power search only, IDEAS.md idea 86):
     `CAWL 345` → (CAWL, '0345'), `swadesh` → (SWADESH, None); everything but a list is `--CAWL`,
     the search's own leave-out (the single minus of 23 October is gone). A number the list doesn't
     have still counts as a wordlist search (it finds nothing), so `CAWL 9999` doesn't fall back to

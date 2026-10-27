@@ -420,7 +420,7 @@ class RequestDialog(QDialog):
         lay.addWidget(_section("Tokens and Utterances", EMPTY))
         self.search = QLineEdit()
         self.search.setPlaceholderText("search the request's tokens and utterances")
-        _power_placeholder(self.search)          # ⚡ Power search (idea 86)
+        _power_placeholder(self.search)          # ⚡ power search (idea 86)
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self._filter)
         lay.addWidget(self.search)

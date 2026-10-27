@@ -202,7 +202,7 @@ class RowFilter(QSortFilterProxyModel):
         # Each row's searchable text, put together once (25 October: asking every cell again on each
         # keystroke took seconds at 58,000 tokens); forgotten whenever the table's contents change
         self._hay: dict[int, list[str]] = {}
-        on_power(self, self._power_switched)       # ⚡ Power search switched: search again
+        on_power(self, self._power_switched)       # ⚡ power search switched: search again
 
     def setSourceModel(self, model):
         old = self.sourceModel()
@@ -261,7 +261,7 @@ class RowFilter(QSortFilterProxyModel):
         self.searchChanged.emit()
 
     def _power_switched(self):
-        """⚡ Power search was turned on or off: the same text, read again."""
+        """⚡ power search was turned on or off: the same text, read again."""
         if getattr(self, "_typed", ""):
             self.set_search(self._typed)
 

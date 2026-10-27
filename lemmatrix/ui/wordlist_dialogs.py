@@ -546,7 +546,7 @@ class InsertItemsDialog(QDialog):
         self.region.setCurrentIndex(max(0, self.region.findData(self.db.metadata.wordlist_region or wl.AFRICA)))
         self.search = QLineEdit()
         self.search.setPlaceholderText("Search references and glosses")
-        _power_placeholder(self.search)          # ⚡ Power search (idea 86)
+        _power_placeholder(self.search)          # ⚡ power search (idea 86)
         self.search.setClearButtonEnabled(True)
         for w in (self.only_near, QLabel("Items"), self.items, QLabel("Region"), self.region, self.search):
             row.addWidget(w)

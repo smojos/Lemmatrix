@@ -294,7 +294,7 @@ class BulkEditWindow(QDialog):
         bar.addWidget(broom)                                # after Configure columns, as everywhere else
         search = QLineEdit()
         search.setPlaceholderText("quick search of the visible columns")
-        _power_placeholder(search)          # ⚡ Power search (idea 86)
+        _power_placeholder(search)          # ⚡ power search (idea 86)
         search.setClearButtonEnabled(True)
         search.setMaximumWidth(360)
         bar.addWidget(search, 1)

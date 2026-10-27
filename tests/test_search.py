@@ -160,7 +160,7 @@ def test_placeholder_follows_the_switch(app):
     power_placeholder(e)
     search.set_power(True)
     try:
-        assert e.placeholderText() == "⚡ Power search"
+        assert e.placeholderText() == "⚡ power search"
     finally:
         search.set_power(False)
     assert e.placeholderText() == "Search the notebook"
@@ -185,8 +185,12 @@ def test_settings_advanced(win):
     tabs = dlg.findChild(QTabWidget)
     names = [tabs.tabText(i) for i in range(tabs.count())]
     assert names[-1] == "Advanced"
-    titles = [b.title() for b in dlg.findChildren(QGroupBox)]
-    assert "Fire (this computer)" in titles and "Women" in titles and "Dangerous things" in titles
+    from PySide6.QtWidgets import QLabel
+    texts = [lb.text() for lb in tabs.widget(tabs.count() - 1).findChildren(QLabel)]
+    assert any("Fire, women, and dangerous things" in t for t in texts)
+    assert any("Lakoff" in lb.toolTip() for lb in tabs.widget(tabs.count() - 1).findChildren(QLabel))
+    assert not tabs.widget(tabs.count() - 1).findChildren(QGroupBox)          # no boxes (Josh, 27 October)
+    assert dlg.power_search.text() == "⚡ power search"
     assert not dlg.power_search.isChecked()
     dlg.power_search.setChecked(True)
     dlg.apply()
