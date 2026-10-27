@@ -72,13 +72,15 @@ def test_sentenceify_in_bulk_edit(tmp_path):
 # ---- quick search for several items (idea 29) --------------------------------
 
 def test_search_terms_and_marks():
+    from lemmatrix import search
     from lemmatrix.ui import searchmark as sm
-    assert sm.terms("dog, cat ,hare") == ["dog", "cat", "hare"]
-    assert sm.terms("go\\, walk") == ["go, walk"]
+    assert sm.terms("dog, cat") == ["dog, cat"]               # plain: a comma is a comma (idea 86)
+    assert sm.found("go, walk", "go, walk") and not sm.found("go walk", "go, walk")
+    search.set_power(True)                                     # ⚡ Power search: ;; is OR
+    assert sm.terms("dog ;; cat ;;hare") == ["dog", "cat", "hare"]
     assert sm.terms(",") == [","]
-    assert sm.found("a black cat", "dog, cat") and not sm.found("a goat", "dog, cat")
-    assert sm.found("go, walk", "go\\, walk") and not sm.found("go walk", "go\\, walk")
-    assert sm.spans("the dog and cat", "dog, cat") == [(4, 7), (12, 15)]
+    assert sm.found("a black cat", "dog ;; cat") and not sm.found("a goat", "dog ;; cat")
+    assert sm.spans("the dog and cat", "dog ;; cat") == [(4, 7), (12, 15)]
     assert sm.spans("the dog", "dog") == [(4, 7)]
 
 
@@ -86,7 +88,10 @@ def test_lemma_list_search_with_commas(win):
     db = win.doc.db
     a, b = db.entries[0], db.entries[1]
     ga, gb = db.gloss(a), db.gloss(b)
-    win.lemma_search.setText(f"{ga}, {gb}")
+    from lemmatrix import search
+    search.set_power(True)                                     # ;; is OR with ⚡ Power search (idea 86)
+    win.lemma_search.setText(f"{ga} ;; {gb}")
+    win.lemmas.proxy.set_search(win.lemma_search.text())
     shown = {e.ref for e in win.lemmas.visible_rows()}
     assert {a.ref, b.ref} <= shown
     win.lemma_search.setText("")

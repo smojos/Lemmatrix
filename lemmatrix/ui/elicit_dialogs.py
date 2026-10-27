@@ -24,6 +24,7 @@ from ..model import is_utterance, today
 from . import theme, widgets
 from . import widgets as _w  # (ask: buttons that say what they do)
 from .winstate import fit_to_screen
+from .searchmark import power_placeholder as _power_placeholder
 
 NAME = "ɛλicit"
 RECEIVE = "Receive ɛλicitation"
@@ -227,7 +228,8 @@ class ItemFilter(QSortFilterProxyModel):
 
     def filterAcceptsRow(self, row, parent):
         r = self.sourceModel().rows[row]
-        return not self.text or self.text in " ".join(r.cells[:6]).casefold()
+        from .. import search
+        return search.matches(self.text, r.cells[:6])            # one search for every bar (idea 86)
 
 
 class RequestDialog(QDialog):
@@ -418,6 +420,7 @@ class RequestDialog(QDialog):
         lay.addWidget(_section("Tokens and Utterances", EMPTY))
         self.search = QLineEdit()
         self.search.setPlaceholderText("search the request's tokens and utterances")
+        _power_placeholder(self.search)          # ⚡ Power search (idea 86)
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self._filter)
         lay.addWidget(self.search)
@@ -515,7 +518,7 @@ class RequestDialog(QDialog):
                             f"message in {name} (blank: as in the list)" if lang else "")
 
     def _filter(self, *_):
-        self.proxy.text = self.search.text().strip().casefold()
+        self.proxy.text = self.search.text()
         self.proxy.invalidate()
 
     def _selected_rows(self) -> set[int]:

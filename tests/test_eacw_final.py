@@ -182,6 +182,8 @@ def test_link_to_wordlists_fills_clarification_and_taxon(app, tmp_path, monkeypa
 
 
 def test_a_genus_finds_its_items(win):
+    from lemmatrix import search
+    search.set_power(True)                        # the taxon search is ⚡ Power search's (idea 86)
     win.lemma_search.setText("Bovidae")
     win._search_timers["lemma"].timeout.emit()
     refs = {e.ref for e in win.lemmas.visible_rows()}
@@ -352,10 +354,13 @@ def test_a_new_lemma_of_ones_own_goes_to_its_place(win, monkeypatch):
 
 def test_minus_and_the_smolder_search(win):
     db = win.doc.db
-    swadesh = [e for e in db.entries if wl.search_match(db, e, "SWADESH")]
-    others = [e for e in db.entries if wl.search_match(db, e, "-swadesh")]
+    from lemmatrix import search                  # everything but is the search's own -- (idea 86)
+    q = lambda text, e: search.parse(text, True).matches([], lambda t: wl.search_match(db, e, t))  # noqa: E731
+    swadesh = [e for e in db.entries if q("SWADESH", e)]
+    others = [e for e in db.entries if q("--swadesh", e)]
     assert swadesh and others and len(swadesh) + len(others) == len(db.entries)
-    assert not [e for e in db.entries if wl.search_match(db, e, "-EACW")]
+    assert not [e for e in db.entries if q("--EACW", e)]
+    assert wl.search_match(db, db.entries[0], "-swadesh") is None     # the single minus is gone
     assert [e.ref for e in db.entries if wl.search_match(db, e, "Joshua")] == ["V139"]
     assert [e.ref for e in db.entries if wl.search_match(db, e, "josh")] == ["V139"]
 

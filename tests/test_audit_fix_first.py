@@ -309,7 +309,8 @@ def test_next_reference_past_999():
 # ---- B15: Bulk edit starts on the lemmas the lemma list shows -----------------------------
 
 def test_bulk_edit_copies_wordlist_search_and_hide_empty(win):
-    from lemmatrix import bulk
+    from lemmatrix import bulk, search
+    search.set_power(True)                        # wordlist searches are ⚡ Power search's (idea 86)
     for e in win.doc.db.entries[:6]:              # (the prototype sample has no wordlist numbers)
         e.lists["SWADESH"] = ["42"]
     win.doc.db.entries[0].tokens = []             # one of them empty: Hide empty lemmas leaves it out

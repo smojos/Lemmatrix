@@ -21,6 +21,7 @@ from .. import layout
 from .. import wordlists as wl
 from . import theme
 from . import widgets as _w  # (ask: buttons that say what they do)
+from .searchmark import power_placeholder as _power_placeholder
 
 BLANK = ""
 
@@ -545,6 +546,7 @@ class InsertItemsDialog(QDialog):
         self.region.setCurrentIndex(max(0, self.region.findData(self.db.metadata.wordlist_region or wl.AFRICA)))
         self.search = QLineEdit()
         self.search.setPlaceholderText("Search references and glosses")
+        _power_placeholder(self.search)          # ⚡ Power search (idea 86)
         self.search.setClearButtonEnabled(True)
         for w in (self.only_near, QLabel("Items"), self.items, QLabel("Region"), self.region, self.search):
             row.addWidget(w)
@@ -587,9 +589,10 @@ class InsertItemsDialog(QDialog):
         items, region = self.items.currentData(), self.region.currentData()
         pool = wl.missing_family(self.db, self.near) if self.only_near.isChecked() and self.near is not None \
             else wl.missing(self.db)
-        q = self.search.text().strip().casefold()
+        from .. import search
+        text = self.search.text()
         return [i for i in pool if wl.in_version(i, items, region)
-                and (not q or q in i.number.casefold() or q in i.gloss.casefold())]
+                and search.matches(text, (i.number, i.gloss))]       # one search for every bar (idea 86)
 
     def _fill(self):
         from PySide6.QtGui import QColor

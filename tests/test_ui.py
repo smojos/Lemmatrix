@@ -374,7 +374,7 @@ def test_settings_tabs_theme_and_pitch(win):
     from lemmatrix.ui.dialogs import PreferencesDialog
     dlg = PreferencesDialog(win, win.doc.db, win.prefs)
     tabs = dlg.findChild(QTabWidget)
-    assert [tabs.tabText(i) for i in range(tabs.count())] == ["General", "Sound", "Display", "Pitch"]
+    assert [tabs.tabText(i) for i in range(tabs.count())] == ["General", "Sound", "Display", "Pitch", "Advanced"]
     dlg.theme.setCurrentIndex(dlg.theme.findData("dark"))
     dlg.accent.set_colour(theme.QColor("#2e9e44"))
     dlg.apply()

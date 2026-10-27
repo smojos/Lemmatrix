@@ -24,7 +24,8 @@ from .viewmixins import ClickUnselect, WheelZoom
 from ..model import ListItem
 from . import spellui, theme
 from .filter_dialogs import ChooseDialog, FilterForDialog
-from .searchmark import SearchDelegate, keep_colour, paint_cell, terms
+from .. import search as search_mod
+from .searchmark import SearchDelegate, keep_colour, on_power, paint_cell
 from .spellui import SpellDelegate
 from .widgets import FilterHeader, chips_width, draw_pitch, ipa_font, paint_chips, underscore_unit
 
@@ -201,6 +202,7 @@ class RowFilter(QSortFilterProxyModel):
         # Each row's searchable text, put together once (25 October: asking every cell again on each
         # keystroke took seconds at 58,000 tokens); forgotten whenever the table's contents change
         self._hay: dict[int, list[str]] = {}
+        on_power(self, self._power_switched)       # ⚡ Power search switched: search again
 
     def setSourceModel(self, model):
         old = self.sourceModel()
@@ -252,10 +254,16 @@ class RowFilter(QSortFilterProxyModel):
             self.invalidateFilter()
 
     def set_search(self, text):
-        self.search = fl.fold_diacritics(text).casefold()
-        self._items = (self.search, terms(self.search))   # parsed once, not for every row
+        self._typed = text or ""
+        self.search = fl.fold_diacritics(self._typed).casefold()
+        self._query = search_mod.parse(self.search)     # parsed once, not for every row (idea 86)
         self.refilter()
         self.searchChanged.emit()
+
+    def _power_switched(self):
+        """⚡ Power search was turned on or off: the same text, read again."""
+        if getattr(self, "_typed", ""):
+            self.set_search(self._typed)
 
     def set_filter(self, key, flt):
         if flt is None:
@@ -282,24 +290,15 @@ class RowFilter(QSortFilterProxyModel):
             elif not fl.matches(flt, col.get(row), col.unmarked):
                 return False
         if self.search:
-            cached = self.__dict__.get("_items")
-            items = list(cached[1]) if cached and cached[0] == self.search else terms(self.search)
+            q = self.__dict__.get("_query")
+            if q is None:
+                q = self._query = search_mod.parse(self.search)
+            if not q:
+                return True
+            extra = None
             if self.term_match is not None:
-                plain = []
-                for t in items:
-                    hit = self.term_match(row, t)
-                    if hit is None:
-                        plain.append(t)
-                    elif hit:
-                        return True
-                items = plain
-            if not items:
-                return False
-            for hay in self._row_hay(m, r, row):
-                for t in items:
-                    if t in hay:
-                        return True
-            return False
+                extra = lambda t, row=row: self.term_match(row, t)   # noqa: E731 (the lemma searches' own)
+            return q.matches(self._row_hay(m, r, row), extra)
         return True
 
 

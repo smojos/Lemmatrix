@@ -922,11 +922,13 @@ class PreferencesDialog(QDialog):
         vr.addWidget(listen)
         vr.addStretch(1)
 
-        def page(title, sections):
+        def page(title, sections, intro=None):
             """A tab of headed boxes; returns the boxes by heading (to grey a whole box)."""
             boxes = {}
             w = QWidget()
             v = QVBoxLayout(w)
+            if intro is not None:
+                v.addWidget(intro)
             for heading, rows in sections:
                 box = QGroupBox(heading)
                 boxes[heading] = box
@@ -1045,6 +1047,30 @@ class PreferencesDialog(QDialog):
                        ("This computer", [("Pitch playback", voice_row),
                                           ("Playback volume", volume_row),
                                           (None, self.pitch_own), ("Pitch trace colour", self.pitch_colour)])])
+        # Settings → Advanced (IDEAS.md ideas 79 and 86, Josh, 27 October): Fire, women, and dangerous
+        # things, three blocks. Reached only here, never from the menus at the top; everything in it
+        # starts off on a new computer (Josh: "don't make them easy to access").
+        from .. import search
+        intro = QLabel("<i>Fire, women, and dangerous things.</i> Options for experienced users. "
+                       "Each changes how something familiar behaves; all are off on a new computer.")
+        intro.setTextFormat(Qt.RichText)
+        intro.setWordWrap(True)
+        self.power_search = QCheckBox(search.PLACEHOLDER)
+        self.power_search.setChecked(prefs.get_bool(search.POWER_KEY, False))
+        self.power_search.setToolTip(
+            "Every search bar reads doubles as operators (a single - + , / or ; is always searched as typed):\n"
+            "--  leaves an item out of the whole search (goat ;; sheep --kid)\n"
+            "++  AND: a row must have both, in any of its columns (goat ++ PL)\n"
+            ";;  OR (goat ;; sheep); ++ binds tighter: goat ++ PL ;; sheep is (goat and PL) or sheep\n"
+            "\\  before a double searches for it (\\--)\n"
+            "In the lemma searches also: CAWL 345, SWADESH, EACW C001f, --CAWL, and a taxon.\n"
+            "Off: what's typed is found as typed.")
+        example = QLabel("goat ++ PL ;; sheep --kid")
+        example.setStyleSheet(f"color: {theme.muted()}; margin-left: 22px;")
+        empty = lambda: QLabel(f"<span style='color:{theme.muted()}'>Nothing here yet.</span>")  # noqa: E731
+        page("Advanced", [("Fire (this computer)", [(None, self.power_search), (None, example)]),
+                          ("Women", [(None, empty())]),
+                          ("Dangerous things", [(None, empty())])], intro=intro)
         lay.addWidget(_buttons(self))
         # Hidden: the boxes under it grey out whole, their headings and labels too (Josh, 26 October:
         # a bigger visual cue that something is turned off)
@@ -1140,6 +1166,9 @@ class PreferencesDialog(QDialog):
         for key, box in self.badges.items():
             p.set_value(key, box.isChecked())
         self.kb.apply()
+        from .. import search                     # ⚡ Power search (idea 86; this computer)
+        p.set_value(search.POWER_KEY, self.power_search.isChecked())
+        search.set_power(self.power_search.isChecked())
         doc = getattr(self.parent(), "doc", None)
         if doc is not None:                       # the notebook's history switches: the workspace's
             from .. import notebook as nbmod

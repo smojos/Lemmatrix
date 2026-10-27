@@ -68,6 +68,7 @@ from .spellui import SpellDelegate
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, ListEditDelegate, SuggestionDelegate
 from .token_dialog import Slot, TokenDialog
 from . import widgets
+from .searchmark import power_placeholder as _power_placeholder
 
 def pitchmod_parse(text):
     from .. import pitch
@@ -178,6 +179,8 @@ class MainWindow(QMainWindow):
         widgets.set_abbreviate(self.prefs.abbreviate_fields)   # the edit dialogues' labels (idea 73)
         from . import conventions                 # the cell views' display conventions (idea 26)
         conventions.load(self.prefs)
+        from .. import search                     # ⚡ Power search (idea 86): this computer's, off at first
+        search.set_power(self.prefs.get_bool(search.POWER_KEY, False))
         self.player = audio.Player()
         self.doc = Document(db or new_database())
         self.doc.setParent(self)
@@ -317,6 +320,7 @@ class MainWindow(QMainWindow):
         row.addWidget(self.lemma_count)
         self.lemma_search = QLineEdit()
         self.lemma_search.setPlaceholderText("quick search of the visible columns")
+        _power_placeholder(self.lemma_search)          # ⚡ Power search (idea 86)
         self.lemma_search.setClearButtonEnabled(True)
         bl.addWidget(self.lemma_search)
         cv = QLineEdit()
@@ -497,6 +501,7 @@ class MainWindow(QMainWindow):
         top.addWidget(self.all_count)
         self.all_search = QLineEdit()
         self.all_search.setPlaceholderText("quick search of the visible columns")
+        _power_placeholder(self.all_search)          # ⚡ Power search (idea 86)
         self.all_search.setClearButtonEnabled(True)
         cv = QLineEdit()
         cv.setPlaceholderText("CV shape filter (Phonetic) — Stage 2")
@@ -4609,9 +4614,9 @@ class MainWindow(QMainWindow):
 
     def _select_wordlist_hit(self):
         """A wordlist search (CAWL 345) that finds one lemma selects it."""
-        from .. import wordlists
-        from .searchmark import terms
-        if not any(wordlists.search_term(t) for t in terms(self.lemma_search.text())):
+        from .. import search, wordlists
+        q = search.parse(self.lemma_search.text())
+        if not q.power or not any(wordlists.search_term(t) for t in q.marked):
             return
         rows = self.lemmas.visible_rows()
         if len(rows) == 1 and self.lemmas.current_row() is not rows[0]:

@@ -99,11 +99,10 @@ def test_numbers_as_typed():
     assert wl.canon(wl.SWADESH, "042") == "42"
     assert wl.canon(wl.EACW, "c001F") == "C001f"
     assert wl.canon(wl.CAWL, "9999") is None
-    assert wl.search_term("CAWL 345") == (wl.CAWL, "0345", False)
-    assert wl.search_term("swadesh") == (wl.SWADESH, None, False)
-    assert wl.search_term("-Swadesh") == (wl.SWADESH, None, True)
-    assert wl.search_term("- EACW") == (wl.EACW, None, True)
-    assert wl.search_term("Joshua") == wl.search_term("josh") == (wl.EACW, "V139", False)
+    assert wl.search_term("CAWL 345") == (wl.CAWL, "0345")
+    assert wl.search_term("swadesh") == (wl.SWADESH, None)
+    assert wl.search_term("-Swadesh") is None                 # everything but is --SWADESH (idea 86)
+    assert wl.search_term("Joshua") == wl.search_term("josh") == (wl.EACW, "V139")
     assert wl.search_term("cawl 9999")[0] == wl.CAWL        # a wordlist search that finds nothing
     assert wl.search_term("mother") is None
 
@@ -289,11 +288,13 @@ def _search(win, text):
 
 
 def test_the_lemma_lists_search(win):
+    from lemmatrix import search
+    search.set_power(True)                                # wordlist searches: ⚡ Power search (idea 86)
     rows = _search(win, "CAWL 351")                       # father's sister: C014f, and C014 is hidden
     assert [e.ref for e in rows] == ["C014f"]
     assert win.lemmas.current_row() is rows[0]              # selected, so the matrix follows
     assert len(_search(win, "SWADESH")) == sum(1 for e in win.doc.db.entries if e.lists.get(wl.SWADESH))
-    assert sorted(e.ref for e in _search(win, "SWADESH 42, CAWL 1")) == ["A001", "C001", "C001f"]
+    assert sorted(e.ref for e in _search(win, "SWADESH 42 ;; CAWL 1")) == ["A001", "C001", "C001f"]
     assert _search(win, "CAWL 9999") == []
     assert [e.ref for e in _search(win, "mother")][0] == "C001f"    # plain searches as before
     assert len(_search(win, "")) == 2274

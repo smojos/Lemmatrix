@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QLineEdit, QPlainTe
 
 from .. import storage, xmlview
 from . import theme
+from .searchmark import power_placeholder as _power_placeholder
 
 MAX_MARKS = 5000                  # marks drawn at most (every match is still counted and reachable)
 
@@ -296,6 +297,7 @@ class XmlViewerWindow(QDialog):
         bar.setSpacing(4)
         self.search = QLineEdit()
         self.search.setPlaceholderText("search the XML (diacritics and capitals ignored)")
+        _power_placeholder(self.search)          # ⚡ Power search (idea 86)
         self.search.setClearButtonEnabled(True)
         self.search.returnPressed.connect(self._enter)
         self._typing = QTimer(self)
@@ -380,7 +382,11 @@ class XmlViewerWindow(QDialog):
         else:
             if self.folded is None or self.folded.text != self.shown_text:
                 self.folded = xmlview.FoldedText(self.shown_text)
-            self.matches = self.folded.find_all(q)
+            from .. import search                  # one search for every bar (idea 86): every item
+            found = set()                          # not left out; `--` means nothing here
+            for item in search.parse(q).raw_items:
+                found.update(self.folded.find_all(item))
+            self.matches = sorted(found)
             if move:
                 pos = self.text.textCursor().selectionStart() if self.current < 0 else \
                     self.text.textCursor().position()

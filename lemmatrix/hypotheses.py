@@ -505,13 +505,16 @@ def linked_to_item(nb, kind: str, entry: str = "", token: str = "") -> list[tupl
 def matches(h: Hypothesis, text: str, db: Database | None = None, nb=None) -> bool:
     """The search (List's quick search, the notebook's search): number, summary, formulation,
     confidence and the links' notes and words."""
-    text = text.strip().lower()
-    if not text:
-        return True
+    from . import search
+    return search.matches(text, search_parts(h))      # one search for every bar (idea 86)
+
+
+def search_parts(h: Hypothesis) -> list[str]:
+    """What a search looks through in a hypothesis."""
     parts = [h.label, h.summary, h.formulation, h.confidence]
     for ln in h.links:
         parts += [ln.note, ln.about, ln.text]
-    return any(text in (p or "").lower() for p in parts)
+    return parts
 
 
 # --------------------------------------------------------------------------

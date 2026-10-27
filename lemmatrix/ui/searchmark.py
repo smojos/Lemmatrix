@@ -14,6 +14,7 @@ from PySide6.QtGui import QBrush, QFont, QPainter, QPalette, QTextLayout, QTextO
 from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem
 
 from .. import filters as fl
+from .. import search
 from . import theme
 
 
@@ -22,51 +23,57 @@ def _fold(ch: str) -> str:
 
 
 def terms(query: str) -> list[str]:
-    """A search's items: commas separate several, any of which may match (`dog, cat, hare`;
-    IDEAS.md idea 29, Josh 21 October); `\\,` is a comma searched for itself (`go\\, walk`).
-    Spaces round each item are dropped. A search that is nothing but commas is taken as typed."""
-    if not query:
-        return []
-    out, cur, k = [], [], 0
-    while k < len(query):
-        ch = query[k]
-        if ch == "\\" and query[k + 1:k + 2] == ",":
-            cur.append(",")
-            k += 2
-            continue
-        if ch == ",":
-            out.append("".join(cur))
-            cur = []
-        else:
-            cur.append(ch)
-        k += 1
-    out.append("".join(cur))
-    out = [t.strip() for t in out if t.strip()]
-    return out or [query]
+    """The items of a search to mark (IDEAS.md idea 86, `lemmatrix/search.py`): the whole search,
+    plain; with ⚡ Power search on, every item that isn't left out (`--`)."""
+    return search.parse(query).marked
 
 
 def found(hay: str, query: str) -> bool:
-    """Whether any of the search's items is in `hay` (both already folded and casefolded)."""
-    return any(t in hay for t in terms(query))
+    """Whether a search matches `hay` (already in search form)."""
+    return search.parse(query).found(hay)
 
 
 def spans(text: str, query: str) -> list[tuple[int, int]]:
-    """Where the search `query` (already folded and casefolded) is found in `text`: (start, end)
-    in `text`'s own characters, the marks after a match included. Each of a search's items
-    (separated by commas) is marked."""
+    """Where the search `query` is found in `text`: (start, end) in `text`'s own characters, the
+    marks after a match included. Each item that isn't left out is marked."""
     if not text or not query:
         return []
     items = terms(query)
-    if len(items) > 1 or items[0] != query:
-        merged = sorted(sp for t in items for sp in _spans(text, t))
-        out: list[tuple[int, int]] = []
-        for a, b in merged:
-            if out and a <= out[-1][1]:
-                out[-1] = (out[-1][0], max(b, out[-1][1]))
-            else:
-                out.append((a, b))
-        return out
-    return _spans(text, query)
+    if not items:
+        return []
+    if len(items) == 1:
+        return _spans(text, items[0])
+    merged = sorted(sp for t in items for sp in _spans(text, t))
+    out: list[tuple[int, int]] = []
+    for a, b in merged:
+        if out and a <= out[-1][1]:
+            out[-1] = (out[-1][0], max(b, out[-1][1]))
+        else:
+            out.append((a, b))
+    return out
+
+
+def power_placeholder(edit):
+    """A search bar says *⚡ Power search* while Power search is on (Josh, 27 October), its own
+    placeholder otherwise."""
+    own = edit.placeholderText()
+    edit.setProperty("lemmatrix_placeholder", own)
+
+    def show(on: bool, e=edit, again: bool = True):
+        e.setPlaceholderText(search.PLACEHOLDER if on else (e.property("lemmatrix_placeholder") or ""))
+        if again and e.text():                 # what's typed is read again with the new rules
+            e.textChanged.emit(e.text())
+    show(search.power(), again=False)
+    search.listen(show)
+    edit.destroyed.connect(lambda *_: search.unlisten(show))
+
+
+def on_power(obj, fn):
+    """Call `fn()` whenever Power search is switched, while `obj` (a QObject) lives."""
+    def run(_on: bool):
+        fn()
+    search.listen(run)
+    obj.destroyed.connect(lambda *_: search.unlisten(run))
 
 
 def _spans(text: str, query: str) -> list[tuple[int, int]]:

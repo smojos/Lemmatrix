@@ -125,6 +125,7 @@ class LinesView(WheelZoom, QAbstractScrollArea):
         self.edit_mode = False
         self.space_plays = True
         self._search = ""
+        searchmark.on_power(self, lambda: self._search and self._filter())   # idea 86
         self._cells: list[_Cell] = []
         self._tops: list[int] = []
         self._current = None                      # a line id
@@ -215,8 +216,9 @@ class LinesView(WheelZoom, QAbstractScrollArea):
     def _matches(self, line) -> bool:
         if not self._search:
             return True
-        hay = searchmark.fold_query(" ".join(list(line.values.values()) + [line.speaker]))
-        return searchmark.found(hay, self._search) or searchmark.found(shown(hay), self._search)
+        from .. import search
+        hay = [searchmark.fold_query(v or "") for v in list(line.values.values()) + [line.speaker]]
+        return search.parse(self._search).matches(hay + [shown(h) for h in hay])   # each field alone
 
     def _filter(self):
         self._visible = [ln for ln in self.rows if self._matches(ln)]

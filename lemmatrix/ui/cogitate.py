@@ -28,10 +28,12 @@ from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDialog, QDia
                                QWidget)
 
 from .. import hypotheses as hy
+from .. import search
 from . import theme
 from . import widgets as _w  # (ask: buttons that say what they do)
 from .icons import icon, themed_icon
 from .table import Column, FilterTable
+from .searchmark import power_placeholder as _power_placeholder
 
 LOGO = 88                         # Josh's icon at the window's top right, as in the ɛλicit request dialogue
 LIST_TAB, HYPOTHESIS_TAB = 0, 1
@@ -157,6 +159,7 @@ class LinkPicker(QDialog):
         lay.addWidget(what)
         self.search = QLineEdit()
         self.search.setPlaceholderText("search the hypotheses")
+        _power_placeholder(self.search)          # ⚡ Power search (idea 86)
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(lambda *_: self._fill())
         lay.addWidget(self.search)
@@ -356,6 +359,7 @@ class CogitateWindow(QDialog):
         bar.addWidget(_tool("reset-filters", "Clear all filters", self._clear_filters))
         self.list_search = QLineEdit()
         self.list_search.setPlaceholderText("quick search of the hypotheses")
+        _power_placeholder(self.list_search)          # ⚡ Power search (idea 86)
         self.list_search.setClearButtonEnabled(True)
         self.list_search.textChanged.connect(lambda t: self.table.proxy.set_search(t))
         bar.addWidget(self.list_search, 1)
@@ -449,6 +453,7 @@ class CogitateWindow(QDialog):
         filt = QHBoxLayout()
         self.link_search = QLineEdit()
         self.link_search.setPlaceholderText("search the links")
+        _power_placeholder(self.link_search)          # ⚡ Power search (idea 86)
         self.link_search.setClearButtonEnabled(True)
         self.link_search.textChanged.connect(lambda *_: self._fill_links())
         filt.addWidget(self.link_search, 1)
@@ -605,7 +610,7 @@ class CogitateWindow(QDialog):
             return
         db, book = self.doc.db, self.book
         mark, kind = self.mark_filter.currentData(), self.kind_filter.currentData()
-        text = self.link_search.text().strip().lower()
+        text = self.link_search.text()
         rows = []
         for ln in h.links:
             gone = hy.is_gone(db, book, ln)
@@ -616,7 +621,7 @@ class CogitateWindow(QDialog):
             item = hy.label(db, book, ln)
             if gone:
                 item = f"{item}  ({hy.gone_text(ln).lower()})"
-            if text and not any(text in (x or "").lower() for x in (item, ln.note, ln.text, ln.about)):
+            if not search.matches(text, (item, ln.note, ln.text, ln.about)):   # idea 86
                 continue
             faded = ln.kind == hy.SNAPSHOT and bool(ln.target) and hy.snapshot_listed(book, ln) is None
             rows.append(_LinkRow(ln, item, gone, faded))

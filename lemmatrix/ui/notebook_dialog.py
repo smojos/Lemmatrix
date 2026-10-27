@@ -21,12 +21,14 @@ from PySide6.QtWidgets import (QAbstractItemView, QCalendarWidget, QCheckBox, QC
                                QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from .. import matrix as mx, notebook as nbmod
+from .. import search
 from ..model import today
 from . import chiprow as chips
 from . import widgets as _w  # (ask: buttons that say what they do)
 from . import searchmark, theme
 from .icons import icon
 from .widgets import ipa_font, meaning
+from .searchmark import power_placeholder as _power_placeholder
 
 NEWEST, OLDEST = "newest", "oldest"
 # the notebook's tabs; Snapshots after To Do (Josh, 24 October)
@@ -240,6 +242,7 @@ class NotebookDialog(QDialog):
         sr = QHBoxLayout()
         self.search = QLineEdit()
         self.search.setPlaceholderText("Search the notebook")
+        _power_placeholder(self.search)          # ⚡ Power search (idea 86)
         self.search.setClearButtonEnabled(True)
         self.search.setToolTip("Searches the notes, people, places, comments, questions and To Dos")
         self._search_timer = QTimer(self)
@@ -541,18 +544,19 @@ class NotebookDialog(QDialog):
 
     def _highlight(self):
         """Mark what the search found in the notes."""
-        text = self.search.text().strip()
         sels = []
-        if text:
+        items = search.parse(self.search.text()).raw_items     # every item not left out (idea 86)
+        if items:
             fmt = QTextCharFormat()
             fmt.setBackground(QBrush(theme.colour("selected_token")))
             doc = self.notes.document()
-            cur = doc.find(text, 0)
-            while not cur.isNull():
-                sel = QTextEdit.ExtraSelection()
-                sel.cursor, sel.format = cur, fmt
-                sels.append(sel)
-                cur = doc.find(text, cur)
+            for text in items:
+                cur = doc.find(text, 0)
+                while not cur.isNull():
+                    sel = QTextEdit.ExtraSelection()
+                    sel.cursor, sel.format = cur, fmt
+                    sels.append(sel)
+                    cur = doc.find(text, cur)
         self.notes.setExtraSelections(sels)
 
     # ============================================================== editing
@@ -1167,6 +1171,7 @@ class ItemsDialog(QDialog, ItemActions):
         self.show_which.currentIndexChanged.connect(lambda *_: self._fill())
         self.search = QLineEdit()
         self.search.setPlaceholderText(f"Search the {many}")
+        _power_placeholder(self.search)          # ⚡ Power search (idea 86)
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(lambda *_: self._fill())
         top.addWidget(self.show_which)
@@ -1270,13 +1275,13 @@ class ItemsDialog(QDialog, ItemActions):
 
     def _fill(self, select=None):
         which = self.show_which.currentData()
-        text = self.search.text().strip().lower()
+        text = self.search.text()
         self.tree.clear()
         shown = 0
         for s, q in self._all():
             if (which == OPEN and not q.is_open) or (which == RESOLVED and q.is_open):
                 continue
-            if text and text not in q.text.lower() and text not in s.date:
+            if not search.matches(text, (q.text, s.date)):      # one search for every bar (idea 86)
                 continue
             it = self._item([s.date, q.text, nbmod.about_now(self.main.doc.db, q), q.status, q.dated, q.resolved], s, q)
             self.tree.addTopLevelItem(it)
@@ -1537,6 +1542,7 @@ class SnapshotsDialog(QDialog, SnapshotActions):
         lay = QVBoxLayout(self)
         self.search = QLineEdit()
         self.search.setPlaceholderText("Search the snapshots")
+        _power_placeholder(self.search)          # ⚡ Power search (idea 86)
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(lambda *_: self.fill())
         lay.addWidget(self.search)
@@ -1604,12 +1610,12 @@ class SnapshotsDialog(QDialog, SnapshotActions):
             self.refresh()
 
     def fill(self, ident: str | None = None):
-        text = self.search.text().strip().lower()
+        text = self.search.text()
         self.tree.clear()
         every = self.main.doc.notebook.all_snapshots()
         shown = 0
         for s, snap in every:
-            if text and not any(text in (x or "").lower() for x in (snap.name, snap.about, s.date)):
+            if not search.matches(text, (snap.name, snap.about, s.date)):   # idea 86
                 continue
             it = self._item([s.date, snap.name, snap.time, _setup(snap)], snap, s)
             if snap.pinned:

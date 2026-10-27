@@ -35,6 +35,7 @@ from .spellui import SpellDelegate
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, ListEditDelegate
 from .token_dialog import Slot, TokenDialog
 from .widgets import FlowLayout, ipa_font, meaning
+from .searchmark import power_placeholder as _power_placeholder
 
 TEXTS, UTTERANCES_TAB = 0, 1      # the tabs
 LOGO = 96                          # the Texts and utterances logo at the right of the options (22 October)
@@ -242,6 +243,7 @@ class TextsUtterancesWindow(QDialog):
                             "Show the selected utterance in the XML viewer"))
         self.search = QLineEdit()
         self.search.setPlaceholderText("quick search of the visible columns")
+        _power_placeholder(self.search)          # ⚡ Power search (idea 86)
         self.search.setClearButtonEnabled(True)
         bl.addWidget(self.search)
         self.count = QLabel()

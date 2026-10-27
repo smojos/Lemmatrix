@@ -31,6 +31,7 @@ from .icons import icon_size, ink_icon, themed_icon
 from .searchmark import paint_cell
 from .table import ChipsDelegate, Column, DrawingDelegate, FilterTable, RowModel
 from .widgets import ipa_font
+from .searchmark import power_placeholder as _power_placeholder
 
 TICK = "__tick"
 PREVIEW_ROLE = Qt.UserRole + 2
@@ -293,6 +294,7 @@ class BulkEditWindow(QDialog):
         bar.addWidget(broom)                                # after Configure columns, as everywhere else
         search = QLineEdit()
         search.setPlaceholderText("quick search of the visible columns")
+        _power_placeholder(search)          # ⚡ Power search (idea 86)
         search.setClearButtonEnabled(True)
         search.setMaximumWidth(360)
         bar.addWidget(search, 1)

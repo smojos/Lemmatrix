@@ -32,6 +32,7 @@ from .icons import icon, themed_icon
 from .lines_view import ConfigureViewDialog, FieldSpec, LinesView
 from .table import Column, FilterTable
 from .widgets import caption
+from .searchmark import power_placeholder as _power_placeholder
 
 CONTEXT = 2.0            # seconds of the text played either side of a line ("in context")
 
@@ -492,6 +493,7 @@ class TextsPanel(QObject):
                                   "Show the selected text's record in the XML viewer"))
         self.search = QLineEdit()
         self.search.setPlaceholderText("quick search of the texts' visible columns")
+        _power_placeholder(self.search)          # ⚡ Power search (idea 86)
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(lambda text: (self.table.proxy.set_search(text), self._update_count()))
         bl.addWidget(self.search)
@@ -538,6 +540,7 @@ class TextsPanel(QObject):
         bl.itemAt(bl.count() - 1).layout().insertWidget(6, self.edit_label)
         self.line_search = QLineEdit()
         self.line_search.setPlaceholderText("quick search of the lines")
+        _power_placeholder(self.line_search)          # ⚡ Power search (idea 86)
         self.line_search.setClearButtonEnabled(True)
         self.line_search.textChanged.connect(lambda text: (self.lines.set_search(text), self._update_count()))
         self.next_field = QComboBox()

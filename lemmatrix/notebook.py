@@ -685,8 +685,8 @@ def _list_old_snapshots(nb: Notebook) -> int:
 def matches(s: Session, db: Database | None, text: str, nb: "Notebook | None" = None) -> bool:
     """Search: the date, notes, people, places, comments, questions and to dos, and (given the
     notebook) the hypotheses worked on that day."""
-    text = text.strip().lower()
-    if not text:
+    from . import search
+    if not search.parse(text):
         return True
     md = db.metadata if db else None
     parts = [s.date, s.notes, *s.researchers, *s.participants]
@@ -699,11 +699,11 @@ def matches(s: Session, db: Database | None, text: str, nb: "Notebook | None" = 
     parts += [c.text for c in s.comments] + [c.about for c in s.comments]
     parts += [q.text for q in s.questions + s.todos]
     parts += [x.name for x in s.snapshots] + [x.about for x in s.snapshots]
-    if any(text in (x or "").lower() for x in parts):
-        return True
     if nb is not None and s.hypotheses:          # the hypotheses worked on that day (Cogitate)
-        return any(_hy.matches(h, text) for h in nb.hypotheses if h.id in s.hypotheses)
-    return False
+        for h in nb.hypotheses:
+            if h.id in s.hypotheses:
+                parts += _hy.search_parts(h)
+    return search.matches(text, parts)           # one search for every bar (idea 86)
 
 
 def summary(s: Session) -> str:
