@@ -1443,6 +1443,7 @@ class MainWindow(QMainWindow):
         self._act(t, "Check &spelling…", self.check_spelling, "F7")
         self._act(t, "Give every lemma its citation token…", self.give_citation_tokens)   # idea 64
         self._act(t, "Copy citation forms to empty lemmas…", self.copy_citation_forms)   # idea 67
+        self._act(t, "Find precomposed characters…", self.find_precomposed)     # ideas 18, 21
         t.addSection("Soundfiles")
         self._act(t, "Update all soundfile names", self.update_all_names)
         self._act(t, "Fill in recording dates from the soundfiles…", self.fill_recording_dates)
@@ -3878,6 +3879,28 @@ class MainWindow(QMainWindow):
             items.append((label, "", lambda step=step: self.shift_selected_pitch(step), ok))
         return items
 
+    def convert_transcriptions(self, items=None, label: str | None = None) -> int:
+        """Phonetic and Phonemic into the database's form (decomposed or composed, Settings →
+        General; ideas 18 and 21) as one undo step. items: only these lemmas and utterances (the
+        audit's selection). Returns how many lemmas and utterances changed."""
+        from .. import decompose as dmod
+        db = self.doc.db
+        form = dmod.form_of(db.settings)
+        pairs = dmod.pairs(db, form, items)
+        if items is None:                         # texts' fields (not part of the undo step)
+            names = dmod.field_names(db.settings)
+            for t in db.texts:
+                dmod.fix_text(t, names, form)
+        word = "Decompose" if form == "NFD" else "Compose"
+        if pairs:
+            self.doc.apply_changes(label or f"{word} transcriptions", pairs, stamp=False)
+        n = len(pairs)
+        self.statusBar().showMessage(
+            f"{'Decomposed' if form == 'NFD' else 'Composed'} the transcriptions of {n} "
+            f"{'lemma or utterance' if n == 1 else 'lemmas and utterances'}" if n else
+            "The transcriptions were already " + ("decomposed" if form == "NFD" else "composed"), 6000)
+        return n
+
     def shift_selected_pitch(self, step: int):
         sel = self.selected_token()
         f = self._pitch_field()
@@ -4248,8 +4271,11 @@ class MainWindow(QMainWindow):
     def edit_settings(self):
         dlg = PreferencesDialog(self, self.doc.db, self.prefs)
         before = self.doc.settings_snapshot()     # OK with nothing changed: not unsaved
+        was_decomposed = self.doc.db.settings.decomposed
         if dlg.exec():
             names_changed = dlg.apply()
+            if self.doc.db.settings.decomposed != was_decomposed:
+                self.convert_transcriptions()     # NFD or NFC, as now set (format 14)
             self.set_unusual_warning(self.prefs.warn_unusual_tags)
             self.set_spelling_underlines(self.prefs.underline_spelling)
             self._apply_autosave()
@@ -4682,6 +4708,11 @@ class MainWindow(QMainWindow):
                                cc.changed_copies(self.doc.db, chosen), stamp=False)
         self.statusBar().showMessage(f"Copied {len(chosen)} citation form(s) into empty Lemma fields.", 8000)
         self._maybe_update_names()               # a soundfile pattern with the Lemma in it follows
+
+    def find_precomposed(self):
+        """Tools → Audits → Find precomposed characters… (ideas 18 and 21, Josh, 27 October)."""
+        from .precomposed_dialog import run
+        run(self)
 
     def check_reference_order(self):
         """Tools → Check reference order… (Josh, 23 October): lemmas out of the EACW's order."""

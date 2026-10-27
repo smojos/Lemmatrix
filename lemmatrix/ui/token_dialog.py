@@ -229,6 +229,25 @@ class TokenDialog(QDialog):
         left.addWidget(self.pitch_note, row, 1)
         self.pitch_note.setVisible(pitch_on)
         row += 1
+        # ⚠️ precomposed characters in a decomposing database (ideas 18 and 21, Josh, 27 October): e.g.
+        # pasted text; OK, Back and Next decompose them anyway, Decompose does it now
+        self.precomposed_note = QLabel()
+        self.precomposed_note.setWordWrap(True)
+        self.precomposed_note.setStyleSheet(f"color: {theme.colour('warning').name()};")
+        self.decompose_btn = QPushButton("Decompose")
+        self.decompose_btn.setToolTip("Store é as e + ◌́ in Phonetic and Phonemic, as this database does "
+                                      "(Settings → General); nothing changes on the screen")
+        self.decompose_btn.clicked.connect(lambda *_: self.decompose_fields())
+        note_row = QHBoxLayout()
+        note_row.setContentsMargins(0, 0, 0, 0)
+        note_row.addWidget(self.precomposed_note, 1)
+        note_row.addWidget(self.decompose_btn, 0, Qt.AlignVCenter)
+        left.addLayout(note_row, row, 1)
+        row += 1
+        for name, ed in self.edits.items():
+            if s.token_field(name) is not None and s.token_field(name).role in ("phonetic", "phonemic"):
+                ed.textChanged.connect(lambda *_: self._check_precomposed())
+        self._check_precomposed()
         # Cogitate: a 48 px button with Josh's icon (Link to hypothesis…; Josh, 22 October: it
         # replaced the words), with "In hypotheses: H3 (evidence)…" before it, in the header row
         self.hyp_btn = QToolButton()
@@ -740,6 +759,37 @@ class TokenDialog(QDialog):
         self.tags.update()
         for b in self.tags.buttons.values():
             b.update()
+
+    def _transcription_edits(self) -> list:
+        s = self.db.settings
+        return [ed for name, ed in self.edits.items()
+                if (f := s.token_field(name)) is not None and f.role in ("phonetic", "phonemic")]
+
+    def _check_precomposed(self):
+        """⚠️ under the fields when Phonetic or Phonemic holds a precomposed character and the
+        database decomposes them (Settings → General); hidden otherwise."""
+        from .. import decompose
+        found = []
+        if self.db.settings.decomposed:
+            for ed in self._transcription_edits():
+                for ch in decompose.precomposed_chars(ed.text()):
+                    if ch not in found:
+                        found.append(ch)
+        self.precomposed_note.setText(("⚠️ Precomposed characters: " + " ".join(found) +
+                                       " (stored decomposed on OK)") if found else "")
+        self.precomposed_note.setVisible(bool(found))
+        self.decompose_btn.setVisible(bool(found))
+
+    def decompose_fields(self):
+        """Decompose Phonetic and Phonemic now (Ctrl+Z in a field takes it back)."""
+        from .. import decompose
+        for ed in self._transcription_edits():
+            if decompose.precomposed(ed.text()):
+                text, pos = ed.text(), ed.cursorPosition()
+                ed.selectAll()
+                ed.insert(decompose.nfd(text))    # not setText: keeps the field's own undo
+                ed.setCursorPosition(len(decompose.nfd(text[:pos])))   # where it was
+        self._check_precomposed()
 
     def _pitch_changed(self, text):
         self.canvas.set_pitch(text)

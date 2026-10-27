@@ -460,6 +460,20 @@ class Document(QObject):
         # (the audit, section 8).
         self.last_touched: frozenset | None = None
 
+    def decompose(self, *items):
+        """Decomposed transcriptions on (format 14): the lemmas' or utterances' Phonetic and
+        Phonemic decomposed in place before their change is recorded, so the undo step holds what
+        is stored (`lemmatrix/decompose.py`)."""
+        if not self.db.settings.decomposed:
+            return
+        from .. import decompose as dmod
+        names = dmod.field_names(self.db.settings)
+        for item in items:
+            if hasattr(item, "tokens"):
+                dmod.fix_entry(item, names)
+            else:
+                dmod.fix_text(item, names)
+
     def emit_changed(self, entries):
         """`changed`, saying which entries were changed in place (nothing added, removed or
         moved). Every other `changed.emit()` means anything may have changed."""
@@ -560,6 +574,7 @@ class Document(QObject):
         """
         before = entry.copy()
         change(entry)
+        self.decompose(entry)
         self.db.stamp_comments(before, entry, self.work_date())
         after = entry.copy()
         for old, new in renames:
@@ -607,6 +622,7 @@ class Document(QObject):
         for entry, after in pairs:
             before = entry.copy()
             _restore(entry, after)
+            self.decompose(entry)
             if stamp:
                 self.db.stamp_comments(before, entry, self.work_date())
             changes.append((entry, before, entry.copy()))
@@ -649,7 +665,10 @@ class Document(QObject):
         for entry, after in pairs:
             before = entry.copy()
             _restore(entry, after)
+            self.decompose(entry)
             changes.append((entry, before, entry.copy()))
+        known = {id(e) for e in before_order}
+        self.decompose(*(e for e in order if id(e) not in known))     # lemmas new here
         self.db.entries[:] = list(order)
         for old, new in done:
             self._note_rename(old, new)
@@ -766,6 +785,7 @@ class Document(QObject):
         """Add an entry (or an utterance, to the utterances) as one undo step."""
         items = self.db.list_for(entry)
         idx = len(items) if index is None else index
+        self.decompose(entry)
         self.db.stamp_comments(None, entry, self.work_date())
         for old, new in renames:
             self._note_rename(Path(old), Path(new))
@@ -781,6 +801,7 @@ class Document(QObject):
             return
         date = self.work_date()
         for item in items:
+            self.decompose(item)
             self.db.stamp_comments(None, item, date)
             self.db.list_for(item).append(item)
         for old, new in renames:

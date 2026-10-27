@@ -563,6 +563,9 @@ class Settings:
     tier_mapping: TierMapping = field(default_factory=TierMapping)
     tag_separator: str = "-"
     auto_update_names: bool = True
+    # Decomposed transcriptions (ideas 18 and 21, Josh, 27 October; format 14): Phonetic and
+    # Phonemic hold no precomposed characters (é is e + U+0301); `decompose.py`
+    decomposed: bool = False
     pitch_low: int = 1
     pitch_high: int = 5
     pitch_style: str = "contours"

@@ -962,11 +962,21 @@ class PreferencesDialog(QDialog):
         self.origin_on.setToolTip("Where a lemma comes from: the Stem type field (simple, complex, loan) and "
                                   "From (the lemmas it's built from, the languages it was borrowed from). "
                                   "Off hides them everywhere; what's filled in is kept.")
+        # Decomposed transcriptions (ideas 18 and 21, Josh, 27 October; format 14): the database's promise
+        self.decomposed_box = QCheckBox("Decompose Phonetic and Phonemic: no precomposed characters (é is e + ◌́)")
+        self.decomposed_box.setChecked(s.decomposed)
+        self.decomposed_box.setToolTip(
+            "Selected: everything written into Phonetic and Phonemic is decomposed (Unicode NFD), typed, "
+            "pasted, Bulk edit, TextGrids, ɛλicit, so every tone mark is a character of its own and analysis "
+            "tools read tone suprasegmentally. The database file says so (<characters transcriptions=\"NFD\">). "
+            "Deselected: precomposed where Unicode has the character (NFC). Changing it converts the data "
+            "(one undo step); nothing is lost either way. Soundfile names are always composed.")
         self.kb = keyboards.KeyboardSection(self, db, prefs)   # automatic keyboard switching (idea 43)
         page("General", [("This computer", [("Autosave every", self.autosave),
                                             ("Full backup folder", self.backups),
                                             (None, self.welcome)]),
                          ("Lemmas (this database)", [(None, self.origin_on)]),
+                         ("Transcriptions (this database)", [(None, self.decomposed_box)]),
                          ("Notebook (this database)", [(None, b) for b in self.history.values()]),
                          ("Warnings (this computer)", [(None, self.unusual), (None, self.spelling), (None, self.confirm)]),
                          ("Keyboards (this computer)", [(None, w) for w in self.kb.widgets()])])
@@ -1250,6 +1260,7 @@ class PreferencesDialog(QDialog):
         s.clip_padding = self.padding.value()
         s.tag_separator = self.separator.text()
         s.auto_update_names = self.auto_names.isChecked()
+        s.decomposed = self.decomposed_box.isChecked()   # the data is converted by the main window
         s.pitch_low, s.pitch_high = self.low.value(), self.high.value()
         p = self.prefs
         p.record_source = self.source.currentData()

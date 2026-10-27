@@ -60,6 +60,7 @@ def make(ch: Choices) -> Database:
         copy_setup(db, ch.copy_from)
         defaults.ensure_core_fields(db.settings)
     md, s = db.metadata, db.settings
+    s.decomposed = True                       # new databases decompose Phonetic and Phonemic (Josh, 27 October)
     md.language_name, md.language_code = nfc(ch.language_name.strip()), nfc(ch.language_code.strip())
     md.variety_name, md.variety_code = nfc(ch.variety_name.strip()), nfc(ch.variety_code.strip())
     md.name = nfc(ch.name.strip())

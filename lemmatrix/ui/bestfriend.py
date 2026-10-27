@@ -5,6 +5,10 @@ over the typed characters of text boxes whose field is Phonetic or Phonemic (the
 grids' in-place editors, edit mode), corrected by the rules turned on (`lemmatrix/bestfriend.py`).
 **Backspace or Ctrl+Z straight after** a correction puts back what was typed (as Word does); any
 other key, and they work as usual. Pasting never passes through here.
+
+The same filter **decomposes precomposed characters as they are typed** (é → e + ◌́) in a database
+whose transcriptions are decomposed (Settings → General; ideas 18 and 21, format 14), whether or not
+the dog is on: that is the database's promise, not a typing aid (`lemmatrix/decompose.py`).
 """
 
 from __future__ import annotations
@@ -12,7 +16,7 @@ from __future__ import annotations
 from PySide6.QtCore import QEvent, QObject, Qt
 from PySide6.QtWidgets import QLineEdit
 
-from .. import advanced, bestfriend as bf
+from .. import advanced, bestfriend as bf, decompose
 from . import fastpaste, keyboards
 
 
@@ -20,6 +24,11 @@ class BestFriendFilter(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._last = None        # (box, cursor after, text put in, what it replaced + what was typed)
+
+    @staticmethod
+    def _decomposing() -> bool:
+        db = fastpaste.database()
+        return db is not None and db.settings.decomposed
 
     def _role(self, ed) -> str | None:
         """phonetic or phonemic for a Phonetic or Phonemic box, else None (left alone)."""
@@ -44,7 +53,16 @@ class BestFriendFilter(QObject):
             return False
         sel = ed.hasSelectedText()
         start = ed.selectionStart() if sel else ed.cursorPosition()
-        got = bf.correct(ed.text()[:start], typed, lambda rule: advanced.on(rule.key), role)
+        dog = advanced.best_friend()
+        got = bf.correct(ed.text()[:start], typed, lambda rule: advanced.on(rule.key), role) if dog else None
+        if self._decomposing():
+            if got is None:
+                if not decompose.precomposed(typed):
+                    return False
+                ed.insert(decompose.nfd(typed))          # é typed: e + ◌́ stored (not a correction:
+                self._last = None                        # Backspace deletes the mark, as usual)
+                return True
+            got = (got[0], decompose.nfd(got[1]))
         if got is None:
             return False
         back, put = got
@@ -59,7 +77,9 @@ class BestFriendFilter(QObject):
 
     def eventFilter(self, obj, event):
         t = event.type()
-        if t not in (QEvent.KeyPress, QEvent.InputMethod) or not advanced.best_friend():
+        if t not in (QEvent.KeyPress, QEvent.InputMethod):
+            return False
+        if not advanced.best_friend() and not self._decomposing():
             return False
         if not isinstance(obj, QLineEdit):
             return False
@@ -71,6 +91,10 @@ class BestFriendFilter(QObject):
                 text = event.commitString()
                 if len(text) != 1:
                     self._last = None
+                    if (text and decompose.precomposed(text) and self._decomposing()
+                            and not obj.isReadOnly() and self._role(obj)):
+                        obj.insert(decompose.nfd(text))  # a keyboard committing several at once
+                        return True
                     return False
                 return self._correct(obj, text)
             key, mods = event.key(), event.modifiers() & ~Qt.KeypadModifier

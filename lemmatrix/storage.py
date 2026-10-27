@@ -20,20 +20,21 @@ from .model import (LEMMAS, TEXTS, UTTERANCES, ClipSource, Database, Entry, Fiel
                     Location, Metadata, Person, RefCategory, Settings, Support, Tag, TagStructure, Text,
                     Thanks, TierMapping, TierRule, Token, Utterance, is_utterance, new_id, nfc, write_atomically, xml_safe)
 
-FORMAT_VERSION = "13"
+FORMAT_VERSION = "14"
 WORDLIST_ATTRS = {"EACW": "eacw", "CAWL": "cawl", "SWADESH": "swadesh"}   # format 9 (idea 40)
 # Until version 1.0 the current format is read and the formats before it upgraded, from format 5 on
 # (Josh, 18 October 2026: no compatibility code for older formats; the upgrades are kept, 25 October,
 # so an older backup still opens, until v1 fixes the format). When the format changes, an upgrade
 # from the format before is written.
-READABLE = ("5", "6", "7", "8", "9", "10", "11", "12", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
+READABLE = ("5", "6", "7", "8", "9", "10", "11", "12", "13", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
 # 7: before researchers had the Identifiable? checkbox and both checkboxes were always written; 8: before the
 # comparative wordlists (format 9, 22 October: no base and no numbers yet, so nothing to change);
 # 9: before the <typology> block (format 10, 23 October: an older file is tonal, as every database was);
 # 10: before the EACW's version on <wordlist> (format 11, 23 October: items and region, none in an
 # older file, so nothing to change); 11: before the acknowledgements and the EACW's version number
 # (format 12, 24 October: none in an older file, so nothing to change); 12: before fields'
-# abbreviations (format 13, 26 October: the token fields get pht, phm, mph, pch, trs, com)
+# abbreviations (format 13, 26 October: the token fields get pht, phm, mph, pch, trs, com); 13: before
+# <characters> (format 14, 27 October: an older file is NFC, precomposed, as Lemmatrix always wrote)
 BACKUPS_KEPT = 10
 
 
@@ -90,7 +91,17 @@ def _load_tags(el) -> TagStructure:
 
 
 KNOWN_SETTINGS = {"entry-fields", "token-fields", "text-fields", "tier-mapping", "glosses", "tag-structure",
-                  "references", "sounds", "pitch", "playback", "display", "spelling"}
+                  "references", "sounds", "pitch", "playback", "display", "spelling", "characters"}
+
+# Format 14 (ideas 18 and 21, Josh, 27 October): how the transcriptions' characters are stored, written
+# so that a computer or a researcher reading the file knows (Josh): NFD, no precomposed characters in
+# Phonetic and Phonemic, or NFC, precomposed where Unicode has the character.
+CHARACTERS_NOTE = {
+    "NFD": "Phonetic and Phonemic are decomposed (Unicode NFD): they hold no precomposed characters; "
+           "é is e + U+0301, so every tone mark is a character of its own.",
+    "NFC": "Phonetic and Phonemic are composed (Unicode NFC): é is one character (U+00E9) where "
+           "Unicode has one; other marks are characters of their own (ɛ́ is ɛ + U+0301).",
+}
 
 
 def _load_mapping(el) -> TierMapping:
@@ -180,6 +191,8 @@ def _load_settings(el) -> Settings:
     s.matrices = _load_matrices(el.find("display"))
     if (x := el.find("spelling")) is not None:
         s.spelling_words = [w for w in (nfc(_text(w)).strip() for w in x.findall("word")) if w]
+    if (x := el.find("characters")) is not None:
+        s.decomposed = (x.get("transcriptions") or "").upper() == "NFD"
     s.extra = [child for child in el if child.tag not in KNOWN_SETTINGS]
     return s
 
@@ -377,6 +390,9 @@ def load(path: str | os.PathLike) -> Database:
     if version != FORMAT_VERSION:        # format 8 (22 October): researchers selected Identifiable?, read
                                          # above; format 9: wordlist numbers, none in an older file;
         db.upgraded = True               # above; quietly, so saving writes the new format
+    if db.settings.decomposed:           # format 14: anything precomposed (a file edited by hand) decomposed
+        from .decompose import fix_database
+        fix_database(db, "NFD")
     if repaired:
         db.load_notes = list(db.load_notes) + [REPAIRED_NOTE]
     return db
@@ -489,6 +505,8 @@ def _save_values(el, obj, field_order: list[FieldDef], languages: list[str]):
 
 
 def to_element(db: Database) -> ET.Element:
+    from .decompose import fix_database  # the promise kept whatever wrote the values (format 14):
+    fix_database(db)                     # NFD or NFC, as <characters> says
     root = ET.Element("database", format=FORMAT_VERSION)
     md = db.metadata
     m = ET.SubElement(root, "metadata")
@@ -558,6 +576,12 @@ def to_element(db: Database) -> ET.Element:
     x = ET.SubElement(st, "text-fields")
     for f in s.text_fields:
         _save_field(x, f)
+    from .decompose import ROLES
+    form = "NFD" if s.decomposed else "NFC"
+    names = list(dict.fromkeys(f.name for f in (*s.entry_fields, *s.token_fields, *s.text_fields)
+                               if f.role in ROLES))
+    ET.SubElement(st, "characters", {"transcriptions": form, "fields": ", ".join(names)}).text = \
+        CHARACTERS_NOTE[form]
     _save_mapping(st, "tier-mapping", s.tier_mapping)
     ET.SubElement(st, "glosses", languages=" ".join(s.gloss_languages), primary=s.primary_gloss)
     x = ET.SubElement(st, "tag-structure")

@@ -21,6 +21,8 @@ label or its abbreviation, in any case, with or without spaces (`{Tone Class}`, 
 
 from __future__ import annotations
 
+import unicodedata
+
 import re
 
 from .model import Database, Entry, Token
@@ -120,7 +122,9 @@ def build_filename(db: Database, e: Entry, t: Token, extension: str = ".wav") ->
 def praat_name(stem: str) -> str:
     """The name Praat gives an object read from a file with this name: spaces and ASCII
     punctuation other than + - = _ become underscores (checked against Praat 6.1, 18 October).
-    Praat's Save suggests that name, so a TextGrid named this way is saved over itself."""
+    Praat's Save suggests that name, so a TextGrid named this way is saved over itself. Always NFC
+    (composed), whatever the transcriptions' form (format 14): é is one character in a file name."""
+    stem = unicodedata.normalize("NFC", stem)
     return "".join(c if (c.isalnum() or c in "+-=_" or ord(c) > 127) else "_" for c in stem)
 
 
