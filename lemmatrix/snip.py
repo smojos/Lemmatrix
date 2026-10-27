@@ -15,7 +15,7 @@ utterance?"):
    (a click or a cough in a gap doesn't count); its quiet edges, close to it, belong to it.
 4. **Longer tail than lead-in:** 100 ms kept before the first sound, 250 ms after the last.
 5. **A noisy take isn't trimmed** (speech too close to the background to find its edges).
-6. Gaps only ever **shorten** (over 0.6 s → 0.3 s: 0.2 s after the sound, 0.1 s before the next);
+6. Gaps only ever **shorten** (over 0.6 s → 0.6 s: 0.4 s after the sound, 0.2 s before the next; Josh, 27 October: 0.3 s put the repetitions too close);
    nothing is ever lengthened, and a short gap (a closure, a breath) is never touched.
 """
 
@@ -35,7 +35,7 @@ JOIN = 0.150             # s: quiet sound this close to speech belongs to it
 NOISY = 25.0             # dB: peak less than this above the background → not trimmed
 LEAD, TAIL = 0.100, 0.250
 GAP_OVER = 0.600         # s: a gap longer than this is shortened…
-GAP_AFTER, GAP_BEFORE = 0.200, 0.100   # …to this much after one stretch and before the next
+GAP_AFTER, GAP_BEFORE = 0.400, 0.200   # …to 0.6 s: this much after one stretch and before the next (Josh: doubled)
 FADE = 0.005             # s crossfade at each join, so there's no click
 HUM = 100.0              # Hz: left out of the overall loudness
 HISS = (2000.0, 10000.0)  # Hz

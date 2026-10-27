@@ -57,7 +57,7 @@ def test_a_long_gap_shortened_a_short_one_kept():
     gaps = [(b - a) for (_, a), (b, _) in zip(rep.speech, rep.speech[1:])]
     assert len(rep.speech) == 2 or len(rep.speech) == 3
     inner = [c for c in rep.cut if 0.5 < c[0] < 2.5]
-    assert len(inner) == 1 and abs((inner[0][1] - inner[0][0]) - 1.2) < 0.06   # 1.5 s → 0.3 s
+    assert len(inner) == 1 and abs((inner[0][1] - inner[0][0]) - 0.9) < 0.06   # 1.5 s → 0.6 s
     assert all(not (2.9 < c[0] < 3.3) for c in rep.cut)                       # the 0.2 s gap untouched
     assert gaps
 
