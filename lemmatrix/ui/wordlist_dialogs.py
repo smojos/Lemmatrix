@@ -447,6 +447,8 @@ def write_pdf(path: str, db, lid: str, header, data):
 def link_to_wordlists(win):
     """Set an existing database's base list and give its lemmas the other lists' numbers from the
     mapping, by reference (Josh's database: EACW). One undo step."""
+    if _renumber_waits(win):
+        return
     db = win.doc.db
     current = wl.base_of(db)
     labels = [f"{wl.NAMES[x]} ({wl.SHORT[x]})" for x in wl.LIST_IDS]
@@ -667,6 +669,8 @@ def insert_items(win, items) -> list:
 
 def insert_eacw_items(win, near=None):
     """Right-click a lemma → Insert EACW items… (or Tools): pick and insert."""
+    if _renumber_waits(win):
+        return
     db = win.doc.db
     if not wl.is_eacw(db):
         QMessageBox.information(win, "Insert EACW items",
@@ -694,6 +698,8 @@ def check_reference_order(win):
     undo step. The order: the list's items at their places, the researcher's own references inside
     their item's family (B001b after B001), other references at the end of their section (C + ISO
     code after the last C item)."""
+    if _renumber_waits(win):
+        return
     db = win.doc.db
     title = "Check reference order"
     if not wl.is_eacw(db):
@@ -746,12 +752,12 @@ class IntegrityDialog(QDialog):
     selects or deselects all of it); Fix the selected is one undo step. A finding that can't be
     fixed (a lemma with data whose item is hidden) is listed without a checkbox."""
 
-    def __init__(self, win, findings):
+    def __init__(self, win, findings, rn=None):
         super().__init__(win)
         from PySide6.QtGui import QColor
         from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
         from .. import wordlist_check as wc
-        self.win, self.db, self.findings = win, win.doc.db, findings
+        self.win, self.db, self.findings, self.rn = win, win.doc.db, findings, rn
         short = wl.SHORT.get(wl.base_of(self.db), "wordlist")
         self.setWindowTitle(f"Check {short} integrity")
         self.resize(820, 600)
@@ -765,6 +771,18 @@ class IntegrityDialog(QDialog):
         self.tree.header().setSectionResizeMode(2, QHeaderView.Stretch)
         grey = QColor("#8c8c8c")
         self.items: list[tuple[object, object]] = []      # (tree item, finding)
+        if rn is not None and rn.count:                   # the edition's renumbering: always part of it
+            top = QTreeWidgetItem([f"References renumbered by the edition ({rn.count:,}; always done)"])
+            self.tree.addTopLevelItem(top)
+            for e, a in rn.pairs:
+                if a.ref != e.ref or self.db.gloss(a) != self.db.gloss(e):
+                    what = (f"{e.ref} → {a.ref}" if a.ref != e.ref else "") + (
+                        f"{'; ' if a.ref != e.ref else ''}gloss → {self.db.gloss(a)}"
+                        if self.db.gloss(a) != self.db.gloss(e) else "")
+                    top.addChild(QTreeWidgetItem([e.ref, self.db.gloss(e), what, "Renumber"]))
+            for e in rn.removed:
+                top.addChild(QTreeWidgetItem([e.ref, self.db.gloss(e), "Empty; deleted from the list", "Remove"]))
+            top.setExpanded(rn.count <= 12)
         for kind in wc.KINDS:
             mine = [f for f in findings if f.kind == kind]
             if not mine:
@@ -789,7 +807,8 @@ class IntegrityDialog(QDialog):
             self.tree.resizeColumnToContents(c)
         self.tree.itemChanged.connect(lambda *_: self._count())
         lay.addWidget(self.tree, 1)
-        note = QLabel("Lemmas with data are never removed. You can undo the fixes in one step (Ctrl+Z).")
+        note = QLabel("Lemmas with data are never removed. Recordings are renamed with their references. "
+                      "You can undo the fixes in one step (Ctrl+Z).")
         note.setWordWrap(True)
         from . import theme
         note.setStyleSheet(f"color: {theme.muted()};")
@@ -836,9 +855,12 @@ class IntegrityDialog(QDialog):
         return wc.out_of_date(self.db)
 
 
-def apply_fixes(win, findings) -> int:
+def apply_fixes(win, findings, rn=None) -> int:
     """Fix the selected findings as one undo step, and record the shipped EACW edition. Returns how
-    many findings were fixed."""
+    many findings were fixed, or -1 if nothing could change (a recording that couldn't be renamed).
+    rn: the edition's renumbering the findings were checked after; it is always applied with them,
+    its recordings and pictures renamed (as Convert references from a table does)."""
+    from .. import convert_refs as cr
     from .. import wordlist_check as wc
     db = win.doc.db
 
@@ -850,11 +872,21 @@ def apply_fixes(win, findings) -> int:
         wl.fill_item(db, e, item)
         return e
 
-    order, pairs, made = wc.plan(db, findings, new_entry)
+    order, pairs, made = wc.plan(db, findings, new_entry, rn)
+    renames = []
+    if rn is not None:
+        renames, _ = cr.file_renames(db, pairs)
+        pairs = cr.token_files(db, pairs)
     n = sum(1 for f in findings if f.selected and f.fixable)
     version = wl.EACW_VERSION if wl.is_eacw(db) else ""
     what = wc.summary(findings)
-    win.doc.fix_wordlist(f"Wordlist integrity{': ' + what if what else ''}", order, pairs, version)
+    if rn is not None and rn.count:
+        what = f"References {rn.count:,}" + (f" · {what}" if what else "")
+    trouble = win.doc.fix_wordlist(f"Wordlist integrity{': ' + what if what else ''}", order, pairs, version,
+                                   renames)
+    if trouble:
+        QMessageBox.warning(win, "The EACW", "Nothing was changed:\n" + "\n".join(trouble))
+        return -1
     win.lemmas.set_rows(db.entries)
     return n
 
@@ -868,30 +900,66 @@ def check_wordlist_integrity(win):
         QMessageBox.information(win, title, "This database isn't built on a wordlist (Tools → Link to "
                                 "wordlists… sets that).")
         return
-    findings = wc.check(db)
-    if not findings:
+    rn = wc.renumbering(db)
+    findings = wc.check(db, rn)
+    if not findings and rn is None:
         if wc.out_of_date(db):
             db.metadata.wordlist_version = wl.EACW_VERSION
             win.doc.settings_changed()
         QMessageBox.information(win, title, f"The database is as the {wl.NAMES[wl.base_of(db)]} has it.")
         return
-    d = IntegrityDialog(win, findings)
+    d = IntegrityDialog(win, findings, rn)
     if d.exec() != QDialog.Accepted:
         return
     d.sync()
-    n = apply_fixes(win, findings)
-    win.statusBar().showMessage(f"Fixed {n:,} finding(s)." if n else "Recorded the list's new version.", 8000)
+    n = apply_fixes(win, findings, rn)
+    if n >= 0:
+        win.statusBar().showMessage(f"Fixed {n:,} finding(s)." if n else "Recorded the list's new version.", 8000)
 
 
 def update_wordlist(win) -> int:
     """The notice's one click (Josh: "bring their version of the list up to date with the click of
     a button"): every fix that starts selected, and the new edition recorded; one undo step."""
     from .. import wordlist_check as wc
-    findings = wc.check(win.doc.db)
-    n = apply_fixes(win, findings)
-    win.statusBar().showMessage(f"The EACW is up to date ({wl.EACW_VERSION}): "
-                                f"{wc.summary(findings) or 'nothing to change'}. Ctrl+Z undoes it.", 15000)
+    rn = wc.renumbering(win.doc.db)
+    findings = wc.check(win.doc.db, rn)
+    n = apply_fixes(win, findings, rn)
+    if n < 0:
+        return n
+    what = wc.summary(findings)
+    if rn is not None and rn.count:
+        what = f"References {rn.count:,}" + (f" · {what}" if what else "")
+    moved = rn.moved_own if rn is not None else []
+    win.statusBar().showMessage(f"The EACW is up to date ({wl.EACW_VERSION}): {what or 'nothing to change'}"
+                                + (f"; kept under references of their own: " + ", ".join(f"{a} → {b}" for a, b in moved)
+                                   if moved else "") + ". Ctrl+Z undoes it.", 30000)
     return n
+
+
+def _renumber_waits(win) -> bool:
+    """While an EACW database is still on the numbers of an edition before one that renumbered items,
+    the wordlist tools would take one item for another: say so, and offer the update."""
+    db = win.doc.db
+    if not wl.renumber_pending(db):
+        return False
+    box = QMessageBox(QMessageBox.Information, "Update the EACW first",
+                      f"This database is still on the EACW's numbers of {db.metadata.wordlist_version or wl.EDITIONS[0].version}, "
+                      f"and edition {wl.EACW_VERSION} renumbered items. Bring it up to date first (one undo step, "
+                      "recordings renamed with their references).", parent=win)
+    review = box.addButton("Review the update…", QMessageBox.AcceptRole)
+    box.addButton("Cancel", QMessageBox.RejectRole)
+    box.exec()
+    if box.clickedButton() is review:
+        check_wordlist_integrity(win)
+    return True
+
+
+def _what(findings, rn) -> str:
+    from .. import wordlist_check as wc
+    what = wc.summary(findings)
+    if rn is not None and rn.count:
+        what = f"References {rn.count:,}" + (f" · {what}" if what else "")
+    return what or "nothing to change"
 
 
 def offer_update(win):
@@ -902,16 +970,20 @@ def offer_update(win):
     if not wc.out_of_date(db):
         return None
     since = wl.editions_since(wc.version(db))
-    findings = wc.check(db)
-    if not any(f.selected and f.fixable for f in findings):   # nothing it changed is in this database
+    rn = wc.renumbering(db)
+    findings = wc.check(db, rn)
+    if rn is None and not any(f.selected and f.fixable for f in findings):   # nothing it changed is in this database
         db.metadata.wordlist_version = wl.EACW_VERSION         # recorded with the next save
         return None
     box = QMessageBox(QMessageBox.Information, "The EACW has been updated",
                       f"Lemmatrix has a newer edition of the Extended African Comparative Wordlist "
                       f"({wl.EACW_VERSION}) than this database ({wc.version(db)}):\n\n"
                       + "\n".join(f"• {e.version}: {e.note}" for e in since)
-                      + f"\n\nBringing the database up to date: {wc.summary(findings)}. Lemmas with data "
-                      "are never removed, and it is one undo step.", parent=win)
+                      + f"\n\nBringing the database up to date: {_what(findings, rn)}. Lemmas with data "
+                      "are never removed, and it is one undo step."
+                      + ("\n\nThis edition renumbers items, so the wordlist tools (Insert EACW items, Link to "
+                         "wordlists, Check reference order) wait until the database is updated; recordings "
+                         "are renamed with their references." if rn is not None else ""), parent=win)
     update = box.addButton("Update", QMessageBox.AcceptRole)
     review = box.addButton("Review first…", QMessageBox.ActionRole)
     box.addButton("Not now", QMessageBox.RejectRole)

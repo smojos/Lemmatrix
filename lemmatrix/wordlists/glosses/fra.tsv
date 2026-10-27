@@ -1,0 +1,2911 @@
+ref	gloss	clarification	status	earlier
+A001	corps		machine	
+A002	peau		machine	
+A002b	ride		machine	
+A003	cheveu		machine	cheveu, poil
+A003b	poil (du corps)		machine	
+A003c	mèche de cheveux, touffe de cheveux		machine	
+A004	os		machine	
+A004b	squelette		machine	
+A005	muscle		machine	
+A006	tendon		machine	
+A007	sang		machine	
+A008	vaisseau sanguin, veine		machine	
+A009	tête		machine	
+A009b	dessus, partie supérieure		machine	
+A010	sommet du crâne		machine	
+A011	crâne		machine	
+A012	cerveau		machine	
+A013	front		machine	
+A014	visage		machine	
+A014b	devant (d'un objet)		machine	
+A015	œil		machine	
+A016	pupille		machine	
+A017	iris		machine	
+A018	sourcil		machine	
+A019	paupière		machine	
+A020	cil		machine	
+A021	larme		machine	
+A022	oreille		machine	
+A023	conduit auditif		machine	
+A024	lobe de l'oreille		machine	
+A025	cire d'oreille, cérumen		machine	
+A026	nez		machine	
+A027	narine		machine	
+A028	arête du nez		machine	
+A029	morve		machine	
+A030	joue		machine	
+A030a	haut de la joue, pommette		machine	
+A030b	bas de la joue		machine	
+A031	bouche		machine	
+A031b	pointe		machine	
+A032	souffle		machine	
+A033	lèvre		machine	
+A034	gencive		machine	
+A035	dent		machine	
+A035b	tranchant, bord		machine	
+A036	molaire		machine	
+A037	canine		machine	
+A038	incisive		machine	
+A038b	incisive inférieure		machine	
+A039	prémolaire		machine	
+A040	écart entre les dents de devant, dents du bonheur	« dents du bonheur » : expression courante pour cet écart.	machine	
+A041	langue		machine	
+A042	frein de la langue		machine	
+A043	palais		machine	
+A044	luette		machine	
+A045	amygdale		machine	
+A046	salive		machine	
+A047	mâchoire		machine	
+A048	os de la mâchoire		machine	
+A049	menton		machine	
+A050	moustache		machine	
+A051	barbe		machine	
+A052	cou		machine	
+A053	nuque		machine	
+A054	os du cou, vertèbres cervicales		machine	
+A055	gorge		machine	
+A056	trachée		machine	
+A057	pomme d'Adam		machine	
+A058	épaule		machine	
+A059	aisselle		machine	
+A060	articulation de l'épaule		machine	
+A061	omoplate		machine	
+A062	poitrine		machine	
+A063	clavicule		machine	
+A064	cage thoracique		machine	
+A065	sternum		machine	
+A066	cœur		machine	
+A067	poumon		machine	
+A068	sein		machine	
+A069	mamelon		machine	
+A070	lait maternel		machine	
+A071	flanc, côté du corps		machine	
+A071b	côté (d'un objet)		machine	
+A072	côte		machine	
+A073	ventre		machine	
+A073b	milieu, intérieur		machine	
+A074	nombril		machine	
+A075	entrailles		machine	
+A076	foie		machine	
+A077	pancréas		machine	
+A078	vésicule biliaire		machine	
+A079	estomac		machine	
+A080	bile		machine	
+A081	rate		machine	
+A082	intestins		machine	
+A082a	gros intestin		machine	
+A082b	intestin grêle		machine	
+A083	rein		machine	
+A084	vessie		machine	
+A085	utérus		machine	
+A086	cordon ombilical		machine	
+A087	dos		machine	
+A087b	arrière (d'un objet)		machine	
+A088	haut du dos		machine	
+A089	bas du dos		machine	
+A090	colonne vertébrale		machine	
+A091	bras		machine	
+A091a	haut du bras		machine	
+A091b	avant-bras		machine	
+A092	os du bras		machine	
+A093	coude		machine	
+A093a	pointe du coude		machine	
+A093b	pli du coude		machine	
+A094	main		machine	
+A095	paume		machine	
+A096	doigt		machine	
+A097	os du doigt, phalange		machine	
+A098	pouce		machine	
+A099	index		machine	
+A100	majeur		machine	
+A101	annulaire		machine	
+A102	petit doigt		machine	
+A103	jointure (des doigts)		machine	
+A104	ongle		machine	
+A105	poing		machine	
+A106	poignet		machine	
+A107	hanche		machine	
+A108	os de la hanche		machine	
+A109	taille (au-dessus des hanches)		machine	
+A110	fesse		machine	
+A110b	dessous, partie inférieure		machine	
+A111	coccyx		machine	
+A112	anus		machine	
+A113	excréments		machine	
+A114	pénis		machine	
+A115	prépuce		machine	
+A116	scrotum		machine	
+A117	testicule		machine	
+A118	urine		machine	
+A119	sperme		machine	
+A120	sexe de la femme, vagin		machine	
+A121	clitoris		machine	
+A122	jambe		machine	
+A123	fémur		machine	
+A124	cuisse		machine	
+A124a	muscle du devant de la cuisse, quadriceps		machine	
+A124b	intérieur de la cuisse		machine	
+A124c	muscles de l'arrière de la cuisse, ischio-jambiers		machine	
+A125	genou		machine	
+A125a	devant du genou		machine	
+A125b	creux du genou, arrière du genou		machine	
+A126	tibia (devant de la jambe)		machine	
+A127	tibia (os)		machine	
+A128	mollet		machine	
+A129	tendon d'Achille		machine	
+A130	pied		machine	
+A131	cheville		machine	
+A132	os de la cheville, malléole		machine	
+A133	talon		machine	
+A134	avant de la plante du pied		machine	
+A135	orteil		machine	
+A136	gros orteil		machine	
+A137	petit orteil		machine	
+A138	plante du pied		machine	
+B001	personne		machine	
+B001f	femme		machine	
+B001m	homme		machine	
+B002	adulte		machine	
+B002f	femme adulte		machine	
+B002m	homme adulte		machine	
+B003	vierge		machine	
+B003f	femme vierge		machine	
+B003m	homme vierge		machine	
+B004	enfant		machine	
+B004f	fillette, petite fille		machine	
+B004m	garçon		machine	
+B005	bébé		machine	
+B006	fœtus		machine	
+B007	ancien, notable		machine	
+B007f	ancienne, femme âgée respectée		machine	
+B007m	ancien, homme âgé respecté		machine	
+B008	camarade d'âge		machine	
+B008f	camarade d'âge (femme)		machine	
+B008m	camarade d'âge (homme)		machine	
+B009	premier-né		machine	
+B009f	première-née, fille aînée		machine	
+B009m	premier-né, fils aîné		machine	
+B010	jumeau		machine	
+B010f	jumelle		machine	
+B010m	jumeau		machine	
+B011	premier jumeau (né en premier)		machine	
+B011f	première jumelle (née en premier)		machine	
+B011m	premier jumeau (garçon né en premier)		machine	
+B012	second jumeau (né en second)		machine	
+B012f	seconde jumelle (née en second)		machine	
+B012m	second jumeau (garçon né en second)		machine	
+B013	enfant né après des jumeaux		machine	
+B013f	fille née après des jumeaux		machine	
+B013m	garçon né après des jumeaux		machine	
+B014	sage-femme, accoucheuse		machine	
+B015	jeune		machine	
+B015f	jeune fille		machine	
+B015m	jeune homme		machine	
+B016	chef		machine	
+B016f	femme chef, cheffe		machine	
+B016m	chef (homme)		machine	
+B017	monarque, souverain		machine	
+B017f	reine		machine	
+B017m	roi		machine	
+B018	travailleur, ouvrier		machine	
+B018f	travailleuse, ouvrière		machine	
+B018m	travailleur, ouvrier		machine	
+B019	maître		machine	
+B019f	maîtresse, patronne		machine	
+B019m	maître		machine	
+B020	propriétaire		machine	
+B020f	propriétaire (femme)		machine	
+B020m	propriétaire (homme)		machine	
+B021	domestique, serviteur		machine	
+B021f	servante		machine	
+B021m	serviteur		machine	
+B022	chasseur		machine	
+B022f	chasseuse		machine	
+B022m	chasseur		machine	
+B023	gardien de troupeau, berger		machine	
+B023f	gardienne de troupeau, bergère		machine	
+B023m	gardien de troupeau, berger		machine	
+B024	pêcheur		machine	
+B024f	pêcheuse		machine	
+B024m	pêcheur		machine	
+B025	cultivateur, agriculteur		machine	
+B025f	cultivatrice, agricultrice		machine	
+B025m	cultivateur, agriculteur		machine	
+B026	forgeron		machine	
+B026f	femme forgeron, forgeronne		machine	
+B026m	forgeron		machine	
+B027	tailleur, couturier		machine	
+B027f	couturière		machine	
+B027m	tailleur, couturier		machine	
+B028	potier		machine	
+B028f	potière		machine	
+B028m	potier		machine	
+B029	tisserand		machine	
+B029f	tisserande		machine	
+B029m	tisserand		machine	
+B030	boucher		machine	
+B030f	bouchère		machine	
+B030m	boucher		machine	
+B031	commerçant		machine	
+B031f	commerçante		machine	
+B031m	commerçant		machine	
+B032	cuisinier		machine	
+B032f	cuisinière		machine	
+B032m	cuisinier		machine	
+B033	guerrier		machine	
+B033f	guerrière		machine	
+B033m	guerrier		machine	
+B034	captif, prisonnier		machine	
+B034f	captive, prisonnière		machine	
+B034m	captif, prisonnier		machine	
+B035	esclave		machine	
+B035f	femme esclave		machine	
+B035m	homme esclave		machine	
+B036	guide		machine	
+B036f	guide (femme)		machine	
+B036m	guide (homme)		machine	
+B037	voyageur		machine	
+B037f	voyageuse		machine	
+B037m	voyageur		machine	
+B038	messager		machine	
+B038f	messagère		machine	
+B038m	messager		machine	
+B039	guérisseur		machine	
+B039f	guérisseuse		machine	
+B039m	guérisseur		machine	
+B040	devin, médium		machine	
+B040f	devineresse, médium		machine	
+B040m	devin, médium		machine	
+B041	sorcier		machine	
+B041f	sorcière		machine	
+B041m	sorcier		machine	
+B042	prêtre		machine	
+B042f	prêtresse		machine	
+B042m	prêtre		machine	
+B043	mendiant		machine	
+B043f	mendiante		machine	
+B043m	mendiant		machine	
+B044	prostituée, prostitué		machine	
+B044f	prostituée		machine	
+B044m	prostitué		machine	
+B045	villageois		machine	
+B045f	villageoise		machine	
+B045m	villageois		machine	
+B046	habitant de la brousse		machine	
+B046f	habitante de la brousse		machine	
+B046m	habitant de la brousse		machine	
+B047	riche, personne riche		machine	
+B047f	femme riche		machine	
+B047m	homme riche		machine	
+B048	pauvre, personne pauvre		machine	
+B048f	femme pauvre		machine	
+B048m	homme pauvre		machine	
+B049	personne stérile		machine	
+B049f	femme stérile		machine	
+B049m	homme impuissant		machine	
+B050	aveugle, personne aveugle		machine	
+B050f	femme aveugle		machine	
+B050m	homme aveugle		machine	
+B051	sourd, personne sourde		machine	
+B051f	sourde		machine	
+B051m	sourd		machine	
+B052	bossu		machine	
+B052f	bossue		machine	
+B052m	bossu		machine	
+B053	estropié, infirme		machine	
+B053f	estropiée, infirme		machine	
+B053m	estropié, infirme		machine	
+B054	nain		machine	
+B054f	naine		machine	
+B054m	nain		machine	
+B055	géant		machine	
+B055f	géante		machine	
+B055m	géant		machine	
+B056	idiot, imbécile		machine	
+B056f	idiote, imbécile		machine	
+B056m	idiot, imbécile		machine	
+B057	personne sénile		machine	
+B057f	femme sénile		machine	
+B057m	homme sénile		machine	
+B058	fou, malade mental		machine	
+B058f	folle, malade mentale		machine	
+B058m	fou, malade mental		machine	
+B059	lâche		machine	
+B059f	lâche, poltronne		machine	
+B059m	lâche, poltron		machine	
+B060	voleur		machine	
+B060f	voleuse		machine	
+B060m	voleur		machine	
+B061	veuve, veuf		machine	
+B061f	veuve		machine	
+B061m	veuf		machine	
+B062	orphelin		machine	
+B062f	orpheline		machine	
+B062m	orphelin		machine	
+C001	parent (père ou mère)		machine	
+C001f	mère		machine	
+C001m	père		machine	
+C002	frère ou sœur		machine	
+C002f	sœur		machine	
+C002m	frère		machine	
+C003	grand frère ou grande sœur		machine	
+C003f	grande sœur, sœur plus âgée		machine	
+C003m	grand frère, frère plus âgé		machine	
+C004	petit frère ou petite sœur		machine	
+C004f	petite sœur, sœur plus jeune		machine	
+C004m	petit frère, frère plus jeune		machine	
+C005	conjoint, époux		machine	
+C005f	épouse, femme		machine	
+C005m	mari, époux		machine	
+C006	co-conjoint, personne qui partage le même conjoint		machine	
+C006f	co-épouse		machine	
+C006m	co-époux, autre mari de la même épouse		machine	
+C007	mariée ou marié (le jour des noces)		machine	
+C007f	mariée, jeune mariée		machine	
+C007m	marié, jeune marié		machine	
+C008	fiancé(e)		machine	
+C008f	fiancée		machine	
+C008m	fiancé		machine	
+C009	enfant (fils ou fille)		machine	
+C009f	fille (enfant de quelqu'un)		machine	
+C009m	fils		machine	
+C010	petit-enfant		machine	
+C010f	petite-fille, fille du fils ou de la fille		machine	
+C010m	petit-fils, fils du fils ou de la fille		machine	
+C011	ancêtre		machine	
+C011f	ancêtre (femme)		machine	
+C011m	ancêtre (homme)		machine	
+C012	grand-parent paternel		machine	
+C012f	grand-mère paternelle		machine	
+C012m	grand-père paternel		machine	
+C013	arrière-grand-parent paternel		machine	
+C013f	arrière-grand-mère paternelle		machine	
+C013m	arrière-grand-père paternel		machine	
+C014	oncle ou tante paternel(le), frère ou sœur du père		machine	
+C014f	tante paternelle, sœur du père		machine	
+C014m	oncle paternel, frère du père		machine	
+C015	cousin(e) paternel(le), enfant du frère ou de la sœur du père		machine	
+C015f	cousine paternelle, fille du frère ou de la sœur du père		machine	
+C015m	cousin paternel, fils du frère ou de la sœur du père		machine	
+C016	grand-parent maternel		machine	
+C016f	grand-mère maternelle		machine	
+C016m	grand-père maternel		machine	
+C017	arrière-grand-parent maternel		machine	
+C017f	arrière-grand-mère maternelle		machine	
+C017m	arrière-grand-père maternel		machine	
+C018	oncle ou tante maternel(le), frère ou sœur de la mère		machine	
+C018f	tante maternelle, sœur de la mère		machine	
+C018m	oncle maternel, frère de la mère		machine	
+C019	cousin(e) maternel(le), enfant de la sœur ou du frère de la mère		machine	
+C019f	cousine maternelle, fille de la sœur ou du frère de la mère		machine	
+C019m	cousin maternel, fils de la sœur ou du frère de la mère		machine	
+C020	beau-parent (parent du mari)		machine	
+C020f	belle-mère (mère du mari)		machine	
+C020m	beau-père (père du mari)		machine	
+C021	frère ou sœur du mari		machine	
+C021f	belle-sœur (sœur du mari)		machine	
+C021m	beau-frère (frère du mari)		machine	
+C022	neveu ou nièce du mari		machine	
+C022f	nièce du mari		machine	
+C022m	neveu du mari		machine	
+C023	beau-parent (parent de l'épouse)		machine	
+C023f	belle-mère (mère de l'épouse)		machine	
+C023m	beau-père (père de l'épouse)		machine	
+C024	frère ou sœur de l'épouse		machine	
+C024f	belle-sœur (sœur de l'épouse)		machine	
+C024m	beau-frère (frère de l'épouse)		machine	
+C025	neveu ou nièce de l'épouse		machine	
+C025f	nièce de l'épouse		machine	
+C025m	neveu de l'épouse		machine	
+C026	gendre ou belle-fille		machine	
+C026f	belle-fille (épouse du fils), bru		machine	
+C026m	gendre, beau-fils (mari de la fille)		machine	
+C027	descendant		machine	
+C027f	descendante		machine	
+C027m	descendant (homme)		machine	
+C028	enfant illégitime, bâtard	« bâtard » est injurieux	machine	
+C028f	fille illégitime, bâtarde	« bâtarde » est injurieux	machine	
+C028m	fils illégitime, bâtard	« bâtard » est injurieux	machine	
+C029	membre de la famille, parent (au sens large)		machine	
+C029f	membre de la famille (femme), parente		machine	
+C029m	membre de la famille (homme), parent		machine	
+C030	famille		machine	
+C031	clan		machine	
+C032	peuple, ethnie		machine	
+C033	foule		machine	
+C034	ami		machine	
+C034f	amie (au sens d'amitié)		machine	
+C034m	ami (homme, au sens d'amitié)		machine	
+C035	homonyme, personne qui porte le même nom		machine	
+C035f	homonyme, femme qui porte le même nom		machine	
+C035m	homonyme, homme qui porte le même nom		machine	
+C036	connaissance (personne que l'on connaît)		machine	
+C036f	connaissance (femme que l'on connaît)		machine	
+C036m	connaissance (homme que l'on connaît)		machine	
+C037	voisin		machine	
+C037f	voisine		machine	
+C037m	voisin (homme)		machine	
+C038	invité, visiteur		machine	
+C038f	invitée, visiteuse		machine	
+C038m	invité (homme), visiteur		machine	
+C039	hôte (qui reçoit chez soi)		machine	
+C039f	hôtesse (qui reçoit chez elle)		machine	
+C039m	hôte (homme qui reçoit chez lui)		machine	
+C040	inconnu, étranger		machine	
+C040f	inconnue, étrangère		machine	
+C040m	inconnu (homme), étranger		machine	
+C041	ennemi		machine	
+C041f	ennemie		machine	
+C041m	ennemi (homme)		machine	
+C042	étranger (d'un autre pays)		machine	
+C042f	étrangère (d'un autre pays)		machine	
+C042m	étranger (homme d'un autre pays)		machine	
+C043	personne noire, Noir		machine	
+C043f	femme noire, Noire		machine	
+C043m	homme noir, Noir		machine	
+C044	personne au teint clair, dite « rouge »		machine	
+C044f	femme au teint clair, dite « rouge »		machine	
+C044m	homme au teint clair, dit « rouge »		machine	
+C045	personne blanche, Blanc		machine	
+C045f	femme blanche, Blanche		machine	
+C045m	homme blanc, Blanc		machine	
+D001	animal		machine	
+D002	animal domestique		machine	
+D003	animal sauvage		machine	
+D004	viande, chair		machine	
+D004b	viande séchée		machine	
+D005	graisse		machine	
+D006	moelle osseuse		machine	
+D007	graisse fondue		machine	
+D008	troupeau		machine	
+D009	chèvre (terme général)		machine	
+D009b	chevreau, cabri		machine	
+D009f	chèvre (femelle)		machine	
+D009m	bouc		machine	
+D010	barbe de chèvre		machine	
+D011	mouton		machine	
+D011b	agneau		machine	
+D011f	brebis		machine	
+D011m	bélier		machine	
+D012	pelage, fourrure		machine	
+D013	laine		machine	
+D014	bovin, bœuf	« bœuf » : ici au sens général (bovin) ; au sens strict, mâle castré (voir D015).	machine	
+D014b	veau		machine	
+D014f	vache		machine	
+D014m	taureau		machine	
+D015	bœuf castré, bouvillon		machine	
+D016	génisse		machine	
+D017	fanon (de bovin)		machine	
+D018	excréments d'animal, bouse	bouse : de bovin ; crottin : de cheval ou d'âne ; crottes : de chèvre ou de mouton ; fiente : d'oiseau.	machine	
+D019	corne		machine	
+D020	queue		machine	
+D021	peau d'animal		machine	
+D022	bosse de zébu		machine	
+D023	sabot		machine	
+D024	pis		machine	
+D025	trayons		machine	
+D026	lait		machine	
+D027	beurre		machine	
+D028	lait caillé, yaourt		machine	
+D029	cheval		machine	
+D029b	poulain		machine	
+D029f	jument		machine	
+D029m	étalon		machine	
+D030	crinière de cheval		machine	
+D031	âne		machine	
+D031b	ânon		machine	
+D031f	ânesse		machine	
+D031m	âne (mâle), baudet		machine	
+D032	chameau, dromadaire		machine	
+D032b	chamelon		machine	
+D032f	chamelle		machine	
+D032m	chameau (mâle)		machine	
+D033	bosse de chameau		machine	
+D034	chien		machine	
+D034b	chiot		machine	
+D034f	chienne		machine	
+D034m	chien (mâle)		machine	
+D035	chat		machine	
+D035b	chaton		machine	
+D035f	chat (femelle), chatte	« chatte » est le mot courant, mais il a aussi un sens vulgaire en argot ; « chat (femelle) » l'évite.	machine	
+D035m	matou, chat (mâle)		machine	
+D036	porc, cochon		machine	
+D036b	porcelet, cochonnet		machine	
+D036f	truie		machine	
+D036m	verrat		machine	
+D037	phacochère		machine	
+D038	potamochère		machine	
+D039	oryctérope, cochon de terre		machine	
+D040	protèle, loup de terre		machine	
+D041	pangolin		machine	
+D042	singe		machine	
+D043	babouin		machine	
+D044	grivet, singe vert		machine	
+D045	singe bleu, cercopithèque à diadème		machine	
+D046	patas, singe rouge		machine	
+D047	colobe guéréza, colobe noir et blanc		machine	
+D048	galago		machine	
+D049	antilope		machine	
+D050	buffle d'Afrique		machine	
+D051	gnou		machine	
+D052	ourébi		machine	
+D053	koudou		machine	
+D054	zèbre		machine	
+D055	gazelle		machine	
+D056	springbok		machine	
+D057	impala		machine	
+D058	cobe à oreilles blanches		machine	
+D059	cobe lechwe, cobe de Mrs Gray		machine	
+D060	damalisque, topi		machine	
+D061	sitatunga, guib d'eau		machine	
+D062	cobe des roseaux		machine	
+D063	guib harnaché		machine	
+D064	cobe à croissant, cobe defassa		machine	
+D065	bubale		machine	
+D066	éland		machine	
+D067	hippotrague, antilope rouanne		machine	
+D068	oryx		machine	
+D069	mouflon à manchettes		machine	
+D070	céphalophe		machine	
+D071	dik-dik		machine	
+D072	éléphant		machine	
+D073	trompe d'éléphant		machine	
+D074	défense d'éléphant		machine	
+D075	hippopotame		machine	
+D076	rhinocéros		machine	
+D077	corne de rhinocéros		machine	
+D078	girafe		machine	
+D079	hyène tachetée		machine	
+D080	hyène rayée		machine	
+D081	lycaon, chien sauvage d'Afrique		machine	
+D082	chacal		machine	
+D083	renard		machine	
+D083b	fennec		machine	
+D084	civette		machine	
+D085	ratel		machine	
+D086	mangouste ichneumon		machine	
+D087	mangouste naine		machine	
+D088	suricate		machine	
+D089	porc-épic		machine	
+D090	écureuil arboricole		machine	
+D091	écureuil terrestre		machine	
+D092	souris		machine	
+D093	rat		machine	
+D094	aulacode, agouti	« agouti » est le nom courant en Afrique de l'Ouest et centrale (au sens propre, un rongeur d'Amérique) ; « aulacode » est le terme standard.	machine	
+D095	rat palmiste	Malgré son nom, un écureuil terrestre (Euxerus erythropus), et non un rat.	machine	
+D096	musaraigne		machine	
+D097	taupe, rat-taupe		machine	
+D098	lièvre		machine	
+D099	lièvre sauteur, pédète		machine	
+D100	daman		machine	
+D101	félin sauvage, chat sauvage		machine	
+D102	lion		machine	
+D103	crinière de lion		machine	
+D104	griffe de lion		machine	
+D105	léopard, panthère		machine	
+D106	guépard		machine	
+D107	caracal		machine	
+D108	serval		machine	
+D109	genette		machine	
+D110	chauve-souris		machine	
+D111	roussette (chauve-souris)		machine	
+E001	oiseau		machine	
+E002	poulet		machine	
+E002b	poussin		machine	
+E002f	poule		machine	
+E002m	coq		machine	
+E003	poulet cou nu		machine	
+E004	dinde, dindon	« dinde » désigne aussi la femelle et la viande, « dindon » le mâle ; ici l'espèce.	machine	
+E005	bec		machine	
+E006	griffe		machine	
+E007	aile		machine	
+E008	plume		machine	
+E009	crête de coq		machine	
+E010	huppe d'oiseau		machine	
+E011	jabot (d'oiseau)		machine	
+E012	gésier		machine	
+E013	œuf		machine	
+E014	coquille d'œuf		machine	
+E015	blanc d'œuf		machine	
+E016	jaune d'œuf		machine	
+E017	nid		machine	
+E018	volée d'oiseaux		machine	
+E019	autruche		machine	
+E019b	coquille d'œuf d'autruche		machine	
+E020	dendrocygne, canard siffleur		machine	
+E021	ouette d'Égypte		machine	
+E022	pintade		machine	
+E023	francolin		machine	
+E024	flamant		machine	
+E025	pigeon de Guinée		machine	
+E026	tourterelle vineuse		machine	
+E027	tourtelette d'Abyssinie		machine	
+E028	tourterelle masquée		machine	
+E029	colombar		machine	
+E030	outarde		machine	
+E031	coucal		machine	
+E032	coucou de Klaas		machine	
+E033	coucou didric		machine	
+E034	coucou africain		machine	
+E035	engoulevent		machine	
+E036	martinet des palmes		machine	
+E037	martinet (oiseau)		machine	
+E038	râle à bec jaune		machine	
+E039	grue couronnée		machine	
+E040	œdicnème		machine	
+E041	échasse (oiseau)		machine	
+E042	avocette		machine	
+E043	vanneau éperonné		machine	
+E044	jacana		machine	
+E045	bécassine		machine	
+E046	bécasseau, chevalier (oiseau)		machine	
+E047	mouette, goéland		machine	
+E048	tantale ibis		machine	
+E049	bec-ouvert		machine	
+E050	cigogne d'Abdim		machine	
+E051	jabiru d'Afrique		machine	
+E052	marabout (oiseau)		machine	
+E053	pélican		machine	
+E054	bec-en-sabot		machine	
+E055	ombrette		machine	
+E056	crabier chevelu		machine	
+E057	héron strié		machine	
+E058	héron garde-bœufs		machine	
+E059	héron mélanocéphale		machine	
+E060	héron goliath		machine	
+E061	grande aigrette		machine	
+E062	ibis sacré		machine	
+E063	ibis hagedash		machine	
+E064	spatule (oiseau)		machine	
+E065	balbuzard pêcheur		machine	
+E066	vautour charognard		machine	
+E067	vautour africain		machine	
+E068	circaète		machine	
+E069	aigle bateleur		machine	
+E070	milan noir		machine	
+E071	pygargue vocifère, aigle pêcheur		machine	
+E072	aigle huppard		machine	
+E073	petit-duc		machine	
+E074	grand-duc cendré		machine	
+E075	coliou		machine	
+E076	huppe fasciée		machine	
+E077	irrisor moqueur		machine	
+E078	bucorve, calao terrestre		machine	
+E079	calao à bec noir		machine	
+E080	calao à joues argentées		machine	
+E081	martin-pêcheur huppé		machine	
+E082	martin-chasseur du Sénégal		machine	
+E083	martin-chasseur à tête grise		machine	
+E084	martin-chasseur strié		machine	
+E085	martin-pêcheur géant		machine	
+E086	martin-pêcheur pie		machine	
+E087	guêpier nain		machine	
+E088	guêpier vert		machine	
+E089	guêpier écarlate, guêpier carmin		machine	
+E090	rollier d'Abyssinie		machine	
+E091	barbican à bec noir		machine	
+E092	barbican bidenté		machine	
+E093	grand indicateur		machine	
+E094	pic (oiseau)		machine	
+E095	crécerelle		machine	
+E096	perroquet		machine	
+E097	batis		machine	
+E098	gonolek		machine	
+E099	tchagra		machine	
+E100	drongo		machine	
+E101	tchitrec		machine	
+E102	pie-grièche		machine	
+E103	corbeau pie		machine	
+E104	corbeau à queue courte		machine	
+E105	alouette bourdonnante		machine	
+E106	crombec		machine	
+E107	cisticole à tête rousse		machine	
+E108	prinia modeste		machine	
+E109	hirondelle rustique		machine	
+E110	bulbul des jardins		machine	
+E111	zostérops		machine	
+E112	cratérope		machine	
+E113	pique-bœuf		machine	
+E114	choucador de Swainson		machine	
+E115	choucador de Rüppell		machine	
+E116	grive abyssinienne		machine	
+E117	gobemouche gris		machine	
+E118	cossyphe		machine	
+E119	souimanga à poitrine rouge		machine	
+E120	souimanga à ventre jaune		machine	
+E121	grosbec à front blanc		machine	
+E122	tisserin gendarme		machine	
+E123	travailleur à bec rouge, mange-mil		machine	
+E124	euplecte franciscain		machine	
+E125	amarante (oiseau)		machine	
+E126	cordonbleu à joues rouges		machine	
+E127	capucin nonnette		machine	
+E128	veuve dominicaine		machine	
+E129	moineau		machine	
+E130	bergeronnette		machine	
+E131	serin du Mozambique		machine	
+F001	poisson		machine	
+F002	poisson-chat, silure	En Afrique francophone, « silure » désigne tout grand poisson-chat ; au sens strict, le silure glane d’Europe.	machine	
+F003	protoptère, poisson qui s’enfouit dans la boue	Poisson qui survit à la saison sèche enfoui dans la boue.	machine	
+F004	anguille		machine	
+F005	peau de poisson		machine	
+F006	écaille de poisson		machine	
+F007	nageoire dorsale		machine	
+F008	nageoire adipeuse		machine	
+F009	nageoire caudale		machine	
+F010	nageoire pectorale		machine	
+F011	arête de poisson, arête centrale		machine	
+F012	opercule, couvercle des branchies		machine	
+F013	branchie (sous l’opercule)		machine	
+F014	barbillon (moustache du poisson-chat)		machine	
+F015	estomac de poisson		machine	
+F016	vessie natatoire		machine	
+F017	ovaire de poisson, œufs de poisson		machine	
+F018	perche du Nil, capitaine	« Capitaine » désigne la perche du Nil en Afrique francophone ; sur la côte, le nom s’applique aussi à d’autres poissons.	machine	
+F019	tilapia		machine	
+F020	poisson-tigre		machine	
+F021	poisson-éléphant, mormyre		machine	
+F022	polyptère, bichir		machine	
+F023	poisson-chat électrique, silure électrique		machine	
+G001	serpent		machine	
+G002	crochet à venin		machine	
+G003	venin		machine	
+G004	écaille de serpent		machine	
+G005	œuf de reptile		machine	
+G006	serpent à bec, rhamphiophis	Serpent au museau crochu.	machine	
+G007	couleuvre des sables, psammophis		machine	
+G008	vipère		machine	
+G009	cobra, naja		machine	
+G010	mamba vert		machine	
+G011	vipère heurtante		machine	
+G012	vipère rhinocéros		machine	
+G013	vipère à cornes, céraste		machine	
+G014	python		machine	
+G015	crocodile		machine	
+G016	lézard		machine	
+G017	varan		machine	
+G018	agame, margouillat	« Margouillat » désigne l’agame en Afrique de l’Ouest et centrale, mais parfois le gecko ailleurs.	machine	
+G019	scinque		machine	
+G020	gecko		machine	
+G021	caméléon		machine	
+G022	tortue terrestre		machine	
+G023	grande tortue aquatique, tortue marine		machine	
+G024	petite tortue d’eau douce		machine	
+G025	carapace de tortue		machine	
+G026	rainette		machine	
+G027	grenouille-taureau, grosse grenouille		machine	
+G028	crapaud		machine	
+G029	têtard		machine	
+G030	frai de grenouille, œufs de grenouille		machine	
+G031	sac vocal		machine	
+H001	insecte		machine	
+H002	antenne (d’insecte)		machine	
+H003	abeille		machine	
+H004	reine des abeilles		machine	
+H005	essaim d’abeilles		machine	
+H006	ruche		machine	
+H007	cire d’abeille		machine	
+H008	miel		machine	
+H009	rayon de miel		machine	
+H010	dard d’insecte, aiguillon		machine	
+H011	frelon		machine	
+H012	guêpe maçonne		machine	
+H013	guêpe		machine	
+H014	fourmi		machine	
+H015	fourmi magnan, fourmi légionnaire		machine	
+H016	termite ailé, fourmi ailée		machine	
+H017	termite		machine	
+H018	termitière		machine	
+H019	mouche		machine	
+H020	mouche du vinaigre, drosophile		machine	
+H021	taon		machine	
+H022	mouche tsé-tsé		machine	
+H023	moustique		machine	
+H024	asticot		machine	
+H025	sauterelle, criquet (non migrateur)	En français courant, « sauterelle » et « criquet » sont souvent confondus ; ici l’insecte isolé, ni le criquet en essaims ni le grillon.	machine	
+H026	criquet migrateur (en essaims)	Criquet qui se déplace en essaims dévastateurs.	machine	
+H027	grillon	Le grillon chante la nuit ; à ne pas confondre avec le criquet.	machine	
+H028	mante religieuse		machine	
+H029	cafard, blatte		machine	
+H030	hanneton		machine	
+H031	bousier		machine	
+H032	élytre		machine	
+H033	papillon		machine	
+H034	papillon de nuit		machine	
+H035	chenille		machine	
+H036	chenille du mopane	Chenille comestible qui vit sur l’arbre mopane.	machine	
+H037	cocon		machine	
+H038	libellule		machine	
+H039	luciole, ver luisant		machine	
+H040	puce		machine	
+H041	pou		machine	
+H042	punaise de lit		machine	
+H043	tique		machine	
+H044	pou rouge des volailles (acarien)		machine	
+H045	puce-chique, chique	« Chique » seul désigne aussi une chique de tabac.	machine	
+H046	sangsue		machine	
+H047	ver de farine		machine	
+H048	ver de terre, lombric		machine	
+H049	araignée		machine	
+H050	toile d’araignée		machine	
+H051	mygale	« Tarentule » désigne en français une autre araignée (lycose).	machine	
+H052	scorpion		machine	
+H053	scolopendre, mille-pattes plat qui pique	En français courant, « mille-pattes » désigne aussi la scolopendre.	machine	
+H054	iule, mille-pattes rond qui s’enroule		machine	
+H055	escargot		machine	
+H055b	escargot arboricole		machine	
+H055c	escargot terrestre, achatine		machine	
+H055d	escargot aquatique		machine	
+H056	coquille d’escargot		machine	
+H057	crabe		machine	
+H058	crevette		machine	
+H059	palourde		machine	
+H060	moule (coquillage)		machine	
+I001	Dieu, être suprême		machine	
+I002	divinité secondaire, esprit		machine	
+I003	esprit mauvais, démon		machine	
+I004	âme		machine	
+I005	fantôme, revenant		machine	
+I005b	esprit d’un défunt		machine	
+I006	ciel (demeure de Dieu), paradis	Le ciel comme demeure de Dieu, non le ciel visible.	machine	
+I007	séjour des morts		machine	
+I008	sanctuaire, lieu de culte		machine	
+I009	autel		machine	
+I010	sacrifice		machine	
+I011	libation		machine	
+I012	consultation des esprits, séance pour parler avec les morts		machine	
+I013	cérémonie de la pluie		machine	
+I014	bénédiction		machine	
+I015	malédiction		machine	
+I016	chance		machine	
+I017	prophétie		machine	
+I018	vision (surnaturelle)	Au sens surnaturel, non la vue.	machine	
+I019	rêve		machine	
+I020	présage, augure		machine	
+I021	tabou, interdit		machine	
+I022	amulette, talisman		machine	
+I023	objets jetés pour la divination	Éviter « sort » seul : « jeter un sort » veut dire ensorceler.	machine	
+I024	mauvais œil		machine	
+I025	sorcellerie		machine	
+I026	remède, médicament		machine	
+I027	poison		machine	
+I028	cérémonie de guérison		machine	
+I029	maladie		machine	
+I030	douleur		machine	
+I031	fièvre (autre que le paludisme)		machine	
+I032	sueur, transpiration		machine	
+I033	rhume		machine	
+I034	toux		machine	
+I035	hoquet		machine	
+I036	glaire, mucosités de la gorge		machine	
+I037	mal de tête		machine	
+I038	mal de ventre		machine	
+I039	vomi, vomissure		machine	
+I040	diarrhée		machine	
+I041	démangeaison		machine	
+I042	éruption cutanée, boutons		machine	
+I043	paludisme		machine	
+I044	lèpre		machine	
+I045	éléphantiasis		machine	
+I046	mycose de la peau, teigne (maladie de peau)		machine	
+I047	goitre		machine	
+I048	ver intestinal		machine	
+I049	folie, maladie mentale		machine	
+I050	plaie, blessure		machine	
+I051	brûlure		machine	
+I052	zébrure, marque en relief laissée par un coup		machine	
+I053	bleu sur la peau, contusion		machine	
+I054	cicatrice		machine	
+I055	tache sur la peau, imperfection		machine	
+I056	bouton		machine	
+I057	abcès		machine	
+I058	enflure, gonflement		machine	
+I058b	tumeur		machine	
+I058c	bosse, grosseur		machine	
+I059	hernie ombilicale, nombril saillant		machine	
+I060	pus		machine	
+I061	ulcère de la peau, plaie ouverte		machine	
+I062	bosse dans le dos, bosse de bossu	« Bossu » peut être moqueur.	machine	
+I063	maladie des plantes		machine	
+I064	peste bovine		machine	
+I065	vie		machine	
+I066	naissance		machine	
+I067	douleurs de l’accouchement, contractions		machine	
+I068	cérémonie d’attribution du nom	« Baptême » s’emploie aussi en Afrique francophone, mais avec une couleur chrétienne.	machine	
+I069	circoncision	Au sens général ; d’ordinaire celle des garçons.	machine	
+I069f	excision, circoncision féminine	« Mutilations génitales féminines » est le terme officiel des organismes de santé.	machine	
+I069m	circoncision masculine		machine	
+I070	puberté, passage à l’âge adulte		machine	
+I071	initiation des garçons		machine	
+I072	initiation des filles		machine	
+I073	règles, menstruation		machine	
+I074	mort, décès		machine	
+I075	fausse couche		machine	
+I076	corps d’un défunt, cadavre		machine	
+I077	tombe		machine	
+I077b	cimetière		machine	
+I078	funérailles, obsèques		machine	
+I079	lieu de réunion	En Afrique francophone, on parle d’« arbre à palabres » pour le lieu de réunion sous un arbre.	machine	
+I080	fête, festin		machine	
+I081	cérémonie de mariage, noces		machine	
+I082	dot versée à la famille de la mariée, compensation matrimoniale	En Afrique francophone, la « dot » est versée à la famille de la mariée ; en France, c’est l’inverse.	machine	
+I083	loi		machine	
+I084	coutume, tradition		machine	
+I085	jugement coutumier, palabre	« Palabre » au sens africain : assemblée qui règle un différend.	machine	
+J001	arbre		machine	
+J001b	bois		machine	
+J002	tronc (d'arbre)		machine	
+J002b	bûche, rondin		machine	
+J003	branche (d'arbre)		machine	
+J004	brindille		machine	
+J005	écorce (d'arbre)		machine	
+J006	souche		machine	
+J007	écharde		machine	
+J008	racine		machine	
+J009	nœud (dans le bois)		machine	
+J010	sève		machine	
+J010b	caoutchouc, latex		machine	
+J011	feuille		machine	
+J012	bourgeon, bouton floral		machine	
+J013	pousse		machine	
+J014	fleur		machine	
+J015	épine		machine	
+J016	fruit		machine	
+J017	graine		machine	
+J018	noyau (de fruit)		machine	
+J019	peau (de fruit)		machine	
+J020	jus		machine	
+J021	arbuste, buisson		machine	
+J022	neem, margousier		machine	
+J022a	arbre de neem		machine	
+J023	ébène, ébénier		machine	
+J023a	ébénier		machine	
+J023b	fruit de l'ébénier		machine	
+J024	acajou d'Afrique, caïlcédrat	« Acajou » seul peut désigner l'anacardier (pomme de cajou) en Afrique de l'Ouest.	machine	
+J024a	caïlcédrat, acajou d'Afrique (arbre)		machine	
+J025	teck		machine	
+J025a	arbre de teck		machine	
+J026	kapok, fromager		machine	
+J026a	fromager, kapokier		machine	
+J026b	gousse de kapok		machine	
+J027	kigelia		machine	
+J027a	arbre à saucisses		machine	
+J027b	fruit de l'arbre à saucisses		machine	
+J028	acacia, arbre épineux		machine	
+J029	faidherbia, kad	Faidherbia albida, autrefois Acacia albida ; kad (Sénégal), balanzan (Mali), gao (Niger).	machine	
+J029a	arbre de kad, Acacia albida		machine	
+J029b	gousse de kad, gousse d'Acacia albida		machine	
+J030	mopane		machine	
+J030a	arbre mopane		machine	
+J031	euphorbe candélabre		machine	
+J031a	euphorbe arborescente, arbre candélabre		machine	
+J032	gardénia		machine	
+J032a	arbuste gardénia, gardénia des savanes		machine	
+J032b	fruit du gardénia		machine	
+J033	palmier en éventail	Rônier (Borassus) ou palmier doum (Hyphaene) : le terme de la langue pour l'un ou l'autre.	machine	
+J033a	palmier en éventail (rônier ou palmier doum)		machine	
+J033b	fruit du palmier en éventail (rônier ou doum)		machine	
+J034	palmier à huile		machine	
+J034a	palmier à huile (arbre)		machine	
+J034b	noix de palme		machine	
+J035	kola, cola		machine	
+J035a	kolatier, colatier		machine	
+J035b	noix de kola, noix de cola		machine	
+J036	palme, feuille de palmier		machine	
+J037	nervure centrale de la palme, rachis		machine	
+J038	foliole de palme		machine	
+J039	raphia		machine	
+J039a	palmier raphia		machine	
+J040	coco, cocotier		machine	
+J040a	cocotier		machine	
+J040b	noix de coco		machine	
+J041	datte, dattier		machine	
+J041a	dattier		machine	
+J041b	datte		machine	
+J042	figue, figuier		machine	
+J042a	figuier		machine	
+J042b	figue		machine	
+J043	olive, olivier		machine	
+J043a	olivier		machine	
+J043b	olive		machine	
+J044	tamarin, tamarinier		machine	
+J044a	tamarinier		machine	
+J044b	tamarin		machine	
+J045	baobab		machine	
+J045a	baobab (arbre)		machine	
+J045b	pain de singe, fruit du baobab		machine	
+J046	marula		machine	
+J046a	marulier, arbre à marula		machine	
+J046b	fruit du marula		machine	
+J047	karité		machine	
+J047a	karité (arbre), arbre à karité		machine	
+J047b	noix de karité		machine	
+J047c	beurre de karité		machine	
+J048	citron jaune, citronnier	En Afrique de l'Ouest, « citron » seul désigne souvent la lime (citron vert).	machine	
+J048a	citronnier	Le citronnier à citrons jaunes, pas le limettier.	machine	
+J048b	citron jaune	En Afrique de l'Ouest, « citron » seul désigne souvent la lime (citron vert).	machine	
+J049	orange, oranger		machine	
+J049a	oranger		machine	
+J049b	orange		machine	
+J050	pamplemousse, pamplemoussier	Au sens courant (Citrus × paradisi), pas le pamplemousse des botanistes (Citrus maxima).	machine	
+J050a	pamplemoussier	Au sens courant (Citrus × paradisi), pas le pamplemousse des botanistes (Citrus maxima).	machine	
+J050b	pamplemousse	Au sens courant (Citrus × paradisi), pas le pamplemousse des botanistes (Citrus maxima).	machine	
+J051	mangue, manguier		machine	
+J051a	manguier		machine	
+J051b	mangue		machine	
+J052	goyave, goyavier		machine	
+J052a	goyavier		machine	
+J052b	goyave		machine	
+J053	papaye, papayer		machine	
+J053a	papayer		machine	
+J053b	papaye		machine	
+J054	avocat (fruit), avocatier		machine	
+J054a	avocatier		machine	
+J054b	avocat (fruit)		machine	
+J055	banane douce, bananier		machine	
+J055a	bananier		machine	
+J055b	banane douce		machine	
+J056	régime de bananes		machine	
+J057	banane naine, bananier nain		machine	
+J057a	bananier nain		machine	
+J057b	banane naine, petite banane		machine	
+J058	banane plantain, bananier plantain		machine	
+J058a	bananier plantain		machine	
+J058b	banane plantain, banane à cuire		machine	
+J059	ensète, faux bananier		machine	
+J060	ananas		machine	
+J060a	plant d'ananas		machine	
+J060b	ananas (fruit)		machine	
+J061	courge, citrouille		machine	
+J062	pastèque		machine	
+J063	liane		machine	
+J064	vrille		machine	
+J065	sorgho, gros mil		machine	
+J066	sorgho rouge		machine	
+J067	sorgho blanc		machine	
+J068	mil, millet	Tout mil à petits grains : petit mil (mil à chandelle), éleusine, etc. ; pas le sorgho (« gros mil »).	machine	
+J069	fonio		machine	
+J070	teff, tef		machine	
+J071	blé		machine	
+J072	orge		machine	
+J073	maïs		machine	
+J073b	tige de maïs		machine	
+J073c	épi de maïs		machine	
+J073d	grain de maïs		machine	
+J073e	spathe de maïs, enveloppe de l'épi		machine	
+J073g	soies de maïs, barbe de maïs		machine	
+J073h	panicule mâle du maïs, fleur mâle au sommet du maïs		machine	
+J074	balle du grain, menue paille		machine	
+J075	riz		machine	
+J076	canne à sucre		machine	
+J077	graine de sésame, sésame		machine	
+J078	coton		machine	
+J079	haricot		machine	
+J080	arachide, cacahuète		machine	
+J081	coque d'arachide		machine	
+J082	tubercule		machine	
+J083	pomme de terre		machine	
+J084	manioc		machine	
+J085	igname		machine	
+J086	taro ou macabo	Taro (Colocasia) ou macabo (Xanthosoma), les deux « choux caraïbes » comestibles.	machine	
+J087	patate douce		machine	
+J088	oignon		machine	
+J089	ail		machine	
+J090	tomate		machine	
+J091	carotte		machine	
+J092	gombo		machine	
+J093	aubergine		machine	
+J094	poivron		machine	
+J095	piment		machine	
+J096	champignon		machine	
+J097	gingembre		machine	
+J098	cannelle		machine	
+J099	coriandre		machine	
+J100	tabac		machine	
+J101	cannabis, chanvre		machine	
+J102	café, caféier		machine	
+J103	thé, théier		machine	
+J104	herbe		machine	
+J105	brin d'herbe		machine	
+J106	mauvaise herbe		machine	
+J107	roseau		machine	
+J108	papyrus		machine	
+J109	nénuphar		machine	
+J110	bambou de plaine	Bambou des basses terres (Oxytenanthera abyssinica).	machine	
+J111	bambou de montagne	Bambou des hautes terres (Oldeania alpina).	machine	
+J112	nourriture		machine	
+J113	huile		machine	
+J114	pain traditionnel, galette locale	Pain ou galette de base de la région, p. ex. l'injera.	machine	
+J115	provisions de voyage		machine	
+J116	croûte		machine	
+J117	farine		machine	
+J118	sel		machine	
+J119	soupe		machine	
+J120	bouillie		machine	
+J121	couscous		machine	
+J122	petit-déjeuner		machine	
+J123	repas du soir	« Dîner » en France ; « souper » en Belgique, en Suisse et au Canada, où « dîner » est le repas de midi.	machine	
+J124	restes		machine	
+J125	moisissure		machine	
+J126	levure, levain		machine	
+J127	pâte fermentée pour la bière, moût		machine	
+J128	bière de céréales, bière de mil		machine	
+J129	eau-de-vie de grain, alcool distillé		machine	
+J130	hydromel, vin de miel		machine	
+J131	vin de palme		machine	
+K001	chose		machine	
+K002	maison		machine	
+K002b	case, hutte		machine	
+K002c	pièce (d'une maison)		machine	
+K002d	chambre (à coucher)		machine	
+K002e	cuisine		machine	
+K003	concession, enclos familial		machine	
+K003b	cour		machine	
+K003c	case d'entrée, vestibule		machine	
+K004	mur		machine	
+K005	brique de terre crue, banco		machine	
+K006	crépi, enduit		machine	
+K007	badigeon de chaux, lait de chaux		machine	
+K007b	peinture		machine	
+K008	sol, plancher		machine	
+K009	plafond		machine	
+K010	toit		machine	
+K011	chapeau de toit, coiffe du toit conique		machine	
+K012	chaume		machine	
+K013	chevron		machine	
+K014	traverse liant les chevrons, cerceau de toit		machine	
+K015	poteau fourchu		machine	
+K016	poutre transversale, traverse		machine	
+K017	planche		machine	
+K018	porte		machine	
+K019	embrasure de porte, entrée		machine	
+K020	fenêtre		machine	
+K021	échelle		machine	
+K022	appentis, abri		machine	
+K023	tente		machine	
+K024	plateforme surélevée, claie		machine	
+K025	séchoir, claie de séchage		machine	
+K026	grenier		machine	
+K027	enclos à bétail, parc à bétail		machine	
+K028	camp de bétail, campement de bouviers		machine	
+K029	clôture		machine	
+K030	clôture à claire-voie		machine	
+K031	piquet, pieu		machine	
+K032	puits		machine	
+K033	lieu pour se laver, douche		machine	
+K034	toilettes, latrines		machine	
+K035	dépotoir		machine	
+K036	ordures		machine	
+K037	jardin		machine	
+K038	champ		machine	
+K038b	limite de champ, borne		machine	
+K039	village		machine	
+K039b	ville, bourg	Agglomération plus petite qu'une grande ville (K039c).	machine	
+K039c	grande ville		machine	
+K040	camp, campement		machine	
+K041	marché		machine	
+K042	territoire, pays		machine	
+K042b	frontière		machine	
+K043	chemin, sentier		machine	
+K044	bifurcation, embranchement		machine	
+K045	carrefour		machine	
+K046	pont		machine	
+K047	voyage		machine	
+K048	voiture		machine	
+K049	lit		machine	
+K050	natte		machine	
+K051	oreiller		machine	
+K052	moustiquaire		machine	
+K053	tabouret		machine	
+K053b	chaise		machine	
+K054	vannerie		machine	
+K055	lampe		machine	
+K056	bougie		machine	
+K057	éventail		machine	
+K058	cloche, clochette		machine	
+K059	balai		machine	
+K060	chiffon à poussière ou plumeau		machine	
+K061	foyer		machine	
+K062	bois de chauffe		machine	
+K063	tison		machine	
+K064	bâtons à feu, bois à friction		machine	
+K065	tisonnier		machine	
+K066	charbon de bois		machine	
+K067	poterie		machine	
+K068	jarre à eau, canari	« Canari » : grande jarre en terre cuite pour l'eau (Afrique de l'Ouest).	machine	
+K069	marmite en terre		machine	
+K070	marmite en métal		machine	
+K071	bouilloire		machine	
+K072	cafetière en terre cuite		machine	
+K073	cruche, pichet		machine	
+K074	bouteille		machine	
+K075	bouchon de bouteille		machine	
+K076	calebasse, gourde		machine	
+K076a	bol		machine	
+K076b	bol pour le pain		machine	
+K076c	bol pour la sauce		machine	
+K077	anneau de calage pour pot à fond rond		machine	
+K078	assiette		machine	
+K079	plat		machine	
+K080	tasse, gobelet		machine	
+K081	tesson de poterie		machine	
+K082	cuillère		machine	
+K083	louche		machine	
+K084	filtre à bière, passoire à bière		machine	
+K085	manche d'outil, poignée	Manche (outil), poignée (porte, couteau), anse (pot, panier) : le terme de la langue pour une poignée en général.	machine	
+K086	panier tressé, corbeille		machine	
+K087	seau		machine	
+K088	boîte, caisse		machine	
+K089	sac en peau		machine	
+K089b	outre		machine	
+K090	sac en plastique tissé, sac en nylon		machine	
+K091	pierre de foyer		machine	
+K092	meule		machine	
+K092a	molette, meule supérieure		machine	
+K092b	meule dormante, meule inférieure		machine	
+K093	mortier		machine	
+K094	pilon		machine	
+K095	spatule à remuer, mouvette		machine	
+K096	corbeille à vanner, van		machine	
+K097	fourche à battre		machine	
+K098	aire de battage		machine	
+K099	bâton à fouir		machine	
+K100	petite houe, daba		machine	
+K101	grande houe		machine	
+K102	charrue		machine	
+K103	joug		machine	
+K104	faucille		machine	
+K105	machette, coupe-coupe		machine	
+K106	hache		machine	
+K107	pioche		machine	
+K108	marteau		machine	
+K109	enclume		machine	
+K110	forge		machine	
+K111	soufflet		machine	
+K112	four de potier		machine	
+K113	scie		machine	
+K114	ciseau (outil à tailler le bois ou le métal)		machine	
+K115	clou, pointe		machine	
+K116	couteau		machine	
+K117	aiguille		machine	
+K118	pièce (de tissu)		machine	
+K119	chiffon, haillon		machine	
+K120	poche		machine	
+K121	cuir		machine	
+K122	corde		machine	
+K123	ficelle		machine	
+K123b	fil (à coudre)		machine	
+K124	courroie, sangle		machine	
+K125	nœud		machine	
+K125b	nœud coulant, lacet		machine	
+K125c	nœud glissant, nœud à boucle		machine	
+K126	chaîne		machine	
+K127	fagot (de bois)		machine	
+K128	tas (de grain)		machine	
+K129	tortillon, coussinet de portage		machine	
+K130	charge, fardeau		machine	
+K131	canne, bâton de marche		machine	
+K132	badine, baguette		machine	
+K133	partie de chasse		machine	
+K134	terrain de chasse		machine	
+K135	arc		machine	
+K136	flèche		machine	
+K136b	poison de flèche		machine	
+K137	pointe de flèche		machine	
+K138	carquois		machine	
+K139	lance, sagaie		machine	
+K140	bâton de jet		machine	
+K141	massue, gourdin		machine	
+K142	filet de chasse		machine	
+K143	piège		machine	
+K143b	glu		machine	
+K144	appât		machine	
+K145	empreinte de pied		machine	
+K145b	trace d'animal, piste		machine	
+K146	foène, lance de pêche		machine	
+K146b	harpon		machine	
+K147	hameçon		machine	
+K148	ligne de pêche		machine	
+K149	filet de pêche		machine	
+K150	nasse, piège à poissons		machine	
+K151	barrage à poissons		machine	
+K152	pirogue, bateau		machine	
+K153	radeau en ambatch		machine	
+K154	pagaie		machine	
+K155	épée, sabre		machine	
+K156	fourreau, gaine		machine	
+K157	fusil		machine	
+K158	bouclier		machine	
+K159	fouet		machine	
+K160	guerre		machine	
+K160b	razzia de bétail, vol de bétail		machine	
+K161	paix		machine	
+K162	armée		machine	
+K163	biens, possessions		machine	
+K164	argent		machine	
+K164b	cauri		machine	
+K164c	prix		machine	
+K165	cadeau, don		machine	
+K166	dette		machine	
+K167	impôt, taxe		machine	
+K168	héritage		machine	
+K169	vêtement		machine	
+K169b	tissu, étoffe		machine	
+K169c	ourlet		machine	
+K170	robe		machine	
+K171	chemise		machine	
+K172	pantalon		machine	
+K173	boubou, gandoura		machine	
+K174	manteau de peau, kaross		machine	
+K175	pagne court couvrant les reins, cache-sexe	Pas le pagne en tissu (longue pièce de tissu portée comme jupe).	machine	
+K175a	cache-sexe d'homme, pagne court d'homme		machine	
+K175b	cache-sexe de femme, pagne court de femme	Pas le pagne en tissu (longue pièce de tissu portée comme jupe).	machine	
+K176	ceinture		machine	
+K177	ceinture de cauris		machine	
+K178	écharpe de portage, porte-bébé		machine	
+K179	chapeau		machine	
+K179b	turban		machine	
+K180	voile (du visage)		machine	
+K181	chaussure		machine	
+K182	perle		machine	
+K183	bracelet		machine	
+K184	collier		machine	
+K185	anneau de cheville, bracelet de cheville		machine	
+K186	bague		machine	
+K187	boucle d'oreille		machine	
+K188	plateau labial, labret		machine	
+K189	scarification faciale		machine	
+K190	henné		machine	
+K191	savon		machine	
+K192	rasoir		machine	
+K193	peigne		machine	
+K194	frotte-dents, brosse à dents		machine	
+K195	cure-dent		machine	
+K196	musique		machine	
+K197	chant, chanson		machine	
+K198	danse		machine	
+K199	tambour		machine	
+K199b	tambour parlant		machine	
+K199c	tambour en sablier		machine	
+K200	grand tambour		machine	
+K201	petit tambour		machine	
+K202	tambour sur fosse, tambour de terre		machine	
+K203	flûte de Pan		machine	
+K204	flûte à une note		machine	
+K205	corne (instrument de musique), trompe		machine	
+K205b	conque, trompe en coquillage		machine	
+K206	corne de guerre, trompe de guerre		machine	
+K207	lyre		machine	
+K208	vièle, violon		machine	
+K209	balafon, xylophone		machine	
+K210	hochet (instrument de musique), maracas		machine	
+K211	claves		machine	
+K212	sifflet		machine	
+K213	masque		machine	
+K214	pipe (à tabac)		machine	
+K215	tuyau de pipe		machine	
+K216	pipe à eau, narguilé		machine	
+K216a	tube plongeant dans l'eau (pipe à eau)		machine	
+K216b	fourneau (de la pipe à eau)		machine	
+K216c	tuyau d'aspiration		machine	
+K217	cerceau		machine	
+K218	ballon, balle de jeu	Ballon : grosse balle gonflée ; balle : petite balle pleine.	machine	
+K219	awalé, mancala		machine	
+L001	ciel		machine	
+L002	soleil		machine	
+L003	heure		machine	
+L004	jour		machine	
+L005	lune		machine	
+L006	mois		machine	
+L007	pleine lune		machine	
+L008	nouvelle lune		machine	
+L009	éclipse		machine	
+L009a	éclipse de soleil		machine	
+L009b	éclipse de lune		machine	
+L010	étoile		machine	
+L010b	étoile du matin		machine	
+L010c	Pléiades		machine	
+L010d	Grand Chariot (sept étoiles de la Grande Ourse)		machine	
+L010e	Orion, baudrier d'Orion	Le baudrier : les trois étoiles alignées, appelées aussi les Trois Rois.	machine	
+L010g	étoile filante		machine	
+L011	année, an		machine	
+L012	aube		machine	
+L013	lever du soleil		machine	
+L014	matin		machine	
+L015	midi		machine	
+L016	journée, jour (opposé à la nuit)		machine	
+L017	après-midi		machine	
+L018	coucher du soleil		machine	
+L019	crépuscule, tombée de la nuit		machine	
+L020	nuit		machine	
+L021	minuit		machine	
+L022	temps (qui passe)	Le temps qui passe, non la météo.	machine	
+L023	saison		machine	
+L024	saison des pluies		machine	
+L025	saison sèche		machine	
+L026	saison froide, hiver		machine	
+L027	saison des récoltes, période des moissons		machine	
+L028	vent		machine	
+L028b	harmattan		machine	
+L029	air (que l'on respire)		machine	
+L030	tempête de vent (sans pluie)		machine	
+L030b	tempête de sable		machine	
+L031	tourbillon de poussière, tourbillon		machine	
+L032	orage		machine	
+L033	nuage		machine	
+L034	brouillard, brume		machine	
+L035	brume sèche		machine	
+L036	pluie		machine	
+L037	premières pluies		machine	
+L038	bruine, pluie fine		machine	
+L039	tonnerre		machine	
+L040	éclair		machine	
+L041	arc-en-ciel		machine	
+L042	grêle		machine	
+L042b	neige		machine	
+L042c	glace		machine	
+L043	rosée		machine	
+L043b	givre, gelée blanche		machine	
+L044	inondation, crue		machine	
+L045	sécheresse		machine	
+L046	chaleur, temps chaud		machine	
+L047	froid, temps froid		machine	
+L048	lumière		machine	
+L049	lumière du soleil		machine	
+L050	clair de lune		machine	
+L051	ombre (à l'abri du soleil)		machine	
+L052	ombre (projetée par un objet), ombre portée		machine	
+L053	reflet		machine	
+L054	obscurité, ténèbres		machine	
+L055	feu		machine	
+L056	flamme		machine	
+L057	étincelle		machine	
+L058	fumée		machine	
+L059	cendre		machine	
+L060	feu de brousse		machine	
+L061	savane brûlée, terrain brûlé		machine	
+L062	eau		machine	
+L063	rivière, fleuve		machine	
+L064	affluent		machine	
+L065	courant (de la rivière)		machine	
+L066	ruisseau		machine	
+L067	lit de rivière à sec, oued		machine	
+L068	chute d'eau, cascade		machine	
+L069	source		machine	
+L070	rive, berge		machine	
+L071	gué		machine	
+L072	banc de sable		machine	
+L073	île		machine	
+L074	lac		machine	
+L075	mer, océan		machine	
+L076	plage, rivage		machine	
+L077	étang, plan d'eau		machine	
+L078	flaque (d'eau)		machine	
+L079	mare, point d'eau naturel		machine	
+L080	marais, marécage		machine	
+L081	vague		machine	
+L082	bulle		machine	
+L083	écume, mousse		machine	
+L084	substance visqueuse (algues, bave)	La vase : boue gluante au fond de l'eau.	machine	
+L085	monde		machine	
+L086	endroit, lieu		machine	
+L087	sol, terre		machine	
+L088	terre (sol)		machine	
+L089	terre fertile		machine	
+L090	argile, glaise		machine	
+L090b	motte (d'argile ou de boue)		machine	
+L091	boue		machine	
+L092	fentes de la boue séchée		machine	
+L093	sable		machine	
+L093b	dune (de sable)		machine	
+L094	gravier		machine	
+L095	poussière		machine	
+L096	caillou, petite pierre		machine	
+L097	rocher		machine	
+L098	or		machine	
+L099	fer		machine	
+L099b	rouille		machine	
+L100	argent (métal)		machine	
+L101	cuivre		machine	
+L102	endroit rocailleux, rocaille		machine	
+L103	montagne		machine	
+L104	sommet (de montagne), cime		machine	
+L105	colline		machine	
+L106	falaise		machine	
+L107	vallée		machine	
+L108	fossé, rigole		machine	
+L109	fosse		machine	
+L110	trou		machine	
+L110b	tanière, terrier		machine	
+L111	gouffre (effondrement du sol)		machine	
+L112	fissure, crevasse		machine	
+L113	grotte, caverne		machine	
+L114	plaine inondable		machine	
+L115	terrain élevé (hors des crues)		machine	
+L116	savane herbeuse, prairie		machine	
+L117	forêt		machine	
+L117b	clairière		machine	
+L118	brousse		machine	
+L119	désert		machine	
+L119b	oasis		machine	
+L120	plaine salée, sebkha		machine	
+M001	langue		machine	
+M002	voix		machine	
+M003	bruit		machine	
+M004	nom		machine	
+M004b	réputation, renommée		machine	
+M005	mot, parole		machine	
+M006	sens, signification		machine	
+M007	histoire, conte		machine	
+M008	proverbe		machine	
+M009	devinette		machine	
+M010	nouvelles		machine	
+M010b	annonce		machine	
+M010c	récit des faits, compte rendu		machine	
+M011	secret		machine	
+M012	pensée		machine	
+M013	plan, projet		machine	
+M014	vérité		machine	
+M015	mensonge		machine	
+M016	erreur, faute		machine	
+M017	vœu (engagement solennel)		machine	
+M017a	serment		machine	
+M017b	promesse		machine	
+M018	connaissance, savoir		machine	
+M018b	sagesse		machine	
+M019	danger		machine	
+M020	problème, ennui		machine	
+M020b	épreuve, souffrance		machine	
+M020c	obstacle		machine	
+M021	silence		machine	
+M022	écho		machine	
+N001	en haut, vers le haut		machine	
+N002	en bas, vers le bas		machine	
+N003	au-dessus		machine	
+N004	en dessous, dessous		machine	
+N005	en montant (la pente)		machine	
+N006	en descendant (la pente)		machine	
+N007	en amont		machine	
+N008	en aval		machine	
+N009	est		machine	
+N010	ouest		machine	
+N011	nord		machine	
+N012	sud		machine	
+N013	en avant		machine	
+N014	en arrière		machine	
+N015	à droite		machine	
+N016	à gauche		machine	
+N017	devant		machine	
+N018	derrière		machine	
+N019	à côté de		machine	
+N020	dans, à l'intérieur de		machine	
+N021	hors de, à l'extérieur de		machine	
+N022	entre		machine	
+N023	vers		machine	
+N024	en s'éloignant de		machine	
+N025	avec		machine	
+N026	à (un endroit)		machine	
+N027	avant-hier		machine	
+N028	hier		machine	
+N029	aujourd'hui		machine	
+N030	demain		machine	
+N031	après-demain		machine	
+N032	passé, temps d'autrefois		machine	
+N033	auparavant, avant		machine	
+N034	maintenant		machine	
+N035	plus tard		machine	
+N036	avenir, futur		machine	
+N037	tôt, de bonne heure		machine	
+N038	en retard		machine	
+N039	de nouveau, encore		machine	
+N040	parfois, quelquefois		machine	
+N041	souvent		machine	
+N042	d'habitude, habituellement		machine	
+N043	toujours		machine	
+N044	jamais		machine	
+O001	oui		machine	
+O002	non		machine	
+O003	ne... pas		machine	
+O004	et		machine	
+O005	si		machine	
+O006	parce que		machine	
+O007	peut-être		machine	
+O008	vraiment, réellement		machine	
+O009	tous, tout		machine	
+O009b	entier, tout entier		machine	
+O009c	tout le monde		machine	
+O009d	tout, toute chose		machine	
+O009e	partout		machine	
+O010	quelques, certains		machine	
+O010b	quelqu'un		machine	
+O010c	quelque chose		machine	
+O011	aucun, nul		machine	
+O012	les deux, tous les deux		machine	
+O013	moitié		machine	
+O013b	morceau		machine	
+O014	seulement		machine	
+P001	grand, gros		machine	
+P001b	taille, grandeur		machine	
+P002	petit		machine	
+P003	grand (de taille)		machine	
+P004	court, petit (de taille)		machine	
+P005	haut		machine	
+P006	bas		machine	
+P007	profond		machine	
+P008	peu profond		machine	
+P009	large		machine	
+P010	étroit		machine	
+P011	mince (pas épais)		machine	
+P012	lourd		machine	
+P012b	poids		machine	
+P013	léger		machine	
+P014	nombreux		machine	
+P014b	abondant		machine	
+P015	peu nombreux		machine	
+P016	suffisant, suffire		machine	
+P017	épuisé, fini (d'une provision)	Se dit d'une provision qui est finie.	machine	
+P018	rare		machine	
+P019	égal		machine	
+P020	plus grand (que), dépasser		machine	
+P021	semblable, pareil		machine	
+P022	identique, le même		machine	
+P023	différent		machine	
+P023b	autre		machine	
+P024	dernier (en ordre, en rang)		machine	
+P025	varié, divers		machine	
+P026	plat		machine	
+P027	rond		machine	
+P028	droit		machine	
+P029	tordu, courbé		machine	
+P030	creux		machine	
+P031	dur		machine	
+P032	mou		machine	
+P033	tendre		machine	
+P034	tranchant, aiguisé		machine	
+P035	émoussé		machine	
+P036	rugueux		machine	
+P037	lisse		machine	
+P038	glissant		machine	
+P039	collant, gluant		machine	
+P040	ouvert		machine	
+P041	fermé		machine	
+P042	serré		machine	
+P043	lâche, desserré		machine	
+P044	plein		machine	
+P045	vide		machine	
+P046	déchiré		machine	
+P047	neuf, nouveau		machine	
+P048	vieux, usé (pas neuf)		machine	
+P049	en lambeaux, en loques		machine	
+P050	abîmé, endommagé		machine	
+P051	propre		machine	
+P052	sale		machine	
+P053	mouillé		machine	
+P054	sec		machine	
+P055	chaud (d'un objet)		machine	
+P056	froid (d'un objet)		machine	
+P057	mûr		machine	
+P058	vert, pas mûr		machine	
+P059	pourri		machine	
+P060	ratatiné, flétri		machine	
+P061	fertile (sol)		machine	
+P062	stérile, infertile (sol)		machine	
+P063	couleur		machine	
+P064	rouge		machine	
+P064a	chose rouge		machine	
+P064b	très (rouge), tout rouge	Demander la forme intensive ou l'idéophone : « tout rouge ».	machine	
+P065	noir		machine	
+P065a	chose noire		machine	
+P065b	très (noir), tout noir	Demander la forme intensive ou l'idéophone : « tout noir ».	machine	
+P065c	foncé, sombre (de couleur)		machine	
+P066	blanc		machine	
+P066a	chose blanche		machine	
+P066b	très (blanc), tout blanc	Demander la forme intensive ou l'idéophone : « tout blanc ».	machine	
+P066c	clair, pâle (de couleur)		machine	
+P067	vert		machine	
+P067a	chose verte		machine	
+P067b	très (vert), tout vert	Demander la forme intensive ou l'idéophone : « tout vert ».	machine	
+P068	jaune		machine	
+P069	bleu		machine	
+P070	brun, marron		machine	
+P071	tacheté		machine	
+P071b	très (tacheté), tout tacheté	Demander la forme intensive ou l'idéophone : « tout tacheté ».	machine	
+P072	d'une seule couleur, uni		machine	
+P073	pie (noir et blanc)		machine	
+P074	savoureux, délicieux		machine	
+P075	sucré, doux		machine	
+P076	acide, aigre		machine	
+P077	amer		machine	
+P078	salé		machine	
+P079	sentir mauvais, puer		machine	
+P079b	mauvaise odeur, puanteur		machine	
+P080	sentir bon		machine	
+P080b	arôme, bonne odeur		machine	
+P081	rapide		machine	
+P081b	vitesse		machine	
+P082	lent		machine	
+P083	avoir chaud		machine	
+P084	avoir faim		machine	
+P084b	faim		machine	
+P085	avoir soif		machine	
+P085b	soif		machine	
+P086	rassasié		machine	
+P087	fatigué		machine	
+P087b	fatigue		machine	
+P088	avoir sommeil		machine	
+P088b	envie de dormir, somnolence		machine	
+P089	éveillé, réveillé		machine	
+P090	ivre, soûl		machine	
+P091	avoir la tête qui tourne, avoir le vertige		machine	
+P092	nu		machine	
+P093	en bonne santé		machine	
+P093b	santé		machine	
+P094	malade		machine	
+P095	fort		machine	
+P095b	force		machine	
+P095c	puissant		machine	
+P095d	gloire, splendeur		machine	
+P096	musclé		machine	
+P097	faible		machine	
+P097b	faiblesse		machine	
+P098	gros		machine	
+P099	maigre, mince		machine	
+P100	très maigre, décharné		machine	
+P101	qui boite, boiteux	« Boiteux » peut être perçu comme peu respectueux.	machine	
+P102	aveugle		machine	
+P102b	cécité		machine	
+P103	myope		machine	
+P104	muet		machine	
+P105	chauve		machine	
+P106	impuissant (sexuellement)		machine	
+P107	vivant, en vie		machine	
+P108	mort		machine	
+P109	jeune		machine	
+P110	vieux, âgé		machine	
+P111	heureux, content		machine	
+P111b	bonheur, joie		machine	
+P112	triste		machine	
+P112b	tristesse		machine	
+P113	en colère, fâché		machine	
+P113b	colère		machine	
+P114	avoir peur		machine	
+P114b	peur		machine	
+P115	fier		machine	
+P115b	fierté, orgueil		machine	
+P116	jaloux		machine	
+P116b	jalousie		machine	
+P117	timide		machine	
+P117b	honte		machine	
+P118	s'ennuyer		machine	
+P119	agité		machine	
+P120	impatient (de faire), enthousiaste		machine	
+P121	curieux		machine	
+P122	seul		machine	
+P123	courageux		machine	
+P123b	courage		machine	
+P124	gentil, bon		machine	
+P124b	gentillesse, bonté		machine	
+P124c	pitié, compassion		machine	
+P125	généreux		machine	
+P126	égoïste		machine	
+P127	honnête		machine	
+P128	juste		machine	
+P128b	justice		machine	
+P129	corrompu		machine	
+P130	méchant		machine	
+P131	féroce		machine	
+P132	paresseux		machine	
+P132b	paresse		machine	
+P133	patient		machine	
+P133b	patience		machine	
+P134	impatient		machine	
+P135	têtu, obstiné		machine	
+P135b	entêtement, obstination		machine	
+P136	sage		machine	
+P137	intelligent		machine	
+P138	bête, sot		machine	
+P138b	bêtise, sottise		machine	
+P139	confus, désorienté		machine	
+P140	ignorant		machine	
+P141	habile, doué		machine	
+P142	capable, pouvoir		machine	
+P142b	capacité		machine	
+P143	éloquent		machine	
+P144	silencieux, se taire		machine	
+P145	bon		machine	
+P145b	parfait		machine	
+P145c	bien, comme il faut		machine	
+P145d	perfection		machine	
+P146	mauvais		machine	
+P146b	mal		machine	
+P147	correct, juste		machine	
+P148	faux, incorrect		machine	
+P149	coupable		machine	
+P150	innocent		machine	
+P151	beau		machine	
+P152	laid		machine	
+P153	important		machine	
+P154	drôle, amusant		machine	
+P155	facile		machine	
+P156	difficile		machine	
+P157	riche		machine	
+P158	pauvre		machine	
+P159	cher, coûteux		machine	
+P160	bon marché, pas cher		machine	
+P161	perdu, égaré		machine	
+P162	absent		machine	
+P163	proche (d'ici), tout près d'ici		machine	
+P164	proche de là-bas, près de là-bas	Près d'un endroit éloigné du locuteur.	machine	
+P165	éloigné, lointain		machine	
+Q001	un (1)		machine	
+Q001b	premier		machine	
+Q001c	une fois		machine	
+Q002	deux (2)		machine	
+Q002b	deuxième, second		machine	
+Q003	trois (3)		machine	
+Q003b	troisième		machine	
+Q004	quatre (4)		machine	
+Q005	cinq (5)		machine	
+Q006	six (6)		machine	
+Q007	sept (7)		machine	
+Q008	huit (8)		machine	
+Q009	neuf (9)		machine	
+Q010	dix (10)		machine	
+Q011	onze (11)		machine	
+Q012	douze (12)		machine	
+Q013	treize (13)		machine	
+Q014	quatorze (14)		machine	
+Q015	quinze (15)		machine	
+Q016	seize (16)		machine	
+Q017	dix-sept (17)		machine	
+Q018	dix-huit (18)		machine	
+Q019	dix-neuf (19)		machine	
+Q020	vingt (20)		machine	
+Q021	vingt et un (21)		machine	
+Q022	vingt-deux (22)		machine	
+Q023	vingt-trois (23)		machine	
+Q024	vingt-quatre (24)		machine	
+Q030	trente (30)		machine	
+Q035	trente-cinq (35)		machine	
+Q036	trente-six (36)		machine	
+Q040	quarante (40)		machine	
+Q047	quarante-sept (47)		machine	
+Q048	quarante-huit (48)		machine	
+Q050	cinquante (50)		machine	
+Q059	cinquante-neuf (59)		machine	
+Q060	soixante (60)		machine	
+Q070	soixante-dix (70)		machine	
+Q080	quatre-vingts (80)		machine	
+Q090	quatre-vingt-dix (90)		machine	
+Q100	cent (100)		machine	
+Q200	deux cents (200)		machine	
+Q300	trois cents (300)		machine	
+Q400	quatre cents (400)		machine	
+Q500	cinq cents (500)		machine	
+Q600	six cents (600)		machine	
+Q700	sept cents (700)		machine	
+Q800	huit cents (800)		machine	
+Q900	neuf cents (900)		machine	
+Q1000	mille (1000)		machine	
+Q2000	deux mille (2000)		machine	
+Q1736	mille sept cent trente-six (1736)		machine	
+R1SG	je, moi		machine	
+R1DU	nous deux		machine	
+R1DUIN	nous deux (toi et moi)		machine	
+R1DUEX	nous deux (lui ou elle et moi, sans toi)		machine	
+R1PC	nous (quelques-uns)		machine	
+R1PL	nous		machine	
+R1PLIN	nous (y compris toi ou vous)		machine	
+R1PLEX	nous (mais pas toi ni vous)		machine	
+R2SG	tu, toi		machine	
+R2SGM	tu, toi (à un homme)		machine	
+R2SGF	tu, toi (à une femme)		machine	
+R2SGR	vous (de politesse)		machine	
+R2DU	vous deux		machine	
+R2PC	vous (quelques-uns)		machine	
+R2PL	vous (pluriel)		machine	
+R2PLM	vous (à des hommes)		machine	
+R2PLF	vous (à des femmes)		machine	
+R3SG	il, elle		machine	
+R3SGM	il, lui		machine	
+R3SGF	elle		machine	
+R3SGN	il, elle (chose ou animal)		machine	
+R3SGR	il, elle (forme de respect)	Le français n'a pas de pronom de respect à la troisième personne ; il s'agit de la forme honorifique d'autres langues.	machine	
+R3SGLOG	il, elle (renvoyant à l'auteur des paroles rapportées)	Ex. : « Jean dit qu'il viendra », où il est Jean lui-même.	machine	
+R3DU	eux deux, elles deux		machine	
+R3PC	ils, elles (quelques-uns)		machine	
+R3PL	ils, elles		machine	
+R3PLM	ils, eux		machine	
+R3PLF	elles		machine	
+R3PLN	ils, elles (choses ou animaux)		machine	
+R3PLLOG	ils, elles (renvoyant aux auteurs des paroles rapportées)	Ex. : « Ils disent qu'ils viendront », où ils sont ceux-là mêmes qui parlent.	machine	
+R1SGPOSS	le mien, à moi		machine	
+R2SGPOSS	le tien, à toi		machine	
+R3SGPOSS	le sien, à lui ou à elle		machine	
+R1PLPOSS	le nôtre, à nous		machine	
+R2PLPOSS	le vôtre, à vous		machine	
+R3PLPOSS	le leur, à eux		machine	
+RREFL	soi-même, se (réfléchi)		machine	
+RRECP	l'un l'autre, se (réciproque)		machine	
+RLOCDPRX	ici		machine	
+RLOCDADR	là (près de toi)		machine	
+RLOCDMED	là (pas loin)		machine	
+RLOCDDST	là-bas		machine	
+RLOCDREM	là-bas (très loin, hors de vue)		machine	
+R3SGDPRX	celui-ci, ceci		machine	
+R3SGDADR	celui-là (près de toi)		machine	
+R3SGDMED	celui-là (pas loin)		machine	
+R3SGDDST	celui-là, cela		machine	
+R3PLDPRX	ceux-ci		machine	
+R3PLDADR	ceux-là (près de toi)		machine	
+R3PLDMED	ceux-là (pas loin)		machine	
+R3PLDDST	ceux-là		machine	
+RQ3SG	qui ?		machine	
+RQ3PL	qui (au pluriel) ?		machine	
+RQ3SGN	quoi ?		machine	
+RQ3PLN	quoi (au pluriel) ?		machine	
+RQ3SGREL	lequel ?		machine	
+RQ3PLREL	lesquels ?		machine	
+RQ3SGPOSS	à qui ? (à qui est-ce ?)		machine	
+RQLOC	où ?		machine	
+RQTIM	quand ?		machine	
+RQRSN	pourquoi ?		machine	
+RQMAN	comment ?		machine	
+RQQNT	combien ?		machine	
+V001	être		machine	
+V002	exister		machine	
+V003	exister séparément, être séparé		machine	
+V004	ne pas exister		machine	
+V005	devenir		machine	
+V006	avoir, posséder		machine	
+V007	manquer (de)		machine	
+V008	aller		machine	
+V009	venir		machine	
+V010	arriver		machine	
+V011	s'approcher		machine	
+V012	entrer		machine	
+V013	sortir		machine	
+V014	partir, quitter		machine	
+V015	revenir, retourner		machine	
+V016	passer (devant), passer à côté		machine	
+V017	contourner, faire un détour		machine	
+V018	monter		machine	
+V019	descendre		machine	
+V020	tomber		machine	
+V021	se lever		machine	
+V022	traverser (un cours d'eau)		machine	
+V023	traverser (par voie de terre)		machine	
+V024	bouger, se déplacer		machine	
+V024b	mouvement		machine	
+V025	voyager		machine	
+V026	migrer, émigrer		machine	
+V027	errer, vagabonder		machine	
+V028	disparaître		machine	
+V029	marcher		machine	
+V030	faire un pas		machine	
+V031	courir		machine	
+V032	s'enfuir, fuir		machine	
+V033	se dépêcher, se presser		machine	
+V034	trébucher		machine	
+V035	boiter		machine	
+V036	ramper		machine	
+V037	sauter		machine	
+V038	se retourner		machine	
+V039	se balancer		machine	
+V040	glisser		machine	
+V041	rouler		machine	
+V042	nager en surface, patauger		machine	
+V043	nager sous l'eau	comme un poisson	machine	
+V044	plonger		machine	
+V045	flotter		machine	
+V046	couler (au fond), sombrer		machine	
+V047	se noyer		machine	
+V048	voler (dans l'air)	se déplacer dans l'air, et non « dérober »	machine	
+V049	planer		machine	
+V050	se percher		machine	
+V050b	se poser (oiseau)		machine	
+V051	pagayer		machine	
+V052	écoper (une pirogue)		machine	
+V053	chavirer		machine	
+V054	monter (un animal), aller (en véhicule)		machine	
+V055	diriger, conduire (pirogue, véhicule, animal)		machine	
+V056	habiter, demeurer		machine	
+V057	rester		machine	
+V058	se reposer		machine	
+V059	s'asseoir		machine	
+V060	se tenir debout, être debout		machine	
+V061	s'agenouiller		machine	
+V062	s'accroupir		machine	
+V063	se mettre à califourchon (sur)		machine	
+V064	s'appuyer (contre)		machine	
+V065	se coucher, s'allonger		machine	
+V066	se pencher, se baisser		machine	
+V067	s'incliner (pour saluer)		machine	
+V068	respirer		machine	
+V069	haleter		machine	
+V070	bâiller		machine	
+V071	cligner des yeux		machine	
+V072	faire un clin d'œil		machine	
+V073	ronfler		machine	
+V074	renifler		machine	
+V075	se moucher		machine	
+V076	souffler		machine	
+V077	cracher		machine	
+V078	tousser		machine	
+V079	roter, éructer	« roter » est familier	machine	
+V080	éternuer		machine	
+V081	gémir (de douleur)		machine	
+V082	ahaner, grogner (sous l'effort)		machine	
+V083	battre (cœur)		machine	
+V084	lanciner, faire des élancements		machine	
+V085	uriner	« pisser » est vulgaire	machine	
+V086	déféquer, aller à la selle	« chier » est vulgaire	machine	
+V087	lâcher un vent, péter	« péter » est familier	machine	
+V088	frissonner, trembler		machine	
+V089	transpirer, suer		machine	
+V090	saigner		machine	
+V091	coaguler, cailler (sang)		machine	
+V092	s'évanouir		machine	
+V093	vomir		machine	
+V094	dormir		machine	
+V095	se réveiller		machine	
+V096	tomber enceinte		machine	
+V097	accoucher, donner naissance		machine	
+V098	naître		machine	
+V099	grandir		machine	
+V100	vieillir		machine	
+V101	mourir		machine	
+V102	survivre		machine	
+V103	se blesser, être blessé		machine	
+V104	faire mal (à), blesser		machine	
+V105	guérir, se rétablir		machine	
+V106	guérir (quelqu'un), soigner		machine	
+V107	reprendre connaissance, revenir à la vie		machine	
+V108	aboyer		machine	
+V109	grogner (animal)		machine	
+V110	montrer les dents		machine	
+V111	ruminer		machine	
+V112	picorer, becqueter		machine	
+V113	pondre (des œufs)		machine	
+V114	couver		machine	
+V115	éclore		machine	
+V116	caqueter, glousser		machine	
+V117	chanter (coq)		machine	
+V118	battre des ailes		machine	
+V119	ramper en ondulant, onduler (serpent)		machine	
+V120	siffler (serpent)		machine	
+V121	piquer (scorpion)		machine	
+V122	pousser (plante), croître		machine	
+V123	germer, bourgeonner		machine	
+V124	mûrir		machine	
+V125	se faner, se flétrir		machine	
+V126	s'évaporer		machine	
+V127	couler, s'écouler		machine	
+V128	goutter, dégoutter		machine	
+V129	fuir (liquide)		machine	
+V130	éclater		machine	
+V131	enfler, gonfler		machine	
+V132	se propager (feu), se répandre		machine	
+V133	briller		machine	
+V134	pâlir, se décolorer		machine	
+V135	devenir lumineux, s'éclaircir		machine	
+V136	s'assombrir, s'obscurcir		machine	
+V137	sécher, se dessécher		machine	
+V138	brûler, flamber		machine	
+V139	se consumer sans flamme, couver (feu)		machine	
+V140	fondre		machine	
+V141	geler		machine	
+V142	roussir, brûler légèrement		machine	
+V143	bruire (feuilles)		machine	
+V144	couiner, grincer		machine	
+V145	souffler (vent)		machine	
+V146	renverser, abattre (vent)		machine	
+V147	emporter (vent), s'envoler		machine	
+V148	voir		machine	
+V148b	vue		machine	
+V149	regarder		machine	
+V150	remarquer, s'apercevoir (de)		machine	
+V151	entendre		machine	
+V152	écouter		machine	
+V153	sentir (une odeur)		machine	
+V154	goûter		machine	
+V154b	goût		machine	
+V155	ressentir, sentir		machine	
+V156	toucher		machine	
+V157	reconnaître		machine	
+V158	manger		machine	
+V158b	repas		machine	
+V159	manger (de la viande)		machine	
+V160	mâcher		machine	
+V161	croquer		machine	
+V162	ronger		machine	
+V163	mordre		machine	
+V164	lécher		machine	
+V165	sucer		machine	
+V166	avaler		machine	
+V167	s'étrangler, s'étouffer		machine	
+V168	boire		machine	
+V168b	boisson		machine	
+V169	siroter, boire à petites gorgées		machine	
+V170	frapper		machine	
+V171	battre, frapper à coups répétés		machine	
+V172	gifler		machine	
+V173	applaudir, battre des mains		machine	
+V174	donner un coup de pied		machine	
+V175	taper du pied		machine	
+V176	piétiner		machine	
+V177	heurter, se cogner (contre)		machine	
+V178	renverser, faire tomber		machine	
+V179	pousser		machine	
+V180	presser, appuyer (sur)		machine	
+V181	tirer		machine	
+V182	traîner		machine	
+V183	frotter		machine	
+V184	racler, gratter		machine	
+V185	gratter, égratigner		machine	
+V186	secouer		machine	
+V187	écraser		machine	
+V188	poignarder		machine	
+V189	piquer		machine	
+V190	percer (les oreilles)		machine	
+V191	blesser		machine	
+V192	tuer		machine	
+V193	arracher les incisives inférieures (coutume)		machine	
+V194	tenir dans les bras		machine	
+V195	tenir (à la main)		machine	
+V196	prendre		machine	
+V197	saisir, arracher		machine	
+V198	emporter, emmener		machine	
+V199	poser, déposer		machine	
+V200	ramasser		machine	
+V201	laisser tomber, lâcher		machine	
+V202	lever, soulever		machine	
+V203	baisser, abaisser		machine	
+V204	lancer (à quelqu'un)		machine	
+V205	jeter, se débarrasser de		machine	
+V206	porter		machine	
+V207	porter sur la tête		machine	
+V208	porter sur l'épaule		machine	
+V209	porter sur le dos		machine	
+V210	charger		machine	
+V211	décharger		machine	
+V212	apporter, amener		machine	
+V213	donner		machine	
+V214	prêter		machine	
+V215	emprunter		machine	
+V216	offrir		machine	
+V217	accepter, recevoir		machine	
+V218	refuser, rejeter		machine	
+V219	obtenir		machine	
+V220	rendre		machine	
+V221	garder, conserver		machine	
+V222	mettre en réserve, stocker		machine	
+V223	cacher		machine	
+V224	perdre		machine	
+V225	chercher		machine	
+V226	trouver		machine	
+V227	laisser (derrière soi), abandonner		machine	
+V228	surveiller, garder		machine	
+V229	couper		machine	
+V230	entailler un arbre (pour qu'il donne des fruits)		machine	
+V231	abattre (un arbre)		machine	
+V232	hacher, couper en morceaux		machine	
+V233	fendre		machine	
+V234	scier		machine	
+V235	creuser, évider (un tronc)		machine	
+V236	casser (net), rompre		machine	
+V237	déchirer		machine	
+V238	écorcer		machine	
+V239	courber, ployer (une branche)		machine	
+V239b	courbe		machine	
+V240	tordre		machine	
+V241	plier		machine	
+V242	enrouler (une corde)		machine	
+V243	tendre (une peau)		machine	
+V244	étaler		machine	
+V245	accrocher, suspendre		machine	
+V246	tourner, retourner (quelque chose)		machine	
+V247	ouvrir		machine	
+V248	fermer		machine	
+V249	couvrir		machine	
+V250	découvrir (ôter ce qui couvre)		machine	
+V251	boucher		machine	
+V252	envelopper		machine	
+V253	déballer, défaire (un paquet)		machine	
+V254	mettre dedans, tasser		machine	
+V255	remplir		machine	
+V256	sortir (d'un récipient), retirer		machine	
+V257	verser		machine	
+V258	renverser (un liquide)		machine	
+V259	mettre (un vêtement), s'habiller		machine	
+V260	enlever (un vêtement), se déshabiller		machine	
+V261	se laver (le corps), se baigner		machine	
+V262	laver (le linge)		machine	
+V263	essuyer		machine	
+V264	couper (les cheveux)		machine	
+V265	raser, se raser		machine	
+V266	tresser (les cheveux)		machine	
+V267	appliquer (une pommade), enduire		machine	
+V268	décorer, orner		machine	
+V269	préparer (la nourriture)		machine	
+V270	ouvrir (un fruit), fendre		machine	
+V271	trancher, couper en tranches		machine	
+V272	éplucher, peler		machine	
+V273	mélanger		machine	
+V274	remuer		machine	
+V275	filtrer, égoutter		machine	
+V276	piler		machine	
+V277	pulvériser, réduire en poudre		machine	
+V278	concasser, moudre grossièrement	première mouture, sur la meule dormante	machine	
+V279	moudre plus fin	deuxième mouture	machine	
+V280	moudre très fin	troisième mouture, la plus fine	machine	
+V281	pétrir		machine	
+V282	façonner (le pain)		machine	
+V283	plumer		machine	
+V284	cuisiner, faire cuire		machine	
+V285	faire bouillir, bouillir		machine	
+V286	mijoter		machine	
+V287	cuire en ragoût, braiser		machine	
+V288	rôtir, griller		machine	
+V289	frire, faire frire		machine	
+V290	cuire sous la cendre		machine	
+V291	fumer (la viande), boucaner		machine	
+V292	fermenter		machine	
+V293	se gâter, pourrir		machine	
+V294	faire		machine	
+V294b	travail		machine	
+V295	fabriquer, faire		machine	
+V295b	création, acte de créer		machine	
+V296	construire, bâtir		machine	
+V297	réparer		machine	
+V298	remplacer		machine	
+V299	modeler (des pots), façonner		machine	
+V300	coudre		machine	
+V301	tisser		machine	
+V302	enfiler (des perles)		machine	
+V303	attacher, nouer		machine	
+V304	détacher, dénouer		machine	
+V305	lier avec une corde, ficeler		machine	lier (avec une corde), ligoter
+V306	serrer		machine	
+V307	desserrer		machine	
+V308	clôturer, entourer d'une clôture		machine	
+V309	délimiter, piqueter		machine	
+V310	creuser		machine	
+V311	puiser (de l'eau)		machine	
+V312	aller chercher du bois (de feu)		machine	
+V313	balayer		machine	
+V314	polir, cirer		machine	
+V315	sonner (une cloche)		machine	
+V316	sculpter, tailler		machine	
+V317	dessiner		machine	
+V318	retourner la terre (à la main), bêcher		machine	
+V318b	labourer (à la charrue)		machine	
+V319	défricher		machine	
+V320	semer		machine	
+V321	semer à la volée		machine	
+V322	planter (des plants)		machine	
+V323	repiquer, transplanter		machine	
+V324	désherber, sarcler		machine	
+V325	biner, travailler à la houe		machine	
+V326	récolter, moissonner		machine	
+V327	arracher (des ignames), déterrer		machine	
+V328	cueillir (des fruits)		machine	
+V329	récolter (le miel)		machine	
+V330	battre (le grain)		machine	
+V331	vanner		machine	
+V332	décortiquer (des arachides)		machine	
+V333	effeuiller (le maïs), dépouiller (l'épi)		machine	
+V334	faire paître, mener au pâturage		machine	
+V335	nourrir, donner à manger (aux animaux)		machine	
+V336	attacher (un animal au piquet)		machine	
+V337	traire		machine	
+V338	castrer, châtrer		machine	
+V339	domestiquer, apprivoiser		machine	
+V340	abattre, égorger		machine	
+V341	dépouiller, écorcher		machine	
+V342	chasser		machine	
+V343	traquer		machine	
+V344	poursuivre, pourchasser		machine	
+V345	tendre (un piège)		machine	
+V346	prendre au piège, piéger		machine	
+V347	attraper		machine	
+V348	esquiver, échapper à		machine	
+V349	s'échapper, s'enfuir		machine	
+V350	tirer (une flèche, un coup de feu)		machine	
+V351	pêcher		machine	
+V352	changer, modifier		machine	
+V353	détruire		machine	
+V354	libérer, lâcher		machine	
+V355	rendre capable, donner la capacité (de)		machine	
+V356	agrandir		machine	
+V356b	augmenter, croître		machine	
+V357	réduire, diminuer		machine	
+V357b	diminuer, baisser		machine	
+V358	allonger, rallonger		machine	
+V359	raccourcir		machine	
+V360	élargir		machine	
+V361	approfondir, creuser plus profond		machine	
+V362	aplatir, aplanir		machine	
+V363	redresser		machine	
+V364	aiguiser		machine	
+V365	lisser, rendre lisse		machine	
+V366	durcir		machine	
+V367	ramollir		machine	
+V368	faire sécher (le linge), sécher		machine	
+V369	asperger		machine	
+V370	enduire (les murs, le sol) de terre ou de bouse		machine	
+V371	tremper, plonger		machine	
+V372	faire tremper		machine	
+V373	essorer, tordre		machine	
+V374	allumer (le feu)		machine	
+V375	éteindre (le feu)		machine	
+V376	attiser (le feu), éventer		machine	
+V377	ajouter, additionner		machine	
+V378	soustraire, retrancher		machine	
+V379	diminuer, rétrécir	intransitif : devenir plus petit ou moins grand	machine	réduire
+V380	joindre, assembler		machine	
+V381	accumuler		machine	
+V381b	entasser, mettre en tas		machine	
+V382	rassembler, ramasser		machine	
+V383	diviser, partager		machine	
+V384	disperser		machine	
+V385	entourer, encercler		machine	
+V386	chanter		machine	
+V387	fredonner		machine	
+V388	siffler		machine	
+V389	danser		machine	
+V390	jouer		machine	
+V391	jouer (d'un instrument à cordes)		machine	
+V392	jouer (d'un instrument à vent), souffler dans		machine	
+V393	troquer, faire du troc		machine	
+V394	acheter		machine	
+V395	vendre		machine	
+V396	marchander		machine	
+V397	payer		machine	
+V397b	paiement		machine	
+V398	embaucher, prendre en location		machine	
+V399	mendier		machine	
+V400	hériter		machine	
+V401	voler, dérober		machine	
+V402	penser, réfléchir		machine	
+V403	croire		machine	
+V404	savoir, connaître		machine	
+V405	douter		machine	
+V406	espérer		machine	
+V407	apprendre		machine	
+V408	enseigner		machine	
+V409	montrer		machine	
+V410	se souvenir, se rappeler		machine	
+V411	oublier		machine	
+V412	décider		machine	
+V413	choisir		machine	
+V414	hésiter		machine	
+V415	vouloir		machine	
+V416	avoir besoin (de)		machine	
+V417	essayer		machine	
+V418	réussir		machine	
+V419	échouer		machine	
+V420	faire semblant		machine	
+V421	évaluer, juger		machine	
+V422	résoudre		machine	
+V423	compter		machine	
+V424	ranger, mettre en ordre		machine	
+V425	rire		machine	
+V426	sourire		machine	
+V427	se réjouir		machine	
+V428	pleurer		machine	
+V429	pleurer un mort, se lamenter		machine	
+V429b	deuil		machine	
+V430	pousser des youyous		machine	
+V431	faire peur, effrayer		machine	
+V432	faire sursauter, surprendre		machine	
+V433	calmer (un enfant), apaiser		machine	
+V433b	se calmer		machine	
+V434	aimer		machine	
+V435	haïr, détester		machine	
+V436	mépriser		machine	
+V437	admirer		machine	
+V438	respecter		machine	
+V438b	crainte révérencielle, vénération		machine	
+V439	honorer		machine	
+V440	souffrir		machine	
+V441	lutter (contre une difficulté)		machine	lutter, se débattre
+V442	dire		machine	
+V443	parler		machine	
+V443b	discours		machine	
+V444	raconter, dire		machine	
+V445	chuchoter		machine	
+V446	crier, hurler		machine	
+V447	bavarder, causer		machine	
+V448	marmonner		machine	
+V449	bégayer		machine	
+V450	saluer		machine	
+V451	dire au revoir, prendre congé		machine	
+V452	appeler, interpeller		machine	
+V453	annoncer		machine	
+V454	expliquer		machine	
+V455	conseiller		machine	
+V456	faire des commérages, cancaner		machine	
+V457	demander, poser une question		machine	
+V457b	question		machine	
+V458	supplier, implorer		machine	
+V458b	demande, requête		machine	
+V459	répondre		machine	
+V460	remercier		machine	
+V461	jurer, prêter serment		machine	
+V462	insulter		machine	
+V462b	insulte		machine	
+V463	calomnier		machine	
+V464	menacer		machine	
+V465	se disputer verbalement		machine	se disputer
+V465b	dispute, querelle		machine	
+V466	râler, ronchonner		machine	
+V467	contredire		machine	
+V468	accuser		machine	
+V469	nier		machine	
+V470	avouer, reconnaître (une faute)		machine	
+V471	être d'accord (avec)		machine	
+V471b	accord		machine	
+V472	persuader, convaincre		machine	
+V473	louer, faire l'éloge (de)		machine	
+V473b	louange, éloge		machine	
+V474	féliciter		machine	
+V475	se vanter		machine	
+V476	mentir		machine	
+V477	rencontrer		machine	
+V477b	réunion, rencontre		machine	
+V478	accompagner		machine	
+V479	être ensemble		machine	
+V480	se rassembler, se réunir		machine	
+V481	inviter		machine	
+V482	abandonner		machine	
+V483	éviter		machine	
+V484	faire fuir, faire partir		machine	
+V485	ressembler (à)		machine	
+V486	imiter		machine	
+V487	convenir (à), être convenable		machine	
+V488	faire signe de la main		machine	
+V489	montrer du doigt		machine	
+V490	serrer dans ses bras, étreindre		machine	
+V491	caresser		machine	
+V492	embrasser, donner un baiser		machine	
+V493	avoir des rapports sexuels, faire l'amour		machine	
+V494	s'accoupler		machine	
+V495	allaiter		machine	
+V496	chatouiller		machine	
+V497	donner une fessée, fesser		machine	
+V498	aider		machine	
+V499	protéger, défendre		machine	
+V500	s'occuper de, prendre soin de		machine	
+V501	élever (un enfant)		machine	
+V502	gouverner, régner sur		machine	
+V503	commander, ordonner		machine	
+V503b	ordre		machine	
+V504	envoyer		machine	
+V505	servir		machine	
+V506	guider, conduire		machine	
+V507	suivre		machine	
+V508	obéir		machine	
+V509	plaire (à), faire plaisir (à)		machine	
+V510	agacer, ennuyer		machine	
+V511	tromper, duper		machine	
+V512	être en conflit, être brouillé		machine	se quereller
+V513	se battre, combattre		machine	
+V514	se venger		machine	
+V515	intercéder		machine	
+V516	trouver un compromis, transiger		machine	
+V517	faire taire		machine	
+V518	punir		machine	
+V518b	punition, peine		machine	
+V519	vaincre		machine	
+V520	être vaincu		machine	
+V521	piller		machine	
+V522	espionner		machine	
+V523	violer		machine	
+V524	prier		machine	
+V525	prophétiser		machine	
+V526	jeter un sort, ensorceler		machine	
+V527	maudire		machine	
+V528	empoisonner		machine	
+V529	protéger par une amulette		machine	
+V530	exorciser		machine	
+V531	sacrifier, offrir un sacrifice		machine	
+V532	verser une libation		machine	
+V533	enterrer, inhumer		machine	
+V534	présenter ses condoléances, consoler		machine	
+V535	se marier, épouser		machine	
+V535b	mariage (l'état), union conjugale	l'état de personne mariée, pas la cérémonie	machine	
+V536	être fiancé		machine	
+V537	divorcer		machine	
+V538	obstruer, bloquer		machine	
+V539	empêcher		machine	
+V540	interdire, défendre		machine	
+V541	permettre, autoriser		machine	
+V542	s'abstenir		machine	
+V543	commencer		machine	
+V543b	début, commencement		machine	
+V544	continuer		machine	
+V545	s'arrêter, arrêter		machine	
+V546	attendre		machine	
+V547	attendre (quelqu'un, quelque chose)		machine	
+V548	passer du temps, séjourner		machine	
+V549	finir, terminer		machine	
+V549b	fin		machine	
+CENG	Anglais		machine	
+CENGf	Anglaise		machine	
+CENGm	Anglais		machine	
+CFRA	Français		machine	
+CFRAf	Française		machine	
+CFRAm	Français		machine	
+CPOR	Portugais		machine	
+CPORf	Portugaise		machine	
+CPORm	Portugais		machine	
+CDEU	Allemand		machine	
+CDEUf	Allemande		machine	
+CDEUm	Allemand		machine	
+CITA	Italien		machine	
+CITAf	Italienne		machine	
+CITAm	Italien		machine	
+CSPA	Espagnol		machine	
+CSPAf	Espagnole		machine	
+CSPAm	Espagnol		machine	
+CNLD	Néerlandais		machine	
+CNLDf	Néerlandaise		machine	
+CNLDm	Néerlandais		machine	
+CTUR	Turc		machine	
+CTURf	Turque		machine	
+CTURm	Turc		machine	
+CCMN	Chinois		machine	
+CCMNf	Chinoise		machine	
+CCMNm	Chinois		machine	
+CGUJ	personne gujarati		machine	
+CGUJf	femme gujarati		machine	
+CGUJm	homme gujarati		machine	
+CARA	Arabe		machine	
+CARAf	Arabe		machine	
+CARAm	Arabe		machine	
+CKAB	Kabyle		machine	
+CKABf	Kabyle		machine	
+CKABm	Kabyle		machine	
+CTZM	personne amazighe du Moyen Atlas	On évite « Berbère », exonyme ; « Amazigh » est l'autodésignation.	machine	
+CTZMf	femme amazighe du Moyen Atlas	On évite « Berbère », exonyme ; « Amazigh » est l'autodésignation.	machine	
+CTZMm	homme amazigh du Moyen Atlas	On évite « Berbère », exonyme ; « Amazigh » est l'autodésignation.	machine	
+CSHI	personne du peuple appelé Ichelhiyen, Chleuh	« Chleuh » est le nom courant de ce peuple amazigh du sud du Maroc (autodésignation Ichelhiyen), mais c'est aussi une ancienne insulte pour les Allemands ; « Chleuh » seulement en second choix.	machine	
+CSHIf	femme du peuple appelé Ichelhiyen, Chleuhe	« Chleuh » est le nom courant de ce peuple amazigh du sud du Maroc (autodésignation Ichelhiyen), mais c'est aussi une ancienne insulte pour les Allemands ; « Chleuh » seulement en second choix.	machine	
+CSHIm	homme du peuple appelé Ichelhiyen, Chleuh	« Chleuh » est le nom courant de ce peuple amazigh du sud du Maroc (autodésignation Ichelhiyen), mais c'est aussi une ancienne insulte pour les Allemands ; « Chleuh » seulement en second choix.	machine	
+CTMH	personne du peuple appelé Kel Tamasheq, Touareg	« Touareg » est un exonyme d'origine arabe, courant en français mais parfois ressenti comme péjoratif ; l'autodésignation est Kel Tamasheq (ou Imuhagh).	machine	
+CTMHf	femme du peuple appelé Kel Tamasheq, Touarègue	« Touareg » est un exonyme d'origine arabe, courant en français mais parfois ressenti comme péjoratif ; l'autodésignation est Kel Tamasheq (ou Imuhagh).	machine	
+CTMHm	homme du peuple appelé Kel Tamasheq, Touareg	« Touareg » est un exonyme d'origine arabe, courant en français mais parfois ressenti comme péjoratif ; l'autodésignation est Kel Tamasheq (ou Imuhagh).	machine	
+CBEJ	personne bedja		machine	
+CBEJf	femme bedja		machine	
+CBEJm	homme bedja		machine	
+CFIA	Nubien		machine	
+CFIAf	Nubienne		machine	
+CFIAm	Nubien		machine	
+CFVR	personne four (Darfour)		machine	
+CFVRf	femme four (Darfour)		machine	
+CFVRm	homme four (Darfour)		machine	
+CZAG	personne zaghawa		machine	
+CZAGf	femme zaghawa		machine	
+CZAGm	homme zaghawa		machine	
+CMLS	personne massalit		machine	
+CMLSf	femme massalit		machine	
+CMLSm	homme massalit		machine	
+CDIN	personne dinka		machine	
+CDINf	femme dinka		machine	
+CDINm	homme dinka		machine	
+CNUS	personne nuer		machine	
+CNUSf	femme nuer		machine	
+CNUSm	homme nuer		machine	
+CSHK	personne shilluk		machine	
+CSHKf	femme shilluk		machine	
+CSHKm	homme shilluk		machine	
+CANU	personne anuak		machine	
+CANUf	femme anuak		machine	
+CANUm	homme anuak		machine	
+CBFA	personne du peuple appelé Bari		machine	
+CBFAf	femme du peuple appelé Bari		machine	
+CBFAm	homme du peuple appelé Bari		machine	
+CZNE	personne zandé		machine	
+CZNEf	femme zandé		machine	
+CZNEm	homme zandé		machine	
+CACH	personne acholi		machine	
+CACHf	femme acholi		machine	
+CACHm	homme acholi		machine	
+CLAJ	personne du peuple appelé Lango (Ouganda)		machine	
+CLAJf	femme du peuple appelé Lango (Ouganda)		machine	
+CLAJm	homme du peuple appelé Lango (Ouganda)		machine	
+CTEO	personne du peuple appelé Iteso		machine	
+CTEOf	femme du peuple appelé Iteso		machine	
+CTEOm	homme du peuple appelé Iteso		machine	
+CLUO	personne luo (Kenya)		machine	
+CLUOf	femme luo (Kenya)		machine	
+CLUOm	homme luo (Kenya)		machine	
+CAMH	personne amhara		machine	
+CAMHf	femme amhara		machine	
+CAMHm	homme amhara		machine	
+CORM	personne oromo	Ne pas utiliser « Galla », ancien terme injurieux encore présent dans de vieux ouvrages en français.	machine	
+CORMf	femme oromo	Ne pas utiliser « Galla », ancien terme injurieux encore présent dans de vieux ouvrages en français.	machine	
+CORMm	homme oromo	Ne pas utiliser « Galla », ancien terme injurieux encore présent dans de vieux ouvrages en français.	machine	
+CTIR	Tigréen, Tigrinya	« Tigréen » pour le Tigray (Éthiopie) ; en Érythrée on dit « Tigrinya ».	machine	
+CTIRf	Tigréenne, femme tigrinya	« Tigréen » pour le Tigray (Éthiopie) ; en Érythrée on dit « Tigrinya ».	machine	
+CTIRm	Tigréen, homme tigrinya	« Tigréen » pour le Tigray (Éthiopie) ; en Érythrée on dit « Tigrinya ».	machine	
+CTIG	personne tigré (Érythrée)	Peuple d'Érythrée et de l'est du Soudan, à ne pas confondre avec les Tigréens du Tigray.	machine	
+CTIGf	femme tigré (Érythrée)	Peuple d'Érythrée et de l'est du Soudan, à ne pas confondre avec les Tigréens du Tigray.	machine	
+CTIGm	homme tigré (Érythrée)	Peuple d'Érythrée et de l'est du Soudan, à ne pas confondre avec les Tigréens du Tigray.	machine	
+CSOM	personne somalie	Au sens ethnique (Somali), et non de la nationalité (Somalien).	machine	
+CSOMf	femme somalie	Au sens ethnique (Somali), et non de la nationalité (Somalien).	machine	
+CSOMm	homme somali	Au sens ethnique (Somali), et non de la nationalité (Somalien).	machine	
+CAAR	personne afar		machine	
+CAARf	femme afar		machine	
+CAARm	homme afar		machine	
+CSID	personne sidama		machine	
+CSIDf	femme sidama		machine	
+CSIDm	homme sidama		machine	
+CWAL	personne du peuple appelé Wolaytta		machine	
+CWALf	femme du peuple appelé Wolaytta		machine	
+CWALm	homme du peuple appelé Wolaytta		machine	
+CHDY	personne du peuple appelé Hadiyya		machine	
+CHDYf	femme du peuple appelé Hadiyya		machine	
+CHDYm	homme du peuple appelé Hadiyya		machine	
+CSGW	personne gouragué		machine	
+CSGWf	femme gouragué		machine	
+CSGWm	homme gouragué		machine	
+CGUK	personne gumuz	Ne pas utiliser « Shanqilla », terme injurieux en Éthiopie.	machine	
+CGUKf	femme gumuz	Ne pas utiliser « Shanqilla », terme injurieux en Éthiopie.	machine	
+CGUKm	homme gumuz	Ne pas utiliser « Shanqilla », terme injurieux en Éthiopie.	machine	
+CWTI	personne du peuple appelé Berta		machine	
+CWTIf	femme du peuple appelé Berta		machine	
+CWTIm	homme du peuple appelé Berta		machine	
+CUDU	personne du peuple appelé Uduk		machine	
+CUDUf	femme du peuple appelé Uduk		machine	
+CUDUm	homme du peuple appelé Uduk		machine	
+CMPE	personne du peuple appelé Majangir		machine	
+CMPEf	femme du peuple appelé Majangir		machine	
+CMPEm	homme du peuple appelé Majangir		machine	
+CSWA	personne swahilie		machine	
+CSWAf	femme swahilie		machine	
+CSWAm	homme swahili		machine	
+CKIK	personne kikuyu		machine	
+CKIKf	femme kikuyu		machine	
+CKIKm	homme kikuyu		machine	
+CKAM	personne du peuple appelé Kamba (Kenya)		machine	
+CKAMf	femme du peuple appelé Kamba (Kenya)		machine	
+CKAMm	homme du peuple appelé Kamba (Kenya)		machine	
+CGUZ	personne du peuple appelé Gusii		machine	
+CGUZf	femme du peuple appelé Gusii		machine	
+CGUZm	homme du peuple appelé Gusii		machine	
+CMAS	personne massaïe		machine	
+CMASf	femme massaïe		machine	
+CMASm	homme massaï		machine	
+CKLN	personne kalenjin		machine	
+CKLNf	femme kalenjin		machine	
+CKLNm	homme kalenjin		machine	
+CLUG	personne ganda		machine	
+CLUGf	femme ganda		machine	
+CLUGm	homme ganda		machine	
+CNYN	personne du peuple appelé Nyankole		machine	
+CNYNf	femme du peuple appelé Nyankole		machine	
+CNYNm	homme du peuple appelé Nyankole		machine	
+CKIN	personne de langue kinyarwanda, Munyarwanda	Banyarwanda (sg. Munyarwanda) : au Rwanda, en RD Congo et en Ouganda, pas seulement les citoyens rwandais.	machine	
+CKINf	femme de langue kinyarwanda	Banyarwanda (sg. Munyarwanda) : au Rwanda, en RD Congo et en Ouganda, pas seulement les citoyens rwandais.	machine	
+CKINm	homme de langue kinyarwanda	Banyarwanda (sg. Munyarwanda) : au Rwanda, en RD Congo et en Ouganda, pas seulement les citoyens rwandais.	machine	
+CRUN	personne de langue kirundi, Murundi	Barundi (sg. Murundi) : pas seulement les citoyens burundais.	machine	
+CRUNf	femme de langue kirundi	Barundi (sg. Murundi) : pas seulement les citoyens burundais.	machine	
+CRUNm	homme de langue kirundi	Barundi (sg. Murundi) : pas seulement les citoyens burundais.	machine	
+CSUK	personne sukuma		machine	
+CSUKf	femme sukuma		machine	
+CSUKm	homme sukuma		machine	
+CNYM	personne nyamwezi		machine	
+CNYMf	femme nyamwezi		machine	
+CNYMm	homme nyamwezi		machine	
+CHAU	personne haoussa		machine	
+CHAUf	femme haoussa		machine	
+CHAUm	homme haoussa		machine	
+CYOR	personne yoruba		machine	
+CYORf	femme yoruba		machine	
+CYORm	homme yoruba		machine	
+CIBO	personne igbo		machine	
+CIBOf	femme igbo		machine	
+CIBOm	homme igbo		machine	
+CEFI	personne efik		machine	
+CEFIf	femme efik		machine	
+CEFIm	homme efik		machine	
+CTIV	personne tiv		machine	
+CTIVf	femme tiv		machine	
+CTIVm	homme tiv		machine	
+CNUP	personne du peuple appelé Nupe		machine	
+CNUPf	femme du peuple appelé Nupe		machine	
+CNUPm	homme du peuple appelé Nupe		machine	
+CBIN	personne du peuple appelé Edo		machine	
+CBINf	femme du peuple appelé Edo		machine	
+CBINm	homme du peuple appelé Edo		machine	
+CIJC	personne du peuple appelé Ijaw (Izon)		machine	
+CIJCf	femme du peuple appelé Ijaw (Izon)		machine	
+CIJCm	homme du peuple appelé Ijaw (Izon)		machine	
+CAKA	personne akan		machine	
+CAKAf	femme akan		machine	
+CAKAm	homme akan		machine	
+CEWE	personne éwé		machine	
+CEWEf	femme éwé		machine	
+CEWEm	homme éwé		machine	
+CGAA	personne du peuple appelé Ga (Ghana)		machine	
+CGAAf	femme du peuple appelé Ga (Ghana)		machine	
+CGAAm	homme du peuple appelé Ga (Ghana)		machine	
+CDAG	personne dagomba		machine	
+CDAGf	femme dagomba		machine	
+CDAGm	homme dagomba		machine	
+CMOS	personne mossi		machine	
+CMOSf	femme mossi		machine	
+CMOSm	homme mossi		machine	
+CDYU	personne dioula		machine	
+CDYUf	femme dioula		machine	
+CDYUm	homme dioula		machine	
+CBAM	personne bambara		machine	
+CBAMf	femme bambara		machine	
+CBAMm	homme bambara		machine	
+CMNK	personne mandinka		machine	
+CMNKf	femme mandinka		machine	
+CMNKm	homme mandinka		machine	
+CSNK	personne soninké		machine	
+CSNKf	femme soninké		machine	
+CSNKm	homme soninké		machine	
+CWOL	personne wolof		machine	
+CWOLf	femme wolof		machine	
+CWOLm	homme wolof		machine	
+CSRR	personne sérère		machine	
+CSRRf	femme sérère		machine	
+CSRRm	homme sérère		machine	
+CDYO	personne diola		machine	
+CDYOf	femme diola		machine	
+CDYOm	homme diola		machine	
+CTEM	personne du peuple appelé Temné		machine	
+CTEMf	femme du peuple appelé Temné		machine	
+CTEMm	homme du peuple appelé Temné		machine	
+CMEN	personne du peuple appelé Mendé		machine	
+CMENf	femme du peuple appelé Mendé		machine	
+CMENm	homme du peuple appelé Mendé		machine	
+CKRI	personne krio		machine	
+CKRIf	femme krio		machine	
+CKRIm	homme krio		machine	
+CKPE	personne kpellé		machine	
+CKPEf	femme kpellé		machine	
+CKPEm	homme kpellé		machine	
+CBCI	personne baoulé		machine	
+CBCIf	femme baoulé		machine	
+CBCIm	homme baoulé		machine	
+CFON	personne fon		machine	
+CFONf	femme fon		machine	
+CFONm	homme fon		machine	
+CDJE	personne zarma		machine	
+CDJEf	femme zarma		machine	
+CDJEm	homme zarma		machine	
+CSES	personne songhaï		machine	
+CSESf	femme songhaï		machine	
+CSESm	homme songhaï		machine	
+CKBP	personne kabyè		machine	
+CKBPf	femme kabyè		machine	
+CKBPm	homme kabyè		machine	
+CSUS	personne soussou		machine	
+CSUSf	femme soussou		machine	
+CSUSm	homme soussou		machine	
+CFUL	Peul		machine	
+CFULf	Peule		machine	
+CFULm	Peul		machine	
+CKAU	personne kanouri		machine	
+CKAUf	femme kanouri		machine	
+CKAUm	homme kanouri		machine	
+CLIN	personne de langue maternelle lingala	Locuteurs natifs du lingala, non tous ceux qui le parlent comme langue véhiculaire ; à distinguer de la langue bangala (bxg).	machine	
+CLINf	femme de langue maternelle lingala	Locuteurs natifs du lingala, non tous ceux qui le parlent comme langue véhiculaire ; à distinguer de la langue bangala (bxg).	machine	
+CLINm	homme de langue maternelle lingala	Locuteurs natifs du lingala, non tous ceux qui le parlent comme langue véhiculaire ; à distinguer de la langue bangala (bxg).	machine	
+CKON	personne kongo	Bakongo (sg. Mukongo) : à ne pas confondre avec les Congolais, citoyens de l'un ou l'autre Congo.	machine	
+CKONf	femme kongo	Bakongo (sg. Mukongo) : à ne pas confondre avec les Congolais, citoyens de l'un ou l'autre Congo.	machine	
+CKONm	homme kongo	Bakongo (sg. Mukongo) : à ne pas confondre avec les Congolais, citoyens de l'un ou l'autre Congo.	machine	
+CLUA	personne luba du Kasaï		machine	
+CLUAf	femme luba du Kasaï		machine	
+CLUAm	homme luba du Kasaï		machine	
+CLUB	personne luba du Katanga		machine	
+CLUBf	femme luba du Katanga		machine	
+CLUBm	homme luba du Katanga		machine	
+CSAG	personne du peuple sango	Le peuple sango, riverain de l'Oubangui, non tous ceux qui parlent le sango comme langue véhiculaire.	machine	
+CSAGf	femme du peuple sango	Le peuple sango, riverain de l'Oubangui, non tous ceux qui parlent le sango comme langue véhiculaire.	machine	
+CSAGm	homme du peuple sango	Le peuple sango, riverain de l'Oubangui, non tous ceux qui parlent le sango comme langue véhiculaire.	machine	
+CEWO	personne ewondo		machine	
+CEWOf	femme ewondo		machine	
+CEWOm	homme ewondo		machine	
+CBUM	personne boulou		machine	
+CBUMf	femme boulou		machine	
+CBUMm	homme boulou		machine	
+CSBA	personne ngambaye		machine	
+CSBAf	femme ngambaye		machine	
+CSBAm	homme ngambaye		machine	
+CAFR	Afrikaner	Les Afrikaners, non tous les locuteurs de l'afrikaans, dont beaucoup sont métis.	machine	
+CAFRf	femme afrikaner	Les Afrikaners, non tous les locuteurs de l'afrikaans, dont beaucoup sont métis.	machine	
+CAFRm	homme afrikaner	Les Afrikaners, non tous les locuteurs de l'afrikaans, dont beaucoup sont métis.	machine	
+CZUL	Zoulou		machine	
+CZULf	Zouloue		machine	
+CZULm	Zoulou		machine	
+CXHO	personne xhosa		machine	
+CXHOf	femme xhosa		machine	
+CXHOm	homme xhosa		machine	
+CSOT	personne sotho		machine	
+CSOTf	femme sotho		machine	
+CSOTm	homme sotho		machine	
+CTSN	personne tswana		machine	
+CTSNf	femme tswana		machine	
+CTSNm	homme tswana		machine	
+CNSO	personne du peuple appelé Pedi		machine	
+CNSOf	femme du peuple appelé Pedi		machine	
+CNSOm	homme du peuple appelé Pedi		machine	
+CTSO	personne tsonga		machine	
+CTSOf	femme tsonga		machine	
+CTSOm	homme tsonga		machine	
+CVEN	personne venda		machine	
+CVENf	femme venda		machine	
+CVENm	homme venda		machine	
+CSSW	personne swazi		machine	
+CSSWf	femme swazi		machine	
+CSSWm	homme swazi		machine	
+CNDE	personne ndébélé du Nord (Zimbabwe)		machine	
+CNDEf	femme ndébélé du Nord (Zimbabwe)		machine	
+CNDEm	homme ndébélé du Nord (Zimbabwe)		machine	
+CSNA	personne shona		machine	
+CSNAf	femme shona		machine	
+CSNAm	homme shona		machine	
+CNYA	personne chewa		machine	
+CNYAf	femme chewa		machine	
+CNYAm	homme chewa		machine	
+CBEM	personne bemba		machine	
+CBEMf	femme bemba		machine	
+CBEMm	homme bemba		machine	
+CTOI	personne du peuple appelé Tonga (Zambie)		machine	
+CTOIf	femme du peuple appelé Tonga (Zambie)		machine	
+CTOIm	homme du peuple appelé Tonga (Zambie)		machine	
+CLOZ	personne lozi		machine	
+CLOZf	femme lozi		machine	
+CLOZm	homme lozi		machine	
+CUMB	personne du peuple appelé Ovimbundu		machine	
+CUMBf	femme du peuple appelé Ovimbundu		machine	
+CUMBm	homme du peuple appelé Ovimbundu		machine	
+CKMB	personne du peuple appelé Ambundu		machine	
+CKMBf	femme du peuple appelé Ambundu		machine	
+CKMBm	homme du peuple appelé Ambundu		machine	
+CVMW	personne du peuple appelé Makhuwa		machine	
+CVMWf	femme du peuple appelé Makhuwa		machine	
+CVMWm	homme du peuple appelé Makhuwa		machine	
+CSEH	personne du peuple appelé Sena		machine	
+CSEHf	femme du peuple appelé Sena		machine	
+CSEHm	homme du peuple appelé Sena		machine	
+CYAO	personne yao		machine	
+CYAOf	femme yao		machine	
+CYAOm	homme yao		machine	
+CHER	personne herero		machine	
+CHERf	femme herero		machine	
+CHERm	homme herero		machine	
+CNAQ	personne du peuple appelé Khoekhoe	Ne pas utiliser « Hottentot », terme colonial injurieux.	machine	
+CNAQf	femme du peuple appelé Khoekhoe	Ne pas utiliser « Hottentot », terme colonial injurieux.	machine	
+CNAQm	homme du peuple appelé Khoekhoe	Ne pas utiliser « Hottentot », terme colonial injurieux.	machine	
+CMLG	Malgache		machine	
+CMLGf	Malgache		machine	
+CMLGm	Malgache		machine	

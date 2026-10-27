@@ -86,6 +86,13 @@ class NewDatabaseDialog(QDialog):
                                 "understand (e.g. en ar, or en am)")
         f.addRow("Database name", self.db_name)
         f.addRow("Gloss languages", self.glosses)
+        from .. import wordlists as _wl                 # the EACW's shipped glosses and their status (idea 63)
+        shipped = "; ".join(f"{name}, {status[:1].lower()}{status[1:]}"
+                            for name, status in _wl.gloss_statuses().values())
+        gl_note = QLabel(f"With the EACW, fr, ar or am come filled in: {shipped}.")
+        gl_note.setWordWrap(True)
+        gl_note.setStyleSheet(f"color: {theme.muted()};")
+        f.addRow("", gl_note)
 
         # 4. you (remembered on this computer)
         box = section("You, as researcher (remembered on this computer)")

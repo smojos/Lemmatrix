@@ -69,7 +69,7 @@ def test_the_new_database_choice(app):
     from lemmatrix.ui.wordlist_dialogs import WHY_EACW, WordlistChoice
     w = WordlistChoice()
     assert w.choice() == wl.EACW and w.version() == (wl.BASE, wl.AFRICA)
-    assert w.count.text() == "2,274 lemmas"
+    assert w.count.text() == "2,268 lemmas"
     w.items.setCurrentIndex(w.items.findData(wl.EXPANDED))
     w.region.setCurrentIndex(w.region.findData(wl.GLOBAL))
     assert w.count.text() == f"{len(wl.version_items(wl.EXPANDED, wl.GLOBAL)):,} lemmas"
@@ -173,7 +173,8 @@ def test_link_to_wordlists_fills_clarification_and_taxon(app, tmp_path, monkeypa
     d = w.doc.db
     assert d.settings.entry_field(wl.TAXON) is not None and "DEM" in d.settings.word_classes()
     assert d.entry_by_ref("D009").get("Taxon") == "Capra hircus (Bovidae)"
-    assert d.entry_by_ref("J022a").get("Clarification") == "Azadirachta indica"
+    assert d.settings.entry_field(wl.CLARIFICATION) is None          # format 15: no field (idea 87)
+    assert wl.clarification_for(d, d.entry_by_ref("J022a"), "en") == "Azadirachta indica"
     w.doc.undo.undo()
     assert not d.entry_by_ref("D009").get("Taxon")
     w.doc.undo.setClean()

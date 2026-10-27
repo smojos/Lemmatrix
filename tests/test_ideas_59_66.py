@@ -6,6 +6,8 @@ select and fix, one undo step; the EACW's editions, and the update offered on op
 
 import os
 
+import pytest
+
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["LEMMATRIX_SETTINGS"] = "Lemmatrix-tests"
 
@@ -116,6 +118,16 @@ def test_the_ethical_archive_offers_the_thanks(win):
 
 # ---- idea 66: wordlist integrity ---------------------------------------------------------------
 
+@pytest.fixture
+def no_renumbering(monkeypatch):
+    """The editions without 2026-10-27's renumbering: these tests set an older version on a database
+    built from the newest list, which a real older database never is (its references are the old
+    numbers); the renumbering has tests of its own (tests/test_edition_20261027.py)."""
+    from dataclasses import replace
+    eds = tuple(replace(e, renumbered="", old_glosses="", redesignated=frozenset()) for e in wl.EDITIONS)
+    monkeypatch.setattr(wl, "EDITIONS", eds)
+
+
 def _eacw_db(version=""):
     db = newdb.make(newdb.Choices(base=wl.EACW, items=wl.BASE, region=wl.AFRICA))
     db.metadata.wordlist_version = version
@@ -129,7 +141,7 @@ def test_new_eacw_databases_are_on_the_shipped_edition():
     assert wl.editions_since("") == list(wl.EDITIONS[1:])
 
 
-def test_the_check_finds_and_selects_what_the_update_changed():
+def test_the_check_finds_and_selects_what_the_update_changed(no_renumbering):
     db = _eacw_db("")                                    # the first edition
     eacw = wl.get(wl.EACW)
     db.entries = [e for e in db.entries if e.ref not in ("C015f", "D002")]   # C015f newly default
@@ -152,7 +164,7 @@ def test_the_check_finds_and_selects_what_the_update_changed():
     assert "A009b" in eacw.by_number
 
 
-def test_the_plan_never_drops_a_lemma_with_data():
+def test_the_plan_never_drops_a_lemma_with_data(no_renumbering):
     db = _eacw_db("")
     c012 = db.new_entry("C012", gloss="cousin")
     c012.tokens.append(Token(values={"Phonetic": "ba"}))
@@ -165,7 +177,7 @@ def test_the_plan_never_drops_a_lemma_with_data():
     assert {e.ref for e in made} == {f.ref for f in fs if f.kind == wc.MISSING}
 
 
-def test_fix_the_selected_is_one_undo_step(win, monkeypatch):
+def test_fix_the_selected_is_one_undo_step(win, monkeypatch, no_renumbering):
     from lemmatrix.ui import wordlist_dialogs as wd
     db = win.doc.db
     wl.link_as_eacw(db)                                  # the tests' sample isn't built on a list
@@ -192,7 +204,7 @@ def test_fix_the_selected_is_one_undo_step(win, monkeypatch):
     win.doc.mark_clean() if hasattr(win.doc, "mark_clean") else None
 
 
-def test_opening_an_older_edition_offers_the_update(win, monkeypatch):
+def test_opening_an_older_edition_offers_the_update(win, monkeypatch, no_renumbering):
     from lemmatrix.ui import wordlist_dialogs as wd
     db = win.doc.db
     wl.link_as_eacw(db)
@@ -218,7 +230,7 @@ def test_opening_an_older_edition_offers_the_update(win, monkeypatch):
             box.close()
 
 
-def test_nothing_to_update_records_the_edition_quietly():
+def test_nothing_to_update_records_the_edition_quietly(no_renumbering):
     from types import SimpleNamespace
     from lemmatrix.ui import wordlist_dialogs as wd
     db = _eacw_db("")                     # the whole base list: nothing the update changed is missing

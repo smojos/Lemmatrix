@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<database format="13">
+<database format="15">
   <metadata>
     <language code="ITA">Italian</language>
     <variety code="STD">Standard Italian</variety>
@@ -29,7 +29,7 @@
       </location>
     </location>
     <description>A small invented Italian database (Danish as the second gloss language) for trying out ɛλicit. Built by samples/make_elicit_test.py; the recordings are Josh Smolders'.</description>
-    <wordlist base="EACW" items="base" region="africa" version="2026-10-24" />
+    <wordlist base="EACW" items="base" region="africa" version="2026-10-27" />
   </metadata>
   <settings>
     <entry-fields>
@@ -71,7 +71,6 @@
         </item>
       </field>
       <field name="Comment" role="comment" />
-      <field name="Clarification" role="clarification" />
       <field name="Taxon" role="taxon" />
     </entry-fields>
     <token-fields>
@@ -109,6 +108,7 @@
       <field name="Description" />
       <field name="Comment" role="comment" />
     </text-fields>
+    <characters transcriptions="NFC" fields="Phonetic, Phonemic">Phonetic and Phonemic are composed (Unicode NFC): é is one character (U+00E9) where Unicode has one; other marks are characters of their own (ɛ́ is ɛ + U+0301).</characters>
     <tier-mapping main="tx">
       <tier name="tx" field="Phonetic" />
       <tier name="ge" field="Morphemes" />
@@ -297,7 +297,6 @@
     <WordClass>NOUN</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: ask for this (new recording)</Comment>
-    <Clarification>local staple bread, e.g. injera</Clarification>
     <token id="9decbdd58a">
       <Phonemic>ˈpane</Phonemic>
       <Translation lang="en">bread</Translation>

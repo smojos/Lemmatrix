@@ -80,6 +80,8 @@ def make(ch: Choices) -> Database:
         md.author = you["name"] or you["code"]
     if ch.base:
         defaults.fill_from_wordlist(db, ch.base, ch.items, ch.region)
+        from . import wordlists as wl            # the EACW's glosses in the other gloss languages (idea 63)
+        wl.fill_glosses(db)
     pitchkind.convert(db, ch.kind)            # its fields follow the kind (a new database has no data)
     return db
 

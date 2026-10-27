@@ -1734,8 +1734,13 @@ class MainWindow(QMainWindow):
                 continue
             if f.multilingual:
                 for lang in s.gloss_languages:
+                    tip = None
+                    if f.role == "gloss":          # the EACW's clarification in its hover (idea 87)
+                        ws = getattr(self.doc, "workspace", None)
+                        tip = lambda e, l=lang, ws=ws: wordlists.clarification_for(db, e, l, ws) or None
                     cols.append(Column(f"{f.name}:{lang}", f"{f.title} ({lang})" if len(s.gloss_languages) > 1
-                                       else f.title, lambda e, n=f.name, l=lang: e.get(n, l), edit=edit))
+                                       else f.title, lambda e, n=f.name, l=lang: e.get(n, l), edit=edit,
+                                       tooltip=tip))
             else:
                 cols.append(Column(f.name, f.title, lambda e, n=f.name: e.get(n), closed=f.closed,
                                    tree=(lambda f=f: s.list_items(f)) if f.closed else None,
@@ -1762,6 +1767,7 @@ class MainWindow(QMainWindow):
         s = db.settings
         defaults = mx.default_names(db)
         wcf = s.entry_field("word-class")
+        from .. import wordlists
 
         def tag_tree():
             out = [ListItem(fl.CITATION_ITEM)]
@@ -1772,7 +1778,9 @@ class MainWindow(QMainWindow):
             # the lemma's columns: double-click goes to the lemma in the lemma list
             Column("ref", "Reference", lambda r: r.entry.ref, lemma_level=True),
             Column("lemma", "Lemma", lambda r: db.lemma(r.entry), ipa=True, lemma_level=True),
-            Column("gloss", "Gloss", lambda r: db.gloss(r.entry), lemma_level=True),
+            Column("gloss", "Gloss", lambda r: db.gloss(r.entry), lemma_level=True,     # the (i)'s text (idea 87)
+                   tooltip=lambda r, ws=getattr(self.doc, "workspace", None):
+                   wordlists.clarification_for(db, r.entry, s.primary_gloss, ws) or None),
             # the second languages' glosses: offered in Configure columns, not shown by default (idea 19)
             *[Column("gloss:" + lang, f"Gloss ({lang})", lambda r, l=lang: db.gloss(r.entry, l), lemma_level=True)
               for lang in self._other_languages()],
@@ -1986,6 +1994,10 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(
                 f"Added the new field {', '.join(db.added_fields)} (where a lemma comes from, with From). "
                 "It's empty; Settings → General can hide it.", 15000)
+        if getattr(db, "dropped_fields", None):   # format 15 (idea 87): said quietly
+            self.statusBar().showMessage(
+                f"The {', '.join(db.dropped_fields)} field is gone: the EACW's clarifications now come from "
+                "the list itself, as an (i) beside each gloss.", 15000)
         if db.load_notes:                         # e.g. an older file upgraded to the current format
             notes, db.load_notes = db.load_notes, []
             self.doc.settings_changed()           # unsaved, so saving writes the new format
@@ -4128,8 +4140,10 @@ class MainWindow(QMainWindow):
         if focus == "pitch kind":
             dlg.pitch_kind.setFocus()
         before = self.doc.settings_snapshot()     # OK with nothing changed: not unsaved
+        langs_before = list(self.doc.db.settings.gloss_languages)
         if dlg.exec():
             dlg.apply()
+            self._fill_shipped_glosses([l for l in self.doc.db.settings.gloss_languages if l not in langs_before])
             new = dlg.pitch_kind.currentData()
             if new != pitchkind.kind(self.doc.db):
                 self.convert_pitch_kind(new)      # its own undo step (idea 9)
@@ -4138,6 +4152,29 @@ class MainWindow(QMainWindow):
             self._fill_db_title()
             self._setup_columns()
             self._maybe_update_names()
+
+    def _fill_shipped_glosses(self, langs):
+        """A gloss language added in Edit → Metadata to an EACW database (idea 63): the shipped glosses
+        fill its empty glosses where the English gloss is still the list's, one undo step."""
+        from .. import wordlists as wl
+        db = self.doc.db
+        if not langs or not wl.is_eacw(db) or wl.renumber_pending(db):
+            return
+        plan = wl.gloss_fill_plan(db, langs)
+        f = db.settings.entry_field("gloss")
+        if not plan or f is None:
+            return
+        pairs = []
+        for e, vals in plan:
+            after = e.copy()
+            for lang, g in vals.items():
+                after.set(f.name, g, lang, True)
+            pairs.append((e, after))
+        self.doc.apply_changes(f"Glosses from the EACW ({', '.join(langs)})", pairs, stamp=False)
+        wl.record_gloss_editions(db, langs)
+        status = "; ".join(x for x in (wl.gloss_status(l) for l in langs) if x)
+        self.statusBar().showMessage(f"Filled {len(pairs):,} glosses from the EACW ({status}). Ctrl+Z undoes it.",
+                                     15000)
 
     def convert_pitch_kind(self, new: str) -> bool:
         """Convert the database's pitch kind (idea 9). Data the new kind doesn't show is kept hidden
@@ -4766,6 +4803,9 @@ class MainWindow(QMainWindow):
     def convert_references(self):
         """Tools → Convert references from a table… (Josh, 23 October): a conversion map."""
         from .convert_dialog import ConvertReferencesDialog
+        from .wordlist_dialogs import _renumber_waits
+        if _renumber_waits(self):          # converting by hand too would renumber twice (2026-10-27)
+            return
         ConvertReferencesDialog(self).exec()
 
     def batch_tokens(self):

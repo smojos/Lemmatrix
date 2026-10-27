@@ -197,11 +197,18 @@ class EntryDialog(QDialog):
                     keyboards.tag(ed, f"{f.name}:{lang}")             # its own keyboard (idea 43)
                     if f.role == "gloss" and lang == "en":           # red lines under unknown words
                         spellui.attach(ed, getattr(parent, "speller", None))
-                    if lang == s.primary_gloss:
-                        primary_row = (caption(f, f" ({lang})"), ed)
-                    else:
-                        others.append((caption(f, f" ({lang})"), ed))
                     self.fields[(f.name, lang)] = ed
+                    shown = ed
+                    if f.role == "gloss" and entry is not None:     # the EACW's clarification (idea 87)
+                        from .. import wordlists as _wl
+                        clar = _wl.clarification_for(db, entry, lang, getattr(getattr(parent, "doc", None),
+                                                                              "workspace", None))
+                        if clar:
+                            shown = self._with_info(ed, clar)
+                    if lang == s.primary_gloss:
+                        primary_row = (caption(f, f" ({lang})"), shown)
+                    else:
+                        others.append((caption(f, f" ({lang})"), shown))
                 if primary_row is not None and others and self.others_btn is None:
                     primary_row = (primary_row[0], self._with_plus(primary_row[1], [l for l, _ in others]))
                 if primary_row is not None:
@@ -252,6 +259,21 @@ class EntryDialog(QDialog):
         form.addRow(_buttons(self))
         self.adjustSize()
         self.resize(min(max(self.minimumWidth(), self.sizeHint().width()), 460), self.sizeHint().height())
+
+    def _with_info(self, ed, text: str):
+        """A gloss with a small ⓘ at its right whose hover is the EACW's clarification (idea 87): the
+        list's, read from its edition, so it isn't edited here (Settings → General hides them)."""
+        box = QWidget()
+        h = QHBoxLayout(box)
+        h.setContentsMargins(0, 0, 0, 0)
+        h.setSpacing(4)
+        h.addWidget(ed, 1)
+        info = QLabel("ⓘ")
+        info.setObjectName("clarification")
+        info.setToolTip(text)
+        info.setStyleSheet(f"color: {theme.muted()};")
+        h.addWidget(info)
+        return box
 
     def _with_plus(self, ed, labels):
         """The primary gloss with a small + at its right: the other languages' glosses under it."""
@@ -656,6 +678,15 @@ class MetadataDialog(QDialog):
                                 "speakers understand (e.g. in ɛλicit requests): hidden everywhere until a "
                                 "column, a cell line or a dialogue's Other languages is set to show them.")
         form.addRow("Gloss languages", self.glosses)
+        from .. import wordlists as _wl                 # the EACW's shipped glosses and their status (idea 63)
+        if _wl.is_eacw(db):
+            shipped = "; ".join(f"{name} ({status[:1].lower()}{status[1:]})"
+                                for name, status in _wl.gloss_statuses().values())
+            note = QLabel(f"The EACW has glosses in {shipped}: adding fr, ar or am fills the empty glosses "
+                          "of lemmas whose English gloss is still the list's.")
+            note.setWordWrap(True)
+            note.setStyleSheet(f"color: {theme.muted()};")
+            form.addRow("", note)
         lay.addLayout(form)
         # Acknowledgements (idea 59, Josh, 24 October): two lists, an organisation's support and thanks
         ack = QGroupBox("Acknowledgements")
@@ -962,6 +993,14 @@ class PreferencesDialog(QDialog):
         self.origin_on.setToolTip("Where a lemma comes from: the Stem type field (simple, complex, loan) and "
                                   "From (the lemmas it's built from, the languages it was borrowed from). "
                                   "Off hides them everywhere; what's filled in is kept.")
+        from .. import wordlists as _wl                # the EACW's clarifications as (i)s (idea 87, this database)
+        self.clar_on = QCheckBox("Show the EACW's clarifications (an ⓘ beside each gloss)")
+        self.clar_on.setChecked(ws.get_bool(_wl.CLARIFICATIONS_KEY, True) if ws is not None else True)
+        self.clar_on.setEnabled(_wl.is_eacw(db))
+        self.clar_on.setToolTip("The list's plain meaning of an item's gloss, in English and in each gloss language "
+                                "the EACW has glosses in, shown in the hover of an ⓘ in the lemma dialogue and of "
+                                "the gloss in the lemma list and All data. Off hides them all; nothing is lost."
+                                if _wl.is_eacw(db) else "Only in a database built on the EACW.")
         # Decomposed transcriptions (ideas 18 and 21, Josh, 27 October; format 14): the database's promise
         self.decomposed_box = QCheckBox("Decompose Phonetic and Phonemic: no precomposed characters (é is e + ◌́)")
         self.decomposed_box.setChecked(s.decomposed)
@@ -975,7 +1014,7 @@ class PreferencesDialog(QDialog):
         page("General", [("This computer", [("Autosave every", self.autosave),
                                             ("Full backup folder", self.backups),
                                             (None, self.welcome)]),
-                         ("Lemmas (this database)", [(None, self.origin_on)]),
+                         ("Lemmas (this database)", [(None, self.origin_on), (None, self.clar_on)]),
                          ("Transcriptions (this database)", [(None, self.decomposed_box)]),
                          ("Notebook (this database)", [(None, b) for b in self.history.values()]),
                          ("Warnings (this computer)", [(None, self.unusual), (None, self.spelling), (None, self.confirm)]),
@@ -1308,6 +1347,8 @@ class PreferencesDialog(QDialog):
             for section, box in self.history.items():
                 doc.ws_set(nbmod.HISTORY_SETTINGS[section], box.isChecked())
             doc.ws_set(ORIGIN_KEY, self.origin_on.isChecked())
+            from .. import wordlists as _wl
+            doc.ws_set(_wl.CLARIFICATIONS_KEY, self.clar_on.isChecked())
             doc.set_pitch_shown(not self.pitch_hide.isChecked())   # a view setting: never marks it unsaved
         from . import conventions as conv
         conv.save(p, conv.Conventions(on=self.conv_on.isChecked(), brackets=self.conv_brackets.isChecked(),

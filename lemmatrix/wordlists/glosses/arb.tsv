@@ -1,0 +1,2911 @@
+ref	gloss	clarification	status	earlier
+A001	جسم		machine	
+A002	جلد		machine	
+A002b	تجعيدة		machine	
+A003	شَعْر الرأس		machine	شَعْر
+A003b	شعر الجسم		machine	
+A003c	خُصْلة شعر, قُنْزُعة	القُنْزُعة: خصلة من الشعر تُترك على الرأس المحلوق.	machine	
+A004	عظم		machine	
+A004b	هيكل عظمي		machine	
+A005	عضلة		machine	
+A006	وَتَر		machine	
+A007	دم		machine	
+A008	عِرْق, وعاء دموي	أيّ وعاء دموي: شريان أو وريد.	machine	
+A009	رأس		machine	
+A009b	أعلى الشيء, سطح الشيء		machine	
+A010	قمة الرأس		machine	
+A011	جمجمة		machine	
+A012	دماغ		machine	
+A013	جبهة		machine	
+A014	وجه		machine	
+A014b	مقدّمة الشيء		machine	
+A015	عين		machine	
+A016	بؤبؤ		machine	
+A017	قزحية, الجزء الملوّن من العين		machine	
+A018	حاجب		machine	
+A019	جفن		machine	
+A020	رمش		machine	
+A021	دمعة		machine	
+A022	أذن		machine	
+A023	قناة الأذن		machine	
+A024	شحمة الأذن		machine	
+A025	شمع الأذن		machine	
+A026	أنف		machine	
+A027	منخر		machine	
+A028	قصبة الأنف		machine	
+A029	مخاط		machine	
+A030	خد		machine	
+A030a	أعلى الخد		machine	
+A030b	أسفل الخد		machine	
+A031	فم		machine	
+A031b	طرف مدبّب		machine	
+A032	نَفَس		machine	
+A033	شفة		machine	
+A034	لثة		machine	
+A035	سن		machine	
+A035b	حافة حادة, حافة		machine	
+A036	ضرس		machine	
+A037	ناب		machine	
+A038	سن قاطعة		machine	
+A038b	سن قاطعة سفلية		machine	
+A039	ضرس أمامي, ضاحك		machine	
+A040	فرجة بين الأسنان الأمامية, فَلَج		machine	
+A041	لسان		machine	
+A042	لجام اللسان		machine	
+A043	حَنَك, سقف الفم		machine	
+A044	لهاة		machine	
+A045	لوزة الحلق		machine	
+A046	لعاب		machine	
+A047	فك		machine	
+A048	عظم الفك		machine	
+A049	ذَقَن (أسفل الوجه تحت الفم، لا اللحية)		machine	
+A050	شارب		machine	
+A051	لحية		machine	
+A052	رقبة		machine	
+A053	قفا		machine	
+A054	عَظْم الرقبة, فقرات العنق		machine	
+A055	حَلْق		machine	
+A056	قصبة هوائية		machine	
+A057	تفاحة آدم		machine	
+A058	كتف		machine	
+A059	إبط		machine	
+A060	مفصل الكتف		machine	
+A061	لوح الكتف		machine	
+A062	صدر		machine	
+A063	ترقوة		machine	
+A064	قفص صدري		machine	
+A065	عظم القص		machine	
+A066	قلب		machine	
+A067	رئة		machine	
+A068	ثدي		machine	
+A069	حلمة		machine	
+A070	حليب الأم		machine	
+A071	جنب		machine	
+A071b	جانب الشيء		machine	
+A072	ضلع		machine	
+A073	بطن		machine	
+A073b	منتصف, داخل		machine	
+A074	سرة		machine	
+A075	أحشاء		machine	
+A076	كبد		machine	
+A077	بنكرياس		machine	
+A078	مرارة, كيس المرارة		machine	
+A079	معدة		machine	
+A080	صفراء, عصارة صفراوية		machine	
+A081	طحال		machine	
+A082	أمعاء		machine	
+A082a	أمعاء غليظة		machine	
+A082b	أمعاء دقيقة		machine	
+A083	كُلْية		machine	
+A084	مثانة		machine	
+A085	رحم		machine	
+A086	حبل سري		machine	
+A087	ظهر		machine	
+A087b	الجهة الخلفية للشيء		machine	
+A088	أعلى الظهر		machine	
+A089	أسفل الظهر		machine	
+A090	عمود فقري		machine	
+A091	ذراع		machine	
+A091a	عضد		machine	
+A091b	ساعد		machine	
+A092	عَظْم الذراع	عظم العضد أو عظم الساعد.	machine	
+A093	مرفق, كوع		machine	
+A093a	ظاهر المرفق, رأس المرفق		machine	
+A093b	باطن المرفق, ثنية المرفق		machine	
+A094	يد		machine	
+A095	كف		machine	
+A096	إصبع		machine	
+A097	عظم الإصبع		machine	
+A098	إبهام		machine	
+A099	سبابة		machine	
+A100	إصبع وسطى		machine	
+A101	بنصر		machine	
+A102	خنصر		machine	
+A103	مفصل الإصبع		machine	
+A104	ظفر		machine	
+A105	قبضة اليد		machine	
+A106	معصم		machine	
+A107	ورك		machine	
+A108	عظم الورك		machine	
+A109	خصر		machine	
+A110	ردف		machine	
+A110b	أسفل الشيء, قاع الشيء		machine	
+A111	عصعص		machine	
+A112	شرج		machine	
+A113	براز		machine	
+A114	قضيب		machine	
+A115	قلفة		machine	
+A116	صفن		machine	
+A117	خصية		machine	
+A118	بول		machine	
+A119	مني		machine	
+A120	فَرْج, مَهْبِل		machine	
+A121	بظر		machine	
+A122	رِجْل		machine	
+A123	عظم الفخذ		machine	
+A124	فخذ		machine	
+A124a	عضلة الفخذ الأمامية		machine	
+A124b	باطن الفخذ		machine	
+A124c	عضلات الفخذ الخلفية		machine	
+A125	ركبة		machine	
+A125a	مُقَدَّمة الركبة		machine	
+A125b	خَلْف الركبة, باطِن الركبة		machine	
+A126	مقدم الساق		machine	
+A127	قصبة الساق		machine	
+A128	ربلة الساق		machine	
+A129	وتر أخيل		machine	
+A130	قدم		machine	
+A131	كاحل		machine	
+A132	عظم الكاحل البارز		machine	
+A133	كعب		machine	
+A134	باطن مقدم القدم		machine	
+A135	إصبع القدم		machine	
+A136	إبهام القدم		machine	
+A137	خنصر القدم		machine	
+A138	باطن القدم		machine	
+B001	شَخْص		machine	
+B001f	امرأة		machine	
+B001m	رَجُل		machine	
+B002	شخص بالِغ, راشِد		machine	
+B002f	امرأة بالغة, راشِدة		machine	
+B002m	رجل بالغ, راشِد		machine	
+B003	بِكْر		machine	
+B003f	عَذْراء, بِكْر		machine	
+B003m	رجل بِكْر		machine	
+B004	طِفْل		machine	
+B004f	بِنْت, طِفْلة		machine	
+B004m	وَلَد, صَبِيّ		machine	
+B005	رَضِيع		machine	
+B006	جَنِين		machine	
+B007	شَيْخ, كبير القوم		machine	
+B007f	شَيْخة, امرأة من كبار القوم		machine	
+B007m	شَيْخ, كبير القوم		machine	
+B008	تِرْب, قرين في السنّ		machine	
+B008f	تِرْب, قرينة في السنّ		machine	
+B008m	تِرْب, قرين في السنّ		machine	
+B009	بِكْر, المولود الأول		machine	
+B009f	البِنْت البِكْر, المولودة الأولى		machine	
+B009m	الابن البِكْر		machine	
+B010	تَوْأَم		machine	
+B010f	تَوْأَمة		machine	
+B010m	تَوْأَم		machine	
+B011	التوأم الأول, التوأم الأكبر		machine	
+B011f	التوأمة الأولى, التوأمة الكبرى		machine	
+B011m	التوأم الأول, التوأم الأكبر		machine	
+B012	التوأم الثاني, التوأم الأصغر		machine	
+B012f	التوأمة الثانية, التوأمة الصغرى		machine	
+B012m	التوأم الثاني, التوأم الأصغر		machine	
+B013	المولود بعد التوأمين		machine	
+B013f	المولودة بعد التوأمين		machine	
+B013m	المولود بعد التوأمين		machine	
+B014	قابِلة, داية		machine	
+B015	شابّ		machine	
+B015f	شابّة, فتاة		machine	
+B015m	شابّ, فتى		machine	
+B016	زَعِيم, شيخ القبيلة		machine	
+B016f	زَعِيمة, زَعِيمة القبيلة		machine	
+B016m	زَعِيم, شيخ القبيلة		machine	
+B017	مَلِك, عاهِل		machine	
+B017f	مَلِكة		machine	
+B017m	مَلِك		machine	
+B018	عامِل		machine	
+B018f	عامِلة		machine	
+B018m	عامِل		machine	
+B019	سَيِّد		machine	
+B019f	سَيِّدة		machine	
+B019m	سَيِّد		machine	
+B020	مالِك, صاحِب		machine	
+B020f	مالِكة, صاحِبة		machine	
+B020m	مالِك, صاحِب		machine	
+B021	خادِم		machine	
+B021f	خادِمة		machine	
+B021m	خادِم		machine	
+B022	صَيّاد (طَرائد)		machine	
+B022f	صَيّادة (طَرائد)		machine	
+B022m	صَيّاد (طَرائد)		machine	
+B023	راعٍ, راعي ماشية		machine	
+B023f	راعِية		machine	
+B023m	راعٍ		machine	
+B024	صَيّاد سَمَك		machine	
+B024f	صَيّادة سَمَك		machine	
+B024m	صَيّاد سَمَك		machine	
+B025	مُزارِع, فَلّاح		machine	
+B025f	مُزارِعة, فَلّاحة		machine	
+B025m	مُزارِع, فَلّاح		machine	
+B026	حَدّاد		machine	
+B026f	حَدّادة		machine	
+B026m	حَدّاد		machine	
+B027	خَيّاط		machine	
+B027f	خَيّاطة		machine	
+B027m	خَيّاط		machine	
+B028	فَخّاري, خَزّاف		machine	
+B028f	فَخّارية, خَزّافة		machine	
+B028m	فَخّاري, خَزّاف		machine	
+B029	نَسّاج, حائك		machine	
+B029f	نَسّاجة, حائكة		machine	
+B029m	نَسّاج, حائك		machine	
+B030	جَزّار, قَصّاب		machine	
+B030f	جَزّارة		machine	
+B030m	جَزّار, قَصّاب		machine	
+B031	تاجِر		machine	
+B031f	تاجِرة		machine	
+B031m	تاجِر		machine	
+B032	طَبّاخ, طاهٍ		machine	
+B032f	طَبّاخة, طاهِية		machine	
+B032m	طَبّاخ, طاهٍ		machine	
+B033	مُحارِب, مُقاتِل		machine	
+B033f	مُحارِبة, مُقاتِلة		machine	
+B033m	مُحارِب, مُقاتِل		machine	
+B034	أَسِير		machine	
+B034f	أَسِيرة		machine	
+B034m	أَسِير		machine	
+B035	رَقِيق, مَمْلوك	عبد، وهي الكلمة الشائعة للرقيق، شتيمة عنصرية أيضًا في عامية السودان وتشاد؛ ورقيق هو اللفظ المحايد.	machine	
+B035f	أَمَة, جارِية		machine	
+B035m	رَقِيق ذَكَر, عَبْد	عبد شتيمة عنصرية أيضًا في عامية السودان وتشاد.	machine	
+B036	دَلِيل, مُرْشِد		machine	
+B036f	مُرْشِدة		machine	
+B036m	دَلِيل, مُرْشِد		machine	
+B037	مُسافِر		machine	
+B037f	مُسافِرة		machine	
+B037m	مُسافِر		machine	
+B038	رَسُول, مِرْسال		machine	
+B038f	رَسُولة, حامِلة رسالة		machine	
+B038m	رَسُول, مِرْسال		machine	
+B039	مُعالِج شَعْبي, طبيب بَلَدي		machine	
+B039f	مُعالِجة شعبية		machine	
+B039m	مُعالِج شعبي		machine	
+B040	عَرّاف, وَسِيط روحاني		machine	
+B040f	عَرّافة, وَسِيطة روحانية		machine	
+B040m	عَرّاف, وَسِيط روحاني		machine	
+B041	ساحِر		machine	
+B041f	ساحِرة		machine	
+B041m	ساحِر		machine	
+B042	كاهِن		machine	
+B042f	كاهِنة		machine	
+B042m	كاهِن		machine	
+B043	مُتَسَوِّل, شَحّاذ		machine	
+B043f	مُتَسَوِّلة, شَحّاذة		machine	
+B043m	مُتَسَوِّل, شَحّاذ		machine	
+B044	عاهِرة, مُومِس		machine	
+B044f	عاهِرة, مُومِس		machine	
+B044m	رجل يمارس الدعارة, عاهِر		machine	
+B045	قَرَوِي, من أهل القرية		machine	
+B045f	قَرَوِية		machine	
+B045m	قَرَوِي		machine	
+B046	ساكِن الأحراش, ساكِن الخَلاء		machine	
+B046f	ساكِنة الأحراش, ساكِنة الخَلاء		machine	
+B046m	ساكِن الأحراش, ساكِن الخَلاء		machine	
+B047	غَنِيّ, ثَرِيّ		machine	
+B047f	غَنِيّة, ثَرِيّة		machine	
+B047m	غَنِيّ, ثَرِيّ		machine	
+B048	فَقِير		machine	
+B048f	فَقِيرة		machine	
+B048m	فَقِير		machine	
+B049	عَقِيم		machine	
+B049f	عاقِر, عَقِيم		machine	
+B049m	عاجِز جنسيًا, عِنِّين		machine	
+B050	أَعْمى, كَفِيف		machine	
+B050f	عَمْياء, كَفِيفة		machine	
+B050m	أَعْمى, كَفِيف		machine	
+B051	أَصَمّ		machine	
+B051f	صَمّاء		machine	
+B051m	أَصَمّ		machine	
+B052	أَحْدَب		machine	
+B052f	حَدْباء		machine	
+B052m	أَحْدَب		machine	
+B053	كَسِيح, مُعاق		machine	
+B053f	كَسِيحة, مُعاقة		machine	
+B053m	كَسِيح, مُعاق		machine	
+B054	قَزَم		machine	
+B054f	قَزَمة		machine	
+B054m	قَزَم		machine	
+B055	عِمْلاق		machine	
+B055f	عِمْلاقة		machine	
+B055m	عِمْلاق		machine	
+B056	أَحْمَق, غَبِيّ		machine	
+B056f	حَمْقاء, غَبِيّة		machine	
+B056m	أَحْمَق, غَبِيّ		machine	
+B057	خَرِف		machine	
+B057f	خَرِفة		machine	
+B057m	خَرِف		machine	
+B058	مَجْنون		machine	
+B058f	مَجْنونة		machine	
+B058m	مَجْنون		machine	
+B059	جَبان		machine	
+B059f	امرأة جَبانة		machine	
+B059m	جَبان		machine	
+B060	لِصّ, سارِق		machine	
+B060f	لِصّة, سارِقة		machine	
+B060m	لِصّ, سارِق		machine	
+B061	أَرْمَل, أَرْمَلة		machine	
+B061f	أَرْمَلة		machine	
+B061m	أَرْمَل		machine	
+B062	يَتِيم		machine	
+B062f	يَتِيمة		machine	
+B062m	يَتِيم		machine	
+C001	أحد الوالدين		machine	
+C001f	أم		machine	
+C001m	أب		machine	
+C002	أخ أو أخت		machine	
+C002f	أخت		machine	
+C002m	أخ		machine	
+C003	أخ أو أخت أكبر سنًّا		machine	
+C003f	أخت أكبر سنًّا		machine	
+C003m	أخ أكبر سنًّا		machine	
+C004	أخ أو أخت أصغر سنًّا		machine	
+C004f	أخت أصغر سنًّا		machine	
+C004m	أخ أصغر سنًّا		machine	
+C005	زوج أو زوجة		machine	
+C005f	زوجة		machine	
+C005m	زوج		machine	
+C006	أحد الأزواج أو الزوجات لشخص واحد	لا كلمة عامة لذلك في العربية؛ والمقصود في الغالب الضرّة.	machine	
+C006f	ضَرّة		machine	
+C006m	زوج آخر للمرأة نفسها في آن واحد		machine	
+C007	عروس أو عريس		machine	
+C007f	عروس		machine	
+C007m	عريس		machine	
+C008	خطيب أو خطيبة		machine	
+C008f	خطيبة		machine	
+C008m	خطيب (للزواج)		machine	
+C009	ابن أو ابنة, وَلَد (ذكرًا أو أنثى)		machine	
+C009f	ابنة		machine	
+C009m	ابن		machine	
+C010	حفيد أو حفيدة		machine	
+C010f	حفيدة		machine	
+C010m	حفيد		machine	
+C011	سَلَف		machine	
+C011f	سَلَف (امرأة), جَدّة من أيّ جيل		machine	
+C011m	سَلَف (رجل), جَدّ من أيّ جيل		machine	
+C012	جَدّ أو جَدّة من جهة الأب		machine	
+C012f	جَدّة من جهة الأب		machine	
+C012m	جَدّ من جهة الأب		machine	
+C013	جَدّ الأب أو جَدّته		machine	
+C013f	جَدّة الأب		machine	
+C013m	جَدّ الأب		machine	
+C014	عمّ أو عمّة		machine	
+C014f	عمّة		machine	
+C014m	عمّ		machine	
+C015	ابن أو بنت العم أو العمة		machine	
+C015f	بنت العم أو العمة		machine	
+C015m	ابن العم أو العمة		machine	
+C016	جَدّ أو جَدّة من جهة الأم		machine	
+C016f	جَدّة من جهة الأم		machine	
+C016m	جَدّ من جهة الأم		machine	
+C017	جَدّ الأم أو جَدّتها		machine	
+C017f	جَدّة الأم		machine	
+C017m	جَدّ الأم		machine	
+C018	خال أو خالة		machine	
+C018f	خالة		machine	
+C018m	خال		machine	
+C019	ابن أو بنت الخال أو الخالة		machine	
+C019f	بنت الخال أو الخالة		machine	
+C019m	ابن الخال أو الخالة		machine	
+C020	والد الزوج أو والدته, حَمو أو حماة	تُطلق حمو وحماة على والدَي أيٍّ من الزوجين.	machine	
+C020f	أم الزوج, حماة	تُطلق حماة على أمّ أيٍّ من الزوجين.	machine	
+C020m	أبو الزوج, حَمو	يُطلق حمو على أبي أيٍّ من الزوجين.	machine	
+C021	أخو الزوج أو أخته		machine	
+C021f	أخت الزوج		machine	
+C021m	أخو الزوج		machine	
+C022	ابن أو بنت أخي الزوج أو أخته		machine	
+C022f	بنت أخي الزوج أو أخته		machine	
+C022m	ابن أخي الزوج أو أخته		machine	
+C023	والد الزوجة أو والدتها, حَمو أو حماة	تُطلق حمو وحماة على والدَي أيٍّ من الزوجين.	machine	
+C023f	أم الزوجة, حماة	تُطلق حماة على أمّ أيٍّ من الزوجين.	machine	
+C023m	أبو الزوجة, حَمو	يُطلق حمو على أبي أيٍّ من الزوجين.	machine	
+C024	أخو الزوجة أو أختها		machine	
+C024f	أخت الزوجة		machine	
+C024m	أخو الزوجة, نسيب	نسيب تُطلق أيضًا على أيّ قريب بالمصاهرة.	machine	
+C025	ابن أو بنت أخي الزوجة أو أختها		machine	
+C025f	بنت أخي الزوجة أو أختها		machine	
+C025m	ابن أخي الزوجة أو أختها		machine	
+C026	زوجة الابن أو زوج الابنة		machine	
+C026f	كَنّة, زوجة الابن		machine	
+C026m	صِهر, زوج الابنة		machine	
+C027	سَليل		machine	
+C027f	سَليلة		machine	
+C027m	سَليل (ذكر)		machine	
+C028	طفل غير شرعي, ولد زنا	ولد زنا لفظ فقهي صريح، ويُستعمل أيضًا شتيمةً.	machine	
+C028f	بنت غير شرعية, بنت زنا	بنت زنا لفظ صريح، ويُستعمل أيضًا شتيمةً.	machine	
+C028m	ابن غير شرعي, ابن زنا	ابن زنا لفظ صريح، ويُستعمل أيضًا شتيمةً.	machine	
+C029	قريب, أحد الأقارب		machine	
+C029f	قريبة, إحدى القريبات		machine	
+C029m	قريب (ذكر), أحد الأقارب		machine	
+C030	عائلة, أسرة		machine	
+C031	عشيرة		machine	
+C032	شعب, قوم		machine	
+C033	حشد		machine	
+C034	صديق		machine	
+C034f	صديقة		machine	
+C034m	صديق (رجل)		machine	
+C035	سَمِيّ, من يحمل الاسم نفسه		machine	
+C035f	سَمِيّة, امرأة تحمل الاسم نفسه		machine	
+C035m	سَمِيّ, رجل يحمل الاسم نفسه		machine	
+C036	أحد المعارف		machine	
+C036f	امرأة من المعارف		machine	
+C036m	رجل من المعارف		machine	
+C037	جار		machine	
+C037f	جارة		machine	
+C037m	جار (رجل)		machine	
+C038	ضيف		machine	
+C038f	ضيفة		machine	
+C038m	ضيف (رجل)		machine	
+C039	مُضيف, صاحب البيت		machine	
+C039f	مُضيفة, صاحبة البيت		machine	
+C039m	مُضيف (رجل), صاحب البيت		machine	
+C040	غريب, شخص لا نعرفه		machine	
+C040f	غريبة (امرأة), امرأة لا نعرفها		machine	
+C040m	غريب (رجل), رجل لا نعرفه		machine	
+C041	عدوّ		machine	
+C041f	عدوّة		machine	
+C041m	عدوّ (رجل)		machine	
+C042	أجنبي		machine	
+C042f	امرأة أجنبية		machine	
+C042m	رجل أجنبي		machine	
+C043	شخص أسود البشرة	في السودان يُقال للأسمر «أزرق» أو «أخضر»، وقد تكون «أسود» وحدها جارحة هناك.	machine	
+C043f	امرأة سوداء البشرة		machine	
+C043m	رجل أسود البشرة		machine	
+C044	شخص أحمر, فاتح البشرة		machine	
+C044f	امرأة حمراء, فاتحة البشرة		machine	
+C044m	رجل أحمر, فاتح البشرة		machine	
+C045	شخص أبيض البشرة, خواجة	خواجة (عامية): أجنبي أبيض، أوروبي في الغالب.	machine	
+C045f	امرأة بيضاء البشرة, خواجية	خواجية (عامية): أجنبية بيضاء، أوروبية في الغالب.	machine	
+C045m	رجل أبيض البشرة, خواجة		machine	
+D001	حيوان		machine	
+D002	حيوان داجن, حيوان أليف		machine	
+D003	حيوان بري		machine	
+D004	لحم		machine	
+D004b	لحم مجفف, قديد		machine	
+D005	دهن, شحم		machine	
+D006	نخاع العظم		machine	
+D007	شحم مذاب, وَدَك		machine	
+D008	قطيع		machine	
+D009	ماعز		machine	
+D009b	جَدْي		machine	
+D009f	عنزة		machine	
+D009m	تيس		machine	
+D010	لحية الماعز		machine	
+D011	خروف, شاة		machine	
+D011b	حَمَل		machine	
+D011f	نعجة		machine	
+D011m	كبش		machine	
+D012	فرو		machine	
+D013	صوف		machine	
+D014	بقر		machine	
+D014b	عِجْل		machine	
+D014f	بقرة		machine	
+D014m	ثور		machine	
+D015	ثور مخصي		machine	
+D016	عِجْلَة, بقرة لم تلد		machine	
+D017	غَبَب, الجلد المتدلي تحت عنق البقر		machine	
+D018	روث		machine	
+D019	قَرْن		machine	
+D020	ذيل		machine	
+D021	جلد حيوان		machine	
+D022	سنام البقر		machine	
+D023	حافر, ظِلف	الحافر للخيل والحمير، والظِّلف للبقر والغنم والماعز، والخُفّ للجمل.	machine	
+D024	ضرع		machine	
+D025	حلمات الضرع		machine	
+D026	حليب	«لبن» هو الحليب في السودان وتشاد ومصر، لكنه الزبادي في الشام والخليج.	machine	
+D027	زبدة		machine	
+D028	لبن رائب, زبادي	«لبن» وحده حليب في السودان ومصر وزبادي في الشام والخليج؛ ويقال «روب» في السودان وتشاد.	machine	
+D029	حصان		machine	
+D029b	مُهْر		machine	
+D029f	فرس, أنثى الحصان		machine	
+D029m	حصان فحل		machine	
+D030	عُرْف الحصان		machine	
+D031	حمار		machine	
+D031b	جَحْش		machine	
+D031f	أتان, حمارة		machine	
+D031m	حمار ذكر		machine	
+D032	جمل, بعير		machine	
+D032b	حُوار, جمل صغير		machine	
+D032f	ناقة		machine	
+D032m	جمل ذكر		machine	
+D033	سنام الجمل		machine	
+D034	كلب		machine	
+D034b	جرو		machine	
+D034f	كلبة		machine	
+D034m	كلب ذكر		machine	
+D035	قط		machine	
+D035b	قطة صغيرة, هُرَيْرة		machine	
+D035f	قطة		machine	
+D035m	قط ذكر		machine	
+D036	خنزير		machine	
+D036b	خنزير صغير		machine	
+D036f	خنزيرة, أنثى الخنزير		machine	
+D036m	خنزير ذكر		machine	
+D037	خنزير الثآليل, حلوف		machine	
+D038	خنزير الأدغال		machine	
+D039	خنزير الأرض		machine	
+D040	ذئب الأرض, ضبع صغير آكل للنمل الأبيض		machine	
+D041	آكل النمل الحرشفي, بنغول		machine	
+D042	قرد		machine	
+D043	قرد البابون, رُبّاح		machine	
+D044	القرد الأخضر الحبشي		machine	
+D045	القرد الأزرق, قرد الغابة		machine	
+D046	القرد الأحمر, قرد الباتاس		machine	
+D047	قرد الكولوبس الأبيض والأسود		machine	
+D048	غلاغو, قرد ليلي صغير		machine	
+D049	ظبي		machine	
+D050	الجاموس الأفريقي, جاموس بري		machine	
+D051	حيوان النُّو		machine	
+D052	ظبي الأوريبي, ظبي عشبي صغير		machine	
+D053	ظبي الكودو		machine	
+D054	حمار وحشي		machine	
+D055	غزال		machine	
+D056	ظبي القفز, سبرينغبوك		machine	
+D057	ظبي الإمبالا		machine	
+D058	ظبي الكوب أبيض الأذنين		machine	
+D059	ظبي الليشوي, كوب المستنقعات		machine	
+D060	ظبي التيانغ, التوبي		machine	
+D061	السيتاتونغا, ظبي المستنقعات		machine	
+D062	ظبي القصب		machine	
+D063	ظبي الأدغال		machine	
+D064	ظبي الماء		machine	
+D065	التيتل, بقر الوحش		machine	
+D066	ظبي الإيلاند		machine	
+D067	ظبي الروان		machine	
+D068	مها		machine	
+D069	الأروي, الكبش البربري		machine	
+D070	ظبي الدويكر الصغير		machine	
+D071	ديك ديك, ظبي صغير جداً		machine	
+D072	فيل		machine	
+D073	خرطوم الفيل		machine	
+D074	ناب الفيل		machine	
+D075	فرس النهر		machine	
+D076	وحيد القرن		machine	
+D077	قرن وحيد القرن		machine	
+D078	زرافة		machine	
+D079	الضبع المرقط		machine	
+D080	الضبع المخطط		machine	
+D081	الكلب البري الأفريقي		machine	
+D082	ابن آوى		machine	
+D083	ثعلب		machine	
+D083b	الفنك, ثعلب الصحراء		machine	
+D084	قط الزباد		machine	
+D085	غرير العسل		machine	
+D086	النمس المصري		machine	
+D087	النمس القزم		machine	
+D088	السرقاط		machine	
+D089	نيص, شَيْهَم		machine	
+D090	سنجاب الشجر		machine	
+D091	السنجاب الأرضي		machine	
+D092	فأر		machine	
+D093	جُرَذ		machine	
+D094	جرذ القصب		machine	
+D095	سنجاب أرضي مخطط, فأر النخيل	يسمّى بالإنجليزية الأفريقية palm rat، وهو سنجاب أرضي مخطط لا فأر.	machine	
+D096	زَبَابة		machine	
+D097	خُلْد, فأر الخلد		machine	
+D098	أرنب بري, أرنب		machine	
+D099	الأرنب القافز		machine	
+D100	الوبر		machine	
+D101	قط بري		machine	
+D102	أسد		machine	
+D103	لِبْدة الأسد		machine	
+D104	مخلب الأسد		machine	
+D105	نمر مرقط, نمر	النمر في السودان وتشاد هو المرقط؛ والمخطط هو الببر (tiger).	machine	
+D106	الفهد الصياد	«فهد» وحده قد يُفهم منه النمر المرقط.	machine	
+D107	عَناق الأرض, الوشق الصحراوي		machine	
+D108	قط السرفال		machine	
+D109	جرنيط, قط الزباد المرقط		machine	
+D110	خفاش		machine	
+D111	خفاش الفاكهة		machine	
+E001	طائر		machine	
+E002	دجاجة		machine	
+E002b	كتكوت, فرخ الدجاج		machine	
+E002f	دجاجة, أنثى الدجاج		machine	
+E002m	ديك		machine	
+E003	دجاجة عارية الرقبة		machine	
+E004	ديك رومي		machine	
+E005	منقار		machine	
+E006	مخلب		machine	
+E007	جناح		machine	
+E008	ريشة		machine	
+E009	عُرْف الديك		machine	
+E010	قُنْزُعة, عُرْف الطائر		machine	
+E011	حوصلة		machine	
+E012	قانصة		machine	
+E013	بيضة		machine	
+E014	قشرة البيضة		machine	
+E015	بياض البيض		machine	
+E016	صفار البيض		machine	
+E017	عُشّ		machine	
+E018	سرب طيور		machine	
+E019	نعامة		machine	
+E019b	قشرة بيض النعام		machine	
+E020	البط الصفّار, بط الشجر		machine	
+E021	الإوز المصري		machine	
+E022	دجاج غينيا		machine	
+E023	دُرّاج, حجل أفريقي		machine	
+E024	نُحام, فلامنجو		machine	
+E025	حمام الصخر المرقط		machine	
+E026	اليمامة الخمرية		machine	
+E027	يمامة الغابة سوداء المنقار		machine	
+E028	يمامة ناماكوا		machine	
+E029	الحمام الأخضر		machine	
+E030	حُبارى		machine	
+E031	الكوكال, وقواق أرضي كبير		machine	
+E032	وقواق كلاس		machine	
+E033	وقواق ديدريك		machine	
+E034	الوقواق الأفريقي		machine	
+E035	السُّبَد		machine	
+E036	سمامة النخيل		machine	
+E037	سمامة		machine	
+E038	المرعة السوداء		machine	
+E039	الكركي المتوج الأسود		machine	
+E040	الكَرَوان		machine	
+E041	أبو المغازل		machine	
+E042	النكات, خوّاض منقاره معقوف لأعلى	«النكات» اسمه في قوائم الطيور، وهو غير مألوف عند العامة.	machine	
+E043	الزقزاق شوكي الجناح		machine	
+E044	الجاكانا		machine	
+E045	الشُّنْقُب		machine	
+E046	الطيطوى, طائر شاطئ صغير طويل المنقار	المقصود طيور الشاطئ الصغيرة من فصيلة الشنقبيات، لا الزقزاق.	machine	
+E047	نورس		machine	
+E048	اللقلق أصفر المنقار		machine	
+E049	اللقلق مفتوح المنقار		machine	
+E050	لقلق أبديم		machine	
+E051	اللقلق سرجي المنقار		machine	
+E052	لقلق المرابو, أبو سعن		machine	
+E053	بَجَع		machine	
+E054	أبو مركوب		machine	
+E055	أبو مطرقة		machine	
+E056	البلشون الأصفر		machine	
+E057	البلشون المخطط		machine	
+E058	أبو قردان, بلشون الماشية		machine	
+E059	مالك الحزين أسود الرأس		machine	
+E060	مالك الحزين العملاق		machine	
+E061	البلشون الأبيض الكبير		machine	
+E062	أبو منجل المقدس		machine	
+E063	أبو منجل الهادادا		machine	
+E064	أبو ملعقة		machine	
+E065	العقاب النساري		machine	
+E066	النسر المقلنس, نسر صغير آكل للجيف	النسر هنا آكل الجيف (vulture)، لا العُقاب.	machine	
+E067	النسر أبيض الظهر, نسر آكل للجيف	النسر هنا آكل الجيف (vulture)، لا العُقاب.	machine	
+E068	عقاب الحيات		machine	
+E069	عقاب البهلوان		machine	
+E070	الحدأة السوداء		machine	
+E071	عقاب السمك الأفريقي		machine	
+E072	العقاب طويل العرف		machine	
+E073	الثبج, بومة صغيرة ذات خُصَل أذنية	«الثبج» اسمه في قوائم الطيور، وهو غير مألوف عند العامة؛ ويسمّى في قطر «قبسة».	machine	
+E074	البومة النسرية الرمادية		machine	
+E075	الطائر الفأري		machine	
+E076	هدهد		machine	
+E077	هدهد الشجر الأخضر		machine	
+E078	أبو قرن الأرضي		machine	
+E079	أبو قرن الرمادي		machine	
+E080	أبو قرن فضي الخدين		machine	
+E081	رفراف الملاكيت		machine	
+E082	رفراف الغابات		machine	
+E083	الرفراف رمادي الرأس		machine	
+E084	الرفراف المخطط		machine	
+E085	الرفراف العملاق		machine	
+E086	الرفراف الأبقع		machine	
+E087	الوروار الصغير		machine	
+E088	الوروار الأخضر		machine	
+E089	الوروار القرمزي		machine	
+E090	الشقراق الحبشي		machine	
+E091	الباربيت أسود المنقار		machine	
+E092	الباربيت مزدوج الأسنان		machine	
+E093	طائر دليل العسل		machine	
+E094	نقار الخشب		machine	
+E095	عوسق		machine	
+E096	ببغاء		machine	
+E097	الباتيس, صائد ذباب صغير أبيض وأسود		machine	
+E098	صرد الأدغال الأحمر والأسود		machine	
+E099	التشاغرا, صرد الأدغال البني		machine	
+E100	الدرونغو, طائر أسود مشقوق الذيل		machine	
+E101	خاطف الذباب الفردوسي		machine	
+E102	الصُّرَد		machine	
+E103	الغراب الأبقع		machine	
+E104	الغراب مروحي الذيل		machine	
+E105	القبرة المصفقة, قبرة تصفق بجناحيها		machine	
+E106	الكرومبك, دخلة قصيرة الذيل		machine	
+E107	سيستيكولا حمراء الهامة		machine	
+E108	البرينيا السمراء, دخلة صغيرة		machine	
+E109	السنونو		machine	
+E110	بلبل	المقصود البلبل البني الشائع في الحدائق، لا العندليب.	machine	
+E111	طائر العين البيضاء		machine	
+E112	الثرثار		machine	
+E113	نقار الماشية		machine	
+E114	الزرزور اللامع الأزرق الأذن الصغير		machine	
+E115	زرزور روبل اللامع		machine	
+E116	السُّمَّنة الحبشية		machine	
+E117	خاطف الذباب المرقط		machine	
+E118	أبو الحناء الأفريقي		machine	
+E119	طائر الشمس قرمزي الصدر		machine	
+E120	طائر الشمس المتغير		machine	
+E121	النساج غليظ المنقار		machine	
+E122	نساج القرية		machine	
+E123	الكويليا حمراء المنقار		machine	
+E124	النساج الأحمر الشمالي		machine	
+E125	عصفور النار		machine	
+E126	الكوردون بلو أحمر الخدين, عصفور أزرق صغير		machine	
+E127	المانيكين البرونزي, عصفور صغير أبيض وأسود		machine	
+E128	الأرملة دبوسية الذيل		machine	
+E129	عصفور الدوري, عصفور	«عصفور» وحده يطلق على أي طائر صغير.	machine	
+E130	الذُّعَرة		machine	
+E131	الكناري أصفر الجبهة		machine	
+F001	سمكة		machine	
+F002	قرموط, سلور	«قرموط» هو الاسم الشائع لسمك القرموط عمومًا في مصر والسودان.	machine	
+F003	سمكة رئوية (تعيش في الطين في موسم الجفاف)		machine	
+F004	ثعبان السمك, أنقليس		machine	
+F005	جلد السمك		machine	
+F006	حرشفة السمك		machine	
+F007	زعنفة ظهرية		machine	
+F008	زعنفة دهنية (زعنفة لحمية صغيرة خلف الزعنفة الظهرية)		machine	
+F009	زعنفة ذيلية, ذيل السمكة		machine	
+F010	زعنفة صدرية (خلف الخياشيم مباشرة)		machine	
+F011	عظم السمك, حسك السمك		machine	
+F012	غطاء الخياشيم		machine	
+F013	خيشوم (تحت غطاء الخياشيم)		machine	
+F014	شارب السمكة (شارب القرموط)		machine	
+F015	معدة السمكة		machine	
+F016	مثانة هوائية (كيس الهواء في السمكة)		machine	
+F017	كتلة البيض في بطن السمكة, بطارخ		machine	
+F018	فرخ النيل	يُسمّى في مصر «قشر بياض» وفي السودان «عِجِل»؛ أما «بياض» وحده فاسم لسمكة قرموطية أخرى.	machine	
+F019	بلطي		machine	
+F020	سمكة النمر (سمكة نهرية مفترسة ذات أسنان)		machine	
+F021	سمكة خرطوم الفيل (ذات خطم طويل كالخرطوم)	لا يوجد اسم فصيح ثابت؛ ولهذه الأسماك أسماء محلية متفاوتة عند صيادي النيل.	machine	
+F022	أبو بشير (سمكة نيلية بدائية تشبه الثعبان، على ظهرها صف من الزعانف الصغيرة)	«أبو بشير» اسم السمكة عند صيادي النيل في مصر والسودان، ومنه اسمها العلمي الشائع.	machine	
+F023	قرموط كهربائي, رعاد		machine	
+G001	ثعبان, حية		machine	
+G002	ناب الثعبان		machine	
+G003	سم الثعبان		machine	
+G004	حرشفة الثعبان		machine	
+G005	بيضة الزواحف		machine	
+G006	ثعبان أبو منقار (ثعبان بني محمر ذو خطم معقوف كالمنقار)		machine	
+G007	ثعبان الرمل النحيل (سريع الحركة، وليس أفعى الرمل)		machine	
+G008	أفعى	المقصود الأفعى بالمعنى الدقيق (الأفعوانيات)، لا كل حية سامة.	machine	
+G009	كوبرا, صل		machine	
+G010	مامبا خضراء		machine	
+G011	أفعى نفاخة		machine	
+G012	أفعى وحيد القرن (أفعى غابات ذات قرون على الأنف)		machine	
+G013	أفعى مقرنة (أفعى صحراوية ذات قرنين فوق العينين)		machine	
+G014	أصلة		machine	
+G015	تمساح		machine	
+G016	سحلية		machine	
+G017	ورل		machine	
+G018	سحلية أغامة (سحلية الصخور ذات الرأس الملون)		machine	
+G019	سقنقور (سحلية ناعمة لامعة الحراشف)		machine	
+G020	أبو بريص, وزغة		machine	
+G021	حرباء		machine	
+G022	سلحفاة برية		machine	
+G023	سلحفاة مائية كبيرة (نهرية أو بحرية)		machine	
+G024	سلحفاة مياه عذبة صغيرة		machine	
+G025	صدفة السلحفاة, درقة السلحفاة		machine	
+G026	ضفدع الشجر		machine	
+G027	ضفدع كبير (الضفدع الثور)		machine	
+G028	علجوم (ضفدع بري خشن الجلد)		machine	
+G029	شرغوف, أبو ذنيبة		machine	
+G030	بيض الضفادع		machine	
+G031	كيس صوتي (كيس الحلق الذي ينفخه الضفدع عند النقيق)		machine	
+H001	حشرة		machine	
+H002	قرن الاستشعار		machine	
+H003	نحلة		machine	
+H004	ملكة النحل		machine	
+H005	سرب نحل, طرد نحل		machine	
+H006	خلية نحل		machine	
+H007	شمع النحل		machine	
+H008	عسل		machine	
+H009	قرص العسل, شهد		machine	
+H010	إبرة اللسع, حمة		machine	
+H011	دبور كبير, زنبور كبير		machine	
+H012	زنبور الطين, زنبور يبني عشه من الطين		machine	
+H013	زنبور, دبور		machine	
+H014	نملة		machine	
+H015	نمل الجيش (نمل مهاجر لاسع)		machine	
+H016	نمل طائر, أرضة مجنحة	يشمل النمل والأرضة المجنحة وقت التطاير، وتؤكل أحيانًا.	machine	
+H017	أرضة, نمل أبيض		machine	
+H018	تل النمل الأبيض, بيت الأرضة		machine	
+H019	ذبابة		machine	
+H020	ذبابة الفاكهة		machine	
+H021	ذبابة الخيل, نعرة		machine	
+H022	ذبابة تسي تسي		machine	
+H023	بعوضة, ناموسة		machine	
+H024	دودة الذباب, يرقة الذباب		machine	
+H025	جندب, نطاط		machine	
+H026	جرادة		machine	
+H027	صرصار الليل, جدجد		machine	
+H028	فرس النبي		machine	
+H029	صرصور		machine	
+H030	خنفساء أيار (خنفساء بنية تطير ليلًا)		machine	
+H031	جعل, خنفساء الروث		machine	
+H032	غمد جناح الخنفساء (غلافها الصلب)		machine	
+H033	فراشة (تطير نهارًا)		machine	
+H034	فراشة ليلية, عثة		machine	
+H035	يسروع, يرقة الفراشة		machine	
+H036	دودة الموبان (يرقة صالحة للأكل تعيش على شجر الموبان)		machine	
+H037	شرنقة		machine	
+H038	يعسوب (حشرة طائرة قرب الماء ذات أربعة أجنحة شفافة)	«اليعسوب» في الفصحى القديمة ملكة النحل أيضًا؛ والمقصود هنا الحشرة الطائرة.	machine	
+H039	يراعة, حباحب		machine	
+H040	برغوث		machine	
+H041	قملة		machine	
+H042	بقة الفراش		machine	
+H043	قرادة		machine	
+H044	حلم الدجاج (طفيلي دقيق يمتص دم الدجاج)	يسميه الناس «قمل الدجاج»، لكنه حلم لا قمل.	machine	
+H045	برغوث الرمل (يحفر في أصابع القدم)		machine	
+H046	عَلَقة (دودة تمتص الدم)		machine	
+H047	دودة الدقيق		machine	
+H048	دودة الأرض		machine	
+H049	عنكبوت		machine	
+H050	بيت العنكبوت, نسيج العنكبوت		machine	
+H051	عنكبوت كبير مشعر يعيش في جحر, رتيلاء	قد تُطلق «رتيلاء» عاميًّا على العنكبوت الجملي، والمقصود هنا العنكبوت الكبير المشعر.	machine	
+H052	عقرب		machine	
+H053	حريش, أم أربعة وأربعين (سريعة لاسعة)		machine	
+H054	دودة ألفية الأرجل (بطيئة أسطوانية تلتف على نفسها)		machine	
+H055	حلزون, قوقع		machine	
+H055b	حلزون الشجر		machine	
+H055c	حلزون بري		machine	
+H055d	حلزون مائي, قوقع الماء		machine	
+H056	صدفة الحلزون, قوقعة		machine	
+H057	سرطان, سلطعون		machine	
+H058	جمبري, روبيان		machine	
+H059	محارة (حيوان ذو صدفتين)		machine	
+H060	بلح البحر, محار المياه العذبة		machine	
+I001	الإله الأعلى, الإله الخالق	الكائن الأعلى خالق الكون، أيًّا كان دين المتكلم؛ ويقول المسلمون والمسيحيون العرب «الله».	machine	
+I002	إله أدنى, روح	إله أو روح أدنى منزلة من الإله الأعلى، كما في الديانات التقليدية.	machine	
+I003	روح شريرة, شيطان		machine	
+I004	روح, نفس		machine	
+I005	شبح (طيف يُرى)		machine	
+I005b	روح الميت (لا تُرى)		machine	
+I006	السماء (مسكن الإله أو الآلهة)	«الجنة» دار النعيم للموتى الصالحين قراءة أخرى، وهي مرتبطة بالأديان الإبراهيمية.	machine	
+I007	عالم الأموات, العالم السفلي		machine	
+I008	مزار, مقام		machine	
+I009	مذبح		machine	
+I010	ذبيحة, قربان (تقدمة للإله أو الأرواح)		machine	
+I011	سكب الشراب قربانًا		machine	
+I012	جلسة تحضير الأرواح		machine	
+I013	طقوس استجلاب المطر (التقليدية)	ليس المقصود صلاة الاستسقاء عند المسلمين، بل طقوس صنع المطر التقليدية.	machine	
+I014	بَرَكة		machine	
+I015	لعنة		machine	
+I016	حظ		machine	
+I017	نبوءة		machine	
+I018	رؤيا (رؤية غيبية)	«رؤيا» بالألف لا «رؤية» التي تعني البصر.	machine	
+I019	حلم		machine	
+I020	علامة غيبية على ما سيحدث (فأل أو نذير)	الفأل غالبًا علامة خير، والنذير علامة شر.	machine	
+I021	محظور, مُحَرَّم عُرفًا		machine	
+I022	تميمة, حِرز	يُسمّى في السودان وتشاد «حجابًا» أيضًا، لكن اللفظ يُفهم أولًا بمعنى غطاء الرأس.	machine	
+I023	قُرْعة (للعرافة)		machine	
+I024	العين, الحسد		machine	
+I025	سحر, شعوذة	«سحر» هو اللفظ المحايد؛ «شعوذة» فيها ازدراء.	machine	
+I026	دواء, علاج		machine	
+I027	سم		machine	
+I028	طقوس العلاج, حفل شفاء		machine	
+I029	مرض		machine	
+I030	ألم, وجع		machine	
+I031	حمى (غير الملاريا)		machine	
+I032	عَرَق		machine	
+I033	زكام		machine	
+I034	سعال, كحة		machine	
+I035	فُواق, حازوقة		machine	
+I036	بلغم		machine	
+I037	صداع		machine	
+I038	ألم البطن, مغص		machine	
+I039	قيء		machine	
+I040	إسهال		machine	
+I041	حكة		machine	
+I042	طفح جلدي		machine	
+I043	ملاريا		machine	
+I044	جذام		machine	
+I045	داء الفيل (تورم الساقين الشديد)		machine	
+I046	سعفة, قوباء		machine	
+I047	دراق, تضخم الغدة الدرقية		machine	
+I048	دودة معوية, دودة البطن		machine	
+I049	جنون, اختلال عقلي		machine	
+I050	جرح		machine	
+I051	حرق (إصابة في الجلد)		machine	
+I052	أثر الضرب (انتفاخ على الجلد)		machine	
+I053	كدمة		machine	
+I054	ندبة, أثر جرح		machine	
+I055	بقعة في الجلد, عيب		machine	
+I056	بثرة, حبة		machine	
+I057	خراج, دمل		machine	
+I058	تورم, انتفاخ		machine	
+I058b	ورم		machine	
+I058c	نتوء, بروز		machine	
+I059	فتق سري, سرة بارزة		machine	
+I060	صديد, قيح		machine	
+I061	قرحة (جرح مفتوح في الجلد)		machine	
+I062	حدبة		machine	
+I063	مرض نباتي, لفحة		machine	
+I064	طاعون البقر		machine	
+I065	حياة		machine	
+I066	ولادة		machine	
+I067	آلام الولادة, طلق		machine	
+I068	حفل تسمية المولود, سماية		machine	
+I069	ختان		machine	
+I069f	ختان الإناث, خفاض	«خفاض» هو اللفظ السوداني الشائع؛ ويُستعمل في الخطاب الطبي والحقوقي «تشويه الأعضاء التناسلية الأنثوية».	machine	
+I069m	ختان الذكور, طهور		machine	
+I070	بلوغ		machine	
+I071	طقوس بلوغ الفتيان		machine	
+I072	طقوس بلوغ الفتيات		machine	
+I073	الدورة الشهرية, حيض		machine	
+I074	موت, وفاة		machine	
+I075	إجهاض تلقائي, سقط	«إجهاض» وحده قد يُفهم بمعنى الإجهاض المتعمَّد.	machine	
+I076	جثة, جثمان		machine	
+I077	قبر		machine	
+I077b	مقبرة		machine	
+I078	جنازة		machine	
+I079	مكان التجمع (تحت شجرة مثلًا)		machine	
+I080	وليمة, عيد		machine	
+I081	عرس, حفل زفاف		machine	
+I082	ما يدفعه العريس لأهل العروس (المهر العرفي)	المهر في الشرع حق للعروس نفسها؛ والمقصود هنا ما يُدفع لأهلها.	machine	
+I083	قانون		machine	
+I084	عادة, عرف		machine	
+I085	محكمة عرفية, جلسة قضاء عرفي		machine	
+J001	شجرة		machine	
+J001b	خشب		machine	
+J002	جذع الشجرة		machine	
+J002b	جذع شجرة مقطوع		machine	
+J003	غصن، فرع		machine	
+J004	غُصَين، عود شجر رفيع		machine	
+J005	لِحاء الشجرة		machine	
+J006	جِذْل الشجرة، بقية الجذع المقطوع		machine	
+J007	شظية خشب		machine	
+J008	جذر		machine	
+J009	عقدة في الخشب		machine	
+J010	نُسْغ، عصارة النبات		machine	
+J010b	مطاط، عصارة الشجر اللبنية		machine	
+J011	ورقة شجر		machine	
+J012	بُرعم		machine	
+J013	نبتة جديدة، خِلْفة		machine	
+J014	زهرة		machine	
+J015	شوكة		machine	
+J016	ثمرة، فاكهة		machine	
+J017	بذرة		machine	
+J018	نواة الثمرة		machine	
+J019	قشرة الثمرة		machine	
+J020	عصير		machine	
+J021	شُجَيرة		machine	
+J022	نيم		machine	
+J022a	شجرة النيم		machine	
+J023	أبنوس		machine	
+J023a	شجرة الأبنوس		machine	
+J023b	ثمرة الأبنوس		machine	
+J024	ماهوجني، مَهوقني		machine	
+J024a	شجرة الماهوجني		machine	
+J025	ساج		machine	
+J025a	شجرة الساج		machine	
+J026	كابوك، قطن الشجر الحريري		machine	
+J026a	شجرة الكابوك		machine	
+J026b	قرن الكابوك، ثمرة الكابوك		machine	
+J027	كيجيليا، شجرة السجق		machine	
+J027a	شجرة السجق		machine	
+J027b	ثمرة شجرة السجق		machine	
+J028	شجرة شوكية، أكاسيا		machine	
+J029	سَنْط أبيض، حَراز	الحَراز هو الاسم السوداني والتشادي لهذه الشجرة (Faidherbia albida، وكانت تُسمّى Acacia albida).	machine	
+J029a	شجرة السَّنْط الأبيض، شجرة الحَراز		machine	
+J029b	قَرْنة السَّنْط الأبيض، قَرْنة الحَراز		machine	
+J030	شجر الفراشة الإفريقي، موباني	شجرة بقولية من جنوب القارة الإفريقية، أوراقها على شكل جناحي فراشة (Colophospermum mopane)؛ لا اسم عربيًّا لها.	machine	
+J030a	شجرة الفراشة الإفريقية، شجرة الموباني		machine	
+J031	يَتُوع شجري، فربيون شمعداني		machine	
+J031a	شجرة اليتوع الشمعدانية		machine	
+J032	غاردينيا		machine	
+J032a	شجرة الغاردينيا		machine	
+J032b	ثمرة الغاردينيا		machine	
+J033	نخيل مروحي (دُلَيب أو دوم)	يشمل نوعين: الدُّلَيب (Borassus aethiopum) والدوم (Hyphaene).	machine	
+J033a	نخلة مروحية (دُلَيب أو دوم)		machine	
+J033b	ثمرة النخلة المروحية (دُلَيب أو دوم)		machine	
+J034	نخيل الزيت		machine	
+J034a	نخلة الزيت		machine	
+J034b	ثمرة نخيل الزيت، جوز النخيل		machine	
+J035	كولا (النبات)		machine	
+J035a	شجرة الكولا		machine	
+J035b	جوزة الكولا		machine	
+J036	سَعَفة		machine	
+J037	جريدة النخل، عِرْق السعفة		machine	
+J038	خُوصة		machine	
+J039	رافية		machine	
+J039a	نخلة الرافية		machine	
+J040	جوز الهند		machine	
+J040a	نخلة جوز الهند		machine	
+J040b	ثمرة جوز الهند		machine	
+J041	تمر		machine	
+J041a	نخلة التمر		machine	
+J041b	ثمرة التمر، تمرة		machine	
+J042	تين		machine	
+J042a	شجرة التين		machine	
+J042b	ثمرة التين		machine	
+J043	زيتون		machine	
+J043a	شجرة الزيتون		machine	
+J043b	ثمرة الزيتون		machine	
+J044	تمر هندي		machine	
+J044a	شجرة التمر الهندي		machine	
+J044b	ثمرة التمر الهندي		machine	
+J045	باوباب، تبلدي		machine	
+J045a	شجرة الباوباب، شجرة التبلدي		machine	
+J045b	ثمرة الباوباب، ثمرة التبلدي	تُسمّى في السودان «القنقليس».	machine	
+J046	مارولا		machine	
+J046a	شجرة المارولا		machine	
+J046b	ثمرة المارولا		machine	
+J047	شيا الإفريقية، كاريتيه	شجرة الكاريتيه الإفريقية (Vitellaria)، لا بذور الشيا (chia).	machine	
+J047a	شجرة الشيا الإفريقية، شجرة الكاريتيه		machine	
+J047b	جوزة الشيا		machine	
+J047c	زبدة الشيا		machine	
+J048	ليمون أصفر	في مصر والسودان قد يعني «ليمون» وحده الليمون الأخضر الصغير (lime).	machine	
+J048a	شجرة الليمون الأصفر		machine	
+J048b	ثمرة الليمون الأصفر، ليمونة صفراء		machine	
+J049	برتقال		machine	
+J049a	شجرة البرتقال		machine	
+J049b	ثمرة البرتقال، برتقالة		machine	
+J050	جريب فروت		machine	
+J050a	شجرة الجريب فروت		machine	
+J050b	ثمرة الجريب فروت		machine	
+J051	مانجو		machine	
+J051a	شجرة المانجو		machine	
+J051b	ثمرة المانجو		machine	
+J052	جوافة		machine	
+J052a	شجرة الجوافة		machine	
+J052b	ثمرة الجوافة		machine	
+J053	بابايا		machine	
+J053a	شجرة البابايا		machine	
+J053b	ثمرة البابايا		machine	
+J054	أفوكادو		machine	
+J054a	شجرة الأفوكادو		machine	
+J054b	ثمرة الأفوكادو		machine	
+J055	موز		machine	
+J055a	نبتة الموز		machine	
+J055b	ثمرة الموز، موزة		machine	
+J056	سُباطة موز، عنقود موز		machine	
+J057	موز قزم		machine	
+J057a	نبتة الموز القزم		machine	
+J057b	ثمرة الموز القزم		machine	
+J058	موز الطهي		machine	
+J058a	نبتة موز الطهي		machine	
+J058b	ثمرة موز الطهي		machine	
+J059	إنسيت، الموز الكاذب		machine	
+J060	أناناس		machine	
+J060a	نبتة الأناناس		machine	
+J060b	ثمرة الأناناس		machine	
+J061	يقطين، قرع عسلي	«قرع» وحده قد يعني القرعة المجففة أو الكوسة في مصر.	machine	
+J062	بطيخ أحمر، بطيخ		machine	
+J063	نبات متسلق		machine	
+J064	مِحْلاق		machine	
+J065	ذرة رفيعة	في السودان تعني «ذرة» وحدها الذرة الرفيعة.	machine	
+J066	ذرة رفيعة حمراء		machine	
+J067	ذرة رفيعة بيضاء		machine	
+J068	دُخْن (من الحبوب)	يشمل كل أنواع الدخن صغيرة الحبوب.	machine	
+J069	فونيو		machine	
+J070	تيف		machine	
+J071	قمح		machine	
+J072	شعير		machine	
+J073	ذرة شامية، ذرة صفراء	ليست الذرة الرفيعة.	machine	
+J073b	ساق الذرة الشامية		machine	
+J073c	كوز الذرة الشامية		machine	
+J073d	حبة الذرة الشامية		machine	
+J073e	غلاف كوز الذرة الشامية		machine	
+J073g	شعر كوز الذرة الشامية		machine	
+J073h	شُرّابة الذرة الشامية، النورة الذكرية للذرة الشامية		machine	
+J074	عُصافة، قشور الحبوب		machine	
+J075	أرز		machine	
+J076	قصب السكر		machine	
+J077	سمسم، بذور السمسم		machine	
+J078	قطن		machine	
+J079	حبوب الفاصوليا	الفاصوليا (Phaseolus)، لا الفول.	machine	
+J080	فول سوداني		machine	
+J081	قشرة الفول السوداني		machine	
+J082	دَرَنة		machine	
+J083	بطاطس	تُسمّى في الشام والمغرب «بطاطا»، أمّا في مصر والخليج فـ«البطاطا» هي البطاطا الحلوة.	machine	
+J084	كسافا، منيهوت		machine	
+J085	يام، دَرَنة اليام	ليست البطاطا الحلوة.	machine	
+J086	قُلقاس		machine	
+J087	بطاطا حلوة		machine	
+J088	بصل		machine	
+J089	ثوم		machine	
+J090	طماطم، بندورة		machine	
+J091	جزر		machine	
+J092	بامية		machine	
+J093	باذنجان		machine	
+J094	فلفل حلو، فلفل رومي		machine	
+J095	فلفل حار، شطة		machine	
+J096	فطر، عيش الغراب		machine	
+J097	زنجبيل		machine	
+J098	قرفة		machine	
+J099	كزبرة		machine	
+J100	تبغ		machine	
+J101	قِنَّب هندي، حشيش مخدِّر	في السودان وتشاد يعني «حشيش» وحده العشب.	machine	
+J102	بُنّ، قهوة		machine	
+J103	شاي		machine	
+J104	عشب		machine	
+J105	ورقة عشب		machine	
+J106	عشب ضار، نبات غير مرغوب في الحقل		machine	
+J107	قصب، بوص		machine	
+J108	بَرْدي		machine	
+J109	نيلوفر، زنبق الماء		machine	
+J110	خيزران الأراضي المنخفضة		machine	
+J111	خيزران المرتفعات		machine	
+J112	طعام		machine	
+J113	زيت		machine	
+J114	خبز محلي تقليدي (مثل الإنجيرا أو الكِسْرة السودانية)		machine	
+J115	زاد، زاد السفر		machine	
+J116	قشرة الخبز		machine	
+J117	دقيق، طحين		machine	
+J118	ملح		machine	
+J119	حساء، شوربة		machine	
+J120	عصيدة		machine	
+J121	كُسْكُس		machine	
+J122	فطور، وجبة الإفطار		machine	
+J123	عشاء، وجبة العشاء		machine	
+J124	بقايا الطعام		machine	
+J125	عَفَن		machine	
+J126	خميرة		machine	
+J127	عجين مخمّر لصنع الجعة		machine	
+J128	جعة الحبوب التقليدية، مريسة	«المريسة» جعة الذرة الرفيعة في السودان.	machine	
+J129	خمر مقطَّرة من الحبوب، عَرَقي	«العرقي» في السودان (والأراقي في إثيوبيا) خمر محلية مقطّرة.	machine	
+J130	نبيذ العسل		machine	
+J131	نبيذ النخيل، خمر النخيل		machine	
+K001	شيء		machine	
+K002	بيت، منزل		machine	
+K002b	كوخ، قُطِّيّة		machine	
+K002c	غرفة		machine	
+K002d	غرفة النوم		machine	
+K002e	مطبخ		machine	
+K003	مجمّع سكني عائلي، حوش	الحوش: الدار المسوّرة التي تضم بيوت الأسرة (السودان والخليج).	machine	
+K003b	فِناء الدار، ساحة الدار		machine	
+K003c	كوخ المدخل، حُجرة المدخل		machine	
+K004	جدار، حائط		machine	
+K005	طوب لَبِن، طوب طيني مجفف		machine	
+K006	لِياسة، طلاء طيني للجدار		machine	
+K007	جير التبييض، طلاء بالجير		machine	
+K007b	طلاء، دهان		machine	
+K008	أرضية		machine	
+K009	سقف (من الداخل)	السقف كما يُرى من داخل البيت.	machine	
+K010	سقف، سطح		machine	
+K011	غطاء قمة السقف المخروطي		machine	
+K012	قش التسقيف		machine	
+K013	عارضة السقف المائلة		machine	
+K014	عارضة السقف الأفقية التي تربط العوارض		machine	
+K015	عمود متشعّب يحمل العارضة		machine	
+K016	عارضة		machine	
+K017	لوح خشب		machine	
+K018	باب		machine	
+K019	فتحة الباب، مدخل		machine	
+K020	نافذة، شبّاك		machine	
+K021	سُلّم نقّال، سُلّم خشبي	لا الدَّرَج.	machine	
+K022	سقيفة مائلة		machine	
+K023	خيمة		machine	
+K024	مصطبة خشبية مرفوعة		machine	
+K025	رفّ تجفيف		machine	
+K026	مخزن حبوب، صومعة		machine	
+K027	زريبة، حظيرة الماشية		machine	
+K028	مخيم الماشية، مُراح		machine	
+K029	سياج		machine	
+K030	سياج مُشبّك		machine	
+K031	وَتِد		machine	
+K032	بئر		machine	
+K033	مكان الاستحمام		machine	
+K034	مرحاض، دورة مياه		machine	
+K035	مكب النفايات		machine	
+K036	قمامة، زبالة		machine	
+K037	حديقة، بستان		machine	
+K038	حقل زراعي		machine	
+K038b	حدّ الحقل		machine	
+K039	قرية		machine	
+K039b	بلدة		machine	
+K039c	مدينة		machine	
+K040	مخيم		machine	
+K041	سوق		machine	
+K042	أرض القوم، ديار		machine	
+K042b	حدود		machine	
+K043	درب، طريق		machine	
+K044	تفرُّع الطريق		machine	
+K045	مفترق طرق، تقاطع		machine	
+K046	جسر		machine	
+K047	رحلة، سفر		machine	
+K048	سيارة		machine	
+K049	سرير		machine	
+K050	حصير	حصير منسوج من السعف أو القش.	machine	
+K051	وسادة، مخدة		machine	
+K052	ناموسية		machine	
+K053	مقعد صغير بلا ظهر		machine	
+K053b	كرسي		machine	
+K054	مشغولات الخوص		machine	
+K055	مصباح، فانوس		machine	
+K056	شمعة		machine	
+K057	مروحة يدوية		machine	
+K058	جرس		machine	
+K059	مكنسة		machine	
+K060	مِنفضة الغبار، خرقة التنظيف		machine	
+K061	موقد النار، كانون		machine	
+K062	حطب		machine	
+K063	جَذْوة، عود مشتعل		machine	
+K064	أعواد قدح النار، عودا الزَّنْد	عودان يُفرك أحدهما بالآخر أو يُدار فيه لإشعال النار.	machine	
+K065	مِحراك النار، عصا تحريك الجمر		machine	
+K066	فحم		machine	
+K067	فخّار		machine	
+K068	جرّة ماء، زِير		machine	
+K069	قِدر فخارية للطبخ، بُرمة		machine	
+K070	قِدر معدنية، حَلّة طبخ		machine	
+K071	غلّاية معدنية، إبريق معدني	تُسمّى في السودان والخليج «كفتيرة».	machine	
+K072	إبريق قهوة فخاري، جَبَنة القهوة	الجَبَنة: إبريق القهوة الفخاري في السودان وإريتريا وإثيوبيا.	machine	
+K073	إبريق		machine	
+K074	زجاجة، قارورة		machine	
+K075	سدادة		machine	
+K076	قَرْعة مجففة (وعاء)، وعاء من القرع		machine	
+K076a	وعاء، زبدية		machine	
+K076b	وعاء تقديم الخبز		machine	
+K076c	وعاء المرق، وعاء الإدام		machine	
+K077	حلقة يُسند عليها القدر المستدير القاع		machine	
+K078	صحن، طبق		machine	
+K079	طبق تقديم، صحن كبير		machine	
+K080	كوب		machine	
+K081	شَقَفة، كِسرة فخار		machine	
+K082	ملعقة		machine	
+K083	مِغرفة		machine	
+K084	مِصفاة الجعة		machine	
+K085	مقبض، يد		machine	
+K086	سلة منسوجة		machine	
+K087	دلو		machine	
+K088	صندوق، علبة		machine	
+K089	كيس من الجلد، جِراب جلدي		machine	
+K089b	قِربة		machine	
+K090	شوال، كيس نايلون منسوج		machine	
+K091	أُثْفِيّة، حجر الموقد		machine	
+K092	حجر الطحن		machine	
+K092a	حجر الطحن العلوي		machine	
+K092b	حجر الطحن السفلي		machine	
+K093	هاون خشبي، مِهراس		machine	
+K094	مِدَقّة، يد الهاون		machine	
+K095	ملعقة خشبية للتقليب، مِسواط الطبخ	عصا أو ملعقة خشبية لتقليب العصيدة والطعام.	machine	
+K096	طبق التذرية، غربال التذرية		machine	
+K097	مِذْراة، شوكة التذرية		machine	
+K098	بَيْدَر، جُرْن		machine	
+K099	أداة حفر، عصا الحفر		machine	
+K100	مِعْزَقة صغيرة		machine	
+K101	مِعْزَقة كبيرة		machine	
+K102	محراث		machine	
+K103	نِير		machine	
+K104	منجل		machine	
+K105	سكين كبيرة لقطع الأغصان، مَنْجل طويل	ليس ساطور الجزّار.	machine	
+K106	فأس		machine	
+K107	مِعْوَل، فأس الحفر		machine	
+K108	مطرقة، شاكوش		machine	
+K109	سندان		machine	
+K110	ورشة الحداد، دكان الحدادة		machine	
+K111	منفاخ الحداد، كِير		machine	
+K112	أتون الفخار، فرن الخزاف		machine	
+K113	منشار		machine	
+K114	إزميل		machine	
+K115	مسمار		machine	
+K116	سكين		machine	
+K117	إبرة		machine	
+K118	رُقعة		machine	
+K119	خِرقة		machine	
+K120	جيب		machine	
+K121	جلد مدبوغ		machine	
+K122	حبل		machine	
+K123	دوبارة، خيط غليظ		machine	
+K123b	خيط الخياطة		machine	
+K124	حزام جلدي، سَيْر		machine	
+K125	عقدة الحبل		machine	
+K125b	أُنْشوطة، عروة الحبل المنزلقة		machine	
+K125c	عقدة منزلقة		machine	
+K126	سلسلة		machine	
+K127	حزمة عيدان، حزمة حطب		machine	
+K128	كومة حبوب، صُبْرة		machine	
+K129	حلقة من قماش أو عشب لحمل الأثقال على الرأس		machine	
+K130	حِمْل، عبء		machine	
+K131	عصا المشي		machine	
+K132	قضيب رفيع، خيزرانة		machine	
+K133	رحلة صيد		machine	
+K134	أرض الصيد، مَصِيد		machine	
+K135	قوس		machine	
+K136	سهم		machine	
+K136b	سُمّ السهام		machine	
+K137	نصل السهم، رأس السهم		machine	
+K138	جَعْبة، كِنانة		machine	
+K139	رمح، حربة		machine	
+K140	عصا الرمي		machine	
+K141	هراوة		machine	
+K142	شبكة صيد الحيوانات		machine	
+K143	فخ، شَرَك		machine	
+K143b	دِبْق		machine	
+K144	طُعْم		machine	
+K145	أثر قدم الإنسان		machine	
+K145b	أثر الحيوان		machine	
+K146	رمح صيد السمك		machine	
+K146b	حَرْبون، حربة صيد مربوطة بحبل		machine	
+K147	صِنّارة، شِصّ		machine	
+K148	خيط الصنارة		machine	
+K149	شبكة صيد السمك		machine	
+K150	مصيدة سمك (حاجز عبر مجرى الماء)		machine	
+K151	سدّ لصيد السمك		machine	
+K152	قارب، زورق		machine	
+K153	طوف من خشب نبات الأمباج الخفيف	الأمباج (Aeschynomene elaphroxylon) نبات مائي خشبه خفيف كالفلّين.	machine	
+K154	مجداف		machine	
+K155	سيف		machine	
+K156	غِمْد		machine	
+K157	بندقية		machine	
+K158	تُرس	لا الدرع الذي يُلبس على الجسد.	machine	
+K159	سوط		machine	
+K160	حرب		machine	
+K160b	غارة لنهب الماشية		machine	
+K161	سلام، سِلْم		machine	
+K162	جيش		machine	
+K163	متاع، ممتلكات		machine	
+K164	نقود		machine	
+K164b	وَدَع، صدفة الودع		machine	
+K164c	سعر، ثمن		machine	
+K165	هدية		machine	
+K166	دَيْن		machine	
+K167	ضريبة		machine	
+K168	ميراث، إرث		machine	
+K169	ملابس، لباس		machine	
+K169b	قماش		machine	
+K169c	حاشية الثوب، طرف الثوب المثني		machine	
+K170	فستان		machine	
+K171	قميص		machine	
+K172	بنطال، سروال		machine	
+K173	جلابية، ثوب رجالي طويل	«الثوب» وحده في السودان لباس المرأة الملفوف؛ المقصود هنا ثوب الرجل الطويل.	machine	
+K174	عباءة من الجلد المدبوغ		machine	
+K175	ساتر للعورة يُلَف حول الوسط، إزار	ليس المئزر (المريلة).	machine	
+K175a	ساتر للعورة للرجال، إزار رجالي		machine	
+K175b	ساتر للعورة للنساء، رَحَط	الرَّحَط: سِتر من سيور الجلد تلبسه النساء في السودان.	machine	
+K176	حزام		machine	
+K177	حزام مزيّن بالوَدَع		machine	
+K178	حمّالة الطفل، مِحمل الرضيع		machine	
+K179	قبعة		machine	
+K179b	عِمامة		machine	
+K180	نِقاب		machine	
+K181	حذاء		machine	
+K182	خرزة		machine	
+K183	سوار		machine	
+K184	قلادة، عِقْد		machine	
+K185	خَلْخال		machine	
+K186	خاتم		machine	
+K187	قُرط		machine	
+K188	قرص الشفة		machine	
+K189	ندبة زخرفية على الوجه، شَلْخ		machine	
+K190	حِنّاء		machine	
+K191	صابون		machine	
+K192	موسى الحلاقة، شفرة الحلاقة		machine	
+K193	مشط		machine	
+K194	مِسواك، فرشاة أسنان		machine	
+K195	عود أسنان، خِلال		machine	
+K196	موسيقى		machine	
+K197	أغنية		machine	
+K198	رقصة، رقص		machine	
+K199	طبل		machine	
+K199b	الطبل الناطق		machine	
+K199c	طبل على شكل الساعة الرملية		machine	
+K200	طبل كبير		machine	
+K201	طبل صغير		machine	
+K202	طبل أرضي فوق حفرة		machine	
+K203	مزمار متعدد القصبات		machine	
+K204	مزمار ذو نغمة واحدة		machine	
+K205	بوق، قرن موسيقي		machine	
+K205b	بوق صدفي		machine	
+K206	بوق الحرب		machine	
+K207	آلة القيثارة ذات الأوتار (ليرة)، طنبور	المقصود الآلة ذات الإطار والأوتار المتوازية؛ «الطنبور» بهذا المعنى سوداني، وفي غير السودان هو آلة ذات زند طويل.	machine	
+K208	رَبابة (آلة وترية بقوس)	في السودان تعني «الربابة» آلة الليرة، لا الكمان الشعبي.	machine	
+K209	زيلوفون، بالافون		machine	
+K210	خشخيشة		machine	
+K211	عصوان إيقاعيتان تُقرعان معاً		machine	
+K212	صفّارة		machine	
+K213	قناع		machine	
+K214	غليون		machine	
+K215	قصبة الغليون		machine	
+K216	شيشة، نارجيلة		machine	
+K216a	أنبوب الشيشة النازل في الماء		machine	
+K216b	رأس الشيشة، حجر الشيشة		machine	
+K216c	ليّ الشيشة، نربيج		machine	
+K217	طوق اللعب يُدحرج بعصا		machine	
+K218	كرة		machine	
+K219	منقلة، لعبة الحفر والحصى		machine	
+L001	سماء		machine	
+L002	شمس		machine	
+L003	ساعة (ستون دقيقة)		machine	
+L004	يوم	اليوم الكامل بليله ونهاره	machine	
+L005	قمر		machine	
+L006	شهر		machine	
+L007	بدر		machine	
+L008	هلال	أول ظهور للقمر بعد المحاق	machine	
+L009	كسوف, خسوف	الكسوف للشمس والخسوف للقمر	machine	
+L009a	كسوف الشمس		machine	
+L009b	خسوف القمر		machine	
+L010	نجم		machine	
+L010b	نجمة الصباح, كوكب الزهرة		machine	
+L010c	الثريا		machine	
+L010d	الدب الأكبر, بنات نعش		machine	
+L010e	الجبار, حزام الجبار		machine	
+L010g	شهاب		machine	
+L011	سنة		machine	
+L012	فجر		machine	
+L013	شروق الشمس		machine	
+L014	صباح		machine	
+L015	ظهيرة, منتصف النهار		machine	
+L016	نهار		machine	
+L017	بعد الظهر, العصر		machine	
+L018	غروب الشمس		machine	
+L019	غسق, وقت المغرب		machine	
+L020	ليل, ليلة		machine	
+L021	منتصف الليل		machine	
+L022	وقت, زمن		machine	
+L023	موسم, فصل		machine	
+L024	موسم الأمطار, الخريف	في السودان وتشاد «الخريف» هو موسم الأمطار	machine	
+L025	موسم الجفاف		machine	
+L026	شتاء		machine	
+L027	موسم الحصاد		machine	
+L028	ريح		machine	
+L028b	رياح الهرمتان الجافة المغبرة		machine	
+L029	هواء (الذي نتنفسه)		machine	
+L030	عاصفة هوائية, ريح عاتية		machine	
+L030b	عاصفة رملية, هبوب		machine	
+L031	زوبعة, دوامة غبار		machine	
+L032	عاصفة رعدية, عاصفة ممطرة		machine	
+L033	سحابة		machine	
+L034	ضباب		machine	
+L035	غبار عالق في الجو, عجاج		machine	
+L036	مطر		machine	
+L037	أول أمطار الموسم		machine	
+L038	رذاذ		machine	
+L039	رعد		machine	
+L040	برق		machine	
+L041	قوس قزح		machine	
+L042	بَرَد		machine	
+L042b	ثلج		machine	
+L042c	جليد, ثلج		machine	
+L043	ندى		machine	
+L043b	صقيع		machine	
+L044	فيضان, سيل		machine	
+L045	جفاف, قحط		machine	
+L046	حَرّ, حرارة		machine	
+L047	بَرْد, برودة		machine	
+L048	ضوء, نور		machine	
+L049	ضوء الشمس		machine	
+L050	ضوء القمر		machine	
+L051	ظل, مكان ظليل		machine	
+L052	ظل (يلقيه شخص أو شيء)	الظل الذي يلقيه شخص أو شيء	machine	
+L053	انعكاس, صورة منعكسة		machine	
+L054	ظلام		machine	
+L055	نار		machine	
+L056	لهب		machine	
+L057	شرارة		machine	
+L058	دخان		machine	
+L059	رماد		machine	
+L060	حريق البرية, حريق الغابات		machine	
+L061	أرض عشبية محروقة		machine	
+L062	ماء		machine	
+L063	نهر		machine	
+L064	رافد		machine	
+L065	تيار النهر		machine	
+L066	جدول, نهير		machine	
+L067	وادٍ جاف, خور	الخور في السودان وتشاد: مجرى سيل يجف في الصيف	machine	
+L068	شلال		machine	
+L069	نبع, عين ماء		machine	
+L070	ضفة النهر, شاطئ النهر		machine	
+L071	مخاضة, معبر ضحل		machine	
+L072	حاجز رملي, جزيرة رملية		machine	
+L073	جزيرة		machine	
+L074	بحيرة		machine	
+L075	بحر, محيط	في السودان قد تعني كلمة «بحر» النهر الكبير	machine	
+L076	شاطئ		machine	
+L077	بركة, غدير		machine	
+L078	بركة ماء صغيرة		machine	
+L079	مورد ماء, حفير		machine	
+L080	مستنقع		machine	
+L081	موجة		machine	
+L082	فقاعة		machine	
+L083	رغوة, زبد		machine	
+L084	مادة لزجة عضوية, طحالب		machine	
+L085	عَالَم, دنيا		machine	
+L086	مكان		machine	
+L087	أرض		machine	
+L088	تربة		machine	
+L089	تربة خصبة		machine	
+L090	طين, صلصال		machine	
+L090b	كتلة طين, مَدَرة		machine	
+L091	وحل, طين		machine	
+L092	تشققات الطين الجاف		machine	
+L093	رمل		machine	
+L093b	كثيب رملي, قوز		machine	
+L094	حصى		machine	
+L095	غبار		machine	
+L096	حجر صغير, حصاة		machine	
+L097	صخرة		machine	
+L098	ذهب		machine	
+L099	حديد		machine	
+L099b	صدأ		machine	
+L100	فضة		machine	
+L101	نحاس		machine	
+L102	أرض صخرية		machine	
+L103	جبل		machine	
+L104	قمة الجبل		machine	
+L105	تل, ربوة		machine	
+L106	جرف, منحدر صخري		machine	
+L107	وادٍ		machine	
+L108	خندق, قناة		machine	
+L109	حفرة		machine	
+L110	ثقب, حفرة		machine	
+L110b	جحر, وكر		machine	
+L111	حفرة انهيار أرضي, خسف أرضي		machine	
+L112	شق, صدع		machine	
+L113	كهف, مغارة		machine	
+L114	سهل فيضي, أرض يغمرها الفيضان		machine	
+L115	أرض مرتفعة عن الفيضان		machine	
+L116	أرض عشبية, سافانا		machine	
+L117	غابة		machine	
+L117b	فسحة في الغابة		machine	
+L118	برية, خلاء		machine	
+L119	صحراء		machine	
+L119b	واحة		machine	
+L120	سبخة, أرض ملحية		machine	
+M001	لغة		machine	
+M002	صوت الإنسان		machine	
+M003	ضجيج, ضوضاء		machine	
+M004	اسم		machine	
+M004b	سمعة		machine	
+M005	كلمة		machine	
+M006	معنى		machine	
+M007	قصة, حكاية		machine	
+M008	مَثَل		machine	
+M009	لغز, أحجية		machine	
+M010	خبر		machine	
+M010b	إعلان		machine	
+M010c	تقرير		machine	
+M011	سر		machine	
+M012	فكرة		machine	
+M013	خطة		machine	
+M014	حقيقة, صدق		machine	
+M015	كذبة		machine	
+M016	خطأ		machine	
+M017	عهد, نذر		machine	
+M017a	قسم, يمين		machine	
+M017b	وعد		machine	
+M018	معرفة		machine	
+M018b	حكمة		machine	
+M019	خطر		machine	
+M020	مشكلة		machine	
+M020b	مشقة, شدة		machine	
+M020c	عقبة, عائق		machine	
+M021	صمت, سكوت		machine	
+M022	صدى		machine	
+N001	إلى أعلى, فوق		machine	
+N002	إلى أسفل, تحت		machine	
+N003	فوق		machine	
+N004	تحت		machine	
+N005	صعودًا في المنحدر		machine	
+N006	نزولًا في المنحدر		machine	
+N007	إلى أعلى النهر, عكس التيار		machine	
+N008	إلى أسفل النهر, مع التيار		machine	
+N009	شرق		machine	
+N010	غرب		machine	
+N011	شمال (الجهة الجغرافية)	«شمال» تعني اليسار أيضًا في عاميات كثيرة	machine	
+N012	جنوب		machine	
+N013	إلى الأمام		machine	
+N014	إلى الخلف, إلى الوراء		machine	
+N015	يمين, إلى اليمين		machine	
+N016	يسار, إلى اليسار	في عاميات كثيرة يقال «شمال» لليسار	machine	
+N017	أمام, قدّام		machine	
+N018	خلف, وراء		machine	
+N019	بجانب, جنب		machine	
+N020	داخل		machine	
+N021	خارج		machine	
+N022	بين		machine	
+N023	نحو, باتجاه		machine	
+N024	بعيدًا عن, من		machine	
+N025	مع		machine	
+N026	في, عند		machine	
+N027	أول أمس		machine	
+N028	أمس		machine	
+N029	اليوم		machine	
+N030	غدًا		machine	
+N031	بعد غد		machine	
+N032	الماضي		machine	
+N033	سابقًا, من قبل		machine	
+N034	الآن		machine	
+N035	لاحقًا, فيما بعد		machine	
+N036	مستقبل		machine	
+N037	مبكرًا, باكرًا		machine	
+N038	متأخرًا		machine	
+N039	مرة أخرى, من جديد		machine	
+N040	أحيانًا		machine	
+N041	كثيرًا ما, مرارًا		machine	
+N042	عادةً, غالبًا		machine	
+N043	دائمًا		machine	
+N044	لا ... أبدًا, لم ... قطّ		machine	
+O001	نعم		machine	
+O002	لا		machine	
+O003	لا, ليس	تختلف أداة النفي حسب الزمن: لا، لم، لن، ليس، ما	machine	
+O004	و		machine	
+O005	إذا, إن		machine	
+O006	لأن		machine	
+O007	ربما, لعل		machine	
+O008	حقًا, فعلًا		machine	
+O009	كل, جميع		machine	
+O009b	كامل, بأكمله		machine	
+O009c	الجميع, كل الناس		machine	
+O009d	كل شيء		machine	
+O009e	في كل مكان		machine	
+O010	بعض		machine	
+O010b	شخص ما, أحد		machine	
+O010c	شيء ما		machine	
+O011	لا أحد, لا شيء		machine	
+O012	كلاهما, الاثنان		machine	
+O013	نصف		machine	
+O013b	قطعة		machine	
+O014	فقط		machine	
+P001	كبير		machine	
+P001b	حجم, مقاس		machine	
+P002	صغير		machine	
+P003	طويل		machine	
+P004	قصير		machine	
+P005	عالٍ, مرتفع		machine	
+P006	منخفض, واطئ		machine	
+P007	عميق		machine	
+P008	ضحل		machine	
+P009	واسع, عريض		machine	
+P010	ضيّق		machine	
+P011	رقيق, رفيع		machine	
+P012	ثقيل		machine	
+P012b	وزن		machine	
+P013	خفيف		machine	
+P014	كثير, عديد		machine	
+P014b	وفير, غزير		machine	
+P015	قليل		machine	
+P016	كافٍ		machine	
+P017	نافد, منتهٍ		machine	
+P018	نادر, شحيح		machine	
+P019	متساوٍ		machine	
+P020	أكثر من, أكبر من		machine	
+P021	متشابه, مماثل		machine	
+P022	متطابق, مماثل تمامًا		machine	
+P023	مختلف		machine	
+P023b	آخَر		machine	
+P024	أخير		machine	
+P025	متنوّع, مختلف الأنواع		machine	
+P026	مسطّح, منبسط		machine	
+P027	مستدير, دائري		machine	
+P028	مستقيم		machine	
+P029	أعوج, ملتوٍ		machine	
+P030	أجوف, مجوّف		machine	
+P031	صلب, قاسٍ		machine	
+P032	ليّن, طريّ		machine	
+P033	طريّ (سهل المضغ)		machine	
+P034	حادّ		machine	
+P035	غير حادّ, كليل		machine	
+P036	خشن		machine	
+P037	أملس, ناعم		machine	
+P038	زلِق		machine	
+P039	لزج, دبِق		machine	
+P040	مفتوح		machine	
+P041	مغلق		machine	
+P042	مشدود, ضيّق		machine	
+P043	مرتخٍ, فضفاض		machine	
+P044	ممتلئ, مليء		machine	
+P045	فارغ		machine	
+P046	ممزّق		machine	
+P047	جديد		machine	
+P048	قديم		machine	
+P049	بالٍ, رثّ		machine	
+P050	تالف, معطوب		machine	
+P051	نظيف		machine	
+P052	متّسخ, وسخ		machine	
+P053	مبلّل, مبتلّ		machine	
+P054	جافّ, ناشف		machine	
+P055	ساخن, حارّ	حارّ قد يعني أيضًا «لاذع الطعم»	machine	
+P056	بارد		machine	
+P057	ناضج		machine	
+P058	فِجّ, غير ناضج		machine	
+P059	فاسد, متعفّن		machine	
+P060	ذابل, منكمش		machine	
+P061	خصب		machine	
+P062	مُجدِب, قاحل		machine	
+P063	لون		machine	
+P064	أحمر		machine	
+P064a	شيء أحمر		machine	
+P064b	أحمر قانٍ	المقصود الكلمة التي تشدّد اللون، مثل «قانٍ» في «أحمر قانٍ»	machine	
+P065	أسود		machine	
+P065a	شيء أسود		machine	
+P065b	أسود حالك, أسود فاحم	المقصود الكلمة التي تشدّد اللون، مثل «حالك» في «أسود حالك»	machine	
+P065c	داكن, غامق		machine	
+P066	أبيض		machine	
+P066a	شيء أبيض		machine	
+P066b	أبيض ناصع	المقصود الكلمة التي تشدّد اللون، مثل «ناصع» في «أبيض ناصع»	machine	
+P066c	فاتح اللون, باهت		machine	
+P067	أخضر		machine	
+P067a	شيء أخضر		machine	
+P067b	أخضر ناضر, أخضر يانع	المقصود الكلمة التي تشدّد اللون، مثل «ناضر» في «أخضر ناضر»	machine	
+P068	أصفر		machine	
+P069	أزرق		machine	
+P070	بُنّي		machine	
+P071	مرقّط, مبقّع		machine	
+P071b	مرقّط جدًّا	المقصود الكلمة التي تشدّد «مرقّط» إن وُجدت في اللغة	machine	
+P072	ذو لون واحد, سادة		machine	
+P073	أبلق		machine	
+P074	لذيذ, شهيّ		machine	
+P075	حلو		machine	
+P076	حامض		machine	
+P077	مُرّ		machine	
+P078	مالح		machine	
+P079	كريه الرائحة, نتن		machine	
+P079b	رائحة كريهة, نتانة		machine	
+P080	طيّب الرائحة, عطِر		machine	
+P080b	رائحة طيّبة, عبير		machine	
+P081	سريع		machine	
+P081b	سرعة		machine	
+P082	بطيء		machine	
+P083	حرّان, شاعر بالحرّ		machine	
+P084	جائع, جوعان		machine	
+P084b	جوع		machine	
+P085	عطشان, ظمآن		machine	
+P085b	عطش, ظمأ		machine	
+P086	شبعان		machine	
+P087	مُتْعَب, تعبان		machine	
+P087b	تعب, إرهاق		machine	
+P088	نعسان		machine	
+P088b	نعاس		machine	
+P089	مستيقظ, صاحٍ		machine	
+P090	سكران, ثمل		machine	
+P091	دائخ, مصاب بالدوار		machine	
+P092	عارٍ, عريان		machine	
+P093	بصحة جيدة, معافى		machine	
+P093b	صحة, عافية		machine	
+P094	مريض		machine	
+P095	قويّ		machine	
+P095b	قوة		machine	
+P095c	عظيم, مقتدر		machine	
+P095d	مجد, عظمة		machine	
+P096	مفتول العضلات		machine	
+P097	ضعيف		machine	
+P097b	ضعف		machine	
+P098	سمين, بدين		machine	
+P099	نحيف, نحيل		machine	
+P100	هزيل, ناحل		machine	
+P101	أعرج		machine	
+P102	أعمى, كفيف	«كفيف» ألطف من «أعمى»	machine	
+P102b	عمى, فقدان البصر		machine	
+P103	قصير النظر		machine	
+P104	أبكم, أخرس		machine	
+P105	أصلع		machine	
+P106	عاجز جنسيًا, عِنّين		machine	
+P107	حيّ		machine	
+P108	ميّت		machine	
+P109	شابّ, صغير السنّ		machine	
+P110	مُسِنّ, كبير السنّ		machine	
+P111	سعيد, فرحان		machine	
+P111b	سعادة, فرح		machine	
+P112	حزين		machine	
+P112b	حزن		machine	
+P113	غاضب		machine	
+P113b	غضب		machine	
+P114	خائف		machine	
+P114b	خوف		machine	
+P115	فخور		machine	
+P115b	فخر, اعتزاز		machine	
+P116	غيور		machine	
+P116b	غيرة		machine	
+P117	خجول		machine	
+P117b	خجل, عار		machine	
+P118	ضَجِر, شاعر بالملل		machine	
+P119	متململ, لا يهدأ	لا يستقرّ في مكانه	machine	
+P120	متحمّس, متلهّف		machine	
+P121	فضولي, محبّ للاستطلاع		machine	
+P122	وحيد, بمفرده		machine	
+P123	شجاع		machine	
+P123b	شجاعة		machine	
+P124	لطيف, طيّب		machine	
+P124b	لطف, طيبة		machine	
+P124c	شفقة, رحمة		machine	
+P125	كريم		machine	
+P126	أناني		machine	
+P127	صادق, أمين		machine	
+P128	عادل		machine	
+P128b	عدل, عدالة		machine	
+P129	فاسد, مرتشٍ		machine	
+P130	شرير		machine	
+P131	شرس, ضارٍ		machine	
+P132	كسول, كسلان		machine	
+P132b	كسل		machine	
+P133	صبور		machine	
+P133b	صبر		machine	
+P134	نافد الصبر, قليل الصبر		machine	
+P135	عنيد		machine	
+P135b	عناد		machine	
+P136	حكيم		machine	
+P137	ذكيّ		machine	
+P138	أحمق, غبيّ		machine	
+P138b	حماقة, غباء		machine	
+P139	مرتبك, حائر		machine	
+P140	جاهل		machine	
+P141	ماهر, حاذق		machine	
+P142	قادر		machine	
+P142b	قدرة, استطاعة		machine	
+P143	فصيح, بليغ		machine	
+P144	صامت, ساكت		machine	
+P145	جيّد, حسن		machine	
+P145b	كامل, مثالي		machine	
+P145c	جيّدًا, كما ينبغي		machine	
+P145d	كمال		machine	
+P146	سيّئ, رديء		machine	
+P146b	بشكل سيّئ, على نحو رديء		machine	
+P147	صحيح, صائب		machine	
+P148	خاطئ, مخطئ		machine	
+P149	مذنب		machine	
+P150	بريء		machine	
+P151	جميل		machine	
+P152	قبيح, دميم		machine	
+P153	مهمّ		machine	
+P154	مسلٍّ, مضحك		machine	
+P155	سهل		machine	
+P156	صعب		machine	
+P157	غنيّ		machine	
+P158	فقير		machine	
+P159	غالٍ, مرتفع الثمن		machine	
+P160	رخيص		machine	
+P161	ضائع, مفقود		machine	
+P162	غائب		machine	
+P163	قريب من هنا		machine	
+P164	قريب من هناك		machine	
+P165	بعيد		machine	
+Q001	واحد		machine	
+Q001b	أوّل		machine	
+Q001c	مرّة واحدة		machine	
+Q002	اثنان		machine	
+Q002b	ثانٍ		machine	
+Q003	ثلاثة		machine	
+Q003b	ثالث		machine	
+Q004	أربعة		machine	
+Q005	خمسة		machine	
+Q006	ستّة		machine	
+Q007	سبعة		machine	
+Q008	ثمانية		machine	
+Q009	تسعة		machine	
+Q010	عشرة		machine	
+Q011	أحد عشر		machine	
+Q012	اثنا عشر		machine	
+Q013	ثلاثة عشر		machine	
+Q014	أربعة عشر		machine	
+Q015	خمسة عشر		machine	
+Q016	ستّة عشر		machine	
+Q017	سبعة عشر		machine	
+Q018	ثمانية عشر		machine	
+Q019	تسعة عشر		machine	
+Q020	عشرون		machine	
+Q021	واحد وعشرون		machine	
+Q022	اثنان وعشرون		machine	
+Q023	ثلاثة وعشرون		machine	
+Q024	أربعة وعشرون		machine	
+Q030	ثلاثون		machine	
+Q035	خمسة وثلاثون		machine	
+Q036	ستّة وثلاثون		machine	
+Q040	أربعون		machine	
+Q047	سبعة وأربعون		machine	
+Q048	ثمانية وأربعون		machine	
+Q050	خمسون		machine	
+Q059	تسعة وخمسون		machine	
+Q060	ستّون		machine	
+Q070	سبعون		machine	
+Q080	ثمانون		machine	
+Q090	تسعون		machine	
+Q100	مئة		machine	
+Q200	مئتان		machine	
+Q300	ثلاثمئة		machine	
+Q400	أربعمئة		machine	
+Q500	خمسمئة		machine	
+Q600	ستّمئة		machine	
+Q700	سبعمئة		machine	
+Q800	ثمانمئة		machine	
+Q900	تسعمئة		machine	
+Q1000	ألف		machine	
+Q2000	ألفان		machine	
+Q1736	ألف وسبعمئة وستّة وثلاثون		machine	
+R1SG	أنا		machine	
+R1DU	نحن الاثنان		machine	
+R1DUIN	نحن الاثنان (أنا وأنت)		machine	
+R1DUEX	نحن الاثنان (أنا وهو، دونك)		machine	
+R1PC	نحن (عدد قليل)		machine	
+R1PL	نحن		machine	
+R1PLIN	نحن (ومعنا أنتم)		machine	
+R1PLEX	نحن (دونكم)		machine	
+R2SG	أنتَ, أنتِ	المذكّر أولًا ثم المؤنّث	machine	
+R2SGM	أنتَ		machine	
+R2SGF	أنتِ		machine	
+R2SGR	حضرتك, أنتم (للاحترام)		machine	
+R2DU	أنتما		machine	
+R2PC	أنتم (عدد قليل)		machine	
+R2PL	أنتم		machine	
+R2PLM	أنتم (للذكور)		machine	
+R2PLF	أنتنّ		machine	
+R3SG	هو, هي	المذكّر أولًا ثم المؤنّث	machine	
+R3SGM	هو		machine	
+R3SGF	هي		machine	
+R3SGN	هو, هي (لغير العاقل)	يُشار إلى غير العاقل بـ«هو» أو «هي» حسب جنس الاسم	machine	
+R3SGR	حضرته, حضرتها		machine	
+R3SGLOG	هو نفسه (أي صاحب القول المنقول)	يعود على قائل الكلام، كما في: قال إنّه هو نفسه سيذهب	machine	
+R3DU	هما		machine	
+R3PC	هم (عدد قليل)		machine	
+R3PL	هم		machine	
+R3PLM	هم (للذكور)		machine	
+R3PLF	هنّ		machine	
+R3PLN	هي (لجمع غير العاقل)	جمع غير العاقل يُعامَل معاملة المفرد المؤنّث	machine	
+R3PLLOG	هم أنفسهم (أي أصحاب القول المنقول)	يعود على قائلي الكلام، كما في: قالوا إنّهم هم أنفسهم سيذهبون	machine	
+R1SGPOSS	لي (هذا لي)	ضمير الملكية المستقلّ: «هذا لي»، لا «بيتي»	machine	
+R2SGPOSS	لكَ (هذا لكَ), لكِ (هذا لكِ)	ضمير الملكية المستقلّ، المذكّر أولًا ثم المؤنّث	machine	
+R3SGPOSS	له (هذا له), لها (هذا لها)	ضمير الملكية المستقلّ	machine	
+R1PLPOSS	لنا (هذا لنا)	ضمير الملكية المستقلّ	machine	
+R2PLPOSS	لكم (هذا لكم)	ضمير الملكية المستقلّ؛ للمؤنّث لكنّ وللمثنّى لكما	machine	
+R3PLPOSS	لهم (هذا لهم)	ضمير الملكية المستقلّ؛ للمؤنّث لهنّ وللمثنّى لهما	machine	
+RREFL	نفس, ذات	يُستعمل مع الضمير المتّصل: نفسي، نفسه	machine	
+RRECP	بعضهم بعضًا		machine	
+RLOCDPRX	هنا		machine	
+RLOCDADR	هناك (عندك)		machine	
+RLOCDMED	هناك (غير بعيد)		machine	
+RLOCDDST	هناك		machine	
+RLOCDREM	هنالك (بعيدًا لا يُرى)		machine	
+R3SGDPRX	هذا, هذه	المذكّر أولًا ثم المؤنّث	machine	
+R3SGDADR	ذلك (عندك), تلك (عندك)		machine	
+R3SGDMED	ذاك		machine	
+R3SGDDST	ذلك, تلك	المذكّر أولًا ثم المؤنّث	machine	
+R3PLDPRX	هؤلاء		machine	
+R3PLDADR	أولئك (عندك)		machine	
+R3PLDMED	أولاك		machine	
+R3PLDDST	أولئك		machine	
+RQ3SG	مَن		machine	
+RQ3PL	مَن (لجماعة)		machine	
+RQ3SGN	ما, ماذا		machine	
+RQ3PLN	ما (لأشياء متعدّدة)		machine	
+RQ3SGREL	أيّ		machine	
+RQ3PLREL	أيّ (لجمع)		machine	
+RQ3SGPOSS	لِمَن		machine	
+RQLOC	أين		machine	
+RQTIM	متى		machine	
+RQRSN	لماذا		machine	
+RQMAN	كيف		machine	
+RQQNT	كم		machine	
+V001	كان	فعل الكون؛ يُحذف في الجملة الاسمية في الزمن الحاضر	machine	
+V002	وُجِدَ		machine	
+V003	وُجِدَ منفصلًا عن غيره		machine	
+V004	لم يوجد, انعدم		machine	
+V005	صار, أصبح		machine	
+V006	كان عنده, مَلَكَ	تُعبَّر الملكية في العربية عادةً بـ«عند»	machine	
+V007	افتقر إلى, نقصه		machine	
+V008	ذهب		machine	
+V009	جاء, أتى		machine	
+V010	وصل		machine	
+V011	اقترب, دنا		machine	
+V012	دخل		machine	
+V013	خرج		machine	
+V014	غادر, رحل		machine	
+V015	عاد, رجع		machine	
+V016	مرّ بـ		machine	
+V017	دار حول, التفّ حول		machine	
+V018	صعد, طلع		machine	
+V019	نزل, هبط		machine	
+V020	سقط, وقع		machine	
+V021	قام, نهض		machine	
+V022	عبر (النهر)		machine	
+V023	اجتاز (أرضًا), قطع (أرضًا)		machine	
+V024	تحرّك		machine	
+V024b	حركة		machine	
+V025	سافر		machine	
+V026	هاجر, رحل		machine	
+V027	تجوّل, هام		machine	
+V028	اختفى		machine	
+V029	مشى (على قدميه)		machine	
+V030	خطا (خطوةً)		machine	
+V031	جرى, ركض		machine	
+V032	هرب, فرّ		machine	
+V033	أسرع, استعجل		machine	
+V034	تعثّر		machine	
+V035	عرج		machine	
+V036	زحف, حبا		machine	
+V037	قفز, نطّ		machine	
+V038	استدار, التفت		machine	
+V039	تأرجح		machine	
+V040	انزلق, تزحلق		machine	
+V041	تدحرج		machine	
+V042	سبح على سطح الماء, خاض الماء		machine	
+V043	سبح تحت الماء		machine	
+V044	غطس		machine	
+V045	طفا		machine	
+V046	غاص إلى القاع, غَرِقَ (الشيء)	غَرِقَ هنا للسفن والأشياء، لا بمعنى موت الإنسان غرقًا	machine	
+V047	غرق		machine	
+V048	طار		machine	
+V049	حلّق (في الجو)		machine	
+V050	جثم (على غصن), وقف (على غصن)		machine	
+V050b	حطّ (الطائر)		machine	
+V051	جذّف		machine	
+V052	نزح الماء (من القارب)		machine	
+V053	انقلب (القارب)		machine	
+V054	ركب		machine	
+V055	قاد, وجّه		machine	
+V056	سكن, أقام		machine	
+V057	بقي, مكث		machine	
+V058	استراح, ارتاح		machine	
+V059	جلس, قعد		machine	
+V060	وقف		machine	
+V061	جثا (على ركبتيه)		machine	
+V062	قرفص, جلس القرفصاء		machine	
+V063	جلس منفرج الساقين على		machine	
+V064	اتّكأ على, استند إلى		machine	
+V065	استلقى, رقد		machine	
+V066	انحنى		machine	
+V067	انحنى (تحيةً)		machine	
+V068	تنفّس		machine	
+V069	لهث		machine	
+V070	تثاءب		machine	
+V071	رمش		machine	
+V072	غمز		machine	
+V073	شخر		machine	
+V074	تشمّم, استنشق		machine	
+V075	تمخّط		machine	
+V076	نفخ (بالفم)		machine	
+V077	بصق, تفل		machine	
+V078	سعل, كحّ		machine	
+V079	تجشّأ, تكرّع		machine	
+V080	عطس		machine	
+V081	تأوّه, أنّ (من الألم)		machine	
+V082	أنّ (من الجهد), زحر		machine	
+V083	خفق (القلب), نبض		machine	
+V084	نبض بالألم		machine	
+V085	تبوّل		machine	
+V086	تبرّز		machine	
+V087	أخرج ريحًا, ضرط	ضرط لفظ صريح قد يُعدّ فظًّا	machine	
+V088	ارتجف, ارتعش		machine	
+V089	عَرِقَ		machine	
+V090	نزف		machine	
+V091	تخثّر, تجلّط		machine	
+V092	أُغمي عليه		machine	
+V093	تقيّأ, استفرغ		machine	
+V094	نام		machine	
+V095	استيقظ, صحا		machine	
+V096	حَمَلَتْ	بصيغة المؤنث	machine	
+V097	وَلَدَتْ, وضعت	بصيغة المؤنث	machine	
+V098	وُلِدَ		machine	
+V099	كَبِرَ, نشأ		machine	
+V100	شاخ, كَبِرَ في السن		machine	
+V101	مات		machine	
+V102	نجا, بقي على قيد الحياة		machine	
+V103	أُصيب, تأذّى		machine	
+V104	آذى, أوجع		machine	
+V105	شُفِيَ, برئ		machine	
+V106	شفى, عالج		machine	
+V107	أفاق, عاد إلى الحياة		machine	
+V108	نبح		machine	
+V109	زمجر, هرّ		machine	
+V110	كشّر عن أنيابه		machine	
+V111	اجترّ		machine	
+V112	نقر		machine	
+V113	باض		machine	
+V114	رقد على البيض, حضن		machine	
+V115	فقس		machine	
+V116	قوقأ (الدجاجة)		machine	
+V117	صاح (الديك)		machine	
+V118	رفرف (بجناحيه)		machine	
+V119	انساب, زحف (الأفعى)		machine	
+V120	فحّ (الأفعى)		machine	
+V121	لدغ (العقرب), لسع		machine	
+V122	نما (النبات)		machine	
+V123	نبت, برعم		machine	
+V124	نضج		machine	
+V125	ذبل		machine	
+V126	تبخّر		machine	
+V127	جرى, سال		machine	
+V128	قطر, تقطّر		machine	
+V129	رشح, تسرّب		machine	
+V130	انفجر, انفقأ		machine	
+V131	انتفخ, تورّم		machine	
+V132	انتشر (الحريق)		machine	
+V133	لمع, أضاء		machine	
+V134	بهت		machine	
+V135	أضاء, صار أفتح		machine	
+V136	أظلم, صار أغمق		machine	
+V137	جفّ, يبس		machine	
+V138	احترق		machine	
+V139	اشتعل بلا لهب		machine	
+V140	ذاب		machine	
+V141	تجمّد		machine	
+V142	لفح (بالنار), شيّط		machine	
+V143	حفّ (أوراق الشجر), خشخش		machine	
+V144	صرّ, صأى		machine	
+V145	هبّ (الريح)		machine	
+V146	أسقطته الريح		machine	
+V147	طار مع الريح, حملته الريح		machine	
+V148	رأى		machine	
+V148b	بصر, رؤية		machine	
+V149	نظر		machine	
+V150	لاحظ, انتبه		machine	
+V151	سمع		machine	
+V152	استمع, أصغى		machine	
+V153	شمّ		machine	
+V154	ذاق		machine	
+V154b	طعم, مذاق		machine	
+V155	شعر, أحسّ		machine	
+V156	لمس		machine	
+V157	عرف, تعرّف على		machine	
+V158	أكل		machine	
+V158b	وجبة		machine	
+V159	أكل (اللحم)		machine	
+V160	مضغ		machine	
+V161	قرمش		machine	
+V162	قرض, قضم		machine	
+V163	عضّ		machine	
+V164	لعق, لحس		machine	
+V165	مصّ		machine	
+V166	بلع, ابتلع		machine	
+V167	غصّ, اختنق		machine	
+V168	شرب		machine	
+V168b	مشروب		machine	
+V169	رشف		machine	
+V170	ضرب		machine	
+V171	ضرب (مرارًا), جلد		machine	
+V172	صفع, لطم		machine	
+V173	صفّق		machine	
+V174	ركل, رفس		machine	
+V175	ضرب الأرض بقدمه		machine	
+V176	داس, وطئ		machine	
+V177	اصطدم بـ		machine	
+V178	أسقط, طرح أرضًا		machine	
+V179	دفع		machine	
+V180	ضغط		machine	
+V181	سحب, شدّ		machine	
+V182	جرّ		machine	
+V183	فرك, دلك		machine	
+V184	كشط		machine	
+V185	حكّ, خدش		machine	
+V186	هزّ, رجّ		machine	
+V187	سحق, هرس		machine	
+V188	طعن		machine	
+V189	وخز		machine	
+V190	ثقب (الأذن)		machine	
+V191	جرح		machine	
+V192	قتل		machine	
+V193	قلع الأسنان الأمامية السفلى (عادةً)		machine	
+V194	حمل (بين ذراعيه), احتضن		machine	
+V195	أمسك (بيده)		machine	
+V196	أخذ		machine	
+V197	انتزع, خطف		machine	
+V198	أخذ معه, ذهب به		machine	
+V199	وضع		machine	
+V200	التقط		machine	
+V201	أوقع, أسقط		machine	
+V202	رفع		machine	
+V203	خفض, أنزل		machine	
+V204	رمى إلى, قذف		machine	
+V205	رمى, تخلّص من		machine	
+V206	حمل		machine	
+V207	حمل (على رأسه)		machine	
+V208	حمل (على كتفه)		machine	
+V209	حمل (على ظهره)		machine	
+V210	حمّل		machine	
+V211	أنزل (الحمولة), فرّغ		machine	
+V212	أحضر, جلب		machine	
+V213	أعطى		machine	
+V214	أعار, أقرض		machine	
+V215	استعار, اقترض		machine	
+V216	قدّم, عرض		machine	
+V217	قبل		machine	
+V218	رفض		machine	
+V219	حصل على, نال		machine	
+V220	أرجع, ردّ		machine	
+V221	احتفظ بـ, حفظ		machine	
+V222	خزّن, ادّخر		machine	
+V223	أخفى, خبّأ		machine	
+V224	أضاع, فقد		machine	
+V225	بحث عن, فتّش عن		machine	
+V226	وجد, عثر على		machine	
+V227	ترك, خلّف		machine	
+V228	حرس		machine	
+V229	قطع		machine	
+V230	شقّ لحاء الشجرة لتثمر		machine	
+V231	قطع (شجرة)		machine	
+V232	قطّع		machine	
+V233	شقّ, فلق		machine	
+V234	نشر (بالمنشار)	بالمنشار، لا بمعنى البسط	machine	
+V235	جوّف (جذعًا)		machine	
+V236	قصف (العود), كسر		machine	
+V237	مزّق		machine	
+V238	قشر (اللحاء), نزع (اللحاء)		machine	
+V239	ثنى (غصنًا), حنى		machine	
+V239b	انحناء, منعطف		machine	
+V240	لوى, فتل		machine	
+V241	طوى		machine	
+V242	لفّ (حبلًا)		machine	
+V243	شدّ (الجلد)		machine	
+V244	بسط, فرش		machine	
+V245	علّق		machine	
+V246	قلب, أدار		machine	
+V247	فتح		machine	
+V248	أغلق, سدّ		machine	
+V249	غطّى		machine	
+V250	كشف, أزال الغطاء		machine	
+V251	سدّ		machine	
+V252	لفّ		machine	
+V253	فكّ (الغلاف)		machine	
+V254	عبّأ, حشر		machine	
+V255	ملأ		machine	
+V256	أخرج (من الوعاء)		machine	
+V257	صبّ		machine	
+V258	دلق		machine	
+V259	لبس		machine	
+V260	خلع (ملابسه)		machine	
+V261	استحمّ		machine	
+V262	غسل (الملابس)		machine	
+V263	مسح		machine	
+V264	قصّ (الشعر)		machine	
+V265	حلق		machine	
+V266	ضفر (الشعر)		machine	
+V267	دهن (بمرهم)		machine	
+V268	زيّن		machine	
+V269	أعدّ (الطعام)		machine	
+V270	شقّ (الفاكهة)		machine	
+V271	قطّع شرائح		machine	
+V272	قشّر		machine	
+V273	خلط		machine	
+V274	حرّك (القدر)		machine	
+V275	صفّى (الطعام)		machine	
+V276	دقّ (في الهاون)		machine	
+V277	سحق (حتى يصير مسحوقًا)		machine	
+V278	جرش (الحبّ)	طحن خشن أوّل على حجر الرحى	machine	
+V279	طحن (طحنة ثانية)	طحن أنعم من الأول	machine	
+V280	طحن ناعمًا (طحنة ثالثة)	أنعم طحن	machine	
+V281	عجن		machine	
+V282	شكّل (الخبز)		machine	
+V283	نتف (الريش)		machine	
+V284	طبخ		machine	
+V285	غلى, سلق		machine	
+V286	طها على نار هادئة		machine	
+V287	طبخ يخنة		machine	
+V288	شوى		machine	
+V289	قلى		machine	
+V290	شوى في الرماد		machine	
+V291	دخّن (اللحم)		machine	
+V292	تخمّر		machine	
+V293	فسد (الطعام)		machine	
+V294	فعل		machine	
+V294b	عَمَل		machine	
+V295	صنع		machine	
+V295b	صُنْع		machine	
+V296	بنى		machine	
+V297	أصلح		machine	
+V298	استبدل		machine	
+V299	صنع الفخّار		machine	
+V300	خاط		machine	
+V301	نسج		machine	
+V302	نظم (الخرز)		machine	
+V303	ربط		machine	
+V304	فكّ		machine	
+V305	حزم (بالحبل)		machine	
+V306	شدّ		machine	
+V307	أرخى		machine	
+V308	سيّج		machine	
+V309	حدّد (قطعة أرض)		machine	
+V310	حفر		machine	
+V311	استقى		machine	
+V312	احتطب		machine	
+V313	كنس		machine	
+V314	لمّع		machine	
+V315	دقّ (الجرس)		machine	
+V316	نحت		machine	
+V317	رسم		machine	
+V318	قلب التربة (باليد)		machine	
+V318b	حرث		machine	
+V319	نظّف الأرض (للزراعة)		machine	
+V320	بذر		machine	
+V321	نثر (البذور)		machine	
+V322	غرس (الشتلات)		machine	
+V323	شتل		machine	
+V324	أزال الأعشاب الضارّة		machine	
+V325	عزق		machine	
+V326	حصد		machine	
+V327	قلع (اليام)		machine	
+V328	قطف (الفاكهة)		machine	
+V329	جنى (العسل)		machine	
+V330	درس (الحبّ)		machine	
+V331	ذرّى (الحبّ)		machine	
+V332	قشّر (الفول السوداني)		machine	
+V333	قشّر (كوز الذرة)		machine	
+V334	رعى		machine	
+V335	علف		machine	
+V336	ربط (الدابّة بحبل)		machine	
+V337	حلب		machine	
+V338	خصى		machine	
+V339	دجّن		machine	
+V340	ذبح		machine	
+V341	سلخ		machine	
+V342	صاد		machine	
+V343	تعقّب (الطريدة) خلسة		machine	
+V344	طارد		machine	
+V345	نصب (فخًّا)		machine	
+V346	صاد بفخّ		machine	
+V347	أمسك		machine	
+V348	تفادى, راوغ		machine	
+V349	هرب		machine	
+V350	رمى (بالسهم), أطلق النار		machine	
+V351	صاد السمك		machine	
+V352	غيّر, تغيّر		machine	
+V353	دمّر		machine	
+V354	أطلق سراح, أفلت		machine	
+V355	مكّن		machine	
+V356	كبّر		machine	
+V356b	ازداد		machine	
+V357	قلّل		machine	
+V357b	نقص		machine	
+V358	طوّل		machine	
+V359	قصّر		machine	
+V360	وسّع		machine	
+V361	عمّق		machine	
+V362	سطّح		machine	
+V363	قوّم		machine	
+V364	سنّ		machine	
+V365	نعّم		machine	
+V366	قسّى		machine	
+V367	ليّن		machine	
+V368	جفّف (الملابس)		machine	
+V369	رشّ		machine	
+V370	طيّن		machine	
+V371	غمس		machine	
+V372	نقع		machine	
+V373	عصر		machine	
+V374	أشعل (النار)		machine	
+V375	أطفأ (النار)		machine	
+V376	هوّى (النار)		machine	
+V377	أضاف, جمع		machine	
+V378	طرح		machine	
+V379	تَقَلَّصَ, نَقَصَ	لازم: صار أصغر أو أقل	machine	خفّض
+V380	وصل (بين شيئين)		machine	
+V381	راكم		machine	
+V381b	كوّم		machine	
+V382	جمع		machine	
+V383	قسم		machine	
+V384	فرّق (الناس)		machine	
+V385	أحاط بـ		machine	
+V386	غنّى		machine	
+V387	دندن		machine	
+V388	صفّر		machine	
+V389	رقص		machine	
+V390	لعب		machine	
+V391	عزف (على آلة وترية)		machine	
+V392	زمّر		machine	
+V393	قايض		machine	
+V394	اشترى		machine	
+V395	باع		machine	
+V396	ساوم		machine	
+V397	دفع		machine	
+V397b	دَفْع (المال)		machine	
+V398	استأجر		machine	
+V399	تسوّل		machine	
+V400	ورث		machine	
+V401	سرق		machine	
+V402	فكّر		machine	
+V403	صدّق, آمن		machine	
+V404	عرف		machine	
+V405	شكّ		machine	
+V406	أمل		machine	
+V407	تعلّم		machine	
+V408	علّم		machine	
+V409	أَرَى		machine	
+V410	تذكّر		machine	
+V411	نسي		machine	
+V412	قرّر		machine	
+V413	اختار		machine	
+V414	تردّد		machine	
+V415	أراد		machine	
+V416	احتاج		machine	
+V417	حاول		machine	
+V418	نجح		machine	
+V419	فشل		machine	
+V420	تظاهر		machine	
+V421	قيّم		machine	
+V422	حلّ		machine	
+V423	عدّ		machine	
+V424	رتّب		machine	
+V425	ضحك		machine	
+V426	ابتسم		machine	
+V427	فرح		machine	
+V428	بكى		machine	
+V429	ناح (على الميت)		machine	
+V429b	حِداد		machine	
+V430	زغرد		machine	
+V431	أخاف		machine	
+V432	أفزع		machine	
+V433	هدّأ (الطفل)		machine	
+V433b	هدأ		machine	
+V434	أحبّ		machine	
+V435	كره		machine	
+V436	احتقر		machine	
+V437	أُعجِبَ بـ		machine	
+V438	احترم		machine	
+V438b	خَشْيَة, مَهابة		machine	
+V439	كرّم		machine	
+V440	عانى		machine	
+V441	كافَحَ		machine	كافح, صارع
+V442	قال		machine	
+V443	تكلّم		machine	
+V443b	خِطاب		machine	
+V444	حكى, أخبر		machine	
+V445	همس		machine	
+V446	صرخ		machine	
+V447	دردش		machine	
+V448	تمتم		machine	
+V449	تأتأ		machine	
+V450	حيّا		machine	
+V451	ودّع		machine	
+V452	نادى		machine	
+V453	أعلن		machine	
+V454	شرح		machine	
+V455	نصح		machine	
+V456	اغتاب		machine	
+V457	سأل		machine	
+V457b	سؤال		machine	
+V458	توسّل		machine	
+V458b	طَلَب		machine	
+V459	ردّ		machine	
+V460	شكر		machine	
+V461	أقسم		machine	
+V462	شتم		machine	
+V462b	شتيمة		machine	
+V463	افترى على		machine	
+V464	هدّد		machine	
+V465	جادل		machine	
+V465b	جِدال, نِزاع		machine	
+V466	تذمّر		machine	
+V467	ناقض		machine	
+V468	اتّهم		machine	
+V469	أنكر		machine	
+V470	اعترف		machine	
+V471	وافق (على)		machine	
+V471b	اتّفاق		machine	
+V472	أقنع		machine	
+V473	مدح		machine	
+V473b	مَدْح		machine	
+V474	هنّأ		machine	
+V475	تباهى		machine	
+V476	كذب		machine	
+V477	التقى بـ		machine	
+V477b	لقاء, اجتماع		machine	
+V478	رافق		machine	
+V479	كان معًا		machine	
+V480	اجتمع		machine	
+V481	دعا (ضيفًا)		machine	
+V482	هجر		machine	
+V483	تجنّب		machine	
+V484	طرد		machine	
+V485	أشبه		machine	
+V486	قلّد		machine	
+V487	ناسب		machine	
+V488	لوّح (بيده)		machine	
+V489	أشار (بإصبعه)		machine	
+V490	عانق		machine	
+V491	داعب		machine	
+V492	قبّل		machine	
+V493	مارس الجنس	جامع لفظ فصيح مهذّب	machine	
+V494	تزاوج		machine	
+V495	أرضع		machine	
+V496	دغدغ		machine	
+V497	ضرب على المؤخّرة		machine	
+V498	ساعد		machine	
+V499	حمى		machine	
+V500	اعتنى بـ		machine	
+V501	ربّى		machine	
+V502	حكم		machine	
+V503	أمر		machine	
+V503b	أَمْر	بمعنى الأمر الصادر لا الشأن	machine	
+V504	أرسل		machine	
+V505	خدم		machine	
+V506	أرشد		machine	
+V507	تبع		machine	
+V508	أطاع		machine	
+V509	أرضى		machine	
+V510	أزعج		machine	
+V511	خدع		machine	
+V512	تَخاصَمَ, تَنازَعَ		machine	تشاجر
+V513	قاتل		machine	
+V514	انتقم		machine	
+V515	توسّط		machine	
+V516	توصّل إلى حلّ وسط		machine	
+V517	أسكت		machine	
+V518	عاقب		machine	
+V518b	عُقوبة		machine	
+V519	هزم		machine	
+V520	هُزِمَ		machine	
+V521	نهب		machine	
+V522	تجسّس على		machine	
+V523	اغتصب		machine	
+V524	صلّى, دعا		machine	
+V525	تنبّأ		machine	
+V526	سحر	السحر موضوع حسّاس	machine	
+V527	لعن		machine	
+V528	سمّم		machine	
+V529	حصّن بتميمة	التميمة: الحجاب أو الحِرز	machine	
+V530	طرد الأرواح الشريرة		machine	
+V531	قدّم ذبيحة		machine	
+V532	سكب شرابًا قربانًا	سكب الشراب قربانًا للأرواح أو الأسلاف	machine	
+V533	دفن		machine	
+V534	عزّى		machine	
+V535	تزوّج		machine	
+V535b	زواج		machine	
+V536	خُطِبَ	الفعل للمخطوب أو المخطوبة	machine	
+V537	طلّق, انفصل	طلّق: الزوج يطلّق زوجته؛ انفصل: يشمل الزوجة التي تنفصل عن زوجها (بالخُلع مثلًا)	machine	
+V538	عرقل		machine	
+V539	منع		machine	
+V540	حظر		machine	
+V541	سمح		machine	
+V542	امتنع		machine	
+V543	بدأ		machine	
+V543b	بداية		machine	
+V544	استمرّ		machine	
+V545	توقّف, أوقف		machine	
+V546	انتظر		machine	
+V547	انتظر (شخصًا أو شيئًا)		machine	
+V548	قضى الوقت		machine	
+V549	أنهى		machine	
+V549b	نِهاية		machine	
+CENG	إنجليزي		machine	
+CENGf	امرأة إنجليزية		machine	
+CENGm	رجل إنجليزي		machine	
+CFRA	فرنسي		machine	
+CFRAf	امرأة فرنسية		machine	
+CFRAm	رجل فرنسي		machine	
+CPOR	برتغالي		machine	
+CPORf	امرأة برتغالية		machine	
+CPORm	رجل برتغالي		machine	
+CDEU	ألماني		machine	
+CDEUf	امرأة ألمانية		machine	
+CDEUm	رجل ألماني		machine	
+CITA	إيطالي		machine	
+CITAf	امرأة إيطالية		machine	
+CITAm	رجل إيطالي		machine	
+CSPA	إسباني		machine	
+CSPAf	امرأة إسبانية		machine	
+CSPAm	رجل إسباني		machine	
+CNLD	هولندي		machine	
+CNLDf	امرأة هولندية		machine	
+CNLDm	رجل هولندي		machine	
+CTUR	تركي		machine	
+CTURf	امرأة تركية		machine	
+CTURm	رجل تركي		machine	
+CCMN	صيني		machine	
+CCMNf	امرأة صينية		machine	
+CCMNm	رجل صيني		machine	
+CGUJ	غوجاراتي	من أهل غوجارات في الهند، ومنهم الجاليات الهندية في شرق أفريقيا وجنوبها	machine	
+CGUJf	امرأة غوجاراتية		machine	
+CGUJm	رجل غوجاراتي		machine	
+CARA	عربي		machine	
+CARAf	امرأة عربية		machine	
+CARAm	رجل عربي		machine	
+CKAB	قبائلي (من منطقة القبائل بالجزائر)	لا بمعنى المنتمي إلى قبيلة	machine	
+CKABf	امرأة قبائلية (من منطقة القبائل بالجزائر)		machine	
+CKABm	رجل قبائلي (من منطقة القبائل بالجزائر)		machine	
+CTZM	أمازيغي من الأطلس المتوسط	يُفضَّل أمازيغي؛ كلمة بربري يعدّها كثير من الأمازيغ مهينة	machine	
+CTZMf	امرأة أمازيغية من الأطلس المتوسط		machine	
+CTZMm	رجل أمازيغي من الأطلس المتوسط		machine	
+CSHI	شخص من شعب يُسمّى إشلحيين, شلحي	إشلحيين هو اسمهم لأنفسهم، أمازيغ سوس في جنوب المغرب؛ كلمة شلحي/شلوح تُستعمل أحياناً للاستهزاء	machine	
+CSHIf	امرأة من شعب يُسمّى إشلحيين, امرأة شلحية		machine	
+CSHIm	رجل من شعب يُسمّى إشلحيين, رجل شلحي		machine	
+CTMH	شخص من شعب يُسمّى كل تماشق, طارقي	الطوارق يسمّون أنفسهم كل تماشق أو إيموهاغ؛ اسم طارقي/طوارق تسمية خارجية قد تُعدّ مهينة	machine	
+CTMHf	امرأة من شعب يُسمّى كل تماشق, امرأة طارقية		machine	
+CTMHm	رجل من شعب يُسمّى كل تماشق, رجل طارقي		machine	
+CBEJ	شخص من البجا, بجاوي		machine	
+CBEJf	امرأة من البجا, امرأة بجاوية		machine	
+CBEJm	رجل من البجا, رجل بجاوي		machine	
+CFIA	نوبي	كلمة بربري أو برابرة استُعملت قديماً للنوبيين في مصر والسودان وقد تُعدّ مهينة	machine	
+CFIAf	امرأة نوبية		machine	
+CFIAm	رجل نوبي		machine	
+CFVR	شخص من الفور		machine	
+CFVRf	امرأة من الفور		machine	
+CFVRm	رجل من الفور		machine	
+CZAG	شخص من الزغاوة		machine	
+CZAGf	امرأة من الزغاوة		machine	
+CZAGm	رجل من الزغاوة		machine	
+CMLS	شخص من المساليت		machine	
+CMLSf	امرأة من المساليت		machine	
+CMLSm	رجل من المساليت		machine	
+CDIN	شخص من الدينكا		machine	
+CDINf	امرأة من الدينكا		machine	
+CDINm	رجل من الدينكا		machine	
+CNUS	شخص من النوير		machine	
+CNUSf	امرأة من النوير		machine	
+CNUSm	رجل من النوير		machine	
+CSHK	شخص من الشلك		machine	
+CSHKf	امرأة من الشلك		machine	
+CSHKm	رجل من الشلك		machine	
+CANU	شخص من الأنواك		machine	
+CANUf	امرأة من الأنواك		machine	
+CANUm	رجل من الأنواك		machine	
+CBFA	شخص من شعب الباري		machine	
+CBFAf	امرأة من شعب الباري		machine	
+CBFAm	رجل من شعب الباري		machine	
+CZNE	شخص من الزاندي	الاسم القديم نيام نيام مهين ولا يُستعمل	machine	
+CZNEf	امرأة من الزاندي		machine	
+CZNEm	رجل من الزاندي		machine	
+CACH	شخص من الأشولي		machine	
+CACHf	امرأة من الأشولي		machine	
+CACHm	رجل من الأشولي		machine	
+CLAJ	شخص من اللانغو		machine	
+CLAJf	امرأة من اللانغو		machine	
+CLAJm	رجل من اللانغو		machine	
+CTEO	شخص من التيسو		machine	
+CTEOf	امرأة من التيسو		machine	
+CTEOm	رجل من التيسو		machine	
+CLUO	شخص من اللوو (كينيا وتنزانيا)		machine	
+CLUOf	امرأة من اللوو (كينيا وتنزانيا)		machine	
+CLUOm	رجل من اللوو (كينيا وتنزانيا)		machine	
+CAMH	شخص من الأمهرة		machine	
+CAMHf	امرأة من الأمهرة		machine	
+CAMHm	رجل من الأمهرة		machine	
+CORM	شخص من الأورومو	الاسم القديم غالا (جالا) مهين ولا يُستعمل	machine	
+CORMf	امرأة من الأورومو		machine	
+CORMm	رجل من الأورومو		machine	
+CTIR	شخص من التغراي أو التغرينيا		machine	
+CTIRf	امرأة من التغراي أو التغرينيا		machine	
+CTIRm	رجل من التغراي أو التغرينيا		machine	
+CTIG	شخص من التغري (إريتريا وشرق السودان)	غير التغراي في إثيوبيا	machine	
+CTIGf	امرأة من التغري (إريتريا وشرق السودان)		machine	
+CTIGm	رجل من التغري (إريتريا وشرق السودان)		machine	
+CSOM	صومالي		machine	
+CSOMf	امرأة صومالية		machine	
+CSOMm	رجل صومالي		machine	
+CAAR	عفري	الاسم القديم الدناكل تسمية خارجية	machine	
+CAARf	امرأة عفرية		machine	
+CAARm	رجل عفري		machine	
+CSID	شخص من السيداما		machine	
+CSIDf	امرأة من السيداما		machine	
+CSIDm	رجل من السيداما		machine	
+CWAL	شخص من الولايتا		machine	
+CWALf	امرأة من الولايتا		machine	
+CWALm	رجل من الولايتا		machine	
+CHDY	شخص من الهاديا	شعب في جنوب إثيوبيا (هدية في المصادر التاريخية)	machine	
+CHDYf	امرأة من الهاديا		machine	
+CHDYm	رجل من الهاديا		machine	
+CSGW	شخص من الغوراغي		machine	
+CSGWf	امرأة من الغوراغي		machine	
+CSGWm	رجل من الغوراغي		machine	
+CGUK	شخص من القمز	كلمة شنقلا (شنقلة) مهينة ولا تُستعمل	machine	
+CGUKf	امرأة من القمز		machine	
+CGUKm	رجل من القمز		machine	
+CWTI	شخص من البرتا	يُسمَّون أحياناً بني شنقول	machine	
+CWTIf	امرأة من البرتا		machine	
+CWTIm	رجل من البرتا		machine	
+CUDU	شخص من الأودوك		machine	
+CUDUf	امرأة من الأودوك		machine	
+CUDUm	رجل من الأودوك		machine	
+CMPE	شخص من شعب يُسمّى ماجانغ		machine	
+CMPEf	امرأة من شعب يُسمّى ماجانغ		machine	
+CMPEm	رجل من شعب يُسمّى ماجانغ		machine	
+CSWA	سواحيلي		machine	
+CSWAf	امرأة سواحيلية		machine	
+CSWAm	رجل سواحيلي		machine	
+CKIK	شخص من الكيكويو		machine	
+CKIKf	امرأة من الكيكويو		machine	
+CKIKm	رجل من الكيكويو		machine	
+CKAM	شخص من الكامبا		machine	
+CKAMf	امرأة من الكامبا		machine	
+CKAMm	رجل من الكامبا		machine	
+CGUZ	شخص من الغوسي (الكيسي)		machine	
+CGUZf	امرأة من الغوسي (الكيسي)		machine	
+CGUZm	رجل من الغوسي (الكيسي)		machine	
+CMAS	شخص من الماساي		machine	
+CMASf	امرأة من الماساي		machine	
+CMASm	رجل من الماساي		machine	
+CKLN	شخص من الكالنجين		machine	
+CKLNf	امرأة من الكالنجين		machine	
+CKLNm	رجل من الكالنجين		machine	
+CLUG	شخص من الباغندا		machine	
+CLUGf	امرأة من الباغندا		machine	
+CLUGm	رجل من الباغندا		machine	
+CNYN	شخص من البانيانكولي		machine	
+CNYNf	امرأة من البانيانكولي		machine	
+CNYNm	رجل من البانيانكولي		machine	
+CKIN	شخص من البانيارواندا (الناطقين بالكينيارواندا)	في رواندا والكونغو الديمقراطية وأوغندا، لا مواطنو رواندا فقط	machine	
+CKINf	امرأة من البانيارواندا (الناطقين بالكينيارواندا)		machine	
+CKINm	رجل من البانيارواندا (الناطقين بالكينيارواندا)		machine	
+CRUN	شخص من الباروندي (الناطقين بالكيروندي)	لا مواطنو بوروندي فقط	machine	
+CRUNf	امرأة من الباروندي (الناطقين بالكيروندي)		machine	
+CRUNm	رجل من الباروندي (الناطقين بالكيروندي)		machine	
+CSUK	شخص من السوكوما		machine	
+CSUKf	امرأة من السوكوما		machine	
+CSUKm	رجل من السوكوما		machine	
+CNYM	شخص من النيامويزي		machine	
+CNYMf	امرأة من النيامويزي		machine	
+CNYMm	رجل من النيامويزي		machine	
+CHAU	شخص من الهوسا	في السودان قد يُدرج الهوسا تحت كلمة فلاتة، وهي تسمية خارجية قد تُعدّ مهينة	machine	
+CHAUf	امرأة من الهوسا		machine	
+CHAUm	رجل من الهوسا		machine	
+CYOR	شخص من اليوروبا		machine	
+CYORf	امرأة من اليوروبا		machine	
+CYORm	رجل من اليوروبا		machine	
+CIBO	شخص من الإيغبو		machine	
+CIBOf	امرأة من الإيغبو		machine	
+CIBOm	رجل من الإيغبو		machine	
+CEFI	شخص من الإفيك		machine	
+CEFIf	امرأة من الإفيك		machine	
+CEFIm	رجل من الإفيك		machine	
+CTIV	شخص من التيف		machine	
+CTIVf	امرأة من التيف		machine	
+CTIVm	رجل من التيف		machine	
+CNUP	شخص من النوبيه (نيجيريا)	النوبيه شعب في نيجيريا، غير النوبيين في السودان ومصر	machine	
+CNUPf	امرأة من النوبيه (نيجيريا)		machine	
+CNUPm	رجل من النوبيه (نيجيريا)		machine	
+CBIN	شخص من الإيدو (البيني)		machine	
+CBINf	امرأة من الإيدو (البيني)		machine	
+CBINm	رجل من الإيدو (البيني)		machine	
+CIJC	شخص من الإيجو		machine	
+CIJCf	امرأة من الإيجو		machine	
+CIJCm	رجل من الإيجو		machine	
+CAKA	شخص من الأكان		machine	
+CAKAf	امرأة من الأكان		machine	
+CAKAm	رجل من الأكان		machine	
+CEWE	شخص من الإيوي		machine	
+CEWEf	امرأة من الإيوي		machine	
+CEWEm	رجل من الإيوي		machine	
+CGAA	شخص من الغا		machine	
+CGAAf	امرأة من الغا		machine	
+CGAAm	رجل من الغا		machine	
+CDAG	شخص من الداغومبا		machine	
+CDAGf	امرأة من الداغومبا		machine	
+CDAGm	رجل من الداغومبا		machine	
+CMOS	شخص من الموسي		machine	
+CMOSf	امرأة من الموسي		machine	
+CMOSm	رجل من الموسي		machine	
+CDYU	شخص من الديولا (بوركينا فاسو وساحل العاج)		machine	
+CDYUf	امرأة من الديولا (بوركينا فاسو وساحل العاج)		machine	
+CDYUm	رجل من الديولا (بوركينا فاسو وساحل العاج)		machine	
+CBAM	شخص من البمبارا		machine	
+CBAMf	امرأة من البمبارا		machine	
+CBAMm	رجل من البمبارا		machine	
+CMNK	شخص من الماندينكا		machine	
+CMNKf	امرأة من الماندينكا		machine	
+CMNKm	رجل من الماندينكا		machine	
+CSNK	شخص من السوننكي		machine	
+CSNKf	امرأة من السوننكي		machine	
+CSNKm	رجل من السوننكي		machine	
+CWOL	شخص من الولوف		machine	
+CWOLf	امرأة من الولوف		machine	
+CWOLm	رجل من الولوف		machine	
+CSRR	شخص من السيرير		machine	
+CSRRf	امرأة من السيرير		machine	
+CSRRm	رجل من السيرير		machine	
+CDYO	شخص من الجولا (السنغال وغامبيا)		machine	
+CDYOf	امرأة من الجولا (السنغال وغامبيا)		machine	
+CDYOm	رجل من الجولا (السنغال وغامبيا)		machine	
+CTEM	شخص من التيمني		machine	
+CTEMf	امرأة من التيمني		machine	
+CTEMm	رجل من التيمني		machine	
+CMEN	شخص من المندي (سيراليون)		machine	
+CMENf	امرأة من المندي (سيراليون)		machine	
+CMENm	رجل من المندي (سيراليون)		machine	
+CKRI	شخص من الكريو		machine	
+CKRIf	امرأة من الكريو		machine	
+CKRIm	رجل من الكريو		machine	
+CKPE	شخص من شعب يُسمّى كبيلي		machine	
+CKPEf	امرأة من شعب يُسمّى كبيلي		machine	
+CKPEm	رجل من شعب يُسمّى كبيلي		machine	
+CBCI	شخص من الباوليه		machine	
+CBCIf	امرأة من الباوليه		machine	
+CBCIm	رجل من الباوليه		machine	
+CFON	شخص من الفون		machine	
+CFONf	امرأة من الفون		machine	
+CFONm	رجل من الفون		machine	
+CDJE	شخص من الزرما		machine	
+CDJEf	امرأة من الزرما		machine	
+CDJEm	رجل من الزرما		machine	
+CSES	شخص من السونغاي		machine	
+CSESf	امرأة من السونغاي		machine	
+CSESm	رجل من السونغاي		machine	
+CKBP	شخص من شعب يُسمّى كابيي		machine	
+CKBPf	امرأة من شعب يُسمّى كابيي		machine	
+CKBPm	رجل من شعب يُسمّى كابيي		machine	
+CSUS	شخص من السوسو		machine	
+CSUSf	امرأة من السوسو		machine	
+CSUSm	رجل من السوسو		machine	
+CFUL	فولاني	في السودان وتشاد يُقال فلاتة، وهي تسمية خارجية قد تُعدّ مهينة	machine	
+CFULf	امرأة فولانية		machine	
+CFULm	رجل فولاني		machine	
+CKAU	شخص من الكانوري		machine	
+CKAUf	امرأة من الكانوري		machine	
+CKAUm	رجل من الكانوري		machine	
+CLIN	شخص من البانغالا (الناطقين باللينغالا لغةً أولى)		machine	
+CLINf	امرأة من البانغالا (الناطقين باللينغالا لغةً أولى)		machine	
+CLINm	رجل من البانغالا (الناطقين باللينغالا لغةً أولى)		machine	
+CKON	شخص من الباكونغو		machine	
+CKONf	امرأة من الباكونغو		machine	
+CKONm	رجل من الباكونغو		machine	
+CLUA	شخص من اللوبا كاساي		machine	
+CLUAf	امرأة من اللوبا كاساي		machine	
+CLUAm	رجل من اللوبا كاساي		machine	
+CLUB	شخص من اللوبا كاتانغا		machine	
+CLUBf	امرأة من اللوبا كاتانغا		machine	
+CLUBm	رجل من اللوبا كاتانغا		machine	
+CSAG	شخص من شعب السانغو النهري	لا كل الناطقين بالسانغو، فهي لغة تواصل في أفريقيا الوسطى	machine	
+CSAGf	امرأة من شعب السانغو النهري		machine	
+CSAGm	رجل من شعب السانغو النهري		machine	
+CEWO	شخص من الإيواندو		machine	
+CEWOf	امرأة من الإيواندو		machine	
+CEWOm	رجل من الإيواندو		machine	
+CBUM	شخص من البولو		machine	
+CBUMf	امرأة من البولو		machine	
+CBUMm	رجل من البولو		machine	
+CSBA	شخص من النغامباي	من شعوب السارا في جنوب تشاد؛ كلمتا كيردي وعبيد لأهل الجنوب مهينتان	machine	
+CSBAf	امرأة من النغامباي		machine	
+CSBAm	رجل من النغامباي		machine	
+CAFR	أفريكاني	من البيض الناطقين بالأفريكانية في جنوب أفريقيا؛ لا بمعنى أفريقي	machine	
+CAFRf	امرأة أفريكانية		machine	
+CAFRm	رجل أفريكاني		machine	
+CZUL	شخص من الزولو		machine	
+CZULf	امرأة من الزولو		machine	
+CZULm	رجل من الزولو		machine	
+CXHO	شخص من الخوسا		machine	
+CXHOf	امرأة من الخوسا		machine	
+CXHOm	رجل من الخوسا		machine	
+CSOT	شخص من الباسوتو		machine	
+CSOTf	امرأة من الباسوتو		machine	
+CSOTm	رجل من الباسوتو		machine	
+CTSN	شخص من التسوانا		machine	
+CTSNf	امرأة من التسوانا		machine	
+CTSNm	رجل من التسوانا		machine	
+CNSO	شخص من البيدي		machine	
+CNSOf	امرأة من البيدي		machine	
+CNSOm	رجل من البيدي		machine	
+CTSO	شخص من التسونغا		machine	
+CTSOf	امرأة من التسونغا		machine	
+CTSOm	رجل من التسونغا		machine	
+CVEN	شخص من الفيندا		machine	
+CVENf	امرأة من الفيندا		machine	
+CVENm	رجل من الفيندا		machine	
+CSSW	شخص من السوازي		machine	
+CSSWf	امرأة من السوازي		machine	
+CSSWm	رجل من السوازي		machine	
+CNDE	شخص من النديبيلي الشماليين (زيمبابوي)		machine	
+CNDEf	امرأة من النديبيلي الشماليين (زيمبابوي)		machine	
+CNDEm	رجل من النديبيلي الشماليين (زيمبابوي)		machine	
+CSNA	شخص من الشونا		machine	
+CSNAf	امرأة من الشونا		machine	
+CSNAm	رجل من الشونا		machine	
+CNYA	شخص من الشيوا		machine	
+CNYAf	امرأة من الشيوا		machine	
+CNYAm	رجل من الشيوا		machine	
+CBEM	شخص من البمبا		machine	
+CBEMf	امرأة من البمبا		machine	
+CBEMm	رجل من البمبا		machine	
+CTOI	شخص من التونغا (زامبيا)		machine	
+CTOIf	امرأة من التونغا (زامبيا)		machine	
+CTOIm	رجل من التونغا (زامبيا)		machine	
+CLOZ	شخص من اللوزي		machine	
+CLOZf	امرأة من اللوزي		machine	
+CLOZm	رجل من اللوزي		machine	
+CUMB	شخص من الأوفيمبوندو		machine	
+CUMBf	امرأة من الأوفيمبوندو		machine	
+CUMBm	رجل من الأوفيمبوندو		machine	
+CKMB	شخص من الأمبوندو		machine	
+CKMBf	امرأة من الأمبوندو		machine	
+CKMBm	رجل من الأمبوندو		machine	
+CVMW	شخص من الماكوا		machine	
+CVMWf	امرأة من الماكوا		machine	
+CVMWm	رجل من الماكوا		machine	
+CSEH	شخص من شعب يُسمّى سينا		machine	
+CSEHf	امرأة من شعب يُسمّى سينا		machine	
+CSEHm	رجل من شعب يُسمّى سينا		machine	
+CYAO	شخص من الياو		machine	
+CYAOf	امرأة من الياو		machine	
+CYAOm	رجل من الياو		machine	
+CHER	شخص من الهيريرو		machine	
+CHERf	امرأة من الهيريرو		machine	
+CHERm	رجل من الهيريرو		machine	
+CNAQ	شخص من الخويخوي (الناما والداما)	الاسم القديم هوتنتوت مهين ولا يُستعمل	machine	
+CNAQf	امرأة من الخويخوي (الناما والداما)		machine	
+CNAQm	رجل من الخويخوي (الناما والداما)		machine	
+CMLG	ملغاشي		machine	
+CMLGf	امرأة ملغاشية		machine	
+CMLGm	رجل ملغاشي		machine	

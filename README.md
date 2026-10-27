@@ -153,11 +153,12 @@ ever closes by itself with no message, `lemmatrix-crash.log` in this folder says
   Tier mapping; tx, ge, ft by default); a line can be played, played in context, opened in Praat
   with its TextGrid, or clipped as an utterance (its stretch of the recording and its text).
 - **Comparative wordlists:** **New database** starts empty or from one of three lists: the
-  **Extended African Comparative Wordlist** (EACW, recommended: 2,556 items, 2,274 of them in its
-  published list), the **SIL Comparative African Wordlist** (CAWL, 1,700) or the **Swadesh list**
+  **Extended African Comparative Wordlist** (EACW, recommended: 2,553 items, 2,268 of them in its
+  published list, edition 2026-10-27), the **SIL Comparative African Wordlist** (CAWL, 1,700) or the **Swadesh list**
   (207). The EACW comes as its base list or expanded with its hidden items, and global, for all of
   Africa or for one region (North, West, East, South, Central); its lemmas get the list's
-  Clarification and Taxon, and its hidden items stay within reach (hover over a reference to see
+  Taxon, its clarifications show as an ⓘ beside each gloss, a second gloss language in French,
+  Arabic or Amharic comes filled in (machine audited), and its hidden items stay within reach (hover over a reference to see
   them, right-click → Insert EACW items… to add them). The list a database starts from gives its
   references; every lemma also carries the other two lists' numbers, hidden (they're in the
   database file and the Reference column's hover). Type `CAWL 345`, `SWADESH 42` or just `SWADESH`

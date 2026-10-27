@@ -1,0 +1,2911 @@
+ref	gloss	clarification	status	earlier
+A001	ሰውነት		machine	
+A002	ቆዳ		machine	
+A002b	መጨማደድ, ሽብሽብ		machine	
+A003	ጸጉር		machine	
+A003b	የሰውነት ጸጉር		machine	
+A003c	የተለየ የጸጉር ዘለላ, ቁንጮ	ቁንጮ፦ በተላጨ ራስ ላይ የሚቀር የጸጉር ዘለላ	checked	
+A004	አጥንት		machine	
+A004b	አጽም		machine	
+A005	ጡንቻ		machine	
+A006	ጅማት		machine	
+A007	ደም		machine	
+A008	የደም ሥር		machine	
+A009	ራስ		machine	
+A009b	የአንድ ነገር የላይኛው ክፍል		machine	
+A010	አናት		machine	
+A011	የራስ ቅል		machine	
+A012	አንጎል		machine	
+A013	ግንባር		machine	
+A014	ፊት		machine	
+A014b	የአንድ ነገር የፊት ክፍል		machine	
+A015	ዓይን		machine	
+A016	ብሌን		machine	
+A017	ቀለም ያለው የዓይን ክፍል		machine	
+A018	ቅንድብ		machine	
+A019	የዓይን ሽፋን		machine	
+A020	ሽፋሽፍት		machine	
+A021	እንባ		machine	
+A022	ጆሮ		machine	
+A023	የጆሮ ቀዳዳ		machine	
+A024	የጆሮ የታችኛው ለስላሳ ክፍል		machine	
+A025	ኩክ		machine	
+A026	አፍንጫ		machine	
+A027	የአፍንጫ ቀዳዳ		machine	
+A028	የአፍንጫ አጥንት		machine	
+A029	ንፍጥ		machine	
+A030	ጉንጭ		machine	
+A030a	የላይኛው ጉንጭ		machine	
+A030b	የታችኛው ጉንጭ		machine	
+A031	አፍ		machine	
+A031b	ጫፍ		machine	
+A032	ትንፋሽ		machine	
+A033	ከንፈር		machine	
+A034	ድድ		machine	
+A035	ጥርስ		machine	
+A035b	ስለት, ጠርዝ		machine	
+A036	መንጋጋ ጥርስ		machine	
+A037	ክራንቻ		machine	
+A038	የፊት ጥርስ		machine	
+A038b	የታችኛው የፊት ጥርስ		machine	
+A039	ከክራንቻና ከመንጋጋ መካከል ያለ ጥርስ		machine	
+A040	ፍንጭት		machine	
+A041	ምላስ		machine	
+A042	ከምላስ ሥር ያለ ስስ ቆዳ		machine	
+A043	ላንቃ		machine	
+A044	እንጥል		machine	
+A045	ቶንሲል		machine	
+A046	ምራቅ		machine	
+A047	መንጋጋ		machine	
+A048	የመንጋጋ አጥንት		machine	
+A049	አገጭ		machine	
+A050	የከንፈር ጢም		machine	
+A051	ጢም		machine	
+A052	አንገት		machine	
+A053	ማጅራት		machine	
+A054	የአንገት አጥንት		machine	
+A055	ጉሮሮ		machine	
+A056	የመተንፈሻ ቧንቧ		machine	
+A057	ማንቁርት		machine	
+A058	ትከሻ		machine	
+A059	ብብት		machine	
+A060	የትከሻ መገጣጠሚያ		machine	
+A061	የትከሻ ጀርባ አጥንት		machine	
+A062	ደረት		machine	
+A063	የአንገት ሥር አጥንት		machine	
+A064	ደረትን የሚከብቡ የጎድን አጥንቶች		machine	
+A065	የደረት አጥንት		machine	
+A066	ልብ		machine	
+A067	ሳንባ		machine	
+A068	ጡት		machine	
+A069	የጡት ጫፍ		machine	
+A070	የጡት ወተት		machine	
+A071	ጎን		machine	
+A071b	የአንድ ነገር ጎን		machine	
+A072	የጎድን አጥንት		machine	
+A073	ሆድ		machine	
+A073b	መሃል, ውስጠኛ ክፍል		machine	
+A074	እምብርት		machine	
+A075	የሆድ ዕቃ		machine	
+A076	ጉበት		machine	
+A077	ጣፊያ	ጣፊያና ቆሽት በአነጋገር ይደበላለቃሉ፤ እዚህ የተፈለገው ከጨጓራ ጀርባ ያለው ምግብ የሚያዋሕድ አካል ነው።	machine	
+A078	የሐሞት ከረጢት		machine	
+A079	ጨጓራ		machine	
+A080	ሐሞት		machine	
+A081	ቆሽት	ጣፊያና ቆሽት በአነጋገር ይደበላለቃሉ፤ እዚህ የተፈለገው በሆድ ግራ በኩል ከጎድን አጥንቶች ሥር ያለው አካል ነው።	machine	
+A082	አንጀት		machine	
+A082a	ትልቅ አንጀት		machine	
+A082b	ትንሽ አንጀት		machine	
+A083	ኩላሊት		machine	
+A084	ፊኛ		machine	
+A085	ማህጸን		machine	
+A086	እትብት		machine	
+A087	ጀርባ		machine	
+A087b	የአንድ ነገር ጀርባ, የኋላ ክፍል		machine	
+A088	የላይኛው ጀርባ		machine	
+A089	የታችኛው ጀርባ		machine	
+A090	አከርካሪ		machine	
+A091	ክንድ (ከትከሻ እስከ እጅ)		machine	
+A091a	የላይኛው ክንድ		machine	
+A091b	የታችኛው ክንድ		machine	
+A092	የክንድ አጥንት		machine	
+A093	ክርን		machine	
+A093a	የክርን ጫፍ, የክርን ውጫዊ ክፍል		machine	
+A093b	የክርን ውስጠኛ ክፍል, የክንድ መታጠፊያ		machine	
+A094	እጅ		machine	
+A095	መዳፍ		machine	
+A096	ጣት		machine	
+A097	የጣት አጥንት		machine	
+A098	አውራ ጣት		machine	
+A099	ሌባ ጣት		machine	
+A100	የመሃል ጣት		machine	
+A101	የቀለበት ጣት		machine	
+A102	ትንሽ ጣት		machine	
+A103	የጣት አንጓ		machine	
+A104	ጥፍር		machine	
+A105	ቡጢ		machine	
+A106	የእጅ አንጓ		machine	
+A107	ዳሌ		machine	
+A108	የዳሌ አጥንት		machine	
+A109	ወገብ		machine	
+A110	መቀመጫ		machine	
+A110b	የአንድ ነገር ታች, የታችኛው ክፍል		machine	
+A111	የጅራት አጥንት		machine	
+A112	ፊንጢጣ		machine	
+A113	ሰገራ		machine	
+A114	የወንድ ብልት		machine	
+A115	ሸለፈት		machine	
+A116	የዘር ፍሬ ከረጢት		machine	
+A117	የዘር ፍሬ		machine	
+A118	ሽንት		machine	
+A119	የዘር ፈሳሽ		machine	
+A120	የሴት ብልት		machine	
+A121	ቂንጥር	ቂንጥር መደበኛው ቃል ነው፤ ገለልተኛ አማራጭ የለም፤ በብዙዎች ዘንድ ነውር ስለሆነ በጥንቃቄ ይጠየቅ።	machine	
+A122	እግር		machine	
+A123	የጭን አጥንት		machine	
+A124	ጭን		machine	
+A124a	የጭን የፊት ጡንቻ		machine	
+A124b	የውስጥ ጭን		machine	
+A124c	የጭን የኋላ ጡንቻዎች		machine	
+A125	ጉልበት		machine	
+A125a	የጉልበት ፊት		machine	
+A125b	የጉልበት ጀርባ		machine	
+A126	ቅልጥም (የታችኛው እግር የፊት ክፍል)		machine	
+A127	የቅልጥም አጥንት		machine	
+A128	ባት		machine	
+A129	የተረከዝ ጅማት		machine	
+A130	እግር (ከቁርጭምጭሚት በታች)		machine	
+A131	ቁርጭምጭሚት		machine	
+A132	በቁርጭምጭሚት ጎን ጎልቶ የሚወጣ አጥንት		machine	
+A133	ተረከዝ		machine	
+A134	ከእግር ጣቶች ሥር ያለ የእግር መዳፍ ክፍል		machine	
+A135	የእግር ጣት		machine	
+A136	የእግር አውራ ጣት		machine	
+A137	የእግር ትንሽ ጣት		machine	
+A138	የእግር መዳፍ		machine	
+B001	ሰው		machine	
+B001f	ሴት		machine	
+B001m	ወንድ		machine	
+B002	አዋቂ		machine	
+B002f	አዋቂ ሴት		machine	
+B002m	አዋቂ ወንድ		machine	
+B003	ድንግል		machine	
+B003f	ድንግል ሴት		machine	
+B003m	ድንግል ወንድ		machine	
+B004	ልጅ, ሕፃን		machine	
+B004f	ሴት ልጅ		machine	
+B004m	ወንድ ልጅ		machine	
+B005	ሕፃን		machine	
+B006	ፅንስ		machine	
+B007	አዛውንት, ሽማግሌ		machine	
+B007f	አሮጊት, ሴት አዛውንት		machine	
+B007m	ሽማግሌ		machine	
+B008	እኩያ		machine	
+B008f	ሴት እኩያ		machine	
+B008m	ወንድ እኩያ		machine	
+B009	የበኩር ልጅ		machine	
+B009f	የበኩር ሴት ልጅ		machine	
+B009m	የበኩር ወንድ ልጅ		machine	
+B010	መንታ		machine	
+B010f	ሴት መንታ		machine	
+B010m	ወንድ መንታ		machine	
+B011	መጀመሪያ የተወለደ መንታ		machine	
+B011f	መጀመሪያ የተወለደች መንታ		machine	
+B011m	መጀመሪያ የተወለደ ወንድ መንታ		machine	
+B012	ሁለተኛ የተወለደ መንታ		machine	
+B012f	ሁለተኛ የተወለደች መንታ		machine	
+B012m	ሁለተኛ የተወለደ ወንድ መንታ		machine	
+B013	ከመንታ ቀጥሎ የተወለደ ልጅ		machine	
+B013f	ከመንታ ቀጥላ የተወለደች ልጅ		machine	
+B013m	ከመንታ ቀጥሎ የተወለደ ወንድ ልጅ		machine	
+B014	አዋላጅ		machine	
+B015	ወጣት		machine	
+B015f	ኮረዳ, ወጣት ሴት		machine	
+B015m	ጎረምሳ, ወጣት ወንድ		machine	
+B016	አለቃ, የጎሳ መሪ		machine	
+B016f	ሴት አለቃ, ሴት የጎሳ መሪ		machine	
+B016m	ወንድ አለቃ, ወንድ የጎሳ መሪ		machine	
+B017	ንጉሥ		machine	
+B017f	ንግሥት		machine	
+B017m	ንጉሥ		machine	
+B018	ሠራተኛ		machine	
+B018f	ሴት ሠራተኛ		machine	
+B018m	ወንድ ሠራተኛ		machine	
+B019	ጌታ		machine	
+B019f	እመቤት		machine	
+B019m	ጌታ		machine	
+B020	ባለቤት, ባለንብረት		machine	
+B020f	ሴት ባለንብረት		machine	
+B020m	ወንድ ባለንብረት		machine	
+B021	አገልጋይ		machine	
+B021f	ገረድ, ሴት አገልጋይ		machine	
+B021m	አሽከር, ወንድ አገልጋይ		machine	
+B022	አዳኝ		machine	
+B022f	ሴት አዳኝ		machine	
+B022m	ወንድ አዳኝ		machine	
+B023	እረኛ		machine	
+B023f	ሴት እረኛ		machine	
+B023m	ወንድ እረኛ		machine	
+B024	ዓሣ አጥማጅ		machine	
+B024f	ሴት ዓሣ አጥማጅ		machine	
+B024m	ወንድ ዓሣ አጥማጅ		machine	
+B025	ገበሬ		machine	
+B025f	ሴት ገበሬ		machine	
+B025m	ወንድ ገበሬ		machine	
+B026	አንጥረኛ, ቀጥቃጭ		machine	
+B026f	ሴት አንጥረኛ		machine	
+B026m	ወንድ አንጥረኛ		machine	
+B027	ልብስ ሰፊ		machine	
+B027f	ሴት ልብስ ሰፊ		machine	
+B027m	ወንድ ልብስ ሰፊ		machine	
+B028	ሸክላ ሠሪ		machine	
+B028f	ሴት ሸክላ ሠሪ		machine	
+B028m	ወንድ ሸክላ ሠሪ		machine	
+B029	ሸማኔ		machine	
+B029f	ሴት ሸማኔ		machine	
+B029m	ወንድ ሸማኔ		machine	
+B030	ሥጋ ሻጭ, አራጅ		machine	
+B030f	ሴት ሥጋ ሻጭ		machine	
+B030m	ወንድ ሥጋ ሻጭ		machine	
+B031	ነጋዴ		machine	
+B031f	ሴት ነጋዴ		machine	
+B031m	ወንድ ነጋዴ		machine	
+B032	ምግብ አብሳይ		machine	
+B032f	ሴት ምግብ አብሳይ, ወጥ ቤት		machine	
+B032m	ወንድ ምግብ አብሳይ		machine	
+B033	ጦረኛ		machine	
+B033f	ሴት ጦረኛ		machine	
+B033m	ወንድ ጦረኛ		machine	
+B034	ምርኮኛ		machine	
+B034f	ሴት ምርኮኛ		machine	
+B034m	ወንድ ምርኮኛ		machine	
+B035	ባሪያ	ባሪያ መደበኛው ቃል ነው፤ ነገር ግን በኢትዮጵያ ጠቆር ያለ የቆዳ ቀለም ላላቸው ሕዝቦች የሚሰጥ የዘር ስድብም ነው። የተለመደ ገለልተኛ አማራጭ ቃል የለም።	machine	
+B035f	ሴት ባሪያ	ባሪያ መደበኛው ቃል ነው፤ ነገር ግን በኢትዮጵያ ጠቆር ያለ የቆዳ ቀለም ላላቸው ሕዝቦች የሚሰጥ የዘር ስድብም ነው። የተለመደ ገለልተኛ አማራጭ ቃል የለም።	machine	
+B035m	ወንድ ባሪያ	ባሪያ መደበኛው ቃል ነው፤ ነገር ግን በኢትዮጵያ ጠቆር ያለ የቆዳ ቀለም ላላቸው ሕዝቦች የሚሰጥ የዘር ስድብም ነው። የተለመደ ገለልተኛ አማራጭ ቃል የለም።	machine	
+B036	መንገድ መሪ		machine	
+B036f	ሴት መንገድ መሪ		machine	
+B036m	ወንድ መንገድ መሪ		machine	
+B037	መንገደኛ		machine	
+B037f	ሴት መንገደኛ		machine	
+B037m	ወንድ መንገደኛ		machine	
+B038	መልእክተኛ		machine	
+B038f	ሴት መልእክተኛ		machine	
+B038m	ወንድ መልእክተኛ		machine	
+B039	የባህል ሐኪም, መድኃኒተኛ		machine	
+B039f	ሴት የባህል ሐኪም		machine	
+B039m	ወንድ የባህል ሐኪም		machine	
+B040	ጠንቋይ, ባለዛር		machine	
+B040f	ሴት ጠንቋይ, ባለዛር		machine	
+B040m	ወንድ ጠንቋይ		machine	
+B041	አስማተኛ		machine	
+B041f	ሴት አስማተኛ		machine	
+B041m	ወንድ አስማተኛ		machine	
+B042	ቄስ		machine	
+B042f	ሴት ቄስ		machine	
+B042m	ቄስ		machine	
+B043	የኔ ቢጤ, ለማኝ		machine	
+B043f	ሴት የኔ ቢጤ, ሴት ለማኝ		machine	
+B043m	ወንድ የኔ ቢጤ, ወንድ ለማኝ		machine	
+B044	የወሲብ ሠራተኛ		machine	
+B044f	ሴተኛ አዳሪ		machine	
+B044m	ወንድ የወሲብ ሠራተኛ, ወንደኛ አዳሪ		machine	
+B045	የመንደር ሰው		machine	
+B045f	የመንደር ሴት		machine	
+B045m	የመንደር ወንድ		machine	
+B046	የጫካ ነዋሪ		machine	
+B046f	ሴት የጫካ ነዋሪ		machine	
+B046m	ወንድ የጫካ ነዋሪ		machine	
+B047	ሀብታም		machine	
+B047f	ሀብታም ሴት		machine	
+B047m	ሀብታም ወንድ		machine	
+B048	ድሃ		machine	
+B048f	ድሃ ሴት		machine	
+B048m	ድሃ ወንድ		machine	
+B049	መካን		machine	
+B049f	መካን ሴት		machine	
+B049m	መካን ወንድ, ስንፈተ ወሲብ ያለበት ወንድ		machine	
+B050	ዓይነ ስውር, ዕውር		machine	
+B050f	ዓይነ ስውሪት		checked	
+B050m	ዓይነ ስውር ወንድ		machine	
+B051	መስማት የተሳነው, ደንቆሮ		machine	
+B051f	መስማት የተሳናት ሴት		machine	
+B051m	መስማት የተሳነው ወንድ		machine	
+B052	ጀርባው የጎበጠ ሰው, ጎባጣ		machine	
+B052f	ጀርባዋ የጎበጠች ሴት, ጎባጣ ሴት		machine	
+B052m	ጀርባው የጎበጠ ወንድ, ጎባጣ ወንድ		machine	
+B053	አካል ጉዳተኛ, አንካሳ		machine	
+B053f	አካል ጉዳተኛ ሴት		machine	
+B053m	አካል ጉዳተኛ ወንድ		machine	
+B054	ድንክ		machine	
+B054f	ድንክ ሴት		machine	
+B054m	ድንክ ወንድ		machine	
+B055	ግዙፍ ሰው, ጭራቅ		machine	
+B055f	ግዙፍ ሴት		machine	
+B055m	ግዙፍ ወንድ		machine	
+B056	ሞኝ		machine	
+B056f	ሞኝ ሴት		machine	
+B056m	ሞኝ ወንድ		machine	
+B057	የጃጀ ሰው		machine	
+B057f	የጃጀች ሴት		machine	
+B057m	የጃጀ ወንድ		machine	
+B058	የአእምሮ ሕመምተኛ, እብድ		machine	
+B058f	የአእምሮ ሕመምተኛ ሴት		machine	
+B058m	የአእምሮ ሕመምተኛ ወንድ		machine	
+B059	ፈሪ		machine	
+B059f	ፈሪ ሴት		machine	
+B059m	ፈሪ ወንድ		machine	
+B060	ሌባ		machine	
+B060f	ሴት ሌባ		machine	
+B060m	ወንድ ሌባ		machine	
+B061	የትዳር ጓደኛው የሞተበት ሰው		machine	
+B061f	ባልቴት, ባሏ የሞተባት ሴት		machine	
+B061m	ሚስቱ የሞተችበት ወንድ		machine	
+B062	የሙት ልጅ		machine	
+B062f	ሴት የሙት ልጅ		machine	
+B062m	ወንድ የሙት ልጅ		machine	
+C001	ወላጅ		machine	
+C001f	እናት		machine	
+C001m	አባት		machine	
+C002	ወንድም ወይም እህት		machine	
+C002f	እህት		machine	
+C002m	ወንድም		machine	
+C003	ታላቅ ወንድም ወይም እህት		machine	
+C003f	ታላቅ እህት		machine	
+C003m	ታላቅ ወንድም		machine	
+C004	ታናሽ ወንድም ወይም እህት		machine	
+C004f	ታናሽ እህት		machine	
+C004m	ታናሽ ወንድም		machine	
+C005	የትዳር ጓደኛ, ባለቤት (ባል ወይም ሚስት)		machine	
+C005f	ሚስት		machine	
+C005m	ባል		machine	
+C006	የትዳር ጓደኛ ከሌላ ጋር የሚጋራ ሰው		checked	
+C006f	ጣውንት	ጣውንት 'ተቀናቃኝ ሴት' የሚል ስሜትም አለው	machine	
+C006m	አንዲት ሚስት ከሌላ ባል ጋር የሚጋራ ባል		checked	
+C007	ሙሽራ ወይም ሙሽሪት		machine	
+C007f	ሙሽሪት		machine	
+C007m	ሙሽራ		machine	
+C008	እጮኛ		machine	
+C008f	እጮኛ (ሴት)		machine	
+C008m	እጮኛ (ወንድ)		machine	
+C009	የራስ ልጅ		checked	
+C009f	የራስ ሴት ልጅ		checked	
+C009m	የራስ ወንድ ልጅ		checked	
+C010	የልጅ ልጅ		machine	
+C010f	ሴት የልጅ ልጅ		machine	
+C010m	ወንድ የልጅ ልጅ		machine	
+C011	ቅድመ አያት (ማንኛውም የቀድሞ ትውልድ)		machine	
+C011f	ሴት ቅድመ አያት (ማንኛውም የቀድሞ ትውልድ)		machine	
+C011m	ወንድ ቅድመ አያት (ማንኛውም የቀድሞ ትውልድ)		machine	
+C012	የአባት ወገን አያት		machine	
+C012f	የአባት እናት		machine	
+C012m	የአባት አባት		machine	
+C013	ምንጅላት (በአባት በኩል), የአባት አያት		machine	
+C013f	ሴት ምንጅላት (በአባት በኩል), የአባት ሴት አያት		machine	
+C013m	ወንድ ምንጅላት (በአባት በኩል), የአባት ወንድ አያት		machine	
+C014	የአባት ወንድም ወይም እህት		machine	
+C014f	የአባት እህት		machine	
+C014m	የአባት ወንድም		machine	
+C015	የአባት ወንድም ወይም እህት ልጅ		machine	
+C015f	የአባት ወንድም ወይም እህት ሴት ልጅ		machine	
+C015m	የአባት ወንድም ወይም እህት ወንድ ልጅ		machine	
+C016	የእናት ወገን አያት		machine	
+C016f	የእናት እናት		machine	
+C016m	የእናት አባት		machine	
+C017	ምንጅላት (በእናት በኩል), የእናት አያት		machine	
+C017f	ሴት ምንጅላት (በእናት በኩል), የእናት ሴት አያት		machine	
+C017m	ወንድ ምንጅላት (በእናት በኩል), የእናት ወንድ አያት		machine	
+C018	የእናት ወንድም ወይም እህት		machine	
+C018f	የእናት እህት		machine	
+C018m	የእናት ወንድም		machine	
+C019	የእናት ወንድም ወይም እህት ልጅ		machine	
+C019f	የእናት ወንድም ወይም እህት ሴት ልጅ		machine	
+C019m	የእናት ወንድም ወይም እህት ወንድ ልጅ		machine	
+C020	የባል ወላጅ		machine	
+C020f	የባል እናት		machine	
+C020m	የባል አባት		machine	
+C021	የባል ወንድም ወይም እህት		machine	
+C021f	የባል እህት		machine	
+C021m	የባል ወንድም		machine	
+C022	የባል ወንድም ወይም እህት ልጅ		machine	
+C022f	የባል ወንድም ወይም እህት ሴት ልጅ		machine	
+C022m	የባል ወንድም ወይም እህት ወንድ ልጅ		machine	
+C023	የሚስት ወላጅ		machine	
+C023f	የሚስት እናት		machine	
+C023m	የሚስት አባት		machine	
+C024	የሚስት ወንድም ወይም እህት		machine	
+C024f	የሚስት እህት		machine	
+C024m	የሚስት ወንድም		machine	
+C025	የሚስት ወንድም ወይም እህት ልጅ		machine	
+C025f	የሚስት ወንድም ወይም እህት ሴት ልጅ		machine	
+C025m	የሚስት ወንድም ወይም እህት ወንድ ልጅ		machine	
+C026	የልጅ የትዳር ጓደኛ		machine	
+C026f	ምራት (የልጅ ሚስት)		machine	
+C026m	አማች (የልጅ ባል)		machine	
+C027	ዘር (ልጅ፣ የልጅ ልጅ...)		machine	
+C027f	ሴት ዘር (ሴት ልጅ፣ የልጅ ልጅ...)		machine	
+C027m	ወንድ ዘር (ወንድ ልጅ፣ የልጅ ልጅ...)		machine	
+C028	ከጋብቻ ውጭ የተወለደ ልጅ, ዲቃላ	ዲቃላ እንደ ስድብም ያገለግላል፤ 'ክልስ' (የተቀላቀለ ዘር) ማለትም ነው	machine	
+C028f	ከጋብቻ ውጭ የተወለደች ልጅ, ዲቃላ	ዲቃላ እንደ ስድብም ያገለግላል፤ 'ክልስ' (የተቀላቀለ ዘር) ማለትም ነው	machine	
+C028m	ከጋብቻ ውጭ የተወለደ ወንድ ልጅ, ዲቃላ	ዲቃላ እንደ ስድብም ያገለግላል፤ 'ክልስ' (የተቀላቀለ ዘር) ማለትም ነው	machine	
+C029	ዘመድ		machine	
+C029f	ሴት ዘመድ		machine	
+C029m	ወንድ ዘመድ		machine	
+C030	ቤተሰብ		machine	
+C031	ጎሳ		machine	
+C032	ብሔር, ብሔረሰብ		machine	
+C033	ብዙ ሰው, የሰው ብዛት		machine	
+C034	ጓደኛ		machine	
+C034f	ጓደኛ (ሴት)	በጓደኝነት እንጂ የፍቅር ጓደኛ ማለት አይደለም	machine	
+C034m	ጓደኛ (ወንድ)	በጓደኝነት እንጂ የፍቅር ጓደኛ ማለት አይደለም	machine	
+C035	ሞክሼ		machine	
+C035f	ሴት ሞክሼ		machine	
+C035m	ወንድ ሞክሼ		machine	
+C036	የሚያውቁት ሰው		machine	
+C036f	የሚያውቋት ሴት		machine	
+C036m	የሚያውቁት ወንድ		machine	
+C037	ጎረቤት		machine	
+C037f	ሴት ጎረቤት		machine	
+C037m	ወንድ ጎረቤት		machine	
+C038	እንግዳ		machine	
+C038f	ሴት እንግዳ		machine	
+C038m	ወንድ እንግዳ		machine	
+C039	እንግዳ ተቀባይ, ጋባዥ		machine	
+C039f	ሴት እንግዳ ተቀባይ		machine	
+C039m	ወንድ እንግዳ ተቀባይ		machine	
+C040	የማያውቁት ሰው, እንግዳ		machine	
+C040f	የማያውቋት ሴት		machine	
+C040m	የማያውቁት ወንድ		machine	
+C041	ጠላት		machine	
+C041f	ሴት ጠላት		machine	
+C041m	ወንድ ጠላት		machine	
+C042	የውጭ አገር ሰው		machine	
+C042f	የውጭ አገር ሴት		machine	
+C042m	የውጭ አገር ወንድ		machine	
+C043	ጥቁር ሰው		machine	
+C043f	ጥቁር ሴት		machine	
+C043m	ጥቁር ወንድ		machine	
+C044	ቀይ ሰው		machine	
+C044f	ቀይ ሴት		machine	
+C044m	ቀይ ወንድ		machine	
+C045	ነጭ ሰው, ፈረንጅ	ፈረንጅ ማንኛውንም የምዕራብ አገር ሰው ያመለክታል፤ ቀልድ አዘል ሊሆን ይችላል	machine	
+C045f	ነጭ ሴት, ፈረንጅ ሴት		machine	
+C045m	ነጭ ወንድ, ፈረንጅ ወንድ		machine	
+D001	እንስሳ		machine	
+D002	የቤት እንስሳ		machine	
+D003	የዱር እንስሳ, አውሬ	አውሬ በተለይ አደገኛ የዱር እንስሳን ያመለክታል።	machine	
+D004	ሥጋ		machine	
+D004b	ቋንጣ		machine	
+D005	ስብ		machine	
+D006	መቅኒ		machine	
+D007	የቀለጠ ስብ		machine	
+D008	መንጋ		machine	
+D009	ፍየል		machine	
+D009b	የፍየል ግልገል		machine	
+D009f	ሴት ፍየል		machine	
+D009m	አውራ ፍየል		machine	
+D010	የፍየል ጢም		machine	
+D011	በግ		machine	
+D011b	ጠቦት		machine	
+D011f	ሴት በግ		machine	
+D011m	አውራ በግ		machine	
+D012	የእንስሳ ጸጉር		machine	
+D013	ሱፍ, የበግ ጸጉር		machine	
+D014	ከብት, የቀንድ ከብት	ከብት ብቻውን ሌሎች የቤት እንስሳትንም ሊያመለክት ይችላል።	machine	
+D014b	ጥጃ		machine	
+D014f	ላም		machine	
+D014m	ኮርማ, በሬ	ኮርማ ያልተኮላሸ ወንድ ከብት ነው፤ በሬ ብዙ ጊዜ የተኮላሸውን የእርሻ በሬ ያመለክታል።	machine	
+D015	ሰንጋ, የተኮላሸ በሬ		machine	
+D016	ጊደር		machine	
+D017	የከብት የአንገት ሥር ተንጠልጣይ ቆዳ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D018	እበት, ፋንድያ	እበት የከብት፣ ፋንድያ የጋማ ከብት ዐይነ ምድር ነው፤ ፍግ ደግሞ ለማዳበሪያ የሚውል የእንስሳ ዐይነ ምድር ነው።	machine	
+D019	ቀንድ		machine	
+D020	ጅራት		machine	
+D021	ቆዳ, ቁርበት		machine	
+D022	ሻኛ		machine	
+D023	ሰኮና		machine	
+D024	ግት		machine	
+D025	የግት ጡቶች		machine	
+D026	ወተት		machine	
+D027	ቅቤ		machine	
+D028	እርጎ		machine	
+D029	ፈረስ		machine	
+D029b	የፈረስ ውርንጭላ		machine	
+D029f	ባዝራ		machine	
+D029m	ድንጉላ, አውራ ፈረስ		machine	
+D030	የፈረስ ጋማ		machine	
+D031	አህያ		machine	
+D031b	ውርንጭላ		machine	
+D031f	ሴት አህያ		machine	
+D031m	ወንድ አህያ, ወደል አህያ		machine	
+D032	ግመል		machine	
+D032b	የግመል ግልገል		machine	
+D032f	ሴት ግመል		machine	
+D032m	አውራ ግመል		machine	
+D033	የግመል ሻኛ		machine	
+D034	ውሻ		machine	
+D034b	ቡችላ		machine	
+D034f	ሴት ውሻ		machine	
+D034m	ወንድ ውሻ		machine	
+D035	ድመት		machine	
+D035b	የድመት ግልገል		machine	
+D035f	ሴት ድመት		machine	
+D035m	ወንድ ድመት		machine	
+D036	አሳማ		machine	
+D036b	የአሳማ ግልገል		machine	
+D036f	ሴት አሳማ		machine	
+D036m	ወንድ አሳማ		machine	
+D037	ከርከሮ		machine	
+D038	የጫካ አሳማ		machine	
+D039	አርድቫርክ, ምስጥ በሊ	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D040	ምስጥ በላ ትንሽ ጅብ	የተለመደ የአማርኛ ስም የለውም፤ ገላጭ ሐረግ ነው። ከተራው ጅብ የተለየ ነው።	machine	
+D041	ቅርፊታም ጉንዳን በሊ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D042	ጦጣ, ዝንጀሮ	ጦጣ ትንንሾቹን፣ ዝንጀሮ ትልልቆቹን (ለምሳሌ ጭላዳን) ያመለክታል፤ እዚህ የሚፈለገው ሁሉንም ነው።	machine	
+D043	ዝንጀሮ	ዝንጀሮ እዚህ ወይራ ዝንጀሮን (baboon) ያመለክታል፤ ጭላዳ አይደለም።	machine	
+D044	ጦጣ		machine	
+D045	ሰማያዊ ጦጣ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D046	ቀይ ጦጣ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D047	ጉሬዛ		machine	
+D048	የሌሊት ጦጣ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D049	የሜዳ ፍየል		machine	
+D050	ጎሽ		machine	
+D051	ዊልደቢስት	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D052	ኦሪቢ	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D053	አጋዘን, ጠምዛዛ ቀንድ ያለው አጋዘን	አጋዘን አንዳንድ ጊዜ ለአጋዘን (deer) ወይም ለሌሎች አጋዘኖች ይውላል፤ እዚህ ታላቁና ትንሹ አጋዘን (kudu) ነው።	machine	
+D054	የሜዳ አህያ		machine	
+D055	የሜዳ ፍየል, ሚዳቋ	ሚዳቋ ብቻውን የጫካውን ሚዳቋ (duiker) ሊያመለክት ይችላል፤ እዚህ በሜዳ የምትኖረው ቀጭን ቀንድ ያላት የሜዳ ፍየል (gazelle) ናት።	machine	
+D056	ስፕሪንግቦክ	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D057	ኢምፓላ	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D058	ነጭ ጆሮ ኮብ	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D059	የናይል ሌችዌ	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D060	ቲያንግ	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D061	ሲታቱንጋ	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D062	ቦሆር, የሸምበቆ ፍየል	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D063	ድኩላ		machine	
+D064	የውሃ አጋዘን	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D065	ቆርኬ		machine	
+D066	ኢላንድ	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D067	ሮአን	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D068	ሳላ		machine	
+D069	የበረሃ በግ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D070	ሚዳቋ	ሚዳቋ እዚህ በጫካና በቁጥቋጦ የምትኖረውን ትንሽ አጋዘን (duiker) ያመለክታል።	machine	
+D071	ድክድክ	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D072	ዝሆን		machine	
+D073	የዝሆን ኩምቢ		machine	
+D074	የዝሆን ጥርስ		machine	
+D075	ጉማሬ		machine	
+D076	አውራሪስ		machine	
+D077	የአውራሪስ ቀንድ		machine	
+D078	ቀጭኔ		machine	
+D079	ጅብ, ዥንጉርጉር ጅብ		machine	
+D080	ሽንትራም ጅብ		machine	
+D081	የዱር ውሻ		machine	
+D082	ቀበሮ	ቀበሮ ቀበሮንም (fox) ያመለክታል፤ እዚህ የሚፈለገው ጃካል ነው። ቀይ ቀበሮ ግን የኢትዮጵያ ተኩላ ነው።	machine	
+D083	ትንሽ ቀበሮ, ቀበሮ	በአማርኛ ቀበሮ ጃካልንም (D082) ያመለክታል፤ እዚህ ትንሹ ቀበሮ (fox) ነው።	machine	
+D083b	የበረሃ ቀበሮ		machine	
+D084	ጥርኝ, ዝባድ የሚሰጥ ጥርኝ		machine	
+D085	የማር ባጀር	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D086	ሸለምጥማጥ, ትልቅ ግራጫ ሸለምጥማጥ		machine	
+D087	ድንክ ሸለምጥማጥ		machine	
+D088	ሜርካት	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D089	ጃርት, ረጃጅም እሾህ ያለው ጃርት	ጃርት ለትንሹ ጃርትም (hedgehog) ይውላል።	machine	
+D090	የዛፍ ሽኮኮ		machine	
+D091	የመሬት ሽኮኮ		machine	
+D092	አይጥ		machine	
+D093	ትልቅ አይጥ	አይጥ ለአይጥም (mouse) ለትልቁ አይጥም (rat) ይውላል።	machine	
+D094	የሸምበቆ አይጥ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D095	ሽንትራም የመሬት ሽኮኮ	በምዕራብ አፍሪካ እንግሊዝኛ 'palm rat' ይባላል፤ አይጥ ሳይሆን ሽንትራም የመሬት ሽኮኮ ነው።	machine	
+D096	ሹል አፍንጫ አይጥ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D097	ፍልፈል		machine	
+D098	ጥንቸል		machine	
+D099	ጥንቸል መሰል ዘላይ አይጥ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D100	ሽኮኮ, የአለት ሽኮኮ	ሽኮኮ ለሽኮኮም (squirrel) ይውላል፤ እዚህ በአለት ላይ የሚኖረው ሽኮኮ (hyrax) ነው።	machine	
+D101	የዱር ድመት		machine	
+D102	አንበሳ		machine	
+D103	ጎፈር		machine	
+D104	የአንበሳ ጥፍር		machine	
+D105	ነብር, ዥንጉርጉር ነብር	ነብር አንዳንድ ጊዜ ለሽንትራሙ ነብር (tiger) ይውላል፤ እዚህ ዥንጉርጉሩ ነው።	machine	
+D106	አቦሸማኔ		machine	
+D107	ካራካል	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D108	አነር, እግረ ረጅም ዥንጉርጉር የዱር ድመት	አነር ለሌሎች ዥንጉርጉር የዱር ድመቶችም ይውላል።	machine	
+D109	ትንሽ ጥርኝ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+D110	የሌሊት ወፍ		machine	
+D111	ፍራፍሬ በሊ የሌሊት ወፍ		machine	
+E001	ወፍ		machine	
+E002	ዶሮ		machine	
+E002b	ጫጩት		machine	
+E002f	ሴት ዶሮ		machine	
+E002m	አውራ ዶሮ		machine	
+E003	አንገተ መላጣ ዶሮ		machine	
+E004	የፈረንጅ ዶሮ, የቱርክ ዶሮ		machine	
+E005	መንቁር		machine	
+E006	ጥፍር		machine	
+E007	ክንፍ		machine	
+E008	ላባ		machine	
+E009	የአውራ ዶሮ ቁንጮ		machine	
+E010	የወፍ ቁንጮ		machine	
+E011	የወፍ ጉሮሮ ከረጢት	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E012	የዶሮ ጨጓራ		machine	
+E013	እንቁላል		machine	
+E014	የእንቁላል ቅርፊት		machine	
+E015	የእንቁላል ነጭ		machine	
+E016	አስኳል		machine	
+E017	የወፍ ጎጆ		machine	
+E018	የወፍ መንጋ		machine	
+E019	ሰጎን		machine	
+E019b	የሰጎን እንቁላል ቅርፊት		machine	
+E020	ፊሽካ ዳክዬ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E021	የግብፅ ዝይ		machine	
+E022	ጅግራ		machine	
+E023	ቆቅ		machine	
+E024	ፍላሚንጎ	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E025	ዥንጉርጉር ርግብ		machine	
+E026	ዋኖስ	ዋኖስ ለሁሉም ዐይነት ዋኖሶች ይውላል።	machine	
+E027	ጥቁር መንቁር ዋኖስ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E028	ጭራ ረጅም ትንሽ ዋኖስ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E029	አረንጓዴ ርግብ		machine	
+E030	ጅግራ መሰል ትልቅ የሜዳ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E031	ትልቅ የመሬት ኩኩ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E032	የክላስ ኩኩ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E033	ዲደሪክ ኩኩ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E034	የአፍሪካ ኩኩ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E035	በሌሊት የምትበር ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E036	የዘንባባ ጨረባ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E037	ጥቁር ጨረባ	ጨረባ ለጨረባም (swallow) ይውላል፤ እዚህ የሚፈለገው ጠቆር ያለው፣ ሁልጊዜ በአየር ላይ የሚበረው ወፍ (swift) ነው።	machine	
+E038	ጥቁር የረግረግ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E039	ዘውድ ያላት እግረ ረጅም ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E040	ዐይነ ትልቅ የሜዳ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E041	እግረ ረጅም የውሃ ዳር ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E042	መንቁሩ ወደ ላይ የታጠፈ የውሃ ዳር ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E043	ክንፈ ሾካ የውሃ ዳር ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E044	በቅጠል ላይ የምትሄድ የውሃ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E045	ረጅም መንቁር የረግረግ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E046	ትንሽ የውሃ ዳር ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E047	የባሕር ጭላት		machine	
+E048	ቢጫ መንቁር ሽመላ	ሽመላ በአማርኛ ለሽመላ፣ ለጋጋኖና ለሌሎች ረጃጅም እግር ያላቸው የውሃ ዳር ወፎች ይውላል።	machine	
+E049	ክፍት መንቁር ሽመላ	ሽመላ በአማርኛ ለሽመላ፣ ለጋጋኖና ለሌሎች ረጃጅም እግር ያላቸው የውሃ ዳር ወፎች ይውላል።	machine	
+E050	ነጭ ሆድ ሽመላ	ሽመላ በአማርኛ ለሽመላ፣ ለጋጋኖና ለሌሎች ረጃጅም እግር ያላቸው የውሃ ዳር ወፎች ይውላል።	machine	
+E051	ኮርቻ መንቁር ሽመላ	ሽመላ በአማርኛ ለሽመላ፣ ለጋጋኖና ለሌሎች ረጃጅም እግር ያላቸው የውሃ ዳር ወፎች ይውላል።	machine	
+E052	እርኩም		machine	
+E053	ይብራ, ከረጢት መንቁር ትልቅ የውሃ ወፍ	ይብራ በብዙዎች ዘንድ የማይታወቅ ስም ነው፤ መንቁሩ ሥር ከረጢት ያለው ትልቅ የሐይቅ ወፍ (pelican) ነው።	machine	
+E054	ጫማ መንቁር	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E055	መዶሻ ራስ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E056	ትንሽ ቡናማ ሽመላ	ሽመላ ለሽመላም ለሌሎች እግረ ረጃጅም የውሃ ዳር ወፎችም ይውላል፤ እዚህ የሚፈለገው ሽመላ መሰሉ የውሃ ዳር ወፍ (heron) ነው።	machine	
+E057	ትንሽ ጠቆር ያለ ሽመላ	ሽመላ ለሽመላም ለሌሎች እግረ ረጃጅም የውሃ ዳር ወፎችም ይውላል፤ እዚህ የሚፈለገው ሽመላ መሰሉ የውሃ ዳር ወፍ (heron) ነው።	machine	
+E058	ነጭ የከብት ወፍ		machine	
+E059	ጥቁር ራስ ሽመላ	ሽመላ ለሽመላም ለሌሎች እግረ ረጃጅም የውሃ ዳር ወፎችም ይውላል፤ እዚህ የሚፈለገው ሽመላ መሰሉ የውሃ ዳር ወፍ (heron) ነው።	machine	
+E060	ግዙፍ ሽመላ	ሽመላ ለሽመላም ለሌሎች እግረ ረጃጅም የውሃ ዳር ወፎችም ይውላል፤ እዚህ የሚፈለገው ሽመላ መሰሉ የውሃ ዳር ወፍ (heron) ነው።	machine	
+E061	ትልቅ ነጭ ሽመላ	ሽመላ ለሽመላም ለሌሎች እግረ ረጃጅም የውሃ ዳር ወፎችም ይውላል፤ እዚህ የሚፈለገው ሽመላ መሰሉ የውሃ ዳር ወፍ (heron) ነው።	machine	
+E062	ነጭ ጋጋኖ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E063	ጋጋኖ		machine	
+E064	ማንኪያ መንቁር	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E065	ዓሣ አጥማጅ ጭልፊት	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E066	ትንሽ ቡናማ ጥንብ አንሳ	ጥንብ አንሳ ለሁሉም ጥንብ አንሳዎች ይውላል፤ እዚህ በከተማ የሚታየው ትንሹ ነው።	machine	
+E067	ነጭ ጀርባ ጥንብ አንሳ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E068	እባብ በሊ ንስር	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E069	ጭራ አጭር ንስር	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E070	ጭልፊት, ሹካ ጭራ ጭልፊት	ጭልፊት ለሌሎች አዳኝ ወፎችም (falcon, hawk) ይውላል።	machine	
+E071	የዓሣ ንስር		machine	
+E072	ቁንጮ ንስር	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E073	ትንሽ ጉጉት	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E074	ትልቅ ግራጫ ጉጉት	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E075	ጭራ ረጅም ፍራፍሬ በሊ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E076	ቁንጮና ረጅም መንቁር ያላት ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	ጉትዬ ያላት መንቁረ ረጅም ወፍ
+E077	አረንጓዴ የዛፍ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E078	ቀንድ መንቁር የመሬት ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E079	ግራጫ ቀንድ መንቁር ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E080	ብርማ ጉንጭ ቀንድ መንቁር ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E081	ትንሽ ዓሣ አጥማጅ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E082	የጫካ ዓሣ አጥማጅ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E083	ግራጫ ራስ ዓሣ አጥማጅ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E084	ሽንትራም ዓሣ አጥማጅ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E085	ትልቅ ዓሣ አጥማጅ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E086	ጥቁርና ነጭ ዓሣ አጥማጅ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E087	ትንሽ ንብ በሊ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E088	አረንጓዴ ንብ በሊ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E089	ቀይ ንብ በሊ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E090	ሰማያዊ ክንፍ ያላት ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E091	ቀይ ደረት ጥቁር መንቁር ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E092	ቀይ ደረት ጥርሳም መንቁር ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E093	ማር ጠቋሚ ወፍ		machine	
+E094	እንጨት ቆርቋሪ ወፍ		machine	
+E095	ትንሽ ጭልፊት	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E096	በቀቀን		machine	
+E097	ትንሽ ጥቁርና ነጭ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E098	ቀይና ጥቁር የቁጥቋጦ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E099	ቡናማ የቁጥቋጦ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E100	ጭራ ሹካ ጥቁር ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E101	ጭራ ረጅም ነፍሳት በሊ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E102	አዳኝ ትንሽ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E103	ቁራ, አንገተ ነጭ ቁራ		machine	
+E104	ጥቁር ቁራ		machine	
+E105	ክንፏን የምታጨበጭብ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E106	ጭራ አጭር ትንሽ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E107	ቀይ ራስ የሣር ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E108	ጭራ ረጅም ቡናማ ትንሽ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E109	ጨረባ	ጨረባ ለሌሎች ጨረባ መሰል ወፎችም (swift) ይውላል።	machine	
+E110	ቡልቡል	የውጭ ቃል ነው (ተውሶ)፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E111	ዐይነ ነጭ አረንጓዴ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E112	የምትንጫጫ ቡናማ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E113	መዥገር ለቃሚ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E114	የሚያብረቀርቅ ሰማያዊ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E115	ጭራ ረጅም የሚያብረቀርቅ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E116	ሆደ ብርቱካናማ ቡናማ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E117	ዝንብ አዳኝ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E118	ዘማሪ ቡናማ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E119	ቀይ ደረት ማር መጣጭ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E120	ማር መጣጭ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E121	ወፍራም መንቁር ሸማኔ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E122	ሸማኔ ወፍ, ቢጫ ሸማኔ ወፍ		machine	
+E123	ግሪሳ		machine	
+E124	ቀይና ጥቁር ሸማኔ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E125	ትንሽ ቀይ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E126	ትንሽ ሰማያዊ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E127	ትንሽ ጥቁርና ነጭ እህል በሊ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E128	ጭራ ረጅም ትንሽ እህል በሊ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E129	ድንቢጥ	ድንቢጥ ለሌሎች ትንንሽ ወፎችም ይውላል።	machine	
+E130	ጭራ ነቅናቂ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+E131	ቢጫ ግንባር ትንሽ ወፍ	ገላጭ ሐረግ ነው፤ በአማርኛ የተለመደ ስም የለውም።	machine	
+F001	ዓሣ		machine	
+F002	አምባዛ		machine	
+F003	ሳንባ ያለው ዓሣ, በበጋ በጭቃ ውስጥ የሚቀበር ዓሣ	በበጋ በጭቃ ውስጥ ተቀብሮ የሚቆይ ዓሣ።	machine	
+F004	ኢል, እባብ መሰል ዓሣ		machine	
+F005	የዓሣ ቆዳ		machine	
+F006	የዓሣ ቅርፊት		machine	
+F007	የዓሣ የጀርባ ክንፍ		machine	
+F008	ከጀርባ ክንፍ ኋላ ያለ ትንሽ ሥጋማ ክንፍ		machine	
+F009	የዓሣ የጅራት ክንፍ		machine	
+F010	ከመተንፈሻው ኋላ ያለ የዓሣ የጎን ክንፍ		machine	
+F011	የዓሣ አጥንት, የዓሣ እሾህ		machine	
+F012	የዓሣ መተንፈሻ ክዳን		machine	
+F013	ከክዳኑ ሥር ያለ የዓሣ መተንፈሻ	ከክዳኑ ሥር ያለው።	machine	
+F014	የአምባዛ ጢም, የዓሣ ጢም		machine	
+F015	የዓሣ ጨጓራ		machine	
+F016	የዓሣ አየር ፊኛ		machine	
+F017	በዓሣ ሆድ ውስጥ ያለ እንቁላል	በዓሣ ሆድ ውስጥ ያለው የእንቁላል ክምር።	machine	
+F018	ናይል ፐርች	ትልቅ የወንዝና የሐይቅ ዓሣ።	machine	
+F019	ቆሮሶ		machine	
+F020	ነብር ዓሣ, ጥርሳም አዳኝ የወንዝ ዓሣ	ጥርሳም አዳኝ የወንዝ ዓሣ።	machine	
+F021	ኩምቢ ያለው ዓሣ		machine	
+F022	ቢኪር, ባለ ብዙ የጀርባ ክንፍ ዓሣ		machine	
+F023	የሚነዝር አምባዛ		machine	
+G001	እባብ		machine	
+G002	የእባብ ክራንቻ, የእባብ መርዝ ጥርስ		machine	
+G003	የእባብ መርዝ		machine	
+G004	የእባብ ቅርፊት		machine	
+G005	የተሳቢ እንስሳ እንቁላል		machine	
+G006	ምንቃር መሰል አፍንጫ ያለው እባብ		machine	
+G007	የአሸዋ እባብ	ቀጭንና ፈጣን እባብ።	machine	
+G008	እፉኝት		machine	
+G009	ኮብራ	አንገቱን የሚዘረጋ መርዛም እባብ።	machine	
+G010	አረንጓዴ ማምባ	አረንጓዴ መርዛም የዛፍ እባብ።	machine	
+G011	ወፍራም እፉኝት		machine	
+G012	አፍንጫው ላይ ቀንድ ያለው እፉኝት		machine	
+G013	ከዓይኑ በላይ ቀንድ ያለው እፉኝት	የበረሃ እፉኝት።	machine	
+G014	ዘንዶ, ጠምጥሞ የሚገድል ትልቅ እባብ		machine	
+G015	አዞ		machine	
+G016	እንሽላሊት		machine	
+G017	ትልቅ የውሃ እንሽላሊት		machine	
+G018	ራሰ ቀይ የአለት እንሽላሊት	ራሱ ቀይ የሆነ እንሽላሊት።	machine	
+G019	ለስላሳ የሚያብረቀርቅ እንሽላሊት		machine	
+G020	የቤት እንሽላሊት		machine	
+G021	እስስት		machine	
+G022	የየብስ ኤሊ, ኤሊ		machine	
+G023	ትልቅ የውሃ ኤሊ		machine	
+G024	ትንሽ የንጹሕ ውሃ ኤሊ		machine	
+G025	የኤሊ ቅርፊት		machine	
+G026	የዛፍ እንቁራሪት		machine	
+G027	ትልቅ እንቁራሪት		machine	
+G028	ጉርጥ		machine	
+G029	የእንቁራሪት እጭ		machine	
+G030	የእንቁራሪት እንቁላል		machine	
+G031	የእንቁራሪት የጉሮሮ ከረጢት		machine	
+H001	ነፍሳት (እንደ ዝንብና ጉንዳን ያሉ)	ነፍሳት እዚህ ተባዮችን እንጂ ነፍሶችን አያመለክትም።	machine	
+H002	የነፍሳት ቀንድ		machine	
+H003	ንብ		machine	
+H004	ንግሥት ንብ, የንብ አውራ	አውራ እዚህ የቀፎው መሪ ንግሥቲቱ ናት እንጂ ወንዱ ንብ (ድንጉላ) አይደለም።	machine	
+H005	የንብ መንጋ		machine	
+H006	ቀፎ		machine	
+H007	ሰም		machine	
+H008	ማር		machine	
+H009	የንብ እንጀራ		machine	
+H010	መንደፊያ		machine	
+H011	ትልቅ ተርብ		machine	
+H012	የጭቃ ተርብ, ቤቱን በጭቃ የሚሠራ ተርብ		machine	
+H013	ተርብ		machine	
+H014	ጉንዳን		machine	
+H015	ተጓዥ ጉንዳን	በሰልፍ የሚጓዝ ነካሽ ጉንዳን።	machine	
+H016	ክንፍ ያወጣ ምስጥ, በራሪ ጉንዳን		machine	
+H017	ምስጥ		machine	
+H018	ኩይሳ		machine	
+H019	ዝንብ		machine	
+H020	የፍራፍሬ ዝንብ		machine	
+H021	የፈረስ ዝንብ		machine	
+H022	የጻጻ ዝንብ		machine	
+H023	ትንኝ		machine	
+H024	የዝንብ እጭ, ትል		machine	
+H025	ፌንጣ		machine	
+H026	አንበጣ		machine	
+H027	የሌሊት ፌንጣ	ሌሊት የሚንጫጫ ፌንጣ።	machine	
+H028	ጸሎተኛ ፌንጣ		machine	
+H029	በረሮ		machine	
+H030	ማታ የሚበር ቡናማ ጥንዚዛ		machine	
+H031	የፋንድያ ጥንዚዛ		machine	
+H032	የጥንዚዛ ክንፍ ሽፋን		machine	
+H033	ቢራቢሮ		machine	
+H034	የእሳት እራት		machine	
+H035	አባ ጨጓሬ		machine	
+H036	የሚበላ አባ ጨጓሬ		machine	
+H037	የአባ ጨጓሬ ሽፋን		machine	
+H038	የውሃ ተርብ	በውሃ ዳር የሚበር ረጅም ጭራ ያለው ነፍሳት።	machine	
+H039	ብርሃን የሚያበራ ነፍሳት		machine	
+H040	ቁንጫ		machine	
+H041	ቅማል		machine	
+H042	ትኋን		machine	
+H043	መዥገር		machine	
+H044	ደም የሚመጥ የዶሮ ቅማል		machine	
+H045	እግር ውስጥ የሚገባ ቁንጫ		machine	
+H046	አልቅት		machine	
+H047	የዱቄት ትል, የእህል ነቀዝ ትል		machine	
+H048	የመሬት ትል		machine	
+H049	ሸረሪት		machine	
+H050	የሸረሪት ድር		machine	
+H051	ትልቅ ጸጉራም ሸረሪት		machine	
+H052	ጊንጥ		machine	
+H053	መቶ እግር	ጠፍጣፋ ነካሽ ባለ ብዙ እግር።	machine	
+H054	ሺ እግር	ክብ፣ የሚጠቀለል ባለ ብዙ እግር።	machine	
+H055	ቀንድ አውጣ		machine	
+H055b	የዛፍ ቀንድ አውጣ		machine	
+H055c	የመሬት ቀንድ አውጣ		machine	የየብስ ቀንድ አውጣ
+H055d	የውሃ ቀንድ አውጣ		machine	
+H056	የቀንድ አውጣ ቅርፊት		machine	
+H057	ሸርጣን		machine	
+H058	ሽሪምፕ		machine	
+H059	ክብ ባለ ሁለት ቅርፊት ዛጎል		machine	
+H060	ሞላላ ጥቁር ባለ ሁለት ቅርፊት ዛጎል		machine	
+I001	ፈጣሪ, አምላክ	ክርስቲያኖች እግዚአብሔር፣ ሙስሊሞች አላህ ይላሉ።	machine	
+I002	ከፈጣሪ በታች ያለ መንፈስ, ታናሽ አምላክ	ቆሌ፣ ውቃቢና አድባር የሰው ወይም የቦታ ጠባቂ መንፈስ ናቸው፤ ዛር የሚሰፍር መንፈስ ነው።	machine	
+I003	እርኩስ መንፈስ		machine	
+I004	ነፍስ		machine	
+I005	የሚታይ የሙት መንፈስ, ምትሃት		machine	
+I005b	የማይታይ የሙት መንፈስ		machine	
+I006	ሰማይ (የፈጣሪ መኖሪያ), ገነት	ክርስቲያኖች መንግሥተ ሰማያት፣ ሙስሊሞች ጀነት ይላሉ።	machine	
+I007	የሙታን ዓለም		machine	
+I008	የአምልኮ ቦታ, መቅደስ		machine	
+I009	መሠዊያ		machine	
+I010	መሥዋዕት		machine	
+I011	የመጠጥ መሥዋዕት	ለመንፈስ ወይም ለሙታን መጠጥ በመሬት ላይ ማፍሰስ።	machine	
+I012	መናፍስትን የመጥራት ስብሰባ		machine	
+I013	ዝናብ የማዝነብ ሥነ ሥርዓት		machine	
+I014	ምርቃት, በረከት		machine	
+I015	እርግማን		machine	
+I016	ዕድል		machine	
+I017	ትንቢት		machine	
+I018	ራእይ		machine	
+I019	ሕልም		machine	
+I020	ቅድመ ምልክት, የሚመጣውን የሚጠቁም ምልክት		machine	
+I021	እርም		machine	
+I022	ክታብ		machine	
+I023	ዕጣ		machine	
+I024	ክፉ ዓይን, ቡዳ	ቡዳ የሚለው ቃል የእጅ ሙያተኞችን ለመስደብም ስለሚውል በጥንቃቄ ይጠቀሙ።	machine	
+I025	መተት, ሰውን የሚጎዳ አስማት	ጥንቆላ (ሟርት) ወይም የባህል ሕክምና አይደለም፤ ሰውን ለመጉዳት የሚደረግ ነው።	machine	
+I026	መድኃኒት		machine	
+I027	መርዝ		machine	
+I028	የፈውስ ሥነ ሥርዓት		machine	
+I029	በሽታ		machine	
+I030	ሕመም (የሚያም ስሜት)		machine	
+I031	ትኩሳት		machine	
+I032	ላብ		machine	
+I033	ጉንፋን		machine	
+I034	ሳል		machine	
+I035	ስቅታ		machine	
+I036	አክታ		machine	
+I037	ራስ ምታት		machine	
+I038	የሆድ ሕመም, የሆድ ቁርጠት		machine	
+I039	ትውከት		machine	
+I040	ተቅማጥ		machine	
+I041	ማሳከክ		machine	
+I042	የቆዳ ሽፍታ		machine	
+I043	ወባ		machine	
+I044	የሥጋ ደዌ, ቁምጥና	ቁምጥና የሚያንቋሽሽ ሊሆን ይችላል።	machine	
+I045	ዝሆኔ		machine	
+I046	ጭርት		machine	
+I047	እንቅርት		machine	
+I048	የአንጀት ትል		machine	
+I049	የአእምሮ ሕመም, እብደት	እብደት ለስድብም ይውላል።	machine	
+I050	ቁስል		machine	
+I051	የቃጠሎ ቁስል		machine	
+I052	ሰንበር		machine	
+I053	በምት የጠቆረ የቆዳ ምልክት		machine	
+I054	ጠባሳ		machine	
+I055	የቆዳ እንከን, በቆዳ ላይ ያለ ምልክት		machine	
+I056	ብጉር		machine	
+I057	እባጭ		machine	
+I058	እብጠት		machine	
+I058b	ዕጢ, የሚያድግ እብጠት		machine	
+I058c	ጉብታ		machine	
+I059	የወጣ እምብርት		machine	
+I060	መግል		machine	
+I061	የማይድን ክፍት የቆዳ ቁስል, የቆላ ቁስል		machine	
+I062	የጀርባ ጉብጠት		machine	
+I063	የሰብል በሽታ, ዋግ		machine	
+I064	የከብት ቸነፈር	ከብቶችን የሚፈጅ ተላላፊ በሽታ፤ አሁን ጠፍቷል።	machine	
+I065	ሕይወት		machine	
+I066	ልደት, ወሊድ		machine	
+I067	ምጥ		machine	
+I068	የስም ማውጣት ሥነ ሥርዓት		machine	
+I069	ግርዛት		machine	
+I069f	የሴት ልጅ ግርዛት		machine	
+I069m	የወንድ ልጅ ግርዛት		machine	
+I070	ጉርምስና		machine	
+I071	የወንዶች የአቅመ አዳም ሥነ ሥርዓት		machine	
+I072	የሴቶች የአቅመ ሔዋን ሥነ ሥርዓት		machine	
+I073	የወር አበባ		machine	
+I074	ሞት		machine	
+I075	የጽንስ መጨንገፍ	ውርጃ ብዙ ጊዜ ሆን ተብሎ ማስወረድን ያመለክታል።	machine	
+I076	አስከሬን		machine	
+I077	መቃብር		machine	
+I077b	የመቃብር ቦታ, መካነ መቃብር		machine	
+I078	ቀብር		machine	
+I079	መሰብሰቢያ ቦታ		machine	
+I080	በዓል, ድግስ		machine	
+I081	ሰርግ		machine	
+I082	ለሙሽሪት ቤተሰብ የሚከፈል የጋብቻ ክፍያ	ጥሎሽ አይደለም፤ ጥሎሽ ለሙሽሪቷ ራሷ የሚሰጥ ነው።	machine	
+I083	ሕግ		machine	
+I084	ልማድ, ወግ		machine	
+I085	የባህል ችሎት, ሽምግልና		machine	
+J001	ዛፍ		machine	
+J001b	እንጨት		machine	
+J002	የዛፍ ግንድ		machine	
+J002b	ግንዲላ		machine	
+J003	ቅርንጫፍ		machine	
+J004	ቀንበጥ		machine	
+J005	የዛፍ ቅርፊት		machine	
+J006	ጉቶ		machine	
+J007	ስንጥር		machine	
+J008	ሥር		machine	
+J009	የእንጨት ቋጠሮ		machine	
+J010	የዛፍ ፈሳሽ		machine	
+J010b	የዛፍ ወተት	ከአንዳንድ ዛፎች የሚወጣ ወተት የሚመስል ፈሳሽ (ጎማ የሚሠራበት)።	machine	
+J011	ቅጠል		machine	
+J012	እምቡጥ		machine	
+J013	ቡቃያ		machine	
+J014	አበባ		machine	
+J015	እሾህ		machine	
+J016	ፍሬ, ፍራፍሬ		machine	
+J017	የተክል ዘር		machine	
+J018	የፍሬ ውስጥ ጠንካራ ዘር		machine	
+J019	ልጣጭ		machine	
+J020	ጭማቂ		machine	
+J021	ቁጥቋጦ		machine	
+J022	ኒም		machine	
+J022a	የኒም ዛፍ		machine	
+J023	ኢቦኒ (ዛፍና ፍሬ)	ጥቁርና ጠንካራ እንጨት ያለው ዛፍ።	machine	
+J023a	የኢቦኒ ዛፍ		machine	
+J023b	የኢቦኒ ፍሬ		machine	
+J024	ማሆጋኒ	ቀይ ጠንካራ እንጨት ያለው ትልቅ ዛፍ።	machine	
+J024a	የማሆጋኒ ዛፍ		machine	
+J025	ቲክ እንጨት	ቲክ ለአብዛኛው ተናጋሪ የሚታወቀው በእንጨቱ ነው።	machine	
+J025a	የቲክ ዛፍ		machine	
+J026	ካፖክ (ዛፍና ፍሬ)	ፍሬው ጥጥ መሰል ነገር የያዘ ትልቅ ዛፍ።	machine	
+J026a	የካፖክ ዛፍ		machine	
+J026b	የካፖክ ፍሬ	ጥጡ ያለበት።	machine	
+J027	ኪጌሊያ, የቋሊማ ዛፍ (ዛፍና ፍሬ)	ረጃጅም ከባድ ፍሬዎች የሚንጠለጠሉበት ዛፍ፤ የታወቀ የአማርኛ ስም የለውም።	machine	
+J027a	የቋሊማ ዛፍ, የኪጌሊያ ዛፍ	ረጃጅም ከባድ ፍሬዎች የሚንጠለጠሉበት ዛፍ።	machine	
+J027b	የቋሊማ ዛፍ ፍሬ, የኪጌሊያ ፍሬ		machine	
+J028	ግራር		machine	
+J029	ነጭ ግራር (ዛፍና ፍሬ)	በበጋ ቅጠል የሚያወጣ፣ በክረምት ቅጠሉን የሚያረግፍ ግራር።	machine	
+J029a	የነጭ ግራር ዛፍ		machine	
+J029b	የነጭ ግራር ፍሬ		machine	
+J030	ሞፓኔ		machine	
+J030a	የሞፓኔ ዛፍ		machine	
+J031	ቁልቋል	ዛፍ የሚያህል፣ ቅርንጫፎቹ እንደ መቅረዝ ወደ ላይ የቆሙ ቁልቋል።	machine	
+J031a	የቁልቋል ዛፍ		machine	
+J032	ጋርዴኒያ (ዛፍና ፍሬ)		machine	
+J032a	የጋርዴኒያ ዛፍ		machine	
+J032b	የጋርዴኒያ ፍሬ		machine	
+J033	ማራገቢያ ቅጠል ያለው ዘምባባ (ዛፍና ፍሬ)	እንደ ዶም ዘምባባ ቅጠሉ እንደ ማራገቢያ የተዘረጋ ዘምባባ፤ ተምር አይደለም።	machine	
+J033a	ማራገቢያ ቅጠል ያለው የዘምባባ ዛፍ		machine	
+J033b	ማራገቢያ ቅጠል ያለው የዘምባባ ፍሬ		machine	
+J034	የዘይት ዘምባባ (ዛፍና ፍሬ)		machine	
+J034a	የዘይት ዘምባባ ዛፍ		machine	
+J034b	የዘይት ዘምባባ ፍሬ		machine	
+J035	ኮላ (ዛፍና ፍሬ)		machine	
+J035a	የኮላ ዛፍ		machine	
+J035b	የኮላ ፍሬ	ፍሬው ይታኘካል።	machine	
+J036	የዘምባባ ቅጠል		machine	
+J037	የዘምባባ ቅጠል መሀል አገዳ		machine	
+J038	ከዘምባባ ቅጠል የተሰነጠቀ ቅጠል		machine	
+J039	ራፊያ ዘምባባ		machine	
+J039a	የራፊያ ዘምባባ ዛፍ		machine	
+J040	ኮኮናት (ዛፍና ፍሬ)		machine	
+J040a	የኮኮናት ዛፍ		machine	
+J040b	ኮኮናት		machine	
+J041	ተምር (ዛፍና ፍሬ)		machine	
+J041a	የተምር ዛፍ		machine	
+J041b	ተምር		machine	
+J042	በለስ, ሾላ (ዛፍና ፍሬ)	በአንዳንድ አካባቢዎች (ለምሳሌ በትግራይ) በለስ የቁልቋል ፍሬን ያመለክታል፤ እዚህ የሚፈለገው የበለስ ወይም የሾላ ዛፍ ነው።	machine	
+J042a	የበለስ ዛፍ, የሾላ ዛፍ		machine	
+J042b	የበለስ ፍሬ, የሾላ ፍሬ		machine	
+J043	ወይራ (ዛፍና ፍሬ)		machine	
+J043a	የወይራ ዛፍ		machine	
+J043b	የወይራ ፍሬ		machine	
+J044	ሆመር (ዛፍና ፍሬ)		machine	
+J044a	የሆመር ዛፍ		machine	
+J044b	የሆመር ፍሬ		machine	
+J045	ባኦባብ (ዛፍና ፍሬ)		machine	
+J045a	የባኦባብ ዛፍ		machine	
+J045b	የባኦባብ ፍሬ		machine	
+J046	ማሩላ (ዛፍና ፍሬ)		machine	
+J046a	የማሩላ ዛፍ		machine	
+J046b	የማሩላ ፍሬ		machine	
+J047	ሺያ (ዛፍ፣ ፍሬና ቅቤ)		machine	
+J047a	የሺያ ዛፍ		machine	
+J047b	የሺያ ፍሬ		machine	
+J047c	የሺያ ቅቤ	ከፍሬው የሚወጣ ቅባት።	machine	
+J048	ሎሚ (ዛፍና ፍሬ)		machine	
+J048a	የሎሚ ዛፍ		machine	
+J048b	ሎሚ		machine	
+J049	ብርቱካን (ዛፍና ፍሬ)		machine	
+J049a	የብርቱካን ዛፍ		machine	
+J049b	ብርቱካን		machine	
+J050	ግሬፕፍሩት (ዛፍና ፍሬ)		machine	
+J050a	የግሬፕፍሩት ዛፍ		machine	
+J050b	ግሬፕፍሩት		machine	
+J051	ማንጎ (ዛፍና ፍሬ)		machine	
+J051a	የማንጎ ዛፍ		machine	
+J051b	ማንጎ		machine	
+J052	ዘይቱን, ጓቫ (ዛፍና ፍሬ)	በኢትዮጵያ ዘይቱን የሚባለው ጓቫ ነው፤ የወይራ ፍሬ አይደለም።	machine	
+J052a	የዘይቱን ዛፍ, የጓቫ ዛፍ		machine	
+J052b	ዘይቱን, ጓቫ		machine	
+J053	ፓፓያ (ዛፍና ፍሬ)		machine	
+J053a	የፓፓያ ዛፍ		machine	
+J053b	ፓፓያ		machine	
+J054	አቮካዶ (ዛፍና ፍሬ)		machine	
+J054a	የአቮካዶ ዛፍ		machine	
+J054b	አቮካዶ		machine	
+J055	ሙዝ (ተክልና ፍሬ)		machine	
+J055a	የሙዝ ተክል		machine	
+J055b	ሙዝ		machine	
+J056	የሙዝ ዘለላ		machine	
+J057	ድንክ ሙዝ (ተክልና ፍሬ)		machine	
+J057a	የድንክ ሙዝ ተክል		machine	
+J057b	ድንክ ሙዝ		machine	
+J058	የሚቀቀል ሙዝ (ተክልና ፍሬ)	ጥሬ የማይበላ፣ ተቀቅሎ ወይም ተጠብሶ የሚበላ ሙዝ።	machine	
+J058a	የሚቀቀል ሙዝ ተክል		machine	
+J058b	የሚቀቀል ሙዝ		machine	
+J059	እንሰት		machine	
+J060	አናናስ (ተክልና ፍሬ)		machine	
+J060a	የአናናስ ተክል		machine	
+J060b	አናናስ		machine	
+J061	ዱባ		machine	
+J062	ሐብሐብ		machine	
+J063	ሐረግ		machine	
+J064	የሐረግ መጠምጠሚያ	ሐረጉ ሌላ ነገር የሚይዝበት ቀጭን ጥቅልል።	machine	
+J065	ማሽላ		machine	
+J066	ዘንጋዳ, ቀይ ማሽላ		machine	
+J067	ነጭ ማሽላ		machine	
+J068	ዳጉሳ	ዳጉሳና ሌሎች ትናንሽ ፍሬ ያላቸው እህሎች።	machine	
+J069	ፎኒዮ		machine	
+J070	ጤፍ		machine	
+J071	ስንዴ		machine	
+J072	ገብስ		machine	
+J073	በቆሎ		machine	
+J073b	የበቆሎ አገዳ		machine	
+J073c	የበቆሎ ዛላ		machine	
+J073d	የበቆሎ ፍሬ		machine	
+J073e	የበቆሎ ሽፋን ቅጠል		machine	
+J073g	የበቆሎ ጸጉር		machine	
+J073h	የበቆሎ አበባ	በአገዳው ጫፍ ላይ ያለው።	machine	
+J074	እብቅ		machine	
+J075	ሩዝ		machine	
+J076	ሸንኮራ አገዳ		machine	
+J077	ሰሊጥ		machine	
+J078	ጥጥ		machine	
+J079	ቦሎቄ		machine	
+J080	ኦቾሎኒ		machine	
+J081	የኦቾሎኒ ቅርፊት		machine	
+J082	ሥራሥር		machine	
+J083	ድንች		machine	
+J084	ካሳቫ		machine	
+J085	ቦዬ		machine	
+J086	ጎደሬ		machine	
+J087	ስኳር ድንች		machine	
+J088	ሽንኩርት		machine	
+J089	ነጭ ሽንኩርት		machine	
+J090	ቲማቲም		machine	
+J091	ካሮት		machine	
+J092	ባሚያ		machine	
+J093	ኤግፕላንት		machine	
+J094	ጣፋጭ ቃሪያ		machine	
+J095	የሚያቃጥል ቃሪያ	ትኩስም ይሁን የደረቀ (በርበሬ) የሚያቃጥል ቃሪያ፤ የበርበሬ ቅመም ድብልቅ አይደለም።	machine	
+J096	እንጉዳይ		machine	
+J097	ዝንጅብል		machine	
+J098	ቀረፋ		machine	
+J099	ድንብላል	ድንብላል (ኮሪያንደር)፤ እንስላል አይደለም።	machine	
+J100	ትምባሆ		machine	
+J101	ካናቢስ, ሀሺሽ		machine	
+J102	ቡና		machine	
+J103	ሻይ		machine	
+J104	ሣር		machine	
+J105	የሣር ቅጠል		machine	
+J106	አረም		machine	
+J107	ሸምበቆ		machine	
+J108	ደንገል		machine	
+J109	የውሃ አበባ	ቅጠሉና አበባው በውሃ ላይ የሚንሳፈፍ ተክል።	machine	
+J110	የቆላ ቀርከሃ		machine	
+J111	የደጋ ቀርከሃ		machine	
+J112	ምግብ		machine	
+J113	ዘይት		machine	
+J114	ባህላዊ ዳቦ, እንጀራ	በአካባቢው የተለመደው ዋና የዳቦ ዓይነት (ለምሳሌ እንጀራ ወይም ቂጣ)።	machine	
+J115	ስንቅ		machine	
+J116	የዳቦ ቅርፊት		machine	
+J117	ዱቄት		machine	
+J118	ጨው		machine	
+J119	ሾርባ		machine	
+J120	ገንፎ		machine	
+J121	ኩስኩስ		machine	
+J122	ቁርስ		machine	
+J123	እራት		machine	
+J124	ትራፊ		machine	
+J125	ሻጋታ		machine	
+J126	እርሾ		machine	
+J127	ለጠላ የሚቦካ ሊጥ		machine	
+J128	ጠላ		machine	
+J129	አረቄ		machine	
+J130	ጠጅ		machine	
+J131	የዘምባባ ወይን	ከዘምባባ የሚወጣ የሚያሰክር መጠጥ።	machine	
+K001	ነገር		machine	
+K002	ቤት		machine	
+K002b	ጎጆ		machine	
+K002c	ክፍል		machine	
+K002d	መኝታ ቤት		machine	
+K002e	ወጥ ቤት		machine	
+K003	ግቢ		machine	
+K003b	የግቢ ውስጥ ሜዳ, አጥር ግቢ		machine	
+K003c	የግቢ መግቢያ ጎጆ		machine	
+K004	ግድግዳ		machine	
+K005	የጭቃ ጡብ		machine	
+K006	ምርጊት, ልስን		machine	
+K007	ኖራ ቅብ		machine	
+K007b	ቀለም		machine	
+K008	ወለል		machine	
+K009	ኮርኒስ		machine	
+K010	ጣሪያ		machine	
+K011	የጎጆ ጣሪያ ጉልላት	በሣር ክዳን ጎጆ ጣሪያ ጫፍ ላይ የሚደፋ መክደኛ ወይም ጌጥ።	machine	
+K012	የሣር ክዳን		machine	
+K013	ወደ ጣሪያ ጫፍ የሚወጣ ማገር		machine	
+K014	አግዳሚ ማገር	ማገሮቹን የሚያስር።	machine	
+K015	ባለ መንታ ምሰሶ	ጫፉ መንታ ሆኖ ወጋግራ የሚሸከም ምሰሶ (ባላ)።	machine	
+K016	ወጋግራ		machine	
+K017	ሳንቃ		machine	
+K018	በር		machine	
+K019	መግቢያ, ደጃፍ		machine	
+K020	መስኮት		machine	
+K021	መሰላል		machine	
+K022	ባለ አንድ ተዳፋት ጣሪያ መጠለያ		machine	
+K023	ድንኳን		machine	
+K024	ርብራብ		machine	
+K025	ማስጫ		machine	
+K026	ጎተራ		machine	
+K027	በረት		machine	
+K028	የከብት ሰፈር	እረኞች ከብቶቻቸውን ለወቅቱ የሚያሰፍሩበት ቦታ።	machine	
+K029	አጥር		machine	
+K030	ሽንቁር አጥር	በቀዳዳዎቹ ማዶውን ማየት የሚቻልበት አጥር።	machine	
+K031	ካስማ		machine	
+K032	የውሃ ጉድጓድ		machine	
+K033	መታጠቢያ ቦታ		machine	
+K034	መጸዳጃ ቤት, ሽንት ቤት		machine	
+K035	የቆሻሻ መጣያ ቦታ		machine	የቆሻሻ መጣያ
+K036	ቆሻሻ		machine	
+K037	የአትክልት ቦታ		machine	
+K038	እርሻ, ማሳ		machine	
+K038b	የማሳ ወሰን		machine	
+K039	መንደር		machine	
+K039b	ከተማ		machine	
+K039c	ትልቅ ከተማ		machine	
+K040	ጊዜያዊ ሰፈር, ካምፕ		machine	
+K041	ገበያ		machine	
+K042	አገር, ግዛት		machine	
+K042b	ድንበር		machine	
+K043	የእግር መንገድ		machine	
+K044	መንታ መንገድ		machine	
+K045	መስቀለኛ መንገድ		machine	
+K046	ድልድይ		machine	
+K047	ጉዞ		machine	
+K048	መኪና		machine	
+K049	አልጋ		machine	
+K050	ሰሌን		machine	
+K051	ትራስ		machine	
+K052	አጎበር		machine	
+K053	በርጩማ		machine	
+K053b	ወንበር		machine	
+K054	የሰፌድ ስፌት	ሰፌድ፣ መሶብና ቅርጫት የሚሠሩበት የሣር ስፌት።	machine	
+K055	መብራት		machine	
+K056	ሻማ		machine	
+K057	ማራገቢያ		machine	
+K058	ደወል		machine	
+K059	መጥረጊያ		machine	
+K060	አቧራ መጥረጊያ		machine	
+K061	ምድጃ		machine	
+K062	ማገዶ		machine	
+K063	ጉማጅ		machine	
+K064	እሳት መሞጨሪያ እንጨቶች	እርስ በርስ እየተሻሹ ወይም እየተሾሩ እሳት የሚያስነሱ እንጨቶች።	machine	
+K065	እሳት መቆስቆሻ		machine	
+K066	ከሰል		machine	
+K067	የሸክላ ዕቃ		machine	
+K068	እንስራ		machine	
+K069	የወጥ ምንቸት		machine	
+K070	ብረት ድስት		machine	
+K071	ማንቆርቆሪያ		machine	
+K072	ጀበና		machine	
+K073	ማሰሮ, ጆግ		machine	
+K074	ጠርሙስ		machine	
+K075	ቡሽ		machine	
+K076	ቅል		machine	
+K076a	ጎድጓዳ ሳህን		machine	
+K076b	መሶብ, የእንጀራ መሶብ		machine	
+K076c	የወጥ ሳህን		machine	
+K077	የድስት ማስቀመጫ ቀለበት		machine	
+K078	ዝርግ ሳህን		machine	
+K079	ሳህን		machine	
+K080	ኩባያ		machine	
+K081	ገል		machine	
+K082	ማንኪያ		machine	
+K083	ጭልፋ		machine	
+K084	የጠላ ማጥለያ		machine	
+K085	እጀታ		machine	
+K086	ቅርጫት		machine	
+K087	ባልዲ		machine	
+K088	ሳጥን		machine	
+K089	ስልቻ		machine	
+K089b	የውሃ አቁማዳ		machine	
+K090	የፕላስቲክ ኬሻ, የማዳበሪያ ኬሻ		machine	
+K091	የምድጃ ጉልቻ	ድስት በእሳት ላይ የሚያርፍበት ድንጋይ (ከሦስቱ ጉልቻዎች አንዱ)።	machine	
+K092	የድንጋይ ወፍጮ		machine	
+K092a	መጅ		machine	
+K092b	እናት ወፍጮ		machine	
+K093	ሙቀጫ		machine	
+K094	ዘነዘና		machine	
+K095	ማማሰያ		machine	
+K096	ማበጠሪያ ሰፌድ		machine	
+K097	መንሽ		machine	
+K098	አውድማ		machine	
+K099	መቆፈሪያ		machine	
+K100	መኮትኮቻ		machine	
+K101	ዶማ		machine	
+K102	ማረሻ		machine	
+K103	ቀንበር		machine	
+K104	ማጭድ		machine	
+K105	ገጀራ		machine	
+K106	መጥረቢያ		machine	
+K107	መቆፈሪያ ዶማ, ፒካ		machine	
+K108	መዶሻ		machine	
+K109	የቀጥቃጭ መስፍ	ቀጥቃጩ ብረት የሚቀጠቅጥበት ድንጋይ ወይም ብረት።	machine	
+K110	የቀጥቃጭ ቤት		machine	
+K111	ወናፍ		machine	
+K112	የሸክላ መተኮሻ ምድጃ		machine	
+K113	መጋዝ		machine	
+K114	መሮ		machine	
+K115	ሚስማር		machine	
+K116	ቢላዋ		machine	
+K117	የስፌት መርፌ		machine	
+K118	መጣፊያ ጨርቅ		machine	
+K119	ቡትቶ		machine	
+K120	ኪስ		machine	
+K121	የተለፋ ቆዳ		machine	
+K122	ገመድ		machine	
+K123	ሲባጎ		machine	
+K123b	ክር		machine	
+K124	ማሰሪያ		machine	
+K125	ቋጠሮ		machine	
+K125b	ሸምቀቆ		machine	
+K125c	ተንሸራታች ቋጠሮ		machine	
+K126	ሰንሰለት		machine	
+K127	የእንጨት እስር		machine	
+K128	የእህል ክምር		machine	
+K129	የራስ ላይ መሸከሚያ ጉንጉን		machine	
+K130	ሸክም		machine	
+K131	ምርኩዝ		machine	
+K132	አርጩሜ		machine	
+K133	የአደን ጉዞ		machine	
+K134	የአደን ቦታ		machine	
+K135	ቀስት		machine	
+K136	ፍላጻ		machine	
+K136b	የፍላጻ መርዝ		machine	
+K137	የፍላጻ ጫፍ		machine	
+K138	የፍላጻ ማስቀመጫ		machine	
+K139	ጦር (የጦር መሣሪያ)		machine	
+K140	የሚወረወር ዱላ		machine	
+K141	ቆመጥ		machine	
+K142	የአደን መረብ		machine	
+K143	ወጥመድ		machine	
+K143b	ወፍ ማጥመጃ ሙጫ		machine	
+K144	ለማጥመጃ የሚሆን ምግብ	እንስሳ ወይም ዓሣ ለመያዝ በወጥመድ ወይም በመንጠቆ ላይ የሚደረግ ምግብ።	machine	
+K145	የእግር አሻራ		machine	
+K145b	የእንስሳ ዱካ		machine	
+K146	የዓሣ ማጥመጃ ጦር		machine	
+K146b	ባለ ገመድ የዓሣ ጦር		machine	
+K147	የዓሣ መንጠቆ		machine	
+K148	የመንጠቆ ገመድ		machine	
+K149	የዓሣ መረብ		machine	
+K150	የዓሣ ወጥመድ		machine	
+K151	የዓሣ ማጥመጃ ግድብ		machine	
+K152	ጀልባ		machine	
+K153	የአምባች ታንኳ, የአምባች መንሳፈፊያ	ቀላል እንጨት ካለው ተክል የሚሠራ ታንኳ።	machine	
+K154	መቅዘፊያ		machine	
+K155	ሰይፍ		machine	
+K156	ሰገባ		machine	
+K157	ጠመንጃ		machine	
+K158	ጋሻ		machine	
+K159	ጅራፍ		machine	
+K160	ጦርነት		machine	
+K160b	የከብት ዘረፋ		machine	
+K161	ሰላም (የጦርነት ተቃራኒ)		machine	
+K162	ሠራዊት		machine	
+K163	ንብረት		machine	
+K164	ገንዘብ		machine	
+K164b	ዛጎል		machine	
+K164c	ዋጋ		machine	
+K165	ስጦታ		machine	
+K166	ዕዳ		machine	
+K167	ቀረጥ, ግብር		machine	
+K168	ውርስ		machine	
+K169	ልብስ		machine	
+K169b	ጨርቅ		machine	
+K169c	የልብስ ጠርዝ		machine	
+K170	ቀሚስ		machine	
+K171	ሸሚዝ		machine	
+K172	ሱሪ		machine	
+K173	ጀለቢያ		machine	
+K174	ለምድ		machine	
+K175	ወገብ መሸፈኛ ሽርጥ	ብልትንና ወገብን ብቻ የሚሸፍን አጭር ልብስ፤ የወጥ ቤት ሽርጥ አይደለም።	machine	
+K175a	የወንድ ወገብ መሸፈኛ ሽርጥ		machine	
+K175b	የሴት ወገብ መሸፈኛ ሽርጥ		machine	
+K176	ቀበቶ		machine	
+K177	የዛጎል ቀበቶ		machine	
+K178	አንቀልባ		machine	
+K179	ባርኔጣ		machine	
+K179b	ጥምጥም		machine	
+K180	የፊት መሸፈኛ		machine	
+K181	ጫማ		machine	
+K182	ዶቃ		machine	
+K183	አምባር		machine	
+K184	የአንገት ሐብል		machine	
+K185	አልቦ		machine	
+K186	ቀለበት		machine	
+K187	ጉትቻ		machine	
+K188	የከንፈር ሳህን		machine	
+K189	የፊት ጌጥ ጠባሳ		machine	
+K190	እንሶስላ		machine	
+K191	ሳሙና		machine	
+K192	ምላጭ		machine	
+K193	ማበጠሪያ		machine	
+K194	መፋቂያ		machine	
+K195	የጥርስ መጎርጎሪያ		machine	
+K196	ሙዚቃ		machine	
+K197	ዘፈን		machine	
+K198	ጭፈራ		machine	
+K199	ከበሮ		machine	
+K199b	የሚናገር ከበሮ		machine	
+K199c	ወገበ ቀጭን ከበሮ		machine	
+K200	ትልቅ ከበሮ		machine	
+K201	ትንሽ ከበሮ, አታሞ		machine	
+K202	የመሬት ከበሮ	በመሬት ጉድጓድ ላይ የሚሠራ ከበሮ።	machine	
+K203	ባለ ብዙ ቱቦ ዋሽንት		machine	
+K204	እምቢልታ		machine	
+K205	ቀንደ መለከት		machine	
+K205b	የዛጎል መለከት		machine	
+K206	የጦር መለከት		machine	
+K207	ክራር		machine	
+K208	ማሲንቆ		machine	
+K209	ባላፎን	ከእንጨት ዘንጎችና ከቅል የሚሠራ የሙዚቃ መሣሪያ።	machine	
+K210	የሚቅጨለጨል የሙዚቃ መሣሪያ	ሲነቀነቅ የሚቅጨለጨል መሣሪያ፤ ቃጭል ወይም ጸናጽል አይደለም።	machine	
+K211	ለምት የሚጋጩ ሁለት ዱላዎች		machine	የሚጋጩ ሁለት ዱላዎች
+K212	ፊሽካ		machine	
+K213	ጭምብል		machine	
+K214	የትምባሆ ፒፓ		machine	
+K215	የትምባሆ ፒፓ ዘንግ		machine	
+K216	ጋያ		machine	
+K216a	ወደ ውሃው የሚወርድ የጋያ ቱቦ		machine	የጋያ ውስጥ ቱቦ
+K216b	የጋያ ራስ	ትምባሆው የሚቀመጥበት።	machine	
+K216c	የጋያ መሳቢያ ቱቦ		machine	
+K217	በዱላ የሚገፋ የጨዋታ ቀለበት	በዱላ እየተገፋ የሚንከባለል።	machine	
+K218	ኳስ		machine	
+K219	ገበጣ		machine	
+L001	ሰማይ		machine	
+L002	ጸሐይ		machine	
+L003	ሰዓት		machine	
+L004	ቀን (ሃያ አራት ሰዓት)		machine	
+L005	ጨረቃ		machine	
+L006	ወር		machine	
+L007	ሙሉ ጨረቃ		machine	
+L008	አዲስ ጨረቃ		machine	
+L009	ግርዶሽ		machine	
+L009a	የጸሐይ ግርዶሽ		machine	
+L009b	የጨረቃ ግርዶሽ		machine	
+L010	ኮከብ		machine	
+L010b	የንጋት ኮከብ, አጥቢያ ኮከብ		machine	
+L010c	ሰባቱ ከዋክብት (ትንሽ የኮከብ ዘለላ)		machine	
+L010d	የታላቁ ድብ ሰባቱ ደማቅ ከዋክብት		machine	
+L010e	ኦሪዮን (ሦስቱ ተርታ ከዋክብት)		machine	
+L010g	ተወርዋሪ ኮከብ		machine	
+L011	ዓመት		machine	
+L012	ንጋት, ጎህ		machine	
+L013	የጸሐይ መውጣት		machine	
+L014	ጠዋት		machine	
+L015	ቀትር, እኩለ ቀን		machine	
+L016	ቀን (ከሌሊት በተቃራኒ)		machine	
+L017	ከሰዓት በኋላ		machine	
+L018	የጸሐይ መጥለቅ		machine	
+L019	አመሻሽ, ድንግዝግዝ		machine	
+L020	ሌሊት		machine	
+L021	እኩለ ሌሊት		machine	
+L022	ጊዜ		machine	
+L023	ወቅት		machine	
+L024	ክረምት		machine	
+L025	በጋ		machine	
+L026	የብርድ ወቅት	በኢትዮጵያ ክረምት የዝናብ ወቅት ነው፤ እዚህ የሚፈለገው የዓመቱ ቀዝቃዛ ወቅት ነው።	machine	
+L027	የመኸር ወቅት		machine	
+L028	ነፋስ		machine	
+L028b	ደረቅና አቧራማ የሰሜን ምሥራቅ ነፋስ		machine	
+L029	አየር		machine	
+L030	ኃይለኛ ነፋስ (ያለ ዝናብ)		machine	
+L030b	የአሸዋ አውሎ ነፋስ		machine	
+L031	የአቧራ ሽክርክሪት, አውሎ ነፋስ		machine	
+L032	ነጎድጓዳማ ዝናብ, የዝናብ አውሎ		machine	
+L033	ደመና		machine	
+L034	ጭጋግ, ጉም		machine	
+L035	የአቧራ ጭጋግ		machine	
+L036	ዝናብ		machine	
+L037	የወቅቱ የመጀመሪያ ዝናብ		machine	
+L038	ካፊያ		machine	
+L039	ነጎድጓድ		machine	
+L040	መብረቅ		machine	
+L041	ቀስተ ደመና		machine	
+L042	በረዶ, የበረዶ ድንጋይ		machine	
+L042b	ለስላሳ በረዶ		machine	
+L042c	በረዶ (የቀዘቀዘ ውሃ)		machine	
+L043	ጤዛ		machine	
+L043b	ውርጭ		machine	
+L044	ጎርፍ, የውሃ ሙላት		machine	
+L045	ድርቅ		machine	
+L046	ሙቀት, ሐሩር		machine	
+L047	ብርድ		machine	
+L048	ብርሃን		machine	
+L049	የጸሐይ ብርሃን		machine	
+L050	የጨረቃ ብርሃን		machine	
+L051	ጥላ (ከጸሐይ መጠለያ)		machine	
+L052	የነገር ጥላ		machine	
+L053	ነጸብራቅ, በውሃ ላይ የሚታይ ምስል		machine	
+L054	ጨለማ		machine	
+L055	እሳት		machine	
+L056	ነበልባል		machine	
+L057	የእሳት ፍንጣሪ		machine	
+L058	ጭስ		machine	
+L059	አመድ		machine	
+L060	የሰደድ እሳት		machine	
+L061	የተቃጠለ የሳር ሜዳ		machine	
+L062	ውሃ		machine	
+L063	ወንዝ		machine	
+L064	ገባር ወንዝ		machine	
+L065	የውሃ ፍሰት		machine	
+L066	ጅረት		machine	
+L067	የደረቀ ወንዝ		machine	
+L068	ፏፏቴ		machine	
+L069	ምንጭ		machine	
+L070	የወንዝ ዳር		machine	
+L071	የወንዝ መሻገሪያ, መልካ		machine	
+L072	በወንዝ ውስጥ ያለ የአሸዋ ክምር		machine	
+L073	ደሴት		machine	
+L074	ሐይቅ		machine	
+L075	ባሕር, ውቅያኖስ		machine	
+L076	የባሕር ዳርቻ, የሐይቅ ዳርቻ		machine	
+L077	ኩሬ		machine	
+L078	ትንሽ የዝናብ ውሃ ኩሬ		machine	
+L079	የእንስሳት ውሃ መጠጫ ኩሬ		machine	
+L080	ረግረግ		machine	
+L081	ማዕበል		machine	
+L082	የአየር አረፋ		machine	
+L083	አረፋ		machine	
+L084	ዝልግልግ ነገር		machine	
+L085	ዓለም		machine	
+L086	ቦታ		machine	
+L087	መሬት		machine	
+L088	አፈር		machine	
+L089	ለም አፈር		machine	
+L090	ሸክላ, የሸክላ አፈር		machine	
+L090b	የአፈር ጓል, የጭቃ ቁራጭ		machine	
+L091	ጭቃ		machine	
+L092	የደረቀ ጭቃ ስንጥቅ		machine	
+L093	አሸዋ		machine	
+L093b	የአሸዋ ኮረብታ, የአሸዋ ክምር		machine	
+L094	ጠጠር		machine	
+L095	አቧራ		machine	
+L096	ትንሽ ድንጋይ		machine	
+L097	ቋጥኝ, ትልቅ ድንጋይ		machine	
+L098	ወርቅ		machine	
+L099	ብረት		machine	
+L099b	ዝገት		machine	
+L100	ብር (ማዕድኑ)		machine	
+L101	መዳብ		machine	
+L102	ድንጋያማ ቦታ		machine	
+L103	ተራራ		machine	
+L104	የተራራ ጫፍ		machine	
+L105	ኮረብታ		machine	
+L106	ገደል (ቀጥ ያለ የድንጋይ ግድግዳ)		machine	
+L107	ሸለቆ		machine	
+L108	ቦይ		machine	
+L109	ጉድጓድ		machine	
+L110	ጉድጓድ, ቀዳዳ		machine	
+L110b	ጎሬ		machine	
+L111	በመሬት መደርመስ የተፈጠረ ጉድጓድ		machine	
+L112	ስንጥቅ		machine	
+L113	ዋሻ		machine	
+L114	በወንዝ ሙላት የሚጥለቀለቅ ሜዳ		machine	
+L115	ጎርፍ የማይደርስበት ከፍ ያለ ቦታ		machine	
+L116	የሳር ሜዳ		machine	
+L117	ደን		machine	
+L117b	በጫካ ውስጥ ያለ ገላጣ ቦታ		machine	
+L118	ዱር, ምድረ በዳ		machine	
+L119	በረሃ		machine	
+L119b	በበረሃ ውስጥ ውሃ ያለበት ለምለም ቦታ		machine	
+L120	የጨው ሜዳ		machine	
+M001	ቋንቋ		machine	
+M002	ድምጽ		machine	
+M003	ጫጫታ, ጩኸት		machine	
+M004	ስም		machine	
+M004b	ዝና		machine	
+M005	ቃል		machine	
+M006	ትርጉም		machine	
+M007	ታሪክ, ተረት		machine	
+M008	ምሳሌያዊ አነጋገር, ተረትና ምሳሌ		machine	
+M009	እንቆቅልሽ		machine	
+M010	ዜና, ወሬ		machine	
+M010b	ማስታወቂያ		machine	
+M010c	ዘገባ, ሪፖርት		machine	
+M011	ምስጢር		machine	
+M012	ሐሳብ		machine	
+M013	እቅድ		machine	
+M014	እውነት		machine	
+M015	ውሸት		machine	
+M016	ስህተት		machine	
+M017	ስእለት		machine	
+M017a	መሐላ		machine	
+M017b	የተገባ ቃል, ቃል ኪዳን		machine	
+M018	እውቀት		machine	
+M018b	ጥበብ		machine	
+M019	አደጋ		machine	
+M020	ችግር		machine	
+M020b	መከራ		machine	
+M020c	እንቅፋት		machine	
+M021	ዝምታ		machine	
+M022	ማሚቶ		machine	
+N001	ላይ, ወደ ላይ		machine	
+N002	ታች, ወደ ታች		machine	
+N003	በላይ, ከላይ		machine	
+N004	ሥር, በታች		machine	
+N005	ዳገቱን, ሽቅብ		machine	
+N006	ቁልቁለቱን, ቁልቁል		machine	
+N007	ወደ ወንዙ ላይኛው ክፍል, ወደ ወንዙ መነሻ		machine	
+N008	ወደ ወንዙ ታችኛው ክፍል, ወንዙ ወደሚፈስበት		machine	
+N009	ምሥራቅ		machine	
+N010	ምዕራብ		machine	
+N011	ሰሜን		machine	
+N012	ደቡብ		machine	
+N013	ወደ ፊት		machine	
+N014	ወደ ኋላ		machine	
+N015	ቀኝ, ወደ ቀኝ		machine	
+N016	ግራ, ወደ ግራ		machine	
+N017	በ... ፊት, ፊት ለፊት		machine	
+N018	በ... ኋላ, ከ... ጀርባ		machine	
+N019	በ... አጠገብ, ከ... ጎን		machine	
+N020	በ... ውስጥ		machine	
+N021	ከ... ውጭ		machine	
+N022	በ... መካከል		machine	
+N023	ወደ		machine	
+N024	ከ... ርቆ		machine	
+N025	ከ... ጋር		machine	
+N026	በ, እ		machine	
+N027	ከትናንት ወዲያ		machine	
+N028	ትናንት		machine	
+N029	ዛሬ		machine	
+N030	ነገ		machine	
+N031	ከነገ ወዲያ		machine	
+N032	ያለፈ ጊዜ, ድሮ		machine	
+N033	ቀደም ሲል, ከዚህ በፊት		machine	
+N034	አሁን		machine	
+N035	በኋላ		machine	
+N036	መጪው ጊዜ, ወደፊት		machine	
+N037	ቀደም ብሎ, በጊዜ		machine	
+N038	ዘግይቶ		machine	
+N039	እንደገና		machine	
+N040	አንዳንድ ጊዜ		machine	
+N041	ብዙ ጊዜ, ደጋግሞ		machine	
+N042	አብዛኛውን ጊዜ		machine	
+N043	ሁልጊዜ		machine	
+N044	በጭራሽ, ፈጽሞ	ከአሉታዊ ግስ ጋር ይመጣል (ፈጽሞ አልመጣም)።	machine	
+O001	አዎ		machine	
+O002	አይ, የለም		machine	
+O003	አል-...-ም, አይደለም	ግስ በአል-...-ም ይፈርሳል (አልመጣም)፤ ስም ወይም ቅጽል በአይደለም (ቤት አይደለም)።	machine	
+O004	እና, -ና		machine	
+O005	ቢ-, ከ-	ቢመጣ፣ ከመጣ።	machine	
+O006	ምክንያቱም, ስለ		machine	
+O007	ምናልባት		machine	
+O008	በእውነት, በእርግጥ		machine	
+O009	ሁሉ		machine	
+O009b	ሙሉ, መላ		machine	
+O009c	ሁሉም ሰው		machine	
+O009d	ሁሉም ነገር		machine	
+O009e	በየቦታው, ሁሉም ቦታ		machine	
+O010	አንዳንድ, ጥቂት		machine	
+O010b	አንድ ሰው		machine	
+O010c	አንድ ነገር		machine	
+O011	ምንም, አንድም	ከአሉታዊ ግስ ጋር ይመጣል (ምንም የለም፣ አንድም አልቀረም)።	machine	
+O012	ሁለቱም		machine	
+O013	ግማሽ		machine	
+O013b	ቁራጭ		machine	
+O014	ብቻ		machine	
+P001	ትልቅ		machine	
+P001b	መጠን		machine	
+P002	ትንሽ		machine	
+P003	ረጅም		machine	
+P004	አጭር		machine	
+P005	ከፍ ያለ		machine	
+P006	ዝቅ ያለ		machine	
+P007	ጥልቅ		machine	
+P008	ጥልቀት የሌለው		machine	
+P009	ሰፊ		machine	
+P010	ጠባብ		machine	
+P011	ስስ, ቀጭን		machine	
+P012	ከባድ		machine	
+P012b	ክብደት		machine	
+P013	ቀላል (በክብደት)		machine	
+P014	ብዙ		machine	
+P014b	የተትረፈረፈ, በብዛት ያለ		machine	
+P015	ጥቂት		machine	
+P016	በቂ		machine	
+P017	ያለቀ		machine	
+P018	ብርቅ, እምብዛም የማይገኝ		machine	
+P019	እኩል		machine	
+P020	የበለጠ		machine	
+P021	ተመሳሳይ, ተቀራራቢ		machine	
+P022	አንድ ዓይነት		machine	
+P023	የተለየ		machine	
+P023b	ሌላ		machine	
+P024	የመጨረሻ		machine	
+P025	የተለያየ, ልዩ ልዩ		machine	
+P026	ጠፍጣፋ, ለጥ ያለ		machine	
+P027	ክብ		machine	
+P028	ቀጥ ያለ		machine	
+P029	ጠማማ		machine	
+P030	ውስጠ ባዶ		machine	
+P031	ጠንካራ (ለስላሳ ያልሆነ)		machine	
+P032	ለስላሳ		machine	
+P033	ለስላሳ (ለማኘክ), ለጋ		machine	
+P034	ስለታም		machine	
+P035	ዱልዱም		machine	
+P036	ሻካራ		machine	
+P037	ልሙጥ, ለስላሳ		machine	
+P038	የሚያዳልጥ		machine	
+P039	የሚጣበቅ, ዝልግልግ		machine	
+P040	ክፍት		machine	
+P041	ዝግ		machine	
+P042	ጥብቅ		machine	
+P043	ልል		machine	
+P044	ሙሉ		machine	
+P045	ባዶ		machine	
+P046	የተቀደደ		machine	
+P047	አዲስ		machine	
+P048	አሮጌ		machine	
+P049	የተበጣጠሰ (ልብስ)		machine	
+P050	የተበላሸ		machine	
+P051	ንጹሕ		machine	
+P052	የቆሸሸ, ቆሻሻ		machine	
+P053	እርጥብ		machine	
+P054	ደረቅ		machine	
+P055	ሙቅ, ትኩስ		machine	
+P056	ቀዝቃዛ		machine	
+P057	የበሰለ (ፍሬ)		machine	
+P058	ያልበሰለ (ፍሬ)		machine	
+P059	የበሰበሰ		machine	
+P060	የተጨማደደ, የጠወለገ		machine	
+P061	ለም		machine	
+P062	ጠፍ (መሬት)		machine	
+P063	ቀለም		machine	
+P064	ቀይ		machine	
+P064a	ቀይ ነገር		machine	
+P064b	በጣም ቀይ, ደም የመሰለ		machine	
+P065	ጥቁር		machine	
+P065a	ጥቁር ነገር		machine	
+P065b	በጣም ጥቁር, ከሰል የመሰለ		machine	
+P065c	ጠቆር ያለ		machine	
+P066	ነጭ		machine	
+P066a	ነጭ ነገር		machine	
+P066b	በጣም ነጭ, ጥጥ የመሰለ		machine	
+P066c	ፈካ ያለ		machine	
+P067	አረንጓዴ		machine	
+P067a	አረንጓዴ ነገር		machine	
+P067b	በጣም አረንጓዴ, ልምልም ያለ		machine	
+P068	ቢጫ		machine	
+P069	ሰማያዊ		machine	
+P070	ቡናማ		machine	
+P071	ነጠብጣብ ያለው, ዥንጉርጉር		machine	
+P071b	በጣም ዥንጉርጉር		machine	
+P072	ባለ አንድ ቀለም		machine	
+P073	ቡራቡሬ (ጥቁርና ነጭ)		machine	
+P074	የሚጣፍጥ, ጣዕም ያለው		machine	
+P075	ጣፋጭ (እንደ ስኳር)		machine	
+P076	ኮምጣጣ		machine	
+P077	መራራ		machine	
+P078	ጨዋማ		machine	
+P079	ገማ		machine	
+P079b	መጥፎ ሽታ, ግማት		machine	
+P080	ጥሩ መዓዛ አለው		machine	
+P080b	መዓዛ		machine	
+P081	ፈጣን		machine	
+P081b	ፍጥነት		machine	
+P082	ቀርፋፋ, ዘገምተኛ		machine	
+P083	ሞቀው, ሙቀት ተሰማው		machine	
+P084	ራበው		machine	
+P084b	ረሃብ		machine	
+P085	ጠማው		machine	
+P085b	ጥማት		machine	
+P086	የጠገበ		machine	
+P087	የደከመ		machine	
+P087b	ድካም		machine	
+P088	እንቅልፍ እንቅልፍ አለው		machine	
+P088b	ድብታ, የእንቅልፍ ስሜት		machine	
+P089	ያልተኛ, ነቅቶ ያለ		machine	
+P090	የሰከረ		machine	
+P091	ራሱ ዞረ, አዞረው		machine	
+P092	ራቁት		machine	
+P093	ጤነኛ, ጤናማ		machine	
+P093b	ጤና		machine	
+P094	የታመመ, በሽተኛ		machine	
+P095	ጠንካራ		machine	
+P095b	ጥንካሬ, ጉልበት		machine	
+P095c	ኃያል		machine	
+P095d	ግርማ, ክብር		machine	
+P096	ጡንቻማ		machine	
+P097	ደካማ		machine	
+P097b	ደካማነት		machine	
+P098	ወፍራም		machine	
+P099	ቀጭን, ከሲታ		machine	
+P100	በጣም የከሳ, የመነመነ		machine	
+P101	የሚያነክስ, አንካሳ	አንካሳ ሰውን ለመጥራት ሲውል እንደ ስድብ ሊቆጠር ይችላል።	machine	
+P102	ዓይነ ስውር, ዕውር	ዕውር ሰውን ለመጥራት ሲውል ሊያስከፋ ይችላል፤ ጨዋው ቃል ዓይነ ስውር ነው።	machine	
+P102b	ዓይነ ስውርነት		machine	
+P103	ሩቅ ማየት የማይችል		machine	
+P104	መናገር የተሳነው, ዲዳ	ዲዳ ሰውን ለመጥራት ሲውል ሊያስከፋ ይችላል (የሞኝነት ፍቺም ይሰጠዋል)።	machine	
+P105	መላጣ, ራሰ በራ		machine	
+P106	ስንፈተ ወሲብ ያለበት	የሕክምና አገላለጽ ነው፤ የዕለት ቃላቱ ጸያፍ ሊሆኑ ይችላሉ።	machine	
+P107	በሕይወት ያለ, ሕያው		machine	
+P108	የሞተ		machine	
+P109	ወጣት		machine	
+P110	አረጋዊ, በዕድሜ የገፋ		machine	
+P111	ደስተኛ		machine	
+P111b	ደስታ		machine	
+P112	ያዘነ		machine	
+P112b	ሐዘን		machine	
+P113	የተናደደ		machine	
+P113b	ቁጣ, ንዴት		machine	
+P114	የፈራ		machine	
+P114b	ፍርሃት		machine	
+P115	ኩሩ		machine	
+P115b	ኩራት		machine	
+P116	ቀናተኛ		machine	
+P116b	ቅናት		machine	
+P117	ዓይን አፋር		machine	
+P117b	እፍረት		machine	
+P118	ሰለቸው, ደበረው		machine	
+P119	እረፍት የሌለው, ቁንጥንጥ		machine	
+P120	ጉጉ		machine	
+P121	ለማወቅ የሚጓጓ		machine	
+P122	ብቻውን		machine	
+P123	ደፋር, ጀግና		machine	
+P123b	ጀግንነት		machine	
+P124	ደግ		machine	
+P124b	ደግነት		machine	
+P124c	ርኅራኄ, ሐዘኔታ		machine	
+P125	ለጋስ		machine	
+P126	ራስ ወዳድ		machine	
+P127	ሐቀኛ, ታማኝ		machine	
+P128	ፍትሐዊ, ጻድቅ		machine	
+P128b	ፍትሕ		machine	
+P129	ሙሰኛ, ብልሹ		machine	
+P130	ክፉ		machine	
+P131	ኃይለኛ, ቁጡ		machine	
+P132	ሰነፍ		machine	
+P132b	ስንፍና		machine	
+P133	ታጋሽ		machine	
+P133b	ትዕግስት		machine	
+P134	ትዕግስት የሌለው		machine	
+P135	ግትር, እልኸኛ		machine	
+P135b	ግትርነት		machine	
+P136	ጥበበኛ, አስተዋይ		machine	
+P137	ብልህ, ጎበዝ		machine	
+P138	ሞኝ		machine	
+P138b	ሞኝነት		machine	
+P139	ግራ የተጋባ		machine	
+P140	የማያውቅ, አላዋቂ		machine	
+P141	የተካነ, ባለሙያ		machine	
+P142	ቻለ		machine	
+P142b	ችሎታ		machine	
+P143	አንደበተ ርቱዕ		machine	
+P144	ዝም ያለ, ጸጥ ያለ		machine	
+P145	ጥሩ		machine	
+P145b	ፍጹም		machine	
+P145c	በደንብ		machine	
+P145d	ፍጹምነት		machine	
+P146	መጥፎ		machine	
+P146b	በመጥፎ ሁኔታ, ክፉኛ		machine	
+P147	ትክክል		machine	
+P148	የተሳሳተ, ስህተት		machine	
+P149	ጥፋተኛ		machine	
+P150	ከጥፋት ነጻ, ንጹሕ		machine	
+P151	ቆንጆ		machine	
+P152	አስቀያሚ		machine	
+P153	አስፈላጊ		machine	
+P154	አስቂኝ		machine	
+P155	ቀላል		machine	
+P156	ከባድ, አስቸጋሪ		machine	
+P157	ሀብታም		machine	
+P158	ድሃ		machine	
+P159	ውድ		machine	
+P160	ርካሽ, ዋጋው ቀላል		machine	
+P161	የጠፋ		machine	
+P162	ያልተገኘ, የቀረ		machine	
+P163	እዚህ ቅርብ		machine	
+P164	እዚያ ቅርብ		machine	
+P165	ሩቅ		machine	
+Q001	አንድ		machine	
+Q001b	አንደኛ, የመጀመሪያ		machine	
+Q001c	አንድ ጊዜ		machine	
+Q002	ሁለት		machine	
+Q002b	ሁለተኛ		machine	
+Q003	ሶስት, ሦስት		machine	
+Q003b	ሶስተኛ, ሦስተኛ		machine	
+Q004	አራት		machine	
+Q005	አምስት		machine	
+Q006	ስድስት		machine	
+Q007	ሰባት		machine	
+Q008	ስምንት		machine	
+Q009	ዘጠኝ		machine	
+Q010	አስር, አሥር		machine	
+Q011	አስራ አንድ, አሥራ አንድ		machine	
+Q012	አስራ ሁለት, አሥራ ሁለት		machine	
+Q013	አስራ ሶስት, አሥራ ሦስት		machine	
+Q014	አስራ አራት, አሥራ አራት		machine	
+Q015	አስራ አምስት, አሥራ አምስት		machine	
+Q016	አስራ ስድስት, አሥራ ስድስት		machine	
+Q017	አስራ ሰባት, አሥራ ሰባት		machine	
+Q018	አስራ ስምንት, አሥራ ስምንት		machine	
+Q019	አስራ ዘጠኝ, አሥራ ዘጠኝ		machine	
+Q020	ሃያ		machine	
+Q021	ሃያ አንድ		machine	
+Q022	ሃያ ሁለት		machine	
+Q023	ሃያ ሶስት, ሃያ ሦስት		machine	
+Q024	ሃያ አራት		machine	
+Q030	ሰላሳ, ሠላሳ		machine	
+Q035	ሰላሳ አምስት, ሠላሳ አምስት		machine	
+Q036	ሰላሳ ስድስት, ሠላሳ ስድስት		machine	
+Q040	አርባ		machine	
+Q047	አርባ ሰባት		machine	
+Q048	አርባ ስምንት		machine	
+Q050	ሃምሳ		machine	
+Q059	ሃምሳ ዘጠኝ		machine	
+Q060	ስልሳ		machine	
+Q070	ሰባ		machine	
+Q080	ሰማንያ		machine	
+Q090	ዘጠና		machine	
+Q100	መቶ		machine	
+Q200	ሁለት መቶ		machine	
+Q300	ሶስት መቶ, ሦስት መቶ		machine	
+Q400	አራት መቶ		machine	
+Q500	አምስት መቶ		machine	
+Q600	ስድስት መቶ		machine	
+Q700	ሰባት መቶ		machine	
+Q800	ስምንት መቶ		machine	
+Q900	ዘጠኝ መቶ		machine	
+Q1000	ሺህ		machine	
+Q2000	ሁለት ሺህ		machine	
+Q1736	አንድ ሺህ ሰባት መቶ ሰላሳ ስድስት, አንድ ሺህ ሰባት መቶ ሠላሳ ስድስት		machine	
+R1SG	እኔ		machine	
+R1DU	እኛ ሁለታችን	አማርኛ ጥንድ ቁጥር (dual) የለውም፤ «እኛ ሁለታችን» ይባላል።	machine	
+R1DUIN	እኔና አንተ, እኔና አንቺ	አማርኛ አድማጩን የሚጨምር/የማይጨምር «እኛ» አይለይም፤ በሐረግ ተገልጿል።	machine	
+R1DUEX	እኔና እሱ, እኔና እሷ	አድማጩን አይጨምርም። አማርኛ ይህን ልዩነት በተለየ ተውላጠ ስም አያሳይም፤ በሐረግ ተገልጿል።	machine	
+R1PC	እኛ (ጥቂት የሆንን)	አማርኛ የጥቂት ቁጥር (paucal) የለውም፤ «እኛ» ይባላል።	machine	
+R1PL	እኛ		machine	
+R1PLIN	እኛ (እናንተንም ጨምሮ)	አማርኛ ይህን ልዩነት በተለየ ተውላጠ ስም አያሳይም፤ በሐረግ ተገልጿል።	machine	
+R1PLEX	እኛ (እናንተን ሳይጨምር)	አማርኛ ይህን ልዩነት በተለየ ተውላጠ ስም አያሳይም፤ በሐረግ ተገልጿል።	machine	
+R2SG	አንተ, አንቺ		machine	
+R2SGM	አንተ		machine	
+R2SGF	አንቺ		machine	
+R2SGR	እርስዎ, አንቱ	«አንቱ» በአንዳንድ አካባቢዎች (ጎጃም፣ ጎንደር) እንደ ተውላጠ ስም ይነገራል፤ በመደበኛው «እርስዎ» ነው።	machine	
+R2DU	እናንተ ሁለታችሁ	አማርኛ ጥንድ ቁጥር (dual) የለውም፤ «እናንተ ሁለታችሁ» ይባላል።	machine	
+R2PC	እናንተ (ጥቂት የሆናችሁ)	አማርኛ የጥቂት ቁጥር (paucal) የለውም፤ «እናንተ» ይባላል።	machine	
+R2PL	እናንተ		machine	
+R2PLM	እናንተ (ወንዶች)	አማርኛ በብዙ ቁጥር ጾታ አይለይም፤ «እናንተ» ለወንዶችም ለሴቶችም ነው።	machine	
+R2PLF	እናንተ (ሴቶች)	አማርኛ በብዙ ቁጥር ጾታ አይለይም፤ «እናንተ» ለወንዶችም ለሴቶችም ነው።	machine	
+R3SG	እሱ, እሷ		machine	
+R3SGM	እሱ		machine	
+R3SGF	እሷ		machine	
+R3SGN	እሱ (ለነገር)	ለግዑዝ ነገርና ለእንስሳ «እሱ» ይባላል፤ የተለየ ቅጽ የለም።	machine	
+R3SGR	እሳቸው, እርሳቸው		machine	
+R3SGLOG	እሱ ራሱ, እሷ ራሷ	አማርኛ ወደ ንግግሩ ባለቤት የሚመለስ የተለየ ተውላጠ ስም የለውም፤ በተዘዋዋሪ ንግግር ለወንድ «እሱ ራሱ»፣ ለሴት «እሷ ራሷ» ይባላል (ዮሐንስ እሱ ራሱ እንደሚመጣ ተናገረ)።	machine	
+R3DU	እነሱ ሁለቱ	አማርኛ ጥንድ ቁጥር (dual) የለውም፤ «እነሱ ሁለቱ» ይባላል።	machine	
+R3PC	እነሱ (ጥቂት የሆኑት)	አማርኛ የጥቂት ቁጥር (paucal) የለውም፤ «እነሱ» ይባላል።	machine	
+R3PL	እነሱ		machine	
+R3PLM	እነሱ (ወንዶቹ)	አማርኛ በብዙ ቁጥር ጾታ አይለይም፤ «እነሱ» ለወንዶችም ለሴቶችም ነው።	machine	
+R3PLF	እነሱ (ሴቶቹ)	አማርኛ በብዙ ቁጥር ጾታ አይለይም፤ «እነሱ» ለወንዶችም ለሴቶችም ነው።	machine	
+R3PLN	እነሱ (ለነገሮች)	ለግዑዝ ነገሮችና ለእንስሳት «እነሱ» ይባላል፤ የተለየ ቅጽ የለም።	machine	
+R3PLLOG	እነሱ ራሳቸው (የተናገሩት ሰዎች)	አማርኛ ወደ ንግግሩ ባለቤቶች የሚመለስ የተለየ ተውላጠ ስም የለውም፤ በተዘዋዋሪ ንግግር «እነሱ ራሳቸው» ይባላል።	machine	
+R1SGPOSS	የእኔ		machine	
+R2SGPOSS	ያንተ, ያንቺ		machine	
+R3SGPOSS	የእሱ, የእሷ		machine	
+R1PLPOSS	የእኛ		machine	
+R2PLPOSS	የእናንተ		machine	
+R3PLPOSS	የእነሱ		machine	
+RREFL	ራስ	ከባለቤት ቅጥያ ጋር ይመጣል፤ ራሴ፣ ራስህ፣ ራሱ።	machine	
+RRECP	እርስ በርስ		machine	
+RLOCDPRX	እዚህ		machine	
+RLOCDADR	እዚያ (አንተ ጋ)	አማርኛ ሁለት ርቀቶችን ብቻ ይለያል (ይህ/ያ፣ እዚህ/እዚያ)፤ ልዩነቱ በሐረግ ተገልጿል።	machine	
+RLOCDMED	እዚያ (ቅርብ)	አማርኛ ሁለት ርቀቶችን ብቻ ይለያል (ይህ/ያ፣ እዚህ/እዚያ)፤ ልዩነቱ በሐረግ ተገልጿል።	machine	
+RLOCDDST	እዚያ		machine	
+RLOCDREM	እዚያ ሩቅ, እዚያ ማዶ	«ማዶ» ከወንዝ ወይም ከሸለቆ ባሻገር ያለውን ቦታ ያመለክታል፤ «እዚያ ሩቅ» ርቆ ያለውን ቦታ።	machine	
+R3SGDPRX	ይህ		machine	
+R3SGDADR	ያ (አንተ ጋ ያለው)	አማርኛ ሁለት ርቀቶችን ብቻ ይለያል (ይህ/ያ፣ እዚህ/እዚያ)፤ ልዩነቱ በሐረግ ተገልጿል።	machine	
+R3SGDMED	ያ (ቅርብ ያለው)	አማርኛ ሁለት ርቀቶችን ብቻ ይለያል (ይህ/ያ፣ እዚህ/እዚያ)፤ ልዩነቱ በሐረግ ተገልጿል።	machine	
+R3SGDDST	ያ		machine	
+R3PLDPRX	እነዚህ		machine	
+R3PLDADR	እነዚያ (አንተ ጋ ያሉት)	አማርኛ ሁለት ርቀቶችን ብቻ ይለያል (ይህ/ያ፣ እዚህ/እዚያ)፤ ልዩነቱ በሐረግ ተገልጿል።	machine	
+R3PLDMED	እነዚያ (ቅርብ ያሉት)	አማርኛ ሁለት ርቀቶችን ብቻ ይለያል (ይህ/ያ፣ እዚህ/እዚያ)፤ ልዩነቱ በሐረግ ተገልጿል።	machine	
+R3PLDDST	እነዚያ		machine	
+RQ3SG	ማን		machine	
+RQ3PL	እነማን		machine	
+RQ3SGN	ምን		machine	
+RQ3PLN	ምን ምን		machine	
+RQ3SGREL	የትኛው		machine	
+RQ3PLREL	የትኞቹ		machine	
+RQ3SGPOSS	የማን		machine	
+RQLOC	የት		machine	
+RQTIM	መቼ		machine	
+RQRSN	ለምን		machine	
+RQMAN	እንዴት		machine	
+RQQNT	ስንት		machine	
+V001	ነው		machine	
+V002	አለ		machine	
+V003	ተለየ, ተነጠለ		machine	
+V004	የለም		machine	
+V005	ሆነ		machine	
+V006	አለው		machine	
+V007	አጣ		machine	
+V008	ሄደ		machine	
+V009	መጣ		machine	
+V010	ደረሰ		machine	
+V011	ቀረበ		machine	
+V012	ገባ		machine	
+V013	ወደ ውጭ ወጣ		machine	
+V014	ለቆ ሄደ		machine	
+V015	ተመለሰ		machine	
+V016	አጠገቡ አለፈ		machine	
+V017	ዞሮ ሄደ		machine	
+V018	ወደ ላይ ወጣ		machine	
+V019	ወረደ		machine	
+V020	ወደቀ		machine	
+V021	ተነሳ		machine	
+V022	ወንዝ ተሻገረ		machine	
+V023	ሜዳ አቋረጠ		machine	
+V024	ተንቀሳቀሰ		machine	
+V024b	እንቅስቃሴ		machine	
+V025	ተጓዘ		machine	
+V026	ፈለሰ		machine	
+V027	ተንከራተተ		machine	
+V028	ጠፋ		machine	
+V029	በእግሩ ሄደ		machine	
+V030	ተራመደ		machine	
+V031	ሮጠ		machine	
+V032	ሸሸ, አመለጠ		machine	
+V033	ቸኮለ		machine	
+V034	ተደናቀፈ		machine	
+V035	አነከሰ		machine	
+V036	ዳኸ, ተሳበ		machine	
+V037	ዘለለ		machine	
+V038	ዞር አለ		machine	
+V039	ተወዛወዘ		machine	
+V040	ተንሸራተተ		machine	
+V041	ተንከባለለ		machine	
+V042	ውሃ ላይ ዋኘ, ውሃ ውስጥ ተራመደ		machine	
+V043	ውሃ ውስጥ ዋኘ		machine	
+V044	ውሃ ውስጥ ዘሎ ገባ, ጠለቀ		machine	
+V045	ተንሳፈፈ		machine	
+V046	ሰመጠ	ለጀልባና ለዕቃ ነው፤ በውሃ ሰጥሞ መሞት አይደለም።	machine	
+V047	ሰጥሞ ሞተ		machine	
+V048	በረረ		machine	
+V049	ከፍ ብሎ በረረ		machine	
+V050	ቅርንጫፍ ላይ ተቀመጠ		machine	
+V050b	አረፈ (ወፍ)		machine	
+V051	ቀዘፈ		machine	
+V052	ከጀልባ ውሃ ቀዳ		machine	
+V053	ተገለበጠ		machine	
+V054	ጋለበ, ተሳፈረ		machine	
+V055	መራ, ነዳ		machine	
+V056	ኖረ		machine	
+V057	ቆየ		machine	
+V058	አረፈ		machine	
+V059	ተቀመጠ		machine	
+V060	ቆመ		machine	
+V061	ተንበረከከ		machine	
+V062	ቁጢጥ አለ		machine	
+V063	ተፈናጠጠ		machine	
+V064	ተደገፈ		machine	
+V065	ጋደም አለ		machine	
+V066	አጎነበሰ		machine	
+V067	እጅ ነሳ		machine	
+V068	ተነፈሰ		machine	
+V069	ቁና ቁና ተነፈሰ		machine	
+V070	አዛጋ		machine	
+V071	አይኑን አርገበገበ		machine	
+V072	አይኑን ጠቀሰ		machine	
+V073	አንኮራፋ		machine	
+V074	አነፈነፈ		machine	
+V075	ተናፈጠ		machine	
+V076	እፍ አለ		machine	
+V077	ተፋ		machine	
+V078	ሳለ		machine	
+V079	አገሳ (ከበላ በኋላ)		machine	
+V080	አስነጠሰ		machine	
+V081	አቃሰተ		machine	
+V082	በጥረት አቃሰተ, እህ አለ		machine	
+V083	ልቡ መታ		machine	
+V084	ጠዘጠዘ		machine	
+V085	ሸና		machine	
+V086	ተጸዳዳ, አራ	አራ ጨዋ ያልሆነ ቃል ነው።	machine	
+V087	ፈሳ	ጨዋ ያልሆነ ቃል ሊሆን ይችላል።	machine	
+V088	ተንቀጠቀጠ		machine	
+V089	አላበ		machine	
+V090	ደማ		machine	
+V091	ረጋ		machine	
+V092	ራሱን ሳተ		machine	
+V093	አስመለሰ		machine	
+V094	ተኛ		machine	
+V095	ነቃ		machine	
+V096	ጸነሰች, አረገዘች		machine	
+V097	ወለደች		machine	
+V098	ተወለደ		machine	
+V099	አደገ		machine	
+V100	ሸመገለ, አረጀ		machine	
+V101	ሞተ		machine	
+V102	በሕይወት ተረፈ		machine	
+V103	ተጎዳ, ቆሰለ		machine	
+V104	ጎዳ		machine	
+V105	ዳነ		machine	
+V106	ፈወሰ, አዳነ		machine	
+V107	ነፍስ ዘራ		machine	
+V108	ጮኸ (ውሻ)		machine	
+V109	አጉረመረመ		machine	
+V110	ጥርሱን አገጠጠ		machine	
+V111	አመሰኳ		machine	
+V112	በመንቁሩ ለቀመ		machine	
+V113	እንቁላል ጣለች		machine	
+V114	እንቁላል ታቀፈች		machine	
+V115	ተፈለፈለ		machine	
+V116	አስካካች		machine	
+V117	ጮኸ (አውራ ዶሮ)		machine	
+V118	ክንፉን አርገበገበ		machine	
+V119	እንደ እባብ ተሳበ		machine	
+V120	ቱሽ አለ		machine	
+V121	ነደፈ (ጊንጥ)		machine	
+V122	አደገ (ተክል)		machine	
+V123	በቀለ		machine	
+V124	በሰለ		machine	
+V125	ጠወለገ		machine	
+V126	ተነነ		machine	
+V127	ፈሰሰ		machine	
+V128	ተንጠባጠበ		machine	
+V129	አፈሰሰ (ጣሪያ፣ ዕቃ)		machine	
+V130	ፈነዳ		machine	
+V131	አበጠ		machine	
+V132	ተዛመተ (እሳት)		machine	
+V133	አበራ		machine	
+V134	ደበዘዘ, ፈዘዘ		machine	
+V135	በራ, ደመቀ		machine	
+V136	ጨለመ, ጠቆረ		machine	
+V137	ደረቀ		machine	
+V138	ተቃጠለ, ነደደ		machine	
+V139	ሳይነድ ጨሰ		machine	
+V140	ቀለጠ		machine	
+V141	በረዶ ሆነ		machine	
+V142	ለበለበ		machine	
+V143	ተንኮሻኮሸ (ቅጠል)		machine	
+V144	ሲጢጥ አለ		machine	
+V145	ነፈሰ		machine	
+V146	ነፋስ ጣለ		machine	
+V147	ነፋስ ወሰደ		machine	
+V148	አየ		machine	
+V148b	የማየት ችሎታ, እይታ		machine	
+V149	ተመለከተ		machine	
+V150	አስተዋለ		machine	
+V151	ሰማ		machine	
+V152	አዳመጠ		machine	
+V153	አሸተተ		machine	
+V154	ቀመሰ		machine	
+V154b	ጣዕም		machine	
+V155	ተሰማው	ስሜት ሲሰማው እንጂ በመንካት አይደለም።	machine	
+V156	ነካ		machine	
+V157	ለይቶ አወቀ		machine	
+V158	በላ		machine	
+V158b	ምግብ		machine	
+V159	ሥጋ በላ		machine	
+V160	አኘከ		machine	
+V161	ቆረጠመ		machine	
+V162	ጋጠ (አጥንት)		machine	
+V163	ነከሰ		machine	
+V164	ላሰ		machine	
+V165	መጠጠ		machine	
+V166	ዋጠ		machine	
+V167	ታነቀ		machine	
+V168	ጠጣ		machine	
+V168b	መጠጥ		machine	
+V169	ፉት አለ		machine	
+V170	መታ		machine	
+V171	ደበደበ		machine	
+V172	በጥፊ መታ		machine	
+V173	አጨበጨበ		machine	
+V174	በእግሩ መታ		machine	
+V175	መሬቱን በእግሩ መታ		machine	
+V176	ረጋገጠ		machine	
+V177	ተጋጨ		machine	
+V178	ገፍትሮ ጣለ		machine	
+V179	ገፋ		machine	
+V180	ተጫነ		machine	
+V181	ሳበ		machine	
+V182	ጎተተ		machine	
+V183	አሻሸ		machine	
+V184	ፋቀ		machine	
+V185	ቧጨረ, አከከ		machine	
+V186	ነቀነቀ		machine	
+V187	ጨፈለቀ		machine	
+V188	በጩቤ ወጋ		machine	
+V189	በእሾህ ወጋ		machine	
+V190	ጆሮ በሳ		machine	
+V191	አቆሰለ		machine	
+V192	ገደለ		machine	
+V193	የታችኛውን የፊት ጥርስ ነቀለ		machine	
+V194	በእቅፉ ያዘ, ታቀፈ		machine	
+V195	በእጁ ያዘ		machine	
+V196	ወሰደ		machine	
+V197	ነጠቀ, ቀማ		machine	
+V198	ይዞ ሄደ		machine	
+V199	አስቀመጠ		machine	
+V200	አነሳ		machine	
+V201	አወደቀ, ጣለ		machine	
+V202	ከፍ አደረገ		machine	
+V203	ዝቅ አደረገ		machine	
+V204	ወረወረለት		machine	
+V205	ጣለ		machine	
+V206	ተሸከመ		machine	
+V207	በራሱ ላይ ተሸከመ		machine	
+V208	በትከሻው ተሸከመ		machine	
+V209	አዘለ, በጀርባው ተሸከመ		machine	
+V210	ጫነ		machine	
+V211	አወረደ		machine	
+V212	አመጣ		machine	
+V213	ሰጠ		machine	
+V214	አዋሰ, አበደረ		machine	
+V215	ተዋሰ, ተበደረ		machine	
+V216	አቀረበ		machine	
+V217	ተቀበለ		machine	
+V218	እምቢ አለ		machine	
+V219	አገኘ		machine	
+V220	መለሰ		machine	
+V221	አቆየ		machine	
+V222	አከማቸ		machine	
+V223	ደበቀ		machine	
+V224	አጣ		machine	
+V225	ፈለገ		machine	
+V226	አገኘ		machine	
+V227	ትቶ ሄደ		machine	
+V228	ዘብ ጠበቀ		machine	
+V229	ቆረጠ		machine	
+V230	ፍሬ እንዲያፈራ ዛፍ ሸረፈ		machine	
+V231	ዛፍ ቆረጠ		machine	
+V232	ከተፈ		machine	
+V233	ሰነጠቀ, ፈለጠ		machine	
+V234	በመጋዝ ቆረጠ		machine	
+V235	ፈለፈለ		machine	
+V236	ሰበረ, በጠሰ		machine	
+V237	ቀደደ		machine	
+V238	ቅርፊት ላጠ, ቀረፈ		machine	
+V239	አጣመመ		machine	
+V239b	ኩርባ		machine	
+V240	ጠመዘዘ		machine	
+V241	አጠፈ		machine	
+V242	ጠመጠመ		machine	
+V243	ወጠረ		machine	
+V244	ዘረጋ, አሰጣ		machine	
+V245	ሰቀለ		machine	
+V246	ገለበጠ, አዞረ		machine	
+V247	ከፈተ		machine	
+V248	ዘጋ		machine	
+V249	ሸፈነ, ከደነ		machine	
+V250	ገለጠ		machine	
+V251	ደፈነ, ወተፈ		machine	
+V252	ጠቀለለ		machine	
+V253	የተጠቀለለውን ፈታ		machine	
+V254	ጠቀጠቀ, አጨቀ		machine	
+V255	ሞላ		machine	
+V256	አወጣ		machine	
+V257	አፈሰሰ, ቀዳ		machine	
+V258	ሳያስበው አፈሰሰ		machine	
+V259	ለበሰ		machine	
+V260	አወለቀ		machine	
+V261	ታጠበ		machine	
+V262	ልብስ አጠበ		machine	
+V263	አበሰ		machine	
+V264	ጸጉር ቆረጠ		machine	
+V265	ላጨ		machine	
+V266	ጸጉር ጎነጎነ, ሹሩባ ሠራ		machine	
+V267	ቀባ		machine	
+V268	አስጌጠ		machine	
+V269	ምግብ አዘጋጀ		machine	
+V270	ቆርጦ ከፈተ		machine	
+V271	በቀጭኑ ቆረጠ, ቆራረጠ		machine	
+V272	ላጠ		machine	
+V273	ቀላቀለ, አደባለቀ		machine	
+V274	አማሰለ		machine	
+V275	አጣራ, አጠለለ		machine	
+V276	ወቀጠ		machine	
+V277	አደቀቀ		machine	
+V278	ከካ	የመጀመሪያው ሻካራ ፈጨት	machine	
+V279	ፈጨ	ሁለተኛው፣ የተሻለ ልም ፈጨት	machine	
+V280	አላመ	ሦስተኛው፣ እጅግ ልም ፈጨት	machine	
+V281	ለወሰ, አቦካ		machine	
+V282	ሊጥ ቅርጽ አስያዘ		machine	
+V283	ላባ ነጨ		machine	
+V284	አበሰለ		machine	
+V285	ፈላ, ቀቀለ		machine	
+V286	አንተከተከ		machine	
+V287	ወጥ ሠራ		machine	
+V288	ጠበሰ, ቆላ		machine	
+V289	በዘይት ጠበሰ		machine	
+V290	በአመድ ውስጥ ጋገረ		machine	
+V291	በጭስ አደረቀ, አጨሰ		machine	
+V292	ቦካ		machine	
+V293	ተበላሸ, ሻገተ		machine	
+V294	አደረገ		machine	
+V294b	ሥራ		machine	
+V295	ሠራ		machine	
+V295b	መፍጠር, ፈጠራ		machine	
+V296	ገነባ		machine	
+V297	ጠገነ		machine	
+V298	ተካ		machine	
+V299	ሸክላ ሠራ		machine	
+V300	ሰፋ		machine	
+V301	ሸመነ		machine	
+V302	ዶቃ በክር ሰካ		machine	
+V303	አሰረ		machine	
+V304	ፈታ		machine	
+V305	በገመድ ጠፈረ		machine	
+V306	አጠበቀ		machine	
+V307	አላላ		machine	
+V308	አጠረ, በአጥር ከለለ		machine	
+V309	ቦታ ከለለ, ካስማ ቸከለ		machine	
+V310	ቆፈረ		machine	
+V311	ውሃ ቀዳ		machine	
+V312	እንጨት ለቀመ		machine	
+V313	ጠረገ		machine	
+V314	ወለወለ		machine	
+V315	ደወል መታ, ደወለ		machine	
+V316	ቀረጸ, ጠረበ		machine	
+V317	ሥዕል ሳለ		machine	
+V318	መሬት በእጅ ቆፈረ		machine	
+V318b	አረሰ		machine	
+V319	መሬት መነጠረ		machine	
+V320	ዘራ		machine	
+V321	ዘር በተነ, ነሰነሰ		machine	
+V322	ችግኝ ተከለ		machine	
+V323	አዛውሮ ተከለ		machine	
+V324	አረመ		machine	
+V325	ኮተኮተ		machine	
+V326	አጨደ, ምርት ሰበሰበ		machine	
+V327	ቆፍሮ አወጣ		machine	
+V328	ፍሬ ቀጠፈ		machine	
+V329	ማር ቆረጠ		machine	
+V330	ወቃ		machine	
+V331	አዘራ, አበጠረ		machine	
+V332	ፈለፈለ		machine	
+V333	በቆሎ ገፈፈ, ሸለቀቀ		machine	
+V334	ከብት አሰማራ		machine	
+V335	መገበ, ቀለበ		machine	
+V336	ከችካል አሰረ		machine	
+V337	አለበ		machine	
+V338	ሰለበ, ኮላሸ		machine	
+V339	አላመደ, ገራ		machine	
+V340	አረደ		machine	
+V341	ቆዳ ገፈፈ		machine	
+V342	አደነ		machine	
+V343	አድብቶ ተከተለ, አደባ		machine	
+V344	አሳደደ		machine	
+V345	ወጥመድ አጠመደ		machine	
+V346	በወጥመድ ያዘ		machine	
+V347	ቀለበ, ያዘ		machine	
+V348	ሸሸ, አመለጠ		machine	
+V349	አመለጠ		machine	
+V350	ተኮሰ, ቀስት ወረወረ		machine	
+V351	ዓሣ አጠመደ		machine	
+V352	ቀየረ, ተቀየረ		machine	
+V353	አጠፋ, አፈረሰ		machine	
+V354	ለቀቀ, ፈታ		machine	
+V355	አስቻለ		machine	
+V356	አስፋፋ, ትልቅ አደረገ		machine	
+V356b	በዛ, ጨመረ		machine	
+V357	አሳነሰ		machine	
+V357b	አነሰ, ቀነሰ		machine	
+V358	አስረዘመ		machine	
+V359	አሳጠረ		machine	
+V360	አሰፋ		machine	
+V361	አጠለቀ, ጥልቅ አደረገ		machine	
+V362	ጠፍጣፋ አደረገ, ደለደለ		machine	
+V363	አቃና		machine	
+V364	ሳለ, አሾለ		machine	
+V365	አለሰለሰ		machine	
+V366	አጠነከረ		machine	
+V367	አለዘበ		machine	
+V368	ልብስ አሰጣ, አደረቀ		machine	
+V369	ረጨ, አርከፈከፈ		machine	
+V370	ለሰነ, መረገ		machine	
+V371	ነከረ		machine	
+V372	ዘፈዘፈ		machine	
+V373	ጨመቀ		machine	
+V374	እሳት አነደደ, አቀጣጠለ		machine	
+V375	እሳት አጠፋ		machine	
+V376	እሳት አራገበ		machine	
+V377	ጨመረ, ደመረ		machine	
+V378	ቀነሰ		machine	
+V379	አነሰ, ተኮማተረ	ራሱ ያነሰ፤ ሌላን ነገር ማሳነስ አይደለም	machine	ቀነሰ, አሳነሰ
+V380	አገናኘ, አያያዘ		machine	
+V381	አከማቸ		machine	
+V381b	ከመረ		machine	
+V382	ሰበሰበ		machine	
+V383	ከፋፈለ, አካፈለ		machine	
+V384	ሰዎችን በተነ		machine	
+V385	ከበበ		machine	
+V386	ዘፈነ, ዘመረ		machine	
+V387	አንጎራጎረ		machine	
+V388	አፏጨ		machine	
+V389	ጨፈረ		machine	
+V390	ተጫወተ		machine	
+V391	ክራር ደረደረ, መሰንቆ መታ		machine	
+V392	ዋሽንት ነፋ		machine	
+V393	በዕቃ ለወጠ		machine	
+V394	ገዛ		machine	
+V395	ሸጠ		machine	
+V396	ተደራደረ, በዋጋ ተከራከረ		machine	
+V397	ከፈለ		machine	
+V397b	ክፍያ		machine	
+V398	ቀጠረ, ተከራየ		machine	
+V399	ለመነ		machine	
+V400	ወረሰ		machine	
+V401	ሰረቀ		machine	
+V402	አሰበ		machine	
+V403	አመነ		machine	
+V404	አወቀ		machine	
+V405	ተጠራጠረ		machine	
+V406	ተስፋ አደረገ		machine	
+V407	ተማረ		machine	
+V408	አስተማረ		machine	
+V409	አሳየ		machine	
+V410	አስታወሰ		machine	
+V411	ረሳ		machine	
+V412	ወሰነ		machine	
+V413	መረጠ		machine	
+V414	አመነታ		machine	
+V415	ፈለገ		machine	
+V416	አስፈለገው	ብዙውን ጊዜ 'ያስፈልገዋል' ተብሎ ይነገራል	machine	
+V417	ሞከረ		machine	
+V418	ተሳካለት		machine	
+V419	ከሸፈ, አልተሳካለትም		machine	
+V420	አስመሰለ		machine	
+V421	ገመገመ		machine	
+V422	ችግር ፈታ		machine	
+V423	ቆጠረ		machine	
+V424	ደረደረ, አስተካከለ		machine	
+V425	ሳቀ		machine	
+V426	ፈገግ አለ		machine	
+V427	ተደሰተ		machine	
+V428	አለቀሰ		machine	
+V429	ለሟች አለቀሰ, አዘነ		machine	
+V429b	ለቅሶ, ሐዘን		machine	
+V430	እልል አለ		machine	
+V431	አስፈራ		machine	
+V432	አስደነገጠ		machine	
+V433	አባበለ		machine	
+V433b	ተረጋጋ		machine	
+V434	ወደደ		machine	
+V435	ጠላ		machine	
+V436	ናቀ		machine	
+V437	አደነቀ		machine	
+V438	አከበረ		machine	
+V438b	ፈሪሃ እግዚአብሔር, አክብሮት		machine	
+V439	ክብር ሰጠ, አከበረ		machine	
+V440	ተሰቃየ		machine	
+V441	ታገለ		machine	
+V442	አለ		machine	
+V443	ተናገረ		machine	
+V443b	ንግግር		machine	
+V444	ነገረ		machine	
+V445	ሹክ አለ, አንሾካሾከ		machine	
+V446	ጮኸ		machine	
+V447	ተጨዋወተ, አወጋ		machine	
+V448	አጉተመተመ		machine	
+V449	ተንተባተበ		machine	
+V450	ሰላምታ ሰጠ, ሰላም አለ		machine	
+V451	ተሰናበተ		machine	
+V452	ጠራ		machine	
+V453	አስታወቀ, አወጀ		machine	
+V454	አስረዳ, አብራራ		machine	
+V455	መከረ		machine	
+V456	አማ		machine	
+V457	ጠየቀ		machine	
+V457b	ጥያቄ		machine	
+V458	ተማጸነ		machine	
+V458b	ልመና, ጥያቄ		machine	
+V459	መለሰ		machine	
+V460	አመሰገነ		machine	
+V461	ማለ		machine	
+V462	ሰደበ		machine	
+V462b	ስድብ		machine	
+V463	ስም አጠፋ		machine	
+V464	አስፈራራ		machine	
+V465	ተከራከረ		machine	
+V465b	ክርክር, ጭቅጭቅ		machine	
+V466	አጉረመረመ		machine	
+V467	ተቃረነ, ተቃወመ		machine	
+V468	ከሰሰ		machine	
+V469	ካደ		machine	
+V470	ጥፋቱን አመነ		machine	
+V471	ተስማማ		machine	
+V471b	ስምምነት		machine	
+V472	አሳመነ		machine	
+V473	አወደሰ, አሞገሰ		machine	
+V473b	ውዳሴ, ሙገሳ		machine	
+V474	እንኳን ደስ አለህ አለ		machine	
+V475	ተኩራራ		machine	
+V476	ዋሸ		machine	
+V477	ተገናኘ		machine	
+V477b	ስብሰባ, መገናኘት		machine	
+V478	አብሮ ሄደ, አጀበ		machine	
+V479	አብሮ ሆነ		machine	
+V480	ተሰበሰበ		machine	
+V481	ጋበዘ		machine	
+V482	ተወ, ጣለ		machine	
+V483	ራቀ		machine	
+V484	አባረረ		machine	
+V485	መሰለ		machine	
+V486	አስመስሎ አደረገ, ኮረጀ		machine	
+V487	ተገቢ ሆነ, ተስማማ		machine	
+V488	እጅ አውለበለበ		machine	
+V489	በጣት ጠቆመ		machine	
+V490	አቀፈ		machine	
+V491	ደባበሰ		machine	
+V492	ሳመ		machine	
+V493	ግብረ ሥጋ ግንኙነት አደረገ		machine	
+V494	ተራከበ	ለእንስሳት ብቻ	machine	
+V495	አጠባ		machine	
+V496	ኮረኮረ		machine	
+V497	ቂጡን መታ		machine	
+V498	ረዳ		machine	
+V499	ከለለ, ጠበቀ		machine	
+V500	ተንከባከበ		machine	
+V501	አሳደገ		machine	
+V502	አስተዳደረ, ገዛ		machine	
+V503	አዘዘ		machine	
+V503b	ትእዛዝ		machine	
+V504	ላከ		machine	
+V505	አገለገለ		machine	
+V506	መራ		machine	
+V507	ተከተለ		machine	
+V508	ታዘዘ		machine	
+V509	አስደሰተ		machine	
+V510	አበሳጨ		machine	
+V511	አታለለ		machine	
+V512	ተጣላ, ተቃቃረ		machine	ተጨቃጨቀ, ተጣላ
+V513	ተደባደበ, ተዋጋ		machine	
+V514	ተበቀለ		machine	
+V515	አማለደ		machine	
+V516	ተቻቻለ, ተደራድሮ ተስማማ		machine	
+V517	ዝም አሰኘ, አረጋጋ		machine	
+V518	ቀጣ		machine	
+V518b	ቅጣት		machine	
+V519	አሸነፈ		machine	
+V520	ተሸነፈ		machine	
+V521	ዘረፈ		machine	
+V522	ሰለለ		machine	
+V523	አስገድዶ ደፈረ		machine	
+V524	ጸለየ		machine	
+V525	ትንቢት ተናገረ		machine	
+V526	አስማት አደረገ, ደገመ		machine	
+V527	ረገመ		machine	
+V528	መረዘ		machine	
+V529	በክታብ ጠበቀ, ክታብ አሰረ		machine	
+V530	ጋኔን አስወጣ		machine	
+V531	መሥዋዕት አቀረበ, ሠዋ		machine	
+V532	ለመናፍስት መጠጥ አፈሰሰ		machine	
+V533	ቀበረ		machine	
+V534	አጽናና, ለቅሶ ደረሰ		machine	
+V535	አገባ		machine	
+V535b	ትዳር, ጋብቻ		machine	
+V536	ታጨ		machine	
+V537	ተፋታ		machine	
+V538	አገደ, እንቅፋት ሆነ		machine	
+V539	አስቀረ, ተከላከለ		machine	
+V540	ከለከለ		machine	
+V541	ፈቀደ		machine	
+V542	ታቀበ, ተቆጠበ		machine	
+V543	ጀመረ		machine	
+V543b	መጀመሪያ		machine	
+V544	ቀጠለ		machine	
+V545	ቆመ, አቆመ		machine	
+V546	ቆየ		machine	
+V547	ጠበቀ		machine	
+V548	ጊዜ አሳለፈ		machine	
+V549	ጨረሰ		machine	
+V549b	መጨረሻ, ፍጻሜ		machine	
+CENG	እንግሊዛዊ		machine	
+CENGf	እንግሊዛዊት		machine	
+CENGm	እንግሊዛዊ ወንድ		machine	
+CFRA	ፈረንሳዊ		machine	
+CFRAf	ፈረንሳዊት		machine	
+CFRAm	ፈረንሳዊ ወንድ		machine	
+CPOR	ፖርቱጋላዊ		machine	
+CPORf	ፖርቱጋላዊት		machine	
+CPORm	ፖርቱጋላዊ ወንድ		machine	
+CDEU	ጀርመናዊ		machine	
+CDEUf	ጀርመናዊት		machine	
+CDEUm	ጀርመናዊ ወንድ		machine	
+CITA	ጣሊያናዊ		machine	
+CITAf	ጣሊያናዊት		machine	
+CITAm	ጣሊያናዊ ወንድ		machine	
+CSPA	ስፔናዊ		machine	
+CSPAf	ስፔናዊት		machine	
+CSPAm	ስፔናዊ ወንድ		machine	
+CNLD	ሆላንዳዊ		machine	
+CNLDf	ሆላንዳዊት		machine	
+CNLDm	ሆላንዳዊ ወንድ		machine	
+CTUR	ቱርካዊ		machine	
+CTURf	ቱርካዊት		machine	
+CTURm	ቱርካዊ ወንድ		machine	
+CCMN	ቻይናዊ		machine	
+CCMNf	ቻይናዊት		machine	
+CCMNm	ቻይናዊ ወንድ		machine	
+CGUJ	ጉጃራቲ የሚባለው ብሔረሰብ ሰው	የጉጃራቲ ቋንቋ ተናጋሪ ሕንዳዊ	machine	
+CGUJf	ጉጃራቲ የሚባለው ብሔረሰብ ሴት	የጉጃራቲ ቋንቋ ተናጋሪ ሕንዳዊ	machine	
+CGUJm	ጉጃራቲ የሚባለው ብሔረሰብ ወንድ	የጉጃራቲ ቋንቋ ተናጋሪ ሕንዳዊ	machine	
+CARA	አረብ		machine	
+CARAf	አረብ ሴት		machine	
+CARAm	አረብ ወንድ		machine	
+CKAB	ካቢል የሚባለው ብሔረሰብ ሰው	በአልጄሪያ (ካቢሊያ) የሚኖር የአማዚግ ሕዝብ፤ «በርበር» የሚለው የውጭ ስም ሲሆን አንዳንዶች እንደ ንቀት ይቆጥሩታል።	machine	
+CKABf	ካቢል የሚባለው ብሔረሰብ ሴት	በአልጄሪያ (ካቢሊያ) የሚኖር የአማዚግ ሕዝብ፤ «በርበር» የሚለው የውጭ ስም ሲሆን አንዳንዶች እንደ ንቀት ይቆጥሩታል።	machine	
+CKABm	ካቢል የሚባለው ብሔረሰብ ወንድ	በአልጄሪያ (ካቢሊያ) የሚኖር የአማዚግ ሕዝብ፤ «በርበር» የሚለው የውጭ ስም ሲሆን አንዳንዶች እንደ ንቀት ይቆጥሩታል።	machine	
+CTZM	ማዕከላዊ አትላስ አማዚግ የሚባለው ብሔረሰብ ሰው	በሞሮኮ የአትላስ ተራሮች የሚኖር የአማዚግ ሕዝብ፤ «በርበር» የሚለው የውጭ ስም ሲሆን አንዳንዶች እንደ ንቀት ይቆጥሩታል።	machine	
+CTZMf	ማዕከላዊ አትላስ አማዚግ የሚባለው ብሔረሰብ ሴት	በሞሮኮ የአትላስ ተራሮች የሚኖር የአማዚግ ሕዝብ፤ «በርበር» የሚለው የውጭ ስም ሲሆን አንዳንዶች እንደ ንቀት ይቆጥሩታል።	machine	
+CTZMm	ማዕከላዊ አትላስ አማዚግ የሚባለው ብሔረሰብ ወንድ	በሞሮኮ የአትላስ ተራሮች የሚኖር የአማዚግ ሕዝብ፤ «በርበር» የሚለው የውጭ ስም ሲሆን አንዳንዶች እንደ ንቀት ይቆጥሩታል።	machine	
+CSHI	ሺልሃ የሚባለው ብሔረሰብ ሰው	በደቡብ ሞሮኮ የሚኖር የአማዚግ ሕዝብ፤ «በርበር» የሚለው የውጭ ስም ሲሆን አንዳንዶች እንደ ንቀት ይቆጥሩታል።	machine	
+CSHIf	ሺልሃ የሚባለው ብሔረሰብ ሴት	በደቡብ ሞሮኮ የሚኖር የአማዚግ ሕዝብ፤ «በርበር» የሚለው የውጭ ስም ሲሆን አንዳንዶች እንደ ንቀት ይቆጥሩታል።	machine	
+CSHIm	ሺልሃ የሚባለው ብሔረሰብ ወንድ	በደቡብ ሞሮኮ የሚኖር የአማዚግ ሕዝብ፤ «በርበር» የሚለው የውጭ ስም ሲሆን አንዳንዶች እንደ ንቀት ይቆጥሩታል።	machine	
+CTMH	ኬል ታማሸቅ የሚባለው ብሔረሰብ ሰው, ቱዋሬግ	ራሳቸውን ኬል ታማሸቅ (ኢሙሓግ) ብለው ይጠራሉ፤ «ቱዋሬግ» የሚለው የውጭ ስም ሲሆን አንዳንዶች አይወዱትም።	machine	
+CTMHf	ኬል ታማሸቅ የሚባለው ብሔረሰብ ሴት, ቱዋሬግ ሴት	ራሳቸውን ኬል ታማሸቅ (ኢሙሓግ) ብለው ይጠራሉ፤ «ቱዋሬግ» የሚለው የውጭ ስም ሲሆን አንዳንዶች አይወዱትም።	machine	
+CTMHm	ኬል ታማሸቅ የሚባለው ብሔረሰብ ወንድ, ቱዋሬግ ወንድ	ራሳቸውን ኬል ታማሸቅ (ኢሙሓግ) ብለው ይጠራሉ፤ «ቱዋሬግ» የሚለው የውጭ ስም ሲሆን አንዳንዶች አይወዱትም።	machine	
+CBEJ	ቤጃ የሚባለው ብሔረሰብ ሰው		machine	
+CBEJf	ቤጃ የሚባለው ብሔረሰብ ሴት		machine	
+CBEJm	ቤጃ የሚባለው ብሔረሰብ ወንድ		machine	
+CFIA	ኑቢያዊ		machine	
+CFIAf	ኑቢያዊት		machine	
+CFIAm	ኑቢያዊ ወንድ		machine	
+CFVR	ፉር የሚባለው ብሔረሰብ ሰው	በዳርፉር (ሱዳን) የሚኖር ሕዝብ	machine	
+CFVRf	ፉር የሚባለው ብሔረሰብ ሴት	በዳርፉር (ሱዳን) የሚኖር ሕዝብ	machine	
+CFVRm	ፉር የሚባለው ብሔረሰብ ወንድ	በዳርፉር (ሱዳን) የሚኖር ሕዝብ	machine	
+CZAG	ዛጋዋ የሚባለው ብሔረሰብ ሰው		machine	
+CZAGf	ዛጋዋ የሚባለው ብሔረሰብ ሴት		machine	
+CZAGm	ዛጋዋ የሚባለው ብሔረሰብ ወንድ		machine	
+CMLS	ማሳሊት የሚባለው ብሔረሰብ ሰው		machine	
+CMLSf	ማሳሊት የሚባለው ብሔረሰብ ሴት		machine	
+CMLSm	ማሳሊት የሚባለው ብሔረሰብ ወንድ		machine	
+CDIN	ዲንካ		machine	
+CDINf	ዲንካ ሴት		machine	
+CDINm	ዲንካ ወንድ		machine	
+CNUS	ኑዌር	ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት። ባሪያ የሚለውም ለጠቆር ያሉ ሕዝቦች የሚሰጥ የስድብ ቃል ነው።	machine	
+CNUSf	ኑዌር ሴት	ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት። ባሪያ የሚለውም ለጠቆር ያሉ ሕዝቦች የሚሰጥ የስድብ ቃል ነው።	machine	
+CNUSm	ኑዌር ወንድ	ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት። ባሪያ የሚለውም ለጠቆር ያሉ ሕዝቦች የሚሰጥ የስድብ ቃል ነው።	machine	
+CSHK	ሺሉክ የሚባለው ብሔረሰብ ሰው		machine	
+CSHKf	ሺሉክ የሚባለው ብሔረሰብ ሴት		machine	
+CSHKm	ሺሉክ የሚባለው ብሔረሰብ ወንድ		machine	
+CANU	አኙዋክ	ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት። ባሪያ የሚለውም ለጠቆር ያሉ ሕዝቦች የሚሰጥ የስድብ ቃል ነው።	machine	
+CANUf	አኙዋክ ሴት	ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት። ባሪያ የሚለውም ለጠቆር ያሉ ሕዝቦች የሚሰጥ የስድብ ቃል ነው።	machine	
+CANUm	አኙዋክ ወንድ	ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት። ባሪያ የሚለውም ለጠቆር ያሉ ሕዝቦች የሚሰጥ የስድብ ቃል ነው።	machine	
+CBFA	ባሪ የሚባለው ብሔረሰብ ሰው	ባሪ የደቡብ ሱዳን ሕዝብ ስም ነው፤ ከ«ባሪያ» ጋር አያምታቱ።	machine	
+CBFAf	ባሪ የሚባለው ብሔረሰብ ሴት	ባሪ የደቡብ ሱዳን ሕዝብ ስም ነው፤ ከ«ባሪያ» ጋር አያምታቱ።	machine	
+CBFAm	ባሪ የሚባለው ብሔረሰብ ወንድ	ባሪ የደቡብ ሱዳን ሕዝብ ስም ነው፤ ከ«ባሪያ» ጋር አያምታቱ።	machine	
+CZNE	ዛንዴ የሚባለው ብሔረሰብ ሰው		machine	
+CZNEf	ዛንዴ የሚባለው ብሔረሰብ ሴት		machine	
+CZNEm	ዛንዴ የሚባለው ብሔረሰብ ወንድ		machine	
+CACH	አቾሊ የሚባለው ብሔረሰብ ሰው		machine	
+CACHf	አቾሊ የሚባለው ብሔረሰብ ሴት		machine	
+CACHm	አቾሊ የሚባለው ብሔረሰብ ወንድ		machine	
+CLAJ	ላንጎ (ዩጋንዳ) የሚባለው ብሔረሰብ ሰው		machine	
+CLAJf	ላንጎ (ዩጋንዳ) የሚባለው ብሔረሰብ ሴት		machine	
+CLAJm	ላንጎ (ዩጋንዳ) የሚባለው ብሔረሰብ ወንድ		machine	
+CTEO	ቴሶ የሚባለው ብሔረሰብ ሰው		machine	
+CTEOf	ቴሶ የሚባለው ብሔረሰብ ሴት		machine	
+CTEOm	ቴሶ የሚባለው ብሔረሰብ ወንድ		machine	
+CLUO	ሉዎ (ኬንያ) የሚባለው ብሔረሰብ ሰው		machine	
+CLUOf	ሉዎ (ኬንያ) የሚባለው ብሔረሰብ ሴት		machine	
+CLUOm	ሉዎ (ኬንያ) የሚባለው ብሔረሰብ ወንድ		machine	
+CAMH	አማራ		machine	
+CAMHf	አማራ ሴት		machine	
+CAMHm	አማራ ወንድ		machine	
+CORM	ኦሮሞ	ጋላ የሚለው የቆየ ስም የስድብ ቃል ነው፤ አይጠቀሙበት።	machine	
+CORMf	ኦሮሞ ሴት	ጋላ የሚለው የቆየ ስም የስድብ ቃል ነው፤ አይጠቀሙበት።	machine	
+CORMm	ኦሮሞ ወንድ	ጋላ የሚለው የቆየ ስም የስድብ ቃል ነው፤ አይጠቀሙበት።	machine	
+CTIR	ትግራዋይ	ትግሬ የሚለው የቆየ ስም እንደ ንቀት ቃል ይቆጠራል፤ አይጠቀሙበት። ከትግረ ሕዝብ ጋር አያምታቱ።	machine	
+CTIRf	ትግራዋይት	ትግሬ የሚለው የቆየ ስም እንደ ንቀት ቃል ይቆጠራል፤ አይጠቀሙበት። ከትግረ ሕዝብ ጋር አያምታቱ።	machine	
+CTIRm	ትግራዋይ ወንድ	ትግሬ የሚለው የቆየ ስም እንደ ንቀት ቃል ይቆጠራል፤ አይጠቀሙበት። ከትግረ ሕዝብ ጋር አያምታቱ።	machine	
+CTIG	ትግረ የሚባለው ብሔረሰብ ሰው	በኤርትራና በሱዳን የሚኖር የትግረ ቋንቋ ተናጋሪ ሕዝብ፤ ከትግራዋይ የተለየ ነው።	machine	
+CTIGf	ትግረ የሚባለው ብሔረሰብ ሴት	በኤርትራና በሱዳን የሚኖር የትግረ ቋንቋ ተናጋሪ ሕዝብ፤ ከትግራዋይ የተለየ ነው።	machine	
+CTIGm	ትግረ የሚባለው ብሔረሰብ ወንድ	በኤርትራና በሱዳን የሚኖር የትግረ ቋንቋ ተናጋሪ ሕዝብ፤ ከትግራዋይ የተለየ ነው።	machine	
+CSOM	ሶማሌ		machine	
+CSOMf	ሶማሌ ሴት		machine	
+CSOMm	ሶማሌ ወንድ		machine	
+CAAR	አፋር		machine	
+CAARf	አፋር ሴት		machine	
+CAARm	አፋር ወንድ		machine	
+CSID	ሲዳማ		machine	
+CSIDf	ሲዳማ ሴት		machine	
+CSIDm	ሲዳማ ወንድ		machine	
+CWAL	ወላይታ	ወላሞ የሚለው የቆየ ስም እንደ ንቀት ቃል ይቆጠራል፤ አይጠቀሙበት።	machine	
+CWALf	ወላይታ ሴት	ወላሞ የሚለው የቆየ ስም እንደ ንቀት ቃል ይቆጠራል፤ አይጠቀሙበት።	machine	
+CWALm	ወላይታ ወንድ	ወላሞ የሚለው የቆየ ስም እንደ ንቀት ቃል ይቆጠራል፤ አይጠቀሙበት።	machine	
+CHDY	ሀዲያ		machine	
+CHDYf	ሀዲያ ሴት		machine	
+CHDYm	ሀዲያ ወንድ		machine	
+CSGW	ጉራጌ		machine	
+CSGWf	ጉራጌ ሴት		machine	
+CSGWm	ጉራጌ ወንድ		machine	
+CGUK	ጉሙዝ	ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት። ባሪያ የሚለውም ለጠቆር ያሉ ሕዝቦች የሚሰጥ የስድብ ቃል ነው።	machine	
+CGUKf	ጉሙዝ ሴት	ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት። ባሪያ የሚለውም ለጠቆር ያሉ ሕዝቦች የሚሰጥ የስድብ ቃል ነው።	machine	
+CGUKm	ጉሙዝ ወንድ	ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት። ባሪያ የሚለውም ለጠቆር ያሉ ሕዝቦች የሚሰጥ የስድብ ቃል ነው።	machine	
+CWTI	በርታ	ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት። ባሪያ የሚለውም ለጠቆር ያሉ ሕዝቦች የሚሰጥ የስድብ ቃል ነው።	machine	
+CWTIf	በርታ ሴት	ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት። ባሪያ የሚለውም ለጠቆር ያሉ ሕዝቦች የሚሰጥ የስድብ ቃል ነው።	machine	
+CWTIm	በርታ ወንድ	ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት። ባሪያ የሚለውም ለጠቆር ያሉ ሕዝቦች የሚሰጥ የስድብ ቃል ነው።	machine	
+CUDU	ኡዱክ የሚባለው ብሔረሰብ ሰው	ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት።	machine	
+CUDUf	ኡዱክ የሚባለው ብሔረሰብ ሴት	ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት።	machine	
+CUDUm	ኡዱክ የሚባለው ብሔረሰብ ወንድ	ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት።	machine	
+CMPE	መጀንግ የሚባለው ብሔረሰብ ሰው	መዠንገር የሚለው የተለመደው የውጭ ስም እንደ ንቀት ቃል ይቆጠራል። ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት።	machine	
+CMPEf	መጀንግ የሚባለው ብሔረሰብ ሴት	መዠንገር የሚለው የተለመደው የውጭ ስም እንደ ንቀት ቃል ይቆጠራል። ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት።	machine	
+CMPEm	መጀንግ የሚባለው ብሔረሰብ ወንድ	መዠንገር የሚለው የተለመደው የውጭ ስም እንደ ንቀት ቃል ይቆጠራል። ሻንቅላ የሚለው ቃል ለምዕራብ ኢትዮጵያ (ጋምቤላ፣ ቤኒሻንጉል) ሕዝቦች የሚሰጥ የስድብ ቃል ነው፤ አይጠቀሙበት።	machine	
+CSWA	ስዋሂሊ የሚባለው ብሔረሰብ ሰው	የምሥራቅ አፍሪካ የባሕር ዳርቻ ስዋሂሊ ሕዝብ	machine	
+CSWAf	ስዋሂሊ የሚባለው ብሔረሰብ ሴት	የምሥራቅ አፍሪካ የባሕር ዳርቻ ስዋሂሊ ሕዝብ	machine	
+CSWAm	ስዋሂሊ የሚባለው ብሔረሰብ ወንድ	የምሥራቅ አፍሪካ የባሕር ዳርቻ ስዋሂሊ ሕዝብ	machine	
+CKIK	ኪኩዩ የሚባለው ብሔረሰብ ሰው		machine	
+CKIKf	ኪኩዩ የሚባለው ብሔረሰብ ሴት		machine	
+CKIKm	ኪኩዩ የሚባለው ብሔረሰብ ወንድ		machine	
+CKAM	ካምባ (ኬንያ) የሚባለው ብሔረሰብ ሰው		machine	
+CKAMf	ካምባ (ኬንያ) የሚባለው ብሔረሰብ ሴት		machine	
+CKAMm	ካምባ (ኬንያ) የሚባለው ብሔረሰብ ወንድ		machine	
+CGUZ	ጉሲ የሚባለው ብሔረሰብ ሰው		machine	
+CGUZf	ጉሲ የሚባለው ብሔረሰብ ሴት		machine	
+CGUZm	ጉሲ የሚባለው ብሔረሰብ ወንድ		machine	
+CMAS	የማሳይ ሰው		machine	
+CMASf	የማሳይ ሴት		machine	
+CMASm	የማሳይ ወንድ		machine	
+CKLN	ካለንጂን የሚባለው ብሔረሰብ ሰው		machine	
+CKLNf	ካለንጂን የሚባለው ብሔረሰብ ሴት		machine	
+CKLNm	ካለንጂን የሚባለው ብሔረሰብ ወንድ		machine	
+CLUG	ባጋንዳ የሚባለው ብሔረሰብ ሰው		machine	
+CLUGf	ባጋንዳ የሚባለው ብሔረሰብ ሴት		machine	
+CLUGm	ባጋንዳ የሚባለው ብሔረሰብ ወንድ		machine	
+CNYN	ባንያንኮሌ የሚባለው ብሔረሰብ ሰው		machine	
+CNYNf	ባንያንኮሌ የሚባለው ብሔረሰብ ሴት		machine	
+CNYNm	ባንያንኮሌ የሚባለው ብሔረሰብ ወንድ		machine	
+CKIN	ባንያሩዋንዳ የሚባለው ብሔረሰብ ሰው	ኪንያሩዋንዳ ተናጋሪ ሕዝብ፤ በሩዋንዳ፣ በኮንጎና በዩጋንዳ ይኖራሉ። የሩዋንዳ ዜጋ ብቻ ማለት አይደለም።	machine	
+CKINf	ባንያሩዋንዳ የሚባለው ብሔረሰብ ሴት	ኪንያሩዋንዳ ተናጋሪ ሕዝብ፤ በሩዋንዳ፣ በኮንጎና በዩጋንዳ ይኖራሉ። የሩዋንዳ ዜጋ ብቻ ማለት አይደለም።	machine	
+CKINm	ባንያሩዋንዳ የሚባለው ብሔረሰብ ወንድ	ኪንያሩዋንዳ ተናጋሪ ሕዝብ፤ በሩዋንዳ፣ በኮንጎና በዩጋንዳ ይኖራሉ። የሩዋንዳ ዜጋ ብቻ ማለት አይደለም።	machine	
+CRUN	ባሩንዲ የሚባለው ብሔረሰብ ሰው	ኪሩንዲ ተናጋሪ ሕዝብ፤ የቡሩንዲ ዜጋ ብቻ ማለት አይደለም።	machine	
+CRUNf	ባሩንዲ የሚባለው ብሔረሰብ ሴት	ኪሩንዲ ተናጋሪ ሕዝብ፤ የቡሩንዲ ዜጋ ብቻ ማለት አይደለም።	machine	
+CRUNm	ባሩንዲ የሚባለው ብሔረሰብ ወንድ	ኪሩንዲ ተናጋሪ ሕዝብ፤ የቡሩንዲ ዜጋ ብቻ ማለት አይደለም።	machine	
+CSUK	ሱኩማ የሚባለው ብሔረሰብ ሰው		machine	
+CSUKf	ሱኩማ የሚባለው ብሔረሰብ ሴት		machine	
+CSUKm	ሱኩማ የሚባለው ብሔረሰብ ወንድ		machine	
+CNYM	ንያምዌዚ የሚባለው ብሔረሰብ ሰው		machine	
+CNYMf	ንያምዌዚ የሚባለው ብሔረሰብ ሴት		machine	
+CNYMm	ንያምዌዚ የሚባለው ብሔረሰብ ወንድ		machine	
+CHAU	የሃውሳ ሰው		machine	
+CHAUf	የሃውሳ ሴት		machine	
+CHAUm	የሃውሳ ወንድ		machine	
+CYOR	የዮሩባ ሰው		machine	
+CYORf	የዮሩባ ሴት		machine	
+CYORm	የዮሩባ ወንድ		machine	
+CIBO	የኢግቦ ሰው		machine	
+CIBOf	የኢግቦ ሴት		machine	
+CIBOm	የኢግቦ ወንድ		machine	
+CEFI	ኤፊክ የሚባለው ብሔረሰብ ሰው		machine	
+CEFIf	ኤፊክ የሚባለው ብሔረሰብ ሴት		machine	
+CEFIm	ኤፊክ የሚባለው ብሔረሰብ ወንድ		machine	
+CTIV	ቲቭ የሚባለው ብሔረሰብ ሰው		machine	
+CTIVf	ቲቭ የሚባለው ብሔረሰብ ሴት		machine	
+CTIVm	ቲቭ የሚባለው ብሔረሰብ ወንድ		machine	
+CNUP	ኑፔ የሚባለው ብሔረሰብ ሰው		machine	
+CNUPf	ኑፔ የሚባለው ብሔረሰብ ሴት		machine	
+CNUPm	ኑፔ የሚባለው ብሔረሰብ ወንድ		machine	
+CBIN	ኤዶ የሚባለው ብሔረሰብ ሰው		machine	
+CBINf	ኤዶ የሚባለው ብሔረሰብ ሴት		machine	
+CBINm	ኤዶ የሚባለው ብሔረሰብ ወንድ		machine	
+CIJC	ኢጆ የሚባለው ብሔረሰብ ሰው		machine	
+CIJCf	ኢጆ የሚባለው ብሔረሰብ ሴት		machine	
+CIJCm	ኢጆ የሚባለው ብሔረሰብ ወንድ		machine	
+CAKA	አካን የሚባለው ብሔረሰብ ሰው		machine	
+CAKAf	አካን የሚባለው ብሔረሰብ ሴት		machine	
+CAKAm	አካን የሚባለው ብሔረሰብ ወንድ		machine	
+CEWE	ኤዌ የሚባለው ብሔረሰብ ሰው		machine	
+CEWEf	ኤዌ የሚባለው ብሔረሰብ ሴት		machine	
+CEWEm	ኤዌ የሚባለው ብሔረሰብ ወንድ		machine	
+CGAA	ጋ የሚባለው ብሔረሰብ ሰው	በጋና የሚኖር ሕዝብ	machine	
+CGAAf	ጋ የሚባለው ብሔረሰብ ሴት	በጋና የሚኖር ሕዝብ	machine	
+CGAAm	ጋ የሚባለው ብሔረሰብ ወንድ	በጋና የሚኖር ሕዝብ	machine	
+CDAG	ዳጎምባ የሚባለው ብሔረሰብ ሰው		machine	
+CDAGf	ዳጎምባ የሚባለው ብሔረሰብ ሴት		machine	
+CDAGm	ዳጎምባ የሚባለው ብሔረሰብ ወንድ		machine	
+CMOS	ሞሲ የሚባለው ብሔረሰብ ሰው		machine	
+CMOSf	ሞሲ የሚባለው ብሔረሰብ ሴት		machine	
+CMOSm	ሞሲ የሚባለው ብሔረሰብ ወንድ		machine	
+CDYU	ጁላ የሚባለው ብሔረሰብ ሰው	በቡርኪና ፋሶና በኮት ዲቯር የሚኖር የማንዴ ሕዝብ፤ ከጆላ የተለየ ነው።	machine	
+CDYUf	ጁላ የሚባለው ብሔረሰብ ሴት	በቡርኪና ፋሶና በኮት ዲቯር የሚኖር የማንዴ ሕዝብ፤ ከጆላ የተለየ ነው።	machine	
+CDYUm	ጁላ የሚባለው ብሔረሰብ ወንድ	በቡርኪና ፋሶና በኮት ዲቯር የሚኖር የማንዴ ሕዝብ፤ ከጆላ የተለየ ነው።	machine	
+CBAM	ባምባራ የሚባለው ብሔረሰብ ሰው		machine	
+CBAMf	ባምባራ የሚባለው ብሔረሰብ ሴት		machine	
+CBAMm	ባምባራ የሚባለው ብሔረሰብ ወንድ		machine	
+CMNK	ማንዲንካ የሚባለው ብሔረሰብ ሰው		machine	
+CMNKf	ማንዲንካ የሚባለው ብሔረሰብ ሴት		machine	
+CMNKm	ማንዲንካ የሚባለው ብሔረሰብ ወንድ		machine	
+CSNK	ሶኒንኬ የሚባለው ብሔረሰብ ሰው		machine	
+CSNKf	ሶኒንኬ የሚባለው ብሔረሰብ ሴት		machine	
+CSNKm	ሶኒንኬ የሚባለው ብሔረሰብ ወንድ		machine	
+CWOL	ዎሎፍ የሚባለው ብሔረሰብ ሰው		machine	
+CWOLf	ዎሎፍ የሚባለው ብሔረሰብ ሴት		machine	
+CWOLm	ዎሎፍ የሚባለው ብሔረሰብ ወንድ		machine	
+CSRR	ሴሬር የሚባለው ብሔረሰብ ሰው		machine	
+CSRRf	ሴሬር የሚባለው ብሔረሰብ ሴት		machine	
+CSRRm	ሴሬር የሚባለው ብሔረሰብ ወንድ		machine	
+CDYO	ጆላ የሚባለው ብሔረሰብ ሰው	በሴኔጋል (ካዛማንስ) የሚኖር ሕዝብ፤ ከጁላ የተለየ ነው።	machine	
+CDYOf	ጆላ የሚባለው ብሔረሰብ ሴት	በሴኔጋል (ካዛማንስ) የሚኖር ሕዝብ፤ ከጁላ የተለየ ነው።	machine	
+CDYOm	ጆላ የሚባለው ብሔረሰብ ወንድ	በሴኔጋል (ካዛማንስ) የሚኖር ሕዝብ፤ ከጁላ የተለየ ነው።	machine	
+CTEM	ቴምኔ የሚባለው ብሔረሰብ ሰው		machine	
+CTEMf	ቴምኔ የሚባለው ብሔረሰብ ሴት		machine	
+CTEMm	ቴምኔ የሚባለው ብሔረሰብ ወንድ		machine	
+CMEN	ሜንዴ የሚባለው ብሔረሰብ ሰው		machine	
+CMENf	ሜንዴ የሚባለው ብሔረሰብ ሴት		machine	
+CMENm	ሜንዴ የሚባለው ብሔረሰብ ወንድ		machine	
+CKRI	ክሪዮ የሚባለው ብሔረሰብ ሰው	በሴራሊዮን የሚኖር ሕዝብ	machine	
+CKRIf	ክሪዮ የሚባለው ብሔረሰብ ሴት	በሴራሊዮን የሚኖር ሕዝብ	machine	
+CKRIm	ክሪዮ የሚባለው ብሔረሰብ ወንድ	በሴራሊዮን የሚኖር ሕዝብ	machine	
+CKPE	ክፔሌ የሚባለው ብሔረሰብ ሰው		machine	
+CKPEf	ክፔሌ የሚባለው ብሔረሰብ ሴት		machine	
+CKPEm	ክፔሌ የሚባለው ብሔረሰብ ወንድ		machine	
+CBCI	ባውሌ የሚባለው ብሔረሰብ ሰው		machine	
+CBCIf	ባውሌ የሚባለው ብሔረሰብ ሴት		machine	
+CBCIm	ባውሌ የሚባለው ብሔረሰብ ወንድ		machine	
+CFON	ፎን የሚባለው ብሔረሰብ ሰው		machine	
+CFONf	ፎን የሚባለው ብሔረሰብ ሴት		machine	
+CFONm	ፎን የሚባለው ብሔረሰብ ወንድ		machine	
+CDJE	ዛርማ የሚባለው ብሔረሰብ ሰው		machine	
+CDJEf	ዛርማ የሚባለው ብሔረሰብ ሴት		machine	
+CDJEm	ዛርማ የሚባለው ብሔረሰብ ወንድ		machine	
+CSES	ሶንጋይ የሚባለው ብሔረሰብ ሰው		machine	
+CSESf	ሶንጋይ የሚባለው ብሔረሰብ ሴት		machine	
+CSESm	ሶንጋይ የሚባለው ብሔረሰብ ወንድ		machine	
+CKBP	ካብዬ የሚባለው ብሔረሰብ ሰው		machine	
+CKBPf	ካብዬ የሚባለው ብሔረሰብ ሴት		machine	
+CKBPm	ካብዬ የሚባለው ብሔረሰብ ወንድ		machine	
+CSUS	ሱሱ የሚባለው ብሔረሰብ ሰው		machine	
+CSUSf	ሱሱ የሚባለው ብሔረሰብ ሴት		machine	
+CSUSm	ሱሱ የሚባለው ብሔረሰብ ወንድ		machine	
+CFUL	ፉላኒ የሚባለው ብሔረሰብ ሰው		machine	
+CFULf	ፉላኒ የሚባለው ብሔረሰብ ሴት		machine	
+CFULm	ፉላኒ የሚባለው ብሔረሰብ ወንድ		machine	
+CKAU	ካኑሪ የሚባለው ብሔረሰብ ሰው		machine	
+CKAUf	ካኑሪ የሚባለው ብሔረሰብ ሴት		machine	
+CKAUm	ካኑሪ የሚባለው ብሔረሰብ ወንድ		machine	
+CLIN	ሊንጋላ የአፍ መፍቻ ቋንቋው የሆነ ሰው	በኮንጎ፤ ሊንጋላን ለመግባቢያ ብቻ የሚናገሩትን አይጨምርም።	machine	
+CLINf	ሊንጋላ የአፍ መፍቻ ቋንቋዋ የሆነ ሴት	በኮንጎ፤ ሊንጋላን ለመግባቢያ ብቻ የሚናገሩትን አይጨምርም።	machine	
+CLINm	ሊንጋላ የአፍ መፍቻ ቋንቋው የሆነ ወንድ	በኮንጎ፤ ሊንጋላን ለመግባቢያ ብቻ የሚናገሩትን አይጨምርም።	machine	
+CKON	ባኮንጎ የሚባለው ብሔረሰብ ሰው	የኮንጎ ብሔር ሰው እንጂ የኮንጎ አገር ዜጋ ማለት አይደለም	machine	
+CKONf	ባኮንጎ የሚባለው ብሔረሰብ ሴት	የኮንጎ ብሔር ሰው እንጂ የኮንጎ አገር ዜጋ ማለት አይደለም	machine	
+CKONm	ባኮንጎ የሚባለው ብሔረሰብ ወንድ	የኮንጎ ብሔር ሰው እንጂ የኮንጎ አገር ዜጋ ማለት አይደለም	machine	
+CLUA	ሉባ-ካሳይ የሚባለው ብሔረሰብ ሰው		machine	
+CLUAf	ሉባ-ካሳይ የሚባለው ብሔረሰብ ሴት		machine	
+CLUAm	ሉባ-ካሳይ የሚባለው ብሔረሰብ ወንድ		machine	
+CLUB	ሉባ-ካታንጋ የሚባለው ብሔረሰብ ሰው		machine	
+CLUBf	ሉባ-ካታንጋ የሚባለው ብሔረሰብ ሴት		machine	
+CLUBm	ሉባ-ካታንጋ የሚባለው ብሔረሰብ ወንድ		machine	
+CSAG	ሳንጎ የሚባለው ብሔረሰብ ሰው	በማዕከላዊ አፍሪካ ሪፐብሊክ በኡባንጊ ወንዝ ዳር የሚኖር ሕዝብ፤ ሳንጎን ለመግባቢያ የሚናገሩትን ሁሉ አይጨምርም።	machine	
+CSAGf	ሳንጎ የሚባለው ብሔረሰብ ሴት	በማዕከላዊ አፍሪካ ሪፐብሊክ በኡባንጊ ወንዝ ዳር የሚኖር ሕዝብ፤ ሳንጎን ለመግባቢያ የሚናገሩትን ሁሉ አይጨምርም።	machine	
+CSAGm	ሳንጎ የሚባለው ብሔረሰብ ወንድ	በማዕከላዊ አፍሪካ ሪፐብሊክ በኡባንጊ ወንዝ ዳር የሚኖር ሕዝብ፤ ሳንጎን ለመግባቢያ የሚናገሩትን ሁሉ አይጨምርም።	machine	
+CEWO	ኤዎንዶ የሚባለው ብሔረሰብ ሰው		machine	
+CEWOf	ኤዎንዶ የሚባለው ብሔረሰብ ሴት		machine	
+CEWOm	ኤዎንዶ የሚባለው ብሔረሰብ ወንድ		machine	
+CBUM	ቡሉ የሚባለው ብሔረሰብ ሰው		machine	
+CBUMf	ቡሉ የሚባለው ብሔረሰብ ሴት		machine	
+CBUMm	ቡሉ የሚባለው ብሔረሰብ ወንድ		machine	
+CSBA	ንጋምባይ የሚባለው ብሔረሰብ ሰው		machine	
+CSBAf	ንጋምባይ የሚባለው ብሔረሰብ ሴት		machine	
+CSBAm	ንጋምባይ የሚባለው ብሔረሰብ ወንድ		machine	
+CAFR	አፍሪካነር የሚባለው ብሔረሰብ ሰው	ከነጭ ደቡብ አፍሪካውያን የሆኑት አፍሪካነሮች፤ የአፍሪካንስ ተናጋሪዎች ሁሉ ማለት አይደለም።	machine	
+CAFRf	አፍሪካነር የሚባለው ብሔረሰብ ሴት	ከነጭ ደቡብ አፍሪካውያን የሆኑት አፍሪካነሮች፤ የአፍሪካንስ ተናጋሪዎች ሁሉ ማለት አይደለም።	machine	
+CAFRm	አፍሪካነር የሚባለው ብሔረሰብ ወንድ	ከነጭ ደቡብ አፍሪካውያን የሆኑት አፍሪካነሮች፤ የአፍሪካንስ ተናጋሪዎች ሁሉ ማለት አይደለም።	machine	
+CZUL	የዙሉ ሰው		machine	
+CZULf	የዙሉ ሴት		machine	
+CZULm	የዙሉ ወንድ		machine	
+CXHO	ኮሳ የሚባለው ብሔረሰብ ሰው		machine	
+CXHOf	ኮሳ የሚባለው ብሔረሰብ ሴት		machine	
+CXHOm	ኮሳ የሚባለው ብሔረሰብ ወንድ		machine	
+CSOT	ሶቶ የሚባለው ብሔረሰብ ሰው	የደቡብ ሶቶ (ባሶቶ) ሕዝብ፤ በሌሶቶና በደቡብ አፍሪካ ይኖራሉ።	machine	
+CSOTf	ሶቶ የሚባለው ብሔረሰብ ሴት	የደቡብ ሶቶ (ባሶቶ) ሕዝብ፤ በሌሶቶና በደቡብ አፍሪካ ይኖራሉ።	machine	
+CSOTm	ሶቶ የሚባለው ብሔረሰብ ወንድ	የደቡብ ሶቶ (ባሶቶ) ሕዝብ፤ በሌሶቶና በደቡብ አፍሪካ ይኖራሉ።	machine	
+CTSN	ጽዋና የሚባለው ብሔረሰብ ሰው		machine	
+CTSNf	ጽዋና የሚባለው ብሔረሰብ ሴት		machine	
+CTSNm	ጽዋና የሚባለው ብሔረሰብ ወንድ		machine	
+CNSO	ፔዲ የሚባለው ብሔረሰብ ሰው		machine	
+CNSOf	ፔዲ የሚባለው ብሔረሰብ ሴት		machine	
+CNSOm	ፔዲ የሚባለው ብሔረሰብ ወንድ		machine	
+CTSO	ጾንጋ የሚባለው ብሔረሰብ ሰው		machine	
+CTSOf	ጾንጋ የሚባለው ብሔረሰብ ሴት		machine	
+CTSOm	ጾንጋ የሚባለው ብሔረሰብ ወንድ		machine	
+CVEN	ቬንዳ የሚባለው ብሔረሰብ ሰው		machine	
+CVENf	ቬንዳ የሚባለው ብሔረሰብ ሴት		machine	
+CVENm	ቬንዳ የሚባለው ብሔረሰብ ወንድ		machine	
+CSSW	ስዋዚ የሚባለው ብሔረሰብ ሰው		machine	
+CSSWf	ስዋዚ የሚባለው ብሔረሰብ ሴት		machine	
+CSSWm	ስዋዚ የሚባለው ብሔረሰብ ወንድ		machine	
+CNDE	ንዴቤሌ የሚባለው ብሔረሰብ ሰው	የሰሜን ንዴቤሌ ሕዝብ፤ በዚምባብዌ ይኖራሉ።	machine	
+CNDEf	ንዴቤሌ የሚባለው ብሔረሰብ ሴት	የሰሜን ንዴቤሌ ሕዝብ፤ በዚምባብዌ ይኖራሉ።	machine	
+CNDEm	ንዴቤሌ የሚባለው ብሔረሰብ ወንድ	የሰሜን ንዴቤሌ ሕዝብ፤ በዚምባብዌ ይኖራሉ።	machine	
+CSNA	ሾና የሚባለው ብሔረሰብ ሰው		machine	
+CSNAf	ሾና የሚባለው ብሔረሰብ ሴት		machine	
+CSNAm	ሾና የሚባለው ብሔረሰብ ወንድ		machine	
+CNYA	ቼዋ የሚባለው ብሔረሰብ ሰው		machine	
+CNYAf	ቼዋ የሚባለው ብሔረሰብ ሴት		machine	
+CNYAm	ቼዋ የሚባለው ብሔረሰብ ወንድ		machine	
+CBEM	ቤምባ የሚባለው ብሔረሰብ ሰው		machine	
+CBEMf	ቤምባ የሚባለው ብሔረሰብ ሴት		machine	
+CBEMm	ቤምባ የሚባለው ብሔረሰብ ወንድ		machine	
+CTOI	ቶንጋ (ዛምቢያ) የሚባለው ብሔረሰብ ሰው		machine	
+CTOIf	ቶንጋ (ዛምቢያ) የሚባለው ብሔረሰብ ሴት		machine	
+CTOIm	ቶንጋ (ዛምቢያ) የሚባለው ብሔረሰብ ወንድ		machine	
+CLOZ	ሎዚ የሚባለው ብሔረሰብ ሰው		machine	
+CLOZf	ሎዚ የሚባለው ብሔረሰብ ሴት		machine	
+CLOZm	ሎዚ የሚባለው ብሔረሰብ ወንድ		machine	
+CUMB	ኦቪምቡንዱ የሚባለው ብሔረሰብ ሰው		machine	
+CUMBf	ኦቪምቡንዱ የሚባለው ብሔረሰብ ሴት		machine	
+CUMBm	ኦቪምቡንዱ የሚባለው ብሔረሰብ ወንድ		machine	
+CKMB	አምቡንዱ የሚባለው ብሔረሰብ ሰው		machine	
+CKMBf	አምቡንዱ የሚባለው ብሔረሰብ ሴት		machine	
+CKMBm	አምቡንዱ የሚባለው ብሔረሰብ ወንድ		machine	
+CVMW	ማኩዋ የሚባለው ብሔረሰብ ሰው		machine	
+CVMWf	ማኩዋ የሚባለው ብሔረሰብ ሴት		machine	
+CVMWm	ማኩዋ የሚባለው ብሔረሰብ ወንድ		machine	
+CSEH	ሴና የሚባለው ብሔረሰብ ሰው		machine	
+CSEHf	ሴና የሚባለው ብሔረሰብ ሴት		machine	
+CSEHm	ሴና የሚባለው ብሔረሰብ ወንድ		machine	
+CYAO	ያዎ የሚባለው ብሔረሰብ ሰው		machine	
+CYAOf	ያዎ የሚባለው ብሔረሰብ ሴት		machine	
+CYAOm	ያዎ የሚባለው ብሔረሰብ ወንድ		machine	
+CHER	ሄሬሮ የሚባለው ብሔረሰብ ሰው		machine	
+CHERf	ሄሬሮ የሚባለው ብሔረሰብ ሴት		machine	
+CHERm	ሄሬሮ የሚባለው ብሔረሰብ ወንድ		machine	
+CNAQ	ኮይኮይ የሚባለው ብሔረሰብ ሰው	ናማና ዳማራን ይጨምራል፤ «ሆተንቶት» የሚለው የስድብ ቃል ነው፤ አይጠቀሙበት።	machine	
+CNAQf	ኮይኮይ የሚባለው ብሔረሰብ ሴት	ናማና ዳማራን ይጨምራል፤ «ሆተንቶት» የሚለው የስድብ ቃል ነው፤ አይጠቀሙበት።	machine	
+CNAQm	ኮይኮይ የሚባለው ብሔረሰብ ወንድ	ናማና ዳማራን ይጨምራል፤ «ሆተንቶት» የሚለው የስድብ ቃል ነው፤ አይጠቀሙበት።	machine	
+CMLG	ማዳጋስካራዊ		machine	
+CMLGf	ማዳጋስካራዊት		machine	
+CMLGm	ማዳጋስካራዊ ወንድ		machine	

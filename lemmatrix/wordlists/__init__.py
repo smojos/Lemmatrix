@@ -14,7 +14,10 @@ The data files beside this module (tab-separated, UTF-8, one header line):
 - `eacw.tsv`: ref, gloss, word class, default (yes: the published list; no: a hidden item, a
   recommended variant a researcher can add), sub (blank: everyone; A: all of Africa; N W E S C: only
   those regions), clarification (the gloss's plain meaning) and taxon (with its family), in the
-  list's own order (the final list of 23 October 2026: 2,556 items);
+  list's own order (edition 2026-10-27: 2,553 items); since format 15 the clarification is read from
+  here, never stored in a database (IDEAS.md idea 87);
+- `glosses/`: the items' glosses in French, Arabic and Amharic and their status (idea 63);
+- `conversions/`: an edition's old-to-new references and the old glosses it changed;
 - `cawl.tsv`: number, domain, word class, the EACW items it maps to, and its English and French
   glosses when SIL's permission allows them to be shipped (until then the columns are empty);
 - `swadesh.tsv`: number, gloss, word class, the EACW items and CAWL numbers it maps to.
@@ -98,6 +101,16 @@ class Edition:
     made_default: frozenset = frozenset()
     hidden: frozenset = frozenset()
     doi: str = ""          # the edition's own Zenodo DOI (blank: not released on its own)
+    renumbered: str = ""   # the old-to-new reference table in conversions/ (an edition that renumbered
+                           # items or deleted some, 2026-10-27): old, new, "-" for a deleted item
+    old_glosses: str = ""  # conversions/: the glosses of the edition before, where this one changed them
+    redesignated: frozenset = frozenset()   # items that now name something else (D040 anteater → aardwolf):
+                                            # a lemma with data keeps its own meaning under an own reference
+
+    def conversion(self) -> dict[str, str]:
+        """The edition's old reference → new one ("-": deleted); {} for an edition that renumbered
+        nothing."""
+        return _conversion(self.renumbered) if self.renumbered else {}
 
 
 # The EACW's home is the repository smojos/EACW (Josh, 26 October); eacw.tsv, cawl.tsv and swadesh.tsv
@@ -112,8 +125,59 @@ EDITIONS = (
             made_default=frozenset({"B044f", "C015f", "C015m", "C019f", "C019m"}),
             hidden=frozenset({"B044", "C009", *(f"C0{n}" for n in range(12, 25))}),
             doi="10.5281/zenodo.23677136"),
+    Edition("2026-10-27", "The English list's final review: O010 many, P095 (be) ill and P024b last "
+            "deleted; the snails H056–H058 now hidden H055b–H055d; H, O and P renumbered; D040 aardwolf "
+            "and H012 mud wasp; renamed glosses, the property items as (be) big, Canadian spelling, new "
+            "Clarifications; glosses in French, Arabic and Amharic (2,268 published)",
+            hidden=frozenset({"H055b", "H055c", "H055d"}),
+            doi="10.5281/zenodo.23704436", renumbered="2026-10-24 to 2026-10-27.tsv",
+            old_glosses="2026-10-24 glosses.tsv", redesignated=frozenset({"D040", "H012"})),
 )
 EACW_VERSION = EDITIONS[-1].version
+
+
+@lru_cache(maxsize=None)
+def _conversion(name: str) -> dict[str, str]:
+    with open(HERE / "conversions" / name, encoding="utf-8", newline="") as f:
+        return {r["old"].strip(): r["new"].strip() for r in csv.DictReader(f, delimiter="\t") if r["old"].strip()}
+
+
+@lru_cache(maxsize=None)
+def _old_glosses(name: str) -> dict[str, str]:
+    with open(HERE / "conversions" / name, encoding="utf-8", newline="") as f:
+        return {r["ref"].strip(): r["gloss"] for r in csv.DictReader(f, delimiter="\t") if r["ref"].strip()}
+
+
+def redesignated_since(version: str) -> set[str]:
+    """The items (by the newest references) the editions after a version redesignated."""
+    out = set()
+    for ed in editions_since(version):
+        out |= ed.redesignated
+    return out
+
+
+def old_glosses_since(version: str) -> dict[str, str]:
+    """The glosses the database's own edition had, by its references, where a later edition changed
+    them (the first such edition's table: it is the one written against the database's numbers)."""
+    for ed in editions_since(version):
+        if ed.old_glosses:
+            return _old_glosses(ed.old_glosses)
+    return {}
+
+
+def conversion_since(version: str) -> dict[str, str]:
+    """Every renumbering of the editions after a database's version, chained (old → newest; "-"
+    for a deleted item); {} when none of them renumbered anything."""
+    out: dict[str, str] = {}
+    for ed in editions_since(version):
+        step = ed.conversion()
+        if not step:
+            continue
+        out = {old: (step.get(new, new) if new != "-" else "-") for old, new in out.items()}
+        for old, new in step.items():
+            if old not in out and old not in out.values():
+                out[old] = new
+    return {o: n for o, n in out.items() if o != n}
 
 
 def edition(version: str) -> "Edition | None":
@@ -414,13 +478,42 @@ def is_eacw(db) -> bool:
     return base_of(db) == EACW
 
 
+def renumber_pending(db) -> bool:
+    """An EACW database on an edition before one that renumbered items (2026-10-27): its references
+    are still the old numbers, so nothing may treat them as the shipped list's until it is updated
+    (the editions notice, or Check wordlist integrity…), or an item would be taken for another."""
+    return is_eacw(db) and bool(conversion_since(db.metadata.wordlist_version or EDITIONS[0].version))
+
+
+def clarification_shown(db, ws=None) -> bool:
+    """Whether the EACW's clarifications are shown as (i)s (Settings → General, the database's
+    workspace; on by default; idea 87: 'the whole clarification system must be able to be turned
+    off'). Never in a database not built on the EACW."""
+    if not is_eacw(db):
+        return False
+    return ws.get_bool(CLARIFICATIONS_KEY, True) if ws is not None else True
+
+
+CLARIFICATIONS_KEY = "eacw/clarifications"      # the workspace's
+
+
+def clarification_for(db, entry, lang: str = "", ws=None) -> str:
+    """The (i)'s text beside a lemma's gloss in a language (idea 87): its EACW item's clarification
+    in that language, or '' (not an EACW database, switched off, still on old numbers, or none)."""
+    if entry is None or not clarification_shown(db, ws) or renumber_pending(db):
+        return ""
+    n = canon(EACW, entry.ref)
+    return item_clarification(n, lang or db.settings.primary_gloss) if n else ""
+
+
 def ensure_fields(db) -> list[str]:
-    """An EACW database's Clarification and Taxon lemma fields (Josh, 23 October: lemma fields,
-    editable, so a species a researcher adds has its own taxon), after the others. Returns the
-    titles of the fields added."""
+    """An EACW database's Taxon lemma field (Josh, 23 October: a lemma field, editable, so a species a
+    researcher adds has its own taxon), after the others. Returns the titles of the fields added.
+    The Clarification is no field since format 15 (IDEAS.md idea 87, Josh, 27 October): it belongs
+    to the list and its editions, so it is read from the shipped edition and shown as an (i)."""
     from ..model import FieldDef
     s, added = db.settings, []
-    for role, name in ((CLARIFICATION, "Clarification"), (TAXON, "Taxon")):
+    for role, name in ((TAXON, "Taxon"),):
         if s.entry_field(role) is None:
             s.entry_fields.append(FieldDef(name, role=role))
             added.append(name)
@@ -443,11 +536,12 @@ def ensure_word_classes(db) -> list[str]:
 
 
 def fill_item(db, entry, item: Item, overwrite: bool = False):
-    """A lemma made from (or made into) an EACW item: its gloss, word class, Clarification and
-    Taxon where empty (all of them with overwrite), and the other lists' numbers."""
+    """A lemma made from (or made into) an EACW item: its gloss, word class and Taxon where empty
+    (all of them with overwrite), its glosses in the database's other gloss languages where the
+    shipped glosses have them (idea 63), and the other lists' numbers."""
     s = db.settings
     for role, value, lang in (("gloss", item.gloss, s.primary_gloss), ("word-class", item.word_class, None),
-                              (CLARIFICATION, item.clarification, None), (TAXON, item.taxon, None)):
+                              (TAXON, item.taxon, None)):
         f = s.entry_field(role)
         if f is None or not value:
             continue
@@ -456,6 +550,11 @@ def fill_item(db, entry, item: Item, overwrite: bool = False):
         current = entry.get(f.name, lang) if f.multilingual else entry.get(f.name)
         if overwrite or not current:
             entry.set(f.name, value, lang if f.multilingual else None, f.multilingual)
+    g = s.entry_field("gloss")
+    if g is not None and g.multilingual and is_eacw(db):
+        for lang in s.gloss_languages:
+            if lang != s.primary_gloss and not entry.get(g.name, lang) and (x := item_gloss_in(item.number, lang)):
+                entry.set(g.name, x, lang, True)
     if not entry.file_gloss and item.gloss:
         entry.file_gloss = "".join(ch for ch in item.gloss if ch not in _forbidden())
     if is_eacw(db):
@@ -487,7 +586,7 @@ def missing_family(db, entry) -> list[Item]:
 def unused_item(db, ref: str) -> Item | None:
     """The EACW item a reference is, when the database doesn't have it yet (a clash with a hidden
     item, for the lemma dialogue's warning)."""
-    if not is_eacw(db):
+    if not is_eacw(db) or renumber_pending(db):
         return None
     n = canon(EACW, ref)
     if not n or any(canon(EACW, e.ref) == n for e in db.entries):
@@ -499,7 +598,7 @@ def gloss_items(db, gloss: str) -> list[Item]:
     """EACW items the database doesn't have whose gloss is this one (whole, or one of the
     item's alternatives): a new lemma with that gloss is offered the item's reference."""
     key = norm_gloss(gloss)
-    if not key or not is_eacw(db):
+    if not key or not is_eacw(db) or renumber_pending(db):
         return []
     return [i for i in missing(db) if key in gloss_keys(i.gloss)]
 
@@ -527,10 +626,11 @@ def peek(db, entry) -> str:
     if (d := describe(db, entry)):
         lines.append(d)
     s = db.settings
-    for role, label in ((CLARIFICATION, "Clarification"), (TAXON, "Taxon")):
-        f = s.entry_field(role)
-        if f is not None and entry.get(f.name):
-            lines.append(f"{label}: {entry.get(f.name)}")
+    if not renumber_pending(db) and (c := item_clarification(canon(EACW, entry.ref) or "", "en")):
+        lines.append(f"Clarification: {c}")
+    f = s.entry_field(TAXON)
+    if f is not None and entry.get(f.name):
+        lines.append(f"Taxon: {entry.get(f.name)}")
     near = missing_family(db, entry)
     if near:
         lines.append("Not in this database (Insert EACW items… adds them):")
@@ -641,6 +741,126 @@ def out_of_place(entries) -> tuple[list, list]:
         keep.add(id(entries[k]))
         k = back[k]
     return order, [e for e in order if id(e) not in keep]
+
+
+# ---- the EACW's glosses in other languages (IDEAS.md idea 63, Josh, 26–27 October) ----------
+# glosses/{lang}.tsv: each item's gloss in a language of wider communication, that language's own
+# short clarification, and its status (machine: made and audited by machine translation; checked:
+# checked by a person). STATUS.tsv: each language's status as a whole. Copies of the EACW's own
+# glosses/ (smojos/EACW), shipped with each edition; the back-translations stay there.
+GLOSS_EDITION = EACW_VERSION                       # the edition the shipped glosses came with
+# A database's gloss languages are written as it likes (fr, fra; ar, arb, ar-SD; am, amh): each to the
+# file it reads. Arabic is Modern Standard Arabic (arb), the one the glosses are in.
+_GLOSS_CODES = {"fr": "fra", "fra": "fra", "fre": "fra", "ar": "arb", "ara": "arb", "arb": "arb",
+                "am": "amh", "amh": "amh"}
+
+
+def gloss_file(lang: str) -> str:
+    """The shipped glosses' language (fra, arb, amh) for a database's gloss language, or ""."""
+    code = (lang or "").strip().casefold().split("-")[0].split("_")[0]
+    return _GLOSS_CODES.get(code, "")
+
+
+@lru_cache(maxsize=None)
+def _gloss_table(code: str) -> dict[str, dict]:
+    path = HERE / "glosses" / f"{code}.tsv"
+    if not code or not path.exists():
+        return {}
+    with open(path, encoding="utf-8", newline="") as f:
+        return {r["ref"]: r for r in csv.DictReader(f, delimiter="\t")}
+
+
+@lru_cache(maxsize=1)
+def gloss_statuses() -> dict[str, tuple[str, str]]:
+    """{fra: (French, Machine audited only), …}: the shipped languages and their status."""
+    path = HERE / "glosses" / "STATUS.tsv"
+    if not path.exists():
+        return {}
+    with open(path, encoding="utf-8", newline="") as f:
+        return {r["lang"]: (r["language"], r["status"]) for r in csv.DictReader(f, delimiter="\t")}
+
+
+def gloss_status(lang: str) -> str:
+    """'French: machine audited only' for a database's gloss language with shipped glosses, else ''."""
+    code = gloss_file(lang)
+    if code not in gloss_statuses():
+        return ""
+    name, status = gloss_statuses()[code]
+    return f"{name}: {status[:1].lower()}{status[1:]}"
+
+
+def item_gloss_in(ref: str, lang: str) -> str:
+    """An EACW item's shipped gloss in a database's gloss language ('' if none): English is the list's."""
+    if (lang or "").casefold().split("-")[0] in ("en", "eng"):
+        item = get(EACW).by_number.get(ref)
+        return item.gloss if item else ""
+    row = _gloss_table(gloss_file(lang)).get(ref)
+    return nfc_text(row["gloss"]) if row else ""
+
+
+def item_clarification(ref: str, lang: str = "en") -> str:
+    """An EACW item's clarification beside its gloss in a language (IDEAS.md idea 87): the list's
+    English Clarification for English, the language's own for the others; '' if none."""
+    if (lang or "en").casefold().split("-")[0] in ("en", "eng"):
+        item = get(EACW).by_number.get(ref)
+        return item.clarification if item else ""
+    row = _gloss_table(gloss_file(lang)).get(ref)
+    return nfc_text(row["clarification"]) if row else ""
+
+
+def nfc_text(text: str) -> str:
+    return unicodedata.normalize("NFC", text or "").strip()
+
+
+def gloss_fill_plan(db, langs=None, only_list_english: bool = True) -> list[tuple[object, dict[str, str]]]:
+    """(lemma, {lang: gloss}) for the shipped glosses an EACW database can take in its second gloss
+    languages (idea 63, Josh): only an empty gloss is filled, and only where the lemma's English
+    gloss is still the list's (a lemma the researcher re-glossed is left: its item may no longer be
+    what it names). langs: the gloss languages to fill (default: every one but English)."""
+    if not is_eacw(db):
+        return []
+    s = db.settings
+    f = s.entry_field("gloss")
+    if f is None or not f.multilingual:
+        return []
+    langs = [l for l in (langs if langs is not None else s.gloss_languages)
+             if l in s.gloss_languages and gloss_file(l)]
+    if not langs:
+        return []
+    out = []
+    eacw = get(EACW).by_number
+    for e in db.entries:
+        n = canon(EACW, e.ref)
+        if not n:
+            continue
+        if only_list_english:
+            english = e.get(f.name, "en") if "en" in s.gloss_languages else e.get(f.name, s.primary_gloss)
+            if english and not glosses_agree(english, eacw[n].gloss):
+                continue
+        vals = {l: g for l in langs if not e.get(f.name, l) and (g := item_gloss_in(n, l))}
+        if vals:
+            out.append((e, vals))
+    return out
+
+
+def fill_glosses(db, langs=None) -> int:
+    """gloss_fill_plan applied straight to the lemmas (a new database, no undo). Returns how many."""
+    f = db.settings.entry_field("gloss")
+    plan = gloss_fill_plan(db, langs)
+    for e, vals in plan:
+        for lang, g in vals.items():
+            e.set(f.name, g, lang, True)
+    if plan:
+        record_gloss_editions(db, langs)
+    return len(plan)
+
+
+def record_gloss_editions(db, langs=None):
+    """Format 15: the shipped glosses' edition each gloss language is on (idea 63)."""
+    s = db.settings
+    for l in (langs if langs is not None else s.gloss_languages):
+        if gloss_file(l):
+            db.metadata.wordlist_glosses[l] = GLOSS_EDITION
 
 
 # ---- glosses -----------------------------------------------------------
@@ -946,9 +1166,9 @@ def link_plan(db, base: str) -> list[tuple[object, dict[str, list[str]]]]:
 
 def field_plan(db) -> list[tuple[object, dict[str, str]]]:
     """For Link to wordlists… on the EACW: (lemma, {field name: value}) for each lemma whose empty
-    Clarification or Taxon the list can fill (a value the researcher typed is never replaced)."""
+    Taxon the list can fill (a value the researcher typed is never replaced)."""
     s, out = db.settings, []
-    fields = [(f, role) for role in (CLARIFICATION, TAXON) if (f := s.entry_field(role)) is not None]
+    fields = [(f, role) for role in (TAXON,) if (f := s.entry_field(role)) is not None]
     for e in db.entries:
         n = canon(EACW, e.ref)
         item = get(EACW).by_number.get(n) if n else None

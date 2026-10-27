@@ -681,20 +681,46 @@ class Document(QObject):
         """Link to wordlists: the base list and the lemmas' other numbers, as one undo step."""
         self.undo.beginMacro("Link to wordlists")
         if self.db.metadata.wordlist_base != base:
+            if base == "EACW":                   # its references are the shipped edition's numbers now
+                from .. import wordlists as wl
+                if self.db.metadata.wordlist_version != wl.EACW_VERSION:
+                    self.undo.push(WordlistVersionCommand(self, self.db.metadata.wordlist_version,
+                                                          wl.EACW_VERSION))
             self.undo.push(WordlistBaseCommand(self, self.db.metadata.wordlist_base, base))
         self.apply_changes("Wordlist numbers", pairs, stamp=False)
         self.undo.endMacro()
         self.changed.emit()
 
-    def fix_wordlist(self, label: str, order, pairs, version: str = ""):
-        """Check wordlist integrity… (idea 66): the lemmas added, removed, moved and changed, and the
-        EACW edition recorded, as one undo step."""
+    def fix_wordlist(self, label: str, order, pairs, version: str = "", renames=()) -> list[str]:
+        """Check wordlist integrity… (idea 66): the lemmas added, removed, moved and changed (with
+        their recordings and pictures renamed, for an edition that renumbered items), and the EACW
+        edition recorded, as one undo step. Returns the problems; when there is one (a recording
+        that isn't there, or a name already taken), nothing changes and no undo step is made."""
+        problems = []
+        sources = {Path(o) for o, _ in renames}
+        for old, new in renames:                 # checked before anything is renamed
+            old, new = Path(old), Path(new)
+            if old.name.endswith(".lemmatrix-renaming"):
+                continue                         # the second half of a rename through a temporary name
+            if not old.exists():
+                problems.append(f"{old.name} isn't there")
+        for _, new in renames:
+            new = Path(new)
+            if (not new.name.endswith(".lemmatrix-renaming") and new.exists() and new not in sources
+                    and not any(storage.same_file(new, Path(o)) for o in sources if Path(o).exists())):
+                problems.append(f"{new.name} already exists")
+        if problems:
+            return problems
+        at = self.undo.index()
         self.undo.beginMacro(label)
-        self.restructure(label, order, pairs)
-        if version and self.db.metadata.wordlist_version != version:
+        trouble = self.restructure(label, order, pairs, renames)
+        if not trouble and version and self.db.metadata.wordlist_version != version:
             self.undo.push(WordlistVersionCommand(self, self.db.metadata.wordlist_version, version))
         self.undo.endMacro()
+        if trouble and self.undo.index() > at:   # nothing was pushed inside: take the empty step off
+            self.undo.undo()
         self.changed.emit()
+        return trouble
 
     def _note_rename(self, old: Path, new: Path):
         original = self.renamed.pop(old, old)

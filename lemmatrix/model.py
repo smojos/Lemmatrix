@@ -721,6 +721,8 @@ class Metadata:
     # the top of the file by people and machines. "tone": tonal, intonational or unspecified
     typology: dict[str, str] = field(default_factory=lambda: {"tone": "tonal"})
     wordlist_version: str = ""    # EACW: the version of the list the database is up to date with (format 12)
+    # format 15 (idea 63): the edition of the EACW's shipped glosses each gloss language took them from
+    wordlist_glosses: dict[str, str] = field(default_factory=dict)
     support: list[Support] = field(default_factory=list)    # acknowledgements (format 12, idea 59)
     thanks: list[Thanks] = field(default_factory=list)
 
@@ -941,6 +943,7 @@ class Database:
     path: str = ""                                    # where it was loaded from / saved to
     load_notes: list = field(default_factory=list, compare=False)   # e.g. what an upgrade changed
     added_fields: list = field(default_factory=list, compare=False)   # new core fields added on opening
+    dropped_fields: list = field(default_factory=list, compare=False)  # fields an upgrade removed (format 15)
     # read from a format before 7, so the working state (saved matrices, rerecord flags, the
     # spelling list…) came from the database file: its workspace is to be made from it (idea 36)
     workspace_from_file: bool = field(default=False, compare=False)

@@ -116,11 +116,173 @@ def _numbers_text(base: str, e, new: dict) -> str:
     return "; ".join(out)
 
 
-def check(db) -> list[Finding]:
-    """Everything that isn't as the shipped list has it, in KINDS order."""
+# ---- an edition that renumbered items (2026-10-27) ------------------------
+@dataclass
+class Renumbering:
+    """What an edition's renumbering does to a database, worked out before anything changes: the
+    lemmas with their changed copies (the new reference, and the new list gloss where the lemma's
+    is still the old list's), the empty lemmas of deleted items (removed), and `shadow`, a stand-in
+    database whose lemmas are as they will be, which the other checks run on (so they compare the
+    new references with the new list, never the old numbers with it)."""
+    pairs: list = field(default_factory=list)       # (lemma, its changed copy)
+    removed: list = field(default_factory=list)     # the empty lemmas of deleted items
+    moved_own: list = field(default_factory=list)   # (old reference, the own reference it got): deleted
+                                                    # items with data, and references clashing with new ones
+    shadow: object = None
+    real_of: dict = field(default_factory=dict)     # id(shadow lemma) → the real lemma
+
+    @property
+    def count(self) -> int:
+        return len(self.pairs) + len(self.removed)
+
+
+def _next_own(letter: str, taken: set, digits: int = 3) -> str:
+    """The next own reference in a section after everything the list and the database use."""
+    highest = 0
+    for r in taken:
+        if r.startswith(letter) and r[len(letter):].isdigit():
+            highest = max(highest, int(r[len(letter):]))
+    return f"{letter}{highest + 1:0{digits}d}"
+
+
+def _file_gloss(text: str) -> str:
+    from .model import FORBIDDEN_CHARS, nfc
+    return "".join(ch for ch in nfc(text) if ch not in FORBIDDEN_CHARS).strip()
+
+
+def renumbering(db) -> Renumbering | None:
+    """The renumbering of the editions after the database's version, or None if none renumbers.
+
+    - A lemma whose reference the conversion names takes its new reference.
+    - A researcher's own reference under a renumbered item follows its item (P096e under P096 →
+      P095e); under an item that became a sub-item or was deleted it can't, so it is kept under the
+      next own reference of its section.
+    - A redesignated item's lemma (D040 anteater, now aardwolf) with data keeps its meaning and its
+      gloss under the next own reference of its section; an empty one becomes the new item.
+    - A deleted item's lemma is removed when empty, and otherwise kept under the next own reference
+      of its section (Josh, 27 October: *own ref at section end*); so is an own reference that a
+      renumbered item now takes.
+    - A gloss becomes the new list's only where it is still the old list's (a gloss of one's own is
+      left), and the gloss in soundfile names follows only where it was the old gloss's."""
+    from copy import copy as shallow
+    from .model import nfc
+    if not wl.is_eacw(db):
+        return None
+    conv = wl.conversion_since(version(db))
+    if not conv:
+        return None
+    was_gloss = wl.old_glosses_since(version(db))
+    s = db.settings
+    eacw = wl.get(wl.EACW).by_number
+    gf = s.entry_field("gloss")
+    lang = "en" if "en" in s.gloss_languages else s.primary_gloss
+    used = built_from(db)
+    OWN = "+"                                   # "+D": the next own reference of section D
+    r = Renumbering()
+    target: dict[int, str] = {}
+    redesigned = wl.redesignated_since(version(db))
+    for e in db.entries:
+        ref = e.ref.strip()
+        if ref in redesigned and ref not in conv:
+            conv = {**conv, ref: ref}              # it stays where it is, unless it has data
+        if ref in conv:
+            to = conv[ref]
+        else:
+            m = wl._STEM.match(ref)
+            stem = m.group(1) if m else ""
+            if not (m and m.group(2) and stem in conv):
+                continue                        # not touched by the renumbering
+            plain = conv[stem]
+            to = plain + m.group(2) if wl._STEM.fullmatch(plain) and len(plain) == len(stem) else OWN + ref[:1]
+        if to in redesigned and has_data(db, e, used):
+            to = OWN + ref[:1]                  # its word is for the old item, not the new one
+        if to == "-":
+            if has_data(db, e, used):
+                to = OWN + ref[:1]
+            else:
+                r.removed.append(e)
+                continue
+        target[id(e)] = to
+    gone = {id(e) for e in r.removed}
+    list_targets = {v for v in target.values() if not v.startswith(OWN)}
+    for e in db.entries:                        # an own reference a renumbered item now takes
+        if id(e) not in gone and id(e) not in target and e.ref in list_targets:
+            target[id(e)] = OWN + e.ref[:1]
+    taken = set(eacw) | {target.get(id(e), e.ref) for e in db.entries if id(e) not in gone}
+    for e in db.entries:
+        t = target.get(id(e), "")
+        if t.startswith(OWN):
+            own = _next_own(t[1:], taken, s.ref_digits or 3)
+            taken.add(own)
+            target[id(e)] = own
+            r.moved_own.append((e.ref, own))
+    for e in db.entries:
+        if id(e) in gone:
+            continue
+        ref = target.get(id(e), e.ref)
+        after = None
+        if ref != e.ref:
+            after = e.copy()
+            after.ref = nfc(ref)
+        item, was = eacw.get(ref), was_gloss.get(e.ref)
+        if gf is not None and item is not None and was and was != item.gloss:
+            now = e.get(gf.name, lang) if gf.multilingual else e.get(gf.name)
+            if now and " ".join(now.casefold().split()) == " ".join(was.casefold().split()):
+                after = after or e.copy()
+                after.set(gf.name, item.gloss, lang if gf.multilingual else None, gf.multilingual)
+                if e.file_gloss == _file_gloss(was):
+                    after.file_gloss = _file_gloss(item.gloss)
+        if after is not None:
+            r.pairs.append((e, after))
+    finals = [target.get(id(e), e.ref) for e in db.entries if id(e) not in gone]
+    if len(finals) != len(set(finals)):            # never two lemmas with one reference (a safety net)
+        seen = set()
+        for e in db.entries:
+            if id(e) in gone:
+                continue
+            ref = target.get(id(e), e.ref)
+            if ref in seen:
+                own = _next_own(ref[:1], taken, s.ref_digits or 3)
+                taken.add(own)
+                r.moved_own.append((e.ref, own))
+                after = next((a for x, a in r.pairs if x is e), None)
+                if after is None:
+                    after = e.copy()
+                    r.pairs.append((e, after))
+                after.ref = own
+                ref = own
+            seen.add(ref)
+    shadow = shallow(db)
+    after_of = {id(e): a for e, a in r.pairs}
+    # the renumbering keeps the list's order (the snails land under H055, where H056–H058 were); only
+    # a lemma moved under an own reference goes to its new place (the end of its section)
+    order = [after_of.get(id(e), e) for e in db.entries if id(e) not in gone]
+    moved = {own for _, own in r.moved_own}
+    for a in [x for x in order if x.ref in moved]:
+        order.remove(a)
+        at = wl.insert_position(order, a.ref)
+        order.insert(len(order) if at is None else at, a)
+    shadow.entries = order
+    shadow.metadata = shallow(db.metadata)
+    r.shadow = shadow
+    r.real_of = {id(a): e for e, a in r.pairs}
+    return r
+
+
+_UNSET = object()
+
+
+def check(db, rn=_UNSET) -> list[Finding]:
+    """Everything that isn't as the shipped list has it, in KINDS order. A database still on old
+    numbers (an edition renumbered items since) is checked as it will be once renumbered: pass the
+    `renumbering(db)` the fixes will be planned with, so the findings name its stand-in lemmas."""
     base = wl.base_of(db)
     if not base:
         return []
+    if rn is _UNSET:
+        rn = renumbering(db)
+    if rn is not None:
+        db = rn.shadow
     out = []
     for e, new in wl.link_plan(db, base):
         out.append(Finding(NUMBERS, e.ref, db.gloss(e), _numbers_text(base, e, new), "Renew the numbers",
@@ -158,10 +320,24 @@ def check(db) -> list[Finding]:
     return out
 
 
-def plan(db, findings, new_entry) -> tuple[list, list, list]:
+def plan(db, findings, new_entry, rn: "Renumbering | None" = None) -> tuple[list, list, list]:
     """What fixing the selected findings does: (the lemmas' new order, (lemma, its changed copy)
     pairs, the new lemmas), for Document.restructure as one undo step. new_entry(item) makes the
-    lemma for a missing item (with the session's speaker and date). The database isn't changed."""
+    lemma for a missing item (with the session's speaker and date). The database isn't changed.
+    rn: the renumbering the findings were checked after (they name its stand-in lemmas); it is always
+    part of the plan, whatever is selected, and the result names the real lemmas."""
+    if rn is not None:
+        order, pairs, made = _plan(rn.shadow, findings, new_entry)
+        real = lambda e: rn.real_of.get(id(e), e)
+        first = {id(e): a for e, a in rn.pairs}                       # real lemma → renumbered copy
+        fixed = {id(real(e)): a for e, a in pairs}                    # real lemma → the fixes' copy
+        out_pairs = [(e, fixed.get(id(e), a)) for e, a in rn.pairs]
+        out_pairs += [(real(e), a) for e, a in pairs if id(real(e)) not in first]
+        return [real(e) for e in order], out_pairs, made
+    return _plan(db, findings, new_entry)
+
+
+def _plan(db, findings, new_entry) -> tuple[list, list, list]:
     chosen = [f for f in findings if f.selected and f.fixable]
     removed = {id(f.entry) for f in chosen if f.kind == HIDDEN}
     order = [e for e in db.entries if id(e) not in removed]
@@ -204,3 +380,41 @@ def summary(findings) -> str:
         if f.selected and f.fixable:
             counts[f.kind] = counts.get(f.kind, 0) + 1
     return " · ".join(f"{KIND_NAMES[k]} {counts[k]:,}" for k in KINDS if counts.get(k))
+
+
+def update_file(db, new_entry=None) -> tuple[int, list[str]]:
+    """The editions notice's Update without the program (the samples, and tests): every fix that
+    starts selected, the edition's renumbering with its recordings and pictures renamed, and the
+    shipped edition recorded. Changes `db` in place (not saved). Returns (fixes, problems): when a
+    file can't be renamed nothing changes."""
+    from pathlib import Path
+    from . import convert_refs as cr
+    from . import storage
+    rn = renumbering(db)
+    findings = check(db, rn)
+    if new_entry is None:
+        def new_entry(item):
+            classes = set(db.settings.word_classes())
+            e = db.new_entry(item.number, gloss=item.gloss,
+                             word_class=item.word_class if item.word_class in classes else "")
+            wl.fill_item(db, e, item)
+            return e
+    order, pairs, made = plan(db, findings, new_entry, rn)
+    renames = []
+    if rn is not None:
+        renames, _ = cr.file_renames(db, pairs)
+        pairs = cr.token_files(db, pairs)
+    done = []
+    for old, new in renames:
+        old, new = Path(old), Path(new)
+        if not old.exists() or (new.exists() and not storage.same_file(old, new)):
+            for o, n in reversed(done):
+                n.rename(o)
+            return 0, [f"{old.name} can't be renamed to {new.name}"]
+        old.rename(new)
+        done.append((old, new))
+    after = {id(e): a for e, a in pairs}
+    db.entries[:] = [after.get(id(e), e) for e in order]
+    if wl.is_eacw(db):
+        db.metadata.wordlist_version = wl.EACW_VERSION
+    return sum(1 for f in findings if f.selected and f.fixable) + (rn.count if rn else 0), []

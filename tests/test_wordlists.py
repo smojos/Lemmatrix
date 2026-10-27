@@ -22,7 +22,7 @@ SAMPLES = Path(__file__).resolve().parent / "data" / "sample"
 
 # ---- the lists ----------------------------------------------------------
 def test_the_lists_and_their_sizes():
-    assert len(wl.get(wl.EACW).items) == 2556                    # the final list (23 October 2026)
+    assert len(wl.get(wl.EACW).items) == 2553                    # edition 2026-10-27 (2,556 on 23 October)
     assert len(wl.get(wl.CAWL).items) == 1700
     assert len(wl.get(wl.SWADESH).items) == 207
     for lid in wl.LIST_IDS:
@@ -42,7 +42,7 @@ def test_the_eacw_as_josh_set_it():
     assert not any(re.fullmatch(r"C[A-Z]{3}[fm]?", i.number) for i in items)
     assert not any(i.gloss.lower().startswith("ethnic group") for i in items)
     assert not any(re.search(r"\b(LXX|VXX|SP\d|RS\d)\b", i.gloss) for i in items)
-    assert sum(i.default for i in items) == 2274
+    assert sum(i.default for i in items) == 2268
     assert not eacw["I069f"].default and not eacw["I069m"].default     # Josh, 23 October
     # f and m are reserved for female and male: no series runs into them (J073e husk, then J073g)
     assert eacw["J073g"].gloss == "hair (of maize)" and "J073f" not in eacw
@@ -56,8 +56,8 @@ def test_the_eacw_as_josh_set_it():
 def test_the_versions():
     """Josh, 23 October: base or expanded, and global, Africa or one region."""
     count = lambda items, region: len(wl.version_items(items, region))
-    assert count(wl.EXPANDED, wl.AFRICA) == 2556 and count(wl.BASE, wl.AFRICA) == 2274
-    assert count(wl.BASE, wl.GLOBAL) == 2055                # blank sub codes only
+    assert count(wl.EXPANDED, wl.AFRICA) == 2553 and count(wl.BASE, wl.AFRICA) == 2268
+    assert count(wl.BASE, wl.GLOBAL) == 2046                # blank sub codes only
     for r in wl.REGIONS:
         assert count(wl.BASE, wl.GLOBAL) < count(wl.BASE, r) < count(wl.BASE, wl.AFRICA)
     fonio = wl.get(wl.EACW).by_number["J069"]                # W only
@@ -112,7 +112,7 @@ def test_a_new_database_on_the_eacw():
     db = defaults.new_database(wl.EACW)
     assert db.metadata.wordlist_base == wl.EACW
     assert (db.metadata.wordlist_items, db.metadata.wordlist_region) == (wl.BASE, wl.AFRICA)
-    assert len(db.entries) == 2274                             # the base list, all of Africa
+    assert len(db.entries) == 2268                             # the base list, all of Africa
     e = db.entry_by_ref("C001f")
     assert db.gloss(e) == "mother" and db.word_class(e) == "NOUN"
     assert e.lists == {wl.CAWL: ["0345"], wl.SWADESH: ["42"]}
@@ -120,7 +120,7 @@ def test_a_new_database_on_the_eacw():
     assert db.settings.ref_scheme != SEQUENCE                  # the A–V categories stay
     assert wl.numbers(db, e, wl.EACW) == ["C001f"]
     s = db.settings                                            # Clarification and Taxon, the list's classes
-    assert s.entry_field(wl.CLARIFICATION).name == "Clarification" and s.entry_field(wl.TAXON).name == "Taxon"
+    assert s.entry_field(wl.CLARIFICATION) is None and s.entry_field(wl.TAXON).name == "Taxon"   # format 15
     assert {"DEM", "CONJ", "INTERROG", "NEG", "PREP", "INTERJ"} <= set(s.word_classes())
     assert db.entry_by_ref("D009").get("Taxon") == "Capra hircus (Bovidae)"
     assert db.word_class(db.entry_by_ref("R3SGDPRX")) == "DEM"
@@ -297,7 +297,7 @@ def test_the_lemma_lists_search(win):
     assert sorted(e.ref for e in _search(win, "SWADESH 42 ;; CAWL 1")) == ["A001", "C001", "C001f"]
     assert _search(win, "CAWL 9999") == []
     assert [e.ref for e in _search(win, "mother")][0] == "C001f"    # plain searches as before
-    assert len(_search(win, "")) == 2274
+    assert len(_search(win, "")) == 2268
 
 
 def test_the_reference_tooltip(win):

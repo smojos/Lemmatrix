@@ -1,16 +1,16 @@
 ref	gloss	word_class	default	sub	clarification	taxon
-A001	body	NOUN	yes			
+A001	body	NOUN	yes		the (living) body as a whole, not a corpse	
 A002	skin	NOUN	yes			
 A002b	wrinkle	NOUN	yes			
-A003	hair	NOUN	yes			
+A003	hair	NOUN	yes		of the head	
 A003b	body hair	NOUN	yes			
-A003c	tuft	NOUN	yes			
+A003c	tuft	NOUN	yes		a single unit of the head hair standing apart from the rest, e.g. a braided or mudded lock, a bunch, or a tuft left on a shaved head	
 A004	bone	NOUN	yes			
 A004b	skeleton	NOUN	yes			
 A005	muscle	NOUN	yes			
 A006	tendon	NOUN	yes			
 A007	blood	NOUN	yes			
-A008	vein	NOUN	yes			
+A008	vein	NOUN	yes		either vessel, (a) artery, or (b) vein	
 A009	head	NOUN	yes			
 A009b	top	NOUN	no		upper part or surface of something	
 A010	pate	NOUN	yes		top of the head, crown	
@@ -20,7 +20,7 @@ A013	forehead	NOUN	yes
 A014	face	NOUN	yes			
 A014b	front	NOUN	no		front part of something	
 A015	eye	NOUN	yes			
-A016	pupil	NOUN	yes			
+A016	pupil	NOUN	yes		of the eye	
 A017	iris	NOUN	yes			
 A018	eyebrow	NOUN	yes			
 A019	eyelid	NOUN	yes			
@@ -41,11 +41,11 @@ A031	mouth	NOUN	yes
 A031b	tip	NOUN	no		pointed end of something	
 A032	breath	NOUN	yes			
 A033	lip	NOUN	yes			
-A034	gum	NOUN	yes			
+A034	gum	NOUN	yes		of the teeth	
 A035	tooth	NOUN	yes			
 A035b	edge	NOUN	no		usually a sharp edge	
 A036	molar	NOUN	yes			
-A037	canine	NOUN	yes			
+A037	canine	NOUN	yes		tooth, not the dog	
 A038	incisor	NOUN	yes			
 A038b	lower incisor	NOUN	yes	E		
 A039	bicuspid	NOUN	yes		premolar tooth (between the canine and the molars)	
@@ -63,7 +63,7 @@ A050	moustache	NOUN	yes
 A051	beard	NOUN	yes			
 A052	neck	NOUN	yes			
 A053	nape of neck	NOUN	yes			
-A054	neckbone	NOUN	yes			
+A054	neckbone	NOUN	yes		between skull and shoulders; cervical spine	
 A055	throat	NOUN	yes			
 A056	trachea	NOUN	yes			
 A057	adams apple	NOUN	yes			
@@ -84,7 +84,7 @@ A071	side	NOUN	yes
 A071b	side of object	NOUN	no			
 A072	rib	NOUN	yes			
 A073	abdomen	NOUN	yes			
-A073b	middle	NOUN	no		sometimes the inside or flat of something	
+A073b	middle	NOUN	no		either middle, (c) inside, or (d) flat (broad face) of something, as the flat of a blade	
 A074	navel	NOUN	yes			
 A075	innards	NOUN	yes			
 A076	liver	NOUN	yes			
@@ -108,10 +108,10 @@ A090	spine	NOUN	yes
 A091	arm	NOUN	yes			
 A091a	upper arm	NOUN	yes			
 A091b	forearm	NOUN	yes			
-A092	arm bone	NOUN	yes			
+A092	arm bone	NOUN	yes		either arm, (a) upper, or (b) fore	
 A093	elbow	NOUN	yes			
-A093a	outer elbow	NOUN	yes			
-A093b	inner elbow	NOUN	yes			
+A093a	outer elbow	NOUN	yes		the hard outer point of the elbow	
+A093b	inner elbow	NOUN	yes		the inner crook of the elbow	
 A094	hand	NOUN	yes			
 A095	palm	NOUN	yes			
 A096	finger	NOUN	yes			
@@ -139,7 +139,7 @@ A116	scrotum	NOUN	yes
 A117	testicle	NOUN	yes			
 A118	urine	NOUN	yes			
 A119	semen	NOUN	yes			
-A120	vagina	NOUN	yes			
+A120	vagina	NOUN	yes		female genitalia generally	
 A121	clitoris	NOUN	yes			
 A122	leg	NOUN	yes			
 A123	femur	NOUN	yes			
@@ -148,11 +148,11 @@ A124a	quadriceps	NOUN	yes
 A124b	inner thigh	NOUN	yes			
 A124c	hamstrings	NOUN	yes			
 A125	knee	NOUN	yes			
-A125a	outer knee	NOUN	yes			
-A125b	inner knee	NOUN	yes			
+A125a	outer knee	NOUN	yes		or front of the knee	
+A125b	inner knee	NOUN	yes		or back of the knee	
 A126	shin	NOUN	yes		front of the lower leg	
 A127	tibia	NOUN	yes		shinbone	
-A128	calf	NOUN	yes			
+A128	calf	NOUN	yes		of the leg	
 A129	achilles tendon	NOUN	yes			
 A130	foot	NOUN	yes			
 A131	ankle	NOUN	yes			
@@ -202,7 +202,7 @@ B014	midwife	NOUN	yes
 B015	youth	NOUN	yes			
 B015f	female youth	NOUN	no			
 B015m	male youth	NOUN	no			
-B016	chief	NOUN	yes			
+B016	chief	NOUN	yes		traditional head of a village, clan or people	
 B016f	female chief	NOUN	no			
 B016m	male chief	NOUN	no			
 B017	monarch	NOUN	no			
@@ -232,7 +232,7 @@ B024m	male fisher	NOUN	no
 B025	farmer	NOUN	yes			
 B025f	female farmer	NOUN	no			
 B025m	male farmer	NOUN	no			
-B026	metalsmith	NOUN	yes			
+B026	metalsmith	NOUN	yes		either metalsmith, (a) blacksmith, or (b) goldsmith	
 B026f	female metalsmith	NOUN	no			
 B026m	male metalsmith	NOUN	no			
 B027	tailor	NOUN	yes			
@@ -265,9 +265,9 @@ B035m	male slave	NOUN	no
 B036	guide	NOUN	yes			
 B036f	female guide	NOUN	no			
 B036m	male guide	NOUN	no			
-B037	traveler	NOUN	yes			
-B037f	female traveler	NOUN	no			
-B037m	male traveler	NOUN	no			
+B037	traveller	NOUN	yes			
+B037f	female traveller	NOUN	no			
+B037m	male traveller	NOUN	no			
 B038	messenger	NOUN	yes			
 B038f	female messenger	NOUN	no			
 B038m	male messenger	NOUN	no			
@@ -277,10 +277,10 @@ B039m	male healer	NOUN	no
 B040	spiritist	NOUN	yes		spirit medium, diviner	
 B040f	female spiritist	NOUN	no			
 B040m	male spiritist	NOUN	no			
-B041	mage	NOUN	no			
+B041	mage	NOUN	no		one who practises sorcery or witchcraft, of either sex	
 B041f	witch	NOUN	yes			
-B041m	warlock	NOUN	yes		sorcerer	
-B042	priest	NOUN	no			
+B041m	sorcerer	NOUN	yes		male practitioner of sorcery (warlock)	
+B042	priest	NOUN	no		officiant of any religion, including traditional	
 B042f	female priest	NOUN	no			
 B042m	male priest	NOUN	yes			
 B043	beggar	NOUN	yes			
@@ -303,7 +303,7 @@ B048f	female poor person	NOUN	no
 B048m	male poor person	NOUN	no			
 B049	infertile person	NOUN	no			
 B049f	barren woman	NOUN	yes			
-B049m	impotent man	NOUN	yes			
+B049m	impotent man	NOUN	yes		either infertile man, (a) sterile, or (b) sexually impotent	
 B050	blind person	NOUN	yes			
 B050f	female blind person	NOUN	no			
 B050m	male blind person	NOUN	no			
@@ -313,13 +313,13 @@ B051m	male deaf person	NOUN	no
 B052	hunchback	NOUN	yes			
 B052f	female hunchback	NOUN	no			
 B052m	male hunchback	NOUN	no			
-B053	cripple	NOUN	yes			
+B053	cripple	NOUN	yes		physically disabled person, esp. unable to walk normally	
 B053f	female cripple	NOUN	no			
 B053m	male cripple	NOUN	no			
 B054	dwarf	NOUN	yes			
 B054f	female dwarf	NOUN	no			
 B054m	male dwarf	NOUN	no			
-B055	giant	NOUN	yes			
+B055	giant	NOUN	yes		either giant, (a) very large person, or (b) mythical giant or ogre	
 B055f	female giant	NOUN	no			
 B055m	male giant	NOUN	no			
 B056	fool	NOUN	yes			
@@ -383,9 +383,9 @@ C013	paternal great grandparent	NOUN	no
 C013f	paternal great grandmother	NOUN	yes			
 C013m	paternal great grandfather	NOUN	yes			
 C014	paternal pibling	NOUN	no		father's sibling, aunt or uncle	
-C014f	paternal aunt	NOUN	yes			
-C014m	paternal uncle	NOUN	yes			
-C015	paternal cousin	NOUN	no			
+C014f	paternal aunt	NOUN	yes		father's sister	
+C014m	paternal uncle	NOUN	yes		father's brother	
+C015	paternal cousin	NOUN	no		child of father's sibling; either (a) father's brother's child, or (b) father's sister's child	
 C015f	female paternal cousin	NOUN	yes			
 C015m	male paternal cousin	NOUN	yes			
 C016	maternal grandparent	NOUN	no			
@@ -395,9 +395,9 @@ C017	maternal great grandparent	NOUN	no
 C017f	maternal great grandmother	NOUN	yes			
 C017m	maternal great grandfather	NOUN	yes			
 C018	maternal pibling	NOUN	no		mother's sibling, aunt or uncle	
-C018f	maternal aunt	NOUN	yes			
-C018m	maternal uncle	NOUN	yes			
-C019	maternal cousin	NOUN	no			
+C018f	maternal aunt	NOUN	yes		mother's sister	
+C018m	maternal uncle	NOUN	yes		mother's brother	
+C019	maternal cousin	NOUN	no		child of mother's sibling; either (a) mother's sister's child, or (b) mother's brother's child	
 C019f	female maternal cousin	NOUN	yes			
 C019m	male maternal cousin	NOUN	yes			
 C020	marital parent-in-law	NOUN	no		husband's parent	
@@ -467,13 +467,13 @@ C043m	male black person	NOUN	no
 C044	red person	NOUN	yes	E	light-skinned person, described as red	
 C044f	female red person	NOUN	no	E		
 C044m	male red person	NOUN	no	E		
-C045	white person	NOUN	yes			
+C045	white person	NOUN	yes		person of European appearance, described as white	
 C045f	female white person	NOUN	no			
 C045m	male white person	NOUN	no			
 D001	animal	NOUN	yes			Animalia
 D002	domestic animal	NOUN	yes			
 D003	wild animal	NOUN	yes			
-D004	flesh	NOUN	yes			
+D004	flesh	NOUN	yes		either flesh, (c) meat as food, or (d) flesh of a living body	
 D004b	dried meat	NOUN	yes		sun-dried strips of meat, jerky	
 D005	fat	NOUN	yes			
 D006	bone marrow	NOUN	yes			
@@ -497,12 +497,12 @@ D014m	bull	NOUN	yes			Bos taurus (Bovidae)
 D015	steer	NOUN	yes		castrated bull, bullock	Bos taurus (Bovidae)
 D016	heifer	NOUN	yes		young cow that has not calved	Bos taurus (Bovidae)
 D017	dewlap	NOUN	yes		loose skin hanging from the throat of cattle	
-D018	dung	NOUN	yes			
-D019	horn	NOUN	yes			
+D018	dung	NOUN	yes		either dung in general, (a) cow dung, (b) goat or sheep droppings, or (c) horse or donkey dung	
+D019	horn	NOUN	yes		horn of an animal	
 D020	tail	NOUN	yes			
 D021	hide	NOUN	yes		skin of an animal	
 D022	hump	NOUN	yes		hump of cattle, zebu hump	
-D023	hoof	NOUN	yes			
+D023	hoof	NOUN	yes		either hoof, (a) solid hoof of horse or donkey, or (b) cloven hoof of cattle, goats or sheep	
 D024	udder	NOUN	yes			
 D025	teats	NOUN	yes			
 D026	milk	NOUN	yes			
@@ -537,7 +537,7 @@ D036m	boar	NOUN	no		male pig	Sus domesticus (Suidae)
 D037	warthog	NOUN	yes	E W S C		Phacochoerus (Suidae)
 D038	bushpig	NOUN	yes	E W S C	wild forest pig, Potamochoerus	Potamochoerus (Suidae)
 D039	aardvark	NOUN	yes	E W S C		Orycteropus afer (Orycteropodidae)
-D040	anteater	NOUN	yes	E W S C		Orycteropus afer (Orycteropodidae)
+D040	aardwolf	NOUN	yes	E S	small termite-eating hyena; not the striped hyena (D080)	Proteles cristata (Hyaenidae)
 D041	pangolin	NOUN	yes			Manidae
 D042	monkey (generic)	NOUN	yes			Cercopithecidae
 D043	baboon	NOUN	yes			Papio (Cercopithecidae)
@@ -577,7 +577,7 @@ D076	rhino	NOUN	yes			Rhinocerotidae
 D077	rhino horn	NOUN	yes			
 D078	giraffe	NOUN	yes	E W S C		Giraffa (Giraffidae)
 D079	spotted hyena	NOUN	yes	E W S C		Crocuta crocuta (Hyaenidae)
-D080	striped hyena	NOUN	yes			Hyaena hyaena (Hyaenidae)
+D080	striped hyena	NOUN	yes	E W N		Hyaena hyaena (Hyaenidae)
 D081	wilddog	NOUN	yes	E W S C	African wild dog, painted dog	Lycaon pictus (Canidae)
 D082	jackal	NOUN	yes			Lupulella, Canis (part) (Canidae)
 D083	fox	NOUN	yes			Vulpes (Canidae)
@@ -593,7 +593,7 @@ D091	ground squirrel	NOUN	yes			Sciuridae (part)
 D092	mouse	NOUN	yes			Muroidea (part) (Muridae (mainly))
 D093	rat	NOUN	yes			Muroidea (part) (Muridae (mainly))
 D094	cane rat	NOUN	yes	E W S C	grasscutter, Thryonomys	Thryonomys (Thryonomyidae)
-D095	palm rat	NOUN	yes	E W N C		Euxerus erythropus (Sciuridae)
+D095	palm rat	NOUN	yes	E W C	the striped ground squirrel, Euxerus erythropus, called palm rat in West Africa; a kind of D091	Euxerus erythropus (Sciuridae)
 D096	shrew	NOUN	yes			Soricidae
 D097	mole	NOUN	yes		burrowing animal; in Africa a mole-rat or golden mole	Bathyergidae, Spalacidae (part), Chrysochloridae (Bathyergidae, Spalacidae, Chrysochloridae)
 D098	hare	NOUN	yes			Lepus (Leporidae)
@@ -606,7 +606,7 @@ D104	lion claw	NOUN	yes
 D105	leopard	NOUN	yes			Panthera pardus (Felidae)
 D106	cheetah	NOUN	yes			Acinonyx jubatus (Felidae)
 D107	caracal	NOUN	yes		lynx-like desert cat	Caracal caracal (Felidae)
-D108	serval	NOUN	yes	A	long-legged spotted wild cat	Leptailurus serval (Felidae)
+D108	serval	NOUN	yes	E W S C	long-legged spotted wild cat	Leptailurus serval (Felidae)
 D109	genet	NOUN	yes		spotted cat-like carnivore related to civets	Genetta (Viverridae)
 D110	bat	NOUN	yes			Chiroptera
 D111	fruit bat	NOUN	yes			Pteropodidae
@@ -682,14 +682,14 @@ E065	osprey	NOUN	yes			Pandion haliaetus (Pandionidae)
 E066	hooded vulture	NOUN	yes	E W S C		Necrosyrtes monachus (Accipitridae)
 E067	white-backed vulture	NOUN	yes	E W S C		Gyps africanus (Accipitridae)
 E068	snake eagle	NOUN	yes			Circaetus (Accipitridae)
-E069	bataleur	NOUN	yes	E W S C	bateleur eagle	Terathopius ecaudatus (Accipitridae)
+E069	bateleur	NOUN	yes	E W S C	bateleur eagle	Terathopius ecaudatus (Accipitridae)
 E070	black kite	NOUN	yes			Milvus migrans (Accipitridae)
 E071	fish eagle	NOUN	yes	E W S C		Icthyophaga vocifer (Accipitridae)
 E072	long crested eagle	NOUN	yes	E W S C		Lophaetus occipitalis (Accipitridae)
 E073	scops owl	NOUN	yes			Otus (Strigidae)
 E074	greyish eagle owl	NOUN	yes	E W C		Bubo cinerascens (Strigidae)
 E075	mousebird	NOUN	yes	E W S C	long-tailed fruit-eating bird, Colius	Coliidae
-E076	eurasian hoopoe	NOUN	yes			Upupa epops (Upupidae)
+E076	hoopoe	NOUN	yes			Upupa epops (Upupidae)
 E077	green woodhoopoe	NOUN	yes	E W S C		Phoeniculus purpureus (Phoeniculidae)
 E078	ground hornbill	NOUN	yes	E W S C		Bucorvus (Bucerotidae)
 E079	grey hornbill	NOUN	yes	E W S C		Lophoceros nasutus (Bucerotidae)
@@ -718,7 +718,7 @@ E101	paradise flycatcher	NOUN	yes			Terpsiphone (Monarchidae)
 E102	shrike	NOUN	yes			Laniidae
 E103	pied crow	NOUN	yes	E W S C		Corvus albus (Corvidae)
 E104	fan-tailed raven	NOUN	yes			Corvus rhipidurus (Corvidae)
-E105	flappet lark	NOUN	yes	E W S C	savanna lark that claps its wings in flight	Amirafra rufocinnamomea (Alaudidae)
+E105	flappet lark	NOUN	yes	E W S C	savanna lark that claps its wings in flight	Mirafra rufocinnamomea (Alaudidae)
 E106	crombec	NOUN	yes	E W S C	tiny short-tailed warbler	Sylvietta (Macrosphenidae)
 E107	red-pate cisticola	NOUN	yes	E W C	small grass warbler	Cisticola ruficeps (Cisticolidae)
 E108	tawny prinia	NOUN	yes	E W S C	tawny-flanked prinia, small warbler	Prinia subflava (Cisticolidae)
@@ -728,7 +728,7 @@ E111	white-eye	NOUN	yes		small green bird with a white eye-ring	Zosterops (Zoste
 E112	babbler	NOUN	yes	E W S C	noisy brown social songbird, Turdoides	Turdoides (Leiothrichidae)
 E113	oxpecker	NOUN	yes	E W S C	tickbird that rides on cattle	Buphagus (Buphagidae)
 E114	lesser blue-eared starling	NOUN	yes	E W S C		Lamprotornis chloropterus (Sturnidae)
-E115	ruppels starling	NOUN	yes	E C	Ruppell's glossy starling	Lamprotornis purpuroptera (Sturnidae)
+E115	ruppells starling	NOUN	yes	E C	Rüppell's glossy starling	Lamprotornis purpuroptera (Sturnidae)
 E116	abyssinian thrush	NOUN	yes	E S C		Turdus abyssinicus (Turdidae)
 E117	spotted flycatcher	NOUN	yes			Muscicapa striata (Muscicapidae)
 E118	robin-chat	NOUN	yes	E W S C		Cossypha (Muscicapidae)
@@ -766,7 +766,7 @@ F018	Nile perch	NOUN	yes	E W N C		Lates niloticus (Latidae)
 F019	tilapia	NOUN	yes			Tilapiine cichlids (tribes Oreochromini, Coptodonini, Tilapiini etc.) (Cichlidae)
 F020	tigerfish	NOUN	yes	A	Hydrocynus, toothed predatory river fish	Hydrocynus (Alestidae)
 F021	elephant-snout fish	NOUN	yes	A	mormyrid, fish with a long trunk-like snout	Mormyridae
-F022	Nile bichir	NOUN	yes	A	Polypterus, primitive eel-like fish with a row of dorsal finlets	Polypterus (Polypteridae)
+F022	bichir	NOUN	yes	A	Polypterus, primitive eel-like fish with a row of dorsal finlets	Polypterus (Polypteridae)
 F023	electric catfish	NOUN	yes	A		Malapterurus (Malapteruridae)
 G001	snake	NOUN	yes			Serpentes
 G002	fang	NOUN	yes			
@@ -780,7 +780,7 @@ G009	cobra	NOUN	yes			Naja (Elapidae)
 G010	green mamba	NOUN	yes	E W S C		Dendroaspis angusticeps, D. viridis, D. jamesoni (green mambas) (Elapidae)
 G011	puff adder	NOUN	yes	A		Bitis arietans (Viperidae)
 G012	rhinoceros viper	NOUN	yes	E W S C	Bitis nasicornis, forest viper with horns on the nose	Bitis nasicornis (Viperidae)
-G013	horned viper	NOUN	yes		Cerastes, desert viper with horns over the eyes	Cerastes (Viperidae)
+G013	horned viper	NOUN	yes	E W N	Cerastes, desert viper with horns over the eyes	Cerastes (Viperidae)
 G014	python	NOUN	yes			Python (Pythonidae)
 G015	crocodile	NOUN	yes			Crocodylidae
 G016	lizard	NOUN	yes		any lizard, generic term	Lacertilia (paraphyletic; Squamata minus snakes and amphisbaenians)
@@ -809,8 +809,8 @@ H007	beeswax	NOUN	yes
 H008	honey	NOUN	yes			
 H009	honeycomb	NOUN	yes			
 H010	stinger	NOUN	yes			
-H011	hornet	NOUN	yes		large stinging wasp	Vespa (Vespidae)
-H012	black jacket	NOUN	yes		black and white Vespula wasp, North American name	Vespula consobrina (Vespidae)
+H011	hornet	NOUN	yes	E N	large stinging wasp	Vespa (Vespidae)
+H012	mud wasp	NOUN	yes		wasp that builds its nest of mud (mud dauber, potter wasp)	Sceliphron, Eumeninae (Sphecidae, Vespidae)
 H013	wasp	NOUN	yes			Apocrita (part) (Hymenoptera)
 H014	ant	NOUN	yes			Formicidae
 H015	driver ant	NOUN	yes		army ant, Dorylus	Dorylus (Formicidae)
@@ -824,11 +824,11 @@ H022	tsetse fly	NOUN	yes	E W S C		Glossina (Glossinidae)
 H023	mosquito	NOUN	yes			Culicidae
 H024	maggot	NOUN	yes			Diptera (larva)
 H025	grasshopper	NOUN	yes			Caelifera (Orthoptera)
-H026	locust	NOUN	yes			Acrididae (part)
+H026	locust	NOUN	yes		grasshopper in its swarming phase, travelling in destructive clouds	Acrididae (part)
 H027	cricket	NOUN	yes			Gryllidae
 H028	praying mantis	NOUN	yes			Mantodea
 H029	cockroach	NOUN	yes			Blattodea (part)
-H030	june beetle	NOUN	yes		chafer, brown scarab beetle that flies at night	Melolonthinae (Scarabaeidae)
+H030	chafer	NOUN	yes		brown scarab beetle that flies at night (June beetle)	Melolonthinae (Scarabaeidae)
 H031	dung beetle	NOUN	yes			Scarabaeinae (Scarabaeidae)
 H032	shell (of beetle)	NOUN	yes		wing case, elytra	
 H033	butterfly	NOUN	yes			Papilionoidea (Lepidoptera)
@@ -854,21 +854,21 @@ H052	scorpion	NOUN	yes			Scorpiones
 H053	centipede	NOUN	yes			Chilopoda
 H054	millipede	NOUN	yes			Diplopoda
 H055	snail	NOUN	yes			Gastropoda (part)
-H056	tree snail	NOUN	yes			Gastropoda (part)
-H057	ground snail	NOUN	yes		land snail, e.g. giant African land snail	Stylommatophora (part)
-H058	aquatic snail	NOUN	yes			Gastropoda (part)
-H059	shell (of snail)	NOUN	yes			
-H060	crab	NOUN	yes			Brachyura (Decapoda)
-H061	shrimp	NOUN	yes			Decapoda (part)
-H062	clam	NOUN	yes			Bivalvia (part)
-H063	mussel	NOUN	yes			Bivalvia (part)
+H055b	tree snail	NOUN	no			Gastropoda (part)
+H055c	ground snail	NOUN	no		land snail, e.g. giant African land snail	Stylommatophora (part)
+H055d	aquatic snail	NOUN	no			Gastropoda (part)
+H056	shell (of snail)	NOUN	yes			
+H057	crab	NOUN	yes			Brachyura (Decapoda)
+H058	shrimp	NOUN	yes			Decapoda (part)
+H059	clam	NOUN	yes		rounded bivalve that burrows in sand or mud	Bivalvia (part)
+H060	mussel	NOUN	yes		elongated bivalve that clings to rocks	Bivalvia (part)
 I001	spirit (greater)	NOUN	yes		God, the supreme being	
 I002	spirit (lower)	NOUN	yes		lesser god or spirit	
 I003	spirit (evil)	NOUN	yes			
 I004	soul (human)	NOUN	yes			
 I005	ghost	NOUN	yes			
 I005b	spirit of the dead	NOUN	yes		invisible spirit of a dead person, not a visible ghost	
-I006	heaven	NOUN	yes			
+I006	heaven	NOUN	yes		either heaven, (a) the dwelling of God or the gods above, or (b) paradise, the abode of the blessed dead	
 I007	underworld	NOUN	yes			
 I008	shrine	NOUN	yes			
 I009	altar	NOUN	yes			
@@ -885,9 +885,9 @@ I019	dream	NOUN	yes
 I020	omen	NOUN	yes			
 I021	taboo	NOUN	yes			
 I022	charm	NOUN	yes		amulet	
-I023	lots	NOUN	yes		lots cast for divination	
+I023	lots	NOUN	yes		objects (stones, cowries, bones, sticks) cast for divination	
 I024	evil eye	NOUN	yes	E N		
-I025	witchcraft	NOUN	yes			
+I025	witchcraft	NOUN	yes		harmful mystical power used against others, not divination or healing	
 I026	medicine	NOUN	yes			
 I027	poison	NOUN	yes			
 I028	healing ceremony	NOUN	yes			
@@ -917,7 +917,7 @@ I051	burn	NOUN	yes
 I052	welt	NOUN	yes		raised mark on the skin from a blow	
 I053	bruise	NOUN	yes			
 I054	scar	NOUN	yes			
-I055	blemish	NOUN	yes			
+I055	blemish	NOUN	yes		a mark or spot that spoils the skin, not a moral flaw	
 I056	pimple	NOUN	yes			
 I057	abscess	NOUN	yes			
 I058	swelling	NOUN	yes			
@@ -945,9 +945,9 @@ I075	miscarriage	NOUN	yes
 I076	corpse	NOUN	yes			
 I077	grave	NOUN	yes			
 I077b	cemetery	NOUN	yes			
-I078	funeral	NOUN	yes			
+I078	funeral	NOUN	yes		the burial and the rites around it	
 I079	meeting place	NOUN	yes		where people meet, e.g. under a tree	
-I080	feast	NOUN	yes		festive meal or festival	
+I080	feast	NOUN	yes		either feast, (a) festive meal, or (b) festival	
 I081	wedding	NOUN	yes			
 I082	brideprice	NOUN	yes		bridewealth paid to the bride's family	
 I083	law	NOUN	yes			
@@ -1003,7 +1003,7 @@ J031a	candelabra tree	NOUN	yes	E S	tree euphorbia	Euphorbia (tree-form species) 
 J032	gardenia	NOUN	no	E W S C	savanna gardenia, Gardenia ternifolia or erubescens	Gardenia (G. ternifolia, G. erubescens) (Rubiaceae)
 J032a	gardenia tree	NOUN	yes	E W S C	savanna gardenia, Gardenia ternifolia or erubescens	Gardenia (G. ternifolia, G. erubescens) (Rubiaceae)
 J032b	gardenia fruit	NOUN	yes	E W S C		Gardenia (G. ternifolia, G. erubescens) (Rubiaceae)
-J033	fan palm	NOUN	no	A	Borassus or doum palm	Borasseae (Borassus aethiopum, Hyphaene) (Arecaceae)
+J033	fan palm	NOUN	no	A	either fan palm, (c) Borassus palm, or (d) doum palm (Hyphaene)	Borasseae (Borassus aethiopum, Hyphaene) (Arecaceae)
 J033a	fan palm tree	NOUN	yes	A	Borassus or doum palm	Borasseae (Borassus aethiopum, Hyphaene) (Arecaceae)
 J033b	fan palm fruit	NOUN	yes	A		Borasseae (Borassus aethiopum, Hyphaene) (Arecaceae)
 J034	oil palm	NOUN	no			Elaeis guineensis (Arecaceae)
@@ -1108,7 +1108,7 @@ J082	tuber	NOUN	yes
 J083	potato	NOUN	yes			Solanum tuberosum (Solanaceae)
 J084	cassava	NOUN	yes			Manihot esculenta (Euphorbiaceae)
 J085	yam	NOUN	yes			Dioscorea (Dioscoreaceae)
-J086	cocoyam	NOUN	yes		taro or tannia	Colocasia esculenta, Xanthosoma sagittifolium (Araceae)
+J086	cocoyam	NOUN	yes		either cocoyam, (a) taro (Colocasia), or (b) tannia (Xanthosoma)	Colocasia esculenta, Xanthosoma sagittifolium (Araceae)
 J087	sweet potato	NOUN	yes			Ipomoea batatas (Convolvulaceae)
 J088	onion	NOUN	yes			Allium cepa (Amaryllidaceae)
 J089	garlic	NOUN	yes			Allium sativum (Amaryllidaceae)
@@ -1124,8 +1124,8 @@ J098	cinnamon	NOUN	yes			Cinnamomum (Lauraceae)
 J099	coriander	NOUN	yes			Coriandrum sativum (Apiaceae)
 J100	tobacco	NOUN	yes			Nicotiana tabacum (Solanaceae)
 J101	cannabis	NOUN	yes			Cannabis sativa (Cannabaceae)
-J102	coffee	NOUN	yes			Coffea (Rubiaceae)
-J103	tea	NOUN	yes			Camellia sinensis (Theaceae)
+J102	coffee	NOUN	yes		either coffee, (a) the plant, or (b) the beans or drink	Coffea (Rubiaceae)
+J103	tea	NOUN	yes		either tea, (a) the plant, or (b) the leaves or drink	Camellia sinensis (Theaceae)
 J104	grass	NOUN	yes			
 J105	blade of grass	NOUN	yes			
 J106	weed	NOUN	yes			
@@ -1138,11 +1138,11 @@ J112	food	NOUN	yes
 J113	oil	NOUN	yes			
 J114	traditional bread	NOUN	yes		local staple bread, e.g. injera	
 J115	journey bread	NOUN	yes	E	food for a journey, provisions	
-J116	crust	NOUN	yes			
+J116	crust	NOUN	yes		either crust, (a) of bread, or (b) burnt layer stuck to the pot	
 J117	flour	NOUN	yes			
 J118	salt	NOUN	yes			
 J119	soup	NOUN	yes			
-J120	porridge	NOUN	yes			
+J120	porridge	NOUN	yes		either porridge, (a) stiff porridge eaten with the hand, or (b) thin gruel	
 J121	couscous	NOUN	yes	W N		
 J122	breakfast	NOUN	yes			
 J123	evening meal	NOUN	yes			
@@ -1190,18 +1190,18 @@ K026	granary	NOUN	yes
 K027	cattle pen	NOUN	yes			
 K028	cattle camp	NOUN	yes	E	seasonal camp where herders keep their cattle	
 K029	fence	NOUN	yes			
-K030	fence (see-thru)	NOUN	yes		open lattice fence one can see through	
+K030	fence (see-through)	NOUN	yes		open lattice fence one can see through	
 K031	stake	NOUN	yes		pointed post driven into the ground	
 K032	well	NOUN	yes			
 K033	bathing place	NOUN	yes			
 K034	toilet	NOUN	yes			
-K035	garbage dump	NOUN	yes			
-K036	garbage	NOUN	yes			
+K035	garbage dump	NOUN	yes		rubbish dump, refuse heap	
+K036	garbage	NOUN	yes		rubbish, refuse	
 K037	garden	NOUN	yes			
 K038	farm field	NOUN	yes			
 K038b	field boundary	NOUN	yes			
 K039	village	NOUN	yes			
-K039b	town	NOUN	yes		town or city	
+K039b	town	NOUN	yes		town, smaller than a city (K039c)	
 K039c	city	NOUN	yes			
 K040	camp	NOUN	yes			
 K041	market	NOUN	yes			
@@ -1224,8 +1224,8 @@ K055	lamp	NOUN	yes
 K056	candle	NOUN	yes			
 K057	fan	NOUN	yes		hand fan	
 K058	bell	NOUN	yes			
-K059	broom	NOUN	yes			
-K060	duster	NOUN	yes		cloth or brush for removing dust	
+K059	broom	NOUN	yes		a bundle of sticks used for sweeping	
+K060	duster	NOUN	yes		either duster, (a) dust cloth, or (b) feather duster or brush	
 K061	fireplace	NOUN	yes		hearth, place of the cooking fire	
 K062	firewood	NOUN	yes			
 K063	firebrand	NOUN	yes		burning stick taken from a fire	
@@ -1247,13 +1247,13 @@ K076b	bowl for bread	NOUN	yes	E	serving bowl for bread or injera
 K076c	bowl for stew	NOUN	yes	E	bowl for stew or sauce, e.g. wat	
 K077	bowlring	NOUN	yes		ring stand for a round-bottomed pot	
 K078	plate	NOUN	yes			
-K079	dish	NOUN	yes			
-K080	cup	NOUN	yes			
+K079	dish	NOUN	yes		serving dish, larger than a plate (K078)	
+K080	cup	NOUN	yes		either cup, (a) drinking cup or mug, or (b) small coffee cup	
 K081	pottery shard	NOUN	yes			
 K082	spoon	NOUN	yes			
 K083	ladle	NOUN	yes			
 K084	beer filter	NOUN	yes	A	strainer for sorghum or millet beer	
-K085	handle	NOUN	yes			
+K085	handle	NOUN	yes		either handle, (a) of a tool, or (b) of a pot or basket	
 K086	woven basket	NOUN	yes			
 K087	bucket	NOUN	yes			
 K088	box	NOUN	yes			
@@ -1298,8 +1298,8 @@ K123	string	NOUN	yes
 K123b	thread	NOUN	yes		sewing thread	
 K124	strap	NOUN	yes			
 K125	knot	NOUN	yes		knot tied in rope or string	
-K125b	noose	NOUN	no			
-K125c	slipknot	NOUN	no			
+K125b	noose	NOUN	no		loop that tightens when pulled	
+K125c	slipknot	NOUN	no		knot that comes undone when its free end is pulled (not a noose)	
 K126	chain	NOUN	yes			
 K127	bundle (of sticks)	NOUN	yes			
 K128	heap (of grain)	NOUN	yes			
@@ -1328,7 +1328,7 @@ K146b	harpoon	NOUN	no
 K147	fishhook	NOUN	yes			
 K148	fishing line	NOUN	yes			
 K149	fishing net	NOUN	yes			
-K150	fish trap	NOUN	yes		weir across a stream for catching fish	
+K150	fish trap	NOUN	yes		basket trap set in the water to catch fish (not the dam, K151)	
 K151	fish dam	NOUN	yes			
 K152	boat	NOUN	yes			
 K153	ambatch raft	NOUN	yes	E	raft of ambatch (Aeschynomene) pith wood	
@@ -1400,15 +1400,15 @@ K207	lyre	NOUN	yes	E
 K208	fiddle	NOUN	yes			
 K209	xylophone	NOUN	yes	W	balafon, gourd-resonated xylophone	
 K210	rattle (musical)	NOUN	yes			
-K211	clave	NOUN	yes		pair of sticks struck together	
+K211	clapping sticks	NOUN	yes		pair of sticks struck together (claves)	
 K212	whistle	NOUN	yes			
 K213	mask	NOUN	yes			
 K214	tobacco pipe	NOUN	yes			
 K215	pipe-stem	NOUN	yes			
-K216	bong	NOUN	yes	E	water pipe for smoking tobacco	
-K216a	bong downstem	NOUN	yes	E	tube from the bowl down into the water	
-K216b	bong cap	NOUN	yes	E	bowl on top holding the tobacco	
-K216c	bong straw	NOUN	yes	E	tube for drawing the smoke	
+K216	water pipe	NOUN	yes	E	water pipe for smoking tobacco (hookah, bong)	
+K216a	water pipe downstem	NOUN	yes	E	tube from the bowl down into the water	
+K216b	water pipe bowl	NOUN	yes	E	bowl on top holding the tobacco	
+K216c	water pipe mouthpiece	NOUN	yes	E	tube for drawing the smoke	
 K217	toy ring	NOUN	yes		a rolling hoop, pushed along with a stick	
 K218	ball	NOUN	yes			
 K219	mancala	NOUN	yes	A	pit-and-pebble board game (gebeta, bao, oware)	
@@ -1419,7 +1419,7 @@ L004	day	NOUN	yes		24-hour day
 L005	moon	NOUN	yes			
 L006	month	NOUN	yes			
 L007	full moon	NOUN	yes			
-L008	new moon	NOUN	yes			
+L008	new moon	NOUN	yes		either new moon, (a) dark moon, not visible, or (b) first visible crescent	
 L009	eclipse	NOUN	no		of sun or moon	
 L009a	solar eclipse	NOUN	yes			
 L009b	lunar eclipse	NOUN	yes			
@@ -1507,7 +1507,7 @@ L080	swamp	NOUN	yes
 L081	wave	NOUN	yes			
 L082	bubble	NOUN	yes			
 L083	foam	NOUN	yes			
-L084	slime (organic)	NOUN	yes			
+L084	slime (organic)	NOUN	yes		either slime, (a) slimy film of algae on water or stones, or (b) slime of a snail, fish or frog	
 L085	world	NOUN	yes			
 L086	place	NOUN	yes			
 L087	ground	NOUN	yes			
@@ -1536,7 +1536,7 @@ L106	cliff	NOUN	yes
 L107	valley	NOUN	yes			
 L108	ditch	NOUN	yes			
 L109	pit	NOUN	yes			
-L110	hole	NOUN	yes			
+L110	hole	NOUN	yes		either hole, (c) hole in the ground, or (d) hole through something, perforation; a pit is L109	
 L110b	den	NOUN	yes		animal den, lair or burrow	
 L111	sinkhole	NOUN	yes		natural collapse hole in the ground	
 L112	crevice	NOUN	yes			
@@ -1603,8 +1603,8 @@ N020	inside	PREP	yes
 N021	outside	PREP	yes			
 N022	between	PREP	yes			
 N023	towards	PREP	yes			
-N024	away from	PREP	yes			
-N025	with	PREP	yes			
+N024	away from	PREP	yes		either away from, (a) moving away from a place, or (b) far from, at a distance from	
+N025	with	PREP	yes		either with, (a) together with someone, or (b) by means of, using	
 N026	at	PREP	yes		general locative, at a place	
 N027	ereyesterday	NOUN	yes		day before yesterday	
 N028	yesterday	NOUN	yes			
@@ -1628,7 +1628,7 @@ O001	yes	INTERJ	yes
 O002	no	INTERJ	yes		negative answer, opposite of yes	
 O003	not	NEG	no		negator	
 O004	and	CONJ	yes			
-O005	if	CONJ	yes			
+O005	if	CONJ	yes		either if, (a) real condition, or (b) unreal, counterfactual condition	
 O006	because	CONJ	yes			
 O007	perhaps	ADVERB	yes			
 O008	really	ADVERB	yes		truly	
@@ -1637,230 +1637,227 @@ O009b	whole	QUANT	yes		entire
 O009c	everybody	QUANT	yes			
 O009d	everything	QUANT	yes			
 O009e	everywhere	ADVERB	yes			
-O010	many	QUANT	yes			
-O011	some	QUANT	yes			
-O011b	someone	PRONOUN	no			
-O011c	something	PRONOUN	no			
-O012	none	QUANT	yes			
-O013	both	QUANT	yes			
-O014	half	QUANT	yes			
-O014b	piece	NOUN	yes			
-O015	only	ADVERB	yes			
-P001	be big	ADJECTIVE	yes			
+O010	some	QUANT	yes			
+O010b	someone	PRONOUN	no			
+O010c	something	PRONOUN	no			
+O011	none	QUANT	yes		either none, (a) nobody, or (b) nothing	
+O012	both	QUANT	yes			
+O013	half	QUANT	yes			
+O013b	piece	NOUN	yes			
+O014	only	ADVERB	yes			
+P001	(be) big	ADJECTIVE	yes			
 P001b	size	NOUN	yes			
-P002	be small	ADJECTIVE	yes			
-P003	be tall	ADJECTIVE	yes			
-P004	be short	ADJECTIVE	yes			
-P005	be high	ADJECTIVE	yes			
-P006	be low	ADJECTIVE	yes			
-P007	be deep	ADJECTIVE	yes			
-P008	be shallow	ADJECTIVE	yes			
-P009	be wide	ADJECTIVE	yes			
-P010	be narrow	ADJECTIVE	yes			
-P011	be thin	ADJECTIVE	yes		not thick (of objects)	
-P012	be heavy	ADJECTIVE	yes			
+P002	(be) small	ADJECTIVE	yes			
+P003	(be) tall	ADJECTIVE	yes			
+P004	(be) short	ADJECTIVE	yes			
+P005	(be) high	ADJECTIVE	yes			
+P006	(be) low	ADJECTIVE	yes			
+P007	(be) deep	ADJECTIVE	yes			
+P008	(be) shallow	ADJECTIVE	yes			
+P009	(be) wide	ADJECTIVE	yes			
+P010	(be) narrow	ADJECTIVE	yes			
+P011	(be) thin	ADJECTIVE	yes		not thick (of objects)	
+P012	(be) heavy	ADJECTIVE	yes			
 P012b	weight	NOUN	yes			
-P013	be lightweight	ADJECTIVE	yes			
-P014	be many	ADJECTIVE	yes			
-P014b	be abundant	ADJECTIVE	yes			
-P015	be few	ADJECTIVE	yes			
-P016	be enough	ADJECTIVE	yes			
-P017	be used up	ADJECTIVE	yes			
-P018	be scarce	ADJECTIVE	yes			
-P019	be equal	ADJECTIVE	yes			
-P020	be greater	ADJECTIVE	yes		be more than, exceed (comparative)	
-P021	be comparable	ADJECTIVE	yes		be similar, alike	
-P022	be identical	ADJECTIVE	yes			
-P023	be different	ADJECTIVE	yes			
+P013	(be) lightweight	ADJECTIVE	yes			
+P014	(be) many	ADJECTIVE	yes			
+P014b	(be) abundant	ADJECTIVE	yes			
+P015	(be) few	ADJECTIVE	yes			
+P016	(be) enough	ADJECTIVE	yes			
+P017	(be) used up	ADJECTIVE	yes			
+P018	(be) scarce	ADJECTIVE	yes			
+P019	(be) equal	ADJECTIVE	yes			
+P020	(be) greater	ADJECTIVE	yes		be more than, exceed (comparative)	
+P021	(be) comparable	ADJECTIVE	yes		be similar, alike	
+P022	(be) identical	ADJECTIVE	yes			
+P023	(be) different	ADJECTIVE	yes			
 P023b	other	QUANT	yes			
-P024	be last	ADJECTIVE	yes			
-P024b	last	QUANT	yes		final, opposite of first	
-P025	be various	ADJECTIVE	yes		be of several kinds, assorted	
-P026	be flat	ADJECTIVE	yes			
-P027	be round	ADJECTIVE	yes			
-P028	be straight	ADJECTIVE	yes			
-P029	be crooked	ADJECTIVE	yes			
-P030	be hollow	ADJECTIVE	yes			
-P031	be hard	ADJECTIVE	yes			
-P032	be soft	ADJECTIVE	yes			
-P033	be tender	ADJECTIVE	yes		soft to chew (meat, young leaves)	
-P034	be sharp	ADJECTIVE	yes		having a cutting edge (as a knife)	
-P035	be blunt	ADJECTIVE	yes			
-P036	be rough	ADJECTIVE	yes			
-P037	be smooth	ADJECTIVE	yes			
-P038	be slippery	ADJECTIVE	yes			
-P039	be sticky	ADJECTIVE	yes			
-P040	be open	ADJECTIVE	yes			
-P041	be closed	ADJECTIVE	yes			
-P042	be tight	ADJECTIVE	yes			
-P043	be loose	ADJECTIVE	yes			
-P044	be full	ADJECTIVE	yes			
-P045	be empty	ADJECTIVE	yes			
-P046	be torn	ADJECTIVE	yes			
-P047	be new	ADJECTIVE	yes			
-P048	be old (not new)	ADJECTIVE	yes			
-P049	be tattered	ADJECTIVE	yes		worn to rags (of cloth)	
-P050	be ruined	ADJECTIVE	yes		damaged, spoiled (not of food)	
-P051	be clean	ADJECTIVE	yes			
-P052	be dirty	ADJECTIVE	yes			
-P053	be wet	ADJECTIVE	yes			
-P054	be dry	ADJECTIVE	yes			
-P055	be hot (objects)	ADJECTIVE	yes			
-P056	be cold (objects)	ADJECTIVE	yes			
-P057	be ripe	ADJECTIVE	yes			
-P058	be unripe	ADJECTIVE	yes			
-P059	be rotten	ADJECTIVE	yes			
-P060	be shrivelled	ADJECTIVE	yes			
-P061	be fertile (land)	ADJECTIVE	yes			
-P062	be infertile (land)	ADJECTIVE	yes			
+P024	(be) last	ADJECTIVE	yes			
+P025	(be) various	ADJECTIVE	yes		be of several kinds, assorted	
+P026	(be) flat	ADJECTIVE	yes			
+P027	(be) round	ADJECTIVE	yes			
+P028	(be) straight	ADJECTIVE	yes			
+P029	(be) crooked	ADJECTIVE	yes			
+P030	(be) hollow	ADJECTIVE	yes			
+P031	(be) hard	ADJECTIVE	yes			
+P032	(be) soft	ADJECTIVE	yes			
+P033	(be) tender	ADJECTIVE	yes		soft to chew (meat, young leaves)	
+P034	(be) sharp	ADJECTIVE	yes		having a cutting edge (as a knife)	
+P035	(be) blunt	ADJECTIVE	yes			
+P036	(be) rough	ADJECTIVE	yes			
+P037	(be) smooth	ADJECTIVE	yes			
+P038	(be) slippery	ADJECTIVE	yes			
+P039	(be) sticky	ADJECTIVE	yes			
+P040	(be) open	ADJECTIVE	yes			
+P041	(be) closed	ADJECTIVE	yes			
+P042	(be) tight	ADJECTIVE	yes			
+P043	(be) loose	ADJECTIVE	yes			
+P044	(be) full	ADJECTIVE	yes			
+P045	(be) empty	ADJECTIVE	yes			
+P046	(be) torn	ADJECTIVE	yes			
+P047	(be) new	ADJECTIVE	yes			
+P048	(be) old (not new)	ADJECTIVE	yes			
+P049	(be) tattered	ADJECTIVE	yes		worn to rags (of cloth)	
+P050	(be) ruined	ADJECTIVE	yes		damaged, spoiled (not of food)	
+P051	(be) clean	ADJECTIVE	yes			
+P052	(be) dirty	ADJECTIVE	yes			
+P053	(be) wet	ADJECTIVE	yes			
+P054	(be) dry	ADJECTIVE	yes			
+P055	(be) hot (objects)	ADJECTIVE	yes			
+P056	(be) cold (objects)	ADJECTIVE	yes			
+P057	(be) ripe	ADJECTIVE	yes			
+P058	(be) unripe	ADJECTIVE	yes			
+P059	(be) rotten	ADJECTIVE	yes			
+P060	(be) shrivelled	ADJECTIVE	yes			
+P061	(be) fertile (land)	ADJECTIVE	yes			
+P062	(be) infertile (land)	ADJECTIVE	yes			
 P063	colour	NOUN	yes			
-P064	be red	ADJECTIVE	yes			
+P064	(be) red	ADJECTIVE	yes			
 P064a	red thing	NOUN	yes			
 P064b	very (red)	ADVERB	yes	E	intensified form, often an ideophone	
-P065	be black	ADJECTIVE	yes			
+P065	(be) black	ADJECTIVE	yes			
 P065a	black thing	NOUN	yes			
 P065b	very (black)	ADVERB	yes	E	intensified form, often an ideophone	
-P065c	be dark coloured	ADJECTIVE	yes		of a dark shade, any hue	
-P066	be white	ADJECTIVE	yes			
+P065c	(be) dark coloured	ADJECTIVE	yes		of a dark shade, any hue	
+P066	(be) white	ADJECTIVE	yes			
 P066a	white thing	NOUN	yes			
 P066b	very (white)	ADVERB	yes	E	intensified form, often an ideophone	
-P066c	be light coloured	ADJECTIVE	yes		of a pale shade, any hue	
-P067	be green	ADJECTIVE	yes			
+P066c	(be) light coloured	ADJECTIVE	yes		of a pale shade, any hue	
+P067	(be) green	ADJECTIVE	yes			
 P067a	green thing	NOUN	yes			
 P067b	very (green)	ADVERB	yes	E	intensified form, often an ideophone	
-P068	be yellow	ADJECTIVE	yes			
-P069	be blue	ADJECTIVE	yes			
-P070	be brown	ADJECTIVE	yes			
-P071	be spotted	ADJECTIVE	yes			
+P068	(be) yellow	ADJECTIVE	yes			
+P069	(be) blue	ADJECTIVE	yes			
+P070	(be) brown	ADJECTIVE	yes			
+P071	(be) spotted	ADJECTIVE	yes			
 P071b	very (spotted)	ADVERB	yes	E	intensified form, often an ideophone	
-P072	be solid coloured	ADJECTIVE	yes	E	of one colour, without markings (of hides)	
-P073	be piebald	ADJECTIVE	yes	E	patched black and white (of animals)	
-P074	be savory	ADJECTIVE	yes		tasty, delicious	
-P075	be sweet	ADJECTIVE	yes			
-P076	be sour	ADJECTIVE	yes			
-P077	be bitter	ADJECTIVE	yes			
-P078	be salty	ADJECTIVE	yes			
+P072	(be) solid coloured	ADJECTIVE	yes	E	of one colour, without markings (of hides)	
+P073	(be) piebald	ADJECTIVE	yes	E	patched black and white (of animals)	
+P074	(be) savoury	ADJECTIVE	yes		tasty, delicious	
+P075	(be) sweet	ADJECTIVE	yes			
+P076	(be) sour	ADJECTIVE	yes			
+P077	(be) bitter	ADJECTIVE	yes			
+P078	(be) salty	ADJECTIVE	yes			
 P079	smell bad	ADJECTIVE	yes			
 P079b	odour	NOUN	yes		a bad smell	
 P080	smell good	ADJECTIVE	yes			
 P080b	aroma	NOUN	yes			
-P081	be fast	ADJECTIVE	yes			
+P081	(be) fast	ADJECTIVE	yes			
 P081b	speed	NOUN	yes			
-P082	be slow	ADJECTIVE	yes			
-P083	be hot (person)	ADJECTIVE	yes			
-P084	be hungry	ADJECTIVE	yes			
+P082	(be) slow	ADJECTIVE	yes			
+P083	(be) hot (person)	ADJECTIVE	yes			
+P084	(be) hungry	ADJECTIVE	yes			
 P084b	hunger	NOUN	yes			
-P085	be thirsty	ADJECTIVE	yes			
+P085	(be) thirsty	ADJECTIVE	yes			
 P085b	thirst	NOUN	yes			
-P086	be sated	ADJECTIVE	yes		full after eating	
-P087	be tired	ADJECTIVE	yes			
+P086	(be) sated	ADJECTIVE	yes		full after eating	
+P087	(be) tired	ADJECTIVE	yes			
 P087b	tiredness	NOUN	yes			
-P088	be sleepy	ADJECTIVE	yes			
+P088	(be) sleepy	ADJECTIVE	yes			
 P088b	sleepiness	NOUN	yes			
-P089	be awake	ADJECTIVE	yes			
-P090	be drunk	ADJECTIVE	yes			
-P091	be dizzy	ADJECTIVE	yes			
-P092	be naked	ADJECTIVE	yes			
-P093	be healthy	ADJECTIVE	yes			
+P089	(be) awake	ADJECTIVE	yes			
+P090	(be) drunk	ADJECTIVE	yes			
+P091	(be) dizzy	ADJECTIVE	yes			
+P092	(be) naked	ADJECTIVE	yes			
+P093	(be) healthy	ADJECTIVE	yes			
 P093b	health	NOUN	yes			
-P094	be sick	ADJECTIVE	yes			
-P095	be ill	ADJECTIVE	yes			
-P096	be strong	ADJECTIVE	yes			
-P096b	strength	NOUN	yes			
-P096c	be powerful	ADJECTIVE	no		great, mighty	
-P096d	glory	NOUN	no		splendour	
-P097	be muscular	ADJECTIVE	yes			
-P098	be weak	ADJECTIVE	yes			
-P098b	weakness	NOUN	yes			
-P099	be fat	ADJECTIVE	yes			
-P100	be skinny	ADJECTIVE	yes			
-P101	be emaciated	ADJECTIVE	yes		extremely thin, wasted	
-P102	be lame	ADJECTIVE	yes		crippled, walking with a limp	
-P103	be blind	ADJECTIVE	yes			
-P103b	blindness	NOUN	yes			
-P104	be myopic	ADJECTIVE	yes		short-sighted	
-P105	be mute	ADJECTIVE	yes			
-P106	be bald	ADJECTIVE	yes			
-P107	be impotent	ADJECTIVE	yes		unable to have sex (of a man)	
-P108	be alive	ADJECTIVE	yes			
-P109	be dead	ADJECTIVE	yes			
-P110	be young	ADJECTIVE	yes			
-P111	be old (not young)	ADJECTIVE	yes			
-P112	be happy	ADJECTIVE	yes			
-P112b	happiness	NOUN	yes			
-P113	be sad	ADJECTIVE	yes			
-P113b	sadness	NOUN	yes			
-P114	be angry	ADJECTIVE	yes			
-P114b	anger	NOUN	yes			
-P115	be afraid	ADJECTIVE	yes			
-P115b	fear	NOUN	yes			
-P116	be proud	ADJECTIVE	yes			
-P116b	pride	NOUN	yes			
-P117	be jealous	ADJECTIVE	yes			
-P117b	jealousy	NOUN	yes			
-P118	be shy	ADJECTIVE	yes			
-P118b	shame	NOUN	yes			
-P119	be bored	ADJECTIVE	yes			
-P120	be restless	ADJECTIVE	yes			
-P121	be eager	ADJECTIVE	yes			
-P122	be curious	ADJECTIVE	yes		inquisitive, eager to know	
-P123	be alone	ADJECTIVE	yes			
-P124	be brave	ADJECTIVE	yes			
-P124b	bravery	NOUN	yes			
-P125	be kind	ADJECTIVE	yes			
-P125b	kindness	NOUN	yes			
-P125c	pity	NOUN	yes		compassion	
-P126	be generous	ADJECTIVE	yes			
-P127	be selfish	ADJECTIVE	yes			
-P128	be honest	ADJECTIVE	yes			
-P129	be just	ADJECTIVE	no		fair, righteous	
-P129b	justice	NOUN	no			
-P130	be corrupt	ADJECTIVE	yes			
-P131	be wicked	ADJECTIVE	yes			
-P132	be fierce	ADJECTIVE	yes			
-P133	be lazy	ADJECTIVE	yes			
-P133b	laziness	NOUN	yes			
-P134	be patient	ADJECTIVE	yes			
-P134b	patience	NOUN	yes			
-P135	be impatient	ADJECTIVE	yes			
-P136	be stubborn	ADJECTIVE	yes			
-P136b	stubbornness	NOUN	yes			
-P137	be wise	ADJECTIVE	yes			
-P138	be intelligent	ADJECTIVE	yes			
-P139	be foolish	ADJECTIVE	yes			
-P139b	foolishness	NOUN	yes			
-P140	be confused	ADJECTIVE	yes			
-P141	be ignorant	ADJECTIVE	yes		lacking knowledge, unaware	
-P142	be skilled	ADJECTIVE	yes			
-P143	be able	ADJECTIVE	yes			
-P143b	ability	NOUN	yes			
-P144	be eloquent	ADJECTIVE	yes			
-P145	be silent	ADJECTIVE	yes			
-P146	be good	ADJECTIVE	yes			
-P146b	be perfect	ADJECTIVE	no			
-P146c	properly	ADVERB	no		well, in a good way (adverb)	
-P146d	perfection	NOUN	no			
-P147	be bad	ADJECTIVE	yes			
-P147b	badly	ADVERB	no		poorly, in a bad way (adverb)	
-P148	be correct	ADJECTIVE	yes			
-P149	be wrong	ADJECTIVE	yes			
-P150	be guilty	ADJECTIVE	yes			
-P151	be innocent	ADJECTIVE	yes			
-P152	be beautiful	ADJECTIVE	yes			
-P153	be ugly	ADJECTIVE	yes			
-P154	be important	ADJECTIVE	yes			
-P155	be amusing	ADJECTIVE	yes			
-P156	be easy	ADJECTIVE	yes			
-P157	be difficult	ADJECTIVE	yes			
-P158	be rich	ADJECTIVE	yes			
-P159	be poor	ADJECTIVE	yes			
-P160	be expensive	ADJECTIVE	yes			
-P161	be inexpensive	ADJECTIVE	yes			
-P162	be lost	ADJECTIVE	yes			
-P163	be absent	ADJECTIVE	yes			
-P164	be near here	ADJECTIVE	yes		near the speaker	
-P165	be near there	ADJECTIVE	yes		near a place away from the speaker	
-P166	be far	ADJECTIVE	yes			
+P094	(be) sick	ADJECTIVE	yes			
+P095	(be) strong	ADJECTIVE	yes			
+P095b	strength	NOUN	yes			
+P095c	(be) powerful	ADJECTIVE	no		great, mighty	
+P095d	glory	NOUN	no		splendour	
+P096	(be) muscular	ADJECTIVE	yes			
+P097	(be) weak	ADJECTIVE	yes			
+P097b	weakness	NOUN	yes			
+P098	(be) fat	ADJECTIVE	yes			
+P099	(be) skinny	ADJECTIVE	yes			
+P100	(be) emaciated	ADJECTIVE	yes		extremely thin, wasted	
+P101	(be) lame	ADJECTIVE	yes		crippled, walking with a limp	
+P102	(be) blind	ADJECTIVE	yes			
+P102b	blindness	NOUN	yes			
+P103	(be) myopic	ADJECTIVE	yes		short-sighted	
+P104	(be) mute	ADJECTIVE	yes			
+P105	(be) bald	ADJECTIVE	yes			
+P106	(be) impotent	ADJECTIVE	yes		unable to have sex (of a man)	
+P107	(be) alive	ADJECTIVE	yes			
+P108	(be) dead	ADJECTIVE	yes			
+P109	(be) young	ADJECTIVE	yes			
+P110	(be) old (not young)	ADJECTIVE	yes			
+P111	(be) happy	ADJECTIVE	yes			
+P111b	happiness	NOUN	yes			
+P112	(be) sad	ADJECTIVE	yes			
+P112b	sadness	NOUN	yes			
+P113	(be) angry	ADJECTIVE	yes			
+P113b	anger	NOUN	yes			
+P114	(be) afraid	ADJECTIVE	yes			
+P114b	fear	NOUN	yes			
+P115	(be) proud	ADJECTIVE	yes			
+P115b	pride	NOUN	yes			
+P116	(be) jealous	ADJECTIVE	yes			
+P116b	jealousy	NOUN	yes			
+P117	(be) shy	ADJECTIVE	yes			
+P117b	shame	NOUN	yes			
+P118	(be) bored	ADJECTIVE	yes			
+P119	(be) restless	ADJECTIVE	yes			
+P120	(be) eager	ADJECTIVE	yes			
+P121	(be) curious	ADJECTIVE	yes		inquisitive, eager to know	
+P122	(be) alone	ADJECTIVE	yes			
+P123	(be) brave	ADJECTIVE	yes			
+P123b	bravery	NOUN	yes			
+P124	(be) kind	ADJECTIVE	yes			
+P124b	kindness	NOUN	yes			
+P124c	pity	NOUN	yes		compassion	
+P125	(be) generous	ADJECTIVE	yes			
+P126	(be) selfish	ADJECTIVE	yes			
+P127	(be) honest	ADJECTIVE	yes			
+P128	(be) just	ADJECTIVE	no		fair, righteous	
+P128b	justice	NOUN	no			
+P129	(be) corrupt	ADJECTIVE	yes			
+P130	(be) wicked	ADJECTIVE	yes			
+P131	(be) fierce	ADJECTIVE	yes			
+P132	(be) lazy	ADJECTIVE	yes			
+P132b	laziness	NOUN	yes			
+P133	(be) patient	ADJECTIVE	yes			
+P133b	patience	NOUN	yes			
+P134	(be) impatient	ADJECTIVE	yes			
+P135	(be) stubborn	ADJECTIVE	yes			
+P135b	stubbornness	NOUN	yes			
+P136	(be) wise	ADJECTIVE	yes			
+P137	(be) intelligent	ADJECTIVE	yes			
+P138	(be) foolish	ADJECTIVE	yes			
+P138b	foolishness	NOUN	yes			
+P139	(be) confused	ADJECTIVE	yes			
+P140	(be) ignorant	ADJECTIVE	yes		lacking knowledge, unaware	
+P141	(be) skilled	ADJECTIVE	yes			
+P142	(be) able	ADJECTIVE	yes			
+P142b	ability	NOUN	yes			
+P143	(be) eloquent	ADJECTIVE	yes			
+P144	(be) silent	ADJECTIVE	yes			
+P145	(be) good	ADJECTIVE	yes			
+P145b	(be) perfect	ADJECTIVE	no			
+P145c	properly	ADVERB	no		well, in a good way (adverb)	
+P145d	perfection	NOUN	no			
+P146	(be) bad	ADJECTIVE	yes			
+P146b	badly	ADVERB	no		poorly, in a bad way (adverb)	
+P147	(be) correct	ADJECTIVE	yes			
+P148	(be) wrong	ADJECTIVE	yes			
+P149	(be) guilty	ADJECTIVE	yes			
+P150	(be) innocent	ADJECTIVE	yes			
+P151	(be) beautiful	ADJECTIVE	yes			
+P152	(be) ugly	ADJECTIVE	yes			
+P153	(be) important	ADJECTIVE	yes			
+P154	(be) amusing	ADJECTIVE	yes			
+P155	(be) easy	ADJECTIVE	yes			
+P156	(be) difficult	ADJECTIVE	yes			
+P157	(be) rich	ADJECTIVE	yes			
+P158	(be) poor	ADJECTIVE	yes			
+P159	(be) expensive	ADJECTIVE	yes			
+P160	(be) inexpensive	ADJECTIVE	yes			
+P161	(be) lost	ADJECTIVE	yes			
+P162	(be) absent	ADJECTIVE	yes			
+P163	(be) near here	ADJECTIVE	yes		near the speaker	
+P164	(be) near there	ADJECTIVE	yes		near a place away from the speaker	
+P165	(be) far	ADJECTIVE	yes			
 Q001	one	QUANT	yes			
 Q001b	first	QUANT	yes			
 Q001c	once	ADVERB	yes		one time, not formerly	
@@ -1914,13 +1911,13 @@ Q1000	one-thousand	QUANT	yes
 Q2000	two-thousand	QUANT	yes			
 Q1736	one-thousand seven-hundred thirty-six	QUANT	yes			
 R1SG	I	PRONOUN	yes			
-R1DU	we two	PRONOUN	no			
+R1DU	we two	PRONOUN	no		dual, unspecified for clusivity	
 R1DUIN	we two (you and I)	PRONOUN	no		dual inclusive	
 R1DUEX	we two (not you)	PRONOUN	no		dual exclusive	
 R1PC	we (few)	PRONOUN	no		paucal	
 R1PL	we	PRONOUN	yes			
-R1PLIN	we (and you)	PRONOUN	no			
-R1PLEX	we (not you)	PRONOUN	no			
+R1PLIN	we (and you)	PRONOUN	no		plural inclusive: the speaker, the addressee(s) and others	
+R1PLEX	we (not you)	PRONOUN	no		plural exclusive: the speaker and others, not the addressee(s)	
 R2SG	you	PRONOUN	yes			
 R2SGM	you (male)	PRONOUN	no			
 R2SGF	you (female)	PRONOUN	no			
@@ -1944,17 +1941,17 @@ R3PLF	they (female)	PRONOUN	no
 R3PLN	they (neuter)	PRONOUN	no		neuter or non-human	
 R3PLLOG	they (logophoric)	PRONOUN	no		refer back to the reported speakers	
 R1SGPOSS	my	PRONOUN	no		independent possessive	
-R2SGPOSS	your (singular)	PRONOUN	no			
-R3SGPOSS	his or her	PRONOUN	no			
-R1PLPOSS	our	PRONOUN	no			
-R2PLPOSS	your (plural)	PRONOUN	no			
-R3PLPOSS	their	PRONOUN	no			
+R2SGPOSS	your (singular)	PRONOUN	no		independent possessive	
+R3SGPOSS	his or her	PRONOUN	no		independent possessive	
+R1PLPOSS	our	PRONOUN	no		independent possessive	
+R2PLPOSS	your (plural)	PRONOUN	no		independent possessive	
+R3PLPOSS	their	PRONOUN	no		independent possessive	
 RREFL	self	PRONOUN	yes		reflexive	
 RRECP	each other	PRONOUN	no		reciprocal	
 RLOCDPRX	here	DEM	yes			
 RLOCDADR	there (near you)	DEM	no		near the addressee	
 RLOCDMED	there (nearby)	DEM	no		medial distance: between near and far	
-RLOCDDST	there	DEM	yes			
+RLOCDDST	there	DEM	yes		distal: away from the speaker	
 RLOCDREM	yonder (out of sight)	DEM	no		remote: far away or out of sight	
 R3SGDPRX	this	DEM	yes			
 R3SGDADR	that (near you)	DEM	no		near the addressee	
@@ -1978,7 +1975,7 @@ RQMAN	how	INTERROG	yes
 RQQNT	how many	INTERROG	yes			
 V001	to be	VERB	yes		copula, as in X is Y	
 V002	to exist	VERB	yes			
-V003	to exist apart	VERB	yes			
+V003	to exist apart	VERB	yes		be separate, exist apart from others	
 V004	to not exist	VERB	yes			
 V005	to become	VERB	yes			
 V006	to have	VERB	yes			
@@ -2018,8 +2015,8 @@ V038	to turn round	VERB	yes
 V039	to swing	VERB	yes			
 V040	to slide	VERB	yes			
 V041	to roll	VERB	yes			
-V042	to swim on	VERB	yes			
-V043	to swim in	VERB	yes			
+V042	to swim on	VERB	yes		swim on the surface or wade	
+V043	to swim in	VERB	yes		under the water, as a fish	
 V044	to dive	VERB	yes			
 V045	to float	VERB	yes			
 V046	to sink	VERB	yes			
@@ -2031,7 +2028,7 @@ V050b	to alight	VERB	yes		land, of a bird
 V051	to paddle	VERB	yes			
 V052	to bale out (canoe)	VERB	yes		scoop water out of a canoe	
 V053	to capsize	VERB	yes			
-V054	to ride	VERB	yes			
+V054	to ride	VERB	yes		either ride, (a) on an animal, or (b) in a vehicle	
 V055	to steer	VERB	yes		guide a canoe, vehicle or animal; drive	
 V056	to dwell	VERB	yes			
 V057	to stay	VERB	yes			
@@ -2084,7 +2081,7 @@ V103	to be hurt	VERB	yes		get injured
 V104	to cause hurt	VERB	yes			
 V105	to be healed	VERB	yes			
 V106	to cause healing	VERB	yes			
-V107	to revive	VERB	yes			
+V107	to revive	VERB	yes		either (a) regain consciousness, or (b) come back to life	
 V108	to bark (dog)	VERB	yes			
 V109	to growl	VERB	yes			
 V110	to bare (the teeth)	VERB	yes			
@@ -2112,8 +2109,8 @@ V131	to swell	VERB	yes
 V132	to spread (fire)	VERB	yes			
 V133	to shine	VERB	yes			
 V134	to fade	VERB	yes		lose brightness or colour	
-V135	to become bright	VERB	yes			
-V136	to become dark	VERB	yes			
+V135	to become bright	VERB	yes		either (a) grow light, as the sky at dawn, or (b) become brighter, of a colour	
+V136	to become dark	VERB	yes		either (a) grow dark, as the sky at nightfall, or (b) become darker, of a colour	
 V137	to become dry	VERB	yes			
 V138	to burn	VERB	yes			
 V139	to smolder	VERB	yes			
@@ -2121,7 +2118,7 @@ V140	to melt	VERB	yes
 V141	to freeze	VERB	yes	E N S	turn to ice	
 V142	to singe	VERB	yes			
 V143	to rustle (leaves)	VERB	yes			
-V144	to squeak	VERB	yes			
+V144	to squeak	VERB	yes		either (a) squeak, of an animal such as a mouse, or (b) creak, of a door or hinge	
 V145	to blow (of wind)	VERB	yes			
 V146	to blow down	VERB	yes			
 V147	to blow away	VERB	yes			
@@ -2166,7 +2163,7 @@ V181	to pull	VERB	yes
 V182	to drag	VERB	yes			
 V183	to rub	VERB	yes			
 V184	to scrape	VERB	yes			
-V185	to scratch	VERB	yes			
+V185	to scratch	VERB	yes		either scratch, (a) an itch, or (b) with claws or nails, leaving a mark	
 V186	to shake	VERB	yes			
 V187	to crush	VERB	yes			
 V188	to stab	VERB	yes			
@@ -2195,8 +2192,8 @@ V210	to load	VERB	yes
 V211	to unload	VERB	yes			
 V212	to bring	VERB	yes			
 V213	to give	VERB	yes			
-V214	to lend	VERB	yes			
-V215	to borrow	VERB	yes			
+V214	to lend	VERB	yes		either lend, (a) an object, returned itself, or (b) money, repaid	
+V215	to borrow	VERB	yes		either borrow, (a) an object, returned itself, or (b) money, repaid	
 V216	to offer	VERB	yes			
 V217	to accept	VERB	yes			
 V218	to reject	VERB	yes			
@@ -2228,7 +2225,7 @@ V242	to coil (rope)	VERB	yes
 V243	to stretch (hide)	VERB	yes		stretch an animal skin	
 V244	to spread out	VERB	yes			
 V245	to hang	VERB	yes			
-V246	to turn something	VERB	yes			
+V246	to turn something	VERB	yes		either turn something, (a) over, or (b) around	
 V247	to open	VERB	yes			
 V248	to shut	VERB	yes			
 V249	to cover	VERB	yes			
@@ -2236,11 +2233,11 @@ V250	to uncover	VERB	yes
 V251	to stop up	VERB	yes		plug or block an opening	
 V252	to wrap	VERB	yes			
 V253	to unwrap	VERB	yes			
-V254	to pack in	VERB	yes			
+V254	to pack in	VERB	yes		put things into a container or bag, pressing them in	
 V255	to fill	VERB	yes			
 V256	to take out (from container)	VERB	yes			
 V257	to pour	VERB	yes			
-V258	to spill	VERB	yes			
+V258	to spill	VERB	yes		let a liquid fall out by accident	
 V259	to put on (clothing)	VERB	yes			
 V260	to take off (clothing)	VERB	yes			
 V261	to bathe	VERB	yes			
@@ -2259,7 +2256,7 @@ V273	to mix	VERB	yes
 V274	to stir	VERB	yes			
 V275	to strain (food)	VERB	yes			
 V276	to pound	VERB	yes			
-V277	to pulverise	VERB	yes			
+V277	to pulverize	VERB	yes			
 V278	to grind (first pass)	VERB	yes	A	first, coarse grinding on a grinding stone	
 V279	to grind (second pass)	VERB	yes	A	second, finer grinding	
 V280	to grind (third pass)	VERB	yes	A	third, finest grinding	
@@ -2267,7 +2264,7 @@ V281	to knead	VERB	yes
 V282	to shape (bread)	VERB	yes			
 V283	to pluck (feathers)	VERB	yes			
 V284	to cook	VERB	yes			
-V285	to boil	VERB	yes			
+V285	to boil	VERB	yes		either boil, (a) of a liquid, bubble with heat, or (b) cook something in boiling water	
 V286	to simmer	VERB	yes			
 V287	to stew	VERB	yes			
 V288	to roast	VERB	yes			
@@ -2279,7 +2276,7 @@ V293	to spoil (of food)	VERB	yes
 V294	to do	VERB	yes			
 V294b	work	NOUN	yes			
 V295	to make	VERB	yes			
-V295b	creation	NOUN	yes			
+V295b	creation	NOUN	yes		the act of making or creating, not the created world	
 V296	to build	VERB	yes			
 V297	to repair	VERB	yes			
 V298	to replace	VERB	yes			
@@ -2289,7 +2286,7 @@ V301	to weave	VERB	yes
 V302	to thread	VERB	yes		string beads	
 V303	to tie	VERB	yes			
 V304	to untie	VERB	yes			
-V305	to bind (rope)	VERB	yes			
+V305	to bind (rope)	VERB	yes		bind up a bundle	
 V306	to tighten	VERB	yes			
 V307	to loosen	VERB	yes			
 V308	to fence in	VERB	yes			
@@ -2332,18 +2329,18 @@ V343	to stalk	VERB	yes
 V344	to chase	VERB	yes			
 V345	to set (trap)	VERB	yes			
 V346	to trap	VERB	yes			
-V347	to catch	VERB	yes			
-V348	to evade	VERB	yes			
+V347	to catch	VERB	yes		either catch, (a) something thrown, or (b) a fleeing person or animal	
+V348	to evade	VERB	yes		either evade, (a) dodge a blow or a thrown thing, or (b) keep out of someone's reach, elude	
 V349	to escape	VERB	yes			
-V350	to shoot	VERB	yes			
+V350	to shoot	VERB	yes		either shoot, (a) an arrow, or (b) a gun	
 V351	to fish	VERB	yes			
-V352	to change	VERB	yes			
+V352	to change	VERB	yes		either change, (a) make different, or (b) become different	
 V353	to destroy	VERB	yes			
-V354	to release	VERB	yes			
+V354	to release	VERB	yes		either release, (a) set free a captive or animal, or (b) let go of something held	
 V355	to make able	VERB	yes			
 V356	to enlarge	VERB	yes			
 V356b	to increase	VERB	yes		intransitive: become more or bigger	
-V357	to diminish	VERB	yes			
+V357	to make less	VERB	yes		transitive: make something less or smaller	
 V357b	to decrease	VERB	yes		intransitive: become less or smaller	
 V358	to lengthen	VERB	yes			
 V359	to shorten	VERB	yes			
@@ -2353,8 +2350,8 @@ V362	to flatten	VERB	yes
 V363	to straighten	VERB	yes			
 V364	to sharpen	VERB	yes			
 V365	to make smooth	VERB	yes			
-V366	to harden	VERB	yes			
-V367	to soften	VERB	yes			
+V366	to harden	VERB	yes		make hard	
+V367	to soften	VERB	yes		make soft	
 V368	to dry out (clothes)	VERB	yes			
 V369	to sprinkle	VERB	yes			
 V370	to plaster	VERB	yes		coat walls or floors with mud or dung	
@@ -2364,9 +2361,9 @@ V373	to wring out	VERB	yes
 V374	to light (fire)	VERB	yes			
 V375	to quench (fire)	VERB	yes			
 V376	to fan (fire)	VERB	yes			
-V377	to add	VERB	yes			
+V377	to add	VERB	yes		either add, (a) put more in, or (b) sum numbers	
 V378	to subtract	VERB	yes			
-V379	to reduce	VERB	yes			
+V379	to shrink	VERB	yes		intransitive: become less or smaller	
 V380	to join together	VERB	yes			
 V381	to accumulate	VERB	yes			
 V381b	to heap up	VERB	yes		pile up into a heap	
@@ -2387,13 +2384,13 @@ V395	to sell	VERB	yes
 V396	to haggle	VERB	yes			
 V397	to pay	VERB	yes			
 V397b	payment	NOUN	yes			
-V398	to hire	VERB	yes			
+V398	to hire	VERB	yes		either hire, (a) employ a person for pay, or (b) rent an object	
 V399	to beg	VERB	yes			
 V400	to inherit	VERB	yes			
 V401	to steal	VERB	yes			
 V402	to think	VERB	yes			
-V403	to believe	VERB	yes			
-V404	to know	VERB	yes			
+V403	to believe	VERB	yes		either believe, (a) believe something or someone to be true, or (b) believe in (God, a faith)	
+V404	to know	VERB	yes		either know, (a) a fact, or (b) be acquainted with a person or place	
 V405	to doubt	VERB	yes			
 V406	to hope	VERB	yes			
 V407	to learn	VERB	yes			
@@ -2419,7 +2416,7 @@ V426	to smile	VERB	yes
 V427	to rejoice	VERB	yes			
 V428	to cry	VERB	yes		with tears	
 V429	to mourn	VERB	yes		wailing and weeping for the dead	
-V429b	mourning	NOUN	yes			
+V429b	mourning	NOUN	yes		the period of grief and mourning customs after a death	
 V430	to ululate	VERB	yes		high trilling cry made with the tongue	
 V431	to cause fear	VERB	yes			
 V432	to startle	VERB	yes			
@@ -2433,11 +2430,11 @@ V438	to respect	VERB	yes
 V438b	reverence	NOUN	yes		awe, especially toward God	
 V439	to honour	VERB	yes			
 V440	to suffer	VERB	yes			
-V441	to struggle	VERB	yes			
+V441	to struggle	VERB	yes		strive against a difficulty; not a physical fight (V513)	
 V442	to say	VERB	yes			
 V443	to speak	VERB	yes			
 V443b	speech	NOUN	yes		a formal address, discourse	
-V444	to tell	VERB	yes			
+V444	to tell	VERB	yes		either tell, (a) narrate a story, or (b) inform someone of something	
 V445	to whisper	VERB	yes			
 V446	to yell	VERB	yes			
 V447	to chat	VERB	yes			
@@ -2461,7 +2458,7 @@ V462	to insult	VERB	yes
 V462b	insult	NOUN	yes			
 V463	to slander	VERB	yes			
 V464	to threaten	VERB	yes			
-V465	to argue	VERB	yes			
+V465	to argue	VERB	yes		argue verbally, with words only	
 V465b	argument	NOUN	yes		dispute, quarrel	
 V466	to grumble	VERB	yes			
 V467	to contradict	VERB	yes			
@@ -2477,7 +2474,7 @@ V474	to congratulate	VERB	yes
 V475	to boast	VERB	yes			
 V476	to lie	VERB	yes		tell a lie, not lie down	
 V477	to meet	VERB	yes			
-V477b	meeting	NOUN	yes			
+V477b	meeting	NOUN	yes		either meeting, (a) an encounter, or (c) a gathering held for discussion	
 V478	to accompany	VERB	yes			
 V479	to be together	VERB	yes			
 V480	to gather together	VERB	yes		assemble, of people	
@@ -2513,7 +2510,7 @@ V508	to obey	VERB	yes
 V509	to please	VERB	yes			
 V510	to annoy	VERB	yes			
 V511	to deceive	VERB	yes			
-V512	to quarrel	VERB	yes			
+V512	to be in dispute	VERB	yes		be in a dispute or feud, not necessarily verbally	
 V513	to fight	VERB	yes			
 V514	to take revenge	VERB	yes			
 V515	to intercede	VERB	yes		mediate on behalf of another	
@@ -2526,7 +2523,7 @@ V520	to be defeated	VERB	yes
 V521	to plunder	VERB	yes			
 V522	to spy on	VERB	yes			
 V523	to rape	VERB	yes			
-V524	to pray	VERB	yes			
+V524	to pray	VERB	yes		either pray, (a) perform ritual prayer, or (b) petition (God or spirits)	
 V525	to prophesy	VERB	yes			
 V526	to cast (spell)	VERB	yes			
 V527	to curse	VERB	yes			
@@ -2540,7 +2537,7 @@ V534	to condole	VERB	yes		comfort the bereaved
 V535	to marry	VERB	yes			
 V535b	marriage	NOUN	yes		the married state, not the wedding	
 V536	to be betrothed	VERB	yes		be engaged to marry	
-V537	to divorce	VERB	yes			
+V537	to divorce	VERB	yes		either divorce, (a) a husband divorcing his wife, or (b) a wife divorcing her husband	
 V538	to obstruct	VERB	yes			
 V539	to prevent	VERB	yes			
 V540	to forbid	VERB	yes			
@@ -2549,9 +2546,9 @@ V542	to abstain	VERB	yes
 V543	to start	VERB	yes			
 V543b	beginning	NOUN	yes			
 V544	to continue	VERB	yes			
-V545	to stop	VERB	yes			
+V545	to stop	VERB	yes		either stop, (a) cease moving or doing, or (b) make something stop	
 V546	to wait	VERB	yes			
 V547	to wait for	VERB	yes			
 V548	to spend time	VERB	yes			
-V549	to finish	VERB	yes			
+V549	to finish	VERB	yes		bring to an end, complete	
 V549b	end	NOUN	yes		conclusion of an event or period, not a tip	

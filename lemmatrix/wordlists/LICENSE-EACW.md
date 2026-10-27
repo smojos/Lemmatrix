@@ -13,6 +13,9 @@ and `NOTICE.md` at the top of the repository).
 
 - `eacw.tsv`: the EACW itself (its references, glosses, word classes, default and sub codes,
   clarifications and taxa);
+- `glosses/`: the EACW's glosses in French, Arabic and Amharic, with their clarifications and status
+  (machine translated and audited, October 2026; checked by a person where marked);
+- `conversions/`: the tables that bring a database from one edition's references to the next;
 - the EACW's links to the other two lists: the `eacw` column of `cawl.tsv` and of `swadesh.tsv`
   (the correspondences drafted and audited for the EACW, October 2026).
 

@@ -290,7 +290,7 @@ def fill_from_wordlist(db: Database, base: str, items: str = "", region: str = "
         e.file_gloss = "".join(ch for ch in e.file_gloss if ch not in FORBIDDEN_CHARS).strip()
         e.lists = wl.other_numbers(base, item.number)
         if base == wl.EACW:
-            for role in (wl.CLARIFICATION, wl.TAXON):
+            for role in (wl.TAXON,):              # the Clarification is read from the list (idea 87)
                 if (value := getattr(item, role)) and (f := s.entry_field(role)) is not None:
                     e.set(f.name, value)
         db.entries.append(e)

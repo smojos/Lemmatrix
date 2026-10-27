@@ -20,13 +20,13 @@ from .model import (LEMMAS, TEXTS, UTTERANCES, ClipSource, Database, Entry, Fiel
                     Location, Metadata, Person, RefCategory, Settings, Support, Tag, TagStructure, Text,
                     Thanks, TierMapping, TierRule, Token, Utterance, is_utterance, new_id, nfc, write_atomically, xml_safe)
 
-FORMAT_VERSION = "14"
+FORMAT_VERSION = "15"
 WORDLIST_ATTRS = {"EACW": "eacw", "CAWL": "cawl", "SWADESH": "swadesh"}   # format 9 (idea 40)
 # Until version 1.0 the current format is read and the formats before it upgraded, from format 5 on
 # (Josh, 18 October 2026: no compatibility code for older formats; the upgrades are kept, 25 October,
 # so an older backup still opens, until v1 fixes the format). When the format changes, an upgrade
 # from the format before is written.
-READABLE = ("5", "6", "7", "8", "9", "10", "11", "12", "13", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
+READABLE = ("5", "6", "7", "8", "9", "10", "11", "12", "13", "14", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
 # 7: before researchers had the Identifiable? checkbox and both checkboxes were always written; 8: before the
 # comparative wordlists (format 9, 22 October: no base and no numbers yet, so nothing to change);
 # 9: before the <typology> block (format 10, 23 October: an older file is tonal, as every database was);
@@ -34,7 +34,10 @@ READABLE = ("5", "6", "7", "8", "9", "10", "11", "12", "13", FORMAT_VERSION)   #
 # older file, so nothing to change); 11: before the acknowledgements and the EACW's version number
 # (format 12, 24 October: none in an older file, so nothing to change); 12: before fields'
 # abbreviations (format 13, 26 October: the token fields get pht, phm, mph, pch, trs, com); 13: before
-# <characters> (format 14, 27 October: an older file is NFC, precomposed, as Lemmatrix always wrote)
+# <characters> (format 14, 27 October: an older file is NFC, precomposed, as Lemmatrix always wrote);
+# 14: before the EACW's Clarification left the lemma fields and the shipped glosses' editions were
+# recorded (format 15, 27 October, IDEAS.md ideas 87 and 63: the Clarification field and its values
+# are dropped, read from the shipped edition instead; an older file has no <glosses>)
 BACKUPS_KEPT = 10
 
 
@@ -252,6 +255,8 @@ def _load_metadata(m) -> Metadata:
         md.wordlist_items = (x.get("items") or "").strip()      # format 11: base or expanded
         md.wordlist_region = (x.get("region") or "").strip()    # format 11: global, africa, N W E S C
         md.wordlist_version = (x.get("version") or "").strip()  # format 12: the EACW's version
+        md.wordlist_glosses = {g.get("lang", ""): (g.get("edition") or "").strip()   # format 15 (idea 63)
+                               for g in x.findall("glosses") if g.get("lang")}
     if (a := m.find("acknowledgements")) is not None:            # format 12 (idea 59)
         md.support = [Support(nfc(x.get("organisation", "")), nfc(x.get("grant", "")), _text(x))
                       for x in a.findall("support")]
@@ -294,6 +299,24 @@ def _origin_to_stem_type(db: Database):
                 elif e.values.get(f.name) in ("compound", "derived", "reduplicated"):
                     e.values[f.name] = "complex"
         db.upgraded = True
+
+def _drop_clarification(db: Database):
+    """Format 15 (IDEAS.md idea 87, Josh, 27 October): the EACW's Clarification was a lemma field,
+    filled from the list; it is now read from the shipped edition and shown as an (i) beside the
+    gloss, so the field and its values go (Josh: overwritten, a clarification of one's own too)."""
+    s = db.settings
+    gone = [f for f in s.entry_fields if f.role == "clarification"]
+    if not gone:
+        return
+    names = {f.name for f in gone}
+    s.entry_fields = [f for f in s.entry_fields if f.role != "clarification"]
+    for e in db.entries:
+        for n in names:
+            e.values.pop(n, None)
+            e.multi.pop(n, None)
+    db.dropped_fields = [f.title for f in gone]
+    db.upgraded = True
+
 
 def load(path: str | os.PathLike) -> Database:
     path = str(path)
@@ -390,6 +413,8 @@ def load(path: str | os.PathLike) -> Database:
     if version != FORMAT_VERSION:        # format 8 (22 October): researchers selected Identifiable?, read
                                          # above; format 9: wordlist numbers, none in an older file;
         db.upgraded = True               # above; quietly, so saving writes the new format
+    if version in READABLE[:READABLE.index("15")]:   # format 15 (idea 87): the Clarification leaves the fields
+        _drop_clarification(db)
     if db.settings.decomposed:           # format 14: anything precomposed (a file edited by hand) decomposed
         from .decompose import fix_database
         fix_database(db, "NFD")
@@ -554,7 +579,10 @@ def to_element(db: Database) -> ET.Element:
             a["region"] = md.wordlist_region
         if md.wordlist_version:                   # format 12: the EACW's version it is up to date with
             a["version"] = md.wordlist_version
-        ET.SubElement(m, "wordlist", a)
+        w = ET.SubElement(m, "wordlist", a)
+        for lang, ed in md.wordlist_glosses.items():   # format 15 (idea 63): the shipped glosses' edition
+            if lang:
+                ET.SubElement(w, "glosses", {"lang": lang, "edition": ed})
     if md.support or md.thanks:                   # format 12 (idea 59): <support organisation=".." grant="..">
         ack = ET.SubElement(m, "acknowledgements")   # what it funded</support>, <thanks who="..">what for</thanks>
         for x in md.support:
