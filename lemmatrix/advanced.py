@@ -34,7 +34,7 @@ AUTO_SNIP_LINE = ("trim silence at the ends of recordings; for tokens, normalize
 AUTO_SNIP_TIP = "the sign of the covenant"                                  # Josh's hidden joke
 SNIP_BUTTON_TIP = "proselytize this soundfile"                              # Josh
 # The margins in seconds (Josh, 27 October: settable): key → (label, default)
-SNIP_MARGINS = {"recording/snip_before": ("Before", 0.10),
+SNIP_MARGINS = {"recording/snip_before": ("Before", 0.25),
                 "recording/snip_after": ("After", 0.25),
                 "recording/snip_gap": ("Between repetitions", 0.60)}
 

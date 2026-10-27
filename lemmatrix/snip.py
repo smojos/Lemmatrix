@@ -13,7 +13,7 @@ utterance?"):
    loudness, so mains or traffic rumble isn't taken for speech.
 3. A stretch of sound is **speech** only when it reaches well above the background somewhere
    (a click or a cough in a gap doesn't count); its quiet edges, close to it, belong to it.
-4. **Longer tail than lead-in:** 100 ms kept before the first sound, 250 ms after the last (each
+4. **Room at both ends:** 250 ms kept before the first sound and after the last (Josh, 27 October; each
    can be set in Settings → Advanced).
 5. **A noisy take isn't trimmed** (speech too close to the background to find its edges).
 6. Gaps only ever **shorten** (over 0.6 s → 0.6 s: 0.4 s after the sound, 0.2 s before the next;
@@ -35,7 +35,8 @@ SPEECH = 20.0            # dB above the background somewhere: a stretch is speec
 SPEECH_MIN = 0.030       # s of frames that loud, so a click isn't speech
 JOIN = 0.150             # s: quiet sound this close to speech belongs to it
 NOISY = 25.0             # dB: peak less than this above the background → not trimmed
-LEAD, TAIL = 0.100, 0.250   # s kept before the first sound and after the last (Settings: Before, After)
+LEAD, TAIL = 0.250, 0.250   # s kept before the first sound and after the last (Settings: Before, After;
+                            # Josh, 27 October: 0.25 both, the lead was 0.10)
 GAP = 0.600              # s: a gap longer than this is shortened to it (Settings: Between repetitions;
                          # Josh, 27 October: 0.3 s put the repetitions too close), two thirds of it
                          # kept after one stretch and a third before the next

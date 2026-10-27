@@ -36,11 +36,11 @@ def take(*parts):
     return sig + noise(len(sig) / R)
 
 
-def test_ends_trimmed_with_a_longer_tail():
+def test_ends_trimmed_with_a_quarter_second_each_side():
     x = take(np.zeros(R), vowel(0.5), np.zeros(R))
     y, rep = snip.snip(x, R)
-    assert rep.changed and abs(rep.new_length - (0.1 + 0.5 + 0.25)) < 0.06
-    assert rep.cut[0][1] == pytest_approx(0.9) and rep.cut[-1][0] == pytest_approx(1.75)
+    assert rep.changed and abs(rep.new_length - (0.25 + 0.5 + 0.25)) < 0.06
+    assert rep.cut[0][1] == pytest_approx(0.75) and rep.cut[-1][0] == pytest_approx(1.75)
 
 
 def pytest_approx(v, tol=0.05):
@@ -133,7 +133,7 @@ def test_settings_and_the_button(win):
     assert panel.snip_btn.toolTip() == "proselytize this soundfile" and panel.snip_btn.isHidden()
     dlg = PreferencesDialog(win, win.doc.db, win.prefs)
     assert dlg.auto_snip_box.text() == "✂ auto-snip" and dlg.auto_snip_box.toolTip() == "the sign of the covenant"
-    assert [b.value() for b in dlg.snip_margins.values()] == [0.10, 0.25, 0.60]
+    assert [b.value() for b in dlg.snip_margins.values()] == [0.25, 0.25, 0.60]
     assert not any(b.isEnabled() for b in dlg.snip_margins.values())
     dlg.auto_snip_box.setChecked(True)
     dlg.snip_margins["recording/snip_gap"].setValue(0.8)
@@ -179,7 +179,7 @@ def test_proselytize_keeps_the_original(win, tmp_path, monkeypatch):
     audio.write_wav(path, x, R, 16, artist="DML", date="2026-10-27")
     assert autosnip.proselytize(win, None, path, gaps=True)
     d, r = audio.read_any(path)
-    assert len(d) / r < 1.0 and audio.read_info(path).get("IART") == "DML"
+    assert len(d) / r < 1.2 and audio.read_info(path).get("IART") == "DML"
     original = held / "D009 (unsnipped).wav"
     assert original.exists() and abs(len(audio.read_any(original)[0]) / R - 2.5) < 0.01
     assert not autosnip.proselytize(win, None, path, gaps=True)   # nothing left to trim: unchanged

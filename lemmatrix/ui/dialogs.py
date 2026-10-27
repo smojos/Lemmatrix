@@ -1138,7 +1138,7 @@ class PreferencesDialog(QDialog):
         self.snip_margins["recording/snip_gap"].setToolTip("Tokens: a longer gap between repetitions "
                                                            "is shortened to this; a shorter one is left alone")
         snip_reset = QPushButton("Reset")
-        snip_reset.setToolTip("Back to 0.10, 0.25 and 0.60 s")
+        snip_reset.setToolTip("Back to 0.25, 0.25 and 0.60 s")
         snip_reset.clicked.connect(lambda *_: [b.setValue(advanced.SNIP_MARGINS[k][1])
                                                for k, b in self.snip_margins.items()])
         margins.addWidget(snip_reset)
