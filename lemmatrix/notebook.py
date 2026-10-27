@@ -504,11 +504,14 @@ def push_question(nb: Notebook, db: Database, date: str, text: str, e: Entry | N
 # afterwards for the days missed.
 
 ELICIT_HISTORY, COGITATE_HISTORY, SNAPSHOT_HISTORY = "elicit", "cogitate", "snapshot"
-HISTORY_ORDER = (ELICIT_HISTORY, COGITATE_HISTORY, SNAPSHOT_HISTORY)   # Snapshots' last (24 October)
+RESTORE_HISTORY = "restore"                 # File → Restore from backup (idea 54, 27 October)
+HISTORY_ORDER = (ELICIT_HISTORY, COGITATE_HISTORY, SNAPSHOT_HISTORY, RESTORE_HISTORY)   # Snapshots' last (24 October)
 HISTORY_HEADINGS = {ELICIT_HISTORY: "=====ELICIT HISTORY=====", COGITATE_HISTORY: "=====COGITATE HISTORY=====",
-                    SNAPSHOT_HISTORY: "=====SNAPSHOT HISTORY====="}
+                    SNAPSHOT_HISTORY: "=====SNAPSHOT HISTORY=====",
+                    RESTORE_HISTORY: "=====RESTORE HISTORY====="}
 HISTORY_SETTINGS = {ELICIT_HISTORY: "notebook/elicit_history", COGITATE_HISTORY: "notebook/cogitate_history",
-                    SNAPSHOT_HISTORY: "notebook/snapshot_history"}
+                    SNAPSHOT_HISTORY: "notebook/snapshot_history",
+                    RESTORE_HISTORY: "notebook/restore_history"}
 
 
 def _is_heading(row: str) -> bool:
@@ -612,9 +615,11 @@ def push_line_question(nb: Notebook, db: Database, date: str, question: str, tex
 # --------------------------------------------------------------------------
 
 HISTORY_LABELS = {ELICIT_HISTORY: "Write ELICIT HISTORY", COGITATE_HISTORY: "Write COGITATE HISTORY",
-                  SNAPSHOT_HISTORY: "Write SNAPSHOT HISTORY"}
+                  SNAPSHOT_HISTORY: "Write SNAPSHOT HISTORY",
+                  RESTORE_HISTORY: "Write RESTORE HISTORY"}
 HISTORY_WHAT = {ELICIT_HISTORY: "ɛλicit request made or received", COGITATE_HISTORY: "change to a hypothesis",
-                SNAPSHOT_HISTORY: "snapshot taken"}
+                SNAPSHOT_HISTORY: "snapshot taken",
+                RESTORE_HISTORY: "restore from a backup"}
 
 
 def snapshot_line(snap: Snapshot) -> str:

@@ -1400,6 +1400,7 @@ class MainWindow(QMainWindow):
         self.folder_menu.aboutToShow.connect(self._fill_folder_menu)
         f.addSeparator()
         self._act(f, "&Full backup…", self.full_backup)
+        self._act(f, "Restore from &backup…", self.restore_from_backup)   # idea 54 (27 October)
         ex = f.addMenu("&Export")
         self._act(ex, "&Filtered database (current tab) as CSV…", lambda: self.export_csv(filtered=True))
         self._act(ex, "&Entire database as CSV…", lambda: self.export_csv(filtered=False))
@@ -2287,6 +2288,104 @@ class MainWindow(QMainWindow):
         self._set_backup_date("snoozed", "")
         self.statusBar().showMessage(f"Full backup made: {n} files in {QDir.toNativeSeparators(path)}.", 10000)
         return True
+
+    def restore_from_backup(self) -> bool:
+        """File → Restore from backup… (idea 54; Josh, 27 October): any of the database, notebook,
+        workspace and folders, from an autosave, a full backup or the last restore point, here or
+        into a new folder (lemmatrix/restore.py)."""
+        from .. import restore
+        from .restore_dialog import POINT_NOTE, RestoreDialog
+        from PySide6.QtCore import QFile
+        db = self.doc.db
+        title = "Restore from backup"
+        if not db.path:
+            QMessageBox.information(self, title, "Save the database first.")
+            return False
+        info = lockmod.held_elsewhere(db.path)
+        if info is not None:
+            QMessageBox.warning(self, title, f"{Path(db.path).name} seems to be open on "
+                                f"{info.describe()}. Close it there first.")
+            return False
+        if not self._confirm_discard():           # Save first / Discard / Cancel
+            return False
+        path = str(db.path)
+        dlg = RestoreDialog(self, path, self.prefs.full_backup_folder or str(Path.home() / "Documents"))
+        if not dlg.exec() or dlg.plan is None:
+            return False
+        plan, keep_newer = dlg.plan, dlg.keep_newer()
+        n = len(plan.to_write(keep_newer))
+        if not plan.into_new and not _w.ask(
+                self, title, f"Restore {n} file{'s' if n != 1 else ''} from {plan.source.label[0].lower()}"
+                f"{plan.source.label[1:]}?\n\nThe database closes and opens again, so the undo history goes. "
+                f"What the restore replaces is kept in Backups › Before restore, where you can restore it "
+                f"from again.\n\n{POINT_NOTE}", "Restore"):
+            return False
+        progress = QProgressDialog("Restoring…", None, 0, max(n, 1), self)
+        progress.setWindowTitle(title)
+        progress.setWindowModality(Qt.ApplicationModal)   # nothing else while files are written
+        progress.setMinimumDuration(400)
+
+        def step(done, total, name):
+            progress.setValue(done)
+            progress.setLabelText(f"Restoring…\n{name}")
+            QApplication.processEvents()
+        if not plan.into_new:
+            self.load_database(new_database())    # let go of it (its workspace written first)
+            try:                                  # the plan again, now nothing else will write
+                plan = restore.make_plan(path, plan.source, plan.parts)
+            except (restore.RestoreError, OSError) as exc:
+                progress.close()
+                QMessageBox.warning(self, title, f"Nothing was restored: {exc}")
+                self.open_file(path)
+                return False
+        try:
+            rep = restore.apply(plan, keep_newer=keep_newer, db_path=path, progress=step,
+                                discard=lambda f: QFile.moveToTrash(str(f)))
+        except OSError as exc:                    # before anything was written (the folders)
+            progress.close()
+            QMessageBox.warning(self, title, f"Nothing was restored: {exc}")
+            if not plan.into_new:
+                self.open_file(path)
+            return False
+        progress.close()
+        if plan.into_new:
+            new_xml = plan.main / (plan.new_stem + ".xml")
+            if rep.failed:
+                QMessageBox.warning(self, title, f"The copy in {QDir.toNativeSeparators(str(plan.main))} "
+                                    f"stopped part-way ({rep.written} files written): {rep.failed}")
+                return False
+            if _w.ask(self, title, f"Restored into {QDir.toNativeSeparators(str(plan.main))}. "
+                      "Open the restored copy now?", "Open it", "Stay here"):
+                self.open_file(str(new_xml))
+                self._note_restore(restore.note_line(plan))
+            return True
+        self.open_file(path)
+        if rep.failed:
+            QMessageBox.warning(self, title, f"The restore stopped part-way: {rep.failed}\n\n{rep.written} "
+                                f"files were restored. Every file is either as it was or as the backup has "
+                                f"it, never half-written; what was replaced is in "
+                                f"{QDir.toNativeSeparators(str(rep.point))}.")
+            return False
+        self._note_restore(restore.note_line(plan))
+        kept = f"; {rep.kept_newer} newer files kept" if rep.kept_newer else ""
+        self.statusBar().showMessage(f"Restored {rep.written} files from {plan.source.label[0].lower()}"
+                                     f"{plan.source.label[1:]}{kept}. What it replaced is in Backups › "
+                                     "Before restore.", 15000)
+        return True
+
+    def _note_restore(self, line: str):
+        """The restore's line in today's notes (=====RESTORE HISTORY=====), unless switched off."""
+        nb = getattr(self.doc, "notebook", None)
+        if nb is None or not self.doc.db.path:
+            return
+        if not self.doc.ws.get_bool(nbmod.HISTORY_SETTINGS[nbmod.RESTORE_HISTORY], True):
+            return
+        try:
+            nbmod.add_history_line(nb, today(), nbmod.RESTORE_HISTORY, line)
+        except nbmod.NotebookError:
+            return
+        self.doc.notebook_changed()
+        self.refresh_notebook()
 
     def _full_backup_path(self, suggested: str) -> str:
         path, _ = QFileDialog.getSaveFileName(self, "Full backup", suggested, "Zip file (*.zip)")
