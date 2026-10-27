@@ -90,6 +90,15 @@ class RecordingPanel(QGroupBox):
         self.delete_btn = icon_button("delete-recording", "Delete recording")
         self.update_btn = icon_button("update", "Update file name")
         self.praat_btn = icon_button("praat", "Open in Praat (Ctrl+Alt+Space)")
+        # ✂ auto-snip's button (idea 10, Josh, 27 October): shown while auto-snip is on; the dialogue
+        # wires it (autosnip.proselytize) and enables it when there's a soundfile
+        self.snip_btn = icon_button("snip-fire", advanced.SNIP_BUTTON_TIP)
+        self.snip_gaps = True                    # tokens: gaps shortened too; utterances, segments: ends only
+        self._snip_icon()
+        self.snip_btn.setVisible(advanced.auto_snip())
+        snip_listen = lambda key, on, b=self.snip_btn: key == advanced.AUTO_SNIP_KEY and b.setVisible(on)  # noqa: E731
+        advanced.listen(snip_listen)
+        self.destroyed.connect(lambda *_: advanced.unlisten(snip_listen))
         if stretch_before_source:
             buttons.addStretch(1)
         # the recording source (Josh, 21 October): the same setting as Settings → Sound
@@ -149,6 +158,20 @@ class RecordingPanel(QGroupBox):
         self.meter.set_level(0.0)
         self.record_btn.setIcon(icon(record_icon(), 40))
         self.record_btn.setToolTip(record_tip())
+
+    def _snip_icon(self):
+        self.snip_btn.setIcon(icon("snip-fire", 40, theme.colour("window_text").name()))
+
+    def auto_snip(self, samples, rate: int):
+        """✂ auto-snip on a fresh take: (the take to save, the untrimmed take to hold, or None)."""
+        if not advanced.auto_snip():
+            return samples, None
+        from .. import snip
+        try:
+            out, rep = snip.snip(samples, rate, gaps=self.snip_gaps, **advanced.snip_margins())
+        except Exception:                         # never lose a take over trimming it
+            return samples, None
+        return (out, samples) if rep.changed else (samples, None)
 
     def stop(self):
         """Stop and give back (samples, sample rate); None, after saying so, if nothing came in."""

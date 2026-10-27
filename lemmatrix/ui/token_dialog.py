@@ -56,6 +56,7 @@ class Slot:
 
 class TokenDialog(QDialog):
     MULTI_TOKENS = True       # Ctrl+click picks several tags in a group: one token per combination
+    SNIP_GAPS = True          # ✂ auto-snip shortens long gaps between repetitions (tokens only)
     MAX_TOKENS = 50           # at most this many tokens from one OK
 
     def __init__(self, main, slots: list[Slot], index: int, parent=None):
@@ -342,6 +343,8 @@ class TokenDialog(QDialog):
         self.delete_btn.clicked.connect(self._delete_recording)
         self.update_btn.clicked.connect(self._update_name)
         self.praat_btn.clicked.connect(lambda *_: self._open_in_praat())
+        rec.snip_gaps = self.SNIP_GAPS            # ✂ auto-snip: gaps for tokens, ends only for utterances
+        rec.snip_btn.clicked.connect(lambda *_: self._proselytize())
         rec.setContextMenuPolicy(Qt.CustomContextMenu)
         rec.customContextMenuRequested.connect(lambda pos, rec=rec: self._recording_menu(rec.mapToGlobal(pos)))
         outer.addWidget(rec)
@@ -758,6 +761,7 @@ class TokenDialog(QDialog):
         self.play_btn.setEnabled(has_file)
         self.delete_btn.setEnabled(has_file)
         self.praat_btn.setEnabled(has_file)
+        self.rec_panel.snip_btn.setEnabled(has_file)
         folder = self._folder()
         shown = folder / (t.file if has_file else exp)
         self.location.setText(("" if has_file else "Will be saved as ")
@@ -1236,6 +1240,7 @@ class TokenDialog(QDialog):
             return
         samples, rate = take
         self.rec_panel.show_level(samples)           # clipped or very quiet: said, never changed
+        samples, untrimmed = self.rec_panel.auto_snip(samples, rate)   # ✂ auto-snip (idea 10)
         self._collect()
         t = self.token
         # Whoever is the session's speaker now (perhaps no one) is the token's speaker;
@@ -1262,6 +1267,9 @@ class TokenDialog(QDialog):
         except (OSError, audio.AudioError) as exc:
             QMessageBox.warning(self, "Record", f"Couldn't save the recording: {exc}")
             return
+        if untrimmed is not None:                 # the take as recorded: held, never in the way
+            from .autosnip import hold_untrimmed
+            hold_untrimmed(self.main, self._path(exp), untrimmed, rate, t.speaker, t.collected)
         if old and old != exp and self._path(old).exists():
             QFile.moveToTrash(str(self._path(old)))
         t.file = exp
@@ -1269,6 +1277,15 @@ class TokenDialog(QDialog):
         self._show_rerecord(False)
         self._commit(keep_empty=True)
         self._refresh_name()
+
+    def _proselytize(self):
+        """The ✂ button: snip this soundfile once (made outside Lemmatrix, or before auto-snip)."""
+        t = self.token
+        if self.recorder or not t.file or not self._path(t.file).exists():
+            return
+        from .autosnip import proselytize
+        if proselytize(self.main, self, self._path(t.file), self.SNIP_GAPS):
+            self._refresh_name()
 
     # ------------------------------------------------------- rerecord flag
     def _show_rerecord(self, on: bool):

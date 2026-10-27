@@ -1102,6 +1102,54 @@ class PreferencesDialog(QDialog):
         hot_note = QLabel("overwrite soundfiles without warning")
         hot_note.setStyleSheet(f"color: {theme.muted()}; margin-left: 22px;")
         av.addWidget(hot_note)
+        # ✂ auto-snip (idea 10, Josh, 27 October): the margins settable, the ✂ button while it's on
+        self.auto_snip_box = QCheckBox(advanced.AUTO_SNIP)
+        self.auto_snip_box.setChecked(prefs.get_bool(advanced.AUTO_SNIP_KEY, False))
+        self.auto_snip_box.setToolTip(advanced.AUTO_SNIP_TIP)                 # Josh's hidden joke
+        av.addSpacing(6)
+        av.addWidget(self.auto_snip_box)
+        snip_note = QLabel(advanced.AUTO_SNIP_LINE)
+        snip_note.setWordWrap(True)
+        snip_note.setStyleSheet(f"color: {theme.muted()}; margin-left: 22px;")
+        av.addWidget(snip_note)
+        from PySide6.QtWidgets import QDoubleSpinBox
+        margins = QHBoxLayout()
+        margins.setContentsMargins(22, 0, 0, 0)
+        self.snip_margins = {}
+        for key, (label, default) in advanced.SNIP_MARGINS.items():
+            box = QDoubleSpinBox()
+            box.setRange(0.0, 3.0)
+            box.setSingleStep(0.05)
+            box.setDecimals(2)
+            box.setSuffix(" s")
+            try:
+                box.setValue(float(prefs.get_value(key)) if prefs.get_value(key) is not None else default)
+            except (TypeError, ValueError):
+                box.setValue(default)
+            lab = QLabel(label)
+            lab.setBuddy(box)
+            margins.addWidget(lab)
+            margins.addWidget(box)
+            margins.addSpacing(10)
+            self.snip_margins[key] = box
+        self.snip_margins["recording/snip_before"].setToolTip("Silence kept before the first sound")
+        self.snip_margins["recording/snip_after"].setToolTip("Silence kept after the last sound "
+                                                             "(longer, so a quiet ending isn't clipped)")
+        self.snip_margins["recording/snip_gap"].setToolTip("Tokens: a longer gap between repetitions "
+                                                           "is shortened to this; a shorter one is left alone")
+        snip_reset = QPushButton("Reset")
+        snip_reset.setToolTip("Back to 0.10, 0.25 and 0.60 s")
+        snip_reset.clicked.connect(lambda *_: [b.setValue(advanced.SNIP_MARGINS[k][1])
+                                               for k, b in self.snip_margins.items()])
+        margins.addWidget(snip_reset)
+        margins.addStretch(1)
+        av.addLayout(margins)
+
+        def _snip_follow(on):
+            for w in (*self.snip_margins.values(), snip_reset):
+                w.setEnabled(on)
+        self.auto_snip_box.toggled.connect(_snip_follow)
+        _snip_follow(self.auto_snip_box.isChecked())
         self.fast_paste_box = QCheckBox(advanced.FAST_PASTE)  # idea 79 (Josh, 27 October)
         self.fast_paste_box.setChecked(prefs.get_bool(advanced.FAST_PASTE_KEY, False))
         self.fast_paste_box.setToolTip("Typing in Phonetic or Phonemic: Shift+Down copies it into the other "
@@ -1236,9 +1284,13 @@ class PreferencesDialog(QDialog):
         search.set_power(self.power_search.isChecked())
         from .. import advanced                   # 🔥 hot mic, 📋 fast paste (ideas 68, 79; this computer)
         for key, box in ((advanced.HOT_MIC_KEY, self.hot_mic_box), (advanced.FAST_PASTE_KEY, self.fast_paste_box),
-                         (advanced.BEST_FRIEND_KEY, self.best_friend_box), *self.bf_rules.items()):
+                         (advanced.BEST_FRIEND_KEY, self.best_friend_box), *self.bf_rules.items(),
+                         (advanced.AUTO_SNIP_KEY, self.auto_snip_box)):
             p.set_value(key, box.isChecked())
             advanced.set_on(key, box.isChecked())
+        for key, box in self.snip_margins.items():   # ✂ auto-snip's margins (this computer)
+            p.set_value(key, box.value())
+            advanced.set_margin(key, box.value())
         doc = getattr(self.parent(), "doc", None)
         if doc is not None:                       # the notebook's history switches: the workspace's
             from .. import notebook as nbmod

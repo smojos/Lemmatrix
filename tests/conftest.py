@@ -209,7 +209,8 @@ def _no_old_computer_settings():
         for key in ("columns", "lines", "views", "sessions", "fullbackup", "matrix/autoplay",
                     "matrix/only_with_data", "notebook/sort",
                     "session/speaker", "search/power", "recording/hot_mic", "edit/fast_paste",
-                    "edit/best_friend"):
+                    "edit/best_friend", "recording/auto_snip", "recording/snip_before",
+                    "recording/snip_after", "recording/snip_gap"):
             q.remove(key)
         for key in [k for k in q.allKeys() if k.startswith("edit/bf_")]:
             q.remove(key)
@@ -224,8 +225,11 @@ def _plain_search():
     search.set_power(False)
     from lemmatrix import bestfriend
     def reset():
-        for key in (advanced.HOT_MIC_KEY, advanced.FAST_PASTE_KEY, advanced.BEST_FRIEND_KEY):
-            advanced.set_on(key, False)           # 🔥 hot mic, 📋 fast paste, 🐕: off too
+        for key in (advanced.HOT_MIC_KEY, advanced.FAST_PASTE_KEY, advanced.BEST_FRIEND_KEY,
+                    advanced.AUTO_SNIP_KEY):
+            advanced.set_on(key, False)           # 🔥 hot mic, 📋 fast paste, 🐕, ✂: off too
+        for key, (_, default) in advanced.SNIP_MARGINS.items():
+            advanced.set_margin(key, default)
         for rule in bestfriend.RULES:
             advanced.set_on(rule.key, True)       # the dog's rules: on, as on a new computer
     reset()

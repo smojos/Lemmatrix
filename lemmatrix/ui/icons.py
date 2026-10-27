@@ -172,6 +172,27 @@ def _draw(name: str, s: int, p: QPainter, colour: QColor | None = None, colour2:
         p.setPen(Qt.NoPen)
         p.setBrush(BLACK if ink_colour.lightnessF() > 0.5 else WHITE)
         p.drawEllipse(QPointF(s * 0.505, s * 0.585), s * 0.03, s * 0.03)      # the pivot
+    elif name == "snip-fire":                    # ✂ auto-snip's button (Josh, 27 October): Clip as utterance's
+        # scissors with Josh's flame right behind them, a clear edge between the two so the scissors read
+        _flame(p, QRectF(s * 0.30, s * 0.04, s * 0.58, s * 0.92))
+        ink_colour = colour or BLACK                 # the scissors: the theme's text colour (white on dark)
+
+        def scissors(pen):
+            p.setPen(pen)
+            p.setBrush(Qt.NoBrush)
+            p.drawEllipse(QPointF(s * 0.17, s * 0.36), s * 0.11, s * 0.11)          # the handles
+            p.drawEllipse(QPointF(s * 0.17, s * 0.80), s * 0.11, s * 0.11)
+            p.drawLine(QPointF(s * 0.27, s * 0.42), QPointF(s * 0.95, s * 0.80))    # the blades
+            p.drawLine(QPointF(s * 0.27, s * 0.74), QPointF(s * 0.90, s * 0.46))
+        line = max(1.4, s * 0.085)
+        p.save()
+        p.setCompositionMode(QPainter.CompositionMode_Clear)    # the transparent buffer round them
+        scissors(QPen(Qt.black, line + max(2.0, s * 0.09), Qt.SolidLine, Qt.RoundCap))
+        p.restore()
+        scissors(QPen(ink_colour, line, Qt.SolidLine, Qt.RoundCap))
+        p.setPen(Qt.NoPen)
+        p.setBrush(BLACK if ink_colour.lightnessF() > 0.5 else WHITE)
+        p.drawEllipse(QPointF(s * 0.505, s * 0.585), s * 0.03, s * 0.03)      # the pivot
     elif name == "texts-utterances":             # Josh's design (20 October): a T bubble and a lighter U bubble
         from PySide6.QtCore import QByteArray
         from PySide6.QtSvg import QSvgRenderer

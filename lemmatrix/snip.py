@@ -2,8 +2,8 @@
 # Copyright © 2026 Joshua A. G. Smolders. Additional terms: NOTICE.md
 """✂ auto-snip (IDEAS.md idea 10, Josh, 27 October): *trim silence at the ends of recordings; for
 tokens, normalize silence intervals between repetitions*. No Qt here: `snip(samples, rate, gaps)`
-gives back the take, cut, and a report of what was cut. **Test version**: the margins are to be set
-from Josh's own recordings (`tools/snip_dryrun.py`) before it is switched on in the program.
+gives back the take, cut, and a report of what was cut. The margins were set on Josh's own recording
+(27 October: "beautiful. perfect."); `tools/snip_dryrun.py` tries them on a folder.
 
 **Protecting quiet data at the edges** (Josh: "How can we protect quiet data at the end of a word or
 utterance?"):
@@ -13,9 +13,11 @@ utterance?"):
    loudness, so mains or traffic rumble isn't taken for speech.
 3. A stretch of sound is **speech** only when it reaches well above the background somewhere
    (a click or a cough in a gap doesn't count); its quiet edges, close to it, belong to it.
-4. **Longer tail than lead-in:** 100 ms kept before the first sound, 250 ms after the last.
+4. **Longer tail than lead-in:** 100 ms kept before the first sound, 250 ms after the last (each
+   can be set in Settings → Advanced).
 5. **A noisy take isn't trimmed** (speech too close to the background to find its edges).
-6. Gaps only ever **shorten** (over 0.6 s → 0.6 s: 0.4 s after the sound, 0.2 s before the next; Josh, 27 October: 0.3 s put the repetitions too close);
+6. Gaps only ever **shorten** (over 0.6 s → 0.6 s: 0.4 s after the sound, 0.2 s before the next;
+   Josh, 27 October: 0.3 s put the repetitions too close; settable);
    nothing is ever lengthened, and a short gap (a closure, a breath) is never touched.
 """
 
@@ -33,9 +35,10 @@ SPEECH = 20.0            # dB above the background somewhere: a stretch is speec
 SPEECH_MIN = 0.030       # s of frames that loud, so a click isn't speech
 JOIN = 0.150             # s: quiet sound this close to speech belongs to it
 NOISY = 25.0             # dB: peak less than this above the background → not trimmed
-LEAD, TAIL = 0.100, 0.250
-GAP_OVER = 0.600         # s: a gap longer than this is shortened…
-GAP_AFTER, GAP_BEFORE = 0.400, 0.200   # …to 0.6 s: this much after one stretch and before the next (Josh: doubled)
+LEAD, TAIL = 0.100, 0.250   # s kept before the first sound and after the last (Settings: Before, After)
+GAP = 0.600              # s: a gap longer than this is shortened to it (Settings: Between repetitions;
+                         # Josh, 27 October: 0.3 s put the repetitions too close), two thirds of it
+                         # kept after one stretch and a third before the next
 FADE = 0.005             # s crossfade at each join, so there's no click
 HUM = 100.0              # Hz: left out of the overall loudness
 HISS = (2000.0, 10000.0)  # Hz
@@ -123,9 +126,11 @@ def find_speech(samples, rate: int):
     return speech, hop, float(bg), float(overall.max())
 
 
-def snip(samples, rate: int, gaps: bool = True):
+def snip(samples, rate: int, gaps: bool = True, lead: float = LEAD, tail: float = TAIL,
+         gap: float = GAP):
     """The take with its silent ends trimmed and (with `gaps`) long gaps shortened: (samples, Report).
-    The samples come back in the same type and channels; unchanged when there's nothing to do."""
+    `lead`, `tail` and `gap` are seconds (Settings → Advanced → ✂ auto-snip). The samples come back
+    in the same type and channels; unchanged when there's nothing to do."""
     a = np.asarray(samples)
     rep = Report(length=len(a) / rate if rate else 0.0)
     rep.new_length = rep.length
@@ -141,14 +146,14 @@ def snip(samples, rate: int, gaps: bool = True):
         return samples, rep
     n = len(a)
     keep = []                                            # sample ranges to keep, in order
-    start = max(0, speech[0][0] * hop - int(LEAD * rate))
+    after, before = gap * 2 / 3, gap / 3
+    start = max(0, speech[0][0] * hop - int(lead * rate))
     cur = start
     for (s1, e1), (s2, e2) in zip(speech, speech[1:]):
-        gap = (s2 - e1) * hop / rate
-        if gaps and gap > GAP_OVER:
-            keep.append((cur, e1 * hop + int(GAP_AFTER * rate)))
-            cur = s2 * hop - int(GAP_BEFORE * rate)
-    end = min(n, speech[-1][1] * hop + int(TAIL * rate))
+        if gaps and (s2 - e1) * hop / rate > gap:
+            keep.append((cur, e1 * hop + int(after * rate)))
+            cur = s2 * hop - int(before * rate)
+    end = min(n, speech[-1][1] * hop + int(tail * rate))
     keep.append((cur, end))
     cut, prev = [], 0
     for s, e in keep:

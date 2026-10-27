@@ -43,6 +43,8 @@ class SegmentRecordDialog(QDialog):
         self.delete_btn.clicked.connect(lambda *_: self._delete())
         self.update_btn.clicked.connect(lambda *_: self._update_name())
         self.praat_btn.clicked.connect(lambda *_: self._praat())
+        rec.snip_gaps = False                     # ✂ auto-snip: a segment's ends only
+        rec.snip_btn.clicked.connect(lambda *_: self._proselytize())
 
         rl.addWidget(QLabel("Speaker"), 3, 3, Qt.AlignRight)
         self.speaker = QComboBox()
@@ -128,7 +130,7 @@ class SegmentRecordDialog(QDialog):
         else:
             self.name_note.setText("" if has else "Not recorded yet.")
             self.name_note.setStyleSheet(f"color: {theme.muted()};")
-        for b in (self.play_btn, self.delete_btn, self.praat_btn):
+        for b in (self.play_btn, self.delete_btn, self.praat_btn, self.rec_panel.snip_btn):
             b.setEnabled(has)
         self.update_btn.setEnabled(has and self.file.name != exp)
 
@@ -161,8 +163,21 @@ class SegmentRecordDialog(QDialog):
 
     def _stop(self):
         take = self.rec_panel.stop()
-        if take is not None:
-            self.save(*take)
+        if take is None:
+            return
+        samples, rate = take
+        snipped, untrimmed = self.rec_panel.auto_snip(samples, rate)   # ✂ auto-snip (idea 10)
+        if self.save(snipped, rate) and untrimmed is not None:
+            from .autosnip import hold_untrimmed
+            hold_untrimmed(self.main, self.file, untrimmed, rate, self.speaker_code(), self.date.text())
+
+    def _proselytize(self):
+        """The ✂ button: snip this soundfile once."""
+        if self.recorder or self.file is None or not self.file.exists():
+            return
+        from .autosnip import proselytize
+        if proselytize(self.main, self, self.file, gaps=False):
+            self._refresh()
 
     def save(self, samples, rate: int) -> bool:
         """A recording made: written under the expected name (the one it replaces to the Recycle

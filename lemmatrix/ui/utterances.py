@@ -1174,6 +1174,7 @@ class UtteranceDialog(TokenDialog):
     the token fields and recording as for tokens; the utterance-only tag groups and the groups
     with no "usual for" hint first; a Lemmas box; Back and Next through the Utterances grid."""
     MULTI_TOKENS = False      # one utterance at a time
+    SNIP_GAPS = False         # ✂ auto-snip trims an utterance's ends only (its pauses are its timing)
     PITCH_PART = "utterances"
 
     def __init__(self, main, slots: list[Slot], index: int, parent=None):

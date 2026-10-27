@@ -111,3 +111,76 @@ def test_type_and_channels_kept():
     st = np.stack([x, x], axis=1)
     y2, rep2 = snip.snip(st, R)
     assert y2.ndim == 2 and y2.shape[1] == 2 and len(y2) == len(y) or abs(len(y2) - len(y)) < 2
+
+
+# ---- in the program (Josh, 27 October: settable margins, the ✂ button) -------------------------
+
+def test_the_margins_are_used():
+    x = take(np.zeros(R), vowel(0.5), np.zeros(R))
+    y, rep = snip.snip(x, R, lead=0.3, tail=0.5)
+    assert abs(rep.new_length - (0.3 + 0.5 + 0.5)) < 0.06
+    x = take(np.zeros(int(R * 0.3)), vowel(0.4), np.zeros(int(R * 2.0)), vowel(0.4), np.zeros(int(R * 0.3)))
+    y, rep = snip.snip(x, R, gap=1.0)
+    inner = [c for c in rep.cut if 0.5 < c[0] < 2.5]
+    assert len(inner) == 1 and abs((inner[0][1] - inner[0][0]) - 1.0) < 0.06   # 2.0 s → 1.0 s
+
+
+def test_settings_and_the_button(win):
+    from lemmatrix import advanced
+    from lemmatrix.ui.dialogs import PreferencesDialog
+    from lemmatrix.ui.recording_panel import RecordingPanel
+    panel = RecordingPanel(win)
+    assert panel.snip_btn.toolTip() == "proselytize this soundfile" and panel.snip_btn.isHidden()
+    dlg = PreferencesDialog(win, win.doc.db, win.prefs)
+    assert dlg.auto_snip_box.text() == "✂ auto-snip" and dlg.auto_snip_box.toolTip() == "the sign of the covenant"
+    assert [b.value() for b in dlg.snip_margins.values()] == [0.10, 0.25, 0.60]
+    assert not any(b.isEnabled() for b in dlg.snip_margins.values())
+    dlg.auto_snip_box.setChecked(True)
+    dlg.snip_margins["recording/snip_gap"].setValue(0.8)
+    dlg.apply()
+    assert advanced.auto_snip() and advanced.snip_margins()["gap"] == 0.8
+    assert not panel.snip_btn.isHidden()                       # the button follows the switch
+    for key in (advanced.AUTO_SNIP_KEY, "recording/snip_gap"):
+        win.prefs.set_value(key, False if key == advanced.AUTO_SNIP_KEY else 0.6)
+    dlg.reject()
+
+
+def test_a_fresh_take_is_snipped_only_when_on(win):
+    from lemmatrix import advanced
+    from lemmatrix.ui.recording_panel import RecordingPanel
+    panel = RecordingPanel(win)
+    x = take(np.zeros(R), vowel(0.5), np.zeros(R))
+    y, untrimmed = panel.auto_snip(x, R)
+    assert y is x and untrimmed is None
+    advanced.set_on(advanced.AUTO_SNIP_KEY, True)
+    y, untrimmed = panel.auto_snip(x, R)
+    assert len(y) < len(x) and untrimmed is x
+
+
+def test_utterances_and_segments_trim_ends_only(win):
+    from lemmatrix.ui.token_dialog import TokenDialog
+    from lemmatrix.ui.utterances import UtteranceDialog
+    assert TokenDialog.SNIP_GAPS and not UtteranceDialog.SNIP_GAPS
+    src = open(__import__("lemmatrix.ui.segment_record", fromlist=["x"]).__file__, encoding="utf-8").read()
+    assert "rec.snip_gaps = False" in src
+
+
+def test_proselytize_keeps_the_original(win, tmp_path, monkeypatch):
+    from lemmatrix import audio, advanced
+    from lemmatrix.ui import autosnip
+    from lemmatrix.ui import widgets  # noqa: F401
+    from PySide6.QtWidgets import QMessageBox
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
+    held = tmp_path / "held"
+    monkeypatch.setattr(win.doc, "hold_recording", lambda p: held / p.name)
+    held.mkdir()
+    path = tmp_path / "D009.wav"
+    x = take(np.zeros(R), vowel(0.5), np.zeros(R))
+    audio.write_wav(path, x, R, 16, artist="DML", date="2026-10-27")
+    assert autosnip.proselytize(win, None, path, gaps=True)
+    d, r = audio.read_any(path)
+    assert len(d) / r < 1.0 and audio.read_info(path).get("IART") == "DML"
+    original = held / "D009 (unsnipped).wav"
+    assert original.exists() and abs(len(audio.read_any(original)[0]) / R - 2.5) < 0.01
+    assert not autosnip.proselytize(win, None, path, gaps=True)   # nothing left to trim: unchanged
+    assert advanced.SNIP_BUTTON_TIP == "proselytize this soundfile"
