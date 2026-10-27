@@ -57,7 +57,7 @@ def test_filter_for_wording_keys_and_size(app):
     texts = {m: rb.text() for m, rb in d.radios.items()}
     assert texts == {fl.ANYWHERE: "&Anywhere", fl.START: "&Beginning", fl.WHOLE: "&Discrete",
                      fl.END: "&End", fl.REGEX: "Rege&X"}
-    assert d.case.text() == "Mat&Ch cAsE" and d.diacritics.text() == "Match &Fûnkỹ stṵff"
+    assert d.case.text() == "Mat&Ch cAsE" and d.diacritics.text() == "Maːtcʰ &Fûnkỹ stṵff"
     assert d.width() == d.sizeHint().width()
 
 

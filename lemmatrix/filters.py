@@ -59,6 +59,11 @@ def _fold(text: str) -> str:
     return unicodedata.normalize("NFC", "".join(out))
 
 
+@functools.lru_cache(maxsize=1 << 16)
+def _decomposed(text: str) -> str:
+    return unicodedata.normalize("NFD", text)
+
+
 @dataclass
 class Blanks:
     def describe(self) -> str:
@@ -98,7 +103,7 @@ class TextFilter:
         if self.mode != REGEX:
             return None
         flags = 0 if self.match_case else re.IGNORECASE
-        return re.compile(self.text, flags)
+        return re.compile(unicodedata.normalize("NFD", self.text), flags)
 
     def matches(self, value: str) -> bool:
         value = value or ""
@@ -107,8 +112,10 @@ class TextFilter:
                 rx = self.compiled()
             except re.error:
                 return False
-            target = value if self.match_diacritics else fold_diacritics(value)
-            return bool(rx.search(target))
+            # A regular expression sees the text exactly as it is, never folded, and decomposed
+            # (á is a + ◌́), as Bulk edit's does: so aː or a single mark can be searched for
+            # (Josh, 27 October: "Regex searches … should bypass that anyway").
+            return bool(rx.search(_decomposed(value)))
         v, t = self._prep(value), self._prep(self.text)
         if self.mode == WHOLE:
             return v == t

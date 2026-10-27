@@ -47,12 +47,16 @@ class FilterForDialog(QDialog):
         self.case = QCheckBox("Mat&Ch cAsE")
         self.case.setToolTip("Match case: capitals and small letters count as different")
         self.case.setChecked(bool(current and current.match_case))
-        self.diacritics = QCheckBox("Match &Fûnkỹ stṵff")
+        self.diacritics = QCheckBox("Maːtcʰ &Fûnkỹ stṵff")   # Josh, 27 October
         self.diacritics.setChecked(bool(current and current.match_diacritics))
         self.diacritics.setToolTip("Match diacritics. When off, accents and other combining marks are ignored, and so "
-                                   "are modifier letters such as ʰ ʷ ʲ ː (so deet finds dɪɪtʰ).")
+                                   "are modifier letters such as ʰ ʷ ʲ ː (so deet finds dɪɪtʰ).\n"
+                                   "RegeX always matches them, letters and marks apart (á is a + ◌́).")
         grid.addWidget(self.case, 0, 2)
         grid.addWidget(self.diacritics, 1, 2)
+        # A regular expression always sees the text as it is, marks and all: the switch has no say there.
+        self.radios[fl.REGEX].toggled.connect(lambda on: self.diacritics.setEnabled(not on))
+        self.diacritics.setEnabled(not self.radios[fl.REGEX].isChecked())
         lay.addLayout(grid)
         self.error = QLabel()
         self.error.setStyleSheet(f"color: {theme.colour('error').name()};")
