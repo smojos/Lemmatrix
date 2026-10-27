@@ -717,8 +717,8 @@ class Document(QObject):
         if not trouble and version and self.db.metadata.wordlist_version != version:
             self.undo.push(WordlistVersionCommand(self, self.db.metadata.wordlist_version, version))
         self.undo.endMacro()
-        if trouble and self.undo.index() > at:   # nothing was pushed inside: take the empty step off
-            self.undo.undo()
+        if trouble and self.undo.index() > at:   # nothing was pushed inside: step back over the empty
+            self.undo.setIndex(at)               # macro (the review: the previous command is untouched)
         self.changed.emit()
         return trouble
 

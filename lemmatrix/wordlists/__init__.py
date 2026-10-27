@@ -173,10 +173,12 @@ def conversion_since(version: str) -> dict[str, str]:
         step = ed.conversion()
         if not step:
             continue
-        out = {old: (step.get(new, new) if new != "-" else "-") for old, new in out.items()}
+        prev = dict(out)                           # the database's references → the edition before's
+        out = {old: (step.get(new, new) if new != "-" else "-") for old, new in prev.items()}
+        reached = set(prev.values())               # references the earlier editions already gave
         for old, new in step.items():
-            if old not in out and old not in out.values():
-                out[old] = new
+            if old not in prev and old not in reached:
+                out[old] = new                     # a reference no earlier edition moved
     return {o: n for o, n in out.items() if o != n}
 
 
@@ -631,7 +633,7 @@ def peek(db, entry) -> str:
     f = s.entry_field(TAXON)
     if f is not None and entry.get(f.name):
         lines.append(f"Taxon: {entry.get(f.name)}")
-    near = missing_family(db, entry)
+    near = [] if renumber_pending(db) else missing_family(db, entry)   # never the new list's items on old numbers
     if near:
         lines.append("Not in this database (Insert EACW items… adds them):")
         lines += [f"   {i.number}  {i.gloss}" + ("" if i.default else "  (hidden)") for i in near]

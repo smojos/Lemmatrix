@@ -97,8 +97,14 @@ def has_data(db, e, used_in: set | None = None) -> bool:
     fresh = db.new_entry(e.ref).values               # what every new lemma has (Stem type: simple)
     if any(v.strip() and fresh.get(k) != v for k, v in e.values.items() if k not in own):
         return True
+    gname = f.name if (f := s.entry_field("gloss")) is not None else ""
+    n = wl.canon(wl.EACW, e.ref) if wl.is_eacw(db) else None
+
+    def shipped(name, lang, v):                    # a gloss the EACW brought (idea 63) isn't the researcher's
+        return n is not None and name == gname and v.strip() == wl.item_gloss_in(n, lang)
     for name, langs in e.multi.items():
-        if any(v.strip() and (name not in own or lang not in (s.primary_gloss, "en")) for lang, v in langs.items()):
+        if any(v.strip() and (name not in own or lang not in (s.primary_gloss, "en")) and not shipped(name, lang, v)
+               for lang, v in langs.items()):
             return True
     if e.from_lemmas or e.from_languages:
         return True
@@ -181,8 +187,11 @@ def renumbering(db) -> Renumbering | None:
     r = Renumbering()
     target: dict[int, str] = {}
     redesigned = wl.redesignated_since(version(db))
+    folded = {o.casefold(): o for o in conv}
     for e in db.entries:
         ref = e.ref.strip()
+        if ref not in conv and ref.casefold() in folded:
+            ref = folded[ref.casefold()]           # p096 typed by hand is P096 (the review)
         if ref in redesigned and ref not in conv:
             conv = {**conv, ref: ref}              # it stays where it is, unless it has data
         if ref in conv:
@@ -232,6 +241,12 @@ def renumbering(db) -> Renumbering | None:
                 after.set(gf.name, item.gloss, lang if gf.multilingual else None, gf.multilingual)
                 if e.file_gloss == _file_gloss(was):
                     after.file_gloss = _file_gloss(item.gloss)
+        if item is not None and e.ref.strip() in redesigned and ref == e.ref:   # empty, now the new item
+            after = after or e.copy()
+            for role, value in (("word-class", item.word_class), (wl.TAXON, item.taxon)):
+                f = s.entry_field(role)
+                if f is not None and (role != "word-class" or value in s.word_classes()):
+                    after.set(f.name, value)
         if after is not None:
             r.pairs.append((e, after))
     finals = [target.get(id(e), e.ref) for e in db.entries if id(e) not in gone]
@@ -407,11 +422,22 @@ def update_file(db, new_entry=None) -> tuple[int, list[str]]:
     done = []
     for old, new in renames:
         old, new = Path(old), Path(new)
+        problem = ""
         if not old.exists() or (new.exists() and not storage.same_file(old, new)):
-            for o, n in reversed(done):
-                n.rename(o)
-            return 0, [f"{old.name} can't be renamed to {new.name}"]
-        old.rename(new)
+            problem = f"{old.name} can't be renamed to {new.name}"
+        else:
+            try:
+                old.rename(new)
+            except OSError as exc:
+                problem = f"{old.name}: {exc}"
+        if problem:
+            stuck = []
+            for o, n in reversed(done):           # everything back as it was
+                try:
+                    n.rename(o)
+                except OSError:
+                    stuck.append(f"{n.name} couldn't be named {o.name} again")
+            return 0, [problem, *stuck]
         done.append((old, new))
     after = {id(e): a for e, a in pairs}
     db.entries[:] = [after.get(id(e), e) for e in order]

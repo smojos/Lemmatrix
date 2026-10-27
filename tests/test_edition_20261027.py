@@ -227,3 +227,48 @@ def test_the_wordlist_tools_offer_the_update_first(make_win, monkeypatch):
     wd.check_reference_order(w)
     w.convert_references()
     assert len(shown) == 3 and all("renumbered items" in s for s in shown)
+
+
+def test_conversions_chain_whatever_their_order():
+    """The review: an upward shift, a table's row order, and two renumbering editions in a row."""
+    from dataclasses import replace
+    import lemmatrix.wordlists as w
+    base = w.EDITIONS[0]
+
+    def chain(*tables):
+        eds = [base] + [replace(base, version=f"2027-01-0{k}", renumbered=f"t{k}") for k in range(1, len(tables) + 1)]
+        saved = w.EDITIONS, w._conversion
+        w.EDITIONS = tuple(eds)
+        w._conversion = lambda name: tables[int(name[1:]) - 1]
+        try:
+            return w.conversion_since(base.version)
+        finally:
+            w.EDITIONS, w._conversion = saved
+    assert chain({"P096": "P097", "P097": "P098"}) == {"P096": "P097", "P097": "P098"}
+    assert chain({"P096": "P095", "P095": "-"}) == chain({"P095": "-", "P096": "P095"}) == {"P096": "P095", "P095": "-"}
+    assert chain({"A": "B", "B": "-"}, {"B": "C", "C": "D"}) == {"A": "C", "B": "-", "C": "D"}
+
+
+def test_the_lemma_dialogue_never_fills_from_old_numbers():
+    db = _old_db()
+    from lemmatrix.wordlist_check import has_data
+    assert wl.renumber_pending(db)
+    assert wl.peek(db, db.entry_by_ref("H055")).count("Not in this database") == 0
+    lone = db.new_entry("P094", gloss="be sick")
+    lone.set("Gloss", wl.item_gloss_in("P094", "fr"), "fr", True)   # a shipped gloss isn't the researcher's
+    db.metadata.wordlist_version = wl.EACW_VERSION
+    assert not has_data(db, lone)
+
+
+def test_a_researchers_own_clarification_is_named_on_upgrade(tmp_path):
+    db = newdb.make(newdb.Choices(base=wl.EACW))
+    from lemmatrix.model import FieldDef
+    db.settings.entry_fields.append(FieldDef("Clarification", role="clarification"))
+    db.entry_by_ref("A001").values["Clarification"] = "my own note"
+    db.entry_by_ref("J022a").values["Clarification"] = "Azadirachta indica"     # the list's: not named
+    p = tmp_path / "C.xml"
+    storage.save(db, p, backup=False)
+    p.write_text(p.read_text(encoding="utf-8").replace(f'format="{storage.FORMAT_VERSION}"', 'format="14"'),
+                 encoding="utf-8")
+    notes = "\n".join(storage.load(p).load_notes)
+    assert "A001: my own note" in notes and "J022a" not in notes

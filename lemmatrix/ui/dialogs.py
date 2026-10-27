@@ -471,8 +471,8 @@ class EntryDialog(QDialog):
         self.apply(e)
         e.file_gloss = nfc(gloss)
         from .. import wordlists as wl                # an EACW item: its fields and correspondences
-        if wl.is_eacw(self.db) and (n := wl.canon(wl.EACW, e.ref)):
-            wl.fill_item(self.db, e, wl.get(wl.EACW).by_number[n])
+        if wl.is_eacw(self.db) and not wl.renumber_pending(self.db) and (n := wl.canon(wl.EACW, e.ref)):
+            wl.fill_item(self.db, e, wl.get(wl.EACW).by_number[n])   # never from old numbers (the review)
         return e
 
 

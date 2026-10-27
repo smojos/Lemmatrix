@@ -310,11 +310,20 @@ def _drop_clarification(db: Database):
         return
     names = {f.name for f in gone}
     s.entry_fields = [f for f in s.entry_fields if f.role != "clarification"]
+    from . import wordlists as wl
+    own = []
     for e in db.entries:
         for n in names:
-            e.values.pop(n, None)
-            e.multi.pop(n, None)
+            v = e.values.pop(n, None) or next(iter((e.multi.pop(n, None) or {}).values()), "")
+            item = wl.get(wl.EACW).by_number.get(wl.canon(wl.EACW, e.ref) or "") if v else None
+            if v and (item is None or item.clarification != v):
+                own.append(f"{e.ref}: {v}")
     db.dropped_fields = [f.title for f in gone]
+    if own:                              # said in the upgrade's message, so nothing goes unseen
+        db.load_notes = list(db.load_notes) + [
+            "The Clarification field is gone: the EACW's clarifications now come from the list itself, as an "
+            "ⓘ beside each gloss. These clarifications weren't the list's and are no longer kept:\n"
+            + "\n".join(own[:30]) + (f"\n… and {len(own) - 30} more" if len(own) > 30 else "")]
     db.upgraded = True
 
 

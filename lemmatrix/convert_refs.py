@@ -177,10 +177,14 @@ def file_renames(db: Database, pairs) -> tuple[list[tuple[Path, Path]], list[str
 
 def token_files(db: Database, pairs) -> list[tuple[Entry, Entry]]:
     """The changed copies with their tokens' stored file names following the renames."""
+    from . import storage
     out = []
     for e, after in pairs:
+        folder = storage.folder_for(db, e) if db.path else None
         for t, ta in zip(e.tokens, after.tokens):
             if t.file and t.file == db.expected_filename(e, t):
+                if folder is not None and not (folder / t.file).exists():
+                    continue                       # not here (not synced yet): it keeps the name it has
                 ta.file = db.expected_filename(after, ta)
         out.append((e, after))
     return out
