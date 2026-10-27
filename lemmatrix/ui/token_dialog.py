@@ -146,7 +146,7 @@ class TokenDialog(QDialog):
         self.canvas = PitchCanvas(low=s.pitch_low, high=s.pitch_high, font=ipa_font(self.main.prefs.ipa_size + 3))
         self.canvas.setContextMenuPolicy(Qt.CustomContextMenu)
         self.canvas.customContextMenuRequested.connect(self._canvas_menu)
-        self.canvas.setToolTip("Right-click to play the pitch")
+        self.canvas.setToolTip("Right-click to play, raise or lower the pitch")
         self.pitch_play = QToolButton()
         self.pitch_play.setIcon(icon("play-pitch", 22))
         self.pitch_play.setIconSize(QSize(22, 22))
@@ -166,6 +166,7 @@ class TokenDialog(QDialog):
         self.edits: dict[str, QLineEdit] = {}
         self.translation: QLineEdit | None = None      # the English translation: gets suggestions
         self.comment: QLineEdit | None = None          # the first comment field: Push to question
+        self.pitch_edit: QLineEdit | None = None       # the Pitch field: Raise / Lower pitch on right-click
         row = 2
         for f in s.token_fields:
             if f.role == "pitch" and not pitch_on:
@@ -179,6 +180,9 @@ class TokenDialog(QDialog):
                 ed.setValidator(PitchValidator(ed))
                 ed.setPlaceholderText("e.g. 11 4:42 1:4")
                 ed.textChanged.connect(self._pitch_changed)
+                self.pitch_edit = ed                  # right-click: Raise / Lower pitch (Josh, 27 October)
+                ed.setContextMenuPolicy(Qt.CustomContextMenu)
+                ed.customContextMenuRequested.connect(self._pitch_field_menu)
             ed.textChanged.connect(self._fields_changed)
             if f.role == "translation" and s.primary_gloss == predict.LANG:
                 self.translation = ed
@@ -1415,7 +1419,51 @@ class TokenDialog(QDialog):
         a = m.addAction(icon("play-pitch", 16), "Play pitch")
         a.setEnabled(bool(pitchmod.parse(self.canvas.text)))
         a.triggered.connect(lambda *_: self._play_pitch())
+        self._add_shift_items(m)
         m.exec(self.canvas.mapToGlobal(pos))
+
+    def _pitch_field_menu(self, pos):
+        """The Pitch field's right-click menu: the usual editing items, then Raise and Lower pitch."""
+        ed = self.pitch_edit
+        m = ed.createStandardContextMenu()
+        self._add_shift_items(m)
+        m.exec(ed.mapToGlobal(pos))
+        m.deleteLater()
+
+    def _add_shift_items(self, m: QMenu):
+        """Raise pitch and Lower pitch (Bulk edit's shortcut, for the Pitch typed here): every digit a
+        step up or down; greyed when a digit would leave the display range, the reason in the hover."""
+        from .. import bulk
+        ed = self.pitch_edit
+        if ed is None:
+            return
+        s = self.db.settings
+        m.addSeparator()
+        m.setToolTipsVisible(True)
+        for label, step in (("Raise pitch", 1), ("Lower pitch", -1)):
+            a = m.addAction(label)
+            text = ed.text()
+            try:
+                ok = bool(text.strip()) and bulk.shift_pitch(text, step, s.pitch_low, s.pitch_high) != text
+            except bulk.RowError as exc:
+                ok = False
+                a.setToolTip(str(exc))
+            a.setEnabled(ok)
+            a.triggered.connect(lambda *_, step=step: self.shift_pitch(step))
+
+    def shift_pitch(self, step: int):
+        """Raise (1) or lower (-1) the Pitch field by a step; Ctrl+Z in the field takes it back."""
+        from .. import bulk
+        ed = self.pitch_edit
+        if ed is None:
+            return
+        s = self.db.settings
+        try:
+            new = bulk.shift_pitch(ed.text(), step, s.pitch_low, s.pitch_high)
+        except bulk.RowError:
+            return
+        ed.selectAll()
+        ed.insert(new)                            # not setText: keeps the field's own undo
 
     def _recording_menu(self, global_pos):
         m = QMenu(self)
