@@ -35,6 +35,11 @@ def set_context(fn):
     _context = fn
 
 
+def database():
+    """The open database (for the typing helpers), or None."""
+    return _context() if _context is not None else None
+
+
 def role(db, key) -> str | None:
     """phonetic or phonemic for a field key ("Phonetic", "f:Phonemic"), else None."""
     if db is None or not key:
@@ -74,7 +79,7 @@ def _dialog_paste(ed: QLineEdit, db, other_role: str, up: bool) -> bool:
 
 def paste(ed, up: bool) -> bool:
     """Fast-paste from the text box `ed`; True when it did (the key is then taken)."""
-    db = _context() if _context is not None else None
+    db = database()
     key = keyboards.field_key(ed)
     mine = role(db, key)
     if mine is None:

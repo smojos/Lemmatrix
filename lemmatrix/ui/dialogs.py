@@ -1112,6 +1112,29 @@ class PreferencesDialog(QDialog):
         paste_note = QLabel("Phonetic ⇄ Phonemic with Shift+Down / Shift+Up")
         paste_note.setStyleSheet(f"color: {theme.muted()}; margin-left: 22px;")
         av.addWidget(paste_note)
+        from .. import bestfriend                 # 🐕 linguist's best friend (idea 21, Josh, 27 October)
+        self.best_friend_box = QCheckBox(advanced.BEST_FRIEND)
+        self.best_friend_box.setChecked(prefs.get_bool(advanced.BEST_FRIEND_KEY, False))
+        self.best_friend_box.setToolTip("As you type in Phonetic and Phonemic (never when pasting): the rules "
+                                        "selected below. Backspace or Ctrl+Z straight after a correction "
+                                        "puts back what you typed.")
+        av.addSpacing(6)
+        av.addWidget(self.best_friend_box)
+        bf_note = QLabel(advanced.BEST_FRIEND_LINE)
+        bf_note.setStyleSheet(f"color: {theme.muted()}; margin-left: 22px;")
+        av.addWidget(bf_note)
+        self.bf_rules = {}
+        for rule in bestfriend.RULES:
+            box = QCheckBox(rule.label)
+            box.setChecked(prefs.get_bool(rule.key, True))
+            box.setStyleSheet("margin-left: 22px;")
+            av.addWidget(box)
+            self.bf_rules[rule.key] = box
+        def _follow(on):
+            for box in self.bf_rules.values():
+                box.setEnabled(on)
+        self.best_friend_box.toggled.connect(_follow)
+        _follow(self.best_friend_box.isChecked())
         page("Advanced", [], intro=adv)
         lay.addWidget(_buttons(self))
         # Hidden: the boxes under it grey out whole, their headings and labels too (Josh, 26 October:
@@ -1212,7 +1235,8 @@ class PreferencesDialog(QDialog):
         p.set_value(search.POWER_KEY, self.power_search.isChecked())
         search.set_power(self.power_search.isChecked())
         from .. import advanced                   # 🔥 hot mic, 📋 fast paste (ideas 68, 79; this computer)
-        for key, box in ((advanced.HOT_MIC_KEY, self.hot_mic_box), (advanced.FAST_PASTE_KEY, self.fast_paste_box)):
+        for key, box in ((advanced.HOT_MIC_KEY, self.hot_mic_box), (advanced.FAST_PASTE_KEY, self.fast_paste_box),
+                         (advanced.BEST_FRIEND_KEY, self.best_friend_box), *self.bf_rules.items()):
             p.set_value(key, box.isChecked())
             advanced.set_on(key, box.isChecked())
         doc = getattr(self.parent(), "doc", None)

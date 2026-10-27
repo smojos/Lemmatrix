@@ -208,7 +208,10 @@ def _no_old_computer_settings():
     if q.fileName() == os.environ.get("LEMMATRIX_SETTINGS_FILE"):     # never the real preferences
         for key in ("columns", "lines", "views", "sessions", "fullbackup", "matrix/autoplay",
                     "matrix/only_with_data", "notebook/sort",
-                    "session/speaker", "search/power", "recording/hot_mic", "edit/fast_paste"):
+                    "session/speaker", "search/power", "recording/hot_mic", "edit/fast_paste",
+                    "edit/best_friend"):
+            q.remove(key)
+        for key in [k for k in q.allKeys() if k.startswith("edit/bf_")]:
             q.remove(key)
     yield
 
@@ -219,9 +222,13 @@ def _plain_search():
     again after it (a test that turns it on can't leave it on for the next)."""
     from lemmatrix import advanced, search
     search.set_power(False)
-    for key in (advanced.HOT_MIC_KEY, advanced.FAST_PASTE_KEY):   # 🔥 hot mic, 📋 fast paste: off too
-        advanced.set_on(key, False)
+    from lemmatrix import bestfriend
+    def reset():
+        for key in (advanced.HOT_MIC_KEY, advanced.FAST_PASTE_KEY, advanced.BEST_FRIEND_KEY):
+            advanced.set_on(key, False)           # 🔥 hot mic, 📋 fast paste, 🐕: off too
+        for rule in bestfriend.RULES:
+            advanced.set_on(rule.key, True)       # the dog's rules: on, as on a new computer
+    reset()
     yield
     search.set_power(False)
-    for key in (advanced.HOT_MIC_KEY, advanced.FAST_PASTE_KEY):
-        advanced.set_on(key, False)
+    reset()

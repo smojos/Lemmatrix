@@ -88,6 +88,8 @@ def main() -> int:
     app._keyboards = keyboards.install(app)             # a field's own keyboard (idea 43; off until set up)
     from .ui import fastpaste
     app._fast_paste = fastpaste.install(app)            # 📋 fast paste (idea 79; Settings → Advanced, off)
+    from .ui import bestfriend
+    app._best_friend = bestfriend.install(app)          # 🐕 linguist's best friend (idea 21; Advanced, off)
 
     from .ui import splash as splashmod
     splash = splashmod.show(app)                        # until the database is open (a dialogue closes it)
