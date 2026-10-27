@@ -46,13 +46,13 @@ def test_typing_finds_lemmatrixs_own_and_plays(win, area, monkeypatch):
     area.seg_alpha.edit.setText("β")
     assert not _grey(area.letters[0])
     assert "Peter Isotalo · CC BY-SA 3.0 · Wikimedia Commons" in area.letters[0].toolTip()
-    assert "Right Shift+A" in area.letters[0].toolTip()
+    assert "Ctrl+1" in area.letters[0].toolTip()
     area.seg_beta.edit.setText("pu")                                  # nothing for pu: grey
     assert _grey(area.letters[1]) and "record one" in area.letters[1].toolTip()
     area.letters[0].click()
     area.letters[1].click()
     assert got == [["Voiced_bilabial_fricative.ogg"]]
-    assert area.play_key("A") and got[-1] == ["Voiced_bilabial_fricative.ogg"]
+    assert area.play_key("1") and got[-1] == ["Voiced_bilabial_fricative.ogg"]
 
 
 def test_pitch_pads_grey_when_blank(win):
@@ -191,37 +191,19 @@ def test_gamma_appears_when_the_panel_is_tall(win, monkeypatch):
     from PySide6.QtWidgets import QApplication
     QApplication.processEvents()
     assert not c.has_gamma()                                          # hidden by default
-    assert not c.play_key("C") and not c.play_key("G")
+    assert not c.play_key("3")
     sizes = win.right_split.sizes()
     win.right_split.setSizes([sizes[0] - 250, sizes[1] + 250])        # the working panel dragged up
     QApplication.processEvents()
-    assert c.has_gamma() and "Right Shift+C or G" in c.letters[2].toolTip()
+    assert c.has_gamma() and "Ctrl+3" in c.letters[2].toolTip()
     played = []
     monkeypatch.setattr(win, "play_pitch", lambda text: played.append(text))
     c.set_tab("pitch")
     c.gamma.edit.setText("13")
-    assert c.play_key("C") and c.play_key("G") and played == ["13", "13"]
+    assert c.play_key("3") and played == ["13"]
     win.right_split.setSizes(sizes)                                   # not enough room: gone
     QApplication.processEvents()
     assert not c.has_gamma()
-
-
-def test_right_shift_c_types_when_there_is_no_gamma(win, monkeypatch):
-    from lemmatrix.ui import rightshift
-    c = win.comparison
-    monkeypatch.setattr(rightshift, "comparison_in", lambda w: c)
-    monkeypatch.setattr(rightshift, "_right_shift_windows", lambda: None)
-    monkeypatch.setattr(rightshift.sys, "platform", "linux")
-    f = rightshift.RightShiftFilter()
-    f.eventFilter(c, QKeyEvent(QEvent.KeyPress, Qt.Key_Shift, Qt.ShiftModifier, 62, 0xFFE2, 0))
-    cev = QKeyEvent(QEvent.KeyPress, Qt.Key_C, Qt.ShiftModifier, "C")
-    assert not c.has_gamma() and not f.eventFilter(c, cev)           # no γ: a C is typed
-    monkeypatch.setattr(c, "has_gamma", lambda: True)
-    keys = []
-    monkeypatch.setattr(c, "play_key", lambda k: keys.append(k) or True)
-    assert f.eventFilter(c, cev)
-    assert f.eventFilter(c, QKeyEvent(QEvent.KeyPress, Qt.Key_G, Qt.ShiftModifier, "G"))
-    assert keys == ["C", "G"]
 
 
 def test_file_open_folder_has_segments(win, monkeypatch):

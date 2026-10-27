@@ -80,8 +80,6 @@ def main() -> int:
     app._ctrl_space = ctrlspace.install(app)            # Ctrl+Space plays from any field, any keyboard
     from .ui import shiftwheel
     app._shift_wheel = shiftwheel.install(app)          # Shift + wheel scrolls sideways
-    from .ui import rightshift
-    app._right_shift = rightshift.install(app)          # Right Shift+A / B play α / β
     from .ui import symbols
     app._symbols = symbols.install(app)                 # Σymbols in every text field's right-click menu
     from .ui import keyboards

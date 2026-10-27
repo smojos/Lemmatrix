@@ -4,7 +4,7 @@
 called the phonetics scratchpad): two pads, α and β, for asking a speaker "is it A or B?", in the main
 window and under a text's lines (one widget, used twice: Josh, "complete clones"). A third, γ, is
 an Easter egg (Josh, 24 October): it appears when the working panel is dragged tall enough for it
-(Right Shift+C or G plays it: C follows A and B, G sounds like gamma) and goes again when there
+(Ctrl+3 plays it) and goes again when there
 isn't room.
 
 Two tabs (IDEAS.md idea 46, Josh, 24 October):
@@ -15,7 +15,8 @@ Two tabs (IDEAS.md idea 46, Josh, 24 October):
   session speaker's, one with no speaker, another speaker's, then Lemmatrix's own IPA soundfiles;
   `segments.voices`), and the record button beside the box records one into Soundfiles/Segments.
 
-α and β play their pad on the tab shown: a click, Right Shift+A / Right Shift+B, or Enter. They are
+α and β play their pad on the tab shown: a click, Ctrl+1 / Ctrl+2 (Josh, 27 October; Right Shift+A
+/ B until then, which kept him from typing capitals with that hand), or Enter. They are
 grey when there is nothing to play. The boxes of both tabs sit at the same height, with α and β
 centred on them (Josh). Tab goes round the pads' boxes, for typing (Josh). File → Open folder → Soundfiles › Segments opens their folder.
 Nothing typed is saved: the pads are empty each time Lemmatrix opens."""
@@ -23,7 +24,7 @@ Nothing typed is saved: the pads are empty each time Lemmatrix opens."""
 from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QSize, Qt, Signal
-from PySide6.QtGui import QValidator
+from PySide6.QtGui import QKeySequence, QShortcut, QValidator
 from PySide6.QtWidgets import (QHBoxLayout, QLineEdit, QMenu, QSizePolicy, QStackedWidget,
                                QTabBar, QToolButton, QToolTip, QVBoxLayout, QWidget)
 
@@ -152,7 +153,7 @@ class SegmentPad(QWidget):
         keyboards.tag(self.edit, keyboards.SEGMENT)  # typed as transcriptions (idea 43)
         self.edit.setPlaceholderText("ʌ, pu, t͡s…")
         self.edit.setToolTip("Type a sequence (a sound, a syllable, anything): its soundfile is "
-                             "found as you type. Enter, the letter or Right Shift plays it")
+                             "found as you type. Enter, the letter or Ctrl+1, 2, 3 plays it")
         self.edit.setFont(ipa_font(main.prefs.ipa_size))
         self.edit.setValidator(_SequenceValidator(self.edit, self.edit))
         self.edit.textChanged.connect(self._typed)
@@ -298,7 +299,7 @@ class PhoneticsScratchpad(QWidget):
         self.pads, self.seg_pads, self.letters, self.stacks, self.letter_tops, self.rows = [], [], [], [], [], []
         # α and β; γ, an Easter egg (Josh, 24 October), only while the working panel is dragged
         # tall enough for a third row
-        for letter, keys in (("α", "A"), ("β", "B"), ("γ", "C or G")):
+        for letter, keys in (("α", "1"), ("β", "2"), ("γ", "3")):
             roww = QWidget()
             row = QHBoxLayout(roww)
             row.setContentsMargins(0, 0, 0, 0)
@@ -352,6 +353,13 @@ class PhoneticsScratchpad(QWidget):
         self.tabs.currentChanged.connect(self._tab_changed)
         self._sync_heights()
         self.restyle()
+        # Ctrl+1 / 2 / 3 play α, β, γ (Josh, 27 October), in this scratchpad's window while it is
+        # shown (a window shortcut only fires while its widget is visible), from any field
+        self.shortcuts = []
+        for k in ("1", "2", "3"):
+            sc = QShortcut(QKeySequence(f"Ctrl+{k}"), self, lambda k=k: self.play_key(k))
+            sc.setContext(Qt.WindowShortcut)
+            self.shortcuts.append(sc)
         want = 1 if getattr(main.prefs, "comparison_tab", PITCH) == SEGMENTS else 0
         self._auto = True
         self.tabs.setCurrentIndex(want)
@@ -395,7 +403,7 @@ class PhoneticsScratchpad(QWidget):
 
     # ---- playing
     def play(self, pad):
-        """A pad played (its letter clicked, or Right Shift+A / B), if it is the tab shown."""
+        """A pad played (its letter clicked, or Ctrl+1 / 2 / 3), if it is the tab shown."""
         if pad in self.current_pads():
             pad.play()
 
@@ -407,9 +415,9 @@ class PhoneticsScratchpad(QWidget):
         return not self.rows[2].isHidden()
 
     def play_key(self, key: str) -> bool:
-        """Right Shift+A plays α, Right Shift+B β, and Right Shift+C or G γ while it is shown, on
-        the tab shown. False if the key has nothing to play here (it is then typed)."""
-        i = {"A": 0, "B": 1, "C": 2, "G": 2}.get(key.upper())
+        """Ctrl+1 plays α, Ctrl+2 β, and Ctrl+3 γ while it is shown, on the tab shown. False if
+        the key has nothing to play here."""
+        i = {"1": 0, "2": 1, "3": 2}.get(str(key))
         if i is None or (i == 2 and not self.has_gamma()):
             return False
         self.play_row(i)
@@ -498,7 +506,7 @@ class PhoneticsScratchpad(QWidget):
             lbl.setStyleSheet(
                 f"QToolButton {{ color: {on if ok else off}; border: none; padding: 0 4px; }}"
                 f"QToolButton:hover {{ background: {theme.wash(0.8).name()}; border-radius: 6px; }}")
-            tip = f"Play {lbl.text()} (Right Shift+{lbl.property('key')})"
+            tip = f"Play {lbl.text()} (Ctrl+{lbl.property('key')})"
             more = pad.describe()
             lbl.setToolTip(tip + ("\n" + more if more else ""))
 
