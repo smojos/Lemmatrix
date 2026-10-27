@@ -272,3 +272,19 @@ def test_a_researchers_own_clarification_is_named_on_upgrade(tmp_path):
                  encoding="utf-8")
     notes = "\n".join(storage.load(p).load_notes)
     assert "A001: my own note" in notes and "J022a" not in notes
+
+
+def test_a_second_language_gloss_with_a_clarification_opens_in_the_lemma_dialogue(make_win):
+    """Josh, 27 October: A040 diastema and A008 vein wouldn't open in the lemma dialogue. Their French
+    or Arabic gloss has a clarification, so its field is wrapped with the (i), and the + button's count
+    of filled glosses read the wrapper's text."""
+    from lemmatrix.ui.dialogs import EntryDialog
+    db = newdb.make(newdb.Choices(base=wl.EACW, items=wl.BASE, region=wl.AFRICA,
+                                  gloss_languages=["en", "ar", "fr", "am"]))
+    win = make_win(db)
+    refs = _by_ref(db)
+    for ref in ("A008", "A039", "A040"):
+        dlg = EntryDialog(win, db, refs[ref])
+        assert "3 filled" in dlg.others_btn.toolTip()
+        assert dlg.fields[("Gloss", "fr")].text() == refs[ref].get("Gloss", "fr")
+        dlg.reject()

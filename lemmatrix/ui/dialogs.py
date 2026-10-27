@@ -249,7 +249,11 @@ class EntryDialog(QDialog):
         tip_abbreviated(form, s.entry_fields)      # the full name in the hover (idea 73)
         if self.others_btn is not None:            # the + beside the gloss (Josh, 24 October)
             prefs = getattr(parent, "prefs", None)
-            filled = sum(1 for w in self.other_rows if w.text().strip())
+            # count the line edits, not the rows: a gloss with the EACW's clarification is
+            # wrapped with its (i), and the wrapper has no text (Josh, 27 October: A008, A040)
+            filled = sum(1 for (_, lang), ed in self.fields.items()
+                         if lang and lang != s.primary_gloss and isinstance(ed, QLineEdit)
+                         and ed.text().strip())
             if filled:
                 self.others_btn.setToolTip(self.others_btn.toolTip() + f" ({filled} filled)")
             shown = prefs.get_bool(OTHER_GLOSSES, False) if prefs is not None else False
