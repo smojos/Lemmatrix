@@ -1220,27 +1220,15 @@ class TokenDialog(QDialog):
                 return                            # never record over another token's recording
         exp = self._expected()
         own = [p for p in {self.token.file, exp} if p and self._path(p).exists()]
-        if own and not (self.token.file in own and getattr(self, "_record_over_quietly", False)):
-            ask = ("Replace this token's recording?" if self.token.file in own else
-                   f"A file called {exp} is already in the sound folder, though no token uses it. "
-                   "Replace it? (It goes to the Recycle Bin.)")
-            if self.token.file in own:            # this token's own: can be silenced (idea 68)
-                if not self._ask_record_over(ask):
+        if own:
+            if self.token.file in own:            # this token's own: 🔥 hot mic records straight over it
+                from .recording_panel import ask_record_over
+                if not ask_record_over(self, "Replace this token's recording?", "Record over it"):
                     return
-            elif not _w.ask(self, "Record", ask, "Replace it"):
-                return
+            elif not _w.ask(self, "Record", f"A file called {exp} is already in the sound folder, though no "
+                            "token uses it. Replace it? (It goes to the Recycle Bin.)", "Replace it"):
+                return                            # a stray file of that name always asks
         self.rec_panel.start()
-
-    def _ask_record_over(self, text: str) -> bool:
-        """Replace this token's recording? With *Don't ask again until this dialogue closes* (IDEAS.md
-        idea 68, Josh, 26 October): selected, recording over a token's own recording goes straight
-        ahead for the rest of this dialogue, Back and Next included; it asks again when the
-        dialogue is opened next. The replaced recording still goes to the Recycle Bin as before."""
-        go, quiet = _w.ask_with_checkbox(self, "Record", text, "Record over it",
-                                         "Don't ask again until this dialogue closes")
-        if go and quiet:
-            self._record_over_quietly = True
-        return go
 
     def _stop_recording(self):
         take = self.rec_panel.stop()

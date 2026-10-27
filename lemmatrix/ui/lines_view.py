@@ -797,6 +797,32 @@ class LinesView(WheelZoom, QAbstractScrollArea):
         self.select_row(line)
         self._start_edit(line.id, key)
 
+    def fast_paste(self, editor, up: bool, other_role: str, db) -> bool:
+        """📋 fast paste (idea 79): this field's text into the other transcription of the same line,
+        when it is the field right above (Shift+Up) or below (Shift+Down); then edit it."""
+        from .fastpaste import role
+        if self._editor is None or self._editor[0] is not editor:
+            return False
+        ed, line_id, key, original = self._editor
+        keys = [s.key for s in self.fields]
+        if key not in keys:
+            return False
+        i = keys.index(key)
+        j = i - 1 if up else i + 1
+        if not (0 <= j < len(keys)) or role(db, keys[j]) != other_role:
+            return False
+        other, text = keys[j], ed.text()
+        self._moving = True
+        try:
+            self._close_editor(commit=True)
+            line = next((ln for ln in self.rows if ln.id == line_id), None)
+            if line is not None:
+                self.editCommitted.emit(line, other, text)
+            self._start_edit(line_id, other)
+        finally:
+            self._moving = False
+        return True
+
     def _start_edit(self, line_id, key: str):
         self._close_editor(commit=True)
         i = self._index(line_id)

@@ -86,6 +86,8 @@ def main() -> int:
     app._symbols = symbols.install(app)                 # Σymbols in every text field's right-click menu
     from .ui import keyboards
     app._keyboards = keyboards.install(app)             # a field's own keyboard (idea 43; off until set up)
+    from .ui import fastpaste
+    app._fast_paste = fastpaste.install(app)            # 📋 fast paste (idea 79; Settings → Advanced, off)
 
     from .ui import splash as splashmod
     splash = splashmod.show(app)                        # until the database is open (a dialogue closes it)

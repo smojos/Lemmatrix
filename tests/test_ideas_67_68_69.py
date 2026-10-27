@@ -96,32 +96,7 @@ def test_deselected_lemmas_are_left(win, app):
     dlg.reject()
 
 
-# ---- 68: Don't ask again ------------------------------------------------------------------
-def test_dont_ask_again_lasts_until_the_dialogue_closes(win, monkeypatch):
-    from lemmatrix.ui import widgets
-    from lemmatrix.ui.token_dialog import Slot, TokenDialog
-    asked = []
-
-    def answer(parent, title, text, go, check, stop="Cancel"):
-        asked.append(check)
-        return True, True
-    monkeypatch.setattr(widgets, "ask_with_checkbox", answer)
-    dlg = TokenDialog(win, [Slot(win.doc.db.entries[0], 0)], 0)
-    assert not getattr(dlg, "_record_over_quietly", False)
-    assert dlg._ask_record_over("Replace this token's recording?")
-    assert dlg._record_over_quietly and "until this dialogue closes" in asked[0]
-    dlg.reject()
-    again = TokenDialog(win, [Slot(win.doc.db.entries[0], 0)], 0)
-    assert not getattr(again, "_record_over_quietly", False)        # a new dialogue asks again
-    again.reject()
-
-
-def test_not_selected_keeps_asking(win, monkeypatch):
-    from lemmatrix.ui import widgets
-    from lemmatrix.ui.token_dialog import Slot, TokenDialog
-    monkeypatch.setattr(widgets, "ask_with_checkbox", lambda *a, **k: (True, False))
-    dlg = TokenDialog(win, [Slot(win.doc.db.entries[0], 0)], 0)
-    assert dlg._ask_record_over("x") and not getattr(dlg, "_record_over_quietly", False)
-    monkeypatch.setattr(widgets, "ask_with_checkbox", lambda *a, **k: (False, True))
-    assert not dlg._ask_record_over("x") and not getattr(dlg, "_record_over_quietly", False)
-    dlg.reject()
+# ---- 68: the Don't ask again checkbox became 🔥 hot mic (27 October; tests/test_fire.py) -----------
+def test_the_record_question_has_no_checkbox_now(win, monkeypatch):
+    from lemmatrix.ui import token_dialog
+    assert not hasattr(token_dialog.TokenDialog, "_ask_record_over")

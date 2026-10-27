@@ -181,11 +181,15 @@ class MainWindow(QMainWindow):
         conventions.load(self.prefs)
         from .. import search                     # ⚡ power search (idea 86): this computer's, off at first
         search.set_power(self.prefs.get_bool(search.POWER_KEY, False))
+        from .. import advanced                   # 🔥 hot mic and 📋 fast paste (ideas 68, 79): off at first
+        advanced.load(self.prefs)
         self.player = audio.Player()
         self.doc = Document(db or new_database())
         self.doc.setParent(self)
         from . import keyboards                   # automatic keyboard switching (idea 43): this database's fields
         keyboards.set_context(lambda: (self.doc.db, self.prefs))
+        from . import fastpaste
+        fastpaste.set_context(lambda: self.doc.db)
         self.configs: dict = {}               # (kind, word class) -> current MatrixConfig
         self.switched = {LEMMA_TAG: False, TAG_TAG: False}
         self.layouts: dict = {}

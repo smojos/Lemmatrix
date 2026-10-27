@@ -669,6 +669,42 @@ class FilterTable(WheelZoom, ClickUnselect, QTableView):
                 if idx.isValid():
                     self.selectionModel().setCurrentIndex(idx, QItemSelectionModel.NoUpdate)
 
+    # ---- 📋 fast paste (idea 79) -----------------------------------------------
+    def fast_paste(self, editor, up: bool, other_role: str, db) -> bool:
+        """In a cell's in-place editor (Phonetic or Phonemic), either arrow copies the text into the
+        other transcription's column of the same row (side by side, so no up or down here), then
+        edits that cell. A column not shown: nothing (the key does what it always did)."""
+        from PySide6.QtWidgets import QAbstractItemDelegate
+        from .fastpaste import role
+        idx = self.currentIndex()
+        if not idx.isValid():
+            return False
+        src = self.proxy.mapToSource(idx)
+        cols = self.model_.columns
+        oc = next((i for i, c in enumerate(cols) if c.edit and role(db, c.key) == other_role), None)
+        if oc is None:
+            return False
+        row, key = self.model_.rows[src.row()], cols[oc].key
+        text = editor.text()
+        self.commitData(editor)
+        self.closeEditor(editor, QAbstractItemDelegate.NoHint)
+        self.model_.setData(self.model_.index(src.row(), oc), text)
+        want = _row_key(row)
+        QTimer.singleShot(0, lambda: self._edit_cell(want, key))
+        return True
+
+    def _edit_cell(self, want, key: str):
+        """Edit the cell of the row whose key is `want` in the column `key` (after the grid was
+        filled again)."""
+        r = next((i for i, x in enumerate(self.model_.rows) if _row_key(x) == want), None)
+        c = next((i for i, col in enumerate(self.model_.columns) if col.key == key), None)
+        if r is None or c is None:
+            return
+        idx = self.proxy.mapFromSource(self.model_.index(r, c))
+        if idx.isValid():
+            self.setCurrentIndex(idx)
+            self.edit(idx)
+
     # ---- access ----------------------------------------------------------
     def row_at(self, idx):
         if not idx.isValid():

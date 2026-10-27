@@ -19,10 +19,29 @@ from __future__ import annotations
 from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtWidgets import QComboBox, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QMessageBox, QPushButton
 
-from .. import audio
+from .. import advanced, audio
 from . import theme
 from .icons import icon
 
+
+
+def record_icon() -> str:
+    """The Record button's icon: the hot mic (Josh's flame in the cup) while 🔥 hot mic is on."""
+    return "record-hot" if advanced.hot_mic() else "record"
+
+
+def record_tip() -> str:
+    return ("Record (Ctrl+R). 🔥 hot mic is on: a take goes straight over the soundfile already there"
+            if advanced.hot_mic() else "Record (Ctrl+R)")
+
+
+def ask_record_over(parent, text: str, go: str) -> bool:
+    """Record over a soundfile already there? 🔥 hot mic on: yes, without asking (IDEAS.md idea 68,
+    Josh, 27 October); off: asked every time. The replaced soundfile still goes to the Recycle Bin."""
+    if advanced.hot_mic():
+        return True
+    from . import widgets as _w
+    return _w.ask(parent, "Record", text, go)
 
 class RecordingPanel(QGroupBox):
     """The grid's rows: 0 the file name (columns 0–3; the dialogue may put something at column 4),
@@ -61,7 +80,12 @@ class RecordingPanel(QGroupBox):
             b.setStyleSheet("QPushButton { border: none; }")
             buttons.addWidget(b)
             return b
-        self.record_btn = icon_button("record", "Record (Ctrl+R)")
+        self.record_btn = icon_button(record_icon(), record_tip())
+        listen = lambda key, _on, b=self.record_btn: (key == advanced.HOT_MIC_KEY and self.recorder is None  # noqa: E731
+                                                      and (b.setIcon(icon(record_icon(), 40)),
+                                                           b.setToolTip(record_tip())))
+        advanced.listen(listen)                  # 🔥 hot mic switched: the button follows at once
+        self.destroyed.connect(lambda *_: advanced.unlisten(listen))
         self.play_btn = icon_button("play", "Play (Ctrl+Space)")
         self.delete_btn = icon_button("delete-recording", "Delete recording")
         self.update_btn = icon_button("update", "Update file name")
@@ -123,8 +147,8 @@ class RecordingPanel(QGroupBox):
     def _idle(self):
         self.timer.stop()
         self.meter.set_level(0.0)
-        self.record_btn.setIcon(icon("record", 40))
-        self.record_btn.setToolTip("Record (Ctrl+R)")
+        self.record_btn.setIcon(icon(record_icon(), 40))
+        self.record_btn.setToolTip(record_tip())
 
     def stop(self):
         """Stop and give back (samples, sample rate); None, after saying so, if nothing came in."""

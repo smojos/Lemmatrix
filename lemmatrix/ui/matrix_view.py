@@ -745,6 +745,31 @@ class MatrixView(WheelZoom, ClickUnselect, QTableView):
     def editing(self) -> bool:
         return self._editor is not None
 
+    def fast_paste(self, editor, up: bool, other_role: str, db) -> bool:
+        """📋 fast paste (idea 79): this line's text into the other transcription's line of the
+        same token, when it is the line above (Shift+Up) or below (Shift+Down); then edit it."""
+        from .fastpaste import role
+        if self._editor is None or self._editor[0] is not editor:
+            return False
+        ed, e, t, key, original, place = self._editor
+        keys = self.delegate._lines()
+        if key not in keys:
+            return False
+        i = keys.index(key)
+        near = keys[:i][::-1] if up else keys[i + 1:]
+        other = next((k for k in near if role(db, k) == other_role), None)
+        if other is None or (near and near[0] != other):
+            return False                        # only the field right above or below
+        text = ed.text()
+        self._moving = True
+        try:
+            self._close_editor(commit=True)
+            self.fieldEdited.emit(e, t, other, text)
+            self.start_edit(*place, other)
+        finally:
+            self._moving = False
+        return True
+
     def _close_editor(self, commit: bool, then=None):
         if self._editor is None:
             return

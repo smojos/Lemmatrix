@@ -187,7 +187,7 @@ def test_settings_advanced(win):
     assert names[-1] == "Advanced"
     from PySide6.QtWidgets import QLabel
     texts = [lb.text() for lb in tabs.widget(tabs.count() - 1).findChildren(QLabel)]
-    assert any("Fire, women, and dangerous things" in t for t in texts)
+    assert any("Women, Fire, and Dangerous Things" in t for t in texts)
     assert any("Lakoff" in lb.toolTip() for lb in tabs.widget(tabs.count() - 1).findChildren(QLabel))
     assert not tabs.widget(tabs.count() - 1).findChildren(QGroupBox)          # no boxes (Josh, 27 October)
     assert dlg.power_search.text() == "⚡ power search"

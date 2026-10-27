@@ -152,9 +152,11 @@ class SegmentRecordDialog(QDialog):
             return
         target = segments.folder(self.db) / self.expected()
         # only ever over the same sequence by the same speaker, after asking (Josh)
-        if target.exists() and not _w.ask(
-                self, "Record", f"Replace {target.name}? The old one goes to the Recycle Bin.", "Replace it"):
-            return
+        if target.exists():                      # 🔥 hot mic records straight over it (idea 68)
+            from .recording_panel import ask_record_over
+            if not ask_record_over(self, f"Replace {target.name}? The old one goes to the Recycle Bin.",
+                                   "Replace it"):
+                return
         self.rec_panel.start()
 
     def _stop(self):

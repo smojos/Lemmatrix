@@ -208,7 +208,7 @@ def _no_old_computer_settings():
     if q.fileName() == os.environ.get("LEMMATRIX_SETTINGS_FILE"):     # never the real preferences
         for key in ("columns", "lines", "views", "sessions", "fullbackup", "matrix/autoplay",
                     "matrix/only_with_data", "notebook/sort",
-                    "session/speaker", "search/power"):
+                    "session/speaker", "search/power", "recording/hot_mic", "edit/fast_paste"):
             q.remove(key)
     yield
 
@@ -217,7 +217,11 @@ def _no_old_computer_settings():
 def _plain_search():
     """⚡ Power search (idea 86) is off at the start of every test, as on a new computer, and off
     again after it (a test that turns it on can't leave it on for the next)."""
-    from lemmatrix import search
+    from lemmatrix import advanced, search
     search.set_power(False)
+    for key in (advanced.HOT_MIC_KEY, advanced.FAST_PASTE_KEY):   # 🔥 hot mic, 📋 fast paste: off too
+        advanced.set_on(key, False)
     yield
     search.set_power(False)
+    for key in (advanced.HOT_MIC_KEY, advanced.FAST_PASTE_KEY):
+        advanced.set_on(key, False)

@@ -1047,21 +1047,19 @@ class PreferencesDialog(QDialog):
                        ("This computer", [("Pitch playback", voice_row),
                                           ("Playback volume", volume_row),
                                           (None, self.pitch_own), ("Pitch trace colour", self.pitch_colour)])])
-        # Settings → Advanced (IDEAS.md ideas 79 and 86, Josh, 27 October): Fire, women, and dangerous
-        # things, one list with no boxes. Reached only here, never from the menus at the top; everything
+        # Settings → Advanced (IDEAS.md ideas 79 and 86, Josh, 27 October): Women, Fire, and Dangerous
+        # Things (Lakoff's title, in his order), one list with no boxes. Reached only here, never from the menus at the top; everything
         # in it starts off on a new computer (Josh: "don't make them easy to access").
         from .. import search
         adv = QWidget()
         av = QVBoxLayout(adv)
         av.setContentsMargins(0, 0, 0, 0)
         head = QHBoxLayout()
-        title = QLabel(f"<b style='color:{theme.accent().name()}'>Fire, women, and dangerous things</b>")
+        title = QLabel(f"<b style='color:{theme.accent().name()}'>Women, Fire, and Dangerous Things</b>")
         title.setTextFormat(Qt.RichText)
         info = QLabel("ⓘ")
         info.setStyleSheet(f"color: {theme.muted()};")
-        info.setToolTip("After George Lakoff's book, its title reordered:\nLakoff, George. 1987. Women, Fire, and "
-                        "Dangerous Things: What Categories Reveal about the Mind.\nChicago: University of "
-                        "Chicago Press.")
+        info.setToolTip("Lakoff, George. 1987. Women, Fire, and Dangerous Things: What Categories Reveal about the Mind. Chicago: University of Chicago Press.")
         head.addWidget(title)
         head.addWidget(info)
         head.addStretch(1)
@@ -1086,6 +1084,31 @@ class PreferencesDialog(QDialog):
         example = QLabel("goat ++ PL ;; sheep --kid")
         example.setStyleSheet(f"color: {theme.muted()}; margin-left: 22px;")
         av.addWidget(example)
+        from .. import advanced
+        self.hot_mic_box = QCheckBox(advanced.HOT_MIC)       # idea 68 (Josh, 27 October)
+        self.hot_mic_box.setChecked(prefs.get_bool(advanced.HOT_MIC_KEY, False))
+        self.hot_mic_box.setToolTip("A take records straight over the soundfile already there, without asking "
+                                "(the token, utterance and segment dialogues). The old one still goes to the "
+                                "Recycle Bin. The Record button shows a flame while it's on.")
+        hot_info = QLabel("ⓘ")
+        hot_info.setStyleSheet(f"color: {theme.muted()};")
+        hot_info.setToolTip("Not recommended with an orange or red theme")   # Josh: the flame would vanish
+        row = QHBoxLayout()
+        row.addWidget(self.hot_mic_box)
+        row.addWidget(hot_info)
+        row.addStretch(1)
+        av.addSpacing(6)
+        av.addLayout(row)
+        self.fast_paste_box = QCheckBox(advanced.FAST_PASTE)  # idea 79 (Josh, 27 October)
+        self.fast_paste_box.setChecked(prefs.get_bool(advanced.FAST_PASTE_KEY, False))
+        self.fast_paste_box.setToolTip("Typing in Phonetic or Phonemic: Shift+Down copies it into the other "
+                                   "transcription below, Shift+Up into the one above (in a grid, either arrow "
+                                   "into the other column), replacing what's there, and moves there.")
+        av.addSpacing(6)
+        av.addWidget(self.fast_paste_box)
+        paste_note = QLabel("Phonetic ⇄ Phonemic with Shift+Down / Shift+Up")
+        paste_note.setStyleSheet(f"color: {theme.muted()}; margin-left: 22px;")
+        av.addWidget(paste_note)
         page("Advanced", [], intro=adv)
         lay.addWidget(_buttons(self))
         # Hidden: the boxes under it grey out whole, their headings and labels too (Josh, 26 October:
@@ -1185,6 +1208,10 @@ class PreferencesDialog(QDialog):
         from .. import search                     # ⚡ power search (idea 86; this computer)
         p.set_value(search.POWER_KEY, self.power_search.isChecked())
         search.set_power(self.power_search.isChecked())
+        from .. import advanced                   # 🔥 hot mic, 📋 fast paste (ideas 68, 79; this computer)
+        for key, box in ((advanced.HOT_MIC_KEY, self.hot_mic_box), (advanced.FAST_PASTE_KEY, self.fast_paste_box)):
+            p.set_value(key, box.isChecked())
+            advanced.set_on(key, box.isChecked())
         doc = getattr(self.parent(), "doc", None)
         if doc is not None:                       # the notebook's history switches: the workspace's
             from .. import notebook as nbmod
