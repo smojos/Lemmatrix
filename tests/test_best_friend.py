@@ -214,3 +214,28 @@ def test_in_all_data_editor(win):
     for ch in "ba:":
         _type(f, ed, ch)
     assert ed.text() == "baː"
+
+
+# ---- morpheme boundaries (Josh, 27 October) --------------------------------------------------
+
+def test_no_boundaries_in_phonetic():
+    for mark in "-=/+#‐":
+        assert bf.correct("ba", mark, ALL_ON) == (0, "")            # not typed in Phonetic
+        assert bf.correct("ba", mark, ALL_ON, "phonemic") is None   # Phonemic keeps them
+        assert bf.correct("ba", mark, lambda r: r is not bf.BOUNDARIES) is None
+    for kept in "<>.~ ":
+        assert bf.correct("ba", kept, lambda r: r is bf.BOUNDARIES) is None
+
+
+def test_boundaries_typed_in_the_boxes(win):
+    from lemmatrix.ui.bestfriend import BestFriendFilter
+    advanced.set_on(advanced.BEST_FRIEND_KEY, True)
+    f = BestFriendFilter()
+    e, m = _box(win, "Phonetic"), _box(win, "Phonemic")
+    for ch in "ba-na=ka/":
+        _type(f, e, ch)
+        _type(f, m, ch)
+    assert e.text() == "banaka" and m.text() == "ba-na=ka/"
+    _type(f, e, "-")
+    _key(f, e, Qt.Key_Backspace)                                  # straight after: typed after all
+    assert e.text() == "banaka-"

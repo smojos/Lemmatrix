@@ -26,8 +26,13 @@ LENGTH = Rule("edit/bf_length", ": → ː")
 GREEK = Rule("edit/bf_greek", "Greek ε γ φ → ɛ ɣ ɸ")
 CLICKS = Rule("edit/bf_clicks", "clicks ! | || ‡ → ǃ ǀ ǁ ǂ")
 ACCENTS = Rule("edit/bf_accents", "loose accents ´ ` ^ ¨ ~ after a letter → its combining mark")
+BOUNDARIES = Rule("edit/bf_boundaries", "no morpheme boundaries (- = / + #) in Phonetic")
 
-RULES = (EJECTIVE, GLOTTAL, J, G, LENGTH, GREEK, CLICKS, ACCENTS)
+RULES = (EJECTIVE, GLOTTAL, J, G, LENGTH, GREEK, CLICKS, ACCENTS, BOUNDARIES)
+
+# Morphological boundary notation (Josh, 27 October): it belongs in Phonemic and Morphemes, never in
+# the phonetic line, so there it isn't typed. Not < > (infixes; Keyman's IPA sequences use them).
+_BOUNDARY_MARKS = frozenset("-=/+#\u2010\u2011")
 
 _SIMPLE = {
     EJECTIVE: {"'": "ʼ", "’": "ʼ", "‘": "ʼ"},   # Josh: the official ejective marker, U+02BC
@@ -48,12 +53,15 @@ def _carries_marks(ch: str) -> bool:
     return cat.startswith("L") or unicodedata.combining(ch) != 0
 
 
-def correct(before: str, typed: str, on) -> tuple[int, str] | None:
+def correct(before: str, typed: str, on, role: str = "phonetic") -> tuple[int, str] | None:
     """What a typed character becomes: (how many characters before the cursor it replaces, the text
-    put in), or None to type it as it is. `before` is the field's text before the cursor; `on(rule)`
-    says whether a rule is turned on."""
+    put in; "" when it isn't typed at all), or None to type it as it is. `before` is the field's text
+    before the cursor; `on(rule)` says whether a rule is turned on; `role` is the field's (phonetic
+    or phonemic)."""
     if len(typed) != 1:
         return None
+    if typed in _BOUNDARY_MARKS and role == "phonetic" and on(BOUNDARIES):
+        return 0, ""
     for rule, table in _SIMPLE.items():
         if typed in table and on(rule):
             return 0, table[typed]

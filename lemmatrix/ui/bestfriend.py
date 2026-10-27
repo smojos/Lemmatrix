@@ -21,9 +21,9 @@ class BestFriendFilter(QObject):
         super().__init__(parent)
         self._last = None        # (box, cursor after, text put in, what it replaced + what was typed)
 
-    def _phonetic(self, ed) -> bool:
-        db = fastpaste.database()
-        return fastpaste.role(db, keyboards.field_key(ed)) is not None
+    def _role(self, ed) -> str | None:
+        """phonetic or phonemic for a Phonetic or Phonemic box, else None (left alone)."""
+        return fastpaste.role(fastpaste.database(), keyboards.field_key(ed))
 
     def _take_back(self, ed) -> bool:
         last, self._last = self._last, None
@@ -39,11 +39,12 @@ class BestFriendFilter(QObject):
         return True
 
     def _correct(self, ed: QLineEdit, typed: str) -> bool:
-        if ed.isReadOnly() or not self._phonetic(ed):
+        role = None if ed.isReadOnly() else self._role(ed)
+        if role is None:
             return False
         sel = ed.hasSelectedText()
         start = ed.selectionStart() if sel else ed.cursorPosition()
-        got = bf.correct(ed.text()[:start], typed, lambda rule: advanced.on(rule.key))
+        got = bf.correct(ed.text()[:start], typed, lambda rule: advanced.on(rule.key), role)
         if got is None:
             return False
         back, put = got
