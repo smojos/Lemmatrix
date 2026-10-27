@@ -25,6 +25,8 @@ RED = QColor("#d93030")
 PURPLE = QColor("#7b3fbf")
 BLUE = QColor("#3a78d4")
 ORANGE = QColor("#e8822a")                       # To Do's flag (Josh, 21 October)
+FLAME = QColor("#f5821f")                        # 🔥 hot mic's flame (Josh, 27 October): never theme coloured
+FLAME_CORE = QColor("#fff1dc")
 WHITE = QColor("white")
 BLACK = QColor("#1b1b1b")
 
@@ -59,6 +61,35 @@ def _circle(p, s, color):
     p.setPen(Qt.NoPen)
     p.setBrush(color)
     p.drawEllipse(QRectF(1, 1, s - 2, s - 2))
+
+
+def _flame(p, box: QRectF, outer: QColor = FLAME, core: QColor = FLAME_CORE):
+    """Josh's flame (27 October): a round base, the tip leaning a little right, a small lick on the
+    left, and a teardrop core."""
+    x, y, w, h = box.x(), box.y(), box.width(), box.height()
+
+    def P(a, b):
+        return QPointF(x + a * w, y + b * h)
+    f = QPainterPath(P(0.50, 1.00))
+    f.cubicTo(P(0.18, 1.00), P(0.00, 0.80), P(0.02, 0.58))
+    f.cubicTo(P(0.04, 0.42), P(0.12, 0.30), P(0.22, 0.20))
+    f.cubicTo(P(0.22, 0.32), P(0.28, 0.44), P(0.38, 0.48))
+    f.cubicTo(P(0.34, 0.28), P(0.44, 0.10), P(0.60, 0.00))
+    f.cubicTo(P(0.58, 0.18), P(0.70, 0.28), P(0.84, 0.42))
+    f.cubicTo(P(0.96, 0.54), P(1.00, 0.68), P(0.98, 0.76))
+    f.cubicTo(P(0.94, 0.92), P(0.76, 1.00), P(0.50, 1.00))
+    f.closeSubpath()
+    c = QPainterPath(P(0.50, 0.94))
+    c.cubicTo(P(0.30, 0.94), P(0.22, 0.80), P(0.30, 0.68))
+    c.cubicTo(P(0.38, 0.58), P(0.48, 0.52), P(0.52, 0.40))
+    c.cubicTo(P(0.62, 0.52), P(0.76, 0.64), P(0.74, 0.78))
+    c.cubicTo(P(0.72, 0.90), P(0.62, 0.94), P(0.50, 0.94))
+    c.closeSubpath()
+    p.setPen(Qt.NoPen)
+    p.setBrush(outer)
+    p.drawPath(f)
+    p.setBrush(core)
+    p.drawPath(c)
 
 
 def _rounded(p, s, color):
@@ -397,6 +428,14 @@ def _draw(name: str, s: int, p: QPainter, colour: QColor | None = None, colour2:
         p.drawArc(QRectF(s * 0.30, s * 0.30, s * 0.40, s * 0.36), 200 * 16, 140 * 16)
         p.drawLine(QPointF(s / 2, s * 0.66), QPointF(s / 2, s * 0.80))
         p.drawLine(QPointF(s * 0.38, s * 0.80), QPointF(s * 0.62, s * 0.80))
+    elif name == "record-hot":                   # 🔥 hot mic (Josh's mockup, 27 October): the microphone's
+        _rounded(p, s, PURPLE)                   # cup and stand in white, a flame rising out of the cup;
+        p.setPen(QPen(WHITE, max(1.4, s * 0.065), Qt.SolidLine, Qt.RoundCap))   # the flame stays orange
+        p.setBrush(Qt.NoBrush)                   # when All buttons theme coloured is on
+        p.drawArc(QRectF(s * 0.25, s * 0.26, s * 0.50, s * 0.42), 190 * 16, 160 * 16)
+        p.drawLine(QPointF(s / 2, s * 0.68), QPointF(s / 2, s * 0.80))
+        p.drawLine(QPointF(s * 0.37, s * 0.80), QPointF(s * 0.63, s * 0.80))
+        _flame(p, QRectF(s * 0.31, s * 0.10, s * 0.38, s * 0.56))
     elif name == "stop":                         # purple rounded square, white square
         _rounded(p, s, PURPLE)
         p.setPen(Qt.NoPen)
