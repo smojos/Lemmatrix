@@ -12,7 +12,7 @@ The window stays open beside the main one; changes are saved with the database
 
 from __future__ import annotations
 
-from PySide6.QtCore import QDate, QEvent, QRect, QSize, Qt, QTimer
+from PySide6.QtCore import QDate, QEvent, QSize, Qt, QTimer
 from PySide6.QtGui import QBrush, QColor, QFont, QFontMetrics, QTextCharFormat
 from PySide6.QtWidgets import (QAbstractItemView, QCalendarWidget, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
                                QGridLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget,
@@ -83,16 +83,60 @@ class WrapDelegate(QStyledItemDelegate):
         width = self.view.header().sectionSize(index.column()) - 10
         text = index.data(Qt.DisplayRole) or ""
         if width > 20 and text:
-            fm = QFontMetrics(index.data(Qt.FontRole) or option.font)
-            h = fm.boundingRect(QRect(0, 0, width, 100000), Qt.TextWordWrap, text).height() + 6
+            h = wrapped_height(text, index.data(Qt.FontRole) or option.font, width) + 6
             size.setHeight(max(size.height(), h))
         return size
+
+
+def wrapped_height(text: str, font, width: int) -> int:
+    """How tall text is wrapped to a width as the item views draw it: at word boundaries, or
+    anywhere when one word (a long run of tags, 1SG.POSS.PL.F1) is wider than the column."""
+    from PySide6.QtGui import QTextLayout, QTextOption
+    fm = QFontMetrics(font)
+    total = 0
+    for para in text.split("\n"):
+        lay = QTextLayout(para, font)
+        opt = QTextOption()
+        opt.setWrapMode(QTextOption.WrapAtWordBoundaryOrAnywhere)
+        lay.setTextOption(opt)
+        lay.beginLayout()
+        n = 0
+        while True:
+            line = lay.createLine()
+            if not line.isValid():
+                break
+            line.setLineWidth(width)
+            n += 1
+        lay.endLayout()
+        total += max(1, n) * fm.lineSpacing()
+    return total
 
 
 def wrapping(view, query=None):
     view.setWordWrap(True)
     view.setTextElideMode(Qt.ElideNone)
     view.setItemDelegate(WrapDelegate(view, query))
+
+
+TOKEN_WIDTH = 220      # the Token column's width until the researcher drags it (px)
+
+
+def fixed_token_column(view, column: int, prefs, key: str):
+    """The Token column of Questions and To Do (Josh, 27 October): a token with many tags no longer
+    widens it and squeezes the others; it keeps the width the researcher drags it to (on this
+    computer, like other column widths) and its text wraps onto more lines."""
+    h = view.header()
+    h.setSectionResizeMode(column, QHeaderView.Interactive)
+    try:
+        w = int(prefs.get_value(key) or 0)
+    except (TypeError, ValueError):
+        w = 0
+    h.resizeSection(column, w if w >= 40 else TOKEN_WIDTH)
+
+    def keep(index, _old, new):
+        if index == column and new >= 40:
+            prefs.set_value(key, int(new))
+    h.sectionResized.connect(keep)
 
 
 def pick_date(parent, title: str, start: str, taken=(), allow_taken: bool = True) -> str:
@@ -1079,6 +1123,7 @@ class ItemsPanel(QWidget, ItemActions):
         for c in (1, 2, 3, 4):
             h.setSectionResizeMode(c, QHeaderView.ResizeToContents)
         h.setStretchLastSection(False)
+        fixed_token_column(self.tree, self.LINK_COLUMN, dlg.main.prefs, f"columns/{kind}/token-width")
         self.tree.itemDoubleClicked.connect(self._double_clicked)
         self.tree.currentItemChanged.connect(lambda *_: self.buttons())
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -1188,6 +1233,7 @@ class ItemsDialog(QDialog, ItemActions):
         h.setSectionResizeMode(QHeaderView.ResizeToContents)
         h.setSectionResizeMode(1, QHeaderView.Stretch)
         h.setStretchLastSection(False)
+        fixed_token_column(self.tree, self.LINK_COLUMN, main.prefs, f"columns/{kind}/token-width")
         self.tree.itemDoubleClicked.connect(self._double_clicked)
         self.tree.currentItemChanged.connect(lambda *_: self._buttons())
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
