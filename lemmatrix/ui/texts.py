@@ -728,7 +728,10 @@ class TextsPanel(QObject):
         try:                                      # too: here only once, below (25 October)
             self.table.set_rows(list(self.db.texts))
             if self.table.current_row() is None and self.db.texts:
-                self.table.select_row(self.table.visible_rows()[0] if self.table.visible_rows() else None)
+                shown = self.table.visible_rows()
+                last = self.doc.ws.get("texts/current")   # the text last shown (Josh, 28 October:
+                keep = next((t for t in shown if t.id and t.id == last), None)   # it went back to T001)
+                self.table.select_row(keep or (shown[0] if shown else None))
         finally:
             self._refreshing = False
         fresh, self._lines_fresh = getattr(self, "_lines_fresh", None), None
@@ -1088,6 +1091,8 @@ class TextsPanel(QObject):
 
     def _show_lines(self):
         t = self.current()
+        if t is not None and t.id:                # opened again, the window comes back to it
+            self.doc.ws_set("texts/current", t.id)
         self._shown_stamp = self._grid_stamp(t)
         lines = self.lines_of(t) if t is not None else []
         self._lines = lines

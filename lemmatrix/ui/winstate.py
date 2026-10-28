@@ -89,8 +89,10 @@ class _Keeper(QObject):
     def save(self):
         try:
             self.prefs.set_value(self.key, self.window.saveGeometry())
+            held = getattr(self.window, "splitters_held", lambda: ())()
             for sp, k in self._keyed():
-                self.prefs.set_value(k, sp.saveState())
+                if sp not in held:               # full screen: its sizes aren't the ones to keep
+                    self.prefs.set_value(k, sp.saveState())
         except RuntimeError:                    # the window has gone already
             pass
 

@@ -572,5 +572,6 @@ def test_cogitate_sits_at_the_top_right(win, tmp_path, monkeypatch):
     u = uw.texts.clip()[0]
     dlg = UtteranceDialog(win, [Slot(u, 0)], 0, uw)
     row = dlg.head_row
-    assert [row.indexOf(w) for w in (dlg.header, dlg.label_edit, dlg.hyp_btn)] == [0, 1, row.count() - 1]
+    assert [row.indexOf(w) for w in (dlg.ref_edit, dlg.header, dlg.label_edit, dlg.hyp_btn)] == \
+        [0, 1, 2, row.count() - 1]        # the reference editable first (idea 107, 28 October)
     dlg.reject()

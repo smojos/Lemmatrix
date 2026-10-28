@@ -155,7 +155,7 @@ def test_utterance_dialogue_label_lemmas_and_tags(win, tmp_path):
     uw.import_files([str(_wav(tmp_path / "x.wav"))])
     u = db.utterances[0]
     dlg = UtteranceDialog(win, [Slot(u, 0)], 0, uw)
-    assert "W001" in dlg.header.text() and dlg.label_edit.text() == "x"
+    assert dlg.ref_edit.text() == "W001" and dlg.label_edit.text() == "x"   # the reference editable (idea 107)
     assert "Relative clause" in dlg.tags.buttons            # utterance-only groups are offered
     assert not dlg.tags.buttons["Relative clause"].unusual
     dlg.label_edit.setText("hare ran")

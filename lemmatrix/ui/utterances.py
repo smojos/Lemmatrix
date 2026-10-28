@@ -240,6 +240,11 @@ class TextsUtterancesWindow(QDialog):
         self._restyle()
         from . import winstate
         winstate.keep(self, self.main.prefs, "window/utterances")   # size, place and splitters, as adjusted
+        # a full screen's sizes kept by the version of 28 October morning: the panels come back
+        if self.split.sizes()[1] == 0:
+            self.split.setSizes([600, 150])
+        if self.texts.page.sizes()[0] == 0:
+            self.texts.page.setSizes([300, 400])
 
     @property
     def db(self):
@@ -349,8 +354,8 @@ class TextsUtterancesWindow(QDialog):
             need = self.cell.needed_height() - self.cell.height()
         except RuntimeError:
             return
-        if need <= 0 or not self.isVisible():
-            return
+        if need <= 0 or not self.isVisible() or self.full_screen():
+            return                                # full screen keeps the options panel out of view
         a, b = self.split.sizes()
         give = min(need, max(0, a - 160))         # the grid keeps some room
         if give > 0:
@@ -435,6 +440,12 @@ class TextsUtterancesWindow(QDialog):
 
     def full_screen(self) -> bool:
         return self._full_state is not None
+
+    def splitters_held(self) -> tuple:
+        """The splitters whose sizes aren't saved now (winstate): in full screen, the sizes from
+        before are the ones to come back to (Josh, 28 October: closed in full screen, the window
+        opened with the panels gone and F11 couldn't bring them back)."""
+        return (self.split, self.texts.page) if self.full_screen() else ()
 
     def _full_edit_shown(self):
         """The pencil beside the full-screen button: in full screen, on the Texts tab."""
@@ -997,6 +1008,70 @@ class TextsUtterancesWindow(QDialog):
         self.doc.edit_entry(u, change, f"Move {u.ref} to {ref}", renames=renames)
         self.table.select_row(u)
 
+    def change_reference(self, u: Utterance | None = None):
+        """Right-click → Change reference… (idea 107, Josh, 28 October): any number, in this
+        category or another; one another lemma, utterance or text has is refused."""
+        u = u or self.table.current_row()
+        if u is None:
+            return
+        typed, ok = QInputDialog.getText(self, f"Change {u.ref}'s reference", "Reference:", text=u.ref)
+        if not ok:
+            return
+        ref, why = self.db.utterance_reference(typed, u)
+        if not ref:
+            QMessageBox.warning(self, "Change reference", why)
+            return
+        if ref != u.ref:
+            self._rereference([(u, ref)], f"Change {u.ref} to {ref}")
+
+    def move_several(self, us: list | None = None):
+        """Several utterances into a category (Josh, 28 October), renumbered in order from the
+        lowest number free there: one question, one undo step."""
+        us = us or self.table.selected_rows()
+        if not us:
+            return
+        letter = self._ask_category(f"Move {len(us)} utterances", "")
+        if not letter:
+            return
+        moves = self.db.renumbered_utterances(us, letter)
+        if not moves:
+            QMessageBox.information(self, "Move utterances", "They are already numbered that way.")
+            return
+        listed = ", ".join(f"{u.ref} → {r}" for u, r in moves[:8]) + (" …" if len(moves) > 8 else "")
+        what = ("" if not any(u.token.file for u, _ in moves) else " Their recordings are renamed to match."
+                if self.db.settings.auto_update_names else
+                " Their recordings keep their names until Tools → Update all soundfile names.")
+        if not _w.ask(self, "Move utterances", f"Renumber {len(moves)} utterance"
+                      f"{'s' if len(moves) != 1 else ''}: {listed}.{what}", f"Move {len(moves)}"):
+            return
+        self._rereference(moves, f"Move {len(moves)} utterances")
+
+    def _rereference(self, moves: list, label: str):
+        """Give utterances new references, their recordings renamed (when automatic), as one undo
+        step. Done in an order where no recording is renamed onto one not yet moved away (W001
+        → W002 before U001 → W001)."""
+        pending = list(moves)
+        ordered = []
+        while pending:
+            held = {u.ref for u, _ in pending}
+            nxt = next((m for m in pending if m[1] not in held), pending[0])
+            pending.remove(nxt)
+            ordered.append(nxt)
+        self.doc.undo.beginMacro(label)
+        try:
+            for u, ref in ordered:
+                after = u.copy()
+                after.ref = ref
+                renames = self._renamed(u, after)
+
+                def change(x, ref=ref, file=after.token.file):
+                    x.ref = ref
+                    x.token.file = file
+                self.doc.edit_entry(u, change, f"Move {u.ref} to {ref}", renames=renames)
+        finally:
+            self.doc.undo.endMacro()
+        self.table.select_rows([u for u, _ in moves])
+
     def delete(self):
         many = self.table.selected_rows()
         if len(many) > 1:                         # several (Josh, 24 October): asked once, one undo step
@@ -1084,6 +1159,8 @@ class TextsUtterancesWindow(QDialog):
         many = self.table.selected_rows()
         if len(many) > 1:                         # several utterances (Josh, 24 October)
             items = [("Add", "add", self.add, True),
+                     (f"Move {len(many)} to a category…", None, self.move_several,
+                      self.db.settings.ref_scheme != SEQUENCE),
                      (f"Delete {len(many)} utterances", "delete", self.delete, True)]
             if hasattr(self.main, "add_to_elicit"):
                 items.insert(1, (f"Add {len(many)} to the ɛλicit request", None,
@@ -1101,6 +1178,7 @@ class TextsUtterancesWindow(QDialog):
                    if pitchview.shown(pitchview.UTTERANCES) else []),
                  ("Move to another category…", None, self.move_category,
                   row is not None and self.db.settings.ref_scheme != SEQUENCE),
+                 ("Change reference…", None, self.change_reference, row is not None),
                  ("Delete", "delete", self.delete, row is not None)]
         if row is not None and row.source is not None:
             c = self.checks.get(row.id)
@@ -1259,6 +1337,17 @@ class UtteranceDialog(TokenDialog):
                                    "recording when you leave the utterance.")
         self.label_edit.textChanged.connect(self._fields_changed)
         head.insertWidget(1, self.label_edit, 1)
+        # the reference, editable (idea 107, Josh, 28 October): any number, in this category or
+        # another; checked when the utterance is left, and the recording renamed with it
+        self.ref_edit = QLineEdit()
+        self.ref_edit.setFont(ipa_font(15))
+        self.ref_edit.setStyleSheet("font-weight: 600;")
+        self.ref_edit.setMaximumWidth(self.ref_edit.fontMetrics().horizontalAdvance("W00000") + 16)
+        self.ref_edit.setToolTip("The utterance's reference: type another number (or another category's "
+                                 "letter) to change it. One another lemma, utterance or text has is "
+                                 "refused. The recording is renamed with it when you leave the utterance.")
+        self.ref_edit.textChanged.connect(self._fields_changed)
+        head.insertWidget(0, self.ref_edit, 0)
 
         box = QGroupBox("Lemmas")
         bl = QVBoxLayout(box)
@@ -1317,15 +1406,27 @@ class UtteranceDialog(TokenDialog):
         self.completer.model().setStringList(list(self._choices))
 
     def key_fields(self) -> list:
-        return [*super().key_fields(), self.label_edit, self.lemma_find]
+        return [*super().key_fields(), self.ref_edit, self.label_edit, self.lemma_find]
 
     # ---- what differs from a token ------------------------------------------
     def _new_token(self, sl: Slot) -> Token:
         return Token(speaker=self.main.session_speaker(), collected=self.main.session_date())
 
     def _show_header(self, u):
+        if hasattr(self, "ref_edit"):
+            self.ref_edit.blockSignals(True)
+            self.ref_edit.setText(u.ref)
+            self.ref_edit.blockSignals(False)
         cat = category_title(self.db, u.ref)
-        self.header.setText(f"{u.ref}  ·  {cat}  ·" if cat else f"{u.ref}  ·")
+        self.header.setText(f"·  {cat}  ·" if cat else "·")
+
+    def _typed_ref(self) -> str:
+        """The reference as typed, written the database's way (W7 → W007), else as it was."""
+        u = self.slot.entry
+        if not hasattr(self, "ref_edit"):
+            return u.ref
+        ref, _ = self.db.utterance_reference(self.ref_edit.text(), u)
+        return ref or u.ref
 
     def _position_text(self) -> str:
         u = self.slot.entry
@@ -1350,6 +1451,7 @@ class UtteranceDialog(TokenDialog):
 
     def _probe(self) -> Utterance:
         u = self.slot.entry.copy()
+        u.ref = self._typed_ref()
         u.file_gloss = nfc(self.label_edit.text().strip()) if hasattr(self, "label_edit") else u.file_gloss
         u.tokens = [self.token if self.token is not None else Token()]
         return u
@@ -1509,6 +1611,12 @@ class UtteranceDialog(TokenDialog):
         label = nfc(self.label_edit.text().strip())
         lemmas = list(self.lemma_ids)
         new = u not in self.db.utterances
+        ref, why = self.db.utterance_reference(self.ref_edit.text(), u)
+        if not ref:                               # idea 107: refused, back to the reference
+            QMessageBox.warning(self, "Reference", why)
+            self.ref_edit.setFocus()
+            self.ref_edit.selectAll()
+            return False
         if new and not (t.has_content() or keep_empty or self.slot.explicit or label or lemmas):
             return True                           # nothing typed: nothing added
         problems = self.db.settings.tags.conflicts([x for x in t.tags if x not in self.unknown_tags])
@@ -1520,7 +1628,8 @@ class UtteranceDialog(TokenDialog):
         renames, self._renames = self._renames, []
         token = t.copy()
 
-        def change(x, token=token, label=label, lemmas=lemmas):
+        def change(x, token=token, label=label, lemmas=lemmas, ref=ref):
+            x.ref = ref
             x.tokens = [token]
             x.file_gloss = label
             x.lemmas = list(lemmas)
@@ -1528,8 +1637,9 @@ class UtteranceDialog(TokenDialog):
             change(u)
             self.doc.add_entry(u, renames=renames)
             self.slot.index = 0
-        elif self.original != t or u.file_gloss != label or u.lemmas != lemmas or renames:
+        elif self.original != t or u.file_gloss != label or u.lemmas != lemmas or u.ref != ref or renames:
             self.doc.edit_entry(u, change, f"Edit {u.ref}", renames=renames)
+        self._show_header(u)
         self.original = u.tokens[0]
         self.token = self.original.copy()
         self.position.setText(self._position_text())

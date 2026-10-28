@@ -1046,6 +1046,60 @@ class Database:
         return (self.entry_by_ref(ref) is not None or self.utterance_by_ref(ref) is not None
                 or self.text_by_ref(ref) is not None)
 
+    def utterance_reference(self, typed: str, me: Utterance | None = None) -> tuple[str, str]:
+        """An utterance's reference typed by hand (idea 107, Josh, 28 October): (the reference as it
+        is written, W7 → W007, "") or ("", why it can't be). The letters must be an utterance
+        category (any number in the next-number scheme); a reference another lemma, utterance or
+        text has is refused."""
+        typed = nfc((typed or "").strip())
+        digits = self.settings.ref_digits
+        if self.settings.ref_scheme == SEQUENCE:
+            if not typed.isdigit():
+                return "", "A reference here is a number."
+            ref = f"{int(typed):0{digits}d}"
+        else:
+            m = re.fullmatch(r"([A-Za-z]+)\s*(\d+)", typed)
+            if not m:
+                return "", "A reference is a category's letter and a number, e.g. W007."
+            letter = m.group(1).upper()
+            if not any(c.letter == letter for c in self.settings.categories(UTTERANCES)):
+                return "", f"{letter} isn't an utterance category (Edit → Lists → Reference categories)."
+            ref = f"{letter}{int(m.group(2)):0{digits}d}"
+        if int(re.sub(r"\D", "", ref)) == 0:
+            return "", "References start at 1."
+        other = self.entry_by_ref(ref) or self.utterance_by_ref(ref) or self.text_by_ref(ref)
+        if other is not None and other is not me:
+            what = ("the utterance" if isinstance(other, Utterance) else
+                    "the text" if isinstance(other, Text) else "the lemma")
+            return "", f"{ref} is already {what} {ref}'s reference."
+        return ref, ""
+
+    def renumbered_utterances(self, us: list[Utterance], letter: str) -> list[tuple[Utterance, str]]:
+        """Several utterances into a category (idea 107, Josh, 28 October): in their order (by
+        reference), each takes the lowest number free there, the selected ones' own numbers
+        counting as free. [(utterance, new reference)], the unchanged left out."""
+        def order(u):
+            m = re.fullmatch(r"([A-Za-z]*)(\d+)", u.ref)
+            return (m.group(1), int(m.group(2))) if m else (u.ref, 0)
+        us = sorted(us, key=order)
+        moving = {id(u) for u in us}
+        prefix = self.settings.ref_prefix(letter)
+        digits = self.settings.ref_digits
+        used = set()
+        for x in [*self.items(), *self.texts]:
+            r = x.ref
+            if id(x) not in moving and r.startswith(prefix) and r[len(prefix):].isdigit():
+                used.add(int(r[len(prefix):]))
+        out, n = [], 0
+        for u in us:
+            n += 1
+            while n in used:
+                n += 1
+            ref = f"{prefix}{n:0{digits}d}"
+            if ref != u.ref:
+                out.append((u, ref))
+        return out
+
     def suggest_utterance_reference(self, letter: str) -> str:
         """Next free reference in an utterance or text category: W001, W002… and on past W999 to W1000."""
         digits = self.settings.ref_digits
