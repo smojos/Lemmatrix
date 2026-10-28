@@ -41,3 +41,12 @@ def test_stop_follows_hot_mic(monkeypatch):
     assert (rp.record_icon(), rp.stop_icon()) == ("record-hot", "stop-hot")
     monkeypatch.setattr(advanced, "hot_mic", lambda: False)
     assert (rp.record_icon(), rp.stop_icon()) == ("record", "stop")
+
+
+def test_the_stop_square_is_black_with_a_cutout(app, monkeypatch):
+    # Qt ignores Inkscape's paint-order (stroke under fill): the outline is a path of its own beneath
+    img = _img("stop-hot", False, monkeypatch)
+    ring = img.pixelColor(31, 49)                  # on the black band, left side, halfway down
+    hole = img.pixelColor(40, 49)                  # inside the cut-out: the flame's yellow
+    assert ring.lightness() < 60, ring.name()
+    assert hole.lightness() > 100 and hole.red() > 200, hole.name()

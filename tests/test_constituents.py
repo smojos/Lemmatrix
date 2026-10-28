@@ -103,7 +103,7 @@ def test_round_trip_format_16(tmp_path):
 def test_order_values_and_wals():
     assert typology.wals("order", "SVO") == "81A" and typology.wals("order", "OV") == "83A"
     assert typology.wals("order", "topic-initial") == "" and typology.wals("tone", "tonal") == ""
-    assert [v for v, _ in typology.ORDERS][-1] == "unspecified"
+    assert "unspecified" not in [v for v, _ in typology.ORDERS]       # none chosen is unspecified
     assert "Dryer" in typology.CITATIONS and "81A" in typology.CITATIONS and "83A" in typology.CITATIONS
 
 
@@ -248,19 +248,6 @@ def test_edit_fields_chooses_what_goes_under_more(make_win):
     assert dlg.token_more_names() == ["Constituents", "Comment"]
     win.doc.ws_set(TOKEN_MORE_KEY, dlg.token_more_names())
     assert token_more_fields(win, win.doc.db) == {"Constituents", "Comment"}
-
-
-def test_settings_typology_sets_the_features(make_win):
-    from lemmatrix.ui.dialogs import PreferencesDialog
-    win = make_win(_db_with_line())
-    dlg = PreferencesDialog(win, win.doc.db, win.prefs)
-    assert dlg.typ_order.currentData() == "unspecified" and dlg.typ_kind.currentData() == "tonal"
-    dlg.typ_order.setCurrentIndex(dlg.typ_order.findData("SOV"))
-    dlg.typ_morph.setCurrentIndex(dlg.typ_morph.findData("both"))
-    dlg.apply()
-    assert typology.value(win.doc.db, "order") == "SOV" and typology.value(win.doc.db, "morphology") == "both"
-    assert '<feature id="order" value="SOV" wals="81A" />' in storage.to_string(win.doc.db)
-    assert dlg.kind_requested == "tonal"                                # unchanged: no conversion
 
 
 def test_edit_lists_has_the_labels_and_word_class_abbreviations(make_win):

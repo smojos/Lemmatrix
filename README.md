@@ -156,7 +156,7 @@ ever closes by itself with no message, `lemmatrix-crash.log` in this folder says
   token dialogue): labelled brackets over Phonemic's words, `[_ [ADJ]MOD]NP V [_ _]NP`, drawn as
   brackets in the text lines and the matrix cells and written into the TextGrid as the tier `cns`.
   Its labels are in Edit → Lists → Constituent labels; the language's canonical constituent order,
-  morphology type and pitch kind are in Settings → Typology.
+  morphology and pitch kind are in Settings → Typology.
 - **Comparative wordlists:** **New database** starts empty or from one of three lists: the
   **Extended African Comparative Wordlist** (EACW, recommended: 2,553 items, 2,268 of them in its
   published list, edition 2026-10-27), the **SIL Comparative African Wordlist** (CAWL, 1,700) or the **Swadesh list**

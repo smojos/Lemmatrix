@@ -5,24 +5,34 @@ metadata's <typology> block, one <feature id value/> each, so a person reads the
 and a machine finds them by one tag. They describe the language: data, in both archives.
 
 - tone: the pitch kind (pitchkind.py; idea 9);
-- morphology: segmental (concatenative), non-concatenative, both, root-and-pattern, unspecified;
-- order: the canonical constituent order, WALS 81A's values, OV and VO (WALS 83A), topic-initial,
-  unspecified; stored with its WALS feature where it has one (wals="81A"), so compilations line up.
+- morphology: segmental (concatenative), non-concatenative, root-and-pattern;
+- order: the canonical constituent order, WALS 81A's values, OV and VO (WALS 83A), topic-initial;
+  stored with its WALS feature where it has one (wals="81A"), so compilations line up.
 
-Settings → Typology edits morphology and order (the pitch kind too, kept in step with
-Edit → Metadata). No Qt here."""
+Morphology and order take **any number of values** (Josh, 28 October: chips, so no "both"): one
+<feature> element per value, the same id repeated; none chosen is written as value="unspecified".
+In memory a feature's values are one string joined by "; " (values() and set_values() read and
+write it). An older file's morphology "both" opens as segmental and non-concatenative.
+
+Settings → Typology edits morphology and order as chips under Pitch, Morphology and Syntax; the
+pitch kind is shown there fixed (changed in Settings → Pitch). No Qt here."""
 
 from __future__ import annotations
 
 TONE, MORPHOLOGY, ORDER = "tone", "morphology", "order"
 UNSPECIFIED = "unspecified"
 
+SEP = "; "                    # several values of one feature, in memory
+
 MORPHOLOGIES = [("segmental", "segmental (concatenative)"), ("non-concatenative", "non-concatenative"),
-                ("both", "both"), ("root-and-pattern", "root-and-pattern"), (UNSPECIFIED, "unspecified")]
+                ("root-and-pattern", "root-and-pattern")]
+OLD_VALUES = {MORPHOLOGY: {"both": ["segmental", "non-concatenative"]}}   # before chips (28 October)
 
 ORDERS = [("SOV", "SOV"), ("SVO", "SVO"), ("VSO", "VSO"), ("VOS", "VOS"), ("OVS", "OVS"), ("OSV", "OSV"),
           ("no dominant order", "no dominant order"), ("OV", "OV (verb-final)"), ("VO", "VO (verb-initial)"),
-          ("topic-initial", "topic-initial"), (UNSPECIFIED, "unspecified")]
+          ("topic-initial", "topic-initial")]
+
+CHOICES = {MORPHOLOGY: MORPHOLOGIES, ORDER: ORDERS}       # the chips each feature offers
 
 WALS = {**{v: "81A" for v in ("SOV", "SVO", "VSO", "VOS", "OVS", "OSV", "no dominant order")},
         "OV": "83A", "VO": "83A"}
@@ -43,12 +53,33 @@ def value(db, feature: str) -> str:
     return (db.metadata.typology or {}).get(feature) or (UNSPECIFIED if feature != TONE else "tonal")
 
 
+def values(db_or_typology, feature: str) -> list[str]:
+    """The feature's chosen values (none: unspecified), in their order, without repeats."""
+    ty = db_or_typology if isinstance(db_or_typology, dict) else (db_or_typology.metadata.typology or {})
+    raw = ty.get(feature) or ""
+    out = []
+    for v in raw.split(";"):
+        v = v.strip()
+        for w in OLD_VALUES.get(feature, {}).get(v, [v]):
+            if w and w != UNSPECIFIED and w not in out:
+                out.append(w)
+    return out
+
+
+def set_values(typology: dict, feature: str, vals) -> None:
+    vals = [v for v in dict.fromkeys(vals) if v and v != UNSPECIFIED]
+    typology[feature] = SEP.join(vals) if vals else UNSPECIFIED
+
+
+def label(feature: str, val: str) -> str:
+    return dict(CHOICES.get(feature, [])).get(val, val)
+
+
 def normalised(typology: dict) -> dict:
     """The typology with every feature Lemmatrix knows (unspecified when not set), tone first."""
     out = {TONE: (typology or {}).get(TONE) or "tonal"}
     for k in (MORPHOLOGY, ORDER):
-        v = (typology or {}).get(k) or UNSPECIFIED
-        out[k] = v
+        out[k] = SEP.join(values(typology or {}, k)) or UNSPECIFIED
     for k, v in (typology or {}).items():         # features of later versions, kept as they are
         out.setdefault(k, v)
     return out

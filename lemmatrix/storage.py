@@ -248,9 +248,15 @@ def _load_metadata(m) -> Metadata:
         md.variety_code, md.variety_name = nfc(x.get("code", "")), _text(x)
     md.typology = {"tone": "tonal"}             # format 10; an older database is tonal (Josh, 23 October)
     if (t := m.find("typology")) is not None:
+        seen = set()                              # a repeated id: several values (chips, 28 October)
         for f in t.findall("feature"):
-            if f.get("id"):
-                md.typology[f.get("id")] = (f.get("value") or "").strip()
+            if (fid := f.get("id")):
+                v = (f.get("value") or "").strip()
+                if fid in seen and v and v != "unspecified" and md.typology.get(fid) not in ("", "unspecified"):
+                    md.typology[fid] = md.typology[fid] + "; " + v
+                else:
+                    md.typology[fid] = v
+                seen.add(fid)
     md.name = _text(m.find("name"))
     md.author = _text(m.find("author"))
     md.researchers = [_load_person(r, researcher=True) for r in m.findall("researcher")]
@@ -579,11 +585,13 @@ def to_element(db: Database) -> ET.Element:
     # format 10 (ideas 9 and 56): typological features, right after the language, always written
     ty = ET.SubElement(m, "typology")
     from . import typology as typ                 # format 16 (idea 91): morphology and order too, with WALS
-    for fid, value in typ.normalised(md.typology).items():
-        a = {"id": fid, "value": value}
-        if (w := typ.wals(fid, value)):
-            a["wals"] = w
-        ET.SubElement(ty, "feature", a)
+    for fid, joined in typ.normalised(md.typology).items():
+        vals = typ.values(md.typology, fid) if fid in (typ.MORPHOLOGY, typ.ORDER) else [joined]
+        for value in vals or [typ.UNSPECIFIED]:   # one element per value, the id repeated (chips)
+            a = {"id": fid, "value": value}
+            if (w := typ.wals(fid, value)):
+                a["wals"] = w
+            ET.SubElement(ty, "feature", a)
     if md.name:
         ET.SubElement(m, "name").text = md.name
     if md.author:
