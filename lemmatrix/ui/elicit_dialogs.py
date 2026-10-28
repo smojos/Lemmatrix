@@ -164,10 +164,14 @@ def _mb(n: int) -> str:
 # --------------------------------------------------------------------------
 
 class _Row:
-    __slots__ = ("entry", "token", "utterance", "recorded", "image", "kind", "cells")
+    __slots__ = ("entry", "token", "utterance", "recorded", "image", "kind", "cells", "shows")
 
 
-COLUMNS = ("Reference", "Form", "Tags", "Card shows", "Recording", "Picture", "Card")
+# What the speaker will see (Josh, 28 October): the reference, the form (Phonemic, else Phonetic),
+# new or rerecord, what the card shows in English and the second language, and the picture.
+COLUMNS = ("Reference", "Form", "Type", "Card shows", "Picture")
+FORM, TYPE, SHOWS, PICTURE = 1, 2, 3, 4
+MACHINE_GLOSSES = "⚠️ The second language glosses are machine translated, please review"
 EMPTY = ("Please add tokens and utterances to the request from the main window and Texts and "
          "utterances: right-click → Add to ɛλicit request.")
 
@@ -197,16 +201,42 @@ class ItemModel(QAbstractTableModel):
     def data(self, index, role=Qt.DisplayRole):
         r = self.rows[index.row()]
         c = index.column()
+        grey = (c == FORM and not r.cells[FORM]) or (c == SHOWS and r.kind == el.RERECORD)
         if role == Qt.DisplayRole:
-            if c == 6:
-                return "Rerecord" if r.kind == el.RERECORD else "New"
+            if c == FORM and not r.cells[FORM]:
+                return "empty"
+            if c == SHOWS and r.kind == el.RERECORD:
+                return "the recording, to repeat"
+            if c == PICTURE:
+                return r.image.name if r.image else ""
             return r.cells[c]
-        if role == Qt.ToolTipRole and c == 6:
-            return ("It has a soundfile: the card plays it, to be repeated" if r.recorded else
-                    "No soundfile yet: the card shows its gloss or translation")
-        if role == Qt.ForegroundRole and c == 3 and r.kind == el.NEW and not r.cells[3]:
-            return theme.colour("muted")
+        if role == Qt.ToolTipRole:
+            if c == TYPE:
+                return ("It has a soundfile: the card plays it, to be repeated" if r.recorded else
+                        "No soundfile yet: the card shows its translation, else its gloss")
+            if c == SHOWS and r.kind != el.RERECORD:
+                return "English, then the second language; ⚠️: nothing to show in that language"
+            if c == PICTURE and r.image:
+                return f"Open {r.image.name}"
+        if role == Qt.ForegroundRole:
+            if grey:
+                return theme.colour("muted")
+            if c == PICTURE and r.image:
+                return theme.accent()
+        if role == Qt.FontRole and (grey or (c == PICTURE and r.image)):
+            from PySide6.QtGui import QFont
+            f = QFont()
+            f.setItalic(grey)
+            f.setUnderline(c == PICTURE and bool(r.image))
+            return f
         return None
+
+    def set_languages(self, db, languages):
+        """What each card shows in these languages (English, then the second language, if any)."""
+        self.beginResetModel()
+        for r in self.rows:
+            r.cells[SHOWS] = _card_shows(db, r, languages)
+        self.endResetModel()
 
     def remove(self, rows: set[int]):
         self.beginResetModel()
@@ -219,6 +249,14 @@ class ItemModel(QAbstractTableModel):
         self.endResetModel()
 
 
+def _card_shows(db, r: _Row, languages) -> str:
+    """The Card shows cell: what the card shows in each language, ⚠️ where it shows nothing."""
+    if r.kind == el.RERECORD:
+        return ""
+    _, texts = el.card_shows(db, el.Item(el.NEW, r.entry, r.token), languages)
+    return " · ".join(texts.get(l) or "⚠️" for l in languages)
+
+
 class ItemFilter(QSortFilterProxyModel):
     """The search bar: a quick filter of the request's list."""
 
@@ -229,7 +267,7 @@ class ItemFilter(QSortFilterProxyModel):
     def filterAcceptsRow(self, row, parent):
         r = self.sourceModel().rows[row]
         from .. import search
-        return search.matches(self.text, r.cells[:6])            # one search for every bar (idea 86)
+        return search.matches(self.text, r.cells)                # one search for every bar (idea 86)
 
 
 class RequestDialog(QDialog):
@@ -307,11 +345,11 @@ class RequestDialog(QDialog):
         self.audio.setCurrentIndex(self.audio.findData("flac"))
 
     # ---- the rows -----------------------------------------------------
-    def _image_index(self) -> set[str]:
+    def _image_index(self) -> dict[str, Path]:
         folder = layout.images_folder(self.db.path) if self.db.path else None
         if folder is None or not folder.is_dir():
-            return set()
-        return {p.stem.lower() for p in folder.iterdir()
+            return {}
+        return {p.stem.lower(): p for p in sorted(folder.iterdir())
                 if p.is_file() and p.suffix.lower() in layout.IMAGE_EXTENSIONS}
 
     def _rows(self, preselect) -> list[_Row]:
@@ -325,13 +363,10 @@ class RequestDialog(QDialog):
             r = _Row()
             r.entry, r.token, r.utterance = e, t, is_utterance(e)
             r.recorded = el.recording_path(db, e, t) is not None
-            r.image = (not r.utterance) and filenames.image_stem(db, e, t).lower() in self._images
+            r.image = None if r.utterance else self._images.get(filenames.image_stem(db, e, t).lower())
             r.kind = el.RERECORD if r.recorded else el.NEW   # Josh, 20 October: a soundfile means rerecord
-            show, texts = el.card_texts(db, el.Item(el.NEW, e, t), [db.settings.primary_gloss])
-            form = el._form(db, t) or (db.lemma(e) if not r.utterance else e.label)
-            tags = "" if r.utterance else db.settings.tags.display(t.tags)
-            r.cells = [e.ref, form, tags, next(iter(texts.values()), ""),
-                       (t.speaker or "?") if r.recorded else "", "✓" if r.image else ""]
+            r.cells = [e.ref, el._form(db, t), "rerecord" if r.kind == el.RERECORD else "new", "",
+                       r.image.name if r.image else ""]
             rows.append(r)
         return rows
 
@@ -435,9 +470,10 @@ class RequestDialog(QDialog):
         self.table.customContextMenuRequested.connect(self._menu)
         self.table.verticalHeader().hide()
         self.table.setWordWrap(False)
+        self.table.clicked.connect(self._open_picture)
         hh = self.table.horizontalHeader()
         hh.setSectionResizeMode(QHeaderView.Interactive)
-        for c, w in enumerate((70, 150, 170, 220, 80, 56, 80)):
+        for c, w in enumerate((70, 170, 80, 340, 140)):
             self.table.setColumnWidth(c, w)
         hh.setStretchLastSection(True)
         from PySide6.QtGui import QKeySequence, QShortcut
@@ -453,6 +489,10 @@ class RequestDialog(QDialog):
 
         self.count = QLabel()
         lay.addWidget(self.count)
+        self.machine = QLabel(MACHINE_GLOSSES)    # a mild note, not a question (Josh, 28 October)
+        self.machine.setStyleSheet(f"color: {theme.colour('warning').name()};")
+        self.machine.hide()
+        lay.addWidget(self.machine)
         buttons = QDialogButtonBox()
         reset = buttons.addButton("Reset request", QDialogButtonBox.ResetRole)
         reset.setToolTip("Takes every token and utterance out of the request and puts the request details "
@@ -488,6 +528,7 @@ class RequestDialog(QDialog):
         self.l2_name.setEnabled(bool(lang))
         self.l2_name.setToolTip(f"How \"{self.db.metadata.language_name}\" is written in {name}, for the "
                                 f"question \"How do you say this in …?\" (e.g. italiensk)" if lang else "")
+        self.model.set_languages(self.db, self._languages())
         self._l2_people_changed()
         self._update_counts()
 
@@ -516,6 +557,33 @@ class RequestDialog(QDialog):
             edit.setText(self.l2_people.get(self._l2_key(combo), "") if lang else "")
             edit.setToolTip(f"How the {role.lower()}'s name is written in {name}, for the prompts and the "
                             f"message in {name} (blank: as in the list)" if lang else "")
+
+    def _languages(self) -> list[str]:
+        en, lang = self.db.settings.primary_gloss, self.l2.currentData() or ""
+        return [en, lang] if lang and lang != en else [en]
+
+    def _machine_glosses(self, items) -> bool:
+        """A card shows a second-language gloss Lemmatrix shipped from the EACW (machine translated)."""
+        from .. import wordlists
+        lang = self.l2.currentData() or ""
+        if not lang or not wordlists.gloss_file(lang) or not wordlists.is_eacw(self.db):
+            return False
+        g = self.db.settings.entry_field("gloss")
+        for i in items:
+            if i.kind != el.NEW or g is None or el.card_shows(self.db, i, [lang])[0] != "gloss":
+                continue
+            ref = wordlists.canon(wordlists.EACW, i.entry.ref)
+            mine = i.entry.get(g.name, lang)
+            if ref and mine and mine == wordlists.item_gloss_in(ref, lang):   # still as shipped
+                return True
+        return False
+
+    def _open_picture(self, index):
+        if index.column() != PICTURE:
+            return
+        r = self.model.rows[self.proxy.mapToSource(index).row()]
+        if r.image and r.image.exists():
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(r.image)))
 
     def _filter(self, *_):
         self.proxy.text = self.search.text()
@@ -565,6 +633,8 @@ class RequestDialog(QDialog):
         if len(items) > el.MANY_ITEMS:
             text += f" · over {el.MANY_ITEMS} items: 10–15 is recommended for poor internet"
         self.count.setText(text if items else "")
+        if hasattr(self, "machine"):
+            self.machine.setVisible(self._machine_glosses(items))
         self.make_btn.setEnabled(bool(items) and self.speaker.count() > 0)
 
     def _warnings(self, items) -> bool:

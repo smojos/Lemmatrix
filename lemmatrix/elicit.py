@@ -121,6 +121,23 @@ def card_texts(db: Database, it: Item, languages) -> tuple[str, dict[str, str]]:
     return "translation", texts
 
 
+def card_shows(db: Database, it: Item, languages) -> tuple[str, dict[str, str]]:
+    """What the page will show on the card, as the request is built: card_texts, and for a token
+    with no Translation in any language the lemma's gloss with the tags that say something
+    (the researcher is warned). The request dialogue's Card shows column reads it too."""
+    show, texts = card_texts(db, it, languages)
+    e, t = it.entry, it.token
+    if it.kind != NEW_UTTERANCE and show == "translation" and not texts and not is_utterance(e):
+        s = db.settings
+        g = s.entry_field("gloss")
+        shown = [n for n in s.tags.sort(t.tags) if not (s.tags.tag(n) and s.tags.tag(n).default)]
+        tags = ", ".join(shown)
+        texts = {l: f"{e.get(g.name, l)} ({tags})" if tags else e.get(g.name, l)
+                 for l in languages if g and e.get(g.name, l)}
+        show = "gloss"
+    return show, texts
+
+
 def missing_translation(db: Database, it: Item) -> bool:
     """A token (not a citation token) or utterance asked for anew with no English Translation:
     the card would have nothing to show."""
@@ -269,13 +286,7 @@ def new_request(db: Database, items, speaker: str, researcher: str, l2: str = ""
             e, t = it.entry, it.token
             c = Card(n, it.kind, "utterance" if is_utterance(e) else "token", e.id, t.id, e.ref,
                      item_label(db, it), show, texts)
-            if show == "translation" and not texts and not is_utterance(e):      # the warning was given
-                g = s.entry_field("gloss")             # the gloss and the tags that say something
-                shown = [n for n in s.tags.sort(t.tags) if not (s.tags.tag(n) and s.tags.tag(n).default)]
-                tags = ", ".join(shown)
-                c.texts = {l: f"{e.get(g.name, l)} ({tags})" if tags else e.get(g.name, l)
-                           for l in languages if g and e.get(g.name, l)}
-                c.show = "gloss"
+            c.show, c.texts = card_shows(db, it, languages)      # the gloss if no Translation (warned)
             c.repeat = repeat and not is_utterance(e) and it.kind == NEW
             c.file = f"{n:02d}_{filenames.praat_name(e.ref)}.{audio}"
         cards.append(c)

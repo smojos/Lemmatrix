@@ -1180,3 +1180,18 @@ def field_plan(db) -> list[tuple[object, dict[str, str]]]:
         if vals:
             out.append((e, vals))
     return out
+
+
+# ---- the gloss languages Lemmatrix supports (Josh, 28 October) ------------------------------
+# English, the language of the analysis, and the languages the EACW ships glosses in (glosses/STATUS.tsv:
+# French, Arabic and Amharic for v1; Swahili and Portuguese later). Edit → Metadata and New database
+# offer only these. The code a database writes for each (en, fr, ar, am, as since 20 October).
+_SHORT_CODES = {"fra": "fr", "arb": "ar", "amh": "am"}
+
+
+def supported_gloss_languages() -> dict[str, str]:
+    """{code: name} the gloss languages a database can be given: English first."""
+    out = {"en": "English"}
+    for code, (name, _status) in gloss_statuses().items():
+        out[_SHORT_CODES.get(code, code)] = name
+    return out

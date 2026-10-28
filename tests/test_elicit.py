@@ -1286,3 +1286,43 @@ def test_send_again_puts_the_cards_back_on_the_request(win, monkeypatch):
     dlg = opened[0]
     assert {r.entry.ref for r in dlg.model.rows} == {"D035", "J114"} and dlg.speaker.currentData() == "SP2"
     assert set(win.elicit_basket) == {pane.tokens[0].id, gatto.tokens[0].id}
+
+
+def test_the_request_shows_what_the_speaker_will_see(win, monkeypatch):
+    """Josh, 28 October: Reference | Form | Type | Card shows | Picture. Form is Phonemic, else
+    Phonetic, else a grey *empty*; Type new or rerecord; Card shows the English and the second
+    language (⚠️ where the card shows nothing in it), a rerecord its recording; Picture the image's
+    name, a click opens it. A second-language gloss still as the EACW shipped it gets a mild note."""
+    from lemmatrix.ui import elicit_dialogs as ed
+    from lemmatrix import wordlists
+    db = win.doc.db
+    gatto, acqua = db.entry_by_ref("D035"), db.entry_by_ref("L062")
+    dlg = ed.RequestDialog(win, [gatto.tokens[0].id, acqua.tokens[0].id])
+    m = dlg.model
+    assert [m.headerData(c, ed.Qt.Horizontal) for c in range(m.columnCount())] == list(ed.COLUMNS) == [
+        "Reference", "Form", "Type", "Card shows", "Picture"]
+    rows = {r.entry.ref: i for i, r in enumerate(m.rows)}
+    cell = lambda ref, c: m.data(m.index(rows[ref], c))
+    assert cell("D035", ed.TYPE) == "new" and cell("L062", ed.TYPE) == "rerecord"
+    assert cell("L062", ed.SHOWS) == "the recording, to repeat"
+    shows = cell("D035", ed.SHOWS).split(" · ")
+    g = db.settings.entry_field("gloss")
+    assert shows[0] == gatto.get(g.name, db.settings.primary_gloss)
+    assert shows[1] == (gatto.get(g.name, "da") or "⚠️")
+    dlg.l2.setCurrentIndex(dlg.l2.findData(""))                      # no second language: English only
+    assert " · " not in cell("D035", ed.SHOWS)
+    r = m.rows[rows["D035"]]
+    r.cells[ed.FORM] = ""
+    assert cell("D035", ed.FORM) == "empty" and m.data(m.index(rows["D035"], ed.FORM), ed.Qt.FontRole).italic()
+    if r.image:                                                       # the picture opens on a click
+        opened = []
+        monkeypatch.setattr(ed.QDesktopServices, "openUrl", lambda url: opened.append(url))
+        dlg._open_picture(dlg.proxy.mapFromSource(m.index(rows["D035"], ed.PICTURE)))
+        assert cell("D035", ed.PICTURE) == r.image.name and opened
+    assert dlg.machine.isHidden()                                     # Danish: nothing shipped
+    monkeypatch.setattr(wordlists, "gloss_file", lambda lang: "fra" if lang == "da" else "")
+    monkeypatch.setattr(wordlists, "item_gloss_in", lambda ref, lang: gatto.get(g.name, lang))
+    if gatto.get(g.name, "da") and wordlists.is_eacw(db):
+        dlg.l2.setCurrentIndex(dlg.l2.findData("da"))
+        assert not dlg.machine.isHidden() and "machine translated" in dlg.machine.text()
+    dlg.reject()

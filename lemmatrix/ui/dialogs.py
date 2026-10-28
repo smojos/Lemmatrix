@@ -676,11 +676,9 @@ class MetadataDialog(QDialog):
         form.addRow("Database name", self.db_name)
         form.addRow("Author / owner", self.author)
         form.addRow("Description", self.description)
-        self.glosses = QLineEdit(" ".join(db.settings.gloss_languages))
-        self.glosses.setToolTip("Gloss languages, separated by spaces; the first is the primary one (the "
-                                "language of the analysis). The others are second languages, to help "
-                                "speakers understand (e.g. in ɛλicit requests): hidden everywhere until a "
-                                "column, a cell line or a dialogue's Other languages is set to show them.")
+        from .glossbox import GlossLanguagesBox      # chips, only the supported languages (Josh, 28 October)
+        primary = db.settings.primary_gloss
+        self.glosses = GlossLanguagesBox([primary] + [l for l in db.settings.gloss_languages if l != primary])
         form.addRow("Gloss languages", self.glosses)
         from .. import wordlists as _wl                 # the EACW's shipped glosses and their status (idea 63)
         if _wl.is_eacw(db):
@@ -756,11 +754,7 @@ class MetadataDialog(QDialog):
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
 
     def accept(self):
-        langs = self.glosses.text().split()
-        if not langs:
-            QMessageBox.warning(self, "Metadata", "Give at least one gloss language, e.g. en.")
-            return
-        super().accept()
+        super().accept()                          # the gloss languages always have their first
 
     def apply(self):
         md = self.db.metadata
@@ -774,7 +768,7 @@ class MetadataDialog(QDialog):
         from ..model import Support, Thanks
         md.support = [Support(*r) for r in self.support.rows()]
         md.thanks = [Thanks(*r) for r in self.thanks.rows()]
-        langs = self.glosses.text().split()
+        langs = self.glosses.languages()
         self.db.settings.gloss_languages = langs
         self.db.settings.primary_gloss = langs[0]
 

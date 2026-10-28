@@ -80,10 +80,8 @@ class NewDatabaseDialog(QDialog):
         self.db_name = QLineEdit()
         self.db_name.setPlaceholderText("e.g. Complete Lexicon")
         self.db_name.setToolTip("The database's own name, shown at the top of the window. It isn't the file name.")
-        self.glosses = QLineEdit("en")
-        self.glosses.setToolTip("Gloss languages, separated by spaces; the first is the primary one (the "
-                                "language of the analysis), the others second languages to help speakers "
-                                "understand (e.g. en ar, or en am)")
+        from .glossbox import GlossLanguagesBox      # chips, only the supported languages (Josh, 28 October)
+        self.glosses = GlossLanguagesBox(["en"])
         f.addRow("Database name", self.db_name)
         f.addRow("Gloss languages", self.glosses)
         from .. import wordlists as _wl                 # the EACW's shipped glosses and their status (idea 63)
@@ -215,7 +213,7 @@ class NewDatabaseDialog(QDialog):
             language_name=self.lang_name.text(), language_code=self.lang_code.text(),
             variety_name=self.var_name.text(), variety_code=self.var_code.text(),
             kind=self.pitch_kind.currentData(), name=self.db_name.text(),
-            gloss_languages=self.glosses.text().split(),
+            gloss_languages=self.glosses.languages(),
             you={"name": self.you_name.text().strip(), "code": self.you_code.text().strip(),
                  "email": self.you_email.text().strip()},
             copy_from=self.copy_from if copy else None, pattern=self.pattern.text().strip())
