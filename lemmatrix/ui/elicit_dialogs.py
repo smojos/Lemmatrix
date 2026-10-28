@@ -201,12 +201,10 @@ class ItemModel(QAbstractTableModel):
     def data(self, index, role=Qt.DisplayRole):
         r = self.rows[index.row()]
         c = index.column()
-        grey = (c == FORM and not r.cells[FORM]) or (c == SHOWS and r.kind == el.RERECORD)
+        grey = c == FORM and not r.cells[FORM]
         if role == Qt.DisplayRole:
             if c == FORM and not r.cells[FORM]:
                 return "empty"
-            if c == SHOWS and r.kind == el.RERECORD:
-                return "the recording, to repeat"
             if c == PICTURE:
                 return r.image.name if r.image else ""
             return r.cells[c]
@@ -214,7 +212,9 @@ class ItemModel(QAbstractTableModel):
             if c == TYPE:
                 return ("It has a soundfile: the card plays it, to be repeated" if r.recorded else
                         "No soundfile yet: the card shows its translation, else its gloss")
-            if c == SHOWS and r.kind != el.RERECORD:
+            if c == SHOWS and r.kind == el.RERECORD:
+                return "The card's prompt (it plays the recording to repeat), in the form chosen"
+            if c == SHOWS:
                 return "English, then the second language; ⚠️: nothing to show in that language"
             if c == PICTURE and r.image:
                 return f"Open {r.image.name}"
@@ -231,11 +231,12 @@ class ItemModel(QAbstractTableModel):
             return f
         return None
 
-    def set_languages(self, db, languages):
-        """What each card shows in these languages (English, then the second language, if any)."""
+    def set_languages(self, db, languages, prompts=None):
+        """What each card shows in these languages (English, then the second language, if any);
+        a rerecord's card its prompt, as the request's prompts say it (idea 92: the form chosen)."""
         self.beginResetModel()
         for r in self.rows:
-            r.cells[SHOWS] = _card_shows(db, r, languages)
+            r.cells[SHOWS] = _card_shows(db, r, languages, prompts or {})
         self.endResetModel()
 
     def remove(self, rows: set[int]):
@@ -249,10 +250,12 @@ class ItemModel(QAbstractTableModel):
         self.endResetModel()
 
 
-def _card_shows(db, r: _Row, languages) -> str:
-    """The Card shows cell: what the card shows in each language, ⚠️ where it shows nothing."""
+def _card_shows(db, r: _Row, languages, prompts: dict) -> str:
+    """The Card shows cell: what the card shows in each language, ⚠️ where it shows nothing. A
+    rerecord's card shows only its prompt (Josh, 28 October): the request's own text, with an ellipsis."""
     if r.kind == el.RERECORD:
-        return ""
+        texts = [(prompts.get(l) or {}).get("rerecord", "") for l in languages]
+        return " · ".join(f"{t.rstrip('.。።')}…" for t in texts if t)
     _, texts = el.card_shows(db, el.Item(el.NEW, r.entry, r.token), languages)
     return " · ".join(texts.get(l) or "⚠️" for l in languages)
 
@@ -310,13 +313,15 @@ class RequestDialog(QDialog):
             choose(self.send_by, draft["send_by"])
         if "audio" in draft:
             choose(self.audio, draft["audio"])
+        self.address_by_speaker.update(draft.get("address", {}))
+        self._address_follow_speaker()
 
     def draft(self) -> dict:
         return {"speaker": self.speaker.currentData(), "researcher": self.researcher.currentData(),
                 "l2": self.l2.currentData() or "", "l2_name": self.l2_name.text(),
                 "l2_people": dict(self.l2_people),
                 "repeat": self.repeat.isChecked(), "send_by": self.send_by.currentData(),
-                "audio": self.audio.currentData()}
+                "audio": self.audio.currentData(), "address": dict(self.address_by_speaker)}
 
     def reset_request(self):
         """Reset request (Josh, 24 October: everything to zero): every token and utterance taken out
@@ -343,6 +348,8 @@ class RequestDialog(QDialog):
         self.repeat.setChecked(True)
         self.send_by.setCurrentIndex(0 if self.send_by.model().item(0).isEnabled() else 1)
         self.audio.setCurrentIndex(self.audio.findData("flac"))
+        self.address_by_speaker.clear()
+        self._address_follow_speaker()
 
     # ---- the rows -----------------------------------------------------
     def _image_index(self) -> dict[str, Path]:
@@ -388,11 +395,38 @@ class RequestDialog(QDialog):
             if current and self.speaker.findData(current) >= 0:
                 self.speaker.setCurrentIndex(self.speaker.findData(current))
         self.speaker.currentIndexChanged.connect(self._update_counts)
-        form.addRow("Speaker", self.speaker)
+        # How the prompts address the speaker, beside the speaker (Josh, 28 October; idea 92):
+        # Respectful by default, remembered per speaker while the database is open (its workspace).
+        self.address = QComboBox()
+        for code, label in elicit_prompts.SPEAKER_FORMS.items():
+            self.address.addItem(label, code)
+        self.address.setToolTip("How the prompts address the speaker in the second language: respectfully "
+                                "(gender-neutral), or as a man or a woman. English has one form.")
+        self.address_by_speaker = {}              # speaker code -> r, m or f
+        self.address.activated.connect(lambda *_: self.address_by_speaker.__setitem__(
+            self.speaker.currentData() or "", self.address.currentData()))
+        self.speaker.currentIndexChanged.connect(self._address_follow_speaker)
+        row = QHBoxLayout()
+        row.addWidget(self.speaker, 1)
+        row.addWidget(self.address)
+        form.addRow("Speaker", row)
         self.researcher = QComboBox()
         for p in md.researchers:
             self.researcher.addItem(f"{p.code} · {p.name}" if p.name else p.code, p.code)
-        form.addRow("Researcher", self.researcher)
+        # The researcher's gender, where the second language marks {researcher} (idea 92): beside the
+        # researcher, remembered for each researcher on this computer.
+        self.researcher_form = QComboBox()
+        for code, label in elicit_prompts.RESEARCHER_FORMS.items():
+            self.researcher_form.addItem(f"is {label}", code)
+        self.researcher_form.setToolTip("Some languages refer to the researcher as he or she in the prompts "
+                                        "(\"please let him/her know\"). Remembered on this computer.")
+        self.researcher_form.activated.connect(lambda *_: self.main.prefs.set_value(
+            self._researcher_key(), self.researcher_form.currentData()))
+        self.researcher.currentIndexChanged.connect(self._researcher_form_follow)
+        row = QHBoxLayout()
+        row.addWidget(self.researcher, 1)
+        row.addWidget(self.researcher_form)
+        form.addRow("Researcher", row)
         self.l2 = QComboBox()
         self.l2.addItem("None", "")
         for lang in s.gloss_languages:
@@ -510,6 +544,7 @@ class RequestDialog(QDialog):
         buttons.accepted.connect(self._make)
         buttons.rejected.connect(self.reject)
         lay.addWidget(buttons)
+        self._researcher_form_follow()
         self._l2_changed()
 
     def done(self, result):
@@ -521,14 +556,50 @@ class RequestDialog(QDialog):
             self.main.elicit_draft = self.draft()
         super().done(result)
 
+    def _address_follow_speaker(self, *_):
+        form = self.address_by_speaker.get(self.speaker.currentData() or "", elicit_prompts.DEFAULT_SPEAKER_FORM)
+        self.address.setCurrentIndex(max(0, self.address.findData(form)))
+        self._refresh_shows()
+
+    def _researcher_key(self) -> str:
+        return f"elicit/researcher_form/{self.researcher.currentData() or ''}"
+
+    def _researcher_form_follow(self, *_):
+        prefs = getattr(self.main, "prefs", None)
+        form = (prefs.get_value(self._researcher_key()) if prefs else None) or elicit_prompts.DEFAULT_RESEARCHER_FORM
+        self.researcher_form.setCurrentIndex(max(0, self.researcher_form.findData(form)))
+
+    def speaker_form(self) -> str:
+        """r, m or f: what the request uses (respectful where the second language has no forms)."""
+        lang = self.l2.currentData() or ""
+        return self.address.currentData() if elicit_prompts.has_forms(lang) else elicit_prompts.DEFAULT_SPEAKER_FORM
+
+    def researcher_gender(self) -> str:
+        return self.researcher_form.currentData() or elicit_prompts.DEFAULT_RESEARCHER_FORM
+
+    def _refresh_shows(self):
+        if hasattr(self, "model"):
+            self.model.set_languages(self.db, self._languages(), self._prompts())
+
+    def _prompts(self) -> dict:
+        """The prompts the request would carry, {lang: {key: text}}, in the chosen forms."""
+        sp, rs = self.speaker_form(), self.researcher_gender()
+        out = {}
+        for lang in self._languages():
+            out[lang] = (elicit_prompts.prompts(lang, sp, rs) if lang != self.db.settings.primary_gloss
+                         else None) or elicit_prompts.prompts("en")
+        return out
+
     def _l2_changed(self, *_):
         lang = self.l2.currentData() or ""
+        self.address.setVisible(elicit_prompts.has_forms(lang))
+        self.researcher_form.setVisible(elicit_prompts.has_researcher_forms(lang))
         name = elicit_prompts.LANGUAGE_NAMES.get(lang.split("-")[0], lang) if lang else ""
         self.l2_name_label.setText(f"Language's name in {name}" if lang else "Language's name")
         self.l2_name.setEnabled(bool(lang))
         self.l2_name.setToolTip(f"How \"{self.db.metadata.language_name}\" is written in {name}, for the "
                                 f"question \"How do you say this in …?\" (e.g. italiensk)" if lang else "")
-        self.model.set_languages(self.db, self._languages())
+        self._refresh_shows()
         self._l2_people_changed()
         self._update_counts()
 
@@ -694,7 +765,8 @@ class RequestDialog(QDialog):
                              self.l2.currentData() or "", self.l2_name.text(), self.repeat.isChecked(),
                              theme.accent().name(), audio=self.audio.currentData(),
                              l2_names={"speaker": self.speaker_l2.text(),
-                                       "researcher": self.researcher_l2.text()})
+                                       "researcher": self.researcher_l2.text()},
+                             speaker_form=self.speaker_form(), researcher_form=self.researcher_gender())
         if self.send_by.currentData() == "drive":
             drive = google_drive(self.main)
             if drive is None:

@@ -122,14 +122,14 @@ from test_elicit import FakeDrive, _items, _wav_bytes, db  # noqa: E402,F401  (f
 
 def test_the_request_zip_is_put_on_the_disk(db, synced):
     items = _items(db)
-    path = el.write_request(db, el.new_request(db, items, "SP1", "RS1", "da"), items)
+    path = el.write_request(db, el.new_request(db, items, "SP1", "RS1", "fr"), items)
     assert synced.has(path)
 
 
 def test_received_recordings_are_on_the_disk_before_drive_lets_them_go(db, tmp_path, synced):
     drive = FakeDrive()
     items = _items(db)
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     el.publish_drive(db, req, items, drive, "KEY")
     st = el.outstanding_drive(db)[0]
     c = st.request.cards[0]

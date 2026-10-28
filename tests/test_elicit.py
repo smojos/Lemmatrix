@@ -39,7 +39,7 @@ def _items(db):
             el.Item(el.NEW, E["K220"], tok("K220", 1)), el.Item(el.NEW, E["V094"], tok("V094")),
             el.Item(el.RERECORD, E["L062"], tok("L062")), el.Item(el.RERECORD, E["L002"], tok("L002")),
             el.Item(el.RERECORD, U["U001"], U["U001"].token), el.Item(el.NEW, U["U003"], U["U003"].token),
-            el.Item(el.NEW_UTTERANCE, translations={"en": "The sun is hot.", "da": "Solen er varm."})]
+            el.Item(el.NEW_UTTERANCE, translations={"en": "The sun is hot.", "fr": "Le soleil est chaud."})]
 
 
 def _response(st, path, skip=(), rate=8000, date="2026-10-21"):
@@ -68,7 +68,7 @@ def _response(st, path, skip=(), rate=8000, date="2026-10-21"):
 # ---- the test database ------------------------------------------------------------
 
 def test_the_test_database_has_every_case(db):
-    assert db.settings.gloss_languages == ["en", "da"]
+    assert db.settings.gloss_languages == ["en", "fr"]
     assert len(db.entries) == 12 and len(db.utterances) == 3
     recorded = [e.ref for e, t in db.all_tokens() if t.file]
     assert sorted(recorded) == ["J114b", "K002", "K220", "L002", "L062", "U001", "U002"]
@@ -89,11 +89,13 @@ def test_every_built_in_language_has_every_prompt_with_the_same_placeholders():
     assert set(en) == set(elicit_prompts.KEYS)
     for lang, p in elicit_prompts.PROMPTS.items():
         assert set(p) == set(en), lang
-        for k, text in p.items():
-            assert names(text) == names(en[k]), (lang, k)
-    for lang in ("da", "it", "nl", "ar", "am", "fr", "sw"):         # Danish and Italian join; Dutch stays
-        assert elicit_prompts.built_in(lang)
-    assert elicit_prompts.prompts("ar-SD") is elicit_prompts.PROMPTS["ar"]
+        for k, value in p.items():                                   # every form keeps the placeholders
+            for text in (value.values() if isinstance(value, dict) else [value]):
+                assert names(text) == names(en[k]), (lang, k)
+    assert list(elicit_prompts.PROMPTS) == ["en", "fr", "ar", "am"]          # idea 92 (Josh, 28 October)
+    for lang in ("da", "it", "es", "pt", "de", "nl", "sw"):          # the testing languages are gone
+        assert not elicit_prompts.built_in(lang) and elicit_prompts.prompts(lang) is None
+    assert elicit_prompts.prompts("ar-SD") == elicit_prompts.prompts("ar")
 
 
 def test_the_artwork_is_joshs_files_in_the_theme_colour():
@@ -123,16 +125,16 @@ def test_warnings_before_sending(db):
 
 def test_a_request_and_its_zip(db):
     items = _items(db)
-    req = el.new_request(db, items, "SP1", "RS1", "da", "italiensk", accent="#198583")
-    assert req.languages == ["en", "da"] and req.language_names == {"en": "Italian", "da": "italiensk"}
-    assert set(req.prompts) == {"en", "da"} and req.speaker["name"] == "Speaker 1"
+    req = el.new_request(db, items, "SP1", "RS1", "fr", "italien", accent="#198583")
+    assert req.languages == ["en", "fr"] and req.language_names == {"en": "Italian", "fr": "italien"}
+    assert set(req.prompts) == {"en", "fr"} and req.speaker["name"] == "Speaker 1"
     c = {x.n: x for x in req.cards}
-    assert (c[1].show, c[1].texts) == ("gloss", {"en": "cat", "da": "kat"}) and c[1].repeat
-    assert (c[2].show, c[2].texts) == ("translation", {"en": "cats", "da": "katte"})
-    assert c[5].texts == {"en": "book (Plural)", "da": "bog (Plural)"}            # the fallback
+    assert (c[1].show, c[1].texts) == ("gloss", {"en": "cat", "fr": "chat"}) and c[1].repeat
+    assert (c[2].show, c[2].texts) == ("translation", {"en": "cats", "fr": "chats"})
+    assert c[5].texts == {"en": "book (Plural)", "fr": "livre (Plural)"}            # the fallback
     assert c[7].kind == el.RERECORD and c[7].texts == {} and not c[7].repeat
-    assert c[10].texts == {"en": "the dog is eating", "da": "hunden spiser"} and not c[10].repeat
-    assert c[11].kind == el.NEW_UTTERANCE and c[11].translations["da"] == "Solen er varm."
+    assert c[10].texts == {"en": "the dog is eating", "fr": "le chien mange"} and not c[10].repeat
+    assert c[11].kind == el.NEW_UTTERANCE and c[11].translations["fr"] == "Le soleil est chaud."
     path = el.write_request(db, req, items)
     assert path.name == "Elicit_request_SP1_" + req.created[:10] + ".zip"
     with zipfile.ZipFile(path) as zf:
@@ -150,7 +152,7 @@ def test_a_request_and_its_zip(db):
     st = el.stored_requests(db.path)
     assert len(st) == 1 and st[0].request.id == req.id and st[0].response is None
     msg = el.message_text(req)
-    assert el.WEB_PAGE in msg and "Hej Speaker 1!" in msg
+    assert el.WEB_PAGE in msg and "Bonjour Speaker 1" in msg
 
 
 def test_a_language_without_built_in_prompts_gets_english(db):
@@ -163,7 +165,7 @@ def test_a_language_without_built_in_prompts_gets_english(db):
 
 def test_receiving_checks_the_request(db, tmp_path):
     items = _items(db)
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     el.write_request(db, req, items)
     st = el.stored_requests(db.path)[0]
     bad = tmp_path / "bad.zip"
@@ -216,11 +218,11 @@ def test_the_request_dialog(win, monkeypatch):
     gatto = db.entry_by_ref("D035")
     acqua = db.entry_by_ref("L062")
     dlg = ed.RequestDialog(win, [acqua.tokens[0].id, gatto.tokens[0].id])
-    assert dlg.l2.currentData() == "da" and dlg.speaker.currentData() == "SP1"
+    assert dlg.l2.currentData() == "fr" and dlg.speaker.currentData() == "SP1"
     assert len(dlg.model.rows) == 2                                   # only what was added (24 October)
     for r in dlg.model.rows:                                          # a soundfile means rerecord
         assert r.kind == (el.RERECORD if r.recorded else el.NEW)
-    dlg.l2_name.setText("italiensk")
+    dlg.l2_name.setText("italien")
     kinds = [(i.kind, i.entry.ref) for i in dlg.items()]
     assert kinds == [(el.NEW, "D035"), (el.RERECORD, "L062")]         # in the database's order
     monkeypatch.setattr(QMessageBox, "exec", lambda self: None)
@@ -231,7 +233,7 @@ def test_the_request_dialog(win, monkeypatch):
     dlg.send_by.setCurrentIndex(dlg.send_by.findData("file"))       # the zip route (no Google in tests)
     dlg._make()
     assert dlg.made is not None and dlg.made.exists()
-    assert dlg.request.language_names["da"] == "italiensk"
+    assert dlg.request.language_names["fr"] == "italien"
     from lemmatrix.model import today
     notes = win.doc.notebook.session(today()).notes             # Josh, 21 October: a line in the notebook
     rs = dlg.request.researcher["name"]
@@ -293,7 +295,7 @@ def test_review_puts_recordings_in_and_undo_takes_them_out(win, tmp_path):
     from lemmatrix.ui import elicit_dialogs as ed
     db = win.doc.db
     items = _items(db)
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     el.write_request(db, req, items)
     st = el.receive(db, _response(el.stored_requests(db.path)[0], tmp_path / "r.zip", skip={3}))
     win.refresh_elicit_icon()
@@ -323,7 +325,7 @@ def test_review_puts_recordings_in_and_undo_takes_them_out(win, tmp_path):
     assert again_dlg.table.item(10, 4).text() == "Done (utterance U004)"
     again_dlg.decisions.clear()
     again_dlg.reject()
-    assert new_u.token.get("Translation", "da") == "Solen er varm."
+    assert new_u.token.get("Translation", "fr") == "Le soleil est chaud."
     assert (storage.utterance_folder(db) / new_u.token.file).exists()
     st = el.load_stored(st.folder)
     assert el.waiting(db, st) == [] and st.review["5"]["decision"] == el.REJECTED
@@ -347,7 +349,7 @@ def test_an_approved_recording_edited_afterwards_is_not_waiting_again(win, tmp_p
     from lemmatrix.ui import elicit_dialogs as ed
     db = win.doc.db
     items = _items(db)
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     el.write_request(db, req, items)
     st = el.receive(db, _response(el.stored_requests(db.path)[0], tmp_path / "r.zip", skip={3}))
     rerecord = storage.sound_folder(db) / db.entry_by_ref("L062").tokens[0].file
@@ -375,7 +377,7 @@ def test_an_older_review_without_the_replaced_recording(win, tmp_path):
     from lemmatrix.ui import elicit_dialogs as ed
     db = win.doc.db
     items = _items(db)[:2]
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     el.write_request(db, req, items)
     st = el.receive(db, _response(el.stored_requests(db.path)[0], tmp_path / "r.zip"))
     dlg = ed.ReviewDialog(win, st)
@@ -398,7 +400,7 @@ def test_undecided_recordings_wait_for_later(win, tmp_path):
     from lemmatrix.ui import elicit_dialogs as ed
     db = win.doc.db
     items = _items(db)[:3]
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     el.write_request(db, req, items)
     st = el.receive(db, _response(el.stored_requests(db.path)[0], tmp_path / "r.zip"))
     dlg = ed.ReviewDialog(win, st)
@@ -430,7 +432,7 @@ def test_the_whole_loop_through_the_web_page(db, tmp_path):
     import http.server
     import threading
     items = _items(db)[:3] + [_items(db)[6]]                         # gatto, gatti, pane, acqua (rerecord)
-    req = el.new_request(db, items, "SP1", "RS1", "da", "italiensk")
+    req = el.new_request(db, items, "SP1", "RS1", "fr", "italien")
     zpath = el.write_request(db, req, items)
     handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(ROOT / "docs"))
     handler.log_message = lambda *a: None
@@ -549,7 +551,7 @@ def _wav_bytes(tmp_path, n=1, name=""):
 def test_a_request_through_drive(db, tmp_path):
     drive = FakeDrive()
     items = _items(db)
-    req = el.new_request(db, items, "SP1", "RS1", "da", "italiensk")
+    req = el.new_request(db, items, "SP1", "RS1", "fr", "italien")
     link = el.publish_drive(db, req, items, drive, "KEY")
     assert req.transport == "drive" and link == f"{el.WEB_PAGE}#d={req.drive['request']}&k=KEY"
     assert req.expires == "%s" % (__import__("datetime").date.fromisoformat(req.created[:10])
@@ -564,7 +566,7 @@ def test_a_request_through_drive(db, tmp_path):
     assert all(c["upload"] for c in sent["cards"]) and sent["drive"]["response"] and sent["drive"]["status"]
     assert sent["cards"][0]["image_id"] and sent["cards"][6]["original_id"]
     msg = el.message_text(req)
-    assert msg.endswith(link) and "Open the request file" not in msg and "Hej Speaker 1!" in msg
+    assert msg.endswith(link) and "Open the request file" not in msg and "Bonjour Speaker 1" in msg
     st = el.outstanding_drive(db)[0]
     assert st.request.id == req.id
     # the speaker records cards 1 and 2, skips 3, and stops
@@ -591,13 +593,13 @@ def test_a_request_through_drive(db, tmp_path):
 def test_unfinished_and_turned_down_drive_requests(db, tmp_path):
     drive = FakeDrive()
     items = _items(db)[:3]
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     el.publish_drive(db, req, items, drive, "KEY")
     st = el.outstanding_drive(db)[0]
     drive.put(st.request.cards[0].upload, _wav_bytes(tmp_path, 1, st.request.cards[0].file))
     got = el.receive_drive(db, st, drive)                            # taken as it is: the rest not reached
     assert [c.n for c in el.waiting(db, got)] == [1] and got.answer(2) is None
-    req2 = el.new_request(db, items, "SP2", "RS1", "da")
+    req2 = el.new_request(db, items, "SP2", "RS1", "fr")
     el.publish_drive(db, req2, items, drive, "KEY")
     st2 = el.outstanding_drive(db)[0]
     drive.put(st2.request.drive["status"], json.dumps({"reason": "not around"}).encode())
@@ -612,7 +614,7 @@ def test_a_failed_publish_leaves_nothing_in_drive(db):
             raise el.ElicitError("Google Drive answered 500")
     drive = Broken()
     items = _items(db)[:2]
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     with pytest.raises(el.ElicitError):
         el.publish_drive(db, req, items, drive, "KEY")
     assert [f["name"] for f in drive.files.values()] == ["ɛλicit"]
@@ -665,7 +667,7 @@ def test_the_page_through_a_drive_link(db, tmp_path):
     import threading
     drive = FakeDrive()
     items = _items(db)[:2] + [_items(db)[6]]                         # gatto, gatti, acqua (rerecord)
-    req = el.new_request(db, items, "SP1", "RS1", "da", "italiensk")
+    req = el.new_request(db, items, "SP1", "RS1", "fr", "italien")
     link = el.publish_drive(db, req, items, drive, "KEY")
     handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(ROOT / "docs"))
     handler.log_message = lambda *a: None
@@ -718,7 +720,7 @@ def test_the_page_through_a_drive_link(db, tmp_path):
             page.get_by_text("Your recordings have reached Researcher 1").wait_for(timeout=15000)
             assert not errors, errors
             # a second request, turned down on the phone
-            req2 = el.new_request(db, items[:1], "SP1", "RS1", "da")
+            req2 = el.new_request(db, items[:1], "SP1", "RS1", "fr")
             link2 = el.publish_drive(db, req2, items[:1], drive, "KEY")
             page.goto(link2.replace(el.WEB_PAGE, f"http://127.0.0.1:{server.server_port}/elicit/"))
             page.reload()
@@ -816,7 +818,7 @@ def test_sending_waits_with_a_bar_and_the_page_asks_before_closing(db, tmp_path)
     pw = pytest.importorskip("playwright.sync_api")
     drive = FakeDrive()
     items = _items(db)[:3]
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     link = el.publish_drive(db, req, items, drive, "KEY")
     site = _DrivePage(drive, tmp_path)
     try:
@@ -860,9 +862,9 @@ def test_opening_another_link_sends_an_earlier_requests_recordings(db, tmp_path)
     pw = pytest.importorskip("playwright.sync_api")
     drive = FakeDrive()
     items = _items(db)[:3]
-    req1 = el.new_request(db, items, "SP1", "RS1", "da")
+    req1 = el.new_request(db, items, "SP1", "RS1", "fr")
     link1 = el.publish_drive(db, req1, items, drive, "KEY")
-    req2 = el.new_request(db, items[:1], "SP1", "RS1", "da")
+    req2 = el.new_request(db, items[:1], "SP1", "RS1", "fr")
     link2 = el.publish_drive(db, req2, items[:1], drive, "KEY")
     site = _DrivePage(drive, tmp_path)
     try:
@@ -905,7 +907,7 @@ def test_an_expired_request_keeps_unsent_recordings_and_offers_a_file(db, tmp_pa
     pw = pytest.importorskip("playwright.sync_api")
     drive = FakeDrive()
     items = _items(db)[:2]
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     link = el.publish_drive(db, req, items, drive, "KEY")
     site = _DrivePage(drive, tmp_path)
     later = """(() => { const D = Date, shift = 30 * 864e5;
@@ -963,13 +965,13 @@ def _voice_pcm(seconds=2.0, rate=48000, drop=None):
 
 def test_the_message_says_whose_request_of_which_day_and_how_many_items(db):
     items = _items(db)[:3]
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     text = el.message_text(req)
     day = req.created[:10]
     import datetime
     d = datetime.date.fromisoformat(day)
     assert f"Researcher 1's request of {d.day} {d.strftime('%B')} {d.year}: 3 items" in text
-    assert f"anmodning fra {day}: 3 ord" in text
+    assert f"Researcher 1 du {day} : 3 éléments" in text
     assert el.MANY_ITEMS == 15
 
 
@@ -977,7 +979,7 @@ def test_the_review_shows_what_the_take_checks_found(win, tmp_path):
     from lemmatrix.ui import elicit_dialogs as ed
     db = win.doc.db
     items = _items(db)[:3]
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     el.write_request(db, req, items)
     st = el.receive(db, _response(el.stored_requests(db.path)[0], tmp_path / "r.zip"))
     resp = json.loads((st.received / "response.json").read_text(encoding="utf-8"))
@@ -1002,7 +1004,7 @@ def test_find_gaps_in_approved_recordings(win, tmp_path):
     from lemmatrix.ui import elicit_dialogs as ed
     db = win.doc.db
     items = _items(db)[:2]
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     el.write_request(db, req, items)
     st = el.receive(db, _response(el.stored_requests(db.path)[0], tmp_path / "r.zip"))
     dlg = ed.ReviewDialog(win, st)
@@ -1039,7 +1041,7 @@ def test_the_take_is_checked_in_the_page(db, tmp_path):
     pw = pytest.importorskip("playwright.sync_api")
     drive = FakeDrive()
     items = _items(db)[:3]
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     link = el.publish_drive(db, req, items, drive, "KEY")
     site = _DrivePage(drive, tmp_path)
     fake = """([drop, clip]) => {
@@ -1121,7 +1123,7 @@ def test_i_cant_say_this_one_during_a_take_doesnt_leave_sending_stuck(db, tmp_pa
     pw = pytest.importorskip("playwright.sync_api")
     drive = FakeDrive()
     items = _items(db)[:2]
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     link = el.publish_drive(db, req, items, drive, "KEY")
     site = _DrivePage(drive, tmp_path)
     try:
@@ -1160,7 +1162,7 @@ def test_the_button_rains_when_recordings_are_ready_in_drive(win, monkeypatch):
     db = win.doc.db
     drive = FakeDrive()
     items = _items(db)[:2]
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     el.publish_drive(db, req, items, drive, "KEY")
     monkeypatch.setattr(cloud_keys, "google_ready", lambda: True)
     monkeypatch.setattr(gdrive, "Drive", lambda token, on_token=None: drive)
@@ -1247,7 +1249,7 @@ def test_flac_from_the_page_is_lossless_and_becomes_wav(db, tmp_path):
     assert out.stat().st_size < 0.75 * raw.stat().st_size
     # a FLAC request: the cards' files are .flac; received, they are WAVs with the same samples
     items = _items(db)[:2]
-    req = el.new_request(db, items, "SP1", "RS1", "da", audio="flac")
+    req = el.new_request(db, items, "SP1", "RS1", "fr", audio="flac")
     assert all(c.file.endswith(".flac") for c in req.cards)
     el.write_request(db, req, items)
     st = el.stored_requests(db.path)[0]
@@ -1263,7 +1265,7 @@ def test_flac_from_the_page_is_lossless_and_becomes_wav(db, tmp_path):
     back, rate2 = soundfile.read(str(wav), dtype="int16")
     assert rate2 == rate and np.array_equal(back, x)
     assert audio.read_info(wav) == {"IART": "SP1", "ICRD": "2026-10-21"}
-    wreq = el.new_request(db, items, "SP1", "RS1", "da", audio="wav")
+    wreq = el.new_request(db, items, "SP1", "RS1", "fr", audio="wav")
     assert all(c.file.endswith(".wav") for c in wreq.cards)
     assert el.estimated_size(db, items, "flac") < el.estimated_size(db, items, "wav")
 
@@ -1304,11 +1306,13 @@ def test_the_request_shows_what_the_speaker_will_see(win, monkeypatch):
     rows = {r.entry.ref: i for i, r in enumerate(m.rows)}
     cell = lambda ref, c: m.data(m.index(rows[ref], c))
     assert cell("D035", ed.TYPE) == "new" and cell("L062", ed.TYPE) == "rerecord"
-    assert cell("L062", ed.SHOWS) == "the recording, to repeat"
+    from lemmatrix import elicit_prompts as ep                          # the prompt itself, as sent
+    assert cell("L062", ed.SHOWS) == " · ".join(
+        f"{ep.prompts(l)['rerecord'].rstrip('.')}…" for l in ("en", "fr"))
     shows = cell("D035", ed.SHOWS).split(" · ")
     g = db.settings.entry_field("gloss")
     assert shows[0] == gatto.get(g.name, db.settings.primary_gloss)
-    assert shows[1] == (gatto.get(g.name, "da") or "⚠️")
+    assert shows[1] == (gatto.get(g.name, "fr") or "⚠️")
     dlg.l2.setCurrentIndex(dlg.l2.findData(""))                      # no second language: English only
     assert " · " not in cell("D035", ed.SHOWS)
     r = m.rows[rows["D035"]]
@@ -1320,9 +1324,65 @@ def test_the_request_shows_what_the_speaker_will_see(win, monkeypatch):
         dlg._open_picture(dlg.proxy.mapFromSource(m.index(rows["D035"], ed.PICTURE)))
         assert cell("D035", ed.PICTURE) == r.image.name and opened
     assert dlg.machine.isHidden()                                     # Danish: nothing shipped
-    monkeypatch.setattr(wordlists, "gloss_file", lambda lang: "fra" if lang == "da" else "")
+    monkeypatch.setattr(wordlists, "gloss_file", lambda lang: "fra" if lang == "fr" else "")
     monkeypatch.setattr(wordlists, "item_gloss_in", lambda ref, lang: gatto.get(g.name, lang))
-    if gatto.get(g.name, "da") and wordlists.is_eacw(db):
-        dlg.l2.setCurrentIndex(dlg.l2.findData("da"))
+    if gatto.get(g.name, "fr") and wordlists.is_eacw(db):
+        dlg.l2.setCurrentIndex(dlg.l2.findData("fr"))
         assert not dlg.machine.isHidden() and "machine translated" in dlg.machine.text()
     dlg.reject()
+
+
+# ---- idea 92: the prompts by form of address (Josh, 28 October) ----------------------------
+
+def test_the_prompts_in_each_form_of_address(db):
+    """The request carries only the forms chosen: respectful by default, a man or a woman on
+    request, and the researcher's gender where the language marks it; English has one form."""
+    from lemmatrix import elicit_prompts as ep
+    assert set(ep.SPEAKER_FORMS) == {"r", "m", "f"} and ep.DEFAULT_SPEAKER_FORM == "r"
+    for lang in ("fr", "ar", "am"):
+        assert ep.has_forms(lang)
+        for sp in ep.SPEAKER_FORMS:
+            for rs in ep.RESEARCHER_FORMS:
+                p = ep.prompts(lang, sp, rs)
+                assert set(p) == set(ep.KEYS) and all(isinstance(v, str) and v for v in p.values())
+    assert ep.prompts("am", "m")["are_you"] != ep.prompts("am", "f")["are_you"] != ep.prompts("am")["are_you"]
+    assert ep.prompts("en", "f") == ep.prompts("en") == ep.ENGLISH
+    items = _items(db)[:2]
+    req = el.new_request(db, items, "SP1", "RS1", "am", speaker_form="f", researcher_form="f")
+    assert req.prompts["am"] == ep.prompts("am", "f", "f") and req.prompts["en"] == ep.ENGLISH
+    assert req.address == {"speaker": "f", "researcher": "f"}
+    assert "address" not in json.loads(req.to_page_json())          # the page needs only the texts
+    assert el.new_request(db, items, "SP1", "RS1", "am").prompts["am"] == ep.prompts("am", "r", "m")
+
+
+def test_the_address_beside_the_speaker_and_the_researchers_gender(win):
+    """Josh, 28 October: the choice beside the speaker's name, remembered per speaker; the
+    researcher's beside the researcher, remembered on this computer; a rerecord's Card shows is the
+    card's own prompt in the form chosen, with an ellipsis."""
+    from lemmatrix import elicit_prompts as ep
+    from lemmatrix.ui import elicit_dialogs as ed
+    db = win.doc.db
+    db.settings.gloss_languages = ["en", "fr", "am"]
+    acqua = db.entry_by_ref("L062")                                   # a rerecord
+    dlg = ed.RequestDialog(win, [acqua.tokens[0].id])
+    dlg.l2.setCurrentIndex(dlg.l2.findData("am"))
+    assert not dlg.address.isHidden() and dlg.address.currentData() == "r"
+    assert not dlg.researcher_form.isHidden()
+    shows = lambda: dlg.model.data(dlg.model.index(0, ed.SHOWS))     # noqa: E731
+    assert shows() == f"Please repeat this exactly… · {ep.prompts('am', 'r')['rerecord'].rstrip('.።')}…"
+    dlg.address.setCurrentIndex(dlg.address.findData("f"))
+    dlg.address.activated.emit(dlg.address.currentIndex())
+    dlg._refresh_shows()
+    assert ep.prompts("am", "f")["rerecord"].rstrip(".።") in shows()
+    assert dlg.speaker_form() == "f" and dlg.draft()["address"] == {dlg.speaker.currentData(): "f"}
+    dlg.researcher_form.setCurrentIndex(dlg.researcher_form.findData("f"))
+    dlg.researcher_form.activated.emit(dlg.researcher_form.currentIndex())
+    assert win.prefs.get_value(dlg._researcher_key()) == "f"
+    draft = dlg.draft()
+    dlg.reject()
+    again = ed.RequestDialog(win, [acqua.tokens[0].id], draft=draft)      # remembered
+    again.l2.setCurrentIndex(again.l2.findData("am"))
+    assert again.speaker_form() == "f" and again.researcher_gender() == "f"
+    again.l2.setCurrentIndex(again.l2.findData("fr"))                 # French: no researcher forms
+    assert again.researcher_form.isHidden() and not again.address.isHidden()
+    again.reject()

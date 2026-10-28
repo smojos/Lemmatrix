@@ -21,7 +21,7 @@ from test_elicit import FakeDrive, _items, _wav_bytes, db  # noqa: F401  (fixtur
 def test_the_speakers_copy_holds_only_what_the_page_reads(db):
     db.metadata.researchers[0].email = "rs1@example.org"
     items = _items(db)
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     path = el.write_request(db, req, items)
     with zipfile.ZipFile(path) as zf:
         sent = json.loads(zf.read("request.json"))
@@ -39,7 +39,7 @@ def test_the_speakers_copy_holds_only_what_the_page_reads(db):
 def test_the_copy_shared_by_link_in_drive_too(db):
     drive = FakeDrive()
     items = _items(db)
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     el.publish_drive(db, req, items, drive, "KEY")
     sent = json.loads(drive.download(req.drive["request"]))
     assert set(sent["drive"]) == {"response", "status"}                # not the folder's id
@@ -52,7 +52,7 @@ def test_the_copy_shared_by_link_in_drive_too(db):
 def test_an_expired_drive_request_is_no_longer_shared_by_link(db, tmp_path):
     drive = FakeDrive()
     items = _items(db)
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     el.publish_drive(db, req, items, drive, "KEY")
     st = el.outstanding_drive(db)[0]
     c = st.request.cards[0]
@@ -161,7 +161,7 @@ def test_renamed_codes_follow_into_textgrids_clips_and_requests(db, tmp_path):
     from lemmatrix.model import ClipSource
     u.source = ClipSource(text.id, 0.0, 1.0, copied={"tx@SP1": "aa", "ft": "ah"})
     items = _items(db)
-    el.write_request(db, el.new_request(db, items, "SP1", "RS1", "da"), items)
+    el.write_request(db, el.new_request(db, items, "SP1", "RS1", "fr"), items)
     res = recode.follow(db, {"SP1": "SP7"})
     assert (res.textgrids, res.utterances, res.requests, res.failed) == (1, 1, 1, [])
     assert [t.name for t in tgmod.tiers(texts / "T.TextGrid")] == ["tx@SP7", "ft"]

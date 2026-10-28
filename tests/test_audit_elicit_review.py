@@ -11,7 +11,7 @@ def _review(win, tmp_path):
     from lemmatrix.ui import elicit_dialogs as ed
     db = win.doc.db
     items = _items(db)
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     el.write_request(db, req, items)
     st = el.receive(db, _response(el.stored_requests(db.path)[0], tmp_path / "r.zip"))
     dlg = ed.ReviewDialog(win, st)
@@ -67,7 +67,7 @@ def test_a_refreshed_sign_in_is_stored_on_the_main_thread(win, monkeypatch):
     db = win.doc.db
     drive = FakeDrive()
     items = _items(db)[:1]
-    req = el.new_request(db, items, "SP1", "RS1", "da")
+    req = el.new_request(db, items, "SP1", "RS1", "fr")
     el.publish_drive(db, req, items, drive, "KEY")
     where = []
 

@@ -28,7 +28,7 @@
         </location>
       </location>
     </location>
-    <description>A small invented Italian database (Danish as the second gloss language) for trying out ɛλicit. Built by samples/make_elicit_test.py; the recordings are Josh Smolders'.</description>
+    <description>A small invented Italian database (French as the second gloss language) for trying out ɛλicit. Built by samples/make_elicit_test.py; the recordings are Josh Smolders'.</description>
     <wordlist base="EACW" items="base" region="africa" version="2026-10-27" />
   </metadata>
   <settings>
@@ -49,11 +49,6 @@
         <item name="DEM" />
         <item name="INTERROG" />
       </field>
-      <field name="StemType" label="Stem type" role="stem-type" closed="yes">
-        <item name="simple" />
-        <item name="complex" />
-        <item name="loan" />
-      </field>
       <field name="ToneClass" label="Tone Class" closed="yes">
         <item name="H" />
         <item name="L" />
@@ -69,6 +64,11 @@
           <item name="I" />
           <item name="II" />
         </item>
+      </field>
+      <field name="StemType" label="Stem type" role="stem-type" closed="yes">
+        <item name="simple" />
+        <item name="complex" />
+        <item name="loan" />
       </field>
       <field name="Comment" role="comment" />
       <field name="Taxon" role="taxon" />
@@ -115,7 +115,7 @@
       <tier name="ft" field="Translation" lang="en" />
       <tier name="mb" field="" />
     </tier-mapping>
-    <glosses languages="en da" primary="en" />
+    <glosses languages="en fr" primary="en" />
     <tag-structure>
       <group name="Nominal" usual="NOUN">
         <group name="Number">
@@ -256,208 +256,208 @@
     <sounds pattern="{language}-{variety}_{reference}_{gloss}_{tags}" utterance-pattern="{language}-{variety}_{reference}_{label}" text-pattern="{language}-{variety}_{reference}_{title}" clip-padding="100" tag-separator="-" auto-update-names="yes" />
     <pitch display-range="1-5" />
   </settings>
-  <entry ref="D034" file-gloss="dog" id="2fbd9b654b" cawl="0991" swadesh="47">
+  <entry ref="D034" file-gloss="dog" id="df14b2969b" cawl="0991" swadesh="47">
     <Lemma>cane</Lemma>
     <Gloss lang="en">dog</Gloss>
-    <Gloss lang="da">hund</Gloss>
+    <Gloss lang="fr">chien</Gloss>
     <WordClass>NOUN</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: not to ask for</Comment>
     <Taxon>Canis familiaris (Canidae)</Taxon>
-    <token id="bc2e03e0da">
+    <token id="f15e120f43">
       <Phonemic>ˈkane</Phonemic>
       <Translation lang="en">dog</Translation>
-      <Translation lang="da">hund</Translation>
+      <Translation lang="fr">chien</Translation>
     </token>
   </entry>
-  <entry ref="D035" file-gloss="cat" id="928b924faa" cawl="0993">
+  <entry ref="D035" file-gloss="cat" id="86961cea29" cawl="0993">
     <Lemma>gatto</Lemma>
     <Gloss lang="en">cat</Gloss>
-    <Gloss lang="da">kat</Gloss>
+    <Gloss lang="fr">chat</Gloss>
     <WordClass>NOUN</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: ask for this (new recording; it has a picture)</Comment>
     <Taxon>Felis catus (Felidae)</Taxon>
-    <token id="1cd167c805">
+    <token id="5082fe14ed">
       <Phonemic>ˈɡatto</Phonemic>
       <Translation lang="en">cat</Translation>
-      <Translation lang="da">kat</Translation>
+      <Translation lang="fr">chat</Translation>
     </token>
-    <token tags="Plural, Nominative, isolation" id="136049307b">
+    <token tags="Plural, Nominative, isolation" id="34ed9a9d87">
       <Phonemic>ˈɡatti</Phonemic>
       <Translation lang="en">cats</Translation>
-      <Translation lang="da">katte</Translation>
+      <Translation lang="fr">chats</Translation>
       <Comment>ɛλicit test: ask for this (new recording; it has a picture)</Comment>
     </token>
   </entry>
-  <entry ref="J114" file-gloss="bread" id="ddfff729d4" cawl="0575">
+  <entry ref="J114" file-gloss="bread" id="61b657a9bd" cawl="0575">
     <Lemma>pane</Lemma>
     <Gloss lang="en">bread</Gloss>
-    <Gloss lang="da">brød</Gloss>
+    <Gloss lang="fr">pain</Gloss>
     <WordClass>NOUN</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: ask for this (new recording)</Comment>
-    <token id="9decbdd58a">
+    <token id="0b3d3d5e9f">
       <Phonemic>ˈpane</Phonemic>
       <Translation lang="en">bread</Translation>
-      <Translation lang="da">brød</Translation>
+      <Translation lang="fr">pain</Translation>
     </token>
   </entry>
-  <entry ref="J114b" file-gloss="cake" id="3e8982a92e">
+  <entry ref="J114b" file-gloss="cake" id="1758dd50d0">
     <Lemma>torta</Lemma>
     <Gloss lang="en">cake</Gloss>
-    <Gloss lang="da">kage</Gloss>
+    <Gloss lang="fr">gâteau</Gloss>
     <WordClass>NOUN</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: not to ask for</Comment>
-    <token speaker="SP1" collected="2026-10-20" file="ITA-STD_J114b_cake.wav" id="a053b5171a">
+    <token speaker="SP1" collected="2026-10-20" file="ITA-STD_J114b_cake.wav" id="a7c416a47d">
       <Phonemic>ˈtorta</Phonemic>
       <Translation lang="en">cake</Translation>
-      <Translation lang="da">kage</Translation>
+      <Translation lang="fr">gâteau</Translation>
     </token>
-    <token tags="Plural, Nominative, isolation" id="4f19365fc5">
+    <token tags="Plural, Nominative, isolation" id="6626301176">
       <Phonemic>ˈtorte</Phonemic>
       <Translation lang="en">cakes</Translation>
-      <Translation lang="da">kager</Translation>
+      <Translation lang="fr">gâteaux</Translation>
       <Comment>ɛλicit test: ask for this (new recording)</Comment>
     </token>
   </entry>
-  <entry ref="K002" file-gloss="house" id="2af21c8a55" cawl="0662">
+  <entry ref="K002" file-gloss="house" id="d531390f23" cawl="0662">
     <Lemma>casa</Lemma>
     <Gloss lang="en">house</Gloss>
-    <Gloss lang="da">hus</Gloss>
+    <Gloss lang="fr">maison</Gloss>
     <WordClass>NOUN</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: not to ask for</Comment>
-    <token speaker="SP1" collected="2026-10-20" file="ITA-STD_K002_house.wav" id="ab0a6e6b01">
+    <token speaker="SP1" collected="2026-10-20" file="ITA-STD_K002_house.wav" id="32f0b68fbc">
       <Phonemic>ˈkaza</Phonemic>
       <Translation lang="en">house</Translation>
-      <Translation lang="da">hus</Translation>
+      <Translation lang="fr">maison</Translation>
     </token>
-    <token tags="Plural, Nominative, isolation" id="6ef5d09a08">
+    <token tags="Plural, Nominative, isolation" id="d8130f0431">
       <Phonemic>ˈkaze</Phonemic>
       <Translation lang="en">houses</Translation>
-      <Translation lang="da">huse</Translation>
+      <Translation lang="fr">maisons</Translation>
       <Comment>ɛλicit test: not to ask for</Comment>
     </token>
   </entry>
-  <entry ref="K220" file-gloss="book" id="810b0c6cf5">
+  <entry ref="K220" file-gloss="book" id="95b9279c5c">
     <Lemma>libro</Lemma>
     <Gloss lang="en">book</Gloss>
-    <Gloss lang="da">bog</Gloss>
+    <Gloss lang="fr">livre</Gloss>
     <WordClass>NOUN</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: not to ask for</Comment>
-    <token speaker="SP1" collected="2026-10-20" file="ITA-STD_K220_book.wav" id="ab76a46e2c">
+    <token speaker="SP1" collected="2026-10-20" file="ITA-STD_K220_book.wav" id="1a59e80979">
       <Phonemic>ˈlibro</Phonemic>
       <Translation lang="en">book</Translation>
-      <Translation lang="da">bog</Translation>
+      <Translation lang="fr">livre</Translation>
     </token>
-    <token tags="Plural, Nominative, isolation" id="31cec92c01">
+    <token tags="Plural, Nominative, isolation" id="d3d87d1830">
       <Phonemic>ˈlibri</Phonemic>
       <Comment>ɛλicit test: ask for this (new recording; no Translation, so Lemmatrix warns)</Comment>
     </token>
   </entry>
-  <entry ref="L002" file-gloss="sun" id="146cea9420" cawl="1317" swadesh="147">
+  <entry ref="L002" file-gloss="sun" id="9142ae4ba9" cawl="1317" swadesh="147">
     <Lemma>sole</Lemma>
     <Gloss lang="en">sun</Gloss>
-    <Gloss lang="da">sol</Gloss>
+    <Gloss lang="fr">soleil</Gloss>
     <WordClass>NOUN</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: ask for this (rerecord; SP2 hasn't agreed to audio sharing, so Lemmatrix warns)</Comment>
-    <token speaker="SP2" collected="2026-10-20" file="ITA-STD_L002_sun.wav" id="f981f9e563">
+    <token speaker="SP2" collected="2026-10-20" file="ITA-STD_L002_sun.wav" id="1026e49ab3">
       <Phonemic>ˈsole</Phonemic>
       <Translation lang="en">sun</Translation>
-      <Translation lang="da">sol</Translation>
+      <Translation lang="fr">soleil</Translation>
     </token>
   </entry>
-  <entry ref="L062" file-gloss="water" id="83a1c508f4" cawl="1284" swadesh="150">
+  <entry ref="L062" file-gloss="water" id="28dcd3114a" cawl="1284" swadesh="150">
     <Lemma>acqua</Lemma>
     <Gloss lang="en">water</Gloss>
-    <Gloss lang="da">vand</Gloss>
+    <Gloss lang="fr">eau</Gloss>
     <WordClass>NOUN</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: ask for this (rerecord)</Comment>
-    <token speaker="SP1" collected="2026-10-20" file="ITA-STD_L062_water.wav" id="c38d2bbf0c">
+    <token speaker="SP1" collected="2026-10-20" file="ITA-STD_L062_water.wav" id="2816c0b9b9">
       <Phonemic>ˈakkwa</Phonemic>
       <Translation lang="en">water</Translation>
-      <Translation lang="da">vand</Translation>
+      <Translation lang="fr">eau</Translation>
     </token>
   </entry>
-  <entry ref="P001" file-gloss="big" id="f4da859a0a" cawl="1507" swadesh="27">
+  <entry ref="P001" file-gloss="big" id="491006e0a5" cawl="1507" swadesh="27">
     <Lemma>grande</Lemma>
     <Gloss lang="en">big</Gloss>
-    <Gloss lang="da">stor</Gloss>
+    <Gloss lang="fr">grand</Gloss>
     <WordClass>ADJECTIVE</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: not to ask for</Comment>
-    <token id="fa61162432">
+    <token id="052162507c">
       <Phonemic>ˈɡrande</Phonemic>
       <Translation lang="en">big</Translation>
-      <Translation lang="da">stor</Translation>
+      <Translation lang="fr">grand</Translation>
     </token>
   </entry>
-  <entry ref="Q002" file-gloss="two" id="839e956b52" cawl="1591" swadesh="23">
+  <entry ref="Q002" file-gloss="two" id="b9a3bd4055" cawl="1591" swadesh="23">
     <Lemma>due</Lemma>
     <Gloss lang="en">two</Gloss>
-    <Gloss lang="da">to</Gloss>
+    <Gloss lang="fr">deux</Gloss>
     <WordClass>QUANT</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: not to ask for</Comment>
-    <token id="035c5cc2ca">
+    <token id="c8c574c184">
       <Phonemic>ˈdue</Phonemic>
       <Translation lang="en">two</Translation>
-      <Translation lang="da">to</Translation>
+      <Translation lang="fr">deux</Translation>
     </token>
   </entry>
-  <entry ref="V094" file-gloss="to sleep" id="b7131d9e4c" cawl="0128" swadesh="107">
+  <entry ref="V094" file-gloss="to sleep" id="045547c136" cawl="0128" swadesh="107">
     <Lemma>dormire</Lemma>
     <Gloss lang="en">to sleep</Gloss>
-    <Gloss lang="da">at sove</Gloss>
+    <Gloss lang="fr">dormir</Gloss>
     <WordClass>VERB</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: ask for this (new recording; it has a picture) (an animated GIF)</Comment>
-    <token id="9f1e0b996c">
+    <token id="037c5b7eb9">
       <Phonemic>dorˈmire</Phonemic>
       <Translation lang="en">to sleep</Translation>
-      <Translation lang="da">at sove</Translation>
+      <Translation lang="fr">dormir</Translation>
     </token>
   </entry>
-  <entry ref="V158" file-gloss="to eat" id="05091bf15a" cawl="0140" swadesh="93">
+  <entry ref="V158" file-gloss="to eat" id="3a41b74788" cawl="0140" swadesh="93">
     <Lemma>mangiare</Lemma>
     <Gloss lang="en">to eat</Gloss>
-    <Gloss lang="da">at spise</Gloss>
+    <Gloss lang="fr">manger</Gloss>
     <WordClass>VERB</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: not to ask for</Comment>
-    <token id="5a107cc540">
+    <token id="1ebdd66900">
       <Phonemic>manˈdʒare</Phonemic>
       <Translation lang="en">to eat</Translation>
-      <Translation lang="da">at spise</Translation>
+      <Translation lang="fr">manger</Translation>
     </token>
   </entry>
   <utterances>
-    <utterance ref="U001" file-label="the cat is sleeping" id="dbde22b88c">
-      <token speaker="SP1" collected="2026-10-20" file="ITA-STD_U001_the_cat_is_sleeping.wav" id="2a692d01a8">
+    <utterance ref="U001" file-label="the cat is sleeping" id="fcfc7fc412">
+      <token speaker="SP1" collected="2026-10-20" file="ITA-STD_U001_the_cat_is_sleeping.wav" id="d670eb7803">
         <Phonemic>il ˈɡatto ˈdɔrme</Phonemic>
         <Translation lang="en">the cat is sleeping</Translation>
-        <Translation lang="da">katten sover</Translation>
+        <Translation lang="fr">le chat dort</Translation>
         <Comment>ɛλicit test: ask for this (rerecord)</Comment>
       </token>
     </utterance>
-    <utterance ref="U002" file-label="my two big cakes" id="3a77c4fcdc">
-      <token speaker="SP1" collected="2026-10-20" file="ITA-STD_U002_my_two_big_cakes.wav" id="98b260a5c4">
+    <utterance ref="U002" file-label="my two big cakes" id="41439f0394">
+      <token speaker="SP1" collected="2026-10-20" file="ITA-STD_U002_my_two_big_cakes.wav" id="1882374f9c">
         <Phonemic>le ˈmie ˈdue ˈtorte ˈɡrandi</Phonemic>
         <Translation lang="en">my two big cakes</Translation>
-        <Translation lang="da">mine to store kager</Translation>
+        <Translation lang="fr">mes deux grands gâteaux</Translation>
         <Comment>ɛλicit test: not to ask for</Comment>
       </token>
     </utterance>
-    <utterance ref="U003" file-label="the dog is eating" id="1d48740c35">
-      <token id="381560a230">
+    <utterance ref="U003" file-label="the dog is eating" id="c5722c203b">
+      <token id="88feb4c5ad">
         <Phonemic>il ˈkane ˈmandʒa</Phonemic>
         <Translation lang="en">the dog is eating</Translation>
-        <Translation lang="da">hunden spiser</Translation>
+        <Translation lang="fr">le chien mange</Translation>
         <Comment>ɛλicit test: ask for this (new recording)</Comment>
       </token>
     </utterance>

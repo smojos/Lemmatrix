@@ -213,6 +213,7 @@ class Request:
     transport: str = "file"           # file (a zip sent by hand) or drive (a link; Google Drive)
     audio: str = "wav"                # how the page sends the recordings: wav, or flac (lossless, smaller)
     drive: dict = field(default_factory=dict)   # folder, request (file ids), response, status (upload links), link
+    address: dict = field(default_factory=dict)  # {"speaker": r m f, "researcher": m f}: the prompts' form (idea 92)
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), ensure_ascii=False, indent=1)
@@ -226,6 +227,7 @@ class Request:
         d["speaker"] = {k: v for k, v in self.speaker.items() if k in PAGE_PERSON + ("code",)}
         d["researcher"] = {k: v for k, v in self.researcher.items() if k in PAGE_PERSON}
         d["database"] = {"language_name": self.database.get("language_name", "")}
+        d.pop("address", None)                  # the prompts already carry the form chosen
         d["cards"] = [{k: v for k, v in asdict(c).items() if k in PAGE_CARD} for c in self.cards]
         d["drive"] = {k: v for k, v in self.drive.items() if k in ("response", "status")}
         return json.dumps(d, ensure_ascii=False, indent=1)
@@ -256,10 +258,14 @@ def person_name(person: dict, lang: str) -> str:
 
 def new_request(db: Database, items, speaker: str, researcher: str, l2: str = "", l2_language_name: str = "",
                 repeat: bool = True, accent: str = "#198583", today: _dt.date | None = None,
-                audio: str = "flac", l2_names: dict | None = None) -> Request:
+                audio: str = "flac", l2_names: dict | None = None,
+                speaker_form: str = elicit_prompts.DEFAULT_SPEAKER_FORM,
+                researcher_form: str = elicit_prompts.DEFAULT_RESEARCHER_FORM) -> Request:
     """A request for these items (in order). l2: the second language (a gloss language) or "".
     l2_names: {"speaker": ..., "researcher": ...}, their names as written in the second language
-    (blank: the name in the participants or researchers list)."""
+    (blank: the name in the participants or researchers list). speaker_form: how the prompts address
+    the speaker (r respectful, m a man, f a woman); researcher_form: the researcher's gender, where a
+    language marks it (idea 92)."""
     today = today or _dt.date.today()
     md, s = db.metadata, db.settings
     en = s.primary_gloss
@@ -270,11 +276,11 @@ def new_request(db: Database, items, speaker: str, researcher: str, l2: str = ""
         names[l2] = l2_language_name.strip() or lang_name
     prompts = {}
     for lang in languages:
-        p = elicit_prompts.prompts(lang if lang != en else "en")
+        p = elicit_prompts.prompts(lang if lang != en else "en", speaker_form, researcher_form)
         if p:
             prompts[lang] = dict(p)
     if en not in prompts:                         # a primary language other than English: English prompts
-        prompts[en] = dict(elicit_prompts.PROMPTS["en"])
+        prompts[en] = dict(elicit_prompts.ENGLISH)
     cards = []
     for n, it in enumerate(items, 1):
         show, texts = card_texts(db, it, languages)
@@ -303,7 +309,8 @@ def new_request(db: Database, items, speaker: str, researcher: str, l2: str = ""
         speaker=people["speaker"], researcher=people["researcher"],
         database={"name": md.name, "language_code": md.language_code, "language_name": md.language_name,
                   "variety_code": md.variety_code, "variety_name": md.variety_name},
-        languages=languages, language_names=names, prompts=prompts, accent=accent, cards=cards, audio=audio)
+        languages=languages, language_names=names, prompts=prompts, accent=accent, cards=cards, audio=audio,
+        address={"speaker": speaker_form, "researcher": researcher_form})
 
 
 def media_for(db: Database, items) -> dict[int, dict[str, Path]]:

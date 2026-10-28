@@ -99,7 +99,7 @@ The icon is drawn in `lemmatrix/resources/lemmatrix.svg`; `tools/make_icons.py` 
 PNG sizes and `lemmatrix.ico` from it (needs `cairosvg` and Pillow).
 
 **ɛλicit** (remote elicitation) has its own test database: **Help → Sample databases → Open a copy of
-the ɛλicit test database** opens a little Italian, with Danish as the second gloss language
+the ɛλicit test database** opens a little Italian, with French as the second gloss language
 (`samples/Elicit test`, built by `samples/make_elicit_test.py`; each lemma's Comment says how to
 ask for it). The ɛλicit button, left of Texts and utterances, makes a request: a link through your own Google Drive, or a zip to send to a
 speaker, for the web page in `docs/elicit/`, served by GitHub Pages at

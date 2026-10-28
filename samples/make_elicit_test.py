@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LicenseRef-Lemmatrix-Samples
 # Copyright © 2026 Joshua A. G. Smolders. All rights reserved: see SAMPLES.md.
-"""Build the ɛλicit test database: a little Italian, with Danish as the second gloss language.
+"""Build the ɛλicit test database: a little Italian, with French as the second gloss language (Danish until 28 October).
 
     python samples/make_elicit_test.py [folder with the recordings]
 
@@ -49,39 +49,39 @@ ASK_NEW_IMAGE = "ɛλicit test: ask for this (new recording; it has a picture)"
 ASK_RE = "ɛλicit test: ask for this (rerecord)"
 NOT = "ɛλicit test: not to ask for"
 
-# ref, lemma, gloss en, gloss da, word class, phonemic, comment,
-#   [(tags, phonemic, translation en, translation da, recording, speaker, comment)]
+# ref, lemma, gloss en, gloss fr, word class, phonemic, comment,
+#   [(tags, phonemic, translation en, translation fr, recording, speaker, comment)]
 LEMMAS = [
-    ("D035", "gatto", "cat", "kat", "NOUN", "ˈɡatto", ASK_NEW_IMAGE,
-     [(["Plural"], "ˈɡatti", "cats", "katte", "", "", ASK_NEW_IMAGE)]),
-    ("D034", "cane", "dog", "hund", "NOUN", "ˈkane", NOT, []),
-    ("L062", "acqua", "water", "vand", "NOUN", "ˈakkwa", ASK_RE, []),
-    ("J114", "pane", "bread", "brød", "NOUN", "ˈpane", ASK_NEW, []),
-    ("J114b", "torta", "cake", "kage", "NOUN", "ˈtorta", NOT,
-     [(["Plural"], "ˈtorte", "cakes", "kager", "", "", ASK_NEW)]),
-    ("K002", "casa", "house", "hus", "NOUN", "ˈkaza", NOT,
-     [(["Plural"], "ˈkaze", "houses", "huse", "", "", NOT)]),
-    ("K220", "libro", "book", "bog", "NOUN", "ˈlibro", NOT,
+    ("D035", "gatto", "cat", "chat", "NOUN", "ˈɡatto", ASK_NEW_IMAGE,
+     [(["Plural"], "ˈɡatti", "cats", "chats", "", "", ASK_NEW_IMAGE)]),
+    ("D034", "cane", "dog", "chien", "NOUN", "ˈkane", NOT, []),
+    ("L062", "acqua", "water", "eau", "NOUN", "ˈakkwa", ASK_RE, []),
+    ("J114", "pane", "bread", "pain", "NOUN", "ˈpane", ASK_NEW, []),
+    ("J114b", "torta", "cake", "gâteau", "NOUN", "ˈtorta", NOT,
+     [(["Plural"], "ˈtorte", "cakes", "gâteaux", "", "", ASK_NEW)]),
+    ("K002", "casa", "house", "maison", "NOUN", "ˈkaza", NOT,
+     [(["Plural"], "ˈkaze", "houses", "maisons", "", "", NOT)]),
+    ("K220", "libro", "book", "livre", "NOUN", "ˈlibro", NOT,
      [(["Plural"], "ˈlibri", "", "", "", "", "ɛλicit test: ask for this (new recording; no Translation, "
                                              "so Lemmatrix warns)")]),
-    ("L002", "sole", "sun", "sol", "NOUN", "ˈsole",
+    ("L002", "sole", "sun", "soleil", "NOUN", "ˈsole",
      "ɛλicit test: ask for this (rerecord; SP2 hasn't agreed to audio sharing, so Lemmatrix warns)", []),
-    ("V094", "dormire", "to sleep", "at sove", "VERB", "dorˈmire", ASK_NEW_IMAGE + " (an animated GIF)", []),
-    ("V158", "mangiare", "to eat", "at spise", "VERB", "manˈdʒare", NOT, []),
-    ("P001", "grande", "big", "stor", "ADJECTIVE", "ˈɡrande", NOT, []),
-    ("Q002", "due", "two", "to", "QUANT", "ˈdue", NOT, []),
+    ("V094", "dormire", "to sleep", "dormir", "VERB", "dorˈmire", ASK_NEW_IMAGE + " (an animated GIF)", []),
+    ("V158", "mangiare", "to eat", "manger", "VERB", "manˈdʒare", NOT, []),
+    ("P001", "grande", "big", "grand", "ADJECTIVE", "ˈɡrande", NOT, []),
+    ("Q002", "due", "two", "deux", "QUANT", "ˈdue", NOT, []),
 ]
 # The citation tokens recorded, and by whom.
 RECORDED = {"L062": ("acqua", "SP1"), "J114b": ("torta", "SP1"), "K002": ("casa", "SP1"),
             "K220": ("libro", "SP1"), "L002": ("sole", "SP2")}
 
-# ref, label, phonemic, translation en, da, recording, comment
+# ref, label, phonemic, translation en, fr, recording, comment
 UTTERANCES = [
-    ("U001", "the cat is sleeping", "il ˈɡatto ˈdɔrme", "the cat is sleeping", "katten sover",
+    ("U001", "the cat is sleeping", "il ˈɡatto ˈdɔrme", "the cat is sleeping", "le chat dort",
      "il_gatto_dorme", ASK_RE),
-    ("U002", "my two big cakes", "le ˈmie ˈdue ˈtorte ˈɡrandi", "my two big cakes", "mine to store kager",
+    ("U002", "my two big cakes", "le ˈmie ˈdue ˈtorte ˈɡrandi", "my two big cakes", "mes deux grands gâteaux",
      "le_mie_due_torte_grandi", NOT),
-    ("U003", "the dog is eating", "il ˈkane ˈmandʒa", "the dog is eating", "hunden spiser", "", ASK_NEW),
+    ("U003", "the dog is eating", "il ˈkane ˈmandʒa", "the dog is eating", "le chien mange", "", ASK_NEW),
 ]
 
 
@@ -147,12 +147,12 @@ def build(recordings: Path | None = None):
     md.language_code, md.language_name = "ITA", "Italian"
     md.variety_code, md.variety_name = "STD", "Standard Italian"
     md.name = "Elicit Test"
-    md.description = ("A small invented Italian database (Danish as the second gloss language) for trying out "
+    md.description = ("A small invented Italian database (French as the second gloss language) for trying out "
                       "ɛλicit. Built by samples/make_elicit_test.py; the recordings are Josh Smolders'.")
     md.participants = [Person("SP1", "Speaker 1", identifiable=True, audio_sharing=True),
                        Person("SP2", "Speaker 2", identifiable=False, audio_sharing=False)]
     md.researchers = [Person.researcher("RS1", "Researcher 1", email="researcher@example.org")]
-    s.gloss_languages = ["en", "da"]
+    s.gloss_languages = ["en", "fr"]
     s.primary_gloss = "en"
     s.auto_update_names = True
 
@@ -185,26 +185,26 @@ def build(recordings: Path | None = None):
     gloss = s.entry_field("gloss")
     comment = s.entry_field("comment")
     tr = s.token_field("translation")
-    for ref, lemma, en, da, cls, phon, note, others in LEMMAS:
+    for ref, lemma, en, fr, cls, phon, note, others in LEMMAS:
         e = db.new_entry(ref, lemma, en, cls)
-        e.set(gloss.name, da, "da")
+        e.set(gloss.name, fr, "fr")
         e.set(comment.name, note)
         cit = e.tokens[0]
         cit.set("Phonemic", phon)
         cit.set(tr.name, en, "en")
-        cit.set(tr.name, da, "da")
+        cit.set(tr.name, fr, "fr")
         if ref in RECORDED:
             word, speaker = RECORDED[ref]
             cit.speaker, cit.collected = speaker, DATE
             cit.file = db.expected_filename(e, cit)
             shutil.copy2(source(word), storage.sound_folder(db) / cit.file)
-        for tags, p, t_en, t_da, _, _, t_note in others:
+        for tags, p, t_en, t_fr, _, _, t_note in others:
             t = db.new_token(e, tags)
             t.set("Phonemic", p)
             if t_en:
                 t.set(tr.name, t_en, "en")
-            if t_da:
-                t.set(tr.name, t_da, "da")
+            if t_fr:
+                t.set(tr.name, t_fr, "fr")
             t.set("Comment", t_note)
             e.tokens.append(t)
         db.entries.append(e)
@@ -213,12 +213,12 @@ def build(recordings: Path | None = None):
     # book (K220, after the list's last K) are the database's own. Linked as Tools → Link to
     # wordlists… would, and in the list's order.
     wl.link_as_eacw(db)
-    for ref, label, phon, en, da, rec, note in UTTERANCES:
+    for ref, label, phon, en, fr, rec, note in UTTERANCES:
         u = db.new_utterance(ref, label)
         t = u.token
         t.set("Phonemic", phon)
         t.set(tr.name, en, "en")
-        t.set(tr.name, da, "da")
+        t.set(tr.name, fr, "fr")
         t.set("Comment", note)
         if rec:
             t.speaker, t.collected = "SP1", DATE
