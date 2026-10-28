@@ -162,6 +162,17 @@ class TextsUtterancesWindow(QDialog):
         self.full_btn.setIconSize(QSize(18, 18))
         self.full_btn.toggled.connect(self.set_full_screen)
         opts.addWidget(self.full_btn)
+        from .main_window import tool             # edit mode beside it in full screen (Josh, 28 October)
+        self.full_edit_btn = tool("Edit mode", "edit", lambda: self.texts.set_edit_mode(self.full_edit_btn.isChecked()),
+                                  "Edit mode (Ctrl+E): click a field of a line to edit it in place. "
+                                  "Here while full screen hides the options panel")
+        self.full_edit_btn.setObjectName("full-screen-edit")
+        self.full_edit_btn.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        self.full_edit_btn.setCheckable(True)
+        self.full_edit_btn.setIconSize(QSize(18, 18))      # the full-screen button's size: the row keeps its height
+        self.full_edit_btn.setFixedHeight(self.full_btn.sizeHint().height())
+        self.full_edit_btn.hide()
+        opts.addWidget(self.full_edit_btn)
         self._full_state = None
         self._full_icon()
         QShortcut(QKeySequence("F11"), self, lambda: self.full_btn.toggle())
@@ -425,8 +436,15 @@ class TextsUtterancesWindow(QDialog):
     def full_screen(self) -> bool:
         return self._full_state is not None
 
+    def _full_edit_shown(self):
+        """The pencil beside the full-screen button: in full screen, on the Texts tab."""
+        if hasattr(self, "full_edit_btn"):
+            self.full_edit_btn.setVisible(self.full_screen() and self.tabs.currentIndex() == TEXTS)
+            self.full_edit_btn.setChecked(self.texts.edit_btn.isChecked())
+
     def _full_icon(self):
         from . import theme as _theme
+        self._full_edit_shown()
         on = self._full_state is not None
         self.full_btn.setIcon(icon("fullscreen-exit" if on else "fullscreen", 18, _theme.colour("pitch").name()))
         self.full_btn.setToolTip("Back: the texts list and the options panel (F11)" if on else
@@ -649,6 +667,7 @@ class TextsUtterancesWindow(QDialog):
     def _tab_changed(self, i):
         self.pages.setCurrentIndex(i)
         self.options.setCurrentIndex(i)
+        self._full_edit_shown()
 
     def _play_key(self):
         if self.tabs.currentIndex() == TEXTS:

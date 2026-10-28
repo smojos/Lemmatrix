@@ -400,6 +400,17 @@ class MainWindow(QMainWindow):
         self.full_btn.setIconSize(QSize(18, 18))
         self.full_btn.toggled.connect(self.set_full_screen)
         opts.addWidget(self.full_btn)
+        # edit mode beside it while full screen hides the matrices' working panel (Josh, 28 October)
+        self.full_edit_btn = tool("Edit mode", "edit", self.toggle_matrix_edit,
+                                  "Edit mode (Ctrl+E): click a line of a token to edit it in its cell. "
+                                  "Here while full screen hides the working panel")
+        self.full_edit_btn.setObjectName("full-screen-edit")
+        self.full_edit_btn.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        self.full_edit_btn.setCheckable(True)
+        self.full_edit_btn.setIconSize(QSize(18, 18))      # the full-screen button's size: the row keeps its height
+        self.full_edit_btn.setFixedHeight(self.full_btn.sizeHint().height())
+        self.full_edit_btn.hide()
+        opts.addWidget(self.full_edit_btn)
         self._full_state = None
         self._full_icon()
         opts.addStretch(1)
@@ -720,6 +731,7 @@ class MainWindow(QMainWindow):
         on = not self._view(tab).edit_mode
         for t in (LEMMA_TAG, TAG_TAG):            # one edit mode for both matrices
             self._view(t).set_edit_mode(on)
+        self.full_edit_btn.setChecked(on)
         for bar in (self.lt_bar, self.tt_bar):
             bar["edit_mode"].setVisible(on)
             bar["edit_btn"].setChecked(on)
@@ -2700,7 +2712,15 @@ class MainWindow(QMainWindow):
     def full_screen(self) -> bool:
         return self._full_state is not None
 
+    def _full_edit_shown(self):
+        """The pencil beside the full-screen button: in full screen, on Lemma/Tag and Tag/Tag."""
+        if not hasattr(self, "full_edit_btn"):
+            return
+        self.full_edit_btn.setVisible(self.full_screen() and self.tabs.currentIndex() in (LEMMA_TAG, TAG_TAG))
+        self.full_edit_btn.setChecked(self.lt_view.edit_mode)
+
     def _full_icon(self):
+        self._full_edit_shown()
         on = getattr(self, "_full_state", None) is not None
         self.full_btn.setIcon(icon("fullscreen-exit" if on else "fullscreen", 18, theme.colour("pitch").name()))
         self.full_btn.setToolTip("Back: the lemma list and the working panels (F11)" if on else
@@ -3142,6 +3162,7 @@ class MainWindow(QMainWindow):
     def _tab_changed(self, i):
         self.views.setCurrentIndex(i)
         self.options.setCurrentIndex(i)
+        self._full_edit_shown()
         self.refresh()
 
     def _jump_to_lemma(self, entry):

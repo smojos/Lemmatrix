@@ -178,3 +178,36 @@ def test_the_full_screen_icons_differ(app):
     a = icons.icon("fullscreen", 32, "#198583").pixmap(32, 32).toImage()
     b = icons.icon("fullscreen-exit", 32, "#198583").pixmap(32, 32).toImage()
     assert a != b and a.pixelColor(6, 6).alpha() > 0
+
+
+def test_edit_mode_moves_beside_full_screen_on_the_matrices(win):
+    from lemmatrix.ui.main_window import ALL_DATA, LEMMA_TAG
+    win.show()
+    win.tabs.setCurrentIndex(LEMMA_TAG)
+    assert not win.full_edit_btn.isVisible()
+    win.full_btn.click()
+    assert win.full_edit_btn.isVisible()
+    win.full_edit_btn.click()
+    assert win.lt_view.edit_mode and win.lt_bar["edit_btn"].isChecked() and win.full_edit_btn.isChecked()
+    win.toggle_matrix_edit()                       # Ctrl+E: the twin follows
+    assert not win.lt_view.edit_mode and not win.full_edit_btn.isChecked()
+    win.tabs.setCurrentIndex(ALL_DATA)
+    assert not win.full_edit_btn.isVisible()       # All data keeps its Edit button
+    win.tabs.setCurrentIndex(LEMMA_TAG)
+    win.full_btn.click()
+    assert not win.full_edit_btn.isVisible()
+
+
+def test_edit_mode_moves_beside_full_screen_on_the_texts_tab(win):
+    uw = win.open_utterances()
+    uw.show()
+    uw.tabs.setCurrentIndex(0)
+    uw.full_btn.click()
+    assert uw.full_edit_btn.isVisible()
+    uw.full_edit_btn.click()
+    assert uw.texts.edit_btn.isChecked() and uw.texts.lines.edit_mode
+    uw.texts.set_edit_mode(False)
+    assert not uw.full_edit_btn.isChecked()
+    uw.tabs.setCurrentIndex(1)
+    assert not uw.full_edit_btn.isVisible()
+    uw.full_btn.click()

@@ -973,6 +973,8 @@ class TextsPanel(QObject):
 
     def set_edit_mode(self, on: bool):
         self.edit_btn.setChecked(on)
+        if getattr(self.win, "full_edit_btn", None) is not None:   # its twin beside full screen
+            self.win.full_edit_btn.setChecked(on)
         self.lines.set_edit_mode(on)
         self.edit_label.setVisible(on)
         self.edit_label.setStyleSheet(f"color: {theme.accent().name()}; font-weight: bold;")
