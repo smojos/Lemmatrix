@@ -71,3 +71,7 @@ def test_several_values_round_trip_as_repeated_features(tmp_path):
 def test_an_old_both_opens_as_two_chips():
     assert typology.values({"morphology": "both"}, typology.MORPHOLOGY) == ["segmental", "non-concatenative"]
     assert typology.values({"order": "unspecified"}, typology.ORDER) == []
+
+
+def test_the_accents_default_is_jennifers_blue(win):
+    assert _dlg(win).accent.reset.toolTip() == "Jennifer's blue"

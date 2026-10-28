@@ -64,7 +64,7 @@ class PathEdit(QWidget):
 class ColourButton(QWidget):
     """A colour square to click for a colour chooser, with a Default button."""
 
-    def __init__(self, colour: str, default: str, tip: str = "", parent=None):
+    def __init__(self, colour: str, default: str, tip: str = "", parent=None, default_tip: str = ""):
         super().__init__(parent)
         self._colour, self._default = QColor(colour), default
         lay = QHBoxLayout(self)
@@ -73,7 +73,9 @@ class ColourButton(QWidget):
         self.swatch.setFixedSize(44, 24)
         self.swatch.setToolTip((tip + "\n" if tip else "") + "Click to choose another colour")
         self.swatch.clicked.connect(lambda *_: self._choose())
-        reset = QPushButton("Default")
+        reset = self.reset = QPushButton("Default")
+        if default_tip:
+            reset.setToolTip(default_tip)
         reset.clicked.connect(lambda *_: self.set_colour(QColor(self._default)))
         lay.addWidget(self.swatch)
         lay.addWidget(reset)
@@ -911,7 +913,8 @@ class PreferencesDialog(QDialog):
         self.theme.setCurrentIndex(max(0, self.theme.findData(prefs.theme)))
         self.theme.setToolTip("Light or dark, for the whole program")
         self.accent = ColourButton(prefs.accent, theme.DEFAULT_ACCENT,
-                                   "Selected tabs, highlights, tag chips and pitch traces")
+                                   "Selected tabs, highlights, tag chips and pitch traces",
+                                   default_tip="Jennifer's blue")   # Josh, 28 October
         # Two colours of one's own (Josh, 26 October): the search marks, and (Settings → Pitch) the
         # pitch traces; Default (or deselecting) goes back
         self.search_colour = ColourButton(prefs.search_colour, theme.DEFAULT_SEARCH,
