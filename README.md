@@ -76,6 +76,15 @@ In the author's words: *“One of the main goals of this program is to make the 
 (A note on spelling: these documents write *soundfile* and *soundfiles* as one word. That's
 deliberate, part of the author's personal campaign to make it a compound, like *filename*.)
 
+## The road ahead
+
+- **v1 · Collect (2026):** full documentary capture — today's Lemmatrix, nearing completion.
+- **v2 · Analyze (spring 2027):** phonological and grammatical analysis tools, built on the data already captured.
+- **v3 · Compose (fall 2027):** writing-up tools: LaTeX and Word export, papers management. Autosegmental modelling.
+- **v4 · Appreciate (2028):** export tools to give back to the language communities we work with: dictionaries, diagrams, storybooks, apps. Export compatibility with existing tools.
+
+See [DESIGN.md](DESIGN.md), section 6, for what each version holds.
+
 ## Running it on Windows
 
 1. Download this repository, or clone it (e.g. with GitHub Desktop) and pull the latest version.

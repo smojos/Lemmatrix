@@ -1140,7 +1140,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 
 ## 6. Roadmap
 
-*Set by Josh on 22 October 2026, to be developed further. Lemmatrix grows through four versions, each with a purpose of its own. They replace the earlier Stages: Stage 1 (the Windows prototype) became v0, Stage 2 (the analysis engine) v2, and Stage 3 (other formats) is split between v1 (import and export for converting databases) and v3 (LaTeX, Word and HTML). The ideas log is grouped by these versions.*
+*Set by Josh on 22 October 2026, to be developed further. Lemmatrix grows through five versions (v0 to v4; v4 added 28 October), each with a purpose of its own. They replace the earlier Stages: Stage 1 (the Windows prototype) became v0, Stage 2 (the analysis engine) v2, and Stage 3 (other formats) is split between v1 (import and export for converting databases) and v3 (LaTeX, Word and HTML). The ideas log is grouped by these versions.*
 
 ### v0 · Prototype (now: 0.2.x)
 
@@ -1152,6 +1152,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 
 ### v1 · Collect (data collection)
 
+- **Aimed for:** 2026. *Full documentary capture: today's Lemmatrix, nearing completion* (Josh, 28 October).
 - **Purpose:** a researcher collects data in Lemmatrix and works through it. Most of what this needs is built during v0.
 - **The structure stays from v1 on:** no major changes to the database, notebook and workspace formats; anything that does change after 1.0 comes with an upgrade that keeps older files opening.
 - **Import and export for converting databases:** from and to other programs (e.g. Dekereke, FLEx through LIFT, Toolbox/SFM), and hopefully Word tables and Excel sheets; exports in formats other programs can use. *This would change the decision of 16 October to keep Dekereke import and export out of the program (section 4); to be settled* (idea 39).
@@ -1161,6 +1162,7 @@ New databases start with this structure (revised 20 October). Everything in it c
 
 ### v2 · Analyze
 
+- **Aimed for:** spring 2027. *Phonological and grammatical analysis tools, built on the data already captured* (Josh, 28 October).
 - **Purpose:** analysis tools of the kind found in Phonology Assistant and Dekereke, for phonology and grammar, and perhaps discourse.
 - **From the earlier Stage 2:** segment parsing, features, syllabification, CV shapes (including both CV shape filters, sections 5.2 and 5.3), consonant and vowel charts, feature-based search, pitch tools, the Analyze menu and valency (section 7, open question 3); formant plots (`parselmouth`; Praat objects saved beside the segment scratchpad's recordings in `Soundfiles/Segments` could feed vowel plotting, idea 46). Results are checked against other tools' output on the same data.
 - **Results belong to the researcher** (Josh, 22 October): an analysis (charts, counts, parses, valency) is the researcher's own work, like the notebook. Only what describes the data and is needed to read it goes into the database (an analysis setting, say, as the `<analysis>` element already is); the results themselves are kept beside it, in every Full backup and in no archive.
@@ -1168,10 +1170,20 @@ New databases start with this structure (revised 20 October). Everything in it c
 
 ### v3 · Compose
 
+- **Aimed for:** fall 2027. *Writing-up tools: LaTeX and Word export, papers management. Autosegmental modelling* (Josh, 28 October).
 - **Purpose:** from analysis to writing up.
+- **Autosegmental modelling** (Josh, 28 October): drawing and exporting a token's autosegmental representation; the tone tool itself is IDEAS.md idea 4 (logged under v2).
 - Export to LaTeX and Word (interlinear examples, tables, charts); organising papers in preparation; exporting visual aids (charts, diagrams, pictures).
 - **Papers are the researcher's own** (Josh, 22 October): drafts in `Papers/` in the main folder (IDEAS.md idea 30) are unpublished thoughts: in every Full backup, never in an archive. What a paper cites comes from the data with its references, so a reader of the published paper can find it in the archived data.
 - **Ideas:** 2 (the LaTeX example viewer and export), 30, and a hypothesis report, Send to a paper and the snapshot's LaTeX table (idea 35, Later), 58.
+
+### v4 · Appreciate
+
+- **Aimed for:** 2028. *Export tools to give back to the language communities we work with: dictionaries, diagrams, storybooks, apps. Export compatibility with existing tools* (Josh, 28 October).
+- **Purpose:** what was collected, analysed and written up goes back to the people whose language it is, in forms they can use.
+- **What it builds on:** the Ethical archive's rules (section 3.15) decide who is named and heard in anything given back: only what the consent forms allow. The EACW's references and pictures (section 3.16, IDEAS.md idea 27) suit picture dictionaries; the automatic diagrams (idea 58) suit diagrams.
+- **Export compatibility with existing tools:** formats that community-facing programs already read (dictionary and app builders, e.g. through LIFT or SFM); v1's import and export for converting databases (idea 39) is the groundwork.
+- **Ideas:** none yet.
 
 ### Not yet placed
 
@@ -1210,6 +1222,8 @@ New databases start with this structure (revised 20 October). Everything in it c
 **Settled on 22 October (the archives, section 3.15; IDEAS.md idea 44):** the data and the researcher's own work kept apart throughout (section 1): the database is the data, to archive and share; the notebook (Cogitate included), the workspace and later Analyze's results and Compose's papers are the researcher's own, in every Full backup and in no archive unless chosen; the Anonymous backup split into an **Anonymous archive** (nobody named, codes renumbered SP1…/RS1… everywhere, language and variety names as codes with checkboxes to hide the codes as LXX/VXX, no recordings, places top level, the key only in the consent forms' zip; the one for AI) and an **Ethical archive** (the people with Identifiable? selected named, codes kept, only recordings with Audio sharing?, identifiable researchers' emails kept); the notebook off by default in both; two menu items, one dialogue with a switch; Identifiable? on researchers, selected for a new one; both checkboxes always written, yes or no; format 8.
 
 **Settled on 22 October (the roadmap, section 6):** four versions: v0 Prototype (now), v1 Collect (data collection; the structure stays from then on; import and export for converting databases), v2 Analyze, v3 Compose; the ideas log grouped by them; the earlier Stages folded in.
+
+**Settled on 28 October (the roadmap, section 6):** a fifth version, **v4 Appreciate** (2028): export tools to give back to the language communities (dictionaries, diagrams, storybooks, apps) and export compatibility with existing tools; target dates for the others (v1 2026, v2 spring 2027, v3 fall 2027); autosegmental modelling named under v3.
 
 **Settled on 24 October (Snapshots, section 3.7; IDEAS.md idea 16):** snapshots are a list of their own like Questions and To Dos, with no resolving: restore, rename, pin, link, delete; a click on the camera takes one (right-click keeps the old menu), an outline shrinking into the Snapshots button between the ? and the To Do flag; View → Snapshots with Ctrl+Shift+P; the notebook's Snapshots tab after To Do; notebook format 4; a hypothesis citing a deleted snapshot keeps its copy and still restores (grey), and follows a rename; one undo step each; SNAPSHOT HISTORY in the notes, switchable; badges on Questions, To Do and Snapshots, each switchable in Settings → Display.
 
