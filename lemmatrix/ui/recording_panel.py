@@ -26,8 +26,13 @@ from .icons import icon
 
 
 def record_icon() -> str:
-    """The Record button's icon: the hot mic (Josh's flame in the cup) while 🔥 hot mic is on."""
+    """The Record button's icon: 🔥 hot mic's own (Josh's microphone before his flame) while it is on."""
     return "record-hot" if advanced.hot_mic() else "record"
+
+
+def stop_icon() -> str:
+    """The Stop button while recording: 🔥 hot mic's own (Josh, 28 October) while it is on."""
+    return "stop-hot" if advanced.hot_mic() else "stop"
 
 
 def record_tip() -> str:
@@ -154,7 +159,7 @@ class RecordingPanel(QGroupBox):
         self.main.player.stop()
         self.meter.reset()
         self.level_note.hide()
-        self.record_btn.setIcon(icon("stop", 40))
+        self.record_btn.setIcon(icon(stop_icon(), 40))
         self.record_btn.setToolTip("Stop recording (Ctrl+R)")
         self.timer.start()
         return True

@@ -19,6 +19,8 @@ QUESTIONS_FILE = Path(__file__).resolve().parent.parent / "resources" / "questio
 COGITATE_FILE = Path(__file__).resolve().parent.parent / "resources" / "cogitate.svg"     # Josh's hypotheses.svg
 TODO_FILE = Path(__file__).resolve().parent.parent / "resources" / "to_do.svg"            # Josh's, 22 October
 SNAPSHOTS_FILE = Path(__file__).resolve().parent.parent / "resources" / "snapshots.svg"   # Josh's, 24 October
+HOT_MIC_FILE = Path(__file__).resolve().parent.parent / "resources" / "hot_mic.svg"       # Josh's, 28 October
+HOT_MIC_STOP_FILE = Path(__file__).resolve().parent.parent / "resources" / "hot_mic_stop.svg"
 
 GREEN = QColor("#2e9e44")
 RED = QColor("#d93030")
@@ -453,14 +455,6 @@ def _draw(name: str, s: int, p: QPainter, colour: QColor | None = None, colour2:
         p.drawArc(QRectF(s * 0.30, s * 0.30, s * 0.40, s * 0.36), 200 * 16, 140 * 16)
         p.drawLine(QPointF(s / 2, s * 0.66), QPointF(s / 2, s * 0.80))
         p.drawLine(QPointF(s * 0.38, s * 0.80), QPointF(s * 0.62, s * 0.80))
-    elif name == "record-hot":                   # 🔥 hot mic (Josh's mockup, 27 October): the microphone's
-        _rounded(p, s, PURPLE)                   # cup and stand in white, a flame rising out of the cup;
-        p.setPen(QPen(WHITE, max(1.4, s * 0.065), Qt.SolidLine, Qt.RoundCap))   # the flame stays orange
-        p.setBrush(Qt.NoBrush)                   # when All buttons theme coloured is on
-        p.drawArc(QRectF(s * 0.25, s * 0.26, s * 0.50, s * 0.42), 190 * 16, 160 * 16)
-        p.drawLine(QPointF(s / 2, s * 0.68), QPointF(s / 2, s * 0.80))
-        p.drawLine(QPointF(s * 0.37, s * 0.80), QPointF(s * 0.63, s * 0.80))
-        _flame(p, QRectF(s * 0.31, s * 0.10, s * 0.38, s * 0.56))
     elif name == "stop":                         # purple rounded square, white square
         _rounded(p, s, PURPLE)
         p.setPen(Qt.NoPen)
@@ -821,6 +815,13 @@ def _icon(name: str, size: int, colour: str | None, themed: str) -> QIcon:
         from PySide6.QtSvg import QSvgRenderer
         from .. import elicit_art
         svg = elicit_art.svg("main" if name == "elicit" else "waiting", colour or elicit_art.TEAL)
+        QSvgRenderer(QByteArray(svg.encode("utf-8"))).render(p, QRectF(0, 0, size, size))
+        p.end()
+        return QIcon(pm)
+    if name in ("record-hot", "stop-hot"):     # 🔥 hot mic's Record and Stop (Josh's drawings, 28 October):
+        from PySide6.QtCore import QByteArray   # transparent, never theme coloured
+        from PySide6.QtSvg import QSvgRenderer
+        svg = (HOT_MIC_FILE if name == "record-hot" else HOT_MIC_STOP_FILE).read_text(encoding="utf-8")
         QSvgRenderer(QByteArray(svg.encode("utf-8"))).render(p, QRectF(0, 0, size, size))
         p.end()
         return QIcon(pm)

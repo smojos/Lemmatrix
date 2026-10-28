@@ -1620,9 +1620,10 @@ class TokenDialog(QDialog):
         ed.insert(new)                            # not setText: keeps the field's own undo
 
     def _recording_menu(self, global_pos):
+        from .recording_panel import record_icon, stop_icon
         m = QMenu(self)
         for text, name, fn, on in (
-                ("Stop recording" if self.recorder else "Record", "stop" if self.recorder else "record",
+                ("Stop recording" if self.recorder else "Record", stop_icon() if self.recorder else record_icon(),
                  self._record, True),
                 ("Play", "play", self._play, self.play_btn.isEnabled()),
                 ("Open in Praat", "praat", self._open_in_praat, self.praat_btn.isEnabled()),
