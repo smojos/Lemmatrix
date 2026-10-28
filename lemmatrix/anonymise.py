@@ -59,7 +59,7 @@ PRIVATE_NOTE = ("The notebook holds your own work: notes, questions, To Dos and 
 
 # fields whose text is a transcription, never searched for names (nor the word class: a list
 # of grammatical labels)
-_TRANSCRIPTION_ROLES = ("lemma", "phonetic", "phonemic", "morphemes", "pitch")
+_TRANSCRIPTION_ROLES = ("lemma", "phonetic", "phonemic", "morphemes", "constituents", "pitch")   # notation: never scrubbed
 _UNTOUCHED_ROLES = _TRANSCRIPTION_ROLES + ("word-class",)
 _KEEP = object()                          # a name that stays as it is (an identifiable person's)
 

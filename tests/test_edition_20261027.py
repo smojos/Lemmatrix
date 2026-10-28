@@ -137,7 +137,7 @@ def test_a_format_14_file_loses_its_clarification_field(tmp_path):
     assert back.settings.entry_field("clarification") is None and back.upgraded
     assert "Clarification" not in back.entry_by_ref("A001").values and back.dropped_fields == ["Clarification"]
     storage.save(back, p, backup=False)
-    assert "my own note" not in p.read_text(encoding="utf-8") and 'format="15"' in p.read_text(encoding="utf-8")
+    assert "my own note" not in p.read_text(encoding="utf-8") and f'format="{storage.FORMAT_VERSION}"' in p.read_text(encoding="utf-8")
 
 
 def test_the_clarification_can_be_switched_off():

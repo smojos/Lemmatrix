@@ -54,6 +54,9 @@ class Slot:
     values: dict = field(default_factory=dict)   # a new token's fields filled in: {(field, lang or None): text}
 
 
+TOKEN_MORE_OPEN = "dialogs/token_more"      # this computer: the token dialogue's More arrow open or closed
+
+
 class TokenDialog(QDialog):
     MULTI_TOKENS = True       # Ctrl+click picks several tags in a group: one token per combination
     SNIP_GAPS = True          # ✂ auto-snip shortens long gaps between repetitions (tokens only)
@@ -168,9 +171,20 @@ class TokenDialog(QDialog):
         self.comment: QLineEdit | None = None          # the first comment field: Push to question
         self.pitch_edit: QLineEdit | None = None       # the Pitch field: Raise / Lower pitch on right-click
         row = 2
-        for f in s.token_fields:
+        from .dialogs import token_more_fields   # behind the More arrow (idea 91, Josh, 28 October)
+        under_more = token_more_fields(self.main, self.db)
+        fields = [f for f in s.token_fields if f.name not in under_more] + \
+            [f for f in s.token_fields if f.name in under_more]
+        self.more_rows: list = []                 # the widgets behind the More arrow
+        self.more_btn = None
+        self.cons_edit = self.cons_note = None    # the Constituents line and its ⚠️ note
+        for f in fields:
             if f.role == "pitch" and not pitch_on:
                 continue                          # not edited here: the token keeps its Pitch as it is
+            more = f.name in under_more
+            if more and self.more_btn is None:
+                row = self._add_more_button(left, row, [x for x in fields if x.name in under_more])
+            first_widget = left.count()
             ed = keyboards.tag(QLineEdit(), f.name)        # its own keyboard (idea 43)
             if f.role in ("phonetic", "phonemic"):
                 ed.setFont(ipa_font(self.main.prefs.ipa_size + 3))
@@ -223,6 +237,29 @@ class TokenDialog(QDialog):
             self.edits[f.name] = ed
             ed.installEventFilter(self)           # Ctrl+Space plays, never types a space
             row += 1
+            if f.role == "constituents":          # ⚠️ when its words don't match Phonemic's (idea 91)
+                self.cons_edit = ed
+                ed.setPlaceholderText("e.g. [_ [ADJ]MOD]NP V [_ _]NP")
+                ed.setToolTip("Labelled brackets over the words of Phonemic: _ is a word with no label, a "
+                              "bare label (V, ADJ) is a label on one word, [ … ]NP a phrase; brackets nest")
+                self.cons_note = QLabel()
+                self.cons_note.setWordWrap(True)
+                self.cons_note.setStyleSheet(f"color: {theme.colour('warning').name()};")
+                left.addWidget(self.cons_note, row, 1)
+                row += 1
+                ed.textChanged.connect(lambda *_: self._check_constituents())
+            if more:
+                self.more_rows += [left.itemAt(i).widget() or left.itemAt(i).layout()
+                                   for i in range(first_widget, left.count())]
+        if self.cons_edit is not None:
+            ph = next((n for n, e in self.edits.items()
+                       if (fd := s.token_field(n)) is not None and fd.role == "phonemic"), None)
+            if ph is not None:
+                self.edits[ph].textChanged.connect(lambda *_: self._check_constituents())
+        if self.more_btn is not None:
+            shown = self.main.prefs.get_bool(TOKEN_MORE_OPEN, False)
+            self.more_btn.setChecked(shown)
+            self._show_more(shown, remember=False)
         row = self._build_other_languages(left, row)
         self.pitch_note = QLabel()
         self.pitch_note.setStyleSheet(f"color: {theme.colour('warning').name()};")
@@ -474,6 +511,8 @@ class TokenDialog(QDialog):
         self._refresh_name()
         self._update_suggestion()
         self._show_hypotheses()
+        self._check_constituents()                # and More (N filled)
+        self._update_more_count()
         if getattr(self.main, "dialog_autoplay", False) and t.file:
             QTimer.singleShot(150, self._play)
 
@@ -536,6 +575,7 @@ class TokenDialog(QDialog):
     def _fields_changed(self, *_):
         self._collect()
         self._refresh_name()
+        self._update_more_count()
 
     def _tags_changed(self):
         self._fields_changed()
@@ -649,6 +689,70 @@ class TokenDialog(QDialog):
         return [*self.edits.values(), *self.other_edits.values(), self.date]
 
     # ---- second languages (idea 19) ----------------------------------
+    def _add_more_button(self, grid, row: int, fields) -> int:
+        """The More arrow (idea 91, Josh, 28 October: the token edit window is getting crowded): the
+        token fields Edit → Fields puts under More, Constituents to begin with; open or closed as
+        last left (this computer)."""
+        b = self.more_btn = QToolButton()
+        b.setCheckable(True)
+        b.setAutoRaise(True)
+        b.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        b.setFocusPolicy(Qt.NoFocus)
+        b.setText("More")
+        b.setToolTip("The token's other fields: " + ", ".join(f.title for f in fields)
+                     + ". Edit → Fields → Under More in the dialogue chooses which they are.")
+        b.toggled.connect(self._show_more)
+        grid.addWidget(b, row, 0, 1, 2, Qt.AlignLeft)
+        return row + 1
+
+    def _show_more(self, shown: bool, remember: bool = True):
+        if self.more_btn is None:
+            return
+        self.more_btn.setArrowType(Qt.DownArrow if shown else Qt.RightArrow)
+        for w in self.more_rows:
+            if hasattr(w, "setVisible"):
+                w.setVisible(shown)
+            else:                                 # a box with buttons beside it (a Comment under More)
+                for i in range(w.count()):
+                    if (x := w.itemAt(i).widget()) is not None:
+                        x.setVisible(shown)
+        if shown:
+            self._check_constituents()
+        elif self.cons_note is not None:
+            self.cons_note.setVisible(False)
+        if remember:
+            self.main.prefs.set_value(TOKEN_MORE_OPEN, bool(shown))
+
+    def _update_more_count(self):
+        """More (1 filled): how many of the fields behind it hold something."""
+        if self.more_btn is None:
+            return
+        n = sum(1 for w in self.more_rows if isinstance(w, QLineEdit) and w.text().strip())
+        self.more_btn.setText(f"More ({n} filled)" if n else "More")
+
+    def _check_constituents(self):
+        """⚠️ under the Constituents line when its brackets aren't closed or it doesn't take as many
+        words as Phonemic has, and the labels no list has (idea 91). Saved as typed either way."""
+        if self.cons_edit is None or self.cons_note is None:
+            return
+        from .. import constituents as cons
+        from ..interlinear import split_units
+        s = self.db.settings
+        ph = next((e for n, e in self.edits.items()
+                   if (fd := s.token_field(n)) is not None and fd.role == "phonemic"), None)
+        units = len(split_units(ph.text())) if ph is not None and ph.text().strip() else None
+        text = self.cons_edit.text()
+        msgs = []
+        if (p := cons.problem(text, units)):
+            msgs.append(p)
+        if text.strip() and (odd := cons.unknown(s, text)):
+            msgs.append("not in Edit → Lists: " + ", ".join(odd))
+        self.cons_note.setText("⚠️ " + "; ".join(msgs) if msgs else "")
+        under_more = self.more_btn is not None and self.cons_edit in self.more_rows
+        visible = not under_more or self.more_btn.isChecked()
+        self.cons_note.setVisible(bool(msgs) and visible)
+        self._update_more_count()
+
     def _build_other_languages(self, grid, row: int) -> int:
         """The translations in the database's other gloss languages, under the token's fields:
         hidden behind "Other languages" until it's opened (remembered on this computer). They

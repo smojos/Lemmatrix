@@ -21,7 +21,7 @@ TEMPLATE_CHARS = "{}>"
 LABEL_FORBIDDEN = TEMPLATE_CHARS + FORBIDDEN_CHARS
 
 # The token fields' abbreviations (Josh, 26 October); other fields have none until given one
-DEFAULT_ABBR = {"phonetic": "pht", "phonemic": "phm", "morphemes": "mph", "translation": "trs",
+DEFAULT_ABBR = {"phonetic": "pht", "phonemic": "phm", "morphemes": "mph", "constituents": "cns", "translation": "trs",
                 "pitch": "pch", "comment": "com"}
 
 # A template's own words, which no field may answer to unless it is the field they already mean

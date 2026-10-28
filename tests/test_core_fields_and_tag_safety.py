@@ -38,7 +38,7 @@ def test_missing_core_fields_come_back_and_comments_get_their_role(tmp_path):
     s.entry_fields = [f if f.role != "comment" else FieldDef("Comment") for f in s.entry_fields]
     restored = ensure_core_fields(s)
     assert restored == ["Morphemes"]                                  # Comments only got its role
-    assert [f.name for f in s.token_fields][:4] == ["Phonetic", "Phonemic", "Morphemes", "Pitch"]
+    assert [f.name for f in s.token_fields][:4] == ["Phonetic", "Phonemic", "Morphemes", "Constituents"]
     assert s.token_field("comment").name == "Comments"
     assert s.entry_field("comment").name == "Comment"
     db.path = str(tmp_path / "x.xml")

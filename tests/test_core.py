@@ -109,7 +109,8 @@ def test_usual_for_hints():
     assert ts.with_defaults(["Past"], ["VERB"]) == ["Simple", "Past", "Indicative", "Affirmative", "isolation"]
     # a nested word class counts as the class above it
     wcf = d.settings.entry_field("word-class")
-    noun = next(i for i in wcf.items if i.name == "NOUN")
+    noun = next(i for i in wcf.items if i.name.casefold() == "noun")
+    noun.name = "NOUN"                                     # as the prototype's tag hints spell it
     noun.children.append(ListItem("Relational"))
     e = d.new_entry("C001", "bəə", "father", "Relational")
     assert d.classes(e) == ["Relational", "NOUN"]

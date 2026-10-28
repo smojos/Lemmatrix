@@ -29,8 +29,10 @@ class Conventions:
     slashes: bool = True          # Phonemic in /slashes/
     small_caps: bool = True       # glosses in capitals (the Morphemes line) in small caps
     quotes: str = SINGLE          # translations in ‘single’ or “double” quotes, or none
+    label_align: str = "centre"   # the Constituents drawing's labels: left, centre or right (Josh, 28 October)
 
 
+LABEL_ALIGNS = ("left", "centre", "right")
 CURRENT = Conventions()           # set from this computer's settings by the main window
 
 
@@ -39,7 +41,8 @@ def load(prefs) -> Conventions:
     q = prefs.get_value("conventions/quotes")
     c = Conventions(on=g("conventions/on", True), brackets=g("conventions/brackets", True),
                     slashes=g("conventions/slashes", True), small_caps=g("conventions/small_caps", True),
-                    quotes=q if q in QUOTES else SINGLE)
+                    quotes=q if q in QUOTES else SINGLE,
+                    label_align=a if (a := prefs.get_value("conventions/label_align")) in LABEL_ALIGNS else "centre")
     CURRENT.__dict__.update(c.__dict__)
     return CURRENT
 
@@ -48,6 +51,7 @@ def save(prefs, c: Conventions):
     for k in ("on", "brackets", "slashes", "small_caps"):
         prefs.set_value(f"conventions/{k}", bool(getattr(c, k)))
     prefs.set_value("conventions/quotes", c.quotes)
+    prefs.set_value("conventions/label_align", c.label_align)
     CURRENT.__dict__.update(c.__dict__)
 
 
@@ -93,7 +97,7 @@ def wrap_units(role: str, units: list[str], c: Conventions | None = None) -> lis
 
 def small_caps_on(role: str, c: Conventions | None = None) -> bool:
     c = c or CURRENT
-    return c.on and c.small_caps and role == "morphemes"
+    return c.on and c.small_caps and role in ("morphemes", "constituents")   # idea 91: the labels too
 
 
 _WORD = re.compile(r"[A-Za-z0-9]+")

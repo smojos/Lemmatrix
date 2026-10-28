@@ -66,7 +66,7 @@ def merge_items(defaults: list[ListItem], current: list[ListItem], used: set[str
     for top in current:
         for i in top.walk():
             if i.name in used and i.name not in have:
-                out.append(ListItem(i.name))
+                out.append(ListItem(i.name, abbr=i.abbr))
                 have.add(i.name)
                 kept.append(i.name)
     return out, kept

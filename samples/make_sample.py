@@ -545,7 +545,7 @@ class Builder:
         return e
 
     def noun(self, letter, gloss, form):
-        e = self.entry(self.ref(gloss, letter, False), form, gloss, "NOUN")
+        e = self.entry(self.ref(gloss, letter, False), form, gloss, "noun")
         e.set("InflectionClass", inflection_class(form))
         rec = gloss in RECORDED_IN_FULL
         pl = suffix(form, "à", "nà")
@@ -565,7 +565,7 @@ class Builder:
                            f"{poss} {eng}", rec)
 
     def verb(self, gloss, root, past, obj):
-        e = self.entry(self.ref(gloss, "V", True), root, gloss, "VERB")
+        e = self.entry(self.ref(gloss, "V", True), root, gloss, "verb")
         e.set("InflectionClass", inflection_class(root))
         rec = gloss in RECORDED_IN_FULL
         self.token(e, [], root, gloss, f"to {gloss}", True)
@@ -621,13 +621,13 @@ class Builder:
         for v in VERBS:
             self.verb(*v)
         for i, (person, form, eng, _) in enumerate(PRONOUNS):
-            self.simple("R", eng, form, "PRONOUN", ref=f"R{person}")
+            self.simple("R", eng, form, "pronoun", ref=f"R{person}")
         for i, (gloss, form, morphemes) in enumerate(NUMBERS):
-            self.simple("Q", gloss, form, "QUANT", ref=f"Q{i + 1:03d}", morphemes=morphemes)   # Q + the number
+            self.simple("Q", gloss, form, "quant", ref=f"Q{i + 1:03d}", morphemes=morphemes)   # Q + the number
         for gloss, form in ADJECTIVES:
-            self.simple("P", gloss, form, "ADJECTIVE")
+            self.simple("P", gloss, form, "adjective")
         for gloss, form in ADVERBS:
-            self.simple("N", gloss, form, "ADVERB")
+            self.simple("N", gloss, form, "adverb")
         wl.link_as_eacw(self.db)
         add_text(self.db)
         consent_form(self.db)

@@ -340,7 +340,7 @@ class TokenCellDelegate(QStyledItemDelegate):
         """The lined-up columns of a token: each the widest unit at that place in its aligned lines."""
         cols: list[int] = []
         for name in self._lines():
-            if not self._aligned(name):
+            if not self._aligned(name) or self._role(name) == "constituents":   # drawn over them (idea 91)
                 continue
             for i, u in enumerate(self._units(t, name)):
                 w = self._w(name, u) + self.UNIT_GAP
@@ -381,7 +381,9 @@ class TokenCellDelegate(QStyledItemDelegate):
                 w = self._m(("pitch", t.get("Pitch"), self.unit), lambda: pitch_width(t.get("Pitch"), self.unit))
             cols = self._m(("cols", id(t)), lambda: self._cols(t))
             for name in self._lines():
-                if self._aligned(name) and self._units(t, name):
+                if self._cons_drawn(t, name, cols):
+                    w = max(w, sum(cols) - self.UNIT_GAP)
+                elif self._aligned(name) and self._units(t, name) and self._role(name) != "constituents":
                     w = max(w, sum(cols) - self.UNIT_GAP)
                 else:
                     w = max(w, self._w(name, self._text(t, name) or "—"))
@@ -401,8 +403,28 @@ class TokenCellDelegate(QStyledItemDelegate):
         if "drawing" in self.view.cell_fields:
             h += self.draw_h + 4
         for name in self._lines():
-            h += self._m(("h", name), lambda: QFontMetrics(self._font(name)).height()) + 1
+            h += self._line_h(name, hits) + 1
         return h
+
+    def _cons_drawn(self, t, name, cols) -> bool:
+        """Whether a token's Constituents line is drawn as brackets over its lined-up words (idea 91)."""
+        if self._role(name) != "constituents" or self.view.edit_mode or not cols:
+            return False
+        from . import constituents_draw as cd
+        return cd.drawable(mx.cell_text(self.view.db, t, name), len(cols))
+
+    def _line_h(self, name, hits) -> int:
+        """A line's height in a cell: its font's, or the Constituents drawing's (the tallest of the
+        cell's tokens)."""
+        base = self._m(("h", name), lambda: QFontMetrics(self._font(name)).height())
+        if self._role(name) != "constituents" or self.view.edit_mode:
+            return base
+        from . import constituents_draw as cd
+        for _, t in hits:
+            cols = self._m(("cols", id(t)), lambda t=t: self._cols(t))
+            if self._cons_drawn(t, name, cols):
+                base = max(base, cd.height(mx.cell_text(self.view.db, t, name), self.small))
+        return base
 
     def cell_width(self, r, c, hits) -> int:
         widths = self.block_widths(r, c, hits)
@@ -421,7 +443,7 @@ class TokenCellDelegate(QStyledItemDelegate):
             if "drawing" in self.view.cell_fields:
                 y += self.draw_h + 4
             for name in self._lines():
-                h = QFontMetrics(self._font(name)).height()
+                h = self._line_h(name, hits)
                 out.append((n, name, QRect(int(x), int(y), int(w - SOUND_W) + 2, h)))
                 y += h + 1
             x += w + GAP
@@ -482,14 +504,21 @@ class TokenCellDelegate(QStyledItemDelegate):
             for name in self._lines():
                 font = self._font(name)
                 fm = QFontMetrics(font)
+                lh = self._line_h(name, hits)
                 text = self._text(t, name)
+                if self._cons_drawn(t, name, cols):      # brackets over the words (idea 91)
+                    from . import constituents_draw as cd
+                    cd.paint(painter, x, y, cols, mx.cell_text(db, t, name), self.small,
+                             theme.colour("text"), self.UNIT_GAP)
+                    y += lh + 1
+                    continue
                 if self.view.edit_mode:           # edit mode (Ctrl+E): each line shows as a box to type in
                     painter.setPen(QPen(theme.colour("faint"), 1))
                     painter.setBrush(Qt.NoBrush)
                     painter.drawRoundedRect(QRectF(x - 2, y, w - SOUND_W + 6, fm.height()), 3, 3)
                 painter.setFont(font)
                 painter.setPen(theme.colour("text") if text else theme.colour("faint"))
-                units = self._units(t, name) if self._aligned(name) else []
+                units = self._units(t, name) if self._aligned(name) and self._role(name) != "constituents" else []
                 if units:                         # word by word, under each other (idea 2)
                     ux = x
                     caps = conventions.small_caps_on(self._role(name))
@@ -501,7 +530,7 @@ class TokenCellDelegate(QStyledItemDelegate):
                     conventions.draw(painter, QRect(int(x), int(y), int(w) + 2, fm.height()),
                                      Qt.AlignLeft | Qt.AlignVCenter, text or "—", font,
                                      bool(text) and conventions.small_caps_on(self._role(name)))
-                y += fm.height() + 1
+                y += lh + 1
             draw_sound_mark(painter, x + w - SOUND_W + 2, rect.top() + PAD, state)
             x += w + GAP
         painter.restore()

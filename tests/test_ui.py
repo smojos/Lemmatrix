@@ -374,7 +374,7 @@ def test_settings_tabs_theme_and_pitch(win):
     from lemmatrix.ui.dialogs import PreferencesDialog
     dlg = PreferencesDialog(win, win.doc.db, win.prefs)
     tabs = dlg.findChild(QTabWidget)
-    assert [tabs.tabText(i) for i in range(tabs.count())] == ["General", "Sound", "Display", "Pitch", "Advanced"]
+    assert [tabs.tabText(i) for i in range(tabs.count())] == ["General", "Sound", "Display", "Pitch", "Typology", "Advanced"]
     dlg.theme.setCurrentIndex(dlg.theme.findData("dark"))
     dlg.accent.set_colour(theme.QColor("#2e9e44"))
     dlg.apply()
@@ -986,7 +986,7 @@ def test_tab_goes_round_the_token_fields_only(win):
     from PySide6.QtWidgets import QApplication
     dlg = TokenDialog(win, [Slot(win.doc.db.entry_by_ref("E001"), 0)], 0)
     dlg.show()
-    edits = list(dlg.edits.values())
+    edits = [e for e in dlg.edits.values() if e.isVisible()]     # not the fields behind a closed More (idea 91)
     edits[0].setFocus()
     dlg.activateWindow()
     QApplication.processEvents()

@@ -74,7 +74,7 @@ def test_labels_may_not_hold_template_or_file_name_characters():
 def test_new_databases_and_older_files_have_the_abbreviations(tmp_path):
     db = defaults.new_database()
     assert {f.role: f.abbr for f in db.settings.token_fields} == {
-        "phonetic": "pht", "phonemic": "phm", "morphemes": "mph", "pitch": "pch",
+        "phonetic": "pht", "phonemic": "phm", "morphemes": "mph", "constituents": "cns", "pitch": "pch",
         "translation": "trs", "comment": "com"}
     for f in db.settings.token_fields:
         f.abbr = ""

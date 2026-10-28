@@ -1844,7 +1844,8 @@ class MainWindow(QMainWindow):
 
     def _default_all_keys(self) -> list[str]:
         keys = ["ref", "lemma", "tags", "drawing"]
-        keys += ["f:" + f.name for f in self.doc.db.settings.token_fields]
+        keys += ["f:" + f.name for f in self.doc.db.settings.token_fields
+                 if f.role != "constituents"]   # hidden by default (idea 91)
         return keys + ["speaker", "date", "file"]
 
     def _setup_columns(self):
@@ -1991,9 +1992,18 @@ class MainWindow(QMainWindow):
         if (db.workspace_from_file or db.upgraded) and not db.load_notes:   # quietly, saving writes the new format
             self.doc.settings_changed()
         if getattr(db, "added_fields", None):     # a new core field (Stem type, 22 October): said quietly
-            self.statusBar().showMessage(
-                f"Added the new field {', '.join(db.added_fields)} (where a lemma comes from, with From). "
-                "It's empty; Settings → General can hide it.", 15000)
+            s = db.settings
+            stem = [t for t in db.added_fields if (f := s.entry_field("stem-type")) is not None and f.title == t]
+            cons = [t for t in db.added_fields if t not in stem]
+            said = []
+            if stem:
+                said.append(f"Added the new field {', '.join(stem)} (where a lemma comes from, with From). "
+                            "It's empty; Settings → General can hide it.")
+            if cons:                              # idea 91: hidden until shown, nothing to hide
+                said.append(f"Added the new token field {', '.join(cons)} (labelled brackets, written into "
+                            "TextGrids as the tier cns). It's empty and hidden until you show it in Configure "
+                            "view, cell or columns.")
+            self.statusBar().showMessage(" ".join(said), 15000)
         if getattr(db, "dropped_fields", None):   # format 15 (idea 87): said quietly
             self.statusBar().showMessage(
                 f"The {', '.join(db.dropped_fields)} field is gone: the EACW's clarifications now come from "
@@ -4209,6 +4219,10 @@ class MainWindow(QMainWindow):
             more = dlg.more_names()                  # the lemma dialogue's More arrow (idea 60): the workspace's
             if more != default_more(self.doc.db) or self.doc.ws.get(MORE_KEY, None) is not None:
                 self.doc.ws_set(MORE_KEY, more)
+            from .dialogs import TOKEN_MORE_KEY, default_token_more   # the token dialogue's (idea 91)
+            tmore = dlg.token_more_names()
+            if tmore != default_token_more(self.doc.db) or self.doc.ws.get(TOKEN_MORE_KEY, None) is not None:
+                self.doc.ws_set(TOKEN_MORE_KEY, tmore)
             if dlg.apply():
                 self.doc.undo.clear()             # renamed fields can't be undone safely
                 self._follow_field_renames(dlg.renames)
@@ -4431,7 +4445,11 @@ class MainWindow(QMainWindow):
                 self.notebook_dialog._show_history_ticks()
             if names_changed:
                 self._maybe_update_names()
-            if dlg.change_kind_requested:         # Settings → Pitch → Change the pitch kind…
+            from .. import pitchkind
+            new_kind = getattr(dlg, "kind_requested", None)   # Settings → Typology (idea 91)
+            if new_kind and new_kind != pitchkind.kind(self.doc.db):
+                self.convert_pitch_kind(new_kind)      # its own undo step, as from Edit → Metadata
+            elif dlg.change_kind_requested:       # Settings → Pitch → Change the pitch kind…
                 self.edit_metadata(focus="pitch kind")
 
     def apply_ipa_size(self):

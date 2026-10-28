@@ -95,5 +95,5 @@ def test_a_new_matrix_cell_shows_the_fields_in_josh_s_order():
     from lemmatrix import defaults, matrix as mx
     assert mx.DEFAULT_CELL == ["drawing", "Phonetic", "Phonemic", "Morphemes", "Translation", "Comment"]
     names = [f.name for f in defaults.new_database().settings.token_fields if f.name != "Pitch"]
-    assert names == ["Phonetic", "Phonemic", "Morphemes", "Translation", "Comment"]
+    assert names == ["Phonetic", "Phonemic", "Morphemes", "Constituents", "Translation", "Comment"]   # Constituents: hidden (idea 91)
     assert mx.MatrixConfig().cell == mx.DEFAULT_CELL

@@ -429,7 +429,7 @@ def test_tier_mapping_page_and_text_fields(win):
     db = win.doc.db
     dlg = ListsDialog(win, db, win.doc.notebook, TIERS)
     ed = dlg.tier_editor
-    assert [r.tier for r in ed.mapping().rules] == ["tx", "ge", "ft", "mb"] and ed.mapping().main == "tx"
+    assert [r.tier for r in ed.mapping().rules] == ["tx", "ge", "ft", "mb", "cns"] and ed.mapping().main == "tx"
     assert any(f.name == "Genre" for f, _ in dlg.field_lists)               # the genre list is edited here
     ed.table.item(3, 0).setText("mb@SP1")
     assert "@" in ed.problem()

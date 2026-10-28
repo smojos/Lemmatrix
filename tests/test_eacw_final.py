@@ -151,7 +151,7 @@ def test_a_hidden_items_reference_and_gloss(win, monkeypatch):
     dlg, asked = _entry_dialog(win, "I069f", "something else", [0], monkeypatch)
     assert "excision" in asked[0] and dlg._gloss_edit().text() == "excision"    # Make it excision
     e = dlg.new_entry("", "")
-    assert e.lists == {wl.CAWL: ["0936"]} and e.get("WordClass") == "NOUN"
+    assert e.lists == {wl.CAWL: ["0936"]} and e.get("WordClass") == "noun"   # the list's NOUN, as this database spells it
     dlg, asked = _entry_dialog(win, "A999", "excision", [0], monkeypatch)       # Use I069f
     assert "I069f" in asked[0] and dlg.ref.text() == "I069f"
     dlg, asked = _entry_dialog(win, "A999", "excision", [1], monkeypatch)       # Keep A999
@@ -171,7 +171,7 @@ def test_link_to_wordlists_fills_clarification_and_taxon(app, tmp_path, monkeypa
     monkeypatch.setattr(QInputDialog, "getItem", lambda *a, **k: (a[3][0], True))
     wordlist_dialogs.link_to_wordlists(w)
     d = w.doc.db
-    assert d.settings.entry_field(wl.TAXON) is not None and "DEM" in d.settings.word_classes()
+    assert d.settings.entry_field(wl.TAXON) is not None and "dem" in d.settings.word_classes()
     assert d.entry_by_ref("D009").get("Taxon") == "Capra hircus (Bovidae)"
     assert d.settings.entry_field(wl.CLARIFICATION) is None          # format 15: no field (idea 87)
     assert wl.clarification_for(d, d.entry_by_ref("J022a"), "en") == "Azadirachta indica"

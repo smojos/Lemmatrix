@@ -114,16 +114,16 @@ def test_a_new_database_on_the_eacw():
     assert (db.metadata.wordlist_items, db.metadata.wordlist_region) == (wl.BASE, wl.AFRICA)
     assert len(db.entries) == 2268                             # the base list, all of Africa
     e = db.entry_by_ref("C001f")
-    assert db.gloss(e) == "mother" and db.word_class(e) == "NOUN"
+    assert db.gloss(e) == "mother" and db.word_class(e) == "noun"
     assert e.lists == {wl.CAWL: ["0345"], wl.SWADESH: ["42"]}
     assert len(e.tokens) == 1 and not e.tokens[0].tags       # its citation token
     assert db.settings.ref_scheme != SEQUENCE                  # the A–V categories stay
     assert wl.numbers(db, e, wl.EACW) == ["C001f"]
     s = db.settings                                            # Clarification and Taxon, the list's classes
     assert s.entry_field(wl.CLARIFICATION) is None and s.entry_field(wl.TAXON).name == "Taxon"   # format 15
-    assert {"DEM", "CONJ", "INTERROG", "NEG", "PREP", "INTERJ"} <= set(s.word_classes())
+    assert {"dem", "conj", "interrog", "neg", "prep", "interj"} <= set(s.word_classes())
     assert db.entry_by_ref("D009").get("Taxon") == "Capra hircus (Bovidae)"
-    assert db.word_class(db.entry_by_ref("R3SGDPRX")) == "DEM"
+    assert db.word_class(db.entry_by_ref("R3SGDPRX")) == "dem"
     assert db.entry_by_ref("I069f") is None                    # hidden
     full = defaults.new_database(wl.EACW, wl.EXPANDED, "E")
     assert len(full.entries) == len(wl.version_items(wl.EXPANDED, "E"))
@@ -181,8 +181,8 @@ def test_a_cawl_database_glosses_and_word_classes():
     e = db.entry_by_ref("0345")
     assert e.lists == {wl.EACW: ["C001", "C001f"], wl.SWADESH: ["42"]}
     assert db.gloss(e) == "mother"            # the EACW's gloss until SIL allows the CAWL's own
-    assert db.word_class(e) == "NOUN"
-    assert db.word_class(db.entry_by_ref("0140")) == "VERB"     # eat
+    assert db.word_class(e) == "noun"
+    assert db.word_class(db.entry_by_ref("0140")) == "verb"     # eat
     assert all(not set(x.file_gloss) & set('/\\:*?"<>|') for x in db.entries)
 
 

@@ -266,7 +266,12 @@ class LinesView(WheelZoom, QAbstractScrollArea):
     def _font(self, spec: FieldSpec) -> QFont:
         return self.ipa if spec.ipa else self.plain
 
-    def _row_h(self, spec: FieldSpec) -> int:
+    def _row_h(self, spec: FieldSpec, line=None) -> int:
+        if spec.role == "constituents" and line is not None and not self.edit_mode:
+            from . import constituents_draw as cd    # brackets drawn over the words (idea 91)
+            text = self.value(line, spec.key)
+            if text.strip():
+                return max(QFontMetrics(self.plain).height() + ROW_EXTRA, cd.height(text, self.plain) + 2)
         return QFontMetrics(self._font(spec)).height() + ROW_EXTRA
 
     def _role(self, spec: FieldSpec) -> str:
@@ -290,7 +295,7 @@ class LinesView(WheelZoom, QAbstractScrollArea):
     def _cell(self, line, y: int) -> _Cell:
         rows, cols, top = [], [], PAD
         width = 0
-        aligned = [s for s in self.fields if s.aligned]
+        aligned = [s for s in self.fields if s.aligned and s.role != "constituents"]
         for s in aligned:                         # the aligned columns: the widest unit in each
             for i, u in enumerate(self._units(line, s)):
                 w = self._w(s, u) + GAP
@@ -299,10 +304,12 @@ class LinesView(WheelZoom, QAbstractScrollArea):
                 else:
                     cols.append(w)
         for s in self.fields:
-            h = self._row_h(s)
+            h = self._row_h(s, line)
             rows.append((s, top, h))
             top += h
-            if s.aligned:
+            if s.role == "constituents":          # drawn over the columns, or as typed
+                width = max(width, sum(cols), self._w(s, self.value(line, s.key)) if not cols else 0)
+            elif s.aligned:
                 width = max(width, sum(cols))
             else:
                 width = max(width, self._w(s, self._display(line, s)))
@@ -539,6 +546,16 @@ class LinesView(WheelZoom, QAbstractScrollArea):
             self.viewport().update()
 
     # ---- painting ----------------------------------------------------------------------
+    def _paint_constituents(self, p, ln, s, c, x0, y, rh, text_colour) -> bool:
+        """The Constituents line as brackets over the lined-up words (idea 91); False when there
+        are no lined-up words to draw over (it is then shown as typed)."""
+        from . import constituents_draw as cd
+        value = self.value(ln, s.key)
+        if not value.strip() or not cd.drawable(value, len(c.cols)):
+            return False
+        cd.paint(p, x0, y + 1, c.cols, value, self.plain, text_colour, GAP)
+        return True
+
     def paintEvent(self, event):
         p = QPainter(self.viewport())
         p.setRenderHint(QPainter.Antialiasing)
@@ -577,7 +594,10 @@ class LinesView(WheelZoom, QAbstractScrollArea):
                             p.fillRect(QRectF(spans[a][0] - vx - 2, y + 2, spans[b][1] - spans[a][0] + 4, rh - 4),
                                        theme.mix(base, accent, 0.40))
                 p.setFont(self._font(s))
-                if s.aligned:
+                if s.role == "constituents" and not self.edit_mode and \
+                        self._paint_constituents(p, ln, s, c, x0, y, rh, text):
+                    pass
+                elif s.aligned and s.role != "constituents":
                     x = x0
                     p.setPen(text)
                     fm = p.fontMetrics()

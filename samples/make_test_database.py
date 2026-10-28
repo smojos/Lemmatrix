@@ -217,7 +217,7 @@ def main(out: Path):
         for gloss in words.split():
             s, n = fresh_stem()
             tn = tone(n)
-            e = entry(item_ref(gloss, letter, False), s, gloss, "NOUN", rng.choice(["LH", "HL", "L", "H"]))
+            e = entry(item_ref(gloss, letter, False), s, gloss, "noun", rng.choice(["LH", "HL", "L", "H"]))
             if rng.random() < 0.15:
                 e.set("InflectionClass", rng.choice(["I", "II", "III"]))
             add(e, [], s, " ".join(tn), gloss)
@@ -240,7 +240,7 @@ def main(out: Path):
     def verb(gloss, transitive):
         s, n = fresh_stem()
         tn = " ".join(tone(n))
-        e = entry(item_ref(gloss, "V", True), s, gloss, "VERB", rng.choice(["H", "L", "HL"]))
+        e = entry(item_ref(gloss, "V", True), s, gloss, "verb", rng.choice(["H", "L", "HL"]))
         add(e, [], s, tn, gloss)
         role = "A" if transitive else "S"
         for p, (sp, st, sg) in SUBJ.items():
@@ -291,15 +291,15 @@ def main(out: Path):
         add(e, ["utterance-final"], s, tn, gloss + " (final)")
 
     for g in ADJECTIVES:
-        simple(item_ref(g, "P", False), g, "ADJECTIVE")
+        simple(item_ref(g, "P", False), g, "adjective")
     for g in ADVERBS:
-        simple(item_ref(g, "N", False), g, "ADVERB")
+        simple(item_ref(g, "N", False), g, "adverb")
     for ref, g in PRONOUNS:
-        simple(ref, g, "PRONOUN")
+        simple(ref, g, "pronoun")
     for ref, g in QUANTIFIERS:
-        simple(ref, g, "QUANT")
+        simple(ref, g, "quant")
     for g in OTHER_QUANTIFIERS:
-        simple(item_ref(g, "O", False), g, "QUANT")
+        simple(item_ref(g, "O", False), g, "quant")
 
     wl.link_as_eacw(db)
     n_entries = len(db.entries)

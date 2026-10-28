@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<database format="15">
+<database format="16">
   <metadata>
     <language code="LXX">Sample language</language>
     <variety code="VXX">Sample variety</variety>
     <typology>
       <feature id="tone" value="tonal" />
+      <feature id="morphology" value="unspecified" />
+      <feature id="order" value="unspecified" />
     </typology>
     <name>Sample</name>
     <author>Joshua J Alexander</author>
@@ -35,18 +37,18 @@
       <field name="Lemma" role="lemma" />
       <field name="Gloss" role="gloss" />
       <field name="WordClass" label="Word Class" role="word-class" closed="yes">
-        <item name="NOUN" />
-        <item name="VERB" />
-        <item name="PRONOUN" />
-        <item name="QUANT" />
-        <item name="ADJECTIVE" />
-        <item name="ADVERB" />
-        <item name="PREP" />
-        <item name="INTERJ" />
-        <item name="NEG" />
-        <item name="CONJ" />
-        <item name="DEM" />
-        <item name="INTERROG" />
+        <item name="noun" abbr="N" />
+        <item name="verb" abbr="V" />
+        <item name="pronoun" abbr="PRO" />
+        <item name="quant" abbr="QUANT" />
+        <item name="adjective" abbr="ADJ" />
+        <item name="adverb" abbr="ADV" />
+        <item name="prep" abbr="PREP" />
+        <item name="interj" abbr="INTERJ" />
+        <item name="neg" abbr="NEG" />
+        <item name="conj" abbr="CONJ" />
+        <item name="dem" abbr="DEM" />
+        <item name="interrog" abbr="INTERROG" />
       </field>
       <field name="StemType" label="Stem type" role="stem-type" closed="yes">
         <item name="simple" />
@@ -76,6 +78,7 @@
       <field name="Phonetic" role="phonetic" abbr="pht" />
       <field name="Phonemic" role="phonemic" abbr="phm" />
       <field name="Morphemes" role="morphemes" abbr="mph" />
+      <field name="Constituents" role="constituents" abbr="cns" />
       <field name="Pitch" role="pitch" abbr="pch" />
       <field name="Translation" role="translation" abbr="trs" />
       <field name="Comment" role="comment" abbr="com" />
@@ -113,10 +116,32 @@
       <tier name="ge" field="Morphemes" />
       <tier name="ft" field="Translation" lang="en" />
       <tier name="mb" field="" />
+      <tier name="cns" field="Constituents" />
     </tier-mapping>
+    <constituent-labels>
+      <item name="Relations">
+        <item name="intransitive subject" abbr="S" />
+        <item name="transitive subject" abbr="A" />
+        <item name="transitive object" abbr="O" />
+        <item name="verb" abbr="V" />
+        <item name="oblique" abbr="OBL" />
+      </item>
+      <item name="Phrases">
+        <item name="noun phrase" abbr="NP" />
+        <item name="verb phrase" abbr="VP" />
+        <item name="adpositional phrase" abbr="PP" />
+        <item name="adjective phrase" abbr="AP" />
+        <item name="adverb phrase" abbr="ADVP" />
+        <item name="complementizer phrase" abbr="CP" />
+      </item>
+      <item name="Topic and focus">
+        <item name="topic" abbr="TOP" />
+        <item name="focus" abbr="FOC" />
+      </item>
+    </constituent-labels>
     <glosses languages="en" primary="en" />
     <tag-structure>
-      <group name="Nominal" usual="NOUN">
+      <group name="Nominal" usual="noun">
         <group name="Number">
           <tag name="Singular" default="yes" />
           <tag name="Plural" code="PL" />
@@ -139,7 +164,7 @@
           <tag name="3PL.POSS" code="3PL.POSS" />
         </group>
       </group>
-      <group name="Verbal" usual="VERB">
+      <group name="Verbal" usual="verb">
         <group name="Subject">
           <tag name="1SG.A" code="1SG.A" />
           <tag name="1SG.S" code="1SG.S" />
@@ -258,7 +283,7 @@
   <entry ref="A009" file-gloss="head" id="f52dc98aa2" cawl="0003" swadesh="72">
     <Lemma>tʊ́ʊm</Lemma>
     <Gloss lang="en">head</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -378,7 +403,7 @@
   <entry ref="A015" file-gloss="eye" id="b9d2c3a822" cawl="0006" swadesh="74">
     <Lemma>ɲɪ̀n</Lemma>
     <Gloss lang="en">eye</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -498,7 +523,7 @@
   <entry ref="A031" file-gloss="mouth" id="900531aa23" cawl="0015" swadesh="76">
     <Lemma>ɓʌ̄ŋ</Lemma>
     <Gloss lang="en">mouth</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <InflectionClass>I</InflectionClass>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_A031_mouth.wav" id="5c39730aad">
@@ -618,7 +643,7 @@
   <entry ref="A035" file-gloss="tooth" id="8d5a0dca35" cawl="0018" swadesh="77">
     <Lemma>cɔ́kà</Lemma>
     <Gloss lang="en">tooth</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>HL</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -738,7 +763,7 @@
   <entry ref="A094" file-gloss="hand" id="911d07615d" cawl="0056" swadesh="83">
     <Lemma>dàmbɛ́</Lemma>
     <Gloss lang="en">hand</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>LH</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -858,7 +883,7 @@
   <entry ref="A130" file-gloss="foot" id="8af31d576c" cawl="0070" swadesh="80">
     <Lemma>pʰúrʊ̀</Lemma>
     <Gloss lang="en">foot</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>HL</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -978,7 +1003,7 @@
   <entry ref="B001" file-gloss="person" id="a1959efc1b" cawl="0326" swadesh="38">
     <Lemma>ʔɪ́ɪn</Lemma>
     <Gloss lang="en">person</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -1098,7 +1123,7 @@
   <entry ref="B001f" file-gloss="woman" id="48d6aa278e" cawl="0329" swadesh="36">
     <Lemma>dɛ̄nzɪ́</Lemma>
     <Gloss lang="en">woman</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <InflectionClass>II</InflectionClass>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_B001f_woman.wav" id="67d9b6755f">
@@ -1217,7 +1242,7 @@
   <entry ref="B001m" file-gloss="man" id="1ce20abc26" cawl="0328" swadesh="37">
     <Lemma>gàanà</Lemma>
     <Gloss lang="en">man</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -1337,7 +1362,7 @@
   <entry ref="B004" file-gloss="child" id="bf1b31812e" cawl="0334" swadesh="39">
     <Lemma>tʰʊ̀ŋ</Lemma>
     <Gloss lang="en">child</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -1457,7 +1482,7 @@
   <entry ref="C001f" file-gloss="mother" id="3a0c5efb9e" cawl="0345" swadesh="42">
     <Lemma>mʌ̀ʌ</Lemma>
     <Gloss lang="en">mother</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -1577,7 +1602,7 @@
   <entry ref="C001m" file-gloss="father" id="5f4533d0d7" cawl="0344" swadesh="43">
     <Lemma>βɔ́ɔ</Lemma>
     <Gloss lang="en">father</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -1697,7 +1722,7 @@
   <entry ref="D009" file-gloss="goat" id="f788fc94c3" cawl="0965">
     <Lemma>dʌ́ʌm</Lemma>
     <Gloss lang="en">goat</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -1818,7 +1843,7 @@
   <entry ref="D011" file-gloss="sheep" id="b8f6b8850b" cawl="0969">
     <Lemma>pɛ́ɛ</Lemma>
     <Gloss lang="en">sheep</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -1939,7 +1964,7 @@
   <entry ref="D014f" file-gloss="cow" id="71c173856d" cawl="0960">
     <Lemma>ŋʊ̀ʊŋ</Lemma>
     <Gloss lang="en">cow</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -2060,7 +2085,7 @@
   <entry ref="D026" file-gloss="milk" id="8416e8d900" cawl="0585">
     <Lemma>cʰʌ̀ʌ</Lemma>
     <Gloss lang="en">milk</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -2180,7 +2205,7 @@
   <entry ref="D034" file-gloss="dog" id="a383dd4d2c" cawl="0991" swadesh="47">
     <Lemma>ɟɪ̀ŋ</Lemma>
     <Gloss lang="en">dog</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -2301,7 +2326,7 @@
   <entry ref="D072" file-gloss="elephant" id="43743e11b0" cawl="0995">
     <Lemma>ʃɔ̀mbɔ́rɔ̀</Lemma>
     <Gloss lang="en">elephant</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <InflectionClass>II</InflectionClass>
     <Taxon>Elephantidae</Taxon>
@@ -2421,7 +2446,7 @@
   <entry ref="D102" file-gloss="lion" id="f11e33b95a" cawl="1025">
     <Lemma>ŋɔ́ɔɲ</Lemma>
     <Gloss lang="en">lion</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -2542,7 +2567,7 @@
   <entry ref="E019" file-gloss="ostrich" id="9b0921717e" cawl="1053">
     <Lemma>ɓʊ̀ʊndʊ́</Lemma>
     <Gloss lang="en">ostrich</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>LH</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -2663,7 +2688,7 @@
   <entry ref="E132" file-gloss="duck" id="5322bf6ffb">
     <Lemma>kʊ́kʊ̀</Lemma>
     <Gloss lang="en">duck</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>HL</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -2783,7 +2808,7 @@
   <entry ref="E133" file-gloss="eagle" id="da8b6b2cf7">
     <Lemma>ɗɪ́ꜜɗɪ́</Lemma>
     <Gloss lang="en">eagle</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -2903,7 +2928,7 @@
   <entry ref="F001" file-gloss="fish" id="ed5c390a03" cawl="1083" swadesh="45">
     <Lemma>ɲɛ́ɛm</Lemma>
     <Gloss lang="en">fish</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -3024,7 +3049,7 @@
   <entry ref="F002" file-gloss="catfish" id="607a90f9e3" cawl="1084">
     <Lemma>kʰʌ̀nt̪ʌ́</Lemma>
     <Gloss lang="en">catfish</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>LH</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -3145,7 +3170,7 @@
   <entry ref="G001" file-gloss="snake" id="f6e9d1e85b" cawl="1095" swadesh="49">
     <Lemma>t͡sɔ́ɔ</Lemma>
     <Gloss lang="en">snake</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -3266,7 +3291,7 @@
   <entry ref="G015" file-gloss="crocodile" id="e5f99a69c9" cawl="1105">
     <Lemma>ŋàŋkáꜜrá</Lemma>
     <Gloss lang="en">crocodile</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>LH</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -3387,7 +3412,7 @@
   <entry ref="G032" file-gloss="frog" id="eba3c1dd2c">
     <Lemma>ɓɛ̀ɓɛ̄</Lemma>
     <Gloss lang="en">frog</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <InflectionClass>II</InflectionClass>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_G032_frog.wav" id="6833c5fe0e">
@@ -3506,7 +3531,7 @@
   <entry ref="H003" file-gloss="bee" id="d299e1a9cd" cawl="1143">
     <Lemma>dɔ́ŋ</Lemma>
     <Gloss lang="en">bee</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -3627,7 +3652,7 @@
   <entry ref="H008" file-gloss="honey" id="ab390b276c" cawl="1156">
     <Lemma>ʃáꜜsá</Lemma>
     <Gloss lang="en">honey</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -3747,7 +3772,7 @@
   <entry ref="H017" file-gloss="termite" id="11351c429a" cawl="1126">
     <Lemma>zʌ̀mbʌ̀</Lemma>
     <Gloss lang="en">termite</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -3868,7 +3893,7 @@
   <entry ref="H019" file-gloss="fly" id="fcfaa5bf46" cawl="1141">
     <Lemma>ʃɪ̀ɪn</Lemma>
     <Gloss lang="en">fly</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -3989,7 +4014,7 @@
   <entry ref="I086" file-gloss="god" id="7635253684">
     <Lemma>jʊ́ʊ</Lemma>
     <Gloss lang="en">god</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -4109,7 +4134,7 @@
   <entry ref="J001" file-gloss="tree" id="869b92f609" cawl="1158" swadesh="51">
     <Lemma>jɛ́ɛn</Lemma>
     <Gloss lang="en">tree</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -4229,7 +4254,7 @@
   <entry ref="J011" file-gloss="leaf" id="897b21ba7f" cawl="1177" swadesh="56">
     <Lemma>pàlàtá</Lemma>
     <Gloss lang="en">leaf</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>LH</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -4349,7 +4374,7 @@
   <entry ref="J065" file-gloss="sorghum" id="c392669423" cawl="1234 1235">
     <Lemma>d͡zàmá</Lemma>
     <Gloss lang="en">sorghum</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>LH</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -4470,7 +4495,7 @@
   <entry ref="J112" file-gloss="food" id="bc1dc1b9b7" cawl="0569">
     <Lemma>kʊ́ndɛ̀</Lemma>
     <Gloss lang="en">food</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>HL</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -4590,7 +4615,7 @@
   <entry ref="J132" file-gloss="meat" id="9d9500df05">
     <Lemma>rɪ̀ɪŋ</Lemma>
     <Gloss lang="en">meat</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -4710,7 +4735,7 @@
   <entry ref="K002" file-gloss="house" id="8d54f6675f" cawl="0662">
     <Lemma>kʊ̀ʊn</Lemma>
     <Gloss lang="en">house</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -4830,7 +4855,7 @@
   <entry ref="K068" file-gloss="pot" id="13aa509410" cawl="0612">
     <Lemma>dɪ́ɪɗɪ̀</Lemma>
     <Gloss lang="en">pot</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>HL</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -4950,7 +4975,7 @@
   <entry ref="K116" file-gloss="knife" id="f26846f940" cawl="0786">
     <Lemma>t͡sɪ̀mpɪ́</Lemma>
     <Gloss lang="en">knife</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>LH</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -5070,7 +5095,7 @@
   <entry ref="K122" file-gloss="rope" id="139a3c8517" cawl="0653" swadesh="61">
     <Lemma>lʊ́ŋgʊ̀</Lemma>
     <Gloss lang="en">rope</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>HL</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -5190,7 +5215,7 @@
   <entry ref="K139" file-gloss="spear" id="cf567e7d21" cawl="0785">
     <Lemma>bɛ̄ɛŋ</Lemma>
     <Gloss lang="en">spear</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <InflectionClass>I</InflectionClass>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_K139_spear.wav" id="c883307a0e">
@@ -5309,7 +5334,7 @@
   <entry ref="K220" file-gloss="basket" id="1477ffe39a">
     <Lemma>ʃɛ̀nzɛ̀</Lemma>
     <Gloss lang="en">basket</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -5429,7 +5454,7 @@
   <entry ref="L002" file-gloss="sun" id="6eab300b6d" cawl="1317" swadesh="147">
     <Lemma>cɔ̀ɔŋ</Lemma>
     <Gloss lang="en">sun</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -5549,7 +5574,7 @@
   <entry ref="L005" file-gloss="moon" id="9aff467ec8" cawl="1318" swadesh="148">
     <Lemma>pʼɛ̄ɛ</Lemma>
     <Gloss lang="en">moon</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <InflectionClass>II</InflectionClass>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_L005_moon.wav" id="eaf27aeb07">
@@ -5668,7 +5693,7 @@
   <entry ref="L036" file-gloss="rain" id="559191d0f9" cawl="1335" swadesh="151">
     <Lemma>ɓʊ́ʊ</Lemma>
     <Gloss lang="en">rain</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -5788,7 +5813,7 @@
   <entry ref="L055" file-gloss="fire" id="4496613ffc" cawl="1305" swadesh="167">
     <Lemma>d̪ɔ́ɔɲ</Lemma>
     <Gloss lang="en">fire</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -5908,7 +5933,7 @@
   <entry ref="L062" file-gloss="water" id="7de5390dc3" cawl="1284" swadesh="150">
     <Lemma>ɲʊ́ʊ̀</Lemma>
     <Gloss lang="en">water</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>HL</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -6028,7 +6053,7 @@
   <entry ref="L063" file-gloss="river" id="b5cf708fda" cawl="1293" swadesh="152">
     <Lemma>wɔ̄ɔn</Lemma>
     <Gloss lang="en">river</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <InflectionClass>I</InflectionClass>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_L063_river.wav" id="b06c42dc8d">
@@ -6147,7 +6172,7 @@
   <entry ref="L096" file-gloss="stone" id="bc5f6504a3" cawl="1272" swadesh="156">
     <Lemma>kɔ̀ɔlɔ́</Lemma>
     <Gloss lang="en">stone</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <ToneClass>LH</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -6267,7 +6292,7 @@
   <entry ref="N029" file-gloss="today" id="100e0e7089" cawl="1370">
     <Lemma>ɲàmá</Lemma>
     <Gloss lang="en">today</Gloss>
-    <WordClass>ADVERB</WordClass>
+    <WordClass>adverb</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_N029_today.wav" id="664b7002d4">
       <Phonetic>ɲamã</Phonetic>
@@ -6280,7 +6305,7 @@
   <entry ref="P001" file-gloss="big" id="b735a457cb" cawl="1507" swadesh="27">
     <Lemma>dʊ́ŋ</Lemma>
     <Gloss lang="en">big</Gloss>
-    <WordClass>ADJECTIVE</WordClass>
+    <WordClass>adjective</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_P001_big.wav" id="8f38120ec0">
       <Phonetic>dʊŋ</Phonetic>
@@ -6293,7 +6318,7 @@
   <entry ref="P002" file-gloss="small" id="4aa5c8fbb9" cawl="1509" swadesh="32">
     <Lemma>cɪ̀cɪ̀</Lemma>
     <Gloss lang="en">small</Gloss>
-    <WordClass>ADJECTIVE</WordClass>
+    <WordClass>adjective</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_P002_small.wav" id="de047512d4">
       <Phonetic>cɪcɪ</Phonetic>
@@ -6306,7 +6331,7 @@
   <entry ref="P004" file-gloss="short" id="19dc4e3bec" cawl="1515" swadesh="33">
     <Lemma>kʊ́tʊ́</Lemma>
     <Gloss lang="en">short</Gloss>
-    <WordClass>ADJECTIVE</WordClass>
+    <WordClass>adjective</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_P004_short.wav" id="9b9bebb591">
       <Phonetic>kʷʊtʊ</Phonetic>
@@ -6319,7 +6344,7 @@
   <entry ref="P055" file-gloss="hot" id="c628b957bd" cawl="1552" swadesh="180">
     <Lemma>ʃʊ́ʊ</Lemma>
     <Gloss lang="en">hot</Gloss>
-    <WordClass>ADJECTIVE</WordClass>
+    <WordClass>adjective</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_P055_hot.wav" id="0656ea1bb7">
       <Phonetic>ʃʊː</Phonetic>
@@ -6332,7 +6357,7 @@
   <entry ref="P064" file-gloss="red" id="146505da0f" cawl="1557" swadesh="172">
     <Lemma>mɔ̄ɔɲ</Lemma>
     <Gloss lang="en">red</Gloss>
-    <WordClass>ADJECTIVE</WordClass>
+    <WordClass>adjective</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_P064_red.wav" id="052833d757">
       <Phonetic>mɔːɲ</Phonetic>
@@ -6345,7 +6370,7 @@
   <entry ref="P065" file-gloss="black" id="f89e4f305f" cawl="1556" swadesh="176">
     <Lemma>d̪ʊ̀ʊ</Lemma>
     <Gloss lang="en">black</Gloss>
-    <WordClass>ADJECTIVE</WordClass>
+    <WordClass>adjective</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_P065_black.wav" id="4680f4c9be">
       <Phonetic>d̪ʊː</Phonetic>
@@ -6358,7 +6383,7 @@
   <entry ref="P066" file-gloss="white" id="c1a741cd7f" cawl="1555" swadesh="175">
     <Lemma>pɛ̀pɛ́</Lemma>
     <Gloss lang="en">white</Gloss>
-    <WordClass>ADJECTIVE</WordClass>
+    <WordClass>adjective</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_P066_white.wav" id="176aa2014f">
       <Phonetic>pɛpɛ</Phonetic>
@@ -6371,7 +6396,7 @@
   <entry ref="P145" file-gloss="good" id="111e43713e" cawl="1576" swadesh="185">
     <Lemma>ɲɛ̄ɛ</Lemma>
     <Gloss lang="en">good</Gloss>
-    <WordClass>ADJECTIVE</WordClass>
+    <WordClass>adjective</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_P145_good.wav" id="64661c81ae">
       <Phonetic>ɲɛ̃ː</Phonetic>
@@ -6384,7 +6409,7 @@
   <entry ref="P146" file-gloss="bad" id="cd3b1047db" cawl="1577" swadesh="186">
     <Lemma>kʼʌ̀ʌn</Lemma>
     <Gloss lang="en">bad</Gloss>
-    <WordClass>ADJECTIVE</WordClass>
+    <WordClass>adjective</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_P146_bad.wav" id="1e588b9b7b">
       <Phonetic>kʼʌ̰ːn</Phonetic>
@@ -6397,7 +6422,7 @@
   <entry ref="P167" file-gloss="long" id="5984b10279">
     <Lemma>lʌ̀ʌŋgʌ́</Lemma>
     <Gloss lang="en">long</Gloss>
-    <WordClass>ADJECTIVE</WordClass>
+    <WordClass>adjective</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_P167_long.wav" id="f3aeff5995">
       <Phonetic>lʌːŋgʌ</Phonetic>
@@ -6410,7 +6435,7 @@
   <entry ref="Q001" file-gloss="one" id="ea808ba634" cawl="1590" swadesh="22">
     <Lemma>ʔɔ́n</Lemma>
     <Gloss lang="en">one</Gloss>
-    <WordClass>QUANT</WordClass>
+    <WordClass>quant</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_Q001_one.wav" id="9f1a0c1ea1">
       <Phonetic>ʔɔ̰n</Phonetic>
@@ -6423,7 +6448,7 @@
   <entry ref="Q002" file-gloss="two" id="adb1d34a41" cawl="1591" swadesh="23">
     <Lemma>ɓɪ̀ɪ</Lemma>
     <Gloss lang="en">two</Gloss>
-    <WordClass>QUANT</WordClass>
+    <WordClass>quant</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_Q002_two.wav" id="987b58a22f">
       <Phonetic>ɓɪ̰ː</Phonetic>
@@ -6436,7 +6461,7 @@
   <entry ref="Q003" file-gloss="three" id="5c57224c04" cawl="1592" swadesh="24">
     <Lemma>sàdɛ́</Lemma>
     <Gloss lang="en">three</Gloss>
-    <WordClass>QUANT</WordClass>
+    <WordClass>quant</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_Q003_three.wav" id="c35a9956d9">
       <Phonetic>sadɛ</Phonetic>
@@ -6449,7 +6474,7 @@
   <entry ref="Q004" file-gloss="four" id="7a57f03d66" cawl="1593" swadesh="25">
     <Lemma>ŋʊ̂ŋ</Lemma>
     <Gloss lang="en">four</Gloss>
-    <WordClass>QUANT</WordClass>
+    <WordClass>quant</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_Q004_four.wav" id="7053b35765">
       <Phonetic>ŋʊŋ</Phonetic>
@@ -6462,7 +6487,7 @@
   <entry ref="Q005" file-gloss="five" id="650bad931d" cawl="1594" swadesh="26">
     <Lemma>t̪ʰʌ́ʌn</Lemma>
     <Gloss lang="en">five</Gloss>
-    <WordClass>QUANT</WordClass>
+    <WordClass>quant</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_Q005_five.wav" id="b29016a3fc">
       <Phonetic>t̪ʰʌ̤ːn</Phonetic>
@@ -6475,7 +6500,7 @@
   <entry ref="Q006" file-gloss="six" id="69ec6d107d" cawl="1595">
     <Lemma>t̪ʰʌ́ʌn ʔɔ́n</Lemma>
     <Gloss lang="en">six</Gloss>
-    <WordClass>QUANT</WordClass>
+    <WordClass>quant</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_Q006_six.wav" id="8f4881271d">
       <Phonetic>t̪ʰʌ̤ːn ʔɔ̰n</Phonetic>
@@ -6488,7 +6513,7 @@
   <entry ref="Q007" file-gloss="seven" id="8865456ff4" cawl="1596">
     <Lemma>t̪ʰʌ́ʌn ɓɪ̀ɪ</Lemma>
     <Gloss lang="en">seven</Gloss>
-    <WordClass>QUANT</WordClass>
+    <WordClass>quant</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_Q007_seven.wav" id="fedd673c05">
       <Phonetic>t̪ʰʌ̤ːn ɓɪ̰ː</Phonetic>
@@ -6501,7 +6526,7 @@
   <entry ref="Q008" file-gloss="eight" id="72e2394396" cawl="1597">
     <Lemma>t̪ʰʌ́ʌn sàdɛ́</Lemma>
     <Gloss lang="en">eight</Gloss>
-    <WordClass>QUANT</WordClass>
+    <WordClass>quant</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_Q008_eight.wav" id="78fc051f24">
       <Phonetic>t̪ʰʌ̤ːn sadɛ</Phonetic>
@@ -6514,7 +6539,7 @@
   <entry ref="Q009" file-gloss="nine" id="fe46102acc" cawl="1598">
     <Lemma>t̪ʰʌ́ʌn ŋʊ̂ŋ</Lemma>
     <Gloss lang="en">nine</Gloss>
-    <WordClass>QUANT</WordClass>
+    <WordClass>quant</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_Q009_nine.wav" id="ba807280b5">
       <Phonetic>t̪ʰʌ̤ːn ŋʊŋ</Phonetic>
@@ -6527,7 +6552,7 @@
   <entry ref="Q010" file-gloss="ten" id="519df0305e" cawl="1599">
     <Lemma>ɟɔ̌</Lemma>
     <Gloss lang="en">ten</Gloss>
-    <WordClass>QUANT</WordClass>
+    <WordClass>quant</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_Q010_ten.wav" id="555f6522e1">
       <Phonetic>ɟɔ</Phonetic>
@@ -6540,7 +6565,7 @@
   <entry ref="R1SG" file-gloss="I" id="ab59e8f819" cawl="1648" swadesh="1">
     <Lemma>mɪ̀ɪ</Lemma>
     <Gloss lang="en">I</Gloss>
-    <WordClass>PRONOUN</WordClass>
+    <WordClass>pronoun</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_R1SG_I.wav" id="a5de825ae3">
       <Phonetic>mɪ̃ː</Phonetic>
@@ -6553,7 +6578,7 @@
   <entry ref="R1PL" file-gloss="we" id="6fac40703a" cawl="1651" swadesh="4">
     <Lemma>tʌ́ʌn</Lemma>
     <Gloss lang="en">we</Gloss>
-    <WordClass>PRONOUN</WordClass>
+    <WordClass>pronoun</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_R1PL_we.wav" id="67ae2aeb37">
       <Phonetic>tʌːn</Phonetic>
@@ -6566,7 +6591,7 @@
   <entry ref="R2SG" file-gloss="you (sg)" id="a1397a92ac" cawl="1649" swadesh="2">
     <Lemma>jɔ̀ɔ</Lemma>
     <Gloss lang="en">you (sg)</Gloss>
-    <WordClass>PRONOUN</WordClass>
+    <WordClass>pronoun</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_R2SG_you__sg_.wav" id="39be529513">
       <Phonetic>jɔː</Phonetic>
@@ -6579,7 +6604,7 @@
   <entry ref="R2PL" file-gloss="you (pl)" id="1f75ecb629" cawl="1652" swadesh="5">
     <Lemma>βʊ̄ʊ</Lemma>
     <Gloss lang="en">you (pl)</Gloss>
-    <WordClass>PRONOUN</WordClass>
+    <WordClass>pronoun</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_R2PL_you__pl_.wav" id="da98b2c670">
       <Phonetic>βʊː</Phonetic>
@@ -6592,7 +6617,7 @@
   <entry ref="R3SG" file-gloss="he" id="1c4cc65644" cawl="1650" swadesh="3">
     <Lemma>wɛ́ɛ</Lemma>
     <Gloss lang="en">he</Gloss>
-    <WordClass>PRONOUN</WordClass>
+    <WordClass>pronoun</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_R3SG_he.wav" id="4def38331f">
       <Phonetic>wɛː</Phonetic>
@@ -6605,7 +6630,7 @@
   <entry ref="R3PL" file-gloss="they" id="949bfc57ba" cawl="1653" swadesh="6">
     <Lemma>kɪ́ɪn</Lemma>
     <Gloss lang="en">they</Gloss>
-    <WordClass>PRONOUN</WordClass>
+    <WordClass>pronoun</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_R3PL_they.wav" id="e91122ecc0">
       <Phonetic>kʲɪːn</Phonetic>
@@ -6618,7 +6643,7 @@
   <entry ref="RLOCDPRX" file-gloss="here" id="b99528d7dd" cawl="1654" swadesh="9">
     <Lemma>dɛ̀ɛ́</Lemma>
     <Gloss lang="en">here</Gloss>
-    <WordClass>ADVERB</WordClass>
+    <WordClass>adverb</WordClass>
     <StemType>simple</StemType>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_RLOCDPRX_here.wav" id="a33bb787fe">
       <Phonetic>dɛː</Phonetic>
@@ -6631,7 +6656,7 @@
   <entry ref="V148" file-gloss="see" id="68b51b03af" cawl="0131" swadesh="101">
     <Lemma>ɲɔ̄ɔ</Lemma>
     <Gloss lang="en">see</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <InflectionClass>II</InflectionClass>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_V148_see.wav" id="31e16d34f7">
@@ -6715,7 +6740,7 @@
   <entry ref="V151" file-gloss="hear" id="8e48ffa5d4" cawl="0134" swadesh="102">
     <Lemma>pʰɪ̀ɪ</Lemma>
     <Gloss lang="en">hear</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -6800,7 +6825,7 @@
   <entry ref="V158" file-gloss="eat" id="9c439009bc" cawl="0140" swadesh="93">
     <Lemma>tʌ̄ŋ</Lemma>
     <Gloss lang="en">eat</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <InflectionClass>I</InflectionClass>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_V158_eat.wav" id="b9db736b89">
@@ -6884,7 +6909,7 @@
   <entry ref="V168" file-gloss="drink" id="2106df0caf" cawl="0149" swadesh="92">
     <Lemma>mʊ̀ʊn</Lemma>
     <Gloss lang="en">drink</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -6969,7 +6994,7 @@
   <entry ref="V170" file-gloss="hit" id="fb068fd033" cawl="1446" swadesh="113">
     <Lemma>pʼɪ́</Lemma>
     <Gloss lang="en">hit</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -7054,7 +7079,7 @@
   <entry ref="V192" file-gloss="kill" id="0e3a542618" cawl="0511" swadesh="110">
     <Lemma>rɛ̀ɛm</Lemma>
     <Gloss lang="en">kill</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -7139,7 +7164,7 @@
   <entry ref="V194" file-gloss="hold" id="961d5de04d" cawl="1426" swadesh="129">
     <Lemma>gʊ́ʊ</Lemma>
     <Gloss lang="en">hold</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -7224,7 +7249,7 @@
   <entry ref="V196" file-gloss="take" id="92047fd9cf" cawl="1422">
     <Lemma>jàn</Lemma>
     <Gloss lang="en">take</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -7309,7 +7334,7 @@
   <entry ref="V206" file-gloss="carry" id="9346f70d95" cawl="0859">
     <Lemma>ɓɛ́ɛŋ</Lemma>
     <Gloss lang="en">carry</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -7394,7 +7419,7 @@
   <entry ref="V226" file-gloss="find" id="da75f42ffa" cawl="1475">
     <Lemma>ɥɛ̂n</Lemma>
     <Gloss lang="en">find</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>HL</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -7479,7 +7504,7 @@
   <entry ref="V229" file-gloss="cut" id="03ffb8aef3" cawl="0592" swadesh="114">
     <Lemma>kʼɔ́tà</Lemma>
     <Gloss lang="en">cut</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>HL</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -7564,7 +7589,7 @@
   <entry ref="V262" file-gloss="wash" id="f3b1e9071f" cawl="0737" swadesh="132">
     <Lemma>t̪ɔ̀ɔŋkɔ́</Lemma>
     <Gloss lang="en">wash</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>LH</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -7649,7 +7674,7 @@
   <entry ref="V284" file-gloss="cook" id="b1903d47e5" cawl="0603">
     <Lemma>t͡sʊ̀mbà</Lemma>
     <Gloss lang="en">cook</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -7734,7 +7759,7 @@
   <entry ref="V296" file-gloss="build" id="4199ab1731" cawl="0685">
     <Lemma>ɟɛ̀ɛ</Lemma>
     <Gloss lang="en">build</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>L</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -7819,7 +7844,7 @@
   <entry ref="V322" file-gloss="plant" id="f0e8badd06" cawl="0748">
     <Lemma>sɪ̀ndʊ́</Lemma>
     <Gloss lang="en">plant</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>LH</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -7904,7 +7929,7 @@
   <entry ref="V347" file-gloss="catch" id="613020210a" cawl="1424">
     <Lemma>ŋɪ́mbɪ̀</Lemma>
     <Gloss lang="en">catch</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>HL</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -7989,7 +8014,7 @@
   <entry ref="V395" file-gloss="sell" id="acdb10558c" cawl="0821">
     <Lemma>cʼàlàmá</Lemma>
     <Gloss lang="en">sell</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>LH</ToneClass>
     <InflectionClass>II</InflectionClass>
@@ -8074,7 +8099,7 @@
   <entry ref="V404" file-gloss="know" id="95933b6ad6" cawl="0255" swadesh="103">
     <Lemma>d͡zɪ́ɪn</Lemma>
     <Gloss lang="en">know</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>H</ToneClass>
     <InflectionClass>I</InflectionClass>
@@ -8159,7 +8184,7 @@
   <entry ref="V452" file-gloss="call" id="512ef49aec" cawl="0444">
     <Lemma>lɔ̄ɔlɛ̀</Lemma>
     <Gloss lang="en">call</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <InflectionClass>II</InflectionClass>
     <token speaker="DML" collected="2026-10-20" file="LXX-VXX_V452_call.wav" id="febf240c5b">
@@ -8243,7 +8268,7 @@
   <entry ref="V550" file-gloss="throw" id="3963485ca8">
     <Lemma>βàdá</Lemma>
     <Gloss lang="en">throw</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <ToneClass>LH</ToneClass>
     <InflectionClass>II</InflectionClass>

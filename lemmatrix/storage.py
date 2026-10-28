@@ -20,13 +20,13 @@ from .model import (LEMMAS, TEXTS, UTTERANCES, ClipSource, Database, Entry, Fiel
                     Location, Metadata, Person, RefCategory, Settings, Support, Tag, TagStructure, Text,
                     Thanks, TierMapping, TierRule, Token, Utterance, is_utterance, new_id, nfc, write_atomically, xml_safe)
 
-FORMAT_VERSION = "15"
+FORMAT_VERSION = "16"
 WORDLIST_ATTRS = {"EACW": "eacw", "CAWL": "cawl", "SWADESH": "swadesh"}   # format 9 (idea 40)
 # Until version 1.0 the current format is read and the formats before it upgraded, from format 5 on
 # (Josh, 18 October 2026: no compatibility code for older formats; the upgrades are kept, 25 October,
 # so an older backup still opens, until v1 fixes the format). When the format changes, an upgrade
 # from the format before is written.
-READABLE = ("5", "6", "7", "8", "9", "10", "11", "12", "13", "14", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
+READABLE = ("5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", FORMAT_VERSION)   # 5: before texts; 6: before the workspace file;
 # 7: before researchers had the Identifiable? checkbox and both checkboxes were always written; 8: before the
 # comparative wordlists (format 9, 22 October: no base and no numbers yet, so nothing to change);
 # 9: before the <typology> block (format 10, 23 October: an older file is tonal, as every database was);
@@ -37,7 +37,10 @@ READABLE = ("5", "6", "7", "8", "9", "10", "11", "12", "13", "14", FORMAT_VERSIO
 # <characters> (format 14, 27 October: an older file is NFC, precomposed, as Lemmatrix always wrote);
 # 14: before the EACW's Clarification left the lemma fields and the shipped glosses' editions were
 # recorded (format 15, 27 October, IDEAS.md ideas 87 and 63: the Clarification field and its values
-# are dropped, read from the shipped edition instead; an older file has no <glosses>)
+# are dropped, read from the shipped edition instead; an older file has no <glosses>); 15: before the
+# Constituents tier (format 16, 28 October, IDEAS.md idea 91: the core token field Constituents
+# with its tier rule cns, the <constituent-labels> list, abbreviations on list items, and the
+# typology's morphology and order features, all added on opening, empty or unspecified)
 BACKUPS_KEPT = 10
 
 
@@ -60,7 +63,8 @@ def _bool(value: str | None, default: bool = False) -> bool:
 
 
 def _load_item(el) -> ListItem:
-    return ListItem(nfc(el.get("name", "")), [_load_item(c) for c in el.findall("item")])
+    return ListItem(nfc(el.get("name", "")), [_load_item(c) for c in el.findall("item")],
+                    nfc(el.get("abbr", "")))
 
 
 def _load_field(el) -> FieldDef:
@@ -94,7 +98,8 @@ def _load_tags(el) -> TagStructure:
 
 
 KNOWN_SETTINGS = {"entry-fields", "token-fields", "text-fields", "tier-mapping", "glosses", "tag-structure",
-                  "references", "sounds", "pitch", "playback", "display", "spelling", "characters"}
+                  "references", "sounds", "pitch", "playback", "display", "spelling", "characters",
+                  "constituent-labels"}
 
 # Format 14 (ideas 18 and 21, Josh, 27 October): how the transcriptions' characters are stored, written
 # so that a computer or a researcher reading the file knows (Josh): NFD, no precomposed characters in
@@ -194,6 +199,8 @@ def _load_settings(el) -> Settings:
     s.matrices = _load_matrices(el.find("display"))
     if (x := el.find("spelling")) is not None:
         s.spelling_words = [w for w in (nfc(_text(w)).strip() for w in x.findall("word")) if w]
+    if (x := el.find("constituent-labels")) is not None:        # format 16 (idea 91)
+        s.constituent_labels = [_load_item(i) for i in x.findall("item")]
     if (x := el.find("characters")) is not None:
         s.decomposed = (x.get("transcriptions") or "").upper() == "NFD"
     s.extra = [child for child in el if child.tag not in KNOWN_SETTINGS]
@@ -403,7 +410,8 @@ def load(path: str | os.PathLike) -> Database:
     restored = ensure_core_fields(db.settings, skip_roles=() if md.typology.get("tone") != "unspecified"
                                   else ("pitch",))       # an unspecified database has no Pitch (idea 9)
     from .model import NEW_ROLES
-    added = [f.title for f in db.settings.entry_fields if f.role in NEW_ROLES and f.title in restored]
+    added = [f.title for f in (*db.settings.entry_fields, *db.settings.token_fields)
+             if f.role in NEW_ROLES and f.title in restored]      # Stem type, Constituents (idea 91)
     restored = [t for t in restored if t not in added]
     if added:                            # quietly (a status-bar note), so saving writes it
         db.added_fields = added
@@ -424,12 +432,30 @@ def load(path: str | os.PathLike) -> Database:
         db.upgraded = True               # above; quietly, so saving writes the new format
     if version in READABLE[:READABLE.index("15")]:   # format 15 (idea 87): the Clarification leaves the fields
         _drop_clarification(db)
+    if version in READABLE[:READABLE.index("16")]:   # format 16 (idea 91): the Constituents tier
+        _upgrade_to_16(db)
     if db.settings.decomposed:           # format 14: anything precomposed (a file edited by hand) decomposed
         from .decompose import fix_database
         fix_database(db, "NFD")
     if repaired:
         db.load_notes = list(db.load_notes) + [REPAIRED_NOTE]
     return db
+
+
+def _upgrade_to_16(db: Database):
+    """Format 16 (IDEAS.md idea 91, Josh, 28 October): the Constituents field itself comes in as a
+    core field (ensure_core_fields, above); here its tier rule (cns, unless a rule already uses that
+    tier name), and the default Constituent labels. The Word Class list is left exactly as it is:
+    its labels are never written over (Josh: "that would annoy a researcher")."""
+    from . import constituents as cons
+    s = db.settings
+    f = s.token_field(cons.ROLE)
+    if f is not None and s.tier_mapping.rule(cons.TIER) is None and s.tier_mapping.rules:
+        from .model import TierRule
+        s.tier_mapping.rules.append(TierRule(cons.TIER, f.name))
+    if not s.constituent_labels:
+        s.constituent_labels = cons.default_labels()
+    db.upgraded = True
 
 
 def _upgrade_5_to_6(db: Database):
@@ -480,6 +506,8 @@ def _yes(b: bool) -> str:
 
 def _save_item(parent, item: ListItem):
     el = ET.SubElement(parent, "item", name=item.name)
+    if item.abbr:
+        el.set("abbr", item.abbr)
     for c in item.children:
         _save_item(el, c)
 
@@ -550,8 +578,12 @@ def to_element(db: Database) -> ET.Element:
         ET.SubElement(m, "variety", code=md.variety_code).text = md.variety_name or None
     # format 10 (ideas 9 and 56): typological features, right after the language, always written
     ty = ET.SubElement(m, "typology")
-    for fid, value in (md.typology or {"tone": "tonal"}).items():
-        ET.SubElement(ty, "feature", id=fid, value=value)
+    from . import typology as typ                 # format 16 (idea 91): morphology and order too, with WALS
+    for fid, value in typ.normalised(md.typology).items():
+        a = {"id": fid, "value": value}
+        if (w := typ.wals(fid, value)):
+            a["wals"] = w
+        ET.SubElement(ty, "feature", a)
     if md.name:
         ET.SubElement(m, "name").text = md.name
     if md.author:
@@ -620,6 +652,9 @@ def to_element(db: Database) -> ET.Element:
     ET.SubElement(st, "characters", {"transcriptions": form, "fields": ", ".join(names)}).text = \
         CHARACTERS_NOTE[form]
     _save_mapping(st, "tier-mapping", s.tier_mapping)
+    x = ET.SubElement(st, "constituent-labels")   # format 16 (idea 91): the Constituents tier's labels
+    for item in s.constituent_labels:
+        _save_item(x, item)
     ET.SubElement(st, "glosses", languages=" ".join(s.gloss_languages), primary=s.primary_gloss)
     x = ET.SubElement(st, "tag-structure")
     for g in s.tags.groups:

@@ -33,6 +33,7 @@ from .fields_dialog import ListEditor
 from .icons import icon
 
 TAGS = "tags"
+CONSTITUENTS = "constituents"                 # the Constituents tier's labels (idea 91)
 SYMBOLS = "symbols"                           # Σymbols in the right-click menus (kept in the workspace)
 CONFIDENCE = "confidence"                     # Cogitate's confidence levels (kept in the notebook)
 ORIGINAL = Qt.UserRole + 7                    # a row's code when the dialogue opened
@@ -669,6 +670,11 @@ class TierEditor(QWidget):
         return ""
 
 
+def _copy_items(items):
+    import copy
+    return copy.deepcopy(items)
+
+
 def _one_line(text: str, n: int = 80) -> str:
     text = " ".join((text or "").split())
     return text if len(text) <= n else text[:n] + "…"
@@ -744,7 +750,7 @@ class ListsDialog(QDialog):
             for f in fields:
                 if not f.closed:
                     continue
-                ed = ListEditor()
+                ed = ListEditor(abbrs=f.role == "word-class")   # word classes' abbreviations (idea 91)
                 ed.set_items(f.items)
                 self.field_lists.append((f, ed))
                 note = f"The values of the {kind} field {f.title}. Values can be nested."
@@ -752,9 +758,21 @@ class ListsDialog(QDialog):
                     self.class_list = ed
                     note += (" Tag groups can be marked as usual for word classes (under Tags); a class "
                              "includes those nested under it. Renaming a class renames it in the lemmas "
-                             "and the tag groups.")
+                             "and the tag groups. The abbreviations (N, V, ADJ…) are the Constituents "
+                             "tier's word-level labels.")
                 self._page(f"field:{f.name}", f.title, ed, note,
                            lambda f=f, ed=ed: self._reset_field(f, ed))
+
+        self._heading("Constituents")             # the Constituents tier's labels (idea 91, Josh, 28 October)
+        self.constituents = ListEditor(abbrs=True)
+        self.constituents.set_items(_copy_items(db.settings.constituent_labels))
+        self._page(CONSTITUENTS, "Constituent labels", self.constituents,
+                   "The labels of the Constituents tier, each a name and the abbreviation the tier writes "
+                   "(NP: noun phrase), in groups. The word-level labels are the Word Class list's "
+                   "abbreviations (Field lists → Word Class). A label no list has can still be typed; it is "
+                   "marked. Whether S groups with A or with O depends on the language's alignment "
+                   "(nominative–accusative, ergative–absolutive, split): for now they are plain labels.",
+                   self._reset_constituents)
 
         self._heading("Texts")
         self.tier_editor = TierEditor(db)
@@ -917,6 +935,25 @@ class ListsDialog(QDialog):
                     out.append(s)
         return out
 
+    def _reset_constituents(self):
+        from .. import constituents as cons
+        used = set()
+        f = self.db.settings.token_field(cons.ROLE)
+        if f is not None:
+            for _, t in self.db.all_tokens():
+                used.update(cons.parse(t.get(f.name)).labels())
+        current = self.constituents.items()
+        items, kept = resets.merge_items(cons.default_labels(), current, set())
+        have = {i.abbr or i.name for top in items for i in top.walk()}
+        lost = [i for top in current for i in top.walk() if i is not top and (i.abbr or i.name) in used
+                and (i.abbr or i.name) not in have]
+        if lost:                                  # labels in use are kept, under their group
+            items.append(ListItem("Kept", [ListItem(i.name, abbr=i.abbr) for i in lost]))
+            kept = list(kept) + [i.abbr or i.name for i in lost]
+        self.constituents.set_items(items)
+        self.constituents.changed()
+        return kept
+
     def _reset_tiers(self):
         self.tier_editor.load(defaults.tier_mapping())
         return []
@@ -1005,6 +1042,7 @@ class ListsDialog(QDialog):
             f.items = ed.items()
         self.db.settings.ref_categories = self.categories.categories()
         self.db.settings.tier_mapping = self.tier_editor.mapping()
+        self.db.settings.constituent_labels = self.constituents.items()
         self.confidence_changed = False
         if self.notebook is not None:             # Cogitate's levels: the notebook's, renames followed
             from .. import hypotheses as hy

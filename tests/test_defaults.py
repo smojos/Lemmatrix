@@ -42,7 +42,7 @@ def test_tag_structure():
                          "Aspect": "Perfective", "Mood": "Indicative", "Polarity": "Affirmative"}
     for g in (*nominal.groups, *verbal.groups):          # a default has no code: file names leave it out
         assert all(t.file_code() == "" for t in g.tags if t.default)
-    assert nominal.usual == ["NOUN"] and verbal.usual == ["VERB"]
+    assert nominal.usual == ["noun"] and verbal.usual == ["verb"]   # lower case since 28 October (idea 91)
 
 
 def test_lists_people_and_places():
