@@ -1844,7 +1844,8 @@ class MainWindow(QMainWindow):
 
     def _default_all_keys(self) -> list[str]:
         keys = ["ref", "lemma", "tags", "drawing"]
-        keys += ["f:" + f.name for f in self.doc.db.settings.token_fields]
+        keys += ["f:" + f.name for f in self.doc.db.settings.token_fields
+                 if f.role != "constituents"]   # hidden by default (idea 91)
         return keys + ["speaker", "date", "file"]
 
     def _setup_columns(self):
@@ -4209,6 +4210,10 @@ class MainWindow(QMainWindow):
             more = dlg.more_names()                  # the lemma dialogue's More arrow (idea 60): the workspace's
             if more != default_more(self.doc.db) or self.doc.ws.get(MORE_KEY, None) is not None:
                 self.doc.ws_set(MORE_KEY, more)
+            from .dialogs import TOKEN_MORE_KEY, default_token_more   # the token dialogue's (idea 91)
+            tmore = dlg.token_more_names()
+            if tmore != default_token_more(self.doc.db) or self.doc.ws.get(TOKEN_MORE_KEY, None) is not None:
+                self.doc.ws_set(TOKEN_MORE_KEY, tmore)
             if dlg.apply():
                 self.doc.undo.clear()             # renamed fields can't be undone safely
                 self._follow_field_renames(dlg.renames)
@@ -4431,7 +4436,11 @@ class MainWindow(QMainWindow):
                 self.notebook_dialog._show_history_ticks()
             if names_changed:
                 self._maybe_update_names()
-            if dlg.change_kind_requested:         # Settings → Pitch → Change the pitch kind…
+            from .. import pitchkind
+            new_kind = getattr(dlg, "kind_requested", None)   # Settings → Typology (idea 91)
+            if new_kind and new_kind != pitchkind.kind(self.doc.db):
+                self.convert_pitch_kind(new_kind)      # its own undo step, as from Edit → Metadata
+            elif dlg.change_kind_requested:       # Settings → Pitch → Change the pitch kind…
                 self.edit_metadata(focus="pitch kind")
 
     def apply_ipa_size(self):

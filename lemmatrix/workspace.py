@@ -209,7 +209,7 @@ def backup(db: Database):
 # in the grids whose columns mix fields with other things (All data, Utterances, texts, Bulk edit).
 FIELD_LISTS = {"lemma": ("columns/lemma", "columns/bulk-lemmas", "lemma_dialog/more"),
                "token": ("columns/alldata", "columns/utterances", "columns/bulk-tokens",
-                         "lines/fields", "lines/aligned"),
+                         "lines/fields", "lines/aligned", "token_dialog/more"),
                "text": ("columns/texts",)}
 
 

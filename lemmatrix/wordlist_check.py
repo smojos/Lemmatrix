@@ -245,7 +245,9 @@ def renumbering(db) -> Renumbering | None:
             after = after or e.copy()
             for role, value in (("word-class", item.word_class), (wl.TAXON, item.taxon)):
                 f = s.entry_field(role)
-                if f is not None and (role != "word-class" or value in s.word_classes()):
+                if role == "word-class":
+                    value = s.word_class_named(value)
+                if f is not None and value:
                     after.set(f.name, value)
         if after is not None:
             r.pairs.append((e, after))
@@ -409,9 +411,8 @@ def update_file(db, new_entry=None) -> tuple[int, list[str]]:
     findings = check(db, rn)
     if new_entry is None:
         def new_entry(item):
-            classes = set(db.settings.word_classes())
             e = db.new_entry(item.number, gloss=item.gloss,
-                             word_class=item.word_class if item.word_class in classes else "")
+                             word_class=db.settings.word_class_named(item.word_class))
             wl.fill_item(db, e, item)
             return e
     order, pairs, made = plan(db, findings, new_entry, rn)

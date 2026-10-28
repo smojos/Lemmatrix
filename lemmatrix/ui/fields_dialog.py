@@ -35,9 +35,10 @@ def _tool(name, tip, fn):
 
 
 class ListEditor(QWidget):
-    """Edit a closed field's (hierarchical) list."""
+    """Edit a closed field's (hierarchical) list. abbrs: a second column for each item's
+    abbreviation (the Word Class list and the Constituent labels: idea 91)."""
 
-    def __init__(self, parent=None, flat: bool = False):
+    def __init__(self, parent=None, flat: bool = False, abbrs: bool = False):
         super().__init__(parent)
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -55,13 +56,23 @@ class ListEditor(QWidget):
         head.addWidget(_tool("down", "Move down", lambda: self._shift(1)))
         lay.addLayout(head)
         self.tree = QTreeWidget()
-        self.tree.setHeaderHidden(True)
+        self.abbrs = abbrs
+        if abbrs:                                 # Name | Abbreviation, both edited in place
+            self.tree.setColumnCount(2)
+            self.tree.setHeaderLabels(["Name", "Abbreviation"])
+            self.tree.headerItem().setToolTip(1, "What the Constituents tier writes (all caps become small "
+                                                 "caps with /[β]/ on); double-click to edit")
+            self.tree.setColumnWidth(0, 260)
+        else:
+            self.tree.setHeaderHidden(True)
         self.tree.itemChanged.connect(lambda *a: self.changed())
         lay.addWidget(self.tree)
         self.changed = lambda: None
 
-    def _item(self, name, original: str = ""):
-        it = QTreeWidgetItem([name])
+    def _item(self, name, original: str = "", abbr: str = ""):
+        it = QTreeWidgetItem([name, abbr] if self.abbrs else [name])
+        if not self.abbrs and abbr:               # kept as it was where the column isn't shown
+            it.setData(0, Qt.UserRole + 1, abbr)
         it.setFlags(it.flags() | Qt.ItemIsEditable)
         if original:
             it.setData(0, Qt.UserRole, original)      # the value when the list was opened
@@ -72,7 +83,7 @@ class ListEditor(QWidget):
         self.tree.clear()
 
         def add(parent, node):
-            it = self._item(node.name, node.name)
+            it = self._item(node.name, node.name, getattr(node, "abbr", ""))
             if parent is None:
                 self.tree.addTopLevelItem(it)
             else:
@@ -86,7 +97,8 @@ class ListEditor(QWidget):
 
     def items(self) -> list[ListItem]:
         def read(it):
-            return ListItem(nfc(it.text(0).strip()), [read(it.child(i)) for i in range(it.childCount())])
+            return ListItem(nfc(it.text(0).strip()), [read(it.child(i)) for i in range(it.childCount())],
+                            nfc(it.text(1).strip()) if self.abbrs else (it.data(0, Qt.UserRole + 1) or ""))
         return [read(self.tree.topLevelItem(i)) for i in range(self.tree.topLevelItemCount())
                 if self.tree.topLevelItem(i).text(0).strip()]
 
@@ -169,6 +181,10 @@ class FieldsDialog(QDialog):
         under = more_fields(parent, db)              # the lemma dialogue's More arrow (idea 60)
         for f in self.lists["lemma"]:
             f._more = f.name in under
+        from .dialogs import token_more_fields      # the token and utterance dialogues' (idea 91)
+        tunder = token_more_fields(parent, db)
+        for f in self.lists["token"]:
+            f._more = f.name in tunder
         self.current: tuple[str, int] | None = None
 
         outer = QHBoxLayout(self)
@@ -310,9 +326,15 @@ class FieldsDialog(QDialog):
             w.blockSignals(False)
         self._show_problem(kind, f)
         self.more_cb.blockSignals(True)
-        self.more_cb.setVisible(kind == "lemma")
-        self.more_cb.setEnabled(f.role not in self._always)
-        self.more_cb.setChecked(bool(getattr(f, "_more", f.role not in self._always)))
+        self.more_cb.setVisible(kind in ("lemma", "token"))
+        if kind == "token":
+            self.more_cb.setText("Under More in the token and utterance dialogues")
+            self.more_cb.setEnabled(True)
+            self.more_cb.setChecked(bool(getattr(f, "_more", f.role == "constituents")))
+        else:
+            self.more_cb.setText("Under More in the lemma dialogue")
+            self.more_cb.setEnabled(f.role not in self._always)
+            self.more_cb.setChecked(bool(getattr(f, "_more", f.role not in self._always)))
         self.more_cb.blockSignals(False)
         fixed_type = f.builtin
         self.open_rb.setEnabled(not fixed_type)
@@ -331,8 +353,13 @@ class FieldsDialog(QDialog):
             self.list_editor.set_items(f.items)
 
     def _more_toggled(self, on: bool):
-        if self.current and self.current[0] == "lemma":
-            self.lists["lemma"][self.current[1]]._more = bool(on)
+        if self.current and self.current[0] in ("lemma", "token"):
+            self.lists[self.current[0]][self.current[1]]._more = bool(on)
+
+    def token_more_names(self) -> list[str]:
+        """The token fields behind the token and utterance dialogues' More arrow (idea 91; new
+        fields: no, except a Constituents field)."""
+        return [f.name for f in self.lists["token"] if getattr(f, "_more", f.role == "constituents")]
 
     def more_names(self) -> list[str]:
         """The lemma fields behind the More arrow, as they are named now (new fields: yes)."""

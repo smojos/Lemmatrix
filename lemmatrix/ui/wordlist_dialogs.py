@@ -653,11 +653,10 @@ def insert_items(win, items) -> list:
     Returns the new lemmas."""
     db = win.doc.db
     order = list(db.entries)
-    classes = set(db.settings.word_classes())
     made = []
     for item in items:
         e = db.new_entry(item.number, gloss=item.gloss,
-                         word_class=item.word_class if item.word_class in classes else "",
+                         word_class=db.settings.word_class_named(item.word_class),
                          speaker=win.session_speaker(), date=win.session_date())
         wl.fill_item(db, e, item)
         order.insert(wl.insert_position(order, item.number), e)
@@ -865,9 +864,8 @@ def apply_fixes(win, findings, rn=None) -> int:
     db = win.doc.db
 
     def new_entry(item):
-        classes = set(db.settings.word_classes())
         e = db.new_entry(item.number, gloss=item.gloss,
-                         word_class=item.word_class if item.word_class in classes else "",
+                         word_class=db.settings.word_class_named(item.word_class),
                          speaker=win.session_speaker(), date=win.session_date())
         wl.fill_item(db, e, item)
         return e

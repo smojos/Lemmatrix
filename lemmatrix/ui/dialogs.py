@@ -140,6 +140,22 @@ def more_fields(parent, db) -> set[str]:
     return set(names) & keep
 
 
+TOKEN_MORE_KEY = "token_dialog/more"   # the workspace: the token fields behind the dialogues' More arrow (idea 91)
+
+
+def default_token_more(db) -> list[str]:
+    """Constituents starts behind the token and utterance dialogues' More arrow (Josh, 28 October)."""
+    return [f.name for f in db.settings.token_fields if f.role == "constituents"]
+
+
+def token_more_fields(parent, db) -> set[str]:
+    doc = getattr(parent, "doc", None)
+    ws = getattr(doc, "ws", None) if doc is not None else None
+    v = ws.get(TOKEN_MORE_KEY, None) if ws is not None else None
+    names = [str(x) for x in v] if isinstance(v, list) else default_token_more(db)
+    return set(names) & {f.name for f in db.settings.token_fields}
+
+
 def _filled(w) -> bool:
     if isinstance(w, QComboBox):
         return bool(w.currentText().strip())
@@ -1034,7 +1050,8 @@ class PreferencesDialog(QDialog):
         self.conv_brackets.setChecked(c.brackets)
         self.conv_slashes = QCheckBox("Phonemic in /slashes/")
         self.conv_slashes.setChecked(c.slashes)
-        self.conv_caps = QCheckBox("Glosses in capitals (PL, 1SG) in small caps, in the Morphemes line")
+        self.conv_caps = QCheckBox("Glosses in capitals (PL, 1SG) in small caps, in the Morphemes line "
+                                   "and the Constituents labels (NP, V)")
         self.conv_caps.setChecked(c.small_caps)
         self.conv_quotes = QComboBox()
         for key, label in ((conv.SINGLE, "‘single’ quotes"), (conv.DOUBLE, "“double” quotes"),
@@ -1094,6 +1111,39 @@ class PreferencesDialog(QDialog):
                        ("This computer", [("Pitch playback", voice_row),
                                           ("Playback volume", volume_row),
                                           (None, self.pitch_own), ("Pitch trace colour", self.pitch_colour)])])
+        # Settings → Typology (IDEAS.md ideas 56 and 91, Josh, 28 October): the database's typological
+        # features, data (the <typology> block, both archives). The pitch kind is here and in
+        # Edit → Metadata (Josh: keep it in both); changing it converts the database, as there.
+        from .. import typology as typ
+        self.typ_kind, kind_row = pitch_kind_row(kind)
+        self.typ_morph = QComboBox()
+        for v, label in typ.MORPHOLOGIES:
+            self.typ_morph.addItem(label, v)
+        self.typ_morph.setCurrentIndex(max(0, self.typ_morph.findData(typ.value(db, typ.MORPHOLOGY))))
+        self.typ_morph.setToolTip(typ.MORPHOLOGY_TIP)
+        self.typ_order = QComboBox()
+        for v, label in typ.ORDERS:
+            self.typ_order.addItem(label, v)
+            if typ.WALS.get(v):
+                self.typ_order.setItemData(self.typ_order.count() - 1, f"WALS {typ.WALS[v]}", Qt.ToolTipRole)
+        self.typ_order.setCurrentIndex(max(0, self.typ_order.findData(typ.value(db, typ.ORDER))))
+        self.typ_order.setToolTip(typ.ORDER_TIP)
+        order_info = QLabel("ⓘ")
+        order_info.setObjectName("typology-citations")
+        order_info.setStyleSheet(f"color: {theme.muted()};")
+        order_info.setToolTip(typ.CITATIONS)
+        order_row = QWidget()
+        orl = QHBoxLayout(order_row)
+        orl.setContentsMargins(0, 0, 0, 0)
+        orl.addWidget(self.typ_order)
+        orl.addWidget(order_info)
+        orl.addStretch(1)
+        typ_note = QLabel("<i>Facts about the language, kept in the database (and in both archives). The "
+                          "constituent order is what the Constituents tier will be compared with (v2).</i>")
+        typ_note.setTextFormat(Qt.RichText)
+        typ_note.setWordWrap(True)
+        page("Typology", [("This database", [("Pitch kind", kind_row), ("Morphology type", self.typ_morph),
+                                             ("Constituent order", order_row)])], intro=typ_note)
         # Settings → Advanced (IDEAS.md ideas 79 and 86, Josh, 27 October): Women, Fire, and Dangerous
         # Things (Lakoff's title, in his order), one list with no boxes. Reached only here, never from the menus at the top; everything
         # in it starts off on a new computer (Josh: "don't make them easy to access").
@@ -1298,6 +1348,12 @@ class PreferencesDialog(QDialog):
         s.tag_separator = self.separator.text()
         s.auto_update_names = self.auto_names.isChecked()
         s.decomposed = self.decomposed_box.isChecked()   # the data is converted by the main window
+        from .. import typology as typ               # Settings → Typology (idea 91); the pitch kind is
+        ty = dict(self.db.metadata.typology or {})    # converted by the main window (kind_requested)
+        ty[typ.MORPHOLOGY] = self.typ_morph.currentData()
+        ty[typ.ORDER] = self.typ_order.currentData()
+        self.db.metadata.typology = ty
+        self.kind_requested = self.typ_kind.currentData()
         s.pitch_low, s.pitch_high = self.low.value(), self.high.value()
         p = self.prefs
         p.record_source = self.source.currentData()

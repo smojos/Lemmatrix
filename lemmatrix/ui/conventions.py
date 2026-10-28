@@ -93,7 +93,7 @@ def wrap_units(role: str, units: list[str], c: Conventions | None = None) -> lis
 
 def small_caps_on(role: str, c: Conventions | None = None) -> bool:
     c = c or CURRENT
-    return c.on and c.small_caps and role == "morphemes"
+    return c.on and c.small_caps and role in ("morphemes", "constituents")   # idea 91: the labels too
 
 
 _WORD = re.compile(r"[A-Za-z0-9]+")

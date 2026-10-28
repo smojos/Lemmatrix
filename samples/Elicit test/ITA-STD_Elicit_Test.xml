@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<database format="15">
+<database format="16">
   <metadata>
     <language code="ITA">Italian</language>
     <variety code="STD">Standard Italian</variety>
     <typology>
       <feature id="tone" value="tonal" />
+      <feature id="morphology" value="unspecified" />
+      <feature id="order" value="unspecified" />
     </typology>
     <name>Elicit Test</name>
     <researcher code="RS1" name="Researcher 1" email="researcher@example.org" identifiable="yes" />
@@ -36,18 +38,18 @@
       <field name="Lemma" role="lemma" />
       <field name="Gloss" role="gloss" />
       <field name="WordClass" label="Word Class" role="word-class" closed="yes">
-        <item name="NOUN" />
-        <item name="VERB" />
-        <item name="PRONOUN" />
-        <item name="QUANT" />
-        <item name="ADJECTIVE" />
-        <item name="ADVERB" />
-        <item name="PREP" />
-        <item name="INTERJ" />
-        <item name="NEG" />
-        <item name="CONJ" />
-        <item name="DEM" />
-        <item name="INTERROG" />
+        <item name="noun" abbr="N" />
+        <item name="verb" abbr="V" />
+        <item name="pronoun" abbr="PRO" />
+        <item name="quant" abbr="QUANT" />
+        <item name="adjective" abbr="ADJ" />
+        <item name="adverb" abbr="ADV" />
+        <item name="prep" abbr="PREP" />
+        <item name="interj" abbr="INTERJ" />
+        <item name="neg" abbr="NEG" />
+        <item name="conj" abbr="CONJ" />
+        <item name="dem" abbr="DEM" />
+        <item name="interrog" abbr="INTERROG" />
       </field>
       <field name="ToneClass" label="Tone Class" closed="yes">
         <item name="H" />
@@ -77,6 +79,7 @@
       <field name="Phonetic" role="phonetic" abbr="pht" />
       <field name="Phonemic" role="phonemic" abbr="phm" />
       <field name="Morphemes" role="morphemes" abbr="mph" />
+      <field name="Constituents" role="constituents" abbr="cns" />
       <field name="Pitch" role="pitch" abbr="pch" />
       <field name="Translation" role="translation" abbr="trs" />
       <field name="Comment" role="comment" abbr="com" />
@@ -114,10 +117,32 @@
       <tier name="ge" field="Morphemes" />
       <tier name="ft" field="Translation" lang="en" />
       <tier name="mb" field="" />
+      <tier name="cns" field="Constituents" />
     </tier-mapping>
+    <constituent-labels>
+      <item name="Relations">
+        <item name="intransitive subject" abbr="S" />
+        <item name="transitive subject" abbr="A" />
+        <item name="transitive object" abbr="O" />
+        <item name="verb" abbr="V" />
+        <item name="oblique" abbr="OBL" />
+      </item>
+      <item name="Phrases">
+        <item name="noun phrase" abbr="NP" />
+        <item name="verb phrase" abbr="VP" />
+        <item name="adpositional phrase" abbr="PP" />
+        <item name="adjective phrase" abbr="AP" />
+        <item name="adverb phrase" abbr="ADVP" />
+        <item name="complementizer phrase" abbr="CP" />
+      </item>
+      <item name="Topic and focus">
+        <item name="topic" abbr="TOP" />
+        <item name="focus" abbr="FOC" />
+      </item>
+    </constituent-labels>
     <glosses languages="en fr" primary="en" />
     <tag-structure>
-      <group name="Nominal" usual="NOUN">
+      <group name="Nominal" usual="noun">
         <group name="Number">
           <tag name="Singular" default="yes" />
           <tag name="Plural" code="PL" />
@@ -140,7 +165,7 @@
           <tag name="3PL.POSS" code="3PL.POSS" />
         </group>
       </group>
-      <group name="Verbal" usual="VERB">
+      <group name="Verbal" usual="verb">
         <group name="Subject">
           <tag name="1SG.A" code="1SG.A" />
           <tag name="1SG.S" code="1SG.S" />
@@ -260,7 +285,7 @@
     <Lemma>cane</Lemma>
     <Gloss lang="en">dog</Gloss>
     <Gloss lang="fr">chien</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: not to ask for</Comment>
     <Taxon>Canis familiaris (Canidae)</Taxon>
@@ -274,7 +299,7 @@
     <Lemma>gatto</Lemma>
     <Gloss lang="en">cat</Gloss>
     <Gloss lang="fr">chat</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: ask for this (new recording; it has a picture)</Comment>
     <Taxon>Felis catus (Felidae)</Taxon>
@@ -294,7 +319,7 @@
     <Lemma>pane</Lemma>
     <Gloss lang="en">bread</Gloss>
     <Gloss lang="fr">pain</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: ask for this (new recording)</Comment>
     <token id="0b3d3d5e9f">
@@ -307,7 +332,7 @@
     <Lemma>torta</Lemma>
     <Gloss lang="en">cake</Gloss>
     <Gloss lang="fr">gâteau</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: not to ask for</Comment>
     <token speaker="SP1" collected="2026-10-20" file="ITA-STD_J114b_cake.wav" id="a7c416a47d">
@@ -326,7 +351,7 @@
     <Lemma>casa</Lemma>
     <Gloss lang="en">house</Gloss>
     <Gloss lang="fr">maison</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: not to ask for</Comment>
     <token speaker="SP1" collected="2026-10-20" file="ITA-STD_K002_house.wav" id="32f0b68fbc">
@@ -345,7 +370,7 @@
     <Lemma>libro</Lemma>
     <Gloss lang="en">book</Gloss>
     <Gloss lang="fr">livre</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: not to ask for</Comment>
     <token speaker="SP1" collected="2026-10-20" file="ITA-STD_K220_book.wav" id="1a59e80979">
@@ -362,7 +387,7 @@
     <Lemma>sole</Lemma>
     <Gloss lang="en">sun</Gloss>
     <Gloss lang="fr">soleil</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: ask for this (rerecord; SP2 hasn't agreed to audio sharing, so Lemmatrix warns)</Comment>
     <token speaker="SP2" collected="2026-10-20" file="ITA-STD_L002_sun.wav" id="1026e49ab3">
@@ -375,7 +400,7 @@
     <Lemma>acqua</Lemma>
     <Gloss lang="en">water</Gloss>
     <Gloss lang="fr">eau</Gloss>
-    <WordClass>NOUN</WordClass>
+    <WordClass>noun</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: ask for this (rerecord)</Comment>
     <token speaker="SP1" collected="2026-10-20" file="ITA-STD_L062_water.wav" id="2816c0b9b9">
@@ -388,7 +413,7 @@
     <Lemma>grande</Lemma>
     <Gloss lang="en">big</Gloss>
     <Gloss lang="fr">grand</Gloss>
-    <WordClass>ADJECTIVE</WordClass>
+    <WordClass>adjective</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: not to ask for</Comment>
     <token id="052162507c">
@@ -401,7 +426,7 @@
     <Lemma>due</Lemma>
     <Gloss lang="en">two</Gloss>
     <Gloss lang="fr">deux</Gloss>
-    <WordClass>QUANT</WordClass>
+    <WordClass>quant</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: not to ask for</Comment>
     <token id="c8c574c184">
@@ -414,7 +439,7 @@
     <Lemma>dormire</Lemma>
     <Gloss lang="en">to sleep</Gloss>
     <Gloss lang="fr">dormir</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: ask for this (new recording; it has a picture) (an animated GIF)</Comment>
     <token id="037c5b7eb9">
@@ -427,7 +452,7 @@
     <Lemma>mangiare</Lemma>
     <Gloss lang="en">to eat</Gloss>
     <Gloss lang="fr">manger</Gloss>
-    <WordClass>VERB</WordClass>
+    <WordClass>verb</WordClass>
     <StemType>simple</StemType>
     <Comment>ɛλicit test: not to ask for</Comment>
     <token id="1ebdd66900">

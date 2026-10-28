@@ -437,6 +437,7 @@ class ListItem:
     """One value in a closed field's list; lists can be hierarchical."""
     name: str
     children: list["ListItem"] = field(default_factory=list)
+    abbr: str = ""             # its abbreviation (word classes, constituent labels: idea 91, format 16)
 
     def walk(self):
         yield self
@@ -445,9 +446,9 @@ class ListItem:
 
 
 # Fields other features depend on: they can be relabelled and moved, but not deleted (idea 9).
-CORE_ROLES = ("lemma", "gloss", "word-class", "stem-type", "phonetic", "phonemic", "morphemes", "pitch",
-              "translation", "comment", "title", "genre", "status")
-NEW_ROLES = ("stem-type",)          # core fields added after databases existed: "added", not "restored"
+CORE_ROLES = ("lemma", "gloss", "word-class", "stem-type", "phonetic", "phonemic", "morphemes", "constituents",
+              "pitch", "translation", "comment", "title", "genre", "status")
+NEW_ROLES = ("stem-type", "constituents")   # core fields added after databases existed: "added", not "restored"
 
 
 @dataclass
@@ -572,6 +573,9 @@ class Settings:
     play_cell_on_click: bool = False
     matrices: list = field(default_factory=list)      # saved MatrixConfig objects
     spelling_words: list[str] = field(default_factory=list)   # the spellcheck's own word list (Sample variety...)
+    # The Constituents tier's labels (idea 91, format 16): groups (Relations, Phrases…) of labels,
+    # each a name and its abbreviation (NP noun phrase); the word-level labels are the Word Class list's
+    constituent_labels: list[ListItem] = field(default_factory=list)
     extra: list = field(default_factory=list)   # unknown settings elements, kept as-is
 
     def entry_field(self, role_or_name: str) -> FieldDef | None:
@@ -615,6 +619,14 @@ class Settings:
     def list_items(self, f: FieldDef) -> list[ListItem]:
         """The list behind a closed field."""
         return f.items
+
+    def word_class_named(self, value: str) -> str:
+        """The Word Class list's own spelling of a class, matched without regard to case (Josh,
+        28 October: when a new EACW ships it has to know that NOUN = noun); "" if it has none."""
+        if not value:
+            return ""
+        want = value.casefold()
+        return next((c for c in self.word_classes() if c.casefold() == want), "")
 
     def word_classes(self) -> list[str]:
         """Every value in the Word Class list, nested ones included, in list order."""

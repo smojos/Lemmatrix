@@ -8,7 +8,18 @@ from .model import (CORE_ROLES, TEXTS, UTTERANCES, Database, FieldDef, Group, Li
                     RefCategory, Settings, Tag, TagStructure, TierMapping, TierRule)
 from .tagdefs import tag_description
 
-WORD_CLASSES = ["NOUN", "VERB", "PRONOUN", "QUANT", "ADJECTIVE", "ADVERB"]
+# Lower case since 28 October (Josh, idea 91), each with an all-caps abbreviation (for easy small
+# caps): the word-level labels of the Constituents tier. Only new databases: an older database's
+# Word Class list is never written over.
+WORD_CLASSES = ["noun", "verb", "pronoun", "quant", "adjective", "adverb"]
+WORD_CLASS_ABBRS = {"noun": "N", "verb": "V", "pronoun": "PRO", "quant": "QUANT", "adjective": "ADJ",
+                    "adverb": "ADV", "conj": "CONJ", "dem": "DEM", "interj": "INTERJ",
+                    "interrog": "INTERROG", "neg": "NEG", "prep": "PREP"}
+NOUN, VERB = "noun", "verb"
+
+
+def word_class_item(name: str) -> ListItem:
+    return ListItem(name, abbr=WORD_CLASS_ABBRS.get(name.casefold(), ""))
 INSTANCES = "Instances"          # top-level group: Frames and Examples
 EXAMPLES = "Examples"            # Example 1 = X1 …: tells apart tokens that would share a file name
 
@@ -40,7 +51,7 @@ def default_tag_structure() -> TagStructure:
                              ("Absolutive", "ABS"), ("Genitive", "GEN"), ("Pertensive", "PER"),
                              ("Locative", "LOC"), default="Nominative")),
         _group("Possession", _tags(*possessors)),
-    ], usual=["NOUN"])
+    ], usual=[NOUN])
     verbal = _group("Verbal", groups=[
         _group("Subject", _tags(*subjects)),
         _group("Object", _tags(*objects)),
@@ -51,7 +62,7 @@ def default_tag_structure() -> TagStructure:
         _group("Mood", _tags("Indicative", ("Imperative", "IMP"), ("Interrogative", "INT"),
                              default="Indicative")),
         _group("Polarity", _tags("Affirmative", ("Negative", "NEG"), default="Affirmative")),
-    ], usual=["VERB"])
+    ], usual=[VERB])
     shared = [                                  # no hint: usual for every lemma
         Group("Phonological", groups=[
             Group("Following tone", _tags(("before H", "xH"), ("before L", "xL"))),
@@ -169,6 +180,7 @@ def tier_mapping() -> TierMapping:
     """Toolbox and FLEx tier names: tx the text (the lines), ge the glosses, ft the free translation;
     mb (morpheme breaks) is ignored."""
     return TierMapping("tx", [TierRule("tx", "Phonetic"), TierRule("ge", "Morphemes"),
+                              TierRule("cns", "Constituents"),        # idea 91 (Josh, 28 October)
                               TierRule("ft", "Translation", "en"), TierRule("mb", "")])
 
 
@@ -185,7 +197,7 @@ def default_settings() -> Settings:
         FieldDef("Lemma", role="lemma"),
         FieldDef("Gloss", role="gloss"),
         FieldDef("WordClass", "Word Class", role="word-class", closed=True,
-                 items=[ListItem(n) for n in WORD_CLASSES]),
+                 items=[word_class_item(n) for n in WORD_CLASSES]),
         # Tone Class and Inflection Class after Word Class, before Stem type (Josh, 24 October)
         FieldDef("ToneClass", "Tone Class", closed=True, items=tone_classes()),
         FieldDef("InflectionClass", "Inflection Class", closed=True, items=inflection_classes()),
@@ -196,6 +208,7 @@ def default_settings() -> Settings:
         FieldDef("Phonetic", role="phonetic", abbr="pht"),
         FieldDef("Phonemic", role="phonemic", abbr="phm"),
         FieldDef("Morphemes", role="morphemes", abbr="mph"),   # the morpheme gloss line (ideas 2 and 7)
+        FieldDef("Constituents", role="constituents", abbr="cns"),   # labelled brackets (idea 91; hidden by default)
         FieldDef("Pitch", role="pitch", abbr="pch"),
         FieldDef("Translation", role="translation", abbr="trs"),
         FieldDef("Comment", role="comment", abbr="com"),
@@ -207,6 +220,8 @@ def default_settings() -> Settings:
                         for c in DEFAULT_CATEGORIES] + utterance_categories() + text_categories()
     s.text_fields = text_fields()
     s.tier_mapping = tier_mapping()
+    from .constituents import default_labels
+    s.constituent_labels = default_labels()
     return s
 
 
@@ -281,12 +296,10 @@ def fill_from_wordlist(db: Database, base: str, items: str = "", region: str = "
         chosen = wl.version_items(items, region)
         wl.ensure_fields(db)
         wl.ensure_word_classes(db)
-    classes = set(s.word_classes())
     for item in chosen:
         gloss = wl.item_gloss(base, item)
-        wc = wl.word_class_for(base, item)
-        e = db.new_entry(wl.display(base, item.number), gloss=gloss,
-                         word_class=wc if wc in classes else "")
+        wc = s.word_class_named(wl.word_class_for(base, item))     # NOUN in the list = noun here
+        e = db.new_entry(wl.display(base, item.number), gloss=gloss, word_class=wc)
         e.file_gloss = "".join(ch for ch in e.file_gloss if ch not in FORBIDDEN_CHARS).strip()
         e.lists = wl.other_numbers(base, item.number)
         if base == wl.EACW:

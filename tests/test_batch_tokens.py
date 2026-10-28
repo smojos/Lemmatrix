@@ -12,7 +12,7 @@ pytestmark = pytest.mark.real_defaults
 
 def small_db():
     db = defaults.new_database()
-    for ref, gloss, wc in (("D001", "goat", "NOUN"), ("D002", "dog", "NOUN"), ("V001", "to eat", "VERB")):
+    for ref, gloss, wc in (("D001", "goat", "noun"), ("D002", "dog", "noun"), ("V001", "to eat", "verb")):
         db.entries.append(db.new_entry(ref, gloss=gloss, word_class=wc))
     return db
 

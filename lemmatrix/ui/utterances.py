@@ -539,7 +539,8 @@ class TextsUtterancesWindow(QDialog):
 
     def _default_keys(self) -> list[str]:
         keys = ["ref", "label", "tags", "drawing"]
-        keys += ["f:" + f.name for f in self.db.settings.token_fields]
+        keys += ["f:" + f.name for f in self.db.settings.token_fields
+                 if f.role != "constituents"]   # hidden by default (idea 91)
         return keys + ["lemmas", "speaker", "date", "file", "source"]
 
     def _setup_columns(self):

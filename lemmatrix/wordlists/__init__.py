@@ -524,17 +524,32 @@ def ensure_fields(db) -> list[str]:
 
 def ensure_word_classes(db) -> list[str]:
     """The EACW's word classes the database's Word Class list lacks (DEM, CONJ…), added at its
-    end. Returns those added."""
+    end. Returns those added. Matched without regard to case (Josh, 28 October: NOUN = noun), and
+    added in the list's own style: in capitals where every class it has is in capitals (an older
+    database, never written over), else in lower case with the capitals as the abbreviation."""
+    from ..defaults import word_class_item
     f = db.settings.entry_field("word-class")
     if f is None:
         return []
-    have, added = set(f.all_values()), []
+    have = f.all_values()
+    caps = bool(have) and all(v == v.upper() for v in have)
+    folded, added = {v.casefold() for v in have}, []
     for i in get(EACW).items:
-        if i.word_class and i.word_class not in have:
-            f.add_value(i.word_class)
-            have.add(i.word_class)
-            added.append(i.word_class)
+        if i.word_class and i.word_class.casefold() not in folded:
+            name = i.word_class.upper() if caps else i.word_class.lower()
+            item = word_class_item(name)
+            if caps:
+                item.abbr = ""
+            f.items.append(item)
+            folded.add(name.casefold())
+            added.append(name)
     return added
+
+
+def db_word_class(db, value: str) -> str:
+    """The database's spelling of a list's word class (NOUN in the list, noun in a new database);
+    "" if the database has no such class."""
+    return db.settings.word_class_named(value)
 
 
 def fill_item(db, entry, item: Item, overwrite: bool = False):
@@ -547,8 +562,10 @@ def fill_item(db, entry, item: Item, overwrite: bool = False):
         f = s.entry_field(role)
         if f is None or not value:
             continue
-        if role == "word-class" and value not in s.word_classes():
-            continue
+        if role == "word-class":
+            value = s.word_class_named(value)           # NOUN = noun (Josh, 28 October)
+            if not value:
+                continue
         current = entry.get(f.name, lang) if f.multilingual else entry.get(f.name)
         if overwrite or not current:
             entry.set(f.name, value, lang if f.multilingual else None, f.multilingual)

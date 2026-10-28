@@ -722,8 +722,12 @@ class TextsPanel(QObject):
         choices = {k: (title, ipa) for k, title, ipa in self.view_choices()}
         keys = [k for k in self.doc.ws.get_list("lines/fields") if k in choices]
         if not keys:                              # at first: the fields the tier mapping fills
-            mapped = {r.key for r in self.db.settings.tier_mapping.rules if r.field}
-            keys = [k for k in choices if k in mapped] or list(choices)[:4]
+            s = self.db.settings                  # never Constituents: hidden by default (idea 91)
+            mapped = {r.key for r in s.tier_mapping.rules if r.field
+                      and (fd := s.token_field(r.field)) is not None and fd.role != "constituents"}
+            keys = [k for k in choices if k in mapped] or \
+                [k for k in choices if (fd := s.token_field(k.split(":")[0])) is None
+                 or fd.role != "constituents"][:4]
         aligned = self.main.aligned_set()         # one Line up setting for every cell view (idea 2)
         s = self.db.settings
         return [FieldSpec(k, choices[k][0], choices[k][1], k in aligned,

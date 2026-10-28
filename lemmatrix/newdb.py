@@ -40,7 +40,8 @@ class Choices:
 
 def copy_setup(db: Database, src: Database):
     """The other database's fields, lists and tags: lemma, token and text fields (closed fields
-    with their lists), the tag structure, the reference categories and the tier mapping. Nothing
+    with their lists), the tag structure, the reference categories, the tier mapping and the
+    Constituent labels. Nothing
     else: no data, people, places, settings or matrices."""
     s, o = db.settings, src.settings
     s.entry_fields = copy.deepcopy(o.entry_fields)
@@ -51,6 +52,8 @@ def copy_setup(db: Database, src: Database):
     if o.ref_scheme != SEQUENCE and o.ref_categories:
         s.ref_categories = copy.deepcopy(o.ref_categories)
     s.tier_mapping = copy.deepcopy(o.tier_mapping)
+    if o.constituent_labels:                      # the Constituents tier's labels (idea 91)
+        s.constituent_labels = copy.deepcopy(o.constituent_labels)
 
 
 def make(ch: Choices) -> Database:
