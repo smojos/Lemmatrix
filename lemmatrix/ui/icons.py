@@ -549,6 +549,17 @@ def _draw(name: str, s: int, p: QPainter, colour: QColor | None = None, colour2:
         y0, y1 = (0.36, 0.64) if name == "chevron-down" else (0.64, 0.36)
         p.drawPolyline(QPolygonF([QPointF(s * 0.22, s * y0), QPointF(s * 0.5, s * y1),
                                   QPointF(s * 0.78, s * y0)]))
+    elif name in ("fullscreen", "fullscreen-exit"):   # four corners out (or in), in a colour (28 October)
+        p.setPen(QPen(colour or BLACK, max(1.6, s * 0.11), Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        p.setBrush(Qt.NoBrush)
+        a, b, k = s * 0.16, s * 0.84, s * 0.24
+        for cx, cy, dx, dy in ((a, a, 1, 1), (b, a, -1, 1), (a, b, 1, -1), (b, b, -1, -1)):
+            if name == "fullscreen":             # the corner's point at the edge
+                pts = [QPointF(cx + dx * k, cy), QPointF(cx, cy), QPointF(cx, cy + dy * k)]
+            else:                                # pointing in: the corner moved inwards
+                ix, iy = cx + dx * k, cy + dy * k
+                pts = [QPointF(cx, iy), QPointF(ix, iy), QPointF(ix, cy)]
+            p.drawPolyline(QPolygonF(pts))
     elif name == "save-solid":                   # a floppy disk in one colour, shutter and label cut out
         body = QPainterPath()
         x0, y0, x1, y1, cut = s * 0.12, s * 0.12, s * 0.88, s * 0.88, s * 0.17

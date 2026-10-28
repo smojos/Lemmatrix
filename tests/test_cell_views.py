@@ -190,7 +190,14 @@ def test_a_stretch_without_main_tier_text_shows_as_a_flagged_line(win, tmp_path,
         "ft": [(0.5, 1.5, "the hare ran"), (2.0, 3.0, "where is he?")]}, 4.0)
     uw, t = _add_text(win, tmp_path, monkeypatch, src=src)
     rows = uw.texts.lines.rows
-    assert len(rows) == 2 and rows[1].missing_main and rows[1].values["Translation:en"] == "where is he?"
+    # a newly chosen TextGrid's main tier is its translation (Josh, 28 October): both stretches are lines
+    assert t.tiers is not None and t.tiers.main == "ft"
+    assert len(rows) == 2 and not rows[1].missing_main and rows[1].values["Translation:en"] == "where is he?"
+    # with tx as the main tier, the stretch with only a translation is a flagged line
+    from lemmatrix.model import TierMapping, TierRule
+    lines = tgmod.read_lines(src / "story.TextGrid", TierMapping("tx", [TierRule("tx", "Phonetic"),
+                                                                       TierRule("ft", "Translation", "en")]))
+    assert len(lines) == 2 and lines[1].missing_main and lines[1].values["Translation:en"] == "where is he?"
 
 
 # ---- 21 October, later: edit mode in the matrices, the cell's Comment below ----------------

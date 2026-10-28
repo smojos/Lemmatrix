@@ -61,6 +61,18 @@ def field_choices(db, keep: tuple | None = None) -> list[tuple[str, str, str]]:
     return out
 
 
+AUTO_STEPS = ("Make the TextGrid automatically:\n"
+              "1. Choose the recording.\n"
+              "2. Click Make from the speech: Lemmatrix finds each stretch of speech (pauses of 0.3 s or "
+              "more) and makes a line for it, 0.25 s of room either side.\n"
+              "3. The TextGrid has the tiers cns pht phm mph trs com; each line has \u201ctranslate me\u201d "
+              "in trs, the main tier.\n"
+              "4. OK: the recording and the TextGrid are copied into Soundfiles\\Texts under the text's "
+              "names (renamed there if they're already in it).\n"
+              "5. Open in Praat to move boundaries and type; then Refresh text.\n"
+              "No Praat needed for the cutting. To start again later: right-click the text → Archive TextGrid…")
+
+
 # --------------------------------------------------------------------------
 # The text dialogue
 # --------------------------------------------------------------------------
@@ -78,6 +90,8 @@ class TextDialog(QDialog):
         self.resize(600, 720)                     # resizable; the size is remembered (done())
         self.new_wav: Path | None = None
         self.new_grid: Path | None = None
+        self.auto_rules: dict[str, tuple[str, str]] = {}   # tiers of a TextGrid made from the speech
+        self._auto_dir = None
         lay = QVBoxLayout(self)
         form = QFormLayout()
         lay.addLayout(form)
@@ -148,9 +162,18 @@ class TextDialog(QDialog):
         self.grid_label.setWordWrap(True)
         b = QPushButton("Choose TextGrid…")
         b.clicked.connect(lambda *_: self._choose_grid())
+        self.auto_btn = QPushButton("Make from the speech")       # Josh, 28 October: no Praat needed
+        self.auto_btn.setObjectName("make-textgrid")
+        self.auto_btn.clicked.connect(lambda *_: self.make_from_speech())
+        auto_info = QLabel("ⓘ")
+        auto_info.setObjectName("make-textgrid-info")
+        auto_info.setStyleSheet(f"color: {theme.muted()};")
+        auto_info.setToolTip(AUTO_STEPS)
         row = QHBoxLayout()
         row.addWidget(self.grid_label, 1)
         row.addWidget(b)
+        row.addWidget(self.auto_btn)
+        row.addWidget(auto_info)
         fl.addRow("TextGrid", row)
         lay.addWidget(files)
 
@@ -182,6 +205,13 @@ class TextDialog(QDialog):
     def done(self, result):
         self.main.prefs.set_value("window/text", self.saveGeometry())
         super().done(result)
+
+    def cleanup(self):
+        """The TextGrid made from the speech, once copied in (or cancelled): its temporary folder goes."""
+        if self._auto_dir is not None:
+            import shutil
+            shutil.rmtree(self._auto_dir, ignore_errors=True)
+            self._auto_dir = None
 
     # ---- the record ----------------------------------------------------
     def _suggest(self):
@@ -241,7 +271,44 @@ class TextDialog(QDialog):
         path, _ = QFileDialog.getOpenFileName(self, "The text's TextGrid", start, "Praat TextGrids (*.TextGrid)")
         if path:
             self.new_grid = Path(path)
+            self.auto_rules = {}
             self._show_files()
+
+    def make_from_speech(self) -> bool:
+        """A TextGrid cut at the recording's stretches of speech (autogrid), copied in on OK as if
+        chosen: tiers cns pht phm mph trs com, translate me in trs, trs the main tier."""
+        wav = self._current_wav()
+        if wav is None or not wav.exists():
+            QMessageBox.information(self, "Make from the speech", "Choose the recording first.")
+            return False
+        import tempfile
+        from .. import autogrid, audio
+        if self._auto_dir is None:
+            self._auto_dir = Path(tempfile.mkdtemp(prefix="lemmatrix-textgrid-"))
+        out = self._auto_dir / (wav.stem + ".TextGrid")
+        try:
+            n = autogrid.from_recording(wav, out, self.db)
+        except (OSError, audio.AudioError, ValueError) as exc:
+            QMessageBox.warning(self, "Make from the speech", f"Couldn't read {wav.name}: {exc}")
+            return False
+        tiers = autogrid.tiers_for(self.db)
+        self.auto_rules = {x.name.lower(): (x.field, x.lang) for x in tiers}
+        self.auto_main = autogrid.main_tier(tiers, self.db)
+        self.new_grid = out
+        self._show_files()
+        self.lines_note.setText(f"{n} stretch{'es' if n != 1 else ''} of speech found: {n} line"
+                                f"{'s' if n != 1 else ''}, each with <i>{autogrid.PLACEHOLDER}</i> in "
+                                f"{self.auto_main}. Copied into Soundfiles\\Texts on OK; check the boundaries "
+                                "in Praat.")
+        return True
+
+    def _auto_state(self):
+        own = bool(self.text and self.text.textgrid and self.new_grid is None)
+        self.auto_btn.setEnabled(self._current_wav() is not None and not own)
+        self.auto_btn.setToolTip(
+            "This text already has a TextGrid: right-click the text → Archive TextGrid… to start a new one"
+            if own else "Find the stretches of speech in the recording and make a TextGrid with a line "
+            "for each (no Praat needed)" if self._current_wav() is not None else "Choose the recording first")
 
     def _title_name(self) -> str:
         f = self.db.settings.text_field("title")
@@ -256,6 +323,9 @@ class TextDialog(QDialog):
                 label.setToolTip(QDir.toNativeSeparators(str(path)))
         show(self.wav_label, self._current_wav(), bool(self.new_wav))
         show(self.grid_label, self._current_grid(), bool(self.new_grid))
+        if self.new_grid is not None and self.new_grid.parent == self._auto_dir:
+            self.grid_label.setText("<i>made from the speech</i>  <i>(copied in on OK)</i>")
+        self._auto_state()
         self._fill_tiers()
 
     # ---- tiers -----------------------------------------------------------
@@ -274,6 +344,9 @@ class TextDialog(QDialog):
             self.lines_note.setText(f"<span style='color:{theme.colour('error').name()}'>{exc}</span>")
             return
         m = self._mapping()
+        # the main tier: a newly chosen TextGrid's Translation tier by default (Josh, 28 October:
+        # no placeholder in a transcription tier), else the mapping's
+        main_name = self._default_main(infos, m)
         seen = set()
         for info in infos:
             base = tier_base(info.name)[0]
@@ -285,7 +358,10 @@ class TextDialog(QDialog):
             it = QTableWidgetItem(base)
             it.setFlags(it.flags() & ~Qt.ItemIsEditable)
             rule = m.rule(base)
-            if rule is None:
+            if rule is None and base.lower() in self.auto_rules:   # made from the speech: its fields
+                rule = TierRule(base, *self.auto_rules[base.lower()])
+                it.setToolTip("A tier of the TextGrid made from the speech: learned for the next texts too")
+            elif rule is None:
                 it.setToolTip("No rule for this tier yet: what you choose is used for the next texts too")
                 it.setForeground(theme.colour("warning"))
             self.tiers.setItem(r, 0, it)
@@ -302,7 +378,7 @@ class TextDialog(QDialog):
             combo.currentIndexChanged.connect(lambda *_: self._count_lines())
             self.tiers.setCellWidget(r, 2, combo)
             main = QCheckBox()
-            main.setChecked(m.is_main(base))
+            main.setChecked(base.lower() == main_name.lower())
             main.toggled.connect(lambda on, r=r: self._main_toggled(r, on))
             holder = QWidget()
             hl = QHBoxLayout(holder)
@@ -312,6 +388,20 @@ class TextDialog(QDialog):
         self.tiers.resizeColumnsToContents()
         self.tiers.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self._count_lines()
+
+    def _default_main(self, infos, m) -> str:
+        names = [tier_base(i.name)[0] for i in infos if i.kind == "intervals"]
+        if self.new_grid is None or (self.text is not None and self.text.tiers is not None):
+            return next((n for n in names if m.is_main(n)), "")
+        tr = self.db.settings.token_field("translation")
+        for n in names:
+            rule = m.rule(n)
+            if rule is None and n.lower() in self.auto_rules:
+                rule = TierRule(n, *self.auto_rules[n.lower()])
+            if rule is not None and tr is not None and rule.field == tr.name \
+                    and (rule.lang or self.db.settings.primary_gloss) == self.db.settings.primary_gloss:
+                return n
+        return next((n for n in names if m.is_main(n)), "")
 
     def _main_box(self, r) -> QCheckBox:
         return self.tiers.cellWidget(r, 3).findChild(QCheckBox)
@@ -1099,9 +1189,11 @@ class TextsPanel(QObject):
             return
         dlg = TextDialog(self)
         if not dlg.exec():
+            dlg.cleanup()
             return
         t = dlg.record()
         renames = self._copy_in(t, dlg.new_wav, dlg.new_grid)
+        dlg.cleanup()
         if renames is None:
             return
         self.doc.add_entry(t, renames=renames)
@@ -1178,13 +1270,23 @@ class TextsPanel(QObject):
             out.append((self.doc.hold_recording(dst), dst))
         return out
 
-    def edit(self, row=None):
+    def edit(self, row=None, make: bool = False):
         t = row if isinstance(row, Text) else self.current()
         if t is None:
             return
         dlg = TextDialog(self, t)
-        if not dlg.exec():
+        if make and not dlg.make_from_speech():
+            dlg.cleanup()
             return
+        if not dlg.exec():
+            dlg.cleanup()
+            return
+        try:
+            self._edit_with(t, dlg)
+        finally:
+            dlg.cleanup()
+
+    def _edit_with(self, t: Text, dlg: "TextDialog"):
         after = dlg.record()
         folder = storage.text_folder(self.db)
         # Nothing on disk changes until every check has passed (the audit, 25 October): first the
@@ -1284,12 +1386,72 @@ class TextsPanel(QObject):
         for text, name, fn, on in (("Add", "add", self.add, True), ("Edit", "edit", self.edit, row is not None),
                                    ("Open in Praat", "praat", self.open_in_praat, row is not None),
                                    ("Refresh text", "refresh-text", self.refresh_text, row is not None),
+                                   ("Make TextGrid from the speech…", "", self.make_textgrid,
+                                    row is not None and bool(row.file) and not row.textgrid),
+                                   ("Archive TextGrid and start blank…", "", lambda: self.archive_textgrid(False),
+                                    row is not None and bool(row.textgrid)),
+                                   ("Archive TextGrid and keep a working copy…", "",
+                                    lambda: self.archive_textgrid(True), row is not None and bool(row.textgrid)),
                                    (f"Delete {n} texts" if (n := len(self.table.selected_rows())) > 1
                                     else "Delete", "delete", self.delete, row is not None)):
-            a = m.addAction(icon(name, 16), text)
+            a = m.addAction(icon(name, 16), text) if name else m.addAction(text)
             a.setEnabled(on)
             a.triggered.connect(lambda *_, fn=fn: fn())
         m.exec(pos)
+
+    # ---- a TextGrid from the speech, and archiving (Josh, 28 October) -------------------
+    def make_textgrid(self):
+        """Right-click → Make TextGrid from the speech…: the text dialogue, with it already made."""
+        t = self.current()
+        if t is not None and t.file and not t.textgrid:
+            self.edit(t, make=True)
+
+    def archive_textgrid(self, keep: bool) -> bool:
+        """Archive the text's TextGrid as name.archiveN.TextGrid beside it, then start blank (the
+        same tiers, no segments) or keep working on a copy (the TextGrid itself is untouched)."""
+        import shutil
+        from .. import autogrid
+        t = self.current()
+        path = self.grid_path(t) if t is not None else None
+        if path is None or not path.exists():
+            QMessageBox.information(self.win, "Archive TextGrid", "This text has no TextGrid in Soundfiles\\Texts.")
+            return False
+        buf = self.doc.text_buffers.get(t.id)
+        if buf is not None and buf.changed:
+            if not _w.ask(self.win, "Archive TextGrid", f"{t.ref} has line edits that aren't saved into its "
+                          "TextGrid yet. Save them first, so the archive has them?", "Save, then archive"):
+                return False
+            if not self.save_textgrid():
+                return False
+        arch = autogrid.archive_path(path)
+        clips = self.db.clipped_from(t)
+        msg = (f"{path.name} is copied to {arch.name}, beside it in Soundfiles\\Texts (Praat opens it; "
+               "Lemmatrix never reads it as the text's). ")
+        msg += ("The TextGrid then goes on as it is: work on it, and the archive keeps today's version."
+                if keep else "The TextGrid then starts blank: the same tiers, no segments, so the text has no "
+                "lines until they are made again." + (f" The {len(clips)} utterance(s) clipped from it will "
+                                                      "show their lines as missing (Pull)." if clips else ""))
+        msg += " Undo doesn't bring it back; the archive does (rename it)."
+        if not _w.ask(self.win, "Archive TextGrid", msg, "Archive and keep a copy" if keep else
+                      "Archive and start blank"):
+            return False
+        try:
+            shutil.copy2(path, arch)
+            if not keep:
+                tmp = path.with_name(path.name + ".blank")
+                autogrid.blank_like(path, tmp)
+                from ..model import write_bytes_safely
+                write_bytes_safely(path, tmp.read_bytes())
+                tmp.unlink(missing_ok=True)
+        except (OSError, tgmod.TextGridError) as exc:
+            QMessageBox.warning(self.win, "Archive TextGrid", f"Couldn't archive {path.name}: {exc}\n\n"
+                                "If it is open in Praat, close it there and try again.")
+            return False
+        if not keep:
+            self.refresh_text()
+        self.main.statusBar().showMessage(f"{path.name} archived as {arch.name}"
+                                          + ("." if keep else "; the TextGrid starts blank."), 8000)
+        return True
 
     def open_in_praat(self):
         t = self.current()

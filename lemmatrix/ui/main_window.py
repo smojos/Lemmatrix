@@ -391,6 +391,17 @@ class MainWindow(QMainWindow):
         opts = QHBoxLayout()
         opts.setContentsMargins(4, 0, 0, 0)
         opts.addWidget(self.autoplay)
+        # Full screen (Josh, 28 October): the lemma list and the working panels out of view, the
+        # working window alone; the same button again, or F11, brings them back
+        self.full_btn = QToolButton()
+        self.full_btn.setObjectName("full-screen")
+        self.full_btn.setAutoRaise(True)
+        self.full_btn.setCheckable(True)
+        self.full_btn.setIconSize(QSize(18, 18))
+        self.full_btn.toggled.connect(self.set_full_screen)
+        opts.addWidget(self.full_btn)
+        self._full_state = None
+        self._full_icon()
         opts.addStretch(1)
         self.panels_btn = QToolButton()          # hides or shows the option panels below
         self.panels_btn.setAutoRaise(True)
@@ -1475,6 +1486,7 @@ class MainWindow(QMainWindow):
         self.pitch_view_action.setCheckable(True)
         self.pitch_view_action.setChecked(False)
         self._act(v, "Hide or show the working panels", self.toggle_panels)
+        self._act(v, "Full screen (the working window alone)", lambda: self.full_btn.toggle(), "F11")
         # the same keys as in the token dialogue
         self.play_action = self._act(None, "Play the selected token", self.play_selected, "Ctrl+Space")
         self.play_pitch_action = self._act(None, "Play the selected token's pitch", self.play_selected_pitch,
@@ -1575,6 +1587,7 @@ class MainWindow(QMainWindow):
                                        ("Ctrl+Shift+Space", "Play its pitch"),
                                        ("Ctrl+Alt+Space", "Open it in Praat"),
                                        ("Ctrl+R", "Open it and record"), ("Enter", "Open the token dialogue"),
+                                       ("F11", "Full screen: the working window alone, and back"),
                                        ("Delete", "Delete the selected token"),
                                        ("Ctrl + mouse wheel, Ctrl+0", "Zoom a matrix, and back"),
                                        ("Shift + mouse wheel", "Scroll sideways"),
@@ -1587,6 +1600,7 @@ class MainWindow(QMainWindow):
                                            ("→", "Accept the predicted translation"),
                                            ("Ctrl+click a tag", "More than one tag in a group"))),
         ("A text's lines", (("Ctrl+E", "Edit mode"), ("Ctrl+S", "Save this text's TextGrid"),
+                            ("F11", "Full screen: the lines alone, and back"),
                             ("Ctrl+Space, Space", "Play the line"),
                             ("Ctrl+Alt+Space", "Open it in Praat (Utterances: the utterance)"),
                             ("Ctrl+G", "Go to the bookmark"),
@@ -2649,6 +2663,7 @@ class MainWindow(QMainWindow):
         self._save_icon()
         self._style_menu_bar()
         self._panels_icon()
+        self._full_icon()
         if hasattr(self, "tick_action"):
             self.tick_action.setIcon(themed_icon("tick", 16))
         for w in QApplication.topLevelWidgets():         # icons in the theme's colours follow it, every window
@@ -2659,6 +2674,38 @@ class MainWindow(QMainWindow):
             v.switch.setIcon(icon("switch-plain" if theme.dark() else "switch", 22,   # no white edge on dark
                                   theme.colour("pitch").name()))
             v.switch.setIconSize(QSize(22, 22))
+
+    # ---- full screen (Josh, 28 October) ---------------------------------
+    def set_full_screen(self, on: bool):
+        """The working window alone: the lemma list and the working panels out of view; off puts back
+        what was shown before (panels already hidden stay hidden)."""
+        on = bool(on)
+        if self.full_btn.isChecked() != on:
+            self.full_btn.setChecked(on)          # comes back here through toggled
+            return
+        left = self.main_split.widget(0)
+        if on and self._full_state is None:
+            self._full_state = (left.isVisible() or not self.isVisible(), self.panels_hidden())
+            left.hide()
+            if not self.panels_hidden():
+                self.toggle_panels()
+        elif not on and self._full_state is not None:
+            left_shown, panels_were_hidden = self._full_state
+            self._full_state = None
+            left.setVisible(left_shown)
+            if self.panels_hidden() and not panels_were_hidden:
+                self.toggle_panels()
+        self._full_icon()
+
+    def full_screen(self) -> bool:
+        return self._full_state is not None
+
+    def _full_icon(self):
+        on = getattr(self, "_full_state", None) is not None
+        self.full_btn.setIcon(icon("fullscreen-exit" if on else "fullscreen", 18, theme.colour("pitch").name()))
+        self.full_btn.setToolTip("Back: the lemma list and the working panels (F11)" if on else
+                                 "Full screen: the working window alone, the lemma list and the working "
+                                 "panels out of view (F11)")
 
     # ---- option panels -------------------------------------------------
     def panels_hidden(self) -> bool:

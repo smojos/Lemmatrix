@@ -19,8 +19,8 @@ import re
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import QDir, QStringListModel, Qt, Signal
-from PySide6.QtGui import QFont, QKeySequence
+from PySide6.QtCore import QDir, QSize, QStringListModel, Qt, Signal
+from PySide6.QtGui import QFont, QKeySequence, QShortcut
 from PySide6.QtWidgets import (QCheckBox, QCompleter, QDialog, QSplitter, QGroupBox, QHBoxLayout, QInputDialog, QLabel, QLineEdit,
                                QMenu, QMessageBox, QPushButton, QStackedWidget, QTabBar, QToolButton,
                                QVBoxLayout, QWidget, QFileDialog)
@@ -155,6 +155,16 @@ class TextsUtterancesWindow(QDialog):
         opts = QHBoxLayout()
         opts.setContentsMargins(4, 0, 0, 0)
         opts.addWidget(self.autoplay)
+        self.full_btn = QToolButton()             # full screen (Josh, 28 October): the lines alone
+        self.full_btn.setObjectName("full-screen")
+        self.full_btn.setAutoRaise(True)
+        self.full_btn.setCheckable(True)
+        self.full_btn.setIconSize(QSize(18, 18))
+        self.full_btn.toggled.connect(self.set_full_screen)
+        opts.addWidget(self.full_btn)
+        self._full_state = None
+        self._full_icon()
+        QShortcut(QKeySequence("F11"), self, lambda: self.full_btn.toggle())
         opts.addStretch(1)
         bxl.addLayout(opts)
         normal = QFont(box.font())
@@ -196,7 +206,6 @@ class TextsUtterancesWindow(QDialog):
         t.model_.edited.connect(self._edited)
         t.selectionModel().currentRowChanged.connect(lambda *_: self.show_cell())
         self.search.textChanged.connect(lambda text: t.proxy.set_search(text))
-        from PySide6.QtGui import QShortcut
         QShortcut(QKeySequence("Ctrl+Space"), self, self._play_key)       # an utterance, or a text's line
         QShortcut(QKeySequence("Ctrl+Shift+Space"), self, self.play_pitch)    # as in All data
         QShortcut(QKeySequence("Ctrl+Alt+Space"), self, self._praat_key)  # as in All data (Josh, 24 October)
@@ -391,6 +400,38 @@ class TextsUtterancesWindow(QDialog):
             a.setEnabled(on)
             a.triggered.connect(lambda *_: fn())
         m.exec(pos)
+
+    def set_full_screen(self, on: bool):
+        """The working window alone: the texts list (on the Texts tab) and the options panel out of
+        view; off puts back the sizes they had."""
+        on = bool(on)
+        if self.full_btn.isChecked() != on:
+            self.full_btn.setChecked(on)
+            return
+        page = self.texts.page
+        if on and self._full_state is None:
+            self._full_state = (self.split.sizes(), page.sizes())
+            a, b = self.split.sizes()
+            self.split.setSizes([a + b, 0])
+            top, lines = page.sizes()
+            page.setSizes([0, top + lines])
+        elif not on and self._full_state is not None:
+            outer, inner = self._full_state
+            self._full_state = None
+            self.split.setSizes(outer)
+            page.setSizes(inner)
+        self._full_icon()
+
+    def full_screen(self) -> bool:
+        return self._full_state is not None
+
+    def _full_icon(self):
+        from . import theme as _theme
+        on = self._full_state is not None
+        self.full_btn.setIcon(icon("fullscreen-exit" if on else "fullscreen", 18, _theme.colour("pitch").name()))
+        self.full_btn.setToolTip("Back: the texts list and the options panel (F11)" if on else
+                                 "Full screen: the lines (or utterances) alone, the texts list and the "
+                                 "options panel out of view (F11)")
 
     def _main_autoplay(self, on: bool):
         if self.autoplay.isChecked() != bool(on):
@@ -1082,6 +1123,8 @@ class TextsUtterancesWindow(QDialog):
 
     # ---- style and closing --------------------------------------------
     def _restyle(self):
+        if hasattr(self, "full_btn"):
+            self._full_icon()
         a = theme.accent()
         self.logo.setPixmap(icon("texts-utterances", LOGO, theme.colour("pitch").name()).pixmap(LOGO, LOGO))
         self.title.setStyleSheet(f"color: {theme.colour('pitch').name()};")
